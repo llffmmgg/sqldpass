@@ -25,12 +25,6 @@ ORDER BY 3 DESC;`}
         </div>
 
         <div className="relative mx-auto max-w-5xl px-4 py-32 text-center sm:px-6 sm:py-40 lg:px-8">
-          <ScrollReveal>
-            <span className="inline-block rounded-full border border-violet-500/30 bg-violet-500/10 px-4 py-1.5 text-sm font-medium text-violet-400">
-              2025년 개정 반영
-            </span>
-          </ScrollReveal>
-
           <ScrollReveal delay={1}>
             <h1 className="mt-6 text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl lg:text-6xl">
               <span className="bg-gradient-to-r from-amber-400 via-amber-300 to-amber-500 bg-clip-text text-transparent">
