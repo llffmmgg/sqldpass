@@ -2,7 +2,6 @@ package com.sqldpass.domain.subject;
 
 import java.util.List;
 
-import lombok.Builder;
 import lombok.Getter;
 
 @Getter
@@ -14,7 +13,6 @@ public class Subject {
     private final int displayOrder;
     private final List<Subject> children;
 
-    @Builder
     public Subject(Long id, Long parentId, String name, int displayOrder, List<Subject> children) {
         this.id = id;
         this.parentId = parentId;

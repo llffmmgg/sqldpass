@@ -16,4 +16,4 @@ sqld 문제집 사이트 (문제 제공, 풀이 제공)
 
 - Windows 환경. Git Bash/WSL에서는 Unix 명령, PowerShell/CMD에서는 Windows 명령 사용
 - 실제 DB 계정 정보는 커밋하지 않음. 환경별 설정은 프로필 분리 방식으로 관리
-- 커밋 메시지는 짧은 명령형 문장 (예: `Add login validation`)
+- 커밋 메시지는 한국어로 작성하되 접두어(feat, fix, chore 등)는 영어 유지 (예: `feat: 로그인 유효성 검사 추가`)

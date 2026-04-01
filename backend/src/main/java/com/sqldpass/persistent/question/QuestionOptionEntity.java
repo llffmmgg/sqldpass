@@ -14,7 +14,6 @@ import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 
 import lombok.AccessLevel;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -43,7 +42,6 @@ public class QuestionOptionEntity extends BaseTimeEntity {
     @Column(nullable = false)
     private boolean isCorrect;
 
-    @Builder
     public QuestionOptionEntity(QuestionEntity question, int optionNumber, String content, boolean isCorrect) {
         this.question = question;
         this.optionNumber = optionNumber;

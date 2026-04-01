@@ -1,6 +1,5 @@
 package com.sqldpass.domain.question;
 
-import lombok.Builder;
 import lombok.Getter;
 
 @Getter
@@ -11,7 +10,6 @@ public class QuestionOption {
     private final String content;
     private final boolean correct;
 
-    @Builder
     public QuestionOption(Long id, int optionNumber, String content, boolean correct) {
         this.id = id;
         this.optionNumber = optionNumber;

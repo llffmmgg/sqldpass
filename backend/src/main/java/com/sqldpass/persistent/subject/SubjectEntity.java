@@ -17,7 +17,6 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
 import lombok.AccessLevel;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -44,7 +43,6 @@ public class SubjectEntity extends BaseTimeEntity {
     @OneToMany(mappedBy = "parent", fetch = FetchType.LAZY)
     private List<SubjectEntity> children = new ArrayList<>();
 
-    @Builder
     public SubjectEntity(SubjectEntity parent, String name, int displayOrder) {
         this.parent = parent;
         this.name = name;

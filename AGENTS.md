@@ -24,6 +24,7 @@ Read this file first for repo-wide rules. Then read the `AGENTS.md` inside the a
 ## Shared Conventions
 
 - Prefer small, focused commits and PRs with one clear concern.
+- 커밋 메시지는 한국어로 작성하되 접두어(feat, fix, chore 등)는 영어 유지 (예: `feat: 로그인 유효성 검사 추가`)
 - Do not commit secrets, local credentials, `.env` files, or database passwords.
 - Add tests or validation for behavior changes when the local project setup supports it.
 - Preserve existing project structure and naming patterns before introducing new abstractions.

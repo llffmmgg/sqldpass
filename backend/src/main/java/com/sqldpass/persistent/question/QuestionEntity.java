@@ -21,7 +21,6 @@ import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 
 import lombok.AccessLevel;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -50,7 +49,6 @@ public class QuestionEntity extends BaseTimeEntity {
     @OneToOne(mappedBy = "question", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private ExplanationEntity explanation;
 
-    @Builder
     public QuestionEntity(SubjectEntity subject, String content) {
         this.subject = subject;
         this.content = content;

@@ -11,7 +11,6 @@ import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 
 import lombok.AccessLevel;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -42,7 +41,6 @@ public class MemberEntity extends BaseTimeEntity {
     @Column(name = "profile_image", length = 500)
     private String profileImage;
 
-    @Builder
     public MemberEntity(String provider, String providerId, String nickname, String email, String profileImage) {
         this.provider = provider;
         this.providerId = providerId;
