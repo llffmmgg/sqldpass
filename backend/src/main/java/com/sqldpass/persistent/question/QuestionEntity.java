@@ -37,7 +37,7 @@ public class QuestionEntity extends BaseTimeEntity {
     @Column(nullable = false, columnDefinition = "TEXT")
     private String content;
 
-    @Column(name = "correct_option", nullable = false)
+    @Column(name = "correct_option", nullable = false, columnDefinition = "TINYINT")
     private int correctOption;
 
     @Column(columnDefinition = "TEXT")
