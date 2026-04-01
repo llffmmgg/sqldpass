@@ -20,7 +20,8 @@ import com.sqldpass.persistent.solve.SolveMapper;
 import com.sqldpass.persistent.solve.SolveRepository;
 import com.sqldpass.persistent.subject.SubjectEntity;
 import com.sqldpass.persistent.subject.SubjectRepository;
-import com.sqldpass.service.common.NotFoundException;
+import com.sqldpass.service.common.ErrorCode;
+import com.sqldpass.service.common.SqldpassException;
 
 @Service
 @Transactional(readOnly = true)
@@ -42,10 +43,10 @@ public class SolveService {
     @Transactional
     public Solve solve(Long memberId, SolveRequest request) {
         MemberEntity member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new NotFoundException("MEMBER_NOT_FOUND", "회원을 찾을 수 없습니다."));
+                .orElseThrow(() -> new SqldpassException(ErrorCode.MEMBER_NOT_FOUND));
 
         SubjectEntity subject = subjectRepository.findById(request.subjectId())
-                .orElseThrow(() -> new NotFoundException("SUBJECT_NOT_FOUND", "과목을 찾을 수 없습니다."));
+                .orElseThrow(() -> new SqldpassException(ErrorCode.SUBJECT_NOT_FOUND));
 
         List<Long> questionIds = request.answers().stream()
                 .map(SolveAnswerRequest::questionId)
@@ -61,7 +62,7 @@ public class SolveService {
         for (SolveAnswerRequest answerReq : request.answers()) {
             QuestionEntity question = questionMap.get(answerReq.questionId());
             if (question == null) {
-                throw new NotFoundException("QUESTION_NOT_FOUND", "문제를 찾을 수 없습니다. id=" + answerReq.questionId());
+                throw new SqldpassException(ErrorCode.QUESTION_NOT_FOUND, "문제를 찾을 수 없습니다. id=" + answerReq.questionId());
             }
             if (answerReq.selectedOption() == question.getCorrectOption()) {
                 correctCount++;
@@ -93,6 +94,6 @@ public class SolveService {
     public Solve getSolve(Long id) {
         return solveRepository.findById(id)
                 .map(SolveMapper::toDomain)
-                .orElseThrow(() -> new NotFoundException("SOLVE_NOT_FOUND", "풀이 기록을 찾을 수 없습니다."));
+                .orElseThrow(() -> new SqldpassException(ErrorCode.SOLVE_NOT_FOUND));
     }
 }

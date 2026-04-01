@@ -1,18 +1,66 @@
 package com.sqldpass.controller.common;
 
+import java.util.List;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingRequestHeaderException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import com.sqldpass.service.common.NotFoundException;
+import com.sqldpass.service.common.ErrorCode;
+import com.sqldpass.service.common.SqldpassException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(NotFoundException.class)
-    @ResponseStatus(HttpStatus.NOT_FOUND)
-    public ErrorResponse handleNotFound(NotFoundException e) {
-        return new ErrorResponse(404, e.getMessage(), e.getCode());
+    private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+
+    @ExceptionHandler(SqldpassException.class)
+    public ResponseEntity<ErrorResponse> handleSqldpassException(SqldpassException e) {
+        ErrorCode errorCode = e.getErrorCode();
+        ErrorResponse response = new ErrorResponse(
+                errorCode.getHttpStatus().value(), e.getMessage(), errorCode.getCode());
+        return ResponseEntity.status(errorCode.getHttpStatus()).body(response);
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ErrorResponse> handleValidation(MethodArgumentNotValidException e) {
+        List<ErrorResponse.FieldError> fieldErrors = e.getBindingResult().getFieldErrors().stream()
+                .map(fe -> new ErrorResponse.FieldError(fe.getField(), fe.getDefaultMessage()))
+                .toList();
+        ErrorCode errorCode = ErrorCode.INVALID_INPUT;
+        ErrorResponse response = new ErrorResponse(
+                errorCode.getHttpStatus().value(), errorCode.getMessage(), errorCode.getCode(), fieldErrors);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    }
+
+    @ExceptionHandler(MissingRequestHeaderException.class)
+    public ResponseEntity<ErrorResponse> handleMissingHeader(MissingRequestHeaderException e) {
+        ErrorCode errorCode = ErrorCode.MISSING_HEADER;
+        ErrorResponse response = new ErrorResponse(
+                errorCode.getHttpStatus().value(), e.getMessage(), errorCode.getCode());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ErrorResponse> handleUnreadableMessage(HttpMessageNotReadableException e) {
+        ErrorCode errorCode = ErrorCode.INVALID_REQUEST_BODY;
+        ErrorResponse response = new ErrorResponse(
+                errorCode.getHttpStatus().value(), errorCode.getMessage(), errorCode.getCode());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ErrorResponse> handleException(Exception e) {
+        log.error("Unhandled exception", e);
+        ErrorCode errorCode = ErrorCode.INTERNAL_SERVER_ERROR;
+        ErrorResponse response = new ErrorResponse(
+                errorCode.getHttpStatus().value(), errorCode.getMessage(), errorCode.getCode());
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
     }
 }

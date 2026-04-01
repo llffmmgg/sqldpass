@@ -10,7 +10,8 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import com.sqldpass.domain.question.Question;
-import com.sqldpass.service.common.NotFoundException;
+import com.sqldpass.service.common.ErrorCode;
+import com.sqldpass.service.common.SqldpassException;
 import com.sqldpass.service.question.QuestionService;
 
 import static org.mockito.BDDMockito.given;
@@ -57,7 +58,7 @@ class QuestionControllerTest {
     @DisplayName("GET /api/questions/{id} 404 - 존재하지 않는 문제")
     void getQuestion_notFound() throws Exception {
         given(questionService.getQuestion(999L))
-                .willThrow(new NotFoundException("QUESTION_NOT_FOUND", "문제를 찾을 수 없습니다."));
+                .willThrow(new SqldpassException(ErrorCode.QUESTION_NOT_FOUND));
 
         mockMvc.perform(get("/api/questions/999"))
                 .andExpect(status().isNotFound())

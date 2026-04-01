@@ -15,7 +15,7 @@ import com.sqldpass.persistent.question.QuestionEntity;
 import com.sqldpass.persistent.question.QuestionRepository;
 import com.sqldpass.persistent.subject.SubjectEntity;
 import com.sqldpass.persistent.subject.SubjectRepository;
-import com.sqldpass.service.common.NotFoundException;
+import com.sqldpass.service.common.SqldpassException;
 
 import jakarta.persistence.EntityManager;
 
@@ -80,9 +80,9 @@ class QuestionServiceTest {
     }
 
     @Test
-    @DisplayName("존재하지 않는 문제를 조회하면 NotFoundException이 발생한다")
+    @DisplayName("존재하지 않는 문제를 조회하면 SqldpassException이 발생한다")
     void getQuestion_notFound() {
         assertThatThrownBy(() -> questionService.getQuestion(999L))
-                .isInstanceOf(NotFoundException.class);
+                .isInstanceOf(SqldpassException.class);
     }
 }

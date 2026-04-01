@@ -14,6 +14,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.sqldpass.service.solve.SolveService;
 
+import jakarta.validation.Valid;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
@@ -33,7 +35,7 @@ public class SolveController {
     @Operation(summary = "답안 제출 및 채점")
     public SolveResponse submit(
             @RequestHeader("X-Member-Id") Long memberId,
-            @RequestBody SolveRequest request) {
+            @Valid @RequestBody SolveRequest request) {
         return SolveResponse.from(solveService.solve(memberId, request));
     }
 
