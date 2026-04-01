@@ -34,6 +34,13 @@ Windows CMD/PowerShell에서는 `gradlew.bat` 사용.
 - 설정 파일: `src/main/resources/application.yaml`
 - MySQL 데이터소스 설정이 application.yaml에 아직 없으므로, DB 연결 시 설정 추가 필요
 
+## 테스트
+
+- 구현 코드와 테스트 코드 항상 같이 작성
+- 완료 조건: `./gradlew test` 통과 후 보고
+- 테스트 실패 시 스스로 수정, 통과까지 완료
+- 상세 가이드: [`docs/TEST_GUIDE.md`](../docs/TEST_GUIDE.md) 참조
+
 ## Layer Rules
 
 ### 데이터 흐름
