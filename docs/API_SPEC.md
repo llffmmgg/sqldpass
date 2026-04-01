@@ -56,6 +56,8 @@ public record SubjectResponse(
 
 ## 2. 문제 (Question)
 
+> 선택지는 `content` 본문에 포함. 정답 번호(`correctOption`)와 해설(`explanation`)은 question 테이블 컬럼.
+
 ### `GET /api/questions?subjectId={id}&size={n}`
 
 과목별 랜덤 문제 목록을 조회한다. 풀이 화면에서 사용.
@@ -72,18 +74,12 @@ public record SubjectResponse(
   {
     "id": 42,
     "subjectId": 5,
-    "content": "다음 SQL의 실행 결과로 올바른 것은?",
-    "options": [
-      { "optionNumber": 1, "content": "CNT: 3, HIGH_SAL: 2" },
-      { "optionNumber": 2, "content": "CNT: 4, HIGH_SAL: 2" },
-      { "optionNumber": 3, "content": "CNT: 3, HIGH_SAL: 3" },
-      { "optionNumber": 4, "content": "CNT: 4, HIGH_SAL: 3" }
-    ]
+    "content": "다음 SQL의 실행 결과로 올바른 것은?\n\n1. CNT: 3, HIGH_SAL: 2\n2. CNT: 4, HIGH_SAL: 2\n3. CNT: 3, HIGH_SAL: 3\n4. CNT: 4, HIGH_SAL: 3"
   }
 ]
 ```
 
-> 정답(`isCorrect`)과 해설은 포함하지 않는다. 채점 시 서버에서 판별.
+> 정답(`correctOption`)과 해설은 포함하지 않는다. 채점 시 서버에서 판별.
 
 **DTO:**
 
@@ -91,19 +87,13 @@ public record SubjectResponse(
 public record QuestionResponse(
     Long id,
     Long subjectId,
-    String content,
-    List<QuestionOptionResponse> options
-) {}
-
-public record QuestionOptionResponse(
-    int optionNumber,
     String content
 ) {}
 ```
 
 ### `GET /api/questions/{id}`
 
-문제 상세 조회. 해설을 포함한다 (풀이 완료 후 리뷰용).
+문제 상세 조회. 정답과 해설을 포함한다 (풀이 완료 후 리뷰용).
 
 **Response `200 OK`**
 
@@ -111,13 +101,8 @@ public record QuestionOptionResponse(
 {
   "id": 42,
   "subjectId": 5,
-  "content": "다음 SQL의 실행 결과로 올바른 것은?",
-  "options": [
-    { "optionNumber": 1, "content": "CNT: 3, HIGH_SAL: 2", "correct": true },
-    { "optionNumber": 2, "content": "CNT: 4, HIGH_SAL: 2", "correct": false },
-    { "optionNumber": 3, "content": "CNT: 3, HIGH_SAL: 3", "correct": false },
-    { "optionNumber": 4, "content": "CNT: 4, HIGH_SAL: 3", "correct": false }
-  ],
+  "content": "다음 SQL의 실행 결과로 올바른 것은?\n\n1. CNT: 3, HIGH_SAL: 2\n2. CNT: 4, HIGH_SAL: 2\n3. CNT: 3, HIGH_SAL: 3\n4. CNT: 4, HIGH_SAL: 3",
+  "correctOption": 1,
   "explanation": "WHERE dept_id = 10 조건으로 3건이 조회되며..."
 }
 ```
@@ -129,14 +114,8 @@ public record QuestionDetailResponse(
     Long id,
     Long subjectId,
     String content,
-    List<QuestionOptionDetailResponse> options,
+    int correctOption,
     String explanation
-) {}
-
-public record QuestionOptionDetailResponse(
-    int optionNumber,
-    String content,
-    boolean correct
 ) {}
 ```
 
@@ -456,9 +435,23 @@ public record MemberUpdateRequest(String nickname) {}
 
 ---
 
-## 신규 테이블 (Flyway 마이그레이션 필요)
+## 테이블 구조
 
-### `solve`
+### `question` (V3에서 단순화됨)
+
+| 컬럼 | 타입 | 설명 |
+|------|------|------|
+| `id` | BIGINT PK | auto_increment |
+| `subject_id` | BIGINT FK | subject 참조 |
+| `content` | TEXT | 문제 본문 (선택지 텍스트 포함) |
+| `correct_option` | TINYINT | 정답 번호 (1-4) |
+| `explanation` | TEXT | 해설 (nullable) |
+| `created_at` | DATETIME(6) | |
+| `updated_at` | DATETIME(6) | |
+
+> `question_option`, `explanation` 테이블은 삭제됨. 정답률은 `solve_answer`에서 집계.
+
+### `solve` (신규, Flyway V4)
 
 | 컬럼 | 타입 | 설명 |
 |------|------|------|

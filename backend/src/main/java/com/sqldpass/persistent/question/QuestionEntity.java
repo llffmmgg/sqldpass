@@ -1,12 +1,8 @@
 package com.sqldpass.persistent.question;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import com.sqldpass.persistent.common.BaseTimeEntity;
 import com.sqldpass.persistent.subject.SubjectEntity;
 
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -16,8 +12,6 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 
 import lombok.AccessLevel;
@@ -43,22 +37,16 @@ public class QuestionEntity extends BaseTimeEntity {
     @Column(nullable = false, columnDefinition = "TEXT")
     private String content;
 
-    @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<QuestionOptionEntity> options = new ArrayList<>();
+    @Column(name = "correct_option", nullable = false)
+    private int correctOption;
 
-    @OneToOne(mappedBy = "question", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    private ExplanationEntity explanation;
+    @Column(columnDefinition = "TEXT")
+    private String explanation;
 
-    public QuestionEntity(SubjectEntity subject, String content) {
+    public QuestionEntity(SubjectEntity subject, String content, int correctOption, String explanation) {
         this.subject = subject;
         this.content = content;
-    }
-
-    public void addOption(QuestionOptionEntity option) {
-        this.options.add(option);
-    }
-
-    public void setExplanation(ExplanationEntity explanation) {
+        this.correctOption = correctOption;
         this.explanation = explanation;
     }
 }
