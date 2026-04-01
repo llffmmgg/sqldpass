@@ -53,7 +53,7 @@ ORDER BY 3 DESC;`}
           <ScrollReveal delay={3}>
             <div className="mt-10 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
               <a
-                href="#"
+                href="/solve"
                 className="btn-glow inline-flex items-center rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-zinc-900 transition-all duration-300 hover:bg-primary-hover hover:scale-[1.03]"
               >
                 무료로 시작하기
@@ -315,7 +315,7 @@ WHERE  dept_id = 10;`}</code>
             회원가입 없이 바로 문제를 풀어볼 수 있습니다.
           </p>
           <a
-            href="#"
+            href="/solve"
             className="btn-glow mt-8 inline-flex items-center rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-zinc-900 transition-all duration-300 hover:bg-primary-hover hover:scale-[1.03]"
           >
             문제 풀러 가기
