@@ -1,65 +1,332 @@
-import Image from "next/image";
+import ScrollReveal from "@/components/ScrollReveal";
 
 export default function Home() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+    <main className="min-h-screen bg-background text-foreground">
+      {/* Hero */}
+      <section className="relative overflow-hidden">
+        {/* Grid pattern background */}
+        <div className="absolute inset-0 grid-pattern" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,var(--background)_70%)]" />
+
+        {/* Decorative floating SQL text */}
+        <div
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] text-center font-mono text-[14px] leading-loose text-foreground/[0.025] rotate-[-3deg] select-none pointer-events-none animate-float whitespace-pre"
+          aria-hidden="true"
+        >
+          {`SELECT e.name, d.dept_name, SUM(s.amount)
+FROM employee e
+INNER JOIN department d ON e.dept_id = d.id
+LEFT OUTER JOIN salary s ON e.id = s.emp_id
+WHERE d.location = 'SEOUL'
+GROUP BY e.name, d.dept_name
+HAVING SUM(s.amount) > 50000
+ORDER BY 3 DESC;`}
+        </div>
+
+        <div className="relative mx-auto max-w-5xl px-4 py-32 text-center sm:px-6 sm:py-40 lg:px-8">
+          <ScrollReveal>
+            <span className="inline-block rounded-full border border-violet-500/30 bg-violet-500/10 px-4 py-1.5 text-sm font-medium text-violet-400">
+              2025년 개정 반영
+            </span>
+          </ScrollReveal>
+
+          <ScrollReveal delay={1}>
+            <h1 className="mt-6 text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl lg:text-6xl">
+              <span className="bg-gradient-to-r from-amber-400 via-amber-300 to-amber-500 bg-clip-text text-transparent">
+                SQLD 합격
+              </span>
+              ,
+              <br />
+              문제 풀이로 완성하세요
+            </h1>
+          </ScrollReveal>
+
+          <ScrollReveal delay={2}>
+            <p className="mx-auto mt-6 max-w-2xl text-base text-muted sm:text-lg">
+              실제 시험과 동일한 유형의 문제를 풀고, 오답을 분석하고,
+              <br className="hidden sm:block" />
+              취약 과목을 집중 학습하세요.
+            </p>
+          </ScrollReveal>
+
+          <ScrollReveal delay={3}>
+            <div className="mt-10 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
+              <a
+                href="#"
+                className="btn-glow inline-flex items-center rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-zinc-900 transition-all duration-300 hover:bg-primary-hover hover:scale-[1.03]"
+              >
+                무료로 시작하기
+              </a>
+              <a
+                href="#preview"
+                className="inline-flex items-center rounded-lg border border-border px-6 py-3 text-sm font-semibold text-foreground transition-all duration-300 hover:border-violet-500/50 hover:bg-violet-500/5"
+              >
+                문제 미리보기
+              </a>
+            </div>
+          </ScrollReveal>
+        </div>
+      </section>
+
+      {/* Features */}
+      <section className="mx-auto max-w-5xl px-4 py-24 sm:px-6 lg:px-8">
+        <ScrollReveal>
+          <h2 className="text-center text-2xl font-bold sm:text-3xl">
+            주요 기능
+          </h2>
+          <p className="mt-3 text-center text-muted">
+            합격에 필요한 모든 것을 한 곳에서
           </p>
+        </ScrollReveal>
+
+        <div className="mt-12 grid grid-cols-1 gap-6 lg:grid-cols-3">
+          {/* Feature 1 */}
+          <ScrollReveal delay={1}>
+            <div className="group relative rounded-xl border border-border bg-surface p-6 transition-all duration-300 hover:-translate-y-1.5 hover:border-amber-500/30 hover:shadow-[0_0_24px_var(--glow)]">
+              <span className="absolute top-4 right-4 text-[64px] font-bold leading-none text-foreground/[0.03] select-none pointer-events-none">
+                01
+              </span>
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-500/10">
+                <svg
+                  className="h-5 w-5 text-amber-400"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth={1.5}
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 0 0 2.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 0 0-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 0 0 .75-.75 2.25 2.25 0 0 0-.1-.664m-5.8 0A2.251 2.251 0 0 1 13.5 2.25H15a2.25 2.25 0 0 1 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25ZM6.75 12h.008v.008H6.75V12Zm0 3h.008v.008H6.75V15Zm0 3h.008v.008H6.75V18Z"
+                  />
+                </svg>
+              </div>
+              <h3 className="mt-4 text-lg font-semibold">실전 문제 풀이</h3>
+              <p className="mt-2 text-sm leading-relaxed text-muted">
+                최신 출제 경향을 반영한 과목별 문제를 풀어보세요. 1과목 데이터
+                모델링, 2과목 SQL 활용 전 범위를 다룹니다.
+              </p>
+            </div>
+          </ScrollReveal>
+
+          {/* Feature 2 */}
+          <ScrollReveal delay={2}>
+            <div className="group relative rounded-xl border border-border bg-surface p-6 transition-all duration-300 hover:-translate-y-1.5 hover:border-violet-500/30 hover:shadow-[0_0_24px_var(--accent-glow)] lg:-translate-y-2">
+              <span className="absolute top-4 right-4 text-[64px] font-bold leading-none text-foreground/[0.03] select-none pointer-events-none">
+                02
+              </span>
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-violet-500/10">
+                <svg
+                  className="h-5 w-5 text-violet-400"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth={1.5}
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z"
+                  />
+                </svg>
+              </div>
+              <h3 className="mt-4 text-lg font-semibold">오답 분석</h3>
+              <p className="mt-2 text-sm leading-relaxed text-muted">
+                틀린 문제를 자동으로 모아 취약 영역을 분석합니다. 해설과 함께
+                복습하세요.
+              </p>
+            </div>
+          </ScrollReveal>
+
+          {/* Feature 3 */}
+          <ScrollReveal delay={3}>
+            <div className="group relative rounded-xl border border-border bg-surface p-6 transition-all duration-300 hover:-translate-y-1.5 hover:border-amber-500/30 hover:shadow-[0_0_24px_var(--glow)]">
+              <span className="absolute top-4 right-4 text-[64px] font-bold leading-none text-foreground/[0.03] select-none pointer-events-none">
+                03
+              </span>
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-amber-500/10 to-violet-500/10">
+                <svg
+                  className="h-5 w-5 text-amber-400"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth={1.5}
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+                  />
+                </svg>
+              </div>
+              <h3 className="mt-4 text-lg font-semibold">풀이 기록 관리</h3>
+              <p className="mt-2 text-sm leading-relaxed text-muted">
+                회차별 점수 추이와 풀이 시간을 기록합니다. 목표 점수까지 얼마나
+                남았는지 한눈에 확인하세요.
+              </p>
+            </div>
+          </ScrollReveal>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+      </section>
+
+      {/* Preview */}
+      <section
+        id="preview"
+        className="relative border-t border-border bg-surface/50 py-24"
+      >
+        {/* Spotlight background */}
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,var(--accent-glow),transparent_60%)] pointer-events-none" />
+
+        <div className="relative mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
+          <ScrollReveal>
+            <h2 className="text-center text-2xl font-bold sm:text-3xl">
+              문제 미리보기
+            </h2>
+            <p className="mt-3 text-center text-muted">
+              실제 시험과 유사한 문제를 미리 풀어보세요
+            </p>
+          </ScrollReveal>
+
+          <ScrollReveal delay={1}>
+            <div className="mx-auto mt-12 max-w-3xl rounded-xl border border-border bg-surface p-6 sm:p-8">
+              <div className="flex items-center gap-2 text-sm text-muted">
+                <span className="rounded bg-violet-500/10 px-2 py-0.5 text-xs font-medium text-violet-400">
+                  2과목
+                </span>
+                <span>SQL 활용</span>
+              </div>
+
+              <p className="mt-4 font-medium leading-relaxed">
+                다음 SQL의 실행 결과로 올바른 것은?
+              </p>
+
+              {/* Code block with window chrome */}
+              <div className="mt-4 rounded-lg bg-zinc-900 overflow-hidden border border-zinc-800">
+                {/* Window chrome bar */}
+                <div className="flex items-center gap-2 px-4 py-2.5 border-b border-zinc-800">
+                  <span className="h-2.5 w-2.5 rounded-full bg-red-500/60" />
+                  <span className="h-2.5 w-2.5 rounded-full bg-yellow-500/60" />
+                  <span className="h-2.5 w-2.5 rounded-full bg-green-500/60" />
+                  <span className="ml-2 text-[11px] text-zinc-500 font-mono">SQL Query</span>
+                </div>
+                <pre className="overflow-x-auto p-4 text-sm leading-relaxed text-zinc-300 font-mono">
+                  <code>{`SELECT COUNT(*) AS CNT,
+       SUM(CASE WHEN salary > 3000
+                THEN 1 ELSE 0 END) AS HIGH_SAL
+FROM   employee
+WHERE  dept_id = 10;`}</code>
+                  <span className="cursor-blink text-amber-400">|</span>
+                </pre>
+              </div>
+
+              <div className="mt-4 overflow-x-auto">
+                <table className="w-full text-left text-sm">
+                  <caption className="mb-2 text-left text-xs text-muted border-l-2 border-amber-500/50 pl-2">
+                    [EMPLOYEE 테이블]
+                  </caption>
+                  <thead>
+                    <tr className="border-b border-zinc-700 text-muted">
+                      <th className="px-3 py-2 font-medium">EMP_ID</th>
+                      <th className="px-3 py-2 font-medium">DEPT_ID</th>
+                      <th className="px-3 py-2 font-medium">SALARY</th>
+                    </tr>
+                  </thead>
+                  <tbody className="font-mono text-zinc-300">
+                    <tr className="border-b border-zinc-800">
+                      <td className="px-3 py-2">101</td>
+                      <td className="px-3 py-2">10</td>
+                      <td className="px-3 py-2">2500</td>
+                    </tr>
+                    <tr className="border-b border-zinc-800 bg-zinc-800/50">
+                      <td className="px-3 py-2">102</td>
+                      <td className="px-3 py-2">10</td>
+                      <td className="px-3 py-2">3500</td>
+                    </tr>
+                    <tr className="border-b border-zinc-800">
+                      <td className="px-3 py-2">103</td>
+                      <td className="px-3 py-2">10</td>
+                      <td className="px-3 py-2">4000</td>
+                    </tr>
+                    <tr className="bg-zinc-800/50">
+                      <td className="px-3 py-2">104</td>
+                      <td className="px-3 py-2">20</td>
+                      <td className="px-3 py-2">3000</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <ul className="mt-6 space-y-3 text-sm">
+                <li className="answer-option flex items-center gap-3 rounded-lg border border-border px-4 py-3 transition-all duration-300 hover:border-amber-500/40 hover:bg-amber-500/5 cursor-pointer">
+                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-border text-xs text-muted transition-colors group-hover:border-amber-500/40">
+                    1
+                  </span>
+                  <span>CNT: 3, HIGH_SAL: 2</span>
+                </li>
+                <li className="answer-option flex items-center gap-3 rounded-lg border border-border px-4 py-3 transition-all duration-300 hover:border-amber-500/40 hover:bg-amber-500/5 cursor-pointer">
+                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-border text-xs text-muted">
+                    2
+                  </span>
+                  <span>CNT: 4, HIGH_SAL: 2</span>
+                </li>
+                <li className="answer-option flex items-center gap-3 rounded-lg border border-border px-4 py-3 transition-all duration-300 hover:border-amber-500/40 hover:bg-amber-500/5 cursor-pointer">
+                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-border text-xs text-muted">
+                    3
+                  </span>
+                  <span>CNT: 3, HIGH_SAL: 3</span>
+                </li>
+                <li className="answer-option flex items-center gap-3 rounded-lg border border-border px-4 py-3 transition-all duration-300 hover:border-amber-500/40 hover:bg-amber-500/5 cursor-pointer">
+                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-border text-xs text-muted">
+                    4
+                  </span>
+                  <span>CNT: 4, HIGH_SAL: 3</span>
+                </li>
+              </ul>
+
+              <details className="mt-6 rounded-lg border border-border px-4 py-3 text-sm">
+                <summary className="cursor-pointer font-medium text-amber-400 flex items-center gap-2">
+                  <svg className="chevron-icon h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                  </svg>
+                  정답 보기
+                </summary>
+                <p className="mt-3 leading-relaxed text-muted">
+                  <strong className="text-foreground">정답: 1번</strong> — WHERE
+                  dept_id = 10 조건으로 3건이 조회되며, salary &gt; 3000인 행은
+                  102(3500)와 103(4000)으로 2건입니다.
+                </p>
+              </details>
+            </div>
+          </ScrollReveal>
         </div>
-      </main>
-    </div>
+      </section>
+
+      {/* CTA */}
+      <section className="relative mx-auto max-w-5xl px-4 py-24 text-center sm:px-6 lg:px-8">
+        {/* Shimmer divider */}
+        <div className="shimmer-line mx-auto mb-16 max-w-md" />
+
+        <ScrollReveal>
+          <h2 className="text-2xl font-bold sm:text-3xl">
+            지금 바로 시작하세요
+          </h2>
+          <p className="mt-3 text-muted">
+            회원가입 없이 바로 문제를 풀어볼 수 있습니다.
+          </p>
+          <a
+            href="#"
+            className="btn-glow mt-8 inline-flex items-center rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-zinc-900 transition-all duration-300 hover:bg-primary-hover hover:scale-[1.03]"
+          >
+            문제 풀러 가기
+          </a>
+        </ScrollReveal>
+      </section>
+
+      {/* Footer */}
+      <footer className="footer-gradient-border py-8 text-center text-sm text-muted">
+        <p>&copy; 2025 SQLD Pass. All rights reserved.</p>
+      </footer>
+    </main>
   );
 }

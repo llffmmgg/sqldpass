@@ -1,26 +1,214 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #09090b;
+  --foreground: #fafaf9;
+  --primary: #f59e0b;
+  --primary-hover: #fbbf24;
+  --surface: #18181b;
+  --border: #27272a;
+  --muted: #a8a29e;
+  --accent: #8b5cf6;
+  --accent-hover: #a78bfa;
+  --glow: #f59e0b33;
+  --accent-glow: #8b5cf633;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-surface: var(--surface);
+  --color-border: var(--border);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-glow: var(--glow);
+  --color-accent-glow: var(--accent-glow);
+  --font-sans: var(--font-space-grotesk), Pretendard, system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains-mono), ui-monospace, monospace;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
+}
+
+/* ── Keyframes ── */
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes glow-pulse {
+  0%, 100% {
+    box-shadow: 0 0 16px var(--glow), 0 0 48px transparent;
+  }
+  50% {
+    box-shadow: 0 0 24px var(--glow), 0 0 64px var(--glow);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(-4px);
+  }
+  50% {
+    transform: translateY(4px);
+  }
+}
+
+@keyframes typewriter-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+/* ── Scroll Reveal ── */
+
+.reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+}
+
+.reveal.in-view {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.reveal-delay-1 { transition-delay: 150ms; }
+.reveal-delay-2 { transition-delay: 300ms; }
+.reveal-delay-3 { transition-delay: 450ms; }
+
+/* ── Glow button ── */
+
+.btn-glow {
+  animation: glow-pulse 3s ease-in-out infinite;
+}
+
+/* ── Shimmer line ── */
+
+.shimmer-line {
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--accent) 25%,
+    var(--primary) 50%,
+    var(--accent) 75%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 2s linear infinite;
+}
+
+/* ── Grid background pattern ── */
+
+.grid-pattern {
+  background-image:
+    linear-gradient(to right, rgba(245, 158, 11, 0.03) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(245, 158, 11, 0.03) 1px, transparent 1px);
+  background-size: 60px 60px;
+}
+
+/* ── Code window chrome ── */
+
+.code-chrome::before {
+  content: '';
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 14px;
+  border-bottom: 1px solid #27272a;
+}
+
+.code-chrome {
+  position: relative;
+}
+
+/* ── Cursor blink ── */
+
+.cursor-blink {
+  animation: typewriter-blink 1s step-end infinite;
+}
+
+/* ── Details chevron ── */
+
+details summary {
+  list-style: none;
+}
+
+details summary::-webkit-details-marker {
+  display: none;
+}
+
+details summary .chevron-icon {
+  transition: transform 0.3s ease;
+}
+
+details[open] summary .chevron-icon {
+  transform: rotate(90deg);
+}
+
+/* ── Answer option hover effect ── */
+
+.answer-option {
+  position: relative;
+  overflow: hidden;
+}
+
+.answer-option::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 0;
+  background: var(--primary);
+  transition: width 0.3s ease;
+  border-radius: 8px 0 0 8px;
+}
+
+.answer-option:hover::before {
+  width: 3px;
+}
+
+/* ── Gradient footer border ── */
+
+.footer-gradient-border {
+  border-top: none;
+  background-image: linear-gradient(to right, var(--primary), var(--accent));
+  background-size: 100% 1px;
+  background-repeat: no-repeat;
+  background-position: top;
+  padding-top: 1px;
+}
+
+/* ── Float animation ── */
+
+.animate-float {
+  animation: float 4s ease-in-out infinite;
 }
