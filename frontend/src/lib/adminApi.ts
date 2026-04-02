@@ -141,6 +141,14 @@ export function getMembers(page = 0, size = 20) {
   return adminFetch<AdminMemberPage>(`/members?page=${page}&size=${size}`);
 }
 
+export interface GenerationStatus {
+  running: boolean;
+}
+
+export function getGenerationStatus() {
+  return adminFetch<GenerationStatus>("/generate/status");
+}
+
 export function generateQuestions() {
   return adminFetch<GenerationResult>("/generate", { method: "POST" });
 }

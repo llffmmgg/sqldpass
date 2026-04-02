@@ -21,6 +21,7 @@ public class QuestionGenerationService {
 
     private final QuestionRepository questionRepository;
     private final SubjectRepository subjectRepository;
+    private final GenerationLockService lockService;
     private final AiProvider generator;
     private final AiProvider verifier;
     private final int questionsPerSubject;
@@ -30,6 +31,7 @@ public class QuestionGenerationService {
     public QuestionGenerationService(
             QuestionRepository questionRepository,
             SubjectRepository subjectRepository,
+            GenerationLockService lockService,
             @Qualifier("generator") AiProvider generator,
             @Qualifier("verifier") AiProvider verifier,
             @Value("${sqldpass.ai.generation.questions-per-subject:3}") int questionsPerSubject,
@@ -37,6 +39,7 @@ public class QuestionGenerationService {
             @Value("${sqldpass.ai.generation.max-calls-per-run:20}") int maxCallsPerRun) {
         this.questionRepository = questionRepository;
         this.subjectRepository = subjectRepository;
+        this.lockService = lockService;
         this.generator = generator;
         this.verifier = verifier;
         this.questionsPerSubject = questionsPerSubject;
@@ -49,6 +52,15 @@ public class QuestionGenerationService {
     }
 
     public GenerationResult generateAll(int count, Consumer<GenerationEvent> eventListener) {
+        lockService.acquire();
+        try {
+            return doGenerate(count, eventListener);
+        } finally {
+            lockService.release();
+        }
+    }
+
+    private GenerationResult doGenerate(int count, Consumer<GenerationEvent> eventListener) {
         List<SubjectEntity> leafSubjects = subjectRepository.findByChildrenIsEmpty();
         int totalGenerated = 0;
         int totalVerified = 0;

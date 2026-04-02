@@ -18,6 +18,9 @@ public enum ErrorCode {
     // 401
     ADMIN_LOGIN_FAILED(HttpStatus.UNAUTHORIZED, "ADMIN_LOGIN_FAILED", "아이디 또는 비밀번호가 올바르지 않습니다."),
 
+    // 409
+    GENERATION_ALREADY_RUNNING(HttpStatus.CONFLICT, "GENERATION_ALREADY_RUNNING", "이미 문제 생성이 진행 중입니다."),
+
     // 500
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "INTERNAL_SERVER_ERROR", "서버 오류가 발생했습니다."),
     AI_GENERATION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "AI_GENERATION_FAILED", "AI 문제 생성에 실패했습니다."),

@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useRef } from "react";
-import { type GenerationResult } from "@/lib/adminApi";
+import { useState, useRef, useEffect } from "react";
+import { getGenerationStatus, type GenerationResult } from "@/lib/adminApi";
 
 interface ProgressEvent {
   type: "progress" | "error";
@@ -11,9 +11,18 @@ interface ProgressEvent {
 export default function AdminGeneratePage() {
   const [count, setCount] = useState(3);
   const [running, setRunning] = useState(false);
+  const [alreadyRunning, setAlreadyRunning] = useState(false);
   const [logs, setLogs] = useState<{ type: string; message: string }[]>([]);
   const [result, setResult] = useState<GenerationResult | null>(null);
   const logsEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    getGenerationStatus().then((status) => {
+      if (status.running) {
+        setAlreadyRunning(true);
+      }
+    });
+  }, []);
 
   function addLog(type: string, message: string) {
     setLogs((prev) => [...prev, { type, message }]);
@@ -87,6 +96,7 @@ export default function AdminGeneratePage() {
       addLog("error", err instanceof Error ? err.message : "연결 실패");
     } finally {
       setRunning(false);
+      setAlreadyRunning(false);
     }
   }
 
@@ -114,12 +124,18 @@ export default function AdminGeneratePage() {
         </span>
       </div>
 
+      {alreadyRunning && (
+        <div className="mt-4 rounded-lg border border-amber-500/30 bg-amber-500/5 px-4 py-3 text-sm text-amber-400">
+          현재 다른 요청에 의해 문제 생성이 진행 중입니다.
+        </div>
+      )}
+
       <button
         onClick={handleGenerate}
-        disabled={running}
+        disabled={running || alreadyRunning}
         className="mt-4 rounded-lg bg-primary px-6 py-2.5 text-sm font-semibold text-zinc-900 transition hover:bg-primary-hover disabled:opacity-50"
       >
-        {running ? "생성 진행 중..." : "문제 생성 시작"}
+        {running ? "생성 진행 중..." : alreadyRunning ? "생성 진행 중 (다른 요청)" : "문제 생성 시작"}
       </button>
 
       {/* Progress logs */}
