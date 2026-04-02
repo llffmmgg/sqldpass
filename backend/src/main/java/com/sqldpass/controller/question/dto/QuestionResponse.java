@@ -1,4 +1,4 @@
-package com.sqldpass.controller.question;
+package com.sqldpass.controller.question.dto;
 
 import com.sqldpass.domain.question.Question;
 

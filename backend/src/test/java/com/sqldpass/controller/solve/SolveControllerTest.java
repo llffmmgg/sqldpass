@@ -11,6 +11,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import com.sqldpass.controller.solve.dto.SolveRequest;
 import com.sqldpass.domain.solve.Solve;
 import com.sqldpass.domain.solve.SolveAnswer;
 import com.sqldpass.service.admin.JwtProvider;

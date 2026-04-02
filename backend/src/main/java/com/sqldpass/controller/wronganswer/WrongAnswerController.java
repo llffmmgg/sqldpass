@@ -7,6 +7,8 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.sqldpass.controller.wronganswer.dto.WrongAnswerResponse;
+import com.sqldpass.controller.wronganswer.dto.WrongAnswerStatsResponse;
 import com.sqldpass.service.wronganswer.WrongAnswerService;
 
 import io.swagger.v3.oas.annotations.Operation;

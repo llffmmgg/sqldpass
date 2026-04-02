@@ -49,6 +49,7 @@ public class QuestionEntity extends BaseTimeEntity {
     @Column(length = 50)
     private String topic;
 
+    @Column(columnDefinition = "TINYINT")
     private Integer difficulty;
 
     public QuestionEntity(SubjectEntity subject, String content, int correctOption, String explanation) {

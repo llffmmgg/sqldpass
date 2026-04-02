@@ -1,4 +1,4 @@
-package com.sqldpass.controller.solve;
+package com.sqldpass.controller.solve.dto;
 
 import jakarta.validation.constraints.NotNull;
 

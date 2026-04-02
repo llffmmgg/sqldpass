@@ -11,6 +11,9 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.sqldpass.controller.solve.dto.SolveRequest;
+import com.sqldpass.controller.solve.dto.SolveResponse;
+import com.sqldpass.controller.solve.dto.SolveSummaryResponse;
 import com.sqldpass.service.solve.SolveService;
 
 import jakarta.validation.Valid;

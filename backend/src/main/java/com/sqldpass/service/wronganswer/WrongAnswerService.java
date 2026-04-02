@@ -5,8 +5,8 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.sqldpass.controller.wronganswer.WrongAnswerResponse;
-import com.sqldpass.controller.wronganswer.WrongAnswerStatsResponse;
+import com.sqldpass.controller.wronganswer.dto.WrongAnswerResponse;
+import com.sqldpass.controller.wronganswer.dto.WrongAnswerStatsResponse;
 import com.sqldpass.persistent.solve.SolveAnswerRepository;
 
 @Service

@@ -7,8 +7,8 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.sqldpass.controller.solve.SolveAnswerRequest;
-import com.sqldpass.controller.solve.SolveRequest;
+import com.sqldpass.controller.solve.dto.SolveAnswerRequest;
+import com.sqldpass.controller.solve.dto.SolveRequest;
 import com.sqldpass.domain.solve.Solve;
 import com.sqldpass.persistent.member.MemberEntity;
 import com.sqldpass.persistent.member.MemberRepository;
