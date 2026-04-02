@@ -10,6 +10,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import com.sqldpass.domain.subject.Subject;
+import com.sqldpass.service.admin.JwtProvider;
 import com.sqldpass.service.subject.SubjectService;
 
 import static org.mockito.BDDMockito.given;
@@ -25,6 +26,9 @@ class SubjectControllerTest {
 
     @MockitoBean
     private SubjectService subjectService;
+
+    @MockitoBean
+    private JwtProvider jwtProvider;
 
     @Test
     @DisplayName("GET /api/subjects 200 OK - 트리 구조로 반환")

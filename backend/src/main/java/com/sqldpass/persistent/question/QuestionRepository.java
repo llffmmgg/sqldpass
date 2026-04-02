@@ -1,7 +1,10 @@
 package com.sqldpass.persistent.question;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -13,4 +16,10 @@ public interface QuestionRepository extends JpaRepository<QuestionEntity, Long> 
 
     @Query("SELECT q.summary FROM QuestionEntity q WHERE q.subject.id = :subjectId AND q.summary IS NOT NULL")
     List<String> findSummariesBySubjectId(@Param("subjectId") Long subjectId);
+
+    Page<QuestionEntity> findBySubjectIdOrderByCreatedAtDesc(Long subjectId, Pageable pageable);
+
+    Page<QuestionEntity> findAllByOrderByCreatedAtDesc(Pageable pageable);
+
+    long countByCreatedAtAfter(LocalDateTime dateTime);
 }

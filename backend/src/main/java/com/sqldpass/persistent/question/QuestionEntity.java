@@ -60,4 +60,11 @@ public class QuestionEntity extends BaseTimeEntity {
         this.explanation = explanation;
         this.summary = summary;
     }
+
+    public void update(String content, int correctOption, String explanation, String summary) {
+        this.content = content;
+        this.correctOption = correctOption;
+        this.explanation = explanation;
+        this.summary = summary;
+    }
 }

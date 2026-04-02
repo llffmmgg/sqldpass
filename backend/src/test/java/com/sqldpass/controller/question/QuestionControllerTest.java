@@ -10,6 +10,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import com.sqldpass.domain.question.Question;
+import com.sqldpass.service.admin.JwtProvider;
 import com.sqldpass.service.common.ErrorCode;
 import com.sqldpass.service.common.SqldpassException;
 import com.sqldpass.service.question.QuestionService;
@@ -27,6 +28,9 @@ class QuestionControllerTest {
 
     @MockitoBean
     private QuestionService questionService;
+
+    @MockitoBean
+    private JwtProvider jwtProvider;
 
     @Test
     @DisplayName("GET /api/questions 200 OK - 정답과 해설이 포함되지 않는다")

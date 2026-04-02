@@ -39,6 +39,12 @@ spring:
           model: gpt-4o
 
 sqldpass:
+  admin:
+    username: ${ADMIN_USERNAME:admin}
+    password: ${ADMIN_PASSWORD:admin1234}
+  jwt:
+    secret: ${JWT_SECRET:local-dev-secret-key-minimum-32-characters-long}
+    expiration: 3600000
   ai:
     generator:
       provider: claude

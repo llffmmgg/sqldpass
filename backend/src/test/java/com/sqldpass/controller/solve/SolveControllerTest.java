@@ -13,6 +13,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import com.sqldpass.domain.solve.Solve;
 import com.sqldpass.domain.solve.SolveAnswer;
+import com.sqldpass.service.admin.JwtProvider;
 import com.sqldpass.service.solve.SolveService;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -31,6 +32,9 @@ class SolveControllerTest {
 
     @MockitoBean
     private SolveService solveService;
+
+    @MockitoBean
+    private JwtProvider jwtProvider;
 
     @Test
     @DisplayName("POST /api/solves 201 Created - 채점 결과 반환")

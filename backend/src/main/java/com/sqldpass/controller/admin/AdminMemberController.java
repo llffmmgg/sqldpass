@@ -1,0 +1,35 @@
+package com.sqldpass.controller.admin;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.sqldpass.persistent.member.MemberRepository;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+
+@Tag(name = "관리자 - 회원", description = "회원 관리 API")
+@RestController
+@RequestMapping("/api/admin/members")
+public class AdminMemberController {
+
+    private final MemberRepository memberRepository;
+
+    public AdminMemberController(MemberRepository memberRepository) {
+        this.memberRepository = memberRepository;
+    }
+
+    @GetMapping
+    @Operation(summary = "회원 목록 조회")
+    public Page<AdminMemberResponse> getMembers(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        return memberRepository.findAll(PageRequest.of(page, size, Sort.by("createdAt").descending()))
+                .map(AdminMemberResponse::from);
+    }
+}

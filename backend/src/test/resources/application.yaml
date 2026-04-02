@@ -20,6 +20,12 @@ spring:
       enabled: false
 
 sqldpass:
+  admin:
+    username: admin
+    password: admin1234
+  jwt:
+    secret: test-secret-key-minimum-32-characters-long-for-hmac
+    expiration: 3600000
   ai:
     generator:
       provider: claude
