@@ -16,7 +16,9 @@ public enum ErrorCode {
     SOLVE_NOT_FOUND(HttpStatus.NOT_FOUND, "SOLVE_NOT_FOUND", "풀이 기록을 찾을 수 없습니다."),
 
     // 500
-    INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "INTERNAL_SERVER_ERROR", "서버 오류가 발생했습니다.");
+    INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "INTERNAL_SERVER_ERROR", "서버 오류가 발생했습니다."),
+    AI_GENERATION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "AI_GENERATION_FAILED", "AI 문제 생성에 실패했습니다."),
+    AI_VERIFICATION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "AI_VERIFICATION_FAILED", "AI 문제 검증에 실패했습니다.");
 
     private final HttpStatus httpStatus;
     private final String code;

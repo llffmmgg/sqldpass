@@ -16,3 +16,38 @@ spring:
   flyway:
     enabled: true
     baseline-on-migrate: true
+  ai:
+    chat:
+      client:
+        enabled: false
+    anthropic:
+      api-key: ${ANTHROPIC_API_KEY:not-set}
+      chat:
+        options:
+          model: claude-sonnet-4-20250514
+          max-tokens: 4096
+    google:
+      genai:
+        api-key: ${GOOGLE_GENAI_API_KEY:not-set}
+        chat:
+          options:
+            model: gemini-2.0-flash
+    openai:
+      api-key: ${OPENAI_API_KEY:not-set}
+      chat:
+        options:
+          model: gpt-4o
+
+sqldpass:
+  ai:
+    generator:
+      provider: claude
+    verifier:
+      provider: gemini
+    generation:
+      questions-per-subject: 3
+      verification-enabled: true
+      max-calls-per-run: 20
+  scheduler:
+    generation-cron: "0 0 3 * * *"
+    enabled: false

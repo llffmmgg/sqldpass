@@ -9,4 +9,6 @@ public interface SubjectRepository extends JpaRepository<SubjectEntity, Long> {
     List<SubjectEntity> findByParentIsNullOrderByDisplayOrder();
 
     List<SubjectEntity> findByParentIdOrderByDisplayOrder(Long parentId);
+
+    List<SubjectEntity> findByChildrenIsEmpty();
 }

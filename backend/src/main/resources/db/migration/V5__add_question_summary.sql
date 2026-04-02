@@ -1,0 +1,2 @@
+ALTER TABLE question
+    ADD COLUMN summary VARCHAR(200) NULL;

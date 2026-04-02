@@ -43,10 +43,21 @@ public class QuestionEntity extends BaseTimeEntity {
     @Column(columnDefinition = "TEXT")
     private String explanation;
 
+    @Column(length = 200)
+    private String summary;
+
     public QuestionEntity(SubjectEntity subject, String content, int correctOption, String explanation) {
         this.subject = subject;
         this.content = content;
         this.correctOption = correctOption;
         this.explanation = explanation;
+    }
+
+    public QuestionEntity(SubjectEntity subject, String content, int correctOption, String explanation, String summary) {
+        this.subject = subject;
+        this.content = content;
+        this.correctOption = correctOption;
+        this.explanation = explanation;
+        this.summary = summary;
     }
 }

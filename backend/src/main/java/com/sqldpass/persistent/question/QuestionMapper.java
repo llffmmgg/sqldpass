@@ -13,7 +13,8 @@ public class QuestionMapper {
                 entity.getSubject().getId(),
                 entity.getContent(),
                 entity.getCorrectOption(),
-                entity.getExplanation()
+                entity.getExplanation(),
+                entity.getSummary()
         );
     }
 }

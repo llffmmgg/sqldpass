@@ -1,16 +1,34 @@
 spring:
-  datasource:
-    url: jdbc:h2:mem:sqldpass-test;DB_CLOSE_DELAY=-1;MODE=MySQL
-    username: sa
-    password:
-    driver-class-name: org.h2.Driver
+  flyway:
+    enabled: false
   jpa:
     hibernate:
-      ddl-auto: create-drop
-    properties:
-      hibernate:
-        format_sql: true
-        dialect: org.hibernate.dialect.H2Dialect
-    open-in-view: false
-  flyway:
+      ddl-auto: create
+  ai:
+    chat:
+      client:
+        enabled: false
+    anthropic:
+      api-key: test-key
+      enabled: false
+    google:
+      genai:
+        api-key: test-key
+        enabled: false
+    openai:
+      api-key: test-key
+      enabled: false
+
+sqldpass:
+  ai:
+    generator:
+      provider: claude
+    verifier:
+      provider: gemini
+    generation:
+      questions-per-subject: 1
+      verification-enabled: false
+      max-calls-per-run: 5
+  scheduler:
+    generation-cron: "0 0 3 * * *"
     enabled: false
