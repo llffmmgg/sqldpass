@@ -67,6 +67,31 @@ export interface SolveResponse {
   answers: SolveAnswerResponse[];
 }
 
+export interface SolveSummaryResponse {
+  id: number;
+  subjectId: number;
+  totalCount: number;
+  correctCount: number;
+  score: number;
+  solvedAt: string;
+}
+
+export interface WrongAnswerResponse {
+  questionId: number;
+  questionContent: string;
+  subjectName: string;
+  wrongCount: number;
+  lastWrongAt: string;
+}
+
+export interface WrongAnswerStatsResponse {
+  subjectId: number;
+  subjectName: string;
+  totalSolved: number;
+  wrongCount: number;
+  wrongRate: number;
+}
+
 // API 함수
 
 export function getSubjects() {
@@ -86,5 +111,28 @@ export function submitSolve(memberId: number, request: SolveRequest) {
     method: "POST",
     headers: { "X-Member-Id": String(memberId) },
     body: JSON.stringify(request),
+  });
+}
+
+export function getSolves(memberId: number) {
+  return fetchApi<SolveSummaryResponse[]>("/solves", {
+    headers: { "X-Member-Id": String(memberId) },
+  });
+}
+
+export function getSolve(id: number) {
+  return fetchApi<SolveResponse>(`/solves/${id}`);
+}
+
+export function getWrongAnswers(memberId: number, subjectId?: number) {
+  const params = subjectId ? `?subjectId=${subjectId}` : "";
+  return fetchApi<WrongAnswerResponse[]>(`/wrong-answers${params}`, {
+    headers: { "X-Member-Id": String(memberId) },
+  });
+}
+
+export function getWrongAnswerStats(memberId: number) {
+  return fetchApi<WrongAnswerStatsResponse[]>("/wrong-answers/stats", {
+    headers: { "X-Member-Id": String(memberId) },
   });
 }

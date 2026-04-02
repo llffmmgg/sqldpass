@@ -4,70 +4,113 @@ import { useEffect, useState } from "react";
 import {
   getSubjects,
   getQuestions,
-  submitSolve,
+  getQuestionDetail,
   type Subject,
   type Question,
-  type SolveResponse,
+  type QuestionDetail,
 } from "@/lib/api";
 
-type Phase = "select" | "solve" | "result";
+const OPTION_MARKERS = ["①", "②", "③", "④"];
+
+function parseQuestion(content: string) {
+  const lines = content.split("\n").filter((l) => l.trim());
+  const questionLines: string[] = [];
+  const options: string[] = [];
+
+  for (const line of lines) {
+    if (OPTION_MARKERS.some((m) => line.trim().startsWith(m))) {
+      options.push(line.trim());
+    } else if (options.length === 0) {
+      questionLines.push(line);
+    }
+  }
+
+  return {
+    questionText: questionLines.join("\n"),
+    options: options.map((opt) => opt.replace(/^[①②③④]\s*/, "")),
+  };
+}
+
+type Phase = "select" | "solve";
 
 export default function SolvePage() {
   const [phase, setPhase] = useState<Phase>("select");
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [selectedSubject, setSelectedSubject] = useState<Subject | null>(null);
-  const [questions, setQuestions] = useState<Question[]>([]);
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [answers, setAnswers] = useState<Record<number, number>>({});
-  const [result, setResult] = useState<SolveResponse | null>(null);
+  const [queue, setQueue] = useState<Question[]>([]);
+  const [current, setCurrent] = useState<Question | null>(null);
+  const [selectedOption, setSelectedOption] = useState<number | null>(null);
+  const [detail, setDetail] = useState<QuestionDetail | null>(null);
+  const [revealed, setRevealed] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [solvedCount, setSolvedCount] = useState(0);
+  const [correctCount, setCorrectCount] = useState(0);
 
   useEffect(() => {
     getSubjects().then(setSubjects);
   }, []);
 
-  const leafSubjects = subjects.flatMap((s) =>
-    s.children.length > 0 ? s.children : [s]
-  );
+  async function fetchQuestions(subjectId: number): Promise<Question[]> {
+    return getQuestions(subjectId, 10);
+  }
 
   async function handleSelectSubject(subject: Subject) {
     setSelectedSubject(subject);
     setLoading(true);
-    const qs = await getQuestions(subject.id, 10);
-    setQuestions(qs);
-    setAnswers({});
-    setCurrentIndex(0);
+    const qs = await fetchQuestions(subject.id);
+    setQueue(qs.slice(1));
+    setCurrent(qs[0] || null);
+    setSelectedOption(null);
+    setRevealed(false);
+    setDetail(null);
+    setSolvedCount(0);
+    setCorrectCount(0);
     setPhase("solve");
     setLoading(false);
   }
 
-  function handleSelectOption(questionId: number, option: number) {
-    setAnswers((prev) => ({ ...prev, [questionId]: option }));
+  async function handleSelect(option: number) {
+    if (revealed || !current) return;
+    setSelectedOption(option);
+    setRevealed(true);
+
+    const d = await getQuestionDetail(current.id);
+    setDetail(d);
+    setSolvedCount((c) => c + 1);
+    if (option === d.correctOption) {
+      setCorrectCount((c) => c + 1);
+    }
   }
 
-  async function handleSubmit() {
+  async function handleNext() {
     if (!selectedSubject) return;
-    setLoading(true);
-    const solveAnswers = questions.map((q) => ({
-      questionId: q.id,
-      selectedOption: answers[q.id] || 0,
-    }));
-    const res = await submitSolve(1, {
-      subjectId: selectedSubject.id,
-      answers: solveAnswers,
-    });
-    setResult(res);
-    setPhase("result");
-    setLoading(false);
+
+    let nextQueue = [...queue];
+
+    // 큐가 비면 새로 가져오기
+    if (nextQueue.length === 0) {
+      setLoading(true);
+      nextQueue = await fetchQuestions(selectedSubject.id);
+      setLoading(false);
+    }
+
+    setCurrent(nextQueue[0] || null);
+    setQueue(nextQueue.slice(1));
+    setSelectedOption(null);
+    setRevealed(false);
+    setDetail(null);
   }
 
   function handleReset() {
     setPhase("select");
     setSelectedSubject(null);
-    setQuestions([]);
-    setAnswers({});
-    setResult(null);
-    setCurrentIndex(0);
+    setQueue([]);
+    setCurrent(null);
+    setSelectedOption(null);
+    setRevealed(false);
+    setDetail(null);
+    setSolvedCount(0);
+    setCorrectCount(0);
   }
 
   if (loading) {
@@ -110,7 +153,7 @@ export default function SolvePage() {
             ))}
           </div>
 
-          {leafSubjects.length === 0 && (
+          {subjects.length === 0 && (
             <p className="mt-8 text-center text-muted">
               과목 데이터를 불러오는 중...
             </p>
@@ -121,181 +164,119 @@ export default function SolvePage() {
   }
 
   // 문제 풀기
-  if (phase === "solve") {
-    const question = questions[currentIndex];
-    if (!question) return null;
+  if (!current) return null;
 
-    const lines = question.content.split("\n");
-    const allAnswered = questions.every((q) => answers[q.id] !== undefined);
+  const parsed = parseQuestion(current.content);
+  const isCorrect = detail ? selectedOption === detail.correctOption : null;
 
-    return (
-      <main className="min-h-screen bg-background text-foreground">
-        <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6">
-          {/* 진행 상태 */}
-          <div className="flex items-center justify-between">
+  return (
+    <main className="min-h-screen bg-background text-foreground">
+      <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6">
+        {/* 상단 바 */}
+        <div className="flex items-center justify-between">
+          <button
+            onClick={handleReset}
+            className="text-sm text-muted hover:text-foreground transition-colors"
+          >
+            &larr; 과목 선택
+          </button>
+          <div className="flex items-center gap-3">
             <span className="text-sm text-muted">
               {selectedSubject?.name}
             </span>
-            <span className="text-sm text-muted">
-              {currentIndex + 1} / {questions.length}
-            </span>
-          </div>
-
-          <div className="mt-2 h-1 rounded-full bg-border">
-            <div
-              className="h-full rounded-full bg-primary transition-all duration-300"
-              style={{
-                width: `${((currentIndex + 1) / questions.length) * 100}%`,
-              }}
-            />
-          </div>
-
-          {/* 문제 */}
-          <div className="mt-8 rounded-xl border border-border bg-surface p-6">
-            <p className="font-medium leading-relaxed whitespace-pre-wrap">
-              {lines[0]}
-            </p>
-
-            {/* 선택지 (content에서 1. 2. 3. 4. 패턴 파싱) */}
-            <ul className="mt-6 space-y-2">
-              {[1, 2, 3, 4].map((num) => {
-                const optionLine = lines.find((l) =>
-                  l.trimStart().startsWith(`${num}.`)
-                );
-                const optionText =
-                  optionLine?.replace(/^\s*\d+\.\s*/, "") || `선택지 ${num}`;
-                const isSelected = answers[question.id] === num;
-
-                return (
-                  <li key={num}>
-                    <button
-                      onClick={() => handleSelectOption(question.id, num)}
-                      className={`w-full rounded-lg border px-4 py-3 text-left text-sm transition-all duration-200 ${
-                        isSelected
-                          ? "border-amber-500 bg-amber-500/10 text-foreground"
-                          : "border-border hover:border-amber-500/40 hover:bg-amber-500/5"
-                      }`}
-                    >
-                      <span className="mr-3 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-current text-xs">
-                        {num}
-                      </span>
-                      {optionText}
-                    </button>
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
-
-          {/* 네비게이션 */}
-          <div className="mt-6 flex items-center justify-between">
-            <button
-              onClick={() => setCurrentIndex((i) => Math.max(0, i - 1))}
-              disabled={currentIndex === 0}
-              className="rounded-lg border border-border px-4 py-2 text-sm transition hover:bg-surface disabled:opacity-30"
-            >
-              이전
-            </button>
-
-            {currentIndex < questions.length - 1 ? (
-              <button
-                onClick={() => setCurrentIndex((i) => i + 1)}
-                className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-zinc-900 transition hover:bg-primary-hover"
-              >
-                다음
-              </button>
-            ) : (
-              <button
-                onClick={handleSubmit}
-                disabled={!allAnswered}
-                className="btn-glow rounded-lg bg-primary px-6 py-2 text-sm font-semibold text-zinc-900 transition hover:bg-primary-hover disabled:opacity-30 disabled:animate-none disabled:shadow-none"
-              >
-                제출하기
-              </button>
+            {solvedCount > 0 && (
+              <span className="rounded bg-surface border border-border px-2 py-0.5 text-xs text-muted">
+                {correctCount}/{solvedCount} 정답
+              </span>
             )}
           </div>
-
-          {/* 문제 번호 바로가기 */}
-          <div className="mt-6 flex flex-wrap gap-2">
-            {questions.map((q, i) => (
-              <button
-                key={q.id}
-                onClick={() => setCurrentIndex(i)}
-                className={`h-8 w-8 rounded text-xs font-medium transition ${
-                  i === currentIndex
-                    ? "bg-primary text-zinc-900"
-                    : answers[q.id] !== undefined
-                      ? "bg-amber-500/20 text-amber-400 border border-amber-500/30"
-                      : "bg-surface border border-border text-muted"
-                }`}
-              >
-                {i + 1}
-              </button>
-            ))}
-          </div>
         </div>
-      </main>
-    );
-  }
 
-  // 결과
-  if (phase === "result" && result) {
-    return (
-      <main className="min-h-screen bg-background text-foreground">
-        <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6">
-          <div className="text-center">
-            <h1 className="text-3xl font-bold">채점 결과</h1>
-            <div className="mt-6 inline-flex items-baseline gap-1">
-              <span className="text-6xl font-bold bg-gradient-to-r from-amber-400 to-amber-300 bg-clip-text text-transparent">
-                {result.score}
-              </span>
-              <span className="text-2xl text-muted">점</span>
+        {/* 문제 */}
+        <div className="mt-8 rounded-xl border border-border bg-surface p-6">
+          <p className="font-medium leading-relaxed whitespace-pre-wrap">
+            {parsed.questionText}
+          </p>
+
+          <ul className="mt-6 space-y-2">
+            {parsed.options.map((optionText, idx) => {
+              const num = idx + 1;
+              const isSelected = selectedOption === num;
+              const isCorrectOption = detail?.correctOption === num;
+
+              let style = "border-border hover:border-amber-500/40 hover:bg-amber-500/5";
+              if (revealed) {
+                if (isCorrectOption) {
+                  style = "border-green-500 bg-green-500/10 text-green-400";
+                } else if (isSelected && !isCorrectOption) {
+                  style = "border-red-500 bg-red-500/10 text-red-400";
+                } else {
+                  style = "border-border opacity-50";
+                }
+              } else if (isSelected) {
+                style = "border-amber-500 bg-amber-500/10 text-foreground";
+              }
+
+              return (
+                <li key={num}>
+                  <button
+                    onClick={() => handleSelect(num)}
+                    disabled={revealed}
+                    className={`w-full rounded-lg border px-4 py-3 text-left text-sm transition-all duration-200 ${style} disabled:cursor-default`}
+                  >
+                    <span className="mr-3 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-current text-xs">
+                      {num}
+                    </span>
+                    {optionText}
+                    {revealed && isCorrectOption && (
+                      <span className="ml-2 text-green-400">&#10003;</span>
+                    )}
+                    {revealed && isSelected && !isCorrectOption && (
+                      <span className="ml-2 text-red-400">&#10007;</span>
+                    )}
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+
+        {/* 정답 확인 후 해설 + 다음 버튼 */}
+        {revealed && detail && (
+          <div className="mt-4 space-y-4">
+            {/* 결과 표시 */}
+            <div
+              className={`rounded-lg border px-4 py-3 text-sm ${
+                isCorrect
+                  ? "border-green-500/30 bg-green-500/5 text-green-400"
+                  : "border-red-500/30 bg-red-500/5 text-red-400"
+              }`}
+            >
+              {isCorrect ? "정답입니다!" : `오답입니다. 정답은 ${detail.correctOption}번입니다.`}
             </div>
-            <p className="mt-2 text-muted">
-              {result.totalCount}문제 중 {result.correctCount}문제 정답
-            </p>
-          </div>
 
-          <div className="mt-10 space-y-3">
-            {result.answers.map((a, i) => (
-              <div
-                key={a.questionId}
-                className={`rounded-lg border px-4 py-3 text-sm ${
-                  a.correct
-                    ? "border-green-500/30 bg-green-500/5"
-                    : "border-red-500/30 bg-red-500/5"
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <span>
-                    문제 {i + 1}
-                  </span>
-                  <span className={a.correct ? "text-green-400" : "text-red-400"}>
-                    {a.correct ? "정답" : `오답 (선택: ${a.selectedOption}, 정답: ${a.correctOption})`}
-                  </span>
-                </div>
+            {/* 해설 */}
+            {detail.explanation && (
+              <div className="rounded-lg border border-border bg-surface px-4 py-3">
+                <p className="text-sm font-medium text-amber-400">해설</p>
+                <p className="mt-1 text-sm leading-relaxed text-muted">
+                  {detail.explanation}
+                </p>
               </div>
-            ))}
-          </div>
+            )}
 
-          <div className="mt-8 flex justify-center gap-4">
-            <button
-              onClick={handleReset}
-              className="rounded-lg border border-border px-6 py-3 text-sm font-semibold transition hover:bg-surface"
-            >
-              다시 풀기
-            </button>
-            <a
-              href="/"
-              className="rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-zinc-900 transition hover:bg-primary-hover"
-            >
-              홈으로
-            </a>
+            {/* 다음 문제 */}
+            <div className="flex justify-center">
+              <button
+                onClick={handleNext}
+                className="rounded-lg bg-primary px-6 py-2.5 text-sm font-semibold text-zinc-900 transition hover:bg-primary-hover"
+              >
+                다음 문제
+              </button>
+            </div>
           </div>
-        </div>
-      </main>
-    );
-  }
-
-  return null;
+        )}
+      </div>
+    </main>
+  );
 }
