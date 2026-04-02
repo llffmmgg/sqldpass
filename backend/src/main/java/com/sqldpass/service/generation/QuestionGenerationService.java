@@ -63,14 +63,14 @@ public class QuestionGenerationService {
                 String resultJson = new ObjectMapper().writeValueAsString(
                         new com.sqldpass.controller.admin.dto.GenerationResultResponse(
                                 result.totalGenerated(), result.totalVerified(), result.totalSaved(), result.errors()));
-                lockService.completeWithResult(resultJson);
+                lockService.complete(resultJson);
             } catch (Exception e) {
                 log.error("Failed to save generation result", e);
-                lockService.release();
+                lockService.fail("결과 저장 실패: " + e.getMessage());
             }
             return result;
         } catch (Exception e) {
-            lockService.release();
+            lockService.fail(e.getMessage());
             throw e;
         }
     }

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, useRef, useCallback } from "react";
-import { isAuthenticated, clearToken, getGenerationStatus, clearGenerationResult, type GenerationResult } from "@/lib/adminApi";
+import { isAuthenticated, clearToken, getGenerationStatus, resetGeneration, type GenerationResult, type GenerationStatus } from "@/lib/adminApi";
 
 const SIDEBAR_LINKS = [
   { href: "/admin", label: "대시보드", icon: "📊" },
@@ -16,9 +16,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const pathname = usePathname();
   const router = useRouter();
   const [checked, setChecked] = useState(false);
-  const [generating, setGenerating] = useState(false);
+  const [genStatus, setGenStatus] = useState<GenerationStatus | null>(null);
   const [completedResult, setCompletedResult] = useState<GenerationResult | null>(null);
-  const wasRunning = useRef(false);
+  const [failedMessage, setFailedMessage] = useState<string | null>(null);
+  const [connectionError, setConnectionError] = useState(false);
+  const prevStatus = useRef<string>("IDLE");
+  const failCount = useRef(0);
 
   useEffect(() => {
     if (pathname === "/admin/login") {
@@ -32,23 +35,41 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     setChecked(true);
   }, [pathname, router]);
 
-  // 전역 폴링
   const pollStatus = useCallback(() => {
     if (!isAuthenticated() || pathname === "/admin/login") return;
 
     getGenerationStatus().then((status) => {
-      setGenerating(status.running);
+      failCount.current = 0;
+      setConnectionError(false);
+      setGenStatus(status);
 
-      if (wasRunning.current && !status.running && status.result) {
+      // RUNNING → COMPLETED
+      if (prevStatus.current === "RUNNING" && status.status === "COMPLETED" && status.result) {
         try {
-          const result = JSON.parse(status.result) as GenerationResult;
-          setCompletedResult(result);
-        } catch {
-          // ignore parse error
-        }
+          setCompletedResult(JSON.parse(status.result) as GenerationResult);
+        } catch { /* ignore */ }
       }
-      wasRunning.current = status.running;
-    }).catch(() => {});
+
+      // RUNNING → FAILED
+      if (prevStatus.current === "RUNNING" && status.status === "FAILED") {
+        setFailedMessage(status.result || "알 수 없는 오류가 발생했습니다.");
+      }
+
+      // 페이지 진입 시 이미 COMPLETED/FAILED인 경우
+      if (prevStatus.current === "IDLE" && status.status === "COMPLETED" && status.result) {
+        try {
+          setCompletedResult(JSON.parse(status.result) as GenerationResult);
+        } catch { /* ignore */ }
+      }
+      if (prevStatus.current === "IDLE" && status.status === "FAILED") {
+        setFailedMessage(status.result || "알 수 없는 오류가 발생했습니다.");
+      }
+
+      prevStatus.current = status.status;
+    }).catch(() => {
+      failCount.current++;
+      if (failCount.current >= 3) setConnectionError(true);
+    });
   }, [pathname]);
 
   useEffect(() => {
@@ -58,25 +79,27 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     return () => clearInterval(interval);
   }, [pathname, pollStatus]);
 
-  function handleDismissResult() {
-    clearGenerationResult();
+  function handleDismiss() {
+    resetGeneration();
     setCompletedResult(null);
+    setFailedMessage(null);
+    prevStatus.current = "IDLE";
   }
 
   if (!checked) return null;
-
-  if (pathname === "/admin/login") {
-    return <>{children}</>;
-  }
+  if (pathname === "/admin/login") return <>{children}</>;
 
   function handleLogout() {
     clearToken();
     router.push("/admin/login");
   }
 
+  const isRunning = genStatus?.status === "RUNNING";
+  const isStale = isRunning && genStatus?.startedAt &&
+    new Date(genStatus.startedAt).getTime() < Date.now() - 15 * 60 * 1000;
+
   return (
     <div className="flex min-h-screen bg-background text-foreground">
-      {/* Sidebar */}
       <aside className="w-56 shrink-0 border-r border-border bg-surface p-4">
         <Link href="/admin" className="block text-lg font-bold">
           SQLD <span className="text-primary">Admin</span>
@@ -109,16 +132,33 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </div>
       </aside>
 
-      {/* Main content */}
       <div className="flex-1 flex flex-col">
-        {/* 생성 진행 중 배너 */}
-        {generating && (
+        {connectionError && (
+          <div className="border-b border-red-500/30 bg-red-500/5 px-6 py-2 text-sm text-red-400">
+            서버 연결에 실패했습니다. 네트워크를 확인하세요.
+          </div>
+        )}
+
+        {isRunning && !isStale && (
           <div className="border-b border-amber-500/30 bg-amber-500/5 px-6 py-2 text-sm text-amber-400">
             문제 생성이 진행 중입니다...
           </div>
         )}
 
-        {/* 생성 완료 알림 */}
+        {isRunning && isStale && (
+          <div className="border-b border-red-500/30 bg-red-500/5 px-6 py-2 flex items-center justify-between">
+            <span className="text-sm text-red-400">
+              생성이 비정상적으로 오래 걸리고 있습니다. (15분 초과)
+            </span>
+            <button
+              onClick={handleDismiss}
+              className="rounded border border-red-500/30 px-3 py-1 text-xs text-red-400 hover:bg-red-500/10"
+            >
+              강제 초기화
+            </button>
+          </div>
+        )}
+
         {completedResult && (
           <div className="border-b border-green-500/30 bg-green-500/5 px-6 py-3 flex items-center justify-between">
             <span className="text-sm text-green-400">
@@ -126,8 +166,22 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               {completedResult.errors.length > 0 && ` / 오류 ${completedResult.errors.length}건`}
             </span>
             <button
-              onClick={handleDismissResult}
+              onClick={handleDismiss}
               className="rounded border border-green-500/30 px-3 py-1 text-xs text-green-400 hover:bg-green-500/10"
+            >
+              확인
+            </button>
+          </div>
+        )}
+
+        {failedMessage && !completedResult && (
+          <div className="border-b border-red-500/30 bg-red-500/5 px-6 py-3 flex items-center justify-between">
+            <span className="text-sm text-red-400">
+              문제 생성 실패: {failedMessage}
+            </span>
+            <button
+              onClick={handleDismiss}
+              className="rounded border border-red-500/30 px-3 py-1 text-xs text-red-400 hover:bg-red-500/10"
             >
               확인
             </button>

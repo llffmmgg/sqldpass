@@ -142,8 +142,9 @@ export function getMembers(page = 0, size = 20) {
 }
 
 export interface GenerationStatus {
-  running: boolean;
+  status: "IDLE" | "RUNNING" | "COMPLETED" | "FAILED";
   result: string | null;
+  startedAt: string | null;
 }
 
 export function getGenerationStatus() {
@@ -154,6 +155,6 @@ export function generateQuestions(count = 3) {
   return adminFetch<void>(`/generate?count=${count}`, { method: "POST" });
 }
 
-export function clearGenerationResult() {
-  return adminFetch<void>("/generate/result/clear", { method: "POST" });
+export function resetGeneration() {
+  return adminFetch<void>("/generate/reset", { method: "POST" });
 }

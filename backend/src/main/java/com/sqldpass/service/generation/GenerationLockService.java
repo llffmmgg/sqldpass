@@ -31,36 +31,29 @@ public class GenerationLockService {
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void completeWithResult(String resultJson) {
-        generationLockRepository.findById(1)
-                .ifPresent(lock -> lock.completeWithResult(resultJson));
+    public void complete(String resultJson) {
+        generationLockRepository.findById(1).ifPresent(lock -> lock.complete(resultJson));
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void release() {
-        generationLockRepository.findById(1)
-                .ifPresent(GenerationLockEntity::release);
+    public void fail(String error) {
+        generationLockRepository.findById(1).ifPresent(lock -> lock.fail(error));
     }
 
-    @Transactional(readOnly = true)
-    public boolean isRunning() {
-        return generationLockRepository.findById(1)
-                .map(lock -> lock.isRunning() && !lock.isStale())
-                .orElse(false);
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void reset() {
+        generationLockRepository.findById(1).ifPresent(GenerationLockEntity::reset);
     }
 
     @Transactional(readOnly = true)
     public GenerationStatusResponse getStatus() {
         return generationLockRepository.findById(1)
-                .map(lock -> new GenerationStatusResponse(
-                        lock.isRunning() && !lock.isStale(),
-                        lock.getResult()))
-                .orElse(new GenerationStatusResponse(false, null));
-    }
-
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void clearResult() {
-        generationLockRepository.findById(1)
-                .ifPresent(lock -> lock.completeWithResult(null));
+                .map(lock -> {
+                    if (lock.isStale()) {
+                        return new GenerationStatusResponse("FAILED", "생성이 비정상적으로 오래 걸려 중단되었습니다.", lock.getStartedAt());
+                    }
+                    return new GenerationStatusResponse(lock.getStatus(), lock.getResult(), lock.getStartedAt());
+                })
+                .orElse(new GenerationStatusResponse("IDLE", null, null));
     }
 }

@@ -31,10 +31,10 @@ public class AdminGenerationController {
         return lockService.getStatus();
     }
 
-    @PostMapping("/api/admin/generate/result/clear")
-    @Operation(summary = "생성 결과 확인 완료 (result 초기화)")
-    public void clearResult() {
-        lockService.clearResult();
+    @PostMapping("/api/admin/generate/reset")
+    @Operation(summary = "생성 상태 초기화 (IDLE로 리셋)")
+    public void reset() {
+        lockService.reset();
     }
 
     @PostMapping("/api/admin/generate")

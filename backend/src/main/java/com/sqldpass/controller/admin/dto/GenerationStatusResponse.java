@@ -1,4 +1,6 @@
 package com.sqldpass.controller.admin.dto;
 
-public record GenerationStatusResponse(boolean running, String result) {
+import java.time.LocalDateTime;
+
+public record GenerationStatusResponse(String status, String result, LocalDateTime startedAt) {
 }
