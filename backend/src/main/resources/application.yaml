@@ -54,7 +54,7 @@ sqldpass:
       provider: gemini
     generation:
       questions-per-subject: 3
-      verification-enabled: true
+      verification-enabled: false
       max-calls-per-run: 50
   scheduler:
     generation-cron: "0 0 3 * * *"
