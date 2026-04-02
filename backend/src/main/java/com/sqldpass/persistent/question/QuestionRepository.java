@@ -17,9 +17,11 @@ public interface QuestionRepository extends JpaRepository<QuestionEntity, Long> 
     @Query("SELECT q.summary FROM QuestionEntity q WHERE q.subject.id = :subjectId AND q.summary IS NOT NULL")
     List<String> findSummariesBySubjectId(@Param("subjectId") Long subjectId);
 
-    Page<QuestionEntity> findBySubjectIdOrderByCreatedAtDesc(Long subjectId, Pageable pageable);
+    @Query("SELECT q FROM QuestionEntity q JOIN FETCH q.subject WHERE q.subject.id = :subjectId ORDER BY q.createdAt DESC")
+    Page<QuestionEntity> findBySubjectIdWithSubject(@Param("subjectId") Long subjectId, Pageable pageable);
 
-    Page<QuestionEntity> findAllByOrderByCreatedAtDesc(Pageable pageable);
+    @Query("SELECT q FROM QuestionEntity q JOIN FETCH q.subject ORDER BY q.createdAt DESC")
+    Page<QuestionEntity> findAllWithSubject(Pageable pageable);
 
     long countByCreatedAtAfter(LocalDateTime dateTime);
 }
