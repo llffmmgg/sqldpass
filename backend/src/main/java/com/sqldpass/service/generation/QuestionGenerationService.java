@@ -4,8 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -15,10 +13,11 @@ import com.sqldpass.persistent.question.QuestionRepository;
 import com.sqldpass.persistent.subject.SubjectEntity;
 import com.sqldpass.persistent.subject.SubjectRepository;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 @Service
 public class QuestionGenerationService {
-
-    private static final Logger log = LoggerFactory.getLogger(QuestionGenerationService.class);
 
     private final QuestionRepository questionRepository;
     private final SubjectRepository subjectRepository;

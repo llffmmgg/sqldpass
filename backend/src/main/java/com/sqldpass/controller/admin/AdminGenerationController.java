@@ -2,8 +2,6 @@ package com.sqldpass.controller.admin;
 
 import java.io.IOException;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -18,13 +16,13 @@ import com.sqldpass.service.generation.QuestionGenerationService;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Tag(name = "관리자", description = "관리자 API")
 @RestController
 @RequestMapping("/api/admin")
 public class AdminGenerationController {
-
-    private static final Logger log = LoggerFactory.getLogger(AdminGenerationController.class);
 
     private final QuestionGenerationService generationService;
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -36,7 +34,7 @@ public class AdminGenerationController {
     @PostMapping(value = "/generate", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     @Operation(summary = "문제 수동 생성 (SSE)", description = "AI를 이용하여 문제를 생성하고 진행 상황을 실시간으로 전송한다")
     public SseEmitter generate(@RequestParam(defaultValue = "3") int count) {
-        SseEmitter emitter = new SseEmitter(300_000L); // 5분 타임아웃
+        SseEmitter emitter = new SseEmitter(600_000L); // 10분 타임아웃
 
         Thread.startVirtualThread(() -> {
             try {

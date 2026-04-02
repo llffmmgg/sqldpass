@@ -8,12 +8,10 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 public class AiProvider {
-
-    private static final Logger log = LoggerFactory.getLogger(AiProvider.class);
 
     private final ChatClient chatClient;
     private final ObjectMapper objectMapper;

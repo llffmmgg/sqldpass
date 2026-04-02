@@ -80,5 +80,5 @@ com.sqldpass/
 - Java 표준 스타일, 들여쓰기 공백 4칸
 - 클래스 `PascalCase`, 메서드/필드 `camelCase`, 상수 `UPPER_SNAKE_CASE`
 - Spring 컴포넌트는 생성자 주입 우선
-- Lombok 사용 금지. getter/setter/생성자 등 직접 작성
+- Lombok 사용 허용 (@Getter, @NoArgsConstructor, @RequiredArgsConstructor, @Slf4j 등)
 - 객체 생성은 무조건 생성자 사용 (Builder 패턴 금지)
