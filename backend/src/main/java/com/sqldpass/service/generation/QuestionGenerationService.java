@@ -99,9 +99,9 @@ public class QuestionGenerationService {
                             subject.getId(), topic);
 
                     AiGenerationRequest request = new AiGenerationRequest(
-                            subject.getName(), subject.getId(), topic, existingSummaries, 1);
+                            subject.getName(), subject.getId(), topic, existingSummaries, 3);
 
-                    eventListener.accept(GenerationEvent.progress("'" + topic + "' 문제 생성 중..."));
+                    eventListener.accept(GenerationEvent.progress("'" + topic + "' 기본/심화/고난도 3문제 생성 중..."));
 
                     AiGenerationResponse response = generator.generateQuestions(request);
                     callCount++;
@@ -111,56 +111,67 @@ public class QuestionGenerationService {
                         continue;
                     }
 
-                    GeneratedQuestion question = response.questions().get(0);
-                    question = new GeneratedQuestion(
-                            question.content(), question.correctOption(), question.explanation(),
-                            question.summary(), topic, question.difficulty());
-                    totalGenerated++;
+                    totalGenerated += response.questions().size();
 
-                    if (verificationEnabled && callCount < maxCallsPerRun) {
-                        try {
-                            Thread.sleep(5000);
-                            AiVerificationRequest verifyRequest = new AiVerificationRequest(subject.getName(), question);
-                            AiVerificationResponse verifyResponse = verifier.verifyQuestion(verifyRequest);
-                            callCount++;
+                    for (GeneratedQuestion question : response.questions()) {
+                        if (callCount >= maxCallsPerRun) {
+                            errors.add("호출 상한 도달로 검증 중단됨");
+                            break;
+                        }
 
-                            if (!verifyResponse.approved()) {
-                                eventListener.accept(GenerationEvent.progress(
-                                        "'" + topic + "' 검증 실패: " + verifyResponse.reason() + " → 수정 요청"));
+                        question = new GeneratedQuestion(
+                                question.content(), question.correctOption(), question.explanation(),
+                                question.summary(), topic, question.difficulty());
 
-                                if (callCount < maxCallsPerRun) {
-                                    GeneratedQuestion fixed = generator.fixQuestion(question, verifyResponse.reason());
-                                    callCount++;
-                                    if (fixed != null) {
-                                        question = new GeneratedQuestion(
-                                                fixed.content(), fixed.correctOption(), fixed.explanation(),
-                                                fixed.summary(), topic, fixed.difficulty());
-                                        eventListener.accept(GenerationEvent.progress("'" + topic + "' 수정 완료"));
-                                    } else {
-                                        eventListener.accept(GenerationEvent.progress("'" + topic + "' 수정 불가, 건너뜀"));
-                                        continue;
+                        if (verificationEnabled && callCount < maxCallsPerRun) {
+                            try {
+                                Thread.sleep(5000);
+                                AiVerificationRequest verifyRequest = new AiVerificationRequest(subject.getName(), question);
+                                AiVerificationResponse verifyResponse = verifier.verifyQuestion(verifyRequest);
+                                callCount++;
+
+                                if (!verifyResponse.approved()) {
+                                    eventListener.accept(GenerationEvent.progress(
+                                            "'" + topic + "' 검증 실패: " + verifyResponse.reason() + " → 수정 요청"));
+
+                                    if (callCount < maxCallsPerRun) {
+                                        GeneratedQuestion fixed = generator.fixQuestion(question, verifyResponse.reason());
+                                        callCount++;
+                                        if (fixed != null) {
+                                            question = new GeneratedQuestion(
+                                                    fixed.content(), fixed.correctOption(), fixed.explanation(),
+                                                    fixed.summary(), topic, fixed.difficulty());
+                                            eventListener.accept(GenerationEvent.progress("'" + topic + "' 수정 완료"));
+                                        } else {
+                                            eventListener.accept(GenerationEvent.progress("'" + topic + "' 수정 불가, 건너뜀"));
+                                            continue;
+                                        }
                                     }
                                 }
+                                totalVerified++;
+                            } catch (Exception e) {
+                                log.error("Verification failed for topic '{}', saving anyway", topic, e);
+                                errors.add("검증 실패 [" + topic + "]: " + e.getMessage());
                             }
+                        } else {
                             totalVerified++;
-                        } catch (Exception e) {
-                            log.error("Verification failed for topic '{}', saving anyway", topic, e);
-                            errors.add("검증 실패 [" + topic + "]: " + e.getMessage());
                         }
-                    } else {
-                        totalVerified++;
-                    }
 
-                    if (question.summary() != null && existingSummaries.contains(question.summary())) {
-                        log.info("Duplicate summary detected, skipping: {}", question.summary());
-                        continue;
-                    }
+                        if (question.summary() != null && existingSummaries.contains(question.summary())) {
+                            log.info("Duplicate summary detected, skipping: {}", question.summary());
+                            continue;
+                        }
 
-                    QuestionEntity entity = new QuestionEntity(
-                            subject, question.content(), question.correctOption(),
-                            question.explanation(), question.summary(), question.topic(), question.difficulty());
-                    questionRepository.save(entity);
-                    totalSaved++;
+                        QuestionEntity entity = new QuestionEntity(
+                                subject, question.content(), question.correctOption(),
+                                question.explanation(), question.summary(), question.topic(), question.difficulty());
+                        questionRepository.save(entity);
+                        totalSaved++;
+
+                        if (question.summary() != null) {
+                            existingSummaries.add(question.summary());
+                        }
+                    }
 
                     eventListener.accept(GenerationEvent.progress("'" + topic + "' 저장 완료"));
 
