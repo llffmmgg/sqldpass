@@ -20,6 +20,8 @@ spring:
     chat:
       client:
         enabled: false
+    retry:
+      max-attempts: 1
     anthropic:
       api-key: ${ANTHROPIC_API_KEY:not-set}
       chat:
@@ -31,7 +33,7 @@ spring:
         api-key: ${GOOGLE_GENAI_API_KEY:not-set}
         chat:
           options:
-            model: gemini-2.0-flash
+            model: gemini-2.5-flash-lite
     openai:
       api-key: ${OPENAI_API_KEY:not-set}
       chat:
