@@ -2,7 +2,7 @@ package com.sqldpass.controller.admin.dto;
 
 import java.util.List;
 
-import com.sqldpass.service.generation.GenerationResult;
+import com.sqldpass.service.generation.dto.GenerationResult;
 
 public record GenerationResultResponse(int totalGenerated, int totalVerified, int totalSaved, List<String> errors) {
 

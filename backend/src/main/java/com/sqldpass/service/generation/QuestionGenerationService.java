@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.function.Consumer;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.sqldpass.service.generation.dto.*;
 
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -135,7 +136,7 @@ public class QuestionGenerationService {
                         question = new GeneratedQuestion(
                                 question.content(), question.correctOption(), question.explanation(),
                                 question.summary(), topic, question.difficulty());
-
+                        // 현재 사용하지 않음
                         if (verificationEnabled && callCount < maxCallsPerRun) {
                             try {
                                 Thread.sleep(10000);

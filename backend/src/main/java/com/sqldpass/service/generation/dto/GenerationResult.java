@@ -1,4 +1,4 @@
-package com.sqldpass.service.generation;
+package com.sqldpass.service.generation.dto;
 
 import java.util.List;
 

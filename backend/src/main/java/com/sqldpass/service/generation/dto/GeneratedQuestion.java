@@ -1,4 +1,4 @@
-package com.sqldpass.service.generation;
+package com.sqldpass.service.generation.dto;
 
 public record GeneratedQuestion(String content, int correctOption, String explanation, String summary,
                                 String topic, Integer difficulty) {

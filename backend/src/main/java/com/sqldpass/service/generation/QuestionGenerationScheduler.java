@@ -1,5 +1,6 @@
 package com.sqldpass.service.generation;
 
+import com.sqldpass.service.generation.dto.GenerationResult;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
