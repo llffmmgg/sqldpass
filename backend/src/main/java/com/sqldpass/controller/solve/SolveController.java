@@ -8,7 +8,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -18,19 +17,16 @@ import jakarta.validation.Valid;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
 
 @Tag(name = "풀이", description = "풀이/채점 관련 API")
 @RestController
-@RequestMapping("/api/solves")
+@RequiredArgsConstructor
 public class SolveController {
 
     private final SolveService solveService;
 
-    public SolveController(SolveService solveService) {
-        this.solveService = solveService;
-    }
-
-    @PostMapping
+    @PostMapping("/api/solves")
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "답안 제출 및 채점")
     public SolveResponse submit(
@@ -39,7 +35,7 @@ public class SolveController {
         return SolveResponse.from(solveService.solve(memberId, request));
     }
 
-    @GetMapping
+    @GetMapping("/api/solves")
     @Operation(summary = "내 풀이 기록 목록")
     public List<SolveSummaryResponse> getSolves(@RequestHeader("X-Member-Id") Long memberId) {
         return solveService.getMySolves(memberId).stream()
@@ -47,7 +43,7 @@ public class SolveController {
                 .toList();
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/api/solves/{id}")
     @Operation(summary = "풀이 상세 조회")
     public SolveResponse getSolve(@PathVariable Long id) {
         return SolveResponse.from(solveService.getSolve(id));

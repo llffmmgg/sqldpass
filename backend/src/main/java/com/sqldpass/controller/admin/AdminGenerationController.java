@@ -4,7 +4,6 @@ import java.io.IOException;
 
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
@@ -16,25 +15,22 @@ import com.sqldpass.service.generation.QuestionGenerationService;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Tag(name = "관리자", description = "관리자 API")
 @RestController
-@RequestMapping("/api/admin")
+@RequiredArgsConstructor
 public class AdminGenerationController {
 
     private final QuestionGenerationService generationService;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    public AdminGenerationController(QuestionGenerationService generationService) {
-        this.generationService = generationService;
-    }
-
-    @PostMapping(value = "/generate", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    @PostMapping(value = "/api/admin/generate", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     @Operation(summary = "문제 수동 생성 (SSE)", description = "AI를 이용하여 문제를 생성하고 진행 상황을 실시간으로 전송한다")
     public SseEmitter generate(@RequestParam(defaultValue = "3") int count) {
-        SseEmitter emitter = new SseEmitter(600_000L); // 10분 타임아웃
+        SseEmitter emitter = new SseEmitter(600_000L);
 
         Thread.startVirtualThread(() -> {
             try {

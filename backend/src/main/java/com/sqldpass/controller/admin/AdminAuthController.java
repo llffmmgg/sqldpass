@@ -19,7 +19,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 
 @Tag(name = "관리자 인증", description = "관리자 로그인 API")
 @RestController
-@RequestMapping("/api/admin")
 public class AdminAuthController {
 
     private final JwtProvider jwtProvider;
@@ -35,7 +34,7 @@ public class AdminAuthController {
         this.adminPassword = adminPassword;
     }
 
-    @PostMapping("/login")
+    @PostMapping("/api/admin/login")
     @Operation(summary = "관리자 로그인", description = "관리자 계정으로 로그인하여 JWT 토큰을 발급받는다")
     public LoginResponse login(@Valid @RequestBody LoginRequest request) {
         if (!adminUsername.equals(request.username()) || !adminPassword.equals(request.password())) {

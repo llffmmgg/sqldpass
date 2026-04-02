@@ -7,7 +7,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
@@ -20,19 +19,16 @@ import jakarta.validation.Valid;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
 
 @Tag(name = "관리자 - 문제", description = "문제 관리 API")
 @RestController
-@RequestMapping("/api/admin/questions")
+@RequiredArgsConstructor
 public class AdminQuestionController {
 
     private final AdminQuestionService adminQuestionService;
 
-    public AdminQuestionController(AdminQuestionService adminQuestionService) {
-        this.adminQuestionService = adminQuestionService;
-    }
-
-    @GetMapping
+    @GetMapping("/api/admin/questions")
     @Operation(summary = "문제 목록 조회")
     public Page<AdminQuestionResponse> getQuestions(
             @RequestParam(required = false) Long subjectId,
@@ -41,13 +37,13 @@ public class AdminQuestionController {
         return adminQuestionService.getQuestions(subjectId, page, size);
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/api/admin/questions/{id}")
     @Operation(summary = "문제 상세 조회")
     public AdminQuestionResponse getQuestion(@PathVariable Long id) {
         return adminQuestionService.getQuestion(id);
     }
 
-    @PutMapping("/{id}")
+    @PutMapping("/api/admin/questions/{id}")
     @Operation(summary = "문제 수정")
     public AdminQuestionResponse updateQuestion(
             @PathVariable Long id,
@@ -55,7 +51,7 @@ public class AdminQuestionController {
         return adminQuestionService.updateQuestion(id, request);
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/api/admin/questions/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(summary = "문제 삭제")
     public void deleteQuestion(@PathVariable Long id) {

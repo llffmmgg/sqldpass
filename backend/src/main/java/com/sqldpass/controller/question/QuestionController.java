@@ -4,7 +4,6 @@ import java.util.List;
 
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -12,19 +11,16 @@ import com.sqldpass.service.question.QuestionService;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
 
 @Tag(name = "문제", description = "문제 관련 API")
 @RestController
-@RequestMapping("/api/questions")
+@RequiredArgsConstructor
 public class QuestionController {
 
     private final QuestionService questionService;
 
-    public QuestionController(QuestionService questionService) {
-        this.questionService = questionService;
-    }
-
-    @GetMapping
+    @GetMapping("/api/questions")
     @Operation(summary = "과목별 랜덤 문제 조회", description = "정답과 해설은 포함하지 않는다")
     public List<QuestionResponse> getQuestions(
             @RequestParam Long subjectId,
@@ -34,7 +30,7 @@ public class QuestionController {
                 .toList();
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/api/questions/{id}")
     @Operation(summary = "문제 상세 조회", description = "정답과 해설을 포함한다")
     public QuestionDetailResponse getQuestion(@PathVariable Long id) {
         return QuestionDetailResponse.from(questionService.getQuestion(id));

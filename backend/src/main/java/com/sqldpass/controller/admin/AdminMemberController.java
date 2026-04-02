@@ -1,5 +1,6 @@
 package com.sqldpass.controller.admin;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -14,16 +15,12 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 
 @Tag(name = "관리자 - 회원", description = "회원 관리 API")
 @RestController
-@RequestMapping("/api/admin/members")
+@RequiredArgsConstructor
 public class AdminMemberController {
 
     private final AdminMemberService adminMemberService;
 
-    public AdminMemberController(AdminMemberService adminMemberService) {
-        this.adminMemberService = adminMemberService;
-    }
-
-    @GetMapping
+    @GetMapping("/api/admin/members")
     @Operation(summary = "회원 목록 조회")
     public Page<AdminMemberResponse> getMembers(
             @RequestParam(defaultValue = "0") int page,
