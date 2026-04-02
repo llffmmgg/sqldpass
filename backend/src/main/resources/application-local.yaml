@@ -1,0 +1,9 @@
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3307/sqldpass?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul
+    username: root
+    password: sqldpass
+  sql:
+    init:
+      mode: always
+      data-locations: classpath:data-local.sql
