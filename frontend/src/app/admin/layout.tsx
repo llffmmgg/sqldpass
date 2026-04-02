@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import { isAuthenticated, clearToken } from "@/lib/adminApi";
+import { useEffect, useState, useRef, useCallback } from "react";
+import { isAuthenticated, clearToken, getGenerationStatus, clearGenerationResult, type GenerationResult } from "@/lib/adminApi";
 
 const SIDEBAR_LINKS = [
   { href: "/admin", label: "대시보드", icon: "📊" },
@@ -16,6 +16,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const pathname = usePathname();
   const router = useRouter();
   const [checked, setChecked] = useState(false);
+  const [generating, setGenerating] = useState(false);
+  const [completedResult, setCompletedResult] = useState<GenerationResult | null>(null);
+  const wasRunning = useRef(false);
 
   useEffect(() => {
     if (pathname === "/admin/login") {
@@ -28,6 +31,37 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     }
     setChecked(true);
   }, [pathname, router]);
+
+  // 전역 폴링
+  const pollStatus = useCallback(() => {
+    if (!isAuthenticated() || pathname === "/admin/login") return;
+
+    getGenerationStatus().then((status) => {
+      setGenerating(status.running);
+
+      if (wasRunning.current && !status.running && status.result) {
+        try {
+          const result = JSON.parse(status.result) as GenerationResult;
+          setCompletedResult(result);
+        } catch {
+          // ignore parse error
+        }
+      }
+      wasRunning.current = status.running;
+    }).catch(() => {});
+  }, [pathname]);
+
+  useEffect(() => {
+    if (pathname === "/admin/login") return;
+    pollStatus();
+    const interval = setInterval(pollStatus, 5000);
+    return () => clearInterval(interval);
+  }, [pathname, pollStatus]);
+
+  function handleDismissResult() {
+    clearGenerationResult();
+    setCompletedResult(null);
+  }
 
   if (!checked) return null;
 
@@ -76,7 +110,32 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       </aside>
 
       {/* Main content */}
-      <main className="flex-1 p-8">{children}</main>
+      <div className="flex-1 flex flex-col">
+        {/* 생성 진행 중 배너 */}
+        {generating && (
+          <div className="border-b border-amber-500/30 bg-amber-500/5 px-6 py-2 text-sm text-amber-400">
+            문제 생성이 진행 중입니다...
+          </div>
+        )}
+
+        {/* 생성 완료 알림 */}
+        {completedResult && (
+          <div className="border-b border-green-500/30 bg-green-500/5 px-6 py-3 flex items-center justify-between">
+            <span className="text-sm text-green-400">
+              문제 생성 완료! 생성 {completedResult.totalGenerated}개 / 저장 {completedResult.totalSaved}개
+              {completedResult.errors.length > 0 && ` / 오류 ${completedResult.errors.length}건`}
+            </span>
+            <button
+              onClick={handleDismissResult}
+              className="rounded border border-green-500/30 px-3 py-1 text-xs text-green-400 hover:bg-green-500/10"
+            >
+              확인
+            </button>
+          </div>
+        )}
+
+        <main className="flex-1 p-8">{children}</main>
+      </div>
     </div>
   );
 }

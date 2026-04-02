@@ -5,6 +5,8 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.function.Consumer;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -55,9 +57,20 @@ public class QuestionGenerationService {
     public GenerationResult generateAll(int count, Consumer<GenerationEvent> eventListener) {
         lockService.acquire();
         try {
-            return doGenerate(count, eventListener);
-        } finally {
+            GenerationResult result = doGenerate(count, eventListener);
+            try {
+                String resultJson = new ObjectMapper().writeValueAsString(
+                        new com.sqldpass.controller.admin.dto.GenerationResultResponse(
+                                result.totalGenerated(), result.totalVerified(), result.totalSaved(), result.errors()));
+                lockService.completeWithResult(resultJson);
+            } catch (Exception e) {
+                log.error("Failed to save generation result", e);
+                lockService.release();
+            }
+            return result;
+        } catch (Exception e) {
             lockService.release();
+            throw e;
         }
     }
 
@@ -125,7 +138,7 @@ public class QuestionGenerationService {
 
                         if (verificationEnabled && callCount < maxCallsPerRun) {
                             try {
-                                Thread.sleep(5000);
+                                Thread.sleep(10000);
                                 AiVerificationRequest verifyRequest = new AiVerificationRequest(subject.getName(), question);
                                 AiVerificationResponse verifyResponse = verifier.verifyQuestion(verifyRequest);
                                 callCount++;

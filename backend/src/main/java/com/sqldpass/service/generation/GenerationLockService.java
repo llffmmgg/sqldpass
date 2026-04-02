@@ -4,6 +4,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.sqldpass.controller.admin.dto.GenerationStatusResponse;
 import com.sqldpass.persistent.generation.GenerationLockEntity;
 import com.sqldpass.persistent.generation.GenerationLockRepository;
 import com.sqldpass.service.common.ErrorCode;
@@ -30,6 +31,12 @@ public class GenerationLockService {
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void completeWithResult(String resultJson) {
+        generationLockRepository.findById(1)
+                .ifPresent(lock -> lock.completeWithResult(resultJson));
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void release() {
         generationLockRepository.findById(1)
                 .ifPresent(GenerationLockEntity::release);
@@ -40,5 +47,20 @@ public class GenerationLockService {
         return generationLockRepository.findById(1)
                 .map(lock -> lock.isRunning() && !lock.isStale())
                 .orElse(false);
+    }
+
+    @Transactional(readOnly = true)
+    public GenerationStatusResponse getStatus() {
+        return generationLockRepository.findById(1)
+                .map(lock -> new GenerationStatusResponse(
+                        lock.isRunning() && !lock.isStale(),
+                        lock.getResult()))
+                .orElse(new GenerationStatusResponse(false, null));
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void clearResult() {
+        generationLockRepository.findById(1)
+                .ifPresent(lock -> lock.completeWithResult(null));
     }
 }

@@ -143,12 +143,17 @@ export function getMembers(page = 0, size = 20) {
 
 export interface GenerationStatus {
   running: boolean;
+  result: string | null;
 }
 
 export function getGenerationStatus() {
   return adminFetch<GenerationStatus>("/generate/status");
 }
 
-export function generateQuestions() {
-  return adminFetch<GenerationResult>("/generate", { method: "POST" });
+export function generateQuestions(count = 3) {
+  return adminFetch<void>(`/generate?count=${count}`, { method: "POST" });
+}
+
+export function clearGenerationResult() {
+  return adminFetch<void>("/generate/result/clear", { method: "POST" });
 }

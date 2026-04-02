@@ -9,6 +9,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingRequestHeaderException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.context.request.async.AsyncRequestNotUsableException;
 
 import com.sqldpass.service.common.ErrorCode;
 import com.sqldpass.service.common.SqldpassException;
@@ -52,6 +53,11 @@ public class GlobalExceptionHandler {
         ErrorResponse response = new ErrorResponse(
                 errorCode.getHttpStatus().value(), errorCode.getMessage(), errorCode.getCode());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    }
+
+    @ExceptionHandler(AsyncRequestNotUsableException.class)
+    public void handleAsyncDisconnect(AsyncRequestNotUsableException e) {
+        log.debug("클라이언트 연결 종료됨 (SSE disconnect)");
     }
 
     @ExceptionHandler(Exception.class)

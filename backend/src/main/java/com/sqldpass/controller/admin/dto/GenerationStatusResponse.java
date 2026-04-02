@@ -1,4 +1,4 @@
 package com.sqldpass.controller.admin.dto;
 
-public record GenerationStatusResponse(boolean running) {
+public record GenerationStatusResponse(boolean running, String result) {
 }

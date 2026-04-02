@@ -25,9 +25,19 @@ public class GenerationLockEntity {
 
     private LocalDateTime startedAt;
 
+    @Column(columnDefinition = "TEXT")
+    private String result;
+
     public void acquire() {
         this.running = true;
         this.startedAt = LocalDateTime.now();
+        this.result = null;
+    }
+
+    public void completeWithResult(String resultJson) {
+        this.running = false;
+        this.startedAt = null;
+        this.result = resultJson;
     }
 
     public void release() {
