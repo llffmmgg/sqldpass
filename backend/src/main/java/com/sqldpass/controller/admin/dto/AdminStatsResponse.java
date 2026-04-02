@@ -1,4 +1,4 @@
-package com.sqldpass.controller.admin;
+package com.sqldpass.controller.admin.dto;
 
 public record AdminStatsResponse(
         long totalQuestions,

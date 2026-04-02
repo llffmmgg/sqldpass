@@ -1,14 +1,13 @@
 package com.sqldpass.controller.admin;
 
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.sqldpass.persistent.member.MemberRepository;
+import com.sqldpass.controller.admin.dto.AdminMemberResponse;
+import com.sqldpass.service.admin.AdminMemberService;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -18,10 +17,10 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 @RequestMapping("/api/admin/members")
 public class AdminMemberController {
 
-    private final MemberRepository memberRepository;
+    private final AdminMemberService adminMemberService;
 
-    public AdminMemberController(MemberRepository memberRepository) {
-        this.memberRepository = memberRepository;
+    public AdminMemberController(AdminMemberService adminMemberService) {
+        this.adminMemberService = adminMemberService;
     }
 
     @GetMapping
@@ -29,7 +28,6 @@ public class AdminMemberController {
     public Page<AdminMemberResponse> getMembers(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
-        return memberRepository.findAll(PageRequest.of(page, size, Sort.by("createdAt").descending()))
-                .map(AdminMemberResponse::from);
+        return adminMemberService.getMembers(page, size);
     }
 }

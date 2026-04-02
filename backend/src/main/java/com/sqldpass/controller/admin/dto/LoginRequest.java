@@ -1,4 +1,4 @@
-package com.sqldpass.controller.admin;
+package com.sqldpass.controller.admin.dto;
 
 import jakarta.validation.constraints.NotBlank;
 

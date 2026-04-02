@@ -6,6 +6,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.sqldpass.controller.admin.dto.LoginRequest;
+import com.sqldpass.controller.admin.dto.LoginResponse;
 import com.sqldpass.service.admin.JwtProvider;
 import com.sqldpass.service.common.ErrorCode;
 import com.sqldpass.service.common.SqldpassException;

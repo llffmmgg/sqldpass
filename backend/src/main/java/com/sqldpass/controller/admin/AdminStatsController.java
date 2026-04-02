@@ -1,15 +1,11 @@
 package com.sqldpass.controller.admin;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.sqldpass.persistent.member.MemberRepository;
-import com.sqldpass.persistent.question.QuestionRepository;
-import com.sqldpass.persistent.solve.SolveRepository;
+import com.sqldpass.controller.admin.dto.AdminStatsResponse;
+import com.sqldpass.service.admin.AdminStatsService;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -19,26 +15,15 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 @RequestMapping("/api/admin/stats")
 public class AdminStatsController {
 
-    private final QuestionRepository questionRepository;
-    private final MemberRepository memberRepository;
-    private final SolveRepository solveRepository;
+    private final AdminStatsService adminStatsService;
 
-    public AdminStatsController(QuestionRepository questionRepository,
-                                MemberRepository memberRepository,
-                                SolveRepository solveRepository) {
-        this.questionRepository = questionRepository;
-        this.memberRepository = memberRepository;
-        this.solveRepository = solveRepository;
+    public AdminStatsController(AdminStatsService adminStatsService) {
+        this.adminStatsService = adminStatsService;
     }
 
     @GetMapping
     @Operation(summary = "전체 통계 조회")
     public AdminStatsResponse getStats() {
-        LocalDateTime todayStart = LocalDate.now().atStartOfDay();
-        return new AdminStatsResponse(
-                questionRepository.count(),
-                memberRepository.count(),
-                solveRepository.count(),
-                questionRepository.countByCreatedAtAfter(todayStart));
+        return adminStatsService.getStats();
     }
 }
