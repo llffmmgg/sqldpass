@@ -46,6 +46,11 @@ public class QuestionEntity extends BaseTimeEntity {
     @Column(length = 200)
     private String summary;
 
+    @Column(length = 50)
+    private String topic;
+
+    private Integer difficulty;
+
     public QuestionEntity(SubjectEntity subject, String content, int correctOption, String explanation) {
         this.subject = subject;
         this.content = content;
@@ -53,12 +58,15 @@ public class QuestionEntity extends BaseTimeEntity {
         this.explanation = explanation;
     }
 
-    public QuestionEntity(SubjectEntity subject, String content, int correctOption, String explanation, String summary) {
+    public QuestionEntity(SubjectEntity subject, String content, int correctOption, String explanation,
+                          String summary, String topic, Integer difficulty) {
         this.subject = subject;
         this.content = content;
         this.correctOption = correctOption;
         this.explanation = explanation;
         this.summary = summary;
+        this.topic = topic;
+        this.difficulty = difficulty;
     }
 
     public void update(String content, int correctOption, String explanation, String summary) {

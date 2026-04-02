@@ -55,7 +55,7 @@ sqldpass:
     generation:
       questions-per-subject: 3
       verification-enabled: true
-      max-calls-per-run: 20
+      max-calls-per-run: 50
   scheduler:
     generation-cron: "0 0 3 * * *"
     enabled: false

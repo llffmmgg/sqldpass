@@ -1,6 +1,7 @@
 package com.sqldpass.service.generation;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -36,7 +37,7 @@ public class QuestionGenerationService {
             @Qualifier("verifier") AiProvider verifier,
             @Value("${sqldpass.ai.generation.questions-per-subject:3}") int questionsPerSubject,
             @Value("${sqldpass.ai.generation.verification-enabled:true}") boolean verificationEnabled,
-            @Value("${sqldpass.ai.generation.max-calls-per-run:20}") int maxCallsPerRun) {
+            @Value("${sqldpass.ai.generation.max-calls-per-run:50}") int maxCallsPerRun) {
         this.questionRepository = questionRepository;
         this.subjectRepository = subjectRepository;
         this.lockService = lockService;
@@ -70,38 +71,53 @@ public class QuestionGenerationService {
 
         eventListener.accept(GenerationEvent.progress("문제 생성을 시작합니다. 총 " + leafSubjects.size() + "개 과목"));
 
-        for (int i = 0; i < leafSubjects.size(); i++) {
-            SubjectEntity subject = leafSubjects.get(i);
-
-            if (callCount >= maxCallsPerRun) {
-                log.warn("Max API calls reached ({}), stopping generation", maxCallsPerRun);
-                errors.add("호출 상한 도달로 중단됨");
-                break;
+        for (SubjectEntity subject : leafSubjects) {
+            List<String> topics = PromptBuilder.getTopicsForSubject(subject.getName());
+            if (topics.isEmpty()) {
+                log.warn("No topics defined for subject '{}'", subject.getName());
+                continue;
             }
 
+            // 문제가 가장 적은 토픽 N개 선택
+            List<String> selectedTopics = topics.stream()
+                    .sorted(Comparator.comparingLong(t -> questionRepository.countBySubjectIdAndTopic(subject.getId(), t)))
+                    .limit(count)
+                    .toList();
+
             eventListener.accept(GenerationEvent.progress(
-                    "[" + (i + 1) + "/" + leafSubjects.size() + "] '" + subject.getName() + "' 문제 생성 중..."));
+                    "'" + subject.getName() + "' — 토픽: " + String.join(", ", selectedTopics)));
 
-            try {
-                List<String> existingSummaries = questionRepository.findSummariesBySubjectId(subject.getId());
+            for (String topic : selectedTopics) {
+                if (callCount >= maxCallsPerRun) {
+                    errors.add("호출 상한 도달로 중단됨");
+                    eventListener.accept(GenerationEvent.error("호출 상한 도달"));
+                    return new GenerationResult(totalGenerated, totalVerified, totalSaved, errors);
+                }
 
-                AiGenerationRequest request = new AiGenerationRequest(
-                        subject.getName(), subject.getId(), existingSummaries, count);
+                try {
+                    List<String> existingSummaries = questionRepository.findSummariesBySubjectIdAndTopic(
+                            subject.getId(), topic);
 
-                AiGenerationResponse response = generator.generateQuestions(request);
-                callCount++;
-                totalGenerated += response.questions().size();
+                    AiGenerationRequest request = new AiGenerationRequest(
+                            subject.getName(), subject.getId(), topic, existingSummaries, 1);
 
-                eventListener.accept(GenerationEvent.progress(
-                        "'" + subject.getName() + "' " + response.questions().size() + "문제 생성 완료. 검증 시작..."));
+                    eventListener.accept(GenerationEvent.progress("'" + topic + "' 문제 생성 중..."));
 
-                for (GeneratedQuestion question : response.questions()) {
-                    if (callCount >= maxCallsPerRun) {
-                        errors.add("호출 상한 도달로 검증 중단됨");
-                        break;
+                    AiGenerationResponse response = generator.generateQuestions(request);
+                    callCount++;
+
+                    if (response.questions().isEmpty()) {
+                        errors.add("생성 실패 [" + topic + "]: 빈 응답");
+                        continue;
                     }
 
-                    if (verificationEnabled) {
+                    GeneratedQuestion question = response.questions().get(0);
+                    question = new GeneratedQuestion(
+                            question.content(), question.correctOption(), question.explanation(),
+                            question.summary(), topic, question.difficulty());
+                    totalGenerated++;
+
+                    if (verificationEnabled && callCount < maxCallsPerRun) {
                         try {
                             Thread.sleep(5000);
                             AiVerificationRequest verifyRequest = new AiVerificationRequest(subject.getName(), question);
@@ -109,16 +125,27 @@ public class QuestionGenerationService {
                             callCount++;
 
                             if (!verifyResponse.approved()) {
-                                log.info("Question rejected for subject '{}': {}", subject.getName(), verifyResponse.reason());
                                 eventListener.accept(GenerationEvent.progress(
-                                        "문제 검증 실패 (사유: " + verifyResponse.reason() + ")"));
-                                continue;
+                                        "'" + topic + "' 검증 실패: " + verifyResponse.reason() + " → 수정 요청"));
+
+                                if (callCount < maxCallsPerRun) {
+                                    GeneratedQuestion fixed = generator.fixQuestion(question, verifyResponse.reason());
+                                    callCount++;
+                                    if (fixed != null) {
+                                        question = new GeneratedQuestion(
+                                                fixed.content(), fixed.correctOption(), fixed.explanation(),
+                                                fixed.summary(), topic, fixed.difficulty());
+                                        eventListener.accept(GenerationEvent.progress("'" + topic + "' 수정 완료"));
+                                    } else {
+                                        eventListener.accept(GenerationEvent.progress("'" + topic + "' 수정 불가, 건너뜀"));
+                                        continue;
+                                    }
+                                }
                             }
                             totalVerified++;
                         } catch (Exception e) {
-                            log.error("Verification failed for subject '{}', skipping question", subject.getName(), e);
-                            errors.add("검증 실패 [" + subject.getName() + "]: " + e.getMessage());
-                            continue;
+                            log.error("Verification failed for topic '{}', saving anyway", topic, e);
+                            errors.add("검증 실패 [" + topic + "]: " + e.getMessage());
                         }
                     } else {
                         totalVerified++;
@@ -131,23 +158,17 @@ public class QuestionGenerationService {
 
                     QuestionEntity entity = new QuestionEntity(
                             subject, question.content(), question.correctOption(),
-                            question.explanation(), question.summary());
+                            question.explanation(), question.summary(), question.topic(), question.difficulty());
                     questionRepository.save(entity);
                     totalSaved++;
 
-                    if (question.summary() != null) {
-                        existingSummaries.add(question.summary());
-                    }
+                    eventListener.accept(GenerationEvent.progress("'" + topic + "' 저장 완료"));
+
+                } catch (Exception e) {
+                    log.error("Generation failed for topic '{}'", topic, e);
+                    errors.add("생성 실패 [" + topic + "]: " + e.getMessage());
+                    eventListener.accept(GenerationEvent.error("'" + topic + "' 실패: " + e.getMessage()));
                 }
-
-                eventListener.accept(GenerationEvent.progress(
-                        "'" + subject.getName() + "' 완료 (저장: " + totalSaved + "개)"));
-
-            } catch (Exception e) {
-                log.error("Generation failed for subject '{}'", subject.getName(), e);
-                errors.add("생성 실패 [" + subject.getName() + "]: " + e.getMessage());
-                eventListener.accept(GenerationEvent.error(
-                        "'" + subject.getName() + "' 생성 실패: " + e.getMessage()));
             }
         }
 

@@ -14,7 +14,9 @@ public class QuestionMapper {
                 entity.getContent(),
                 entity.getCorrectOption(),
                 entity.getExplanation(),
-                entity.getSummary()
+                entity.getSummary(),
+                entity.getTopic(),
+                entity.getDifficulty()
         );
     }
 }

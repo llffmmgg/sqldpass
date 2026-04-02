@@ -62,6 +62,27 @@ public class AiProvider {
         }
     }
 
+    public GeneratedQuestion fixQuestion(GeneratedQuestion question, String reason) {
+        String prompt = PromptBuilder.buildFixPrompt(question, reason);
+        String responseText = chatClient.prompt()
+                .system(PromptBuilder.FIX_SYSTEM_PROMPT)
+                .user(prompt)
+                .call()
+                .content();
+
+        try {
+            String json = extractJson(responseText);
+            JsonNode root = objectMapper.readTree(json);
+            if (root.has("fixable") && !root.get("fixable").asBoolean()) {
+                return null;
+            }
+            return objectMapper.readValue(json, GeneratedQuestion.class);
+        } catch (Exception e) {
+            log.error("Failed to parse fix response: {}", responseText, e);
+            return null;
+        }
+    }
+
     private String extractJson(String text) {
         int start = text.indexOf('[');
         int startObj = text.indexOf('{');

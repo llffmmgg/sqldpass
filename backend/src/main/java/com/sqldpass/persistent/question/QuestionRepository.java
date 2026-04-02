@@ -24,4 +24,9 @@ public interface QuestionRepository extends JpaRepository<QuestionEntity, Long> 
     Page<QuestionEntity> findAllWithSubject(Pageable pageable);
 
     long countByCreatedAtAfter(LocalDateTime dateTime);
+
+    long countBySubjectIdAndTopic(Long subjectId, String topic);
+
+    @Query("SELECT q.summary FROM QuestionEntity q WHERE q.subject.id = :subjectId AND q.topic = :topic AND q.summary IS NOT NULL")
+    List<String> findSummariesBySubjectIdAndTopic(@Param("subjectId") Long subjectId, @Param("topic") String topic);
 }
