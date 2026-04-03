@@ -1,6 +1,7 @@
 package com.sqldpass.controller.admin;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -11,6 +12,9 @@ import com.sqldpass.controller.admin.dto.GenerationStatusResponse;
 import com.sqldpass.service.generation.GenerationLockService;
 import com.sqldpass.service.generation.QuestionGenerationService;
 
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Tag(name = "관리자", description = "관리자 API")
+@Validated
 @RestController
 @RequiredArgsConstructor
 public class AdminGenerationController {
@@ -40,7 +45,7 @@ public class AdminGenerationController {
     @PostMapping("/api/admin/generate")
     @ResponseStatus(HttpStatus.ACCEPTED)
     @Operation(summary = "문제 생성 시작 (백그라운드)")
-    public void generate(@RequestParam(defaultValue = "3") int count) {
+    public void generate(@RequestParam(defaultValue = "3") @Min(1) @Max(10) int count) {
         Thread.startVirtualThread(() -> {
             try {
                 generationService.generateAll(count, event ->

@@ -2,6 +2,7 @@ package com.sqldpass.controller.admin;
 
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -16,12 +17,15 @@ import com.sqldpass.controller.admin.dto.AdminQuestionUpdateRequest;
 import com.sqldpass.service.admin.AdminQuestionService;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 
 @Tag(name = "관리자 - 문제", description = "문제 관리 API")
+@Validated
 @RestController
 @RequiredArgsConstructor
 public class AdminQuestionController {
@@ -32,8 +36,8 @@ public class AdminQuestionController {
     @Operation(summary = "문제 목록 조회")
     public Page<AdminQuestionResponse> getQuestions(
             @RequestParam(required = false) Long subjectId,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size) {
         return adminQuestionService.getQuestions(subjectId, page, size);
     }
 

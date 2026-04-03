@@ -2,6 +2,8 @@ package com.sqldpass.controller.common;
 
 import java.util.List;
 
+import jakarta.validation.ConstraintViolationException;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -36,6 +38,14 @@ public class GlobalExceptionHandler {
         ErrorCode errorCode = ErrorCode.INVALID_INPUT;
         ErrorResponse response = new ErrorResponse(
                 errorCode.getHttpStatus().value(), errorCode.getMessage(), errorCode.getCode(), fieldErrors);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    }
+
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<ErrorResponse> handleConstraintViolation(ConstraintViolationException e) {
+        ErrorCode errorCode = ErrorCode.INVALID_INPUT;
+        ErrorResponse response = new ErrorResponse(
+                errorCode.getHttpStatus().value(), e.getMessage(), errorCode.getCode());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
 

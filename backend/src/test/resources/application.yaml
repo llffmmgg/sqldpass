@@ -26,7 +26,7 @@ sqldpass:
       client-secret: test-client-secret
   admin:
     username: admin
-    password: admin1234
+    password-hash: $2a$10$zKXKfuTgKRvDGo2F00OyTe2R33XqdfRBxSaqf1VG1oc6Wdtsy.xPO
   jwt:
     secret: test-secret-key-minimum-32-characters-long-for-hmac
     expiration: 3600000
