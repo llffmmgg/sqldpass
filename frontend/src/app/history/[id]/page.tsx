@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useEffect, useState, use } from "react";
 import { getSolve, getQuestionDetail, getSubjects, type SolveResponse, type QuestionDetail, type Subject } from "@/lib/api";
 import { formatDate } from "@/lib/format";
+import { parseQuestion, OPTION_MARKERS } from "@/lib/parseQuestion";
+import QuestionContent from "@/components/QuestionContent";
 
 function buildSubjectMap(subjects: Subject[]): Record<number, string> {
   const map: Record<number, string> = {};
@@ -14,22 +16,6 @@ function buildSubjectMap(subjects: Subject[]): Record<number, string> {
     }
   }
   return map;
-}
-
-const OPTION_MARKERS = ["①", "②", "③", "④"];
-
-function parseOptions(content: string) {
-  const lines = content.split("\n").filter((l) => l.trim());
-  const questionLines: string[] = [];
-  const options: string[] = [];
-  for (const line of lines) {
-    if (OPTION_MARKERS.some((m) => line.trim().startsWith(m))) {
-      options.push(line.trim().replace(/^[①②③④]\s*/, ""));
-    } else {
-      if (options.length === 0) questionLines.push(line);
-    }
-  }
-  return { questionText: questionLines.join("\n"), options };
 }
 
 export default function HistoryDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -96,7 +82,7 @@ export default function HistoryDetailPage({ params }: { params: Promise<{ id: st
         <div className="mt-8 space-y-4">
           {solve.answers.map((answer, idx) => {
             const detail = details[answer.questionId];
-            const parsed = detail ? parseOptions(detail.content) : null;
+            const parsed = detail ? parseQuestion(detail.content) : null;
 
             return (
               <div
@@ -111,9 +97,7 @@ export default function HistoryDetailPage({ params }: { params: Promise<{ id: st
                   <div className="flex-1">
                     <p className="text-sm font-medium text-muted">문제 {idx + 1}</p>
                     {parsed && (
-                      <p className="mt-1 text-sm leading-relaxed whitespace-pre-line">
-                        {parsed.questionText}
-                      </p>
+                      <QuestionContent segments={parsed.segments} className="mt-1" />
                     )}
                   </div>
                   <span

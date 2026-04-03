@@ -9,27 +9,8 @@ import {
   type Question,
   type QuestionDetail,
 } from "@/lib/api";
-
-const OPTION_MARKERS = ["①", "②", "③", "④"];
-
-function parseQuestion(content: string) {
-  const lines = content.split("\n").filter((l) => l.trim());
-  const questionLines: string[] = [];
-  const options: string[] = [];
-
-  for (const line of lines) {
-    if (OPTION_MARKERS.some((m) => line.trim().startsWith(m))) {
-      options.push(line.trim());
-    } else if (options.length === 0) {
-      questionLines.push(line);
-    }
-  }
-
-  return {
-    questionText: questionLines.join("\n"),
-    options: options.map((opt) => opt.replace(/^[①②③④]\s*/, "")),
-  };
-}
+import { parseQuestion } from "@/lib/parseQuestion";
+import QuestionContent from "@/components/QuestionContent";
 
 type Phase = "select" | "solve";
 
@@ -194,9 +175,7 @@ export default function SolvePage() {
 
         {/* 문제 */}
         <div className="mt-8 rounded-xl border border-border bg-surface p-6">
-          <p className="font-medium leading-relaxed whitespace-pre-wrap">
-            {parsed.questionText}
-          </p>
+          <QuestionContent segments={parsed.segments} />
 
           <ul className="mt-6 space-y-2">
             {parsed.options.map((optionText, idx) => {
