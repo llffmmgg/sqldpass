@@ -1,6 +1,20 @@
 @import "tailwindcss";
 
 :root {
+  --background: #ffffff;
+  --foreground: #18181b;
+  --primary: #d97706;
+  --primary-hover: #b45309;
+  --surface: #f4f4f5;
+  --border: #e4e4e7;
+  --muted: #71717a;
+  --accent: #7c3aed;
+  --accent-hover: #6d28d9;
+  --glow: #d9770633;
+  --accent-glow: #7c3aed33;
+}
+
+:root.dark {
   --background: #09090b;
   --foreground: #fafaf9;
   --primary: #f59e0b;
@@ -129,9 +143,162 @@ body {
 
 .grid-pattern {
   background-image:
-    linear-gradient(to right, rgba(245, 158, 11, 0.03) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(245, 158, 11, 0.03) 1px, transparent 1px);
-  background-size: 60px 60px;
+    radial-gradient(circle, rgba(245, 158, 11, 0.06) 1px, transparent 1px),
+    linear-gradient(to right, rgba(245, 158, 11, 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(245, 158, 11, 0.04) 1px, transparent 1px);
+  background-size: 60px 60px, 60px 60px, 60px 60px;
+}
+
+/* ── Hero ambient base ── */
+
+.hero-ambient {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 80% 60% at 30% 40%, rgba(245, 158, 11, 0.12), transparent),
+    radial-gradient(ellipse 70% 50% at 70% 30%, rgba(139, 92, 246, 0.1), transparent),
+    radial-gradient(ellipse 90% 40% at 50% 80%, rgba(245, 158, 11, 0.06), transparent);
+}
+
+/* ── Hero Orbs ── */
+
+@keyframes orb-drift-1 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  25% { transform: translate(60px, -40px) scale(1.15); }
+  50% { transform: translate(-30px, 30px) scale(0.9); }
+  75% { transform: translate(40px, 60px) scale(1.1); }
+}
+
+@keyframes orb-drift-2 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  25% { transform: translate(-50px, 40px) scale(1.1); }
+  50% { transform: translate(40px, -60px) scale(1.15); }
+  75% { transform: translate(-40px, -20px) scale(0.9); }
+}
+
+@keyframes orb-drift-3 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(70px, 20px) scale(1.12); }
+  66% { transform: translate(-60px, -40px) scale(0.88); }
+}
+
+@keyframes orb-drift-4 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(-40px, 50px) scale(1.2); }
+}
+
+@keyframes orb-drift-5 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  40% { transform: translate(50px, -30px) scale(1.1); }
+  80% { transform: translate(-30px, 40px) scale(0.95); }
+}
+
+.hero-orb {
+  position: absolute;
+  border-radius: 9999px;
+  pointer-events: none;
+  will-change: transform;
+}
+
+/* Primary amber — large, top-left, dominant */
+.hero-orb-1 {
+  width: 700px;
+  height: 700px;
+  background: radial-gradient(circle, rgba(245, 158, 11, 0.4) 0%, rgba(245, 158, 11, 0.1) 40%, transparent 70%);
+  filter: blur(60px);
+  top: -25%;
+  left: -5%;
+  animation: orb-drift-1 25s ease-in-out infinite;
+}
+
+/* Primary violet — large, top-right */
+.hero-orb-2 {
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, rgba(139, 92, 246, 0.35) 0%, rgba(139, 92, 246, 0.08) 40%, transparent 70%);
+  filter: blur(60px);
+  top: -10%;
+  right: -5%;
+  animation: orb-drift-2 30s ease-in-out infinite;
+}
+
+/* Mixed — bottom center, bridge between the two */
+.hero-orb-3 {
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(circle, rgba(217, 119, 6, 0.25) 0%, rgba(139, 92, 246, 0.15) 40%, transparent 70%);
+  filter: blur(70px);
+  bottom: -15%;
+  left: 20%;
+  animation: orb-drift-3 20s ease-in-out infinite;
+}
+
+/* Secondary amber — mid layer, center-left overlap */
+.hero-orb-4 {
+  width: 350px;
+  height: 350px;
+  background: radial-gradient(circle, rgba(251, 191, 36, 0.2) 0%, transparent 60%);
+  filter: blur(50px);
+  top: 30%;
+  left: 15%;
+  animation: orb-drift-4 18s ease-in-out infinite;
+}
+
+/* Secondary violet — mid layer, center-right overlap */
+.hero-orb-5 {
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle, rgba(167, 139, 250, 0.18) 0%, transparent 60%);
+  filter: blur(50px);
+  top: 20%;
+  right: 20%;
+  animation: orb-drift-5 22s ease-in-out infinite;
+}
+
+/* ── Noise overlay ── */
+
+.noise-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.35;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 256px 256px;
+}
+
+/* ── Light sweep beams ── */
+
+.hero-beam {
+  position: absolute;
+  pointer-events: none;
+  opacity: 0;
+}
+
+.hero-beam-1 {
+  width: 2px;
+  height: 250%;
+  background: linear-gradient(to bottom, transparent 0%, rgba(245, 158, 11, 0.3) 30%, rgba(245, 158, 11, 0.5) 50%, rgba(245, 158, 11, 0.3) 70%, transparent 100%);
+  left: 25%;
+  top: -75%;
+  transform: rotate(-25deg);
+  animation: beam-fade 10s ease-in-out infinite;
+}
+
+.hero-beam-2 {
+  width: 2px;
+  height: 250%;
+  background: linear-gradient(to bottom, transparent 0%, rgba(139, 92, 246, 0.25) 30%, rgba(139, 92, 246, 0.4) 50%, rgba(139, 92, 246, 0.25) 70%, transparent 100%);
+  right: 30%;
+  top: -75%;
+  transform: rotate(20deg);
+  animation: beam-fade 10s ease-in-out 5s infinite;
+}
+
+@keyframes beam-fade {
+  0%, 100% { opacity: 0; }
+  40%, 60% { opacity: 1; }
 }
 
 /* ── Code window chrome ── */
@@ -212,3 +379,28 @@ details[open] summary .chevron-icon {
 .animate-float {
   animation: float 4s ease-in-out infinite;
 }
+
+/* ── SQL fragment float variants ── */
+
+@keyframes sql-bob-up {
+  0%, 100% { translate: 0 0; }
+  50% { translate: 0 -10px; }
+}
+
+@keyframes sql-bob-down {
+  0%, 100% { translate: 0 0; }
+  50% { translate: 0 8px; }
+}
+
+.sql-frag {
+  will-change: translate;
+}
+
+.sql-float-1 { animation: sql-bob-up 5s ease-in-out infinite; }
+.sql-float-2 { animation: sql-bob-down 6s ease-in-out infinite; }
+.sql-float-3 { animation: sql-bob-up 7s ease-in-out infinite; }
+.sql-float-4 { animation: sql-bob-down 4.5s ease-in-out infinite; }
+.sql-float-5 { animation: sql-bob-up 5.5s ease-in-out infinite; }
+.sql-float-6 { animation: sql-bob-down 6.5s ease-in-out infinite; }
+.sql-float-7 { animation: sql-bob-up 4s ease-in-out infinite; }
+.sql-float-8 { animation: sql-bob-down 7.5s ease-in-out infinite; }
