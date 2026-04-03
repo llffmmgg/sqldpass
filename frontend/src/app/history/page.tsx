@@ -22,7 +22,7 @@ export default function HistoryPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    Promise.all([getSolves(1), getSubjects()])
+    Promise.all([getSolves(), getSubjects()])
       .then(([solvesData, subjects]) => {
         setSolves(solvesData);
         setSubjectMap(buildSubjectMap(subjects));

@@ -20,6 +20,10 @@ spring:
       enabled: false
 
 sqldpass:
+  oauth:
+    google:
+      client-id: test-client-id
+      client-secret: test-client-secret
   admin:
     username: admin
     password: admin1234

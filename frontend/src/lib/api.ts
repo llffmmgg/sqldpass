@@ -1,10 +1,14 @@
+import { getToken } from "@/lib/auth";
+
 const BASE = "/api";
 
 export async function fetchApi<T>(path: string, options?: RequestInit): Promise<T> {
+  const token = getToken();
   const res = await fetch(`${BASE}${path}`, {
     ...options,
     headers: {
       "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...options?.headers,
     },
   });
@@ -106,33 +110,26 @@ export function getQuestionDetail(id: number) {
   return fetchApi<QuestionDetail>(`/questions/${id}`);
 }
 
-export function submitSolve(memberId: number, request: SolveRequest) {
+export function submitSolve(request: SolveRequest) {
   return fetchApi<SolveResponse>("/solves", {
     method: "POST",
-    headers: { "X-Member-Id": String(memberId) },
     body: JSON.stringify(request),
   });
 }
 
-export function getSolves(memberId: number) {
-  return fetchApi<SolveSummaryResponse[]>("/solves", {
-    headers: { "X-Member-Id": String(memberId) },
-  });
+export function getSolves() {
+  return fetchApi<SolveSummaryResponse[]>("/solves");
 }
 
 export function getSolve(id: number) {
   return fetchApi<SolveResponse>(`/solves/${id}`);
 }
 
-export function getWrongAnswers(memberId: number, subjectId?: number) {
+export function getWrongAnswers(subjectId?: number) {
   const params = subjectId ? `?subjectId=${subjectId}` : "";
-  return fetchApi<WrongAnswerResponse[]>(`/wrong-answers${params}`, {
-    headers: { "X-Member-Id": String(memberId) },
-  });
+  return fetchApi<WrongAnswerResponse[]>(`/wrong-answers${params}`);
 }
 
-export function getWrongAnswerStats(memberId: number) {
-  return fetchApi<WrongAnswerStatsResponse[]>("/wrong-answers/stats", {
-    headers: { "X-Member-Id": String(memberId) },
-  });
+export function getWrongAnswerStats() {
+  return fetchApi<WrongAnswerStatsResponse[]>("/wrong-answers/stats");
 }

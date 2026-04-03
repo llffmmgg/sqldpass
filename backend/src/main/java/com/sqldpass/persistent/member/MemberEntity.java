@@ -35,17 +35,9 @@ public class MemberEntity extends BaseTimeEntity {
     @Column(nullable = false, length = 50)
     private String nickname;
 
-    @Column(length = 100)
-    private String email;
-
-    @Column(name = "profile_image", length = 500)
-    private String profileImage;
-
-    public MemberEntity(String provider, String providerId, String nickname, String email, String profileImage) {
+    public MemberEntity(String provider, String providerId, String nickname) {
         this.provider = provider;
         this.providerId = providerId;
         this.nickname = nickname;
-        this.email = email;
-        this.profileImage = profileImage;
     }
 }

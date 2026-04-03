@@ -1,8 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { isLoggedIn, getNickname, clearAuth } from "@/lib/auth";
+import { getGoogleLoginUrl } from "@/lib/oauth";
 
 const NAV_LINKS = [
   { href: "/", label: "홈" },
@@ -13,11 +15,30 @@ const NAV_LINKS = [
 
 export default function NavBar() {
   const pathname = usePathname();
+  const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [loggedIn, setLoggedIn] = useState(false);
+  const [nickname, setNickname] = useState<string | null>(null);
+
+  useEffect(() => {
+    setLoggedIn(isLoggedIn());
+    setNickname(getNickname());
+  }, [pathname]);
 
   function isActive(href: string) {
     if (href === "/") return pathname === "/";
     return pathname.startsWith(href);
+  }
+
+  function handleLogin() {
+    window.location.href = getGoogleLoginUrl();
+  }
+
+  function handleLogout() {
+    clearAuth();
+    setLoggedIn(false);
+    setNickname(null);
+    router.push("/");
   }
 
   return (
@@ -28,22 +49,45 @@ export default function NavBar() {
         </Link>
 
         {/* Desktop */}
-        <ul className="hidden gap-1 sm:flex">
-          {NAV_LINKS.map((link) => (
-            <li key={link.href}>
-              <Link
-                href={link.href}
-                className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
-                  isActive(link.href)
-                    ? "bg-primary/10 text-primary"
-                    : "text-muted hover:text-foreground"
-                }`}
+        <div className="hidden items-center gap-1 sm:flex">
+          <ul className="flex gap-1">
+            {NAV_LINKS.map((link) => (
+              <li key={link.href}>
+                <Link
+                  href={link.href}
+                  className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+                    isActive(link.href)
+                      ? "bg-primary/10 text-primary"
+                      : "text-muted hover:text-foreground"
+                  }`}
+                >
+                  {link.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+
+          <div className="ml-4 flex items-center gap-2">
+            {loggedIn ? (
+              <>
+                <span className="text-sm text-muted">{nickname}</span>
+                <button
+                  onClick={handleLogout}
+                  className="rounded-md px-3 py-1.5 text-sm font-medium text-muted transition-colors hover:text-foreground"
+                >
+                  로그아웃
+                </button>
+              </>
+            ) : (
+              <button
+                onClick={handleLogin}
+                className="rounded-lg bg-primary px-4 py-1.5 text-sm font-semibold text-zinc-900 transition-colors hover:bg-primary-hover"
               >
-                {link.label}
-              </Link>
-            </li>
-          ))}
-        </ul>
+                로그인
+              </button>
+            )}
+          </div>
+        </div>
 
         {/* Mobile hamburger */}
         <button
@@ -63,23 +107,45 @@ export default function NavBar() {
 
       {/* Mobile menu */}
       {menuOpen && (
-        <ul className="border-t border-border px-4 pb-3 sm:hidden">
-          {NAV_LINKS.map((link) => (
-            <li key={link.href}>
-              <Link
-                href={link.href}
-                onClick={() => setMenuOpen(false)}
-                className={`block rounded-md px-3 py-2 text-sm font-medium transition-colors ${
-                  isActive(link.href)
-                    ? "bg-primary/10 text-primary"
-                    : "text-muted hover:text-foreground"
-                }`}
+        <div className="border-t border-border px-4 pb-3 sm:hidden">
+          <ul>
+            {NAV_LINKS.map((link) => (
+              <li key={link.href}>
+                <Link
+                  href={link.href}
+                  onClick={() => setMenuOpen(false)}
+                  className={`block rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+                    isActive(link.href)
+                      ? "bg-primary/10 text-primary"
+                      : "text-muted hover:text-foreground"
+                  }`}
+                >
+                  {link.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+          <div className="mt-2 border-t border-border pt-2">
+            {loggedIn ? (
+              <div className="flex items-center justify-between px-3 py-2">
+                <span className="text-sm text-muted">{nickname}</span>
+                <button
+                  onClick={() => { handleLogout(); setMenuOpen(false); }}
+                  className="text-sm text-muted hover:text-foreground"
+                >
+                  로그아웃
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => { handleLogin(); setMenuOpen(false); }}
+                className="block w-full rounded-lg bg-primary px-4 py-2 text-center text-sm font-semibold text-zinc-900 transition-colors hover:bg-primary-hover"
               >
-                {link.label}
-              </Link>
-            </li>
-          ))}
-        </ul>
+                로그인
+              </button>
+            )}
+          </div>
+        </div>
       )}
     </header>
   );

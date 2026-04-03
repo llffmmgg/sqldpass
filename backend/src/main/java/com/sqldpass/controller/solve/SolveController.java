@@ -7,7 +7,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -16,6 +15,7 @@ import com.sqldpass.controller.solve.dto.SolveResponse;
 import com.sqldpass.controller.solve.dto.SolveSummaryResponse;
 import com.sqldpass.service.solve.SolveService;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -33,14 +33,16 @@ public class SolveController {
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "답안 제출 및 채점")
     public SolveResponse submit(
-            @RequestHeader("X-Member-Id") Long memberId,
-            @Valid @RequestBody SolveRequest request) {
-        return SolveResponse.from(solveService.solve(memberId, request));
+            HttpServletRequest request,
+            @Valid @RequestBody SolveRequest body) {
+        Long memberId = (Long) request.getAttribute("memberId");
+        return SolveResponse.from(solveService.solve(memberId, body));
     }
 
     @GetMapping("/api/solves")
     @Operation(summary = "내 풀이 기록 목록")
-    public List<SolveSummaryResponse> getSolves(@RequestHeader("X-Member-Id") Long memberId) {
+    public List<SolveSummaryResponse> getSolves(HttpServletRequest request) {
+        Long memberId = (Long) request.getAttribute("memberId");
         return solveService.getMySolves(memberId).stream()
                 .map(SolveSummaryResponse::from)
                 .toList();

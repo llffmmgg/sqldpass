@@ -8,7 +8,6 @@ public record AdminMemberResponse(
         Long id,
         String provider,
         String nickname,
-        String email,
         LocalDateTime createdAt) {
 
     public static AdminMemberResponse from(MemberEntity entity) {
@@ -16,7 +15,6 @@ public record AdminMemberResponse(
                 entity.getId(),
                 entity.getProvider(),
                 entity.getNickname(),
-                entity.getEmail(),
                 entity.getCreatedAt());
     }
 }

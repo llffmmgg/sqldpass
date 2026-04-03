@@ -1,7 +1,7 @@
 -- 로컬 환경 시드 데이터 (local 프로필에서만 실행)
 -- 임시 회원
-INSERT IGNORE INTO member (id, provider, provider_id, nickname, email, profile_image, created_at, updated_at)
-VALUES (1, 'local', 'local-1', '테스트유저', 'test@test.com', NULL, NOW(6), NOW(6));
+INSERT IGNORE INTO member (id, provider, provider_id, nickname, created_at, updated_at)
+VALUES (1, 'local', 'local-1', '테스트유저', NOW(6), NOW(6));
 
 -- === 과목 3: 데이터 모델링의 이해 ===
 

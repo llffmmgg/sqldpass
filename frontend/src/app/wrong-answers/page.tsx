@@ -12,6 +12,8 @@ import {
   type QuestionDetail,
 } from "@/lib/api";
 import { formatDate } from "@/lib/format";
+import { parseQuestion } from "@/lib/parseQuestion";
+import QuestionContent from "@/components/QuestionContent";
 import Link from "next/link";
 
 function getLeafSubjects(subjects: Subject[]): { id: number; name: string }[] {
@@ -43,8 +45,8 @@ export default function WrongAnswersPage() {
 
   useEffect(() => {
     Promise.all([
-      getWrongAnswerStats(1),
-      getWrongAnswers(1),
+      getWrongAnswerStats(),
+      getWrongAnswers(),
       getSubjects(),
     ])
       .then(([statsData, wrongData, subjectsData]) => {
@@ -58,7 +60,7 @@ export default function WrongAnswersPage() {
   function handleSubjectFilter(subjectId: number | null) {
     setSelectedSubject(subjectId);
     setLoading(true);
-    getWrongAnswers(1, subjectId ?? undefined)
+    getWrongAnswers(subjectId ?? undefined)
       .then(setWrongAnswers)
       .finally(() => setLoading(false));
   }
@@ -199,11 +201,16 @@ export default function WrongAnswersPage() {
                   </div>
 
                   {expandedId === wa.questionId && (
-                    <div className="mt-3 rounded-lg border border-border px-3 py-3 text-sm">
-                      <p className="font-medium text-amber-400">해설</p>
-                      <p className="mt-1 leading-relaxed text-muted">
-                        {explanations[wa.questionId] || "로딩 중..."}
-                      </p>
+                    <div className="mt-3 space-y-3">
+                      <div className="rounded-lg border border-border px-3 py-3">
+                        <QuestionContent segments={parseQuestion(wa.questionContent).segments} />
+                      </div>
+                      <div className="rounded-lg border border-border px-3 py-3 text-sm">
+                        <p className="font-medium text-amber-400">해설</p>
+                        <p className="mt-1 leading-relaxed text-muted">
+                          {explanations[wa.questionId] || "로딩 중..."}
+                        </p>
+                      </div>
                     </div>
                   )}
                 </div>

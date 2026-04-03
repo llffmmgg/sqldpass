@@ -62,7 +62,7 @@ class SolveServiceTest {
         entityManager.flush();
         entityManager.clear();
 
-        member = new MemberEntity("google", "123", "테스터", "test@test.com", null);
+        member = new MemberEntity("google", "123", "테스터");
         memberRepository.save(member);
 
         subject = new SubjectEntity(null, "SQL 기본", 1);
