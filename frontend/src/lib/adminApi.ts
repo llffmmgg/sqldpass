@@ -39,7 +39,7 @@ async function adminFetch<T>(path: string, options?: RequestInit): Promise<T> {
     throw new Error(error.message);
   }
 
-  if (res.status === 204) return undefined as T;
+  if (res.status === 204 || res.status === 202) return undefined as T;
   return res.json();
 }
 
