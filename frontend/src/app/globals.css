@@ -143,10 +143,15 @@ body {
 
 .grid-pattern {
   background-image:
-    radial-gradient(circle, rgba(245, 158, 11, 0.06) 1px, transparent 1px),
-    linear-gradient(to right, rgba(245, 158, 11, 0.04) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(245, 158, 11, 0.04) 1px, transparent 1px);
+    radial-gradient(circle, var(--primary) 1px, transparent 1px),
+    linear-gradient(to right, var(--primary) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--primary) 1px, transparent 1px);
   background-size: 60px 60px, 60px 60px, 60px 60px;
+  opacity: 0.04;
+}
+
+:root.dark .grid-pattern {
+  opacity: 0.06;
 }
 
 /* ── Hero ambient base ── */

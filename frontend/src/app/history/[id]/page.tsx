@@ -6,6 +6,7 @@ import { getSolve, getQuestionDetail, getSubjects, type SolveResponse, type Ques
 import { formatDate } from "@/lib/format";
 import { parseQuestion, OPTION_MARKERS } from "@/lib/parseQuestion";
 import QuestionContent from "@/components/QuestionContent";
+import Spinner from "@/components/Spinner";
 
 function buildSubjectMap(subjects: Subject[]): Record<number, string> {
   const map: Record<number, string> = {};
@@ -48,7 +49,7 @@ export default function HistoryDetailPage({ params }: { params: Promise<{ id: st
     return (
       <main className="min-h-screen bg-background text-foreground">
         <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6">
-          <p className="py-12 text-center text-muted">로딩 중...</p>
+          <Spinner />
         </div>
       </main>
     );
@@ -107,7 +108,7 @@ export default function HistoryDetailPage({ params }: { params: Promise<{ id: st
                         : "bg-red-500/20 text-red-400"
                     }`}
                   >
-                    {answer.correct ? "정답" : "오답"}
+                    {answer.correct ? "\u2713 정답" : "\u2717 오답"}
                   </span>
                 </div>
 

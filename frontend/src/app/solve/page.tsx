@@ -11,6 +11,7 @@ import {
 } from "@/lib/api";
 import { parseQuestion } from "@/lib/parseQuestion";
 import QuestionContent from "@/components/QuestionContent";
+import Spinner from "@/components/Spinner";
 
 type Phase = "select" | "solve";
 
@@ -97,7 +98,7 @@ export default function SolvePage() {
   if (loading) {
     return (
       <main className="min-h-screen bg-background text-foreground flex items-center justify-center">
-        <p className="text-muted">로딩 중...</p>
+        <Spinner message="문제를 불러오는 중..." />
       </main>
     );
   }
@@ -201,7 +202,7 @@ export default function SolvePage() {
                   <button
                     onClick={() => handleSelect(num)}
                     disabled={revealed}
-                    className={`w-full rounded-lg border px-4 py-3 text-left text-sm transition-all duration-200 ${style} disabled:cursor-default`}
+                    className={`w-full rounded-lg border px-4 py-3 text-left text-sm transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 ${style} disabled:cursor-default`}
                   >
                     <span className="mr-3 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-current text-xs">
                       {num}

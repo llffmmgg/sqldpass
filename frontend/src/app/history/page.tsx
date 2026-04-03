@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { getSolves, getSubjects, type SolveSummaryResponse, type Subject } from "@/lib/api";
+import Spinner from "@/components/Spinner";
 import { formatDate } from "@/lib/format";
 
 function buildSubjectMap(subjects: Subject[]): Record<number, string> {
@@ -37,16 +38,20 @@ export default function HistoryPage() {
         <p className="mt-2 text-sm text-muted">지금까지의 학습 이력을 확인하세요.</p>
 
         <div className="mt-8 space-y-3">
-          {loading && (
-            <p className="py-12 text-center text-muted">로딩 중...</p>
-          )}
+          {loading && <Spinner />}
 
           {!loading && solves.length === 0 && (
             <div className="py-16 text-center">
-              <p className="text-muted">아직 풀이 기록이 없습니다.</p>
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-surface border border-border">
+                <svg className="h-8 w-8 text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                </svg>
+              </div>
+              <p className="mt-4 text-muted">아직 풀이 기록이 없습니다.</p>
+              <p className="mt-1 text-sm text-muted/60">문제를 풀면 여기에 기록이 쌓여요.</p>
               <Link
                 href="/solve"
-                className="mt-4 inline-block rounded-lg bg-primary px-5 py-2 text-sm font-semibold text-zinc-900 transition-colors hover:bg-primary-hover"
+                className="mt-6 inline-block rounded-lg bg-primary px-5 py-2 text-sm font-semibold text-zinc-900 transition-colors hover:bg-primary-hover"
               >
                 문제 풀러 가기
               </Link>

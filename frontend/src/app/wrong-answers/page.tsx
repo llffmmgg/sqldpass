@@ -14,6 +14,7 @@ import {
 import { formatDate } from "@/lib/format";
 import { parseQuestion } from "@/lib/parseQuestion";
 import QuestionContent from "@/components/QuestionContent";
+import Spinner from "@/components/Spinner";
 import Link from "next/link";
 
 function getLeafSubjects(subjects: Subject[]): { id: number; name: string }[] {
@@ -146,15 +147,20 @@ export default function WrongAnswersPage() {
 
           <div className="mt-4 space-y-3">
             {loading && (
-              <p className="py-12 text-center text-muted">로딩 중...</p>
+              <Spinner />
             )}
 
             {!loading && wrongAnswers.length === 0 && (
               <div className="py-16 text-center">
-                <p className="text-muted">오답이 없습니다. 완벽해요!</p>
+                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-green-500/10 border border-green-500/20">
+                  <svg className="h-8 w-8 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                  </svg>
+                </div>
+                <p className="mt-4 text-muted">오답이 없습니다. 완벽해요!</p>
                 <Link
                   href="/solve"
-                  className="mt-4 inline-block rounded-lg bg-primary px-5 py-2 text-sm font-semibold text-zinc-900 transition-colors hover:bg-primary-hover"
+                  className="mt-6 inline-block rounded-lg bg-primary px-5 py-2 text-sm font-semibold text-zinc-900 transition-colors hover:bg-primary-hover"
                 >
                   문제 풀러 가기
                 </Link>
@@ -200,19 +206,21 @@ export default function WrongAnswersPage() {
                     </div>
                   </div>
 
-                  {expandedId === wa.questionId && (
-                    <div className="mt-3 space-y-3">
-                      <div className="rounded-lg border border-border px-3 py-3">
-                        <QuestionContent segments={parseQuestion(wa.questionContent).segments} />
-                      </div>
-                      <div className="rounded-lg border border-border px-3 py-3 text-sm">
-                        <p className="font-medium text-amber-400">해설</p>
-                        <p className="mt-1 leading-relaxed text-muted">
-                          {explanations[wa.questionId] || "로딩 중..."}
-                        </p>
+                  <div className={`grid transition-all duration-300 ease-in-out ${expandedId === wa.questionId ? "grid-rows-[1fr] opacity-100 mt-3" : "grid-rows-[0fr] opacity-0"}`}>
+                    <div className="overflow-hidden">
+                      <div className="space-y-3">
+                        <div className="rounded-lg border border-border px-3 py-3">
+                          <QuestionContent segments={parseQuestion(wa.questionContent).segments} />
+                        </div>
+                        <div className="rounded-lg border border-border px-3 py-3 text-sm">
+                          <p className="font-medium text-amber-400">해설</p>
+                          <p className="mt-1 leading-relaxed text-muted">
+                            {explanations[wa.questionId] || "로딩 중..."}
+                          </p>
+                        </div>
                       </div>
                     </div>
-                  )}
+                  </div>
                 </div>
               ))}
           </div>

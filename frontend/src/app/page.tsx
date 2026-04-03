@@ -59,7 +59,7 @@ export default function Home() {
         <div className="relative mx-auto max-w-5xl px-4 py-32 text-center sm:px-6 sm:py-40 lg:px-8">
           <ScrollReveal>
             <span className="inline-block rounded-full border border-violet-500/30 bg-violet-500/10 px-4 py-1.5 text-sm font-medium text-violet-400">
-              현재 개발 중
+              Beta
             </span>
           </ScrollReveal>
 
