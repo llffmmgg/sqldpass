@@ -5,24 +5,56 @@ export default function Home() {
     <main className="min-h-screen bg-background text-foreground">
       {/* Hero */}
       <section className="relative overflow-hidden">
-        {/* Grid pattern background */}
-        <div className="absolute inset-0 grid-pattern" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,var(--background)_70%)]" />
+        {/* Layer 1: Ambient base gradient — fills the void */}
+        <div className="hero-ambient" aria-hidden="true" />
 
-        {/* Decorative floating SQL text */}
-        <div
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] text-center font-mono text-[14px] leading-loose text-foreground/[0.025] rotate-[-3deg] select-none pointer-events-none animate-float whitespace-pre"
-          aria-hidden="true"
-        >
-          {`SELECT e.name, d.dept_name, SUM(s.amount)
-FROM employee e
-INNER JOIN department d ON e.dept_id = d.id
-LEFT OUTER JOIN salary s ON e.id = s.emp_id
-WHERE d.location = 'SEOUL'
-GROUP BY e.name, d.dept_name
-HAVING SUM(s.amount) > 50000
-ORDER BY 3 DESC;`}
-        </div>
+        {/* Layer 2: Grid pattern */}
+        <div className="absolute inset-0 grid-pattern" />
+
+        {/* Layer 3: Animated gradient orbs — 5 overlapping layers */}
+        <div className="hero-orb hero-orb-1" aria-hidden="true" />
+        <div className="hero-orb hero-orb-2" aria-hidden="true" />
+        <div className="hero-orb hero-orb-3" aria-hidden="true" />
+        <div className="hero-orb hero-orb-4" aria-hidden="true" />
+        <div className="hero-orb hero-orb-5" aria-hidden="true" />
+
+        {/* Layer 4: Light sweep beams */}
+        <div className="hero-beam hero-beam-1" aria-hidden="true" />
+        <div className="hero-beam hero-beam-2" aria-hidden="true" />
+
+        {/* Layer 5: Noise texture */}
+        <div className="noise-overlay" aria-hidden="true" />
+
+        {/* Layer 6: Edge vignette for readability */}
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_50%_at_50%_50%,transparent_0%,var(--background)_100%)]" />
+
+        {/* Layer 7: SQL fragments scattered in margins */}
+        {/* Left side */}
+        <span className="sql-frag sql-float-1 hidden lg:block absolute top-[12%] left-[3%] font-mono text-[15px] text-foreground/[0.3] rotate-[-4deg] select-none pointer-events-none" aria-hidden="true">
+          SELECT *
+        </span>
+        <span className="sql-frag sql-float-2 hidden lg:block absolute top-[35%] left-[5%] font-mono text-[11px] text-foreground/[0.22] rotate-[2deg] select-none pointer-events-none" aria-hidden="true">
+          WHERE dept_id = 10
+        </span>
+        <span className="sql-frag sql-float-3 hidden lg:block absolute top-[58%] left-[2%] font-mono text-[13px] text-foreground/[0.25] rotate-[-2deg] select-none pointer-events-none" aria-hidden="true">
+          GROUP BY name
+        </span>
+        <span className="sql-frag sql-float-4 hidden lg:block absolute top-[78%] left-[6%] font-mono text-[12px] text-foreground/[0.2] rotate-[5deg] select-none pointer-events-none" aria-hidden="true">
+          INNER JOIN
+        </span>
+        {/* Right side */}
+        <span className="sql-frag sql-float-5 hidden lg:block absolute top-[18%] right-[4%] font-mono text-[13px] text-foreground/[0.25] rotate-[3deg] select-none pointer-events-none" aria-hidden="true">
+          ORDER BY 1 DESC
+        </span>
+        <span className="sql-frag sql-float-6 hidden lg:block absolute top-[42%] right-[2%] font-mono text-[15px] text-foreground/[0.3] rotate-[-3deg] select-none pointer-events-none" aria-hidden="true">
+          COUNT(*)
+        </span>
+        <span className="sql-frag sql-float-7 hidden lg:block absolute top-[65%] right-[5%] font-mono text-[11px] text-foreground/[0.22] rotate-[4deg] select-none pointer-events-none" aria-hidden="true">
+          HAVING SUM &gt; 50000
+        </span>
+        <span className="sql-frag sql-float-8 hidden lg:block absolute top-[85%] right-[3%] font-mono text-[12px] text-foreground/[0.25] rotate-[-5deg] select-none pointer-events-none" aria-hidden="true">
+          LEFT OUTER JOIN
+        </span>
 
         <div className="relative mx-auto max-w-5xl px-4 py-32 text-center sm:px-6 sm:py-40 lg:px-8">
           <ScrollReveal>
