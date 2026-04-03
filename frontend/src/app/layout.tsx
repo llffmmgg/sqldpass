@@ -17,6 +17,9 @@ export const metadata: Metadata = {
   title: "SQLD Pass - SQLD 자격증 시험 대비 문제 풀이",
   description:
     "실제 시험과 유사한 문제로 SQLD 자격증을 준비하세요. 풀이 기록, 오답 분석까지.",
+  icons: {
+    icon: "/favicon.svg",
+  },
 };
 
 export default function RootLayout({
