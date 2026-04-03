@@ -30,29 +30,29 @@ export default function Home() {
 
         {/* Layer 7: SQL fragments scattered in margins */}
         {/* Left side */}
-        <span className="sql-frag sql-float-1 hidden lg:block absolute top-[12%] left-[3%] font-mono text-[15px] text-foreground/[0.3] rotate-[-4deg] select-none pointer-events-none" aria-hidden="true">
+        <span className="sql-frag sql-float-1 absolute top-[12%] left-[3%] font-mono text-[15px] text-foreground/[0.3] rotate-[-4deg] select-none pointer-events-none" aria-hidden="true">
           SELECT *
         </span>
-        <span className="sql-frag sql-float-2 hidden lg:block absolute top-[35%] left-[5%] font-mono text-[11px] text-foreground/[0.22] rotate-[2deg] select-none pointer-events-none" aria-hidden="true">
+        <span className="sql-frag sql-float-2 absolute top-[35%] left-[5%] font-mono text-[11px] text-foreground/[0.22] rotate-[2deg] select-none pointer-events-none" aria-hidden="true">
           WHERE dept_id = 10
         </span>
-        <span className="sql-frag sql-float-3 hidden lg:block absolute top-[58%] left-[2%] font-mono text-[13px] text-foreground/[0.25] rotate-[-2deg] select-none pointer-events-none" aria-hidden="true">
+        <span className="sql-frag sql-float-3 absolute top-[58%] left-[2%] font-mono text-[13px] text-foreground/[0.25] rotate-[-2deg] select-none pointer-events-none" aria-hidden="true">
           GROUP BY name
         </span>
-        <span className="sql-frag sql-float-4 hidden lg:block absolute top-[78%] left-[6%] font-mono text-[12px] text-foreground/[0.2] rotate-[5deg] select-none pointer-events-none" aria-hidden="true">
+        <span className="sql-frag sql-float-4 absolute top-[78%] left-[6%] font-mono text-[12px] text-foreground/[0.2] rotate-[5deg] select-none pointer-events-none" aria-hidden="true">
           INNER JOIN
         </span>
         {/* Right side */}
-        <span className="sql-frag sql-float-5 hidden lg:block absolute top-[18%] right-[4%] font-mono text-[13px] text-foreground/[0.25] rotate-[3deg] select-none pointer-events-none" aria-hidden="true">
+        <span className="sql-frag sql-float-5 absolute top-[18%] right-[4%] font-mono text-[13px] text-foreground/[0.25] rotate-[3deg] select-none pointer-events-none" aria-hidden="true">
           ORDER BY 1 DESC
         </span>
-        <span className="sql-frag sql-float-6 hidden lg:block absolute top-[42%] right-[2%] font-mono text-[15px] text-foreground/[0.3] rotate-[-3deg] select-none pointer-events-none" aria-hidden="true">
+        <span className="sql-frag sql-float-6 absolute top-[42%] right-[2%] font-mono text-[15px] text-foreground/[0.3] rotate-[-3deg] select-none pointer-events-none" aria-hidden="true">
           COUNT(*)
         </span>
-        <span className="sql-frag sql-float-7 hidden lg:block absolute top-[65%] right-[5%] font-mono text-[11px] text-foreground/[0.22] rotate-[4deg] select-none pointer-events-none" aria-hidden="true">
+        <span className="sql-frag sql-float-7 absolute top-[65%] right-[5%] font-mono text-[11px] text-foreground/[0.22] rotate-[4deg] select-none pointer-events-none" aria-hidden="true">
           HAVING SUM &gt; 50000
         </span>
-        <span className="sql-frag sql-float-8 hidden lg:block absolute top-[85%] right-[3%] font-mono text-[12px] text-foreground/[0.25] rotate-[-5deg] select-none pointer-events-none" aria-hidden="true">
+        <span className="sql-frag sql-float-8 absolute top-[85%] right-[3%] font-mono text-[12px] text-foreground/[0.25] rotate-[-5deg] select-none pointer-events-none" aria-hidden="true">
           LEFT OUTER JOIN
         </span>
 
