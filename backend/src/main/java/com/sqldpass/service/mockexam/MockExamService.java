@@ -9,6 +9,7 @@ import com.sqldpass.domain.mockexam.MockExam;
 import com.sqldpass.persistent.mockexam.MockExamEntity;
 import com.sqldpass.persistent.mockexam.MockExamMapper;
 import com.sqldpass.persistent.mockexam.MockExamRepository;
+import com.sqldpass.persistent.question.QuestionRepository;
 import com.sqldpass.service.common.ErrorCode;
 import com.sqldpass.service.common.SqldpassException;
 
@@ -20,6 +21,7 @@ import lombok.RequiredArgsConstructor;
 public class MockExamService {
 
     private final MockExamRepository mockExamRepository;
+    private final QuestionRepository questionRepository;
     private final MockExamCreator mockExamCreator;
 
     /** 모의고사 목록 조회 (최신 sequence 순) */
@@ -50,6 +52,8 @@ public class MockExamService {
         if (!mockExamRepository.existsById(id)) {
             throw new SqldpassException(ErrorCode.MOCK_EXAM_NOT_FOUND);
         }
+        // 편성된 문제들을 풀로 복귀(FK 해제) 후 모의고사 삭제
+        questionRepository.releaseFromMockExam(id);
         mockExamRepository.deleteById(id);
     }
 }

@@ -8,7 +8,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.sqldpass.persistent.mockexam.MockExamEntity;
-import com.sqldpass.persistent.mockexam.MockExamQuestionEntity;
 import com.sqldpass.persistent.mockexam.MockExamRepository;
 import com.sqldpass.persistent.question.QuestionEntity;
 import com.sqldpass.persistent.question.QuestionRepository;
@@ -29,7 +28,8 @@ import lombok.RequiredArgsConstructor;
  *   - SQL 활용 (id=6): 13문항
  *   - 관리 구문 (id=7): 13문항
  *
- * 각 과목의 문제 수가 부족하면 MOCK_EXAM_INSUFFICIENT_QUESTIONS 예외 반환.
+ * 각 과목의 (아직 모의고사에 편성되지 않은) 문제 수가 부족하면
+ * MOCK_EXAM_INSUFFICIENT_QUESTIONS 예외 반환.
  */
 @Component
 @RequiredArgsConstructor
@@ -52,7 +52,7 @@ public class MockExamCreator {
         int nextSeq = mockExamRepository.findMaxSequence().orElse(0) + 1;
         String name = "모의고사 " + nextSeq;
 
-        // 2) 각 과목별로 랜덤 추출 + 부족 검증
+        // 2) 각 과목별로 미편성 문제에서 랜덤 추출 + 부족 검증
         List<QuestionEntity> picked = new ArrayList<>();
         for (Map.Entry<Long, Integer> entry : DISTRIBUTION.entrySet()) {
             Long subjectId = entry.getKey();
@@ -62,19 +62,17 @@ public class MockExamCreator {
             if (sub.size() < needed) {
                 throw new SqldpassException(
                         ErrorCode.MOCK_EXAM_INSUFFICIENT_QUESTIONS,
-                        String.format("과목 ID %d 문항이 부족합니다. (필요 %d, 보유 %d)",
+                        String.format("과목 ID %d 미편성 문항이 부족합니다. (필요 %d, 보유 %d)",
                                 subjectId, needed, sub.size()));
             }
             picked.addAll(sub);
         }
 
-        // 3) MockExam + 매핑 저장
-        MockExamEntity mockExam = new MockExamEntity(name, nextSeq);
+        // 3) MockExam 저장 후 문제 배정 (mockExam.id 필요)
+        MockExamEntity saved = mockExamRepository.save(new MockExamEntity(name, nextSeq));
         for (int i = 0; i < picked.size(); i++) {
-            MockExamQuestionEntity meq = new MockExamQuestionEntity(mockExam, picked.get(i), i + 1);
-            mockExam.addQuestion(meq);
+            saved.linkQuestion(picked.get(i), i + 1);
         }
-
-        return mockExamRepository.save(mockExam);
+        return saved;
     }
 }

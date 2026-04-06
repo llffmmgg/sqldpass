@@ -4,8 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.sqldpass.persistent.common.BaseTimeEntity;
+import com.sqldpass.persistent.question.QuestionEntity;
 
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -38,16 +38,18 @@ public class MockExamEntity extends BaseTimeEntity {
     @Column(name = "sequence", nullable = false)
     private int sequence;
 
-    @OneToMany(mappedBy = "mockExam", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "mockExam")
     @OrderBy("displayOrder ASC")
-    private List<MockExamQuestionEntity> questions = new ArrayList<>();
+    private List<QuestionEntity> questions = new ArrayList<>();
 
     public MockExamEntity(String name, int sequence) {
         this.name = name;
         this.sequence = sequence;
     }
 
-    public void addQuestion(MockExamQuestionEntity question) {
+    /** 양방향 동기화 — 문제에 모의고사 배정 + 컬렉션에도 추가 */
+    public void linkQuestion(QuestionEntity question, int displayOrder) {
+        question.assignToMockExam(this, displayOrder);
         this.questions.add(question);
     }
 }

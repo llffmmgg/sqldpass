@@ -34,11 +34,10 @@ public class MockExamMapper {
                 totalQuestionCount);
     }
 
-    public static MockExamQuestion toDomain(MockExamQuestionEntity entity) {
-        QuestionEntity q = entity.getQuestion();
+    public static MockExamQuestion toDomain(QuestionEntity q) {
         return new MockExamQuestion(
                 q.getId(),
-                entity.getDisplayOrder(),
+                q.getDisplayOrder() != null ? q.getDisplayOrder() : 0,
                 q.getContent(),
                 q.getSubject().getId(),
                 q.getSubject().getName());
