@@ -27,3 +27,6 @@ Thumbs.db
 # Internal docs
 docs/internal/
 troubleshooting/
+backend/docs/CODE_REVIEW.md
+proxy/README.md
+observability/README.md
