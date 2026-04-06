@@ -1,0 +1,29 @@
+# ============================================================
+# Promtail (로그 수집기) — ARM, E2 #1 양쪽에 배포
+# ============================================================
+# 위치: ~/promtail/
+# 같은 디렉토리에 promtail-config.yml 필요
+# ============================================================
+
+services:
+  promtail:
+    image: grafana/promtail:3.2.0
+    container_name: promtail
+    restart: unless-stopped
+    volumes:
+      # Docker 소켓 (컨테이너 메타데이터 조회)
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      # Docker 로그 파일 (실제 로그 내용)
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      # Promtail 설정
+      - ./promtail-config.yml:/etc/promtail/config.yml:ro
+      # position 영속화 (재시작해도 중복 수집 방지)
+      - promtail-positions:/tmp
+    command: -config.file=/etc/promtail/config.yml
+    deploy:
+      resources:
+        limits:
+          memory: 100M
+
+volumes:
+  promtail-positions:

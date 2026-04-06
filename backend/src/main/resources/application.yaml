@@ -11,6 +11,11 @@ spring:
     properties:
       hibernate:
         format_sql: true
+        # 1초 이상 걸린 쿼리는 WARN 로그로 출력 → Promtail이 수집 → Loki에서 검색 가능
+        session:
+          events:
+            log:
+              LOG_QUERIES_SLOWER_THAN_MS: 1000
     open-in-view: false
     defer-datasource-initialization: false
   flyway:

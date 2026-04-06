@@ -1,0 +1,63 @@
+# ============================================================
+# Loki 설정 (single-binary 모드)
+# ============================================================
+# - 14일 retention (336시간)
+# - 파일시스템 저장 (외부 의존성 X)
+# - 인증 없음 (VCN 내부에서만 접근하므로)
+# ============================================================
+
+auth_enabled: false
+
+server:
+  http_listen_port: 3100
+  grpc_listen_port: 9096
+
+common:
+  path_prefix: /loki
+  storage:
+    filesystem:
+      chunks_directory: /loki/chunks
+      rules_directory: /loki/rules
+  replication_factor: 1
+  ring:
+    kvstore:
+      store: inmemory
+
+schema_config:
+  configs:
+    - from: 2024-01-01
+      store: tsdb
+      object_store: filesystem
+      schema: v13
+      index:
+        prefix: index_
+        period: 24h
+
+# 14일 retention (14 * 24 = 336시간)
+limits_config:
+  retention_period: 336h
+  reject_old_samples: true
+  reject_old_samples_max_age: 336h
+  allow_structured_metadata: true
+  volume_enabled: true
+
+# 자동 삭제 (compactor)
+compactor:
+  working_directory: /loki/compactor
+  retention_enabled: true
+  retention_delete_delay: 2h
+  retention_delete_worker_count: 10
+  delete_request_store: filesystem
+
+# 작은 인스턴스 최적화
+ingester:
+  chunk_idle_period: 1h
+  max_chunk_age: 2h
+  chunk_target_size: 1048576   # 1MB
+
+query_range:
+  results_cache:
+    cache:
+      embedded_cache:
+        enabled: true
+        max_size_mb: 50

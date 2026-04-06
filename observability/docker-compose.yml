@@ -1,0 +1,84 @@
+# ============================================================
+# Loki + Grafana 스택 (E2.1.Micro #2 전용)
+# ============================================================
+# 위치: ~/observability/ (E2 #2 인스턴스)
+#
+# 사전 조건:
+#   - .env 파일 생성 (GF_ADMIN_PASSWORD)
+#   - DNS: grafana.sqldpass.com → 이 인스턴스 IP
+#   - OCI 보안 목록: 80, 443 인바운드 허용
+#   - SSL 인증서 발급 완료 (README 참고)
+# ============================================================
+
+services:
+  # ----------------------------------------------------------
+  # Loki — 로그 저장소 + 검색 엔진
+  # ----------------------------------------------------------
+  loki:
+    image: grafana/loki:3.2.0
+    container_name: loki
+    restart: unless-stopped
+    ports:
+      # VCN 내부 Promtail에서 접근. 외부 차단은 OCI 보안 목록에서.
+      - "3100:3100"
+    volumes:
+      - ./loki-config.yml:/etc/loki/local-config.yaml:ro
+      - loki-data:/loki
+    command: -config.file=/etc/loki/local-config.yaml
+    deploy:
+      resources:
+        limits:
+          memory: 300M
+
+  # ----------------------------------------------------------
+  # Grafana — UI (LogQL 쿼리 + 대시보드)
+  # ----------------------------------------------------------
+  grafana:
+    image: grafana/grafana:11.4.0
+    container_name: grafana
+    restart: unless-stopped
+    ports:
+      # localhost만 노출 → nginx가 https로 프록시
+      - "127.0.0.1:3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GF_ADMIN_PASSWORD}
+      GF_SERVER_ROOT_URL: https://grafana.sqldpass.com
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_AUTH_ANONYMOUS_ENABLED: "false"
+    volumes:
+      - grafana-data:/var/lib/grafana
+    depends_on:
+      - loki
+    deploy:
+      resources:
+        limits:
+          memory: 200M
+
+  # ----------------------------------------------------------
+  # nginx — Grafana 리버스 프록시 + HTTPS termination
+  # ----------------------------------------------------------
+  nginx:
+    image: nginx:alpine
+    container_name: nginx-grafana
+    restart: unless-stopped
+    network_mode: host   # localhost:3000(grafana)에 접근하기 위해
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./certbot/conf:/etc/letsencrypt:ro
+      - ./certbot/www:/var/www/certbot:ro
+
+  # ----------------------------------------------------------
+  # certbot — Let's Encrypt 자동 갱신
+  # ----------------------------------------------------------
+  certbot:
+    image: certbot/certbot
+    container_name: certbot
+    restart: unless-stopped
+    volumes:
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+
+volumes:
+  loki-data:
+  grafana-data:

@@ -1,0 +1,36 @@
+# ============================================================
+# Promtail — Docker 로그 수집기
+# ============================================================
+# ARM 백엔드 인스턴스와 E2 #1 (nginx) 인스턴스 양쪽에 배포.
+# 실행 중인 모든 컨테이너의 stdout/stderr를 자동 수집해서 Loki로 전송.
+#
+# ⚠️ 배포 전 <LOKI_HOST>를 E2 #2의 VCN 내부 IP로 교체할 것.
+#    예: 10.0.0.150
+# ============================================================
+
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+
+positions:
+  filename: /tmp/positions.yaml
+
+clients:
+  - url: http://<LOKI_HOST>:3100/loki/api/v1/push
+
+scrape_configs:
+  - job_name: docker
+    docker_sd_configs:
+      - host: unix:///var/run/docker.sock
+        refresh_interval: 5s
+    relabel_configs:
+      # 컨테이너 이름을 라벨로
+      - source_labels: ['__meta_docker_container_name']
+        regex: '/(.*)'
+        target_label: container
+      # stdout/stderr 구분
+      - source_labels: ['__meta_docker_container_log_stream']
+        target_label: stream
+      # 호스트 식별 (ARM vs E2 구분용)
+      - source_labels: ['__meta_docker_container_label_com_docker_compose_project']
+        target_label: compose_project
