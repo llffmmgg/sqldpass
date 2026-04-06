@@ -61,22 +61,26 @@ function SolvePageContent() {
     setLoading(false);
   }
 
-  async function handleSelect(option: number) {
+  function handleSelect(option: number) {
     if (revealed || !current) return;
     setSelectedOption(option);
+  }
+
+  async function handleSubmit() {
+    if (revealed || !current || selectedOption === null) return;
     setRevealed(true);
 
     const d = await getQuestionDetail(current.id);
     setDetail(d);
     setSolvedCount((c) => c + 1);
-    if (option === d.correctOption) {
+    if (selectedOption === d.correctOption) {
       setCorrectCount((c) => c + 1);
     }
 
     if (selectedSubject) {
       submitSolve({
         subjectId: selectedSubject.id,
-        answers: [{ questionId: current.id, selectedOption: option }],
+        answers: [{ questionId: current.id, selectedOption }],
       }).catch((e) => console.error("풀이 제출 실패:", e));
     }
   }
@@ -237,6 +241,19 @@ function SolvePageContent() {
             })}
           </ul>
         </div>
+
+        {/* 제출 버튼 (미공개 상태) */}
+        {!revealed && (
+          <div className="mt-4 flex justify-center">
+            <button
+              onClick={handleSubmit}
+              disabled={selectedOption === null}
+              className="rounded-lg bg-primary px-6 py-2.5 text-sm font-semibold text-zinc-900 transition hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-primary"
+            >
+              정답 제출
+            </button>
+          </div>
+        )}
 
         {/* 정답 확인 후 해설 + 다음 버튼 */}
         {revealed && detail && (
