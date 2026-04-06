@@ -46,7 +46,8 @@ export interface QuestionDetail {
 
 export interface SolveAnswerRequest {
   questionId: number;
-  selectedOption: number;
+  selectedOption?: number;
+  answerText?: string;
 }
 
 export interface SolveRequest {
