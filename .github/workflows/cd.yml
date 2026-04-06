@@ -80,7 +80,14 @@ jobs:
           chmod +x gradlew
           ./gradlew test --no-daemon
 
-      # Docker Buildx: 빌드 캐시 등 고급 기능 지원
+      # QEMU: ARM64 크로스 빌드를 위한 에뮬레이션 설정
+      # ubuntu-latest는 amd64인데 OCI 서버는 arm64이므로 필요
+      - name: QEMU 설정
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: arm64
+
+      # Docker Buildx: 멀티플랫폼 빌드, 캐시 등 고급 기능 지원
       - name: Docker Buildx 설정
         uses: docker/setup-buildx-action@v3
 
@@ -94,11 +101,13 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       # Docker 이미지 빌드 + ghcr.io에 푸시
+      # platforms: OCI ARM 인스턴스(Ampere)용으로 linux/arm64 빌드
       - name: Docker 이미지 빌드 및 푸시
         uses: docker/build-push-action@v6
         with:
           context: ./backend
           push: true
+          platforms: linux/arm64
           tags: |
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:prod
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
