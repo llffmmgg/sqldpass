@@ -5,6 +5,7 @@ import java.util.List;
 
 import com.sqldpass.persistent.common.BaseTimeEntity;
 import com.sqldpass.persistent.member.MemberEntity;
+import com.sqldpass.persistent.mockexam.MockExamEntity;
 import com.sqldpass.persistent.subject.SubjectEntity;
 
 import jakarta.persistence.CascadeType;
@@ -41,8 +42,12 @@ public class SolveEntity extends BaseTimeEntity {
     private MemberEntity member;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "subject_id", nullable = false)
+    @JoinColumn(name = "subject_id")
     private SubjectEntity subject;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "mock_exam_id")
+    private MockExamEntity mockExam;
 
     @Column(nullable = false)
     private int totalCount;
@@ -59,6 +64,14 @@ public class SolveEntity extends BaseTimeEntity {
     public SolveEntity(MemberEntity member, SubjectEntity subject, int totalCount, int correctCount, int score) {
         this.member = member;
         this.subject = subject;
+        this.totalCount = totalCount;
+        this.correctCount = correctCount;
+        this.score = score;
+    }
+
+    public SolveEntity(MemberEntity member, MockExamEntity mockExam, int totalCount, int correctCount, int score) {
+        this.member = member;
+        this.mockExam = mockExam;
         this.totalCount = totalCount;
         this.correctCount = correctCount;
         this.score = score;

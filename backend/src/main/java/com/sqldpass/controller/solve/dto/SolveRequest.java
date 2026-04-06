@@ -4,9 +4,14 @@ import java.util.List;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.NotNull;
 
 public record SolveRequest(
-        @NotNull(message = "과목 ID는 필수입니다.") Long subjectId,
+        Long subjectId,
+        Long mockExamId,
         @NotEmpty(message = "답안 목록은 비어있을 수 없습니다.") @Valid List<SolveAnswerRequest> answers) {
+
+    /**
+     * subjectId 또는 mockExamId 중 하나는 반드시 있어야 함.
+     * SolveService에서 validate.
+     */
 }

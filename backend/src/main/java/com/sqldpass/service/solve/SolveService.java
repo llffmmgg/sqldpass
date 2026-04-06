@@ -12,6 +12,8 @@ import com.sqldpass.controller.solve.dto.SolveRequest;
 import com.sqldpass.domain.solve.Solve;
 import com.sqldpass.persistent.member.MemberEntity;
 import com.sqldpass.persistent.member.MemberRepository;
+import com.sqldpass.persistent.mockexam.MockExamEntity;
+import com.sqldpass.persistent.mockexam.MockExamRepository;
 import com.sqldpass.persistent.question.QuestionEntity;
 import com.sqldpass.persistent.question.QuestionRepository;
 import com.sqldpass.persistent.solve.SolveAnswerEntity;
@@ -31,22 +33,28 @@ public class SolveService {
     private final QuestionRepository questionRepository;
     private final MemberRepository memberRepository;
     private final SubjectRepository subjectRepository;
+    private final MockExamRepository mockExamRepository;
 
     public SolveService(SolveRepository solveRepository, QuestionRepository questionRepository,
-                        MemberRepository memberRepository, SubjectRepository subjectRepository) {
+                        MemberRepository memberRepository, SubjectRepository subjectRepository,
+                        MockExamRepository mockExamRepository) {
         this.solveRepository = solveRepository;
         this.questionRepository = questionRepository;
         this.memberRepository = memberRepository;
         this.subjectRepository = subjectRepository;
+        this.mockExamRepository = mockExamRepository;
     }
 
     @Transactional
     public Solve solve(Long memberId, SolveRequest request) {
+        // subjectId 또는 mockExamId 중 정확히 하나는 있어야 함
+        if ((request.subjectId() == null) == (request.mockExamId() == null)) {
+            throw new SqldpassException(ErrorCode.INVALID_INPUT,
+                    "subjectId 또는 mockExamId 중 하나만 지정해야 합니다.");
+        }
+
         MemberEntity member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new SqldpassException(ErrorCode.MEMBER_NOT_FOUND));
-
-        SubjectEntity subject = subjectRepository.findById(request.subjectId())
-                .orElseThrow(() -> new SqldpassException(ErrorCode.SUBJECT_NOT_FOUND));
 
         List<Long> questionIds = request.answers().stream()
                 .map(SolveAnswerRequest::questionId)
@@ -57,7 +65,7 @@ public class SolveService {
 
         int totalCount = request.answers().size();
 
-        // 먼저 정답 수 계산
+        // 정답 수 계산
         int correctCount = 0;
         for (SolveAnswerRequest answerReq : request.answers()) {
             QuestionEntity question = questionMap.get(answerReq.questionId());
@@ -70,7 +78,18 @@ public class SolveService {
         }
 
         int score = totalCount > 0 ? (int) Math.round((double) correctCount / totalCount * 100) : 0;
-        SolveEntity solveEntity = new SolveEntity(member, subject, totalCount, correctCount, score);
+
+        // 풀이 종류에 따라 SolveEntity 생성
+        SolveEntity solveEntity;
+        if (request.subjectId() != null) {
+            SubjectEntity subject = subjectRepository.findById(request.subjectId())
+                    .orElseThrow(() -> new SqldpassException(ErrorCode.SUBJECT_NOT_FOUND));
+            solveEntity = new SolveEntity(member, subject, totalCount, correctCount, score);
+        } else {
+            MockExamEntity mockExam = mockExamRepository.findById(request.mockExamId())
+                    .orElseThrow(() -> new SqldpassException(ErrorCode.MOCK_EXAM_NOT_FOUND));
+            solveEntity = new SolveEntity(member, mockExam, totalCount, correctCount, score);
+        }
 
         for (SolveAnswerRequest answerReq : request.answers()) {
             QuestionEntity question = questionMap.get(answerReq.questionId());

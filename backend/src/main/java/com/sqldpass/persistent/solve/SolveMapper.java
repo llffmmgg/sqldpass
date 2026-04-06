@@ -18,7 +18,8 @@ public class SolveMapper {
         return new Solve(
                 entity.getId(),
                 entity.getMember().getId(),
-                entity.getSubject().getId(),
+                entity.getSubject() != null ? entity.getSubject().getId() : null,
+                entity.getMockExam() != null ? entity.getMockExam().getId() : null,
                 entity.getTotalCount(),
                 entity.getCorrectCount(),
                 entity.getScore(),

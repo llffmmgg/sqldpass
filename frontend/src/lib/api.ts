@@ -50,7 +50,8 @@ export interface SolveAnswerRequest {
 }
 
 export interface SolveRequest {
-  subjectId: number;
+  subjectId?: number;
+  mockExamId?: number;
   answers: SolveAnswerRequest[];
 }
 
@@ -63,7 +64,8 @@ export interface SolveAnswerResponse {
 
 export interface SolveResponse {
   id: number;
-  subjectId: number;
+  subjectId: number | null;
+  mockExamId: number | null;
   totalCount: number;
   correctCount: number;
   score: number;
@@ -73,7 +75,8 @@ export interface SolveResponse {
 
 export interface SolveSummaryResponse {
   id: number;
-  subjectId: number;
+  subjectId: number | null;
+  mockExamId: number | null;
   totalCount: number;
   correctCount: number;
   score: number;

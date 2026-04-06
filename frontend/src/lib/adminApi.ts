@@ -158,3 +158,25 @@ export function generateQuestions(count = 3) {
 export function resetGeneration() {
   return adminFetch<void>("/generate/reset", { method: "POST" });
 }
+
+// 모의고사 관리
+
+export interface AdminMockExam {
+  id: number;
+  name: string;
+  sequence: number;
+  totalQuestions: number;
+  createdAt: string;
+}
+
+export function getAdminMockExams() {
+  return adminFetch<AdminMockExam[]>("/mock-exams");
+}
+
+export function createMockExam() {
+  return adminFetch<AdminMockExam>("/mock-exams", { method: "POST" });
+}
+
+export function deleteMockExam(id: number) {
+  return adminFetch<void>(`/mock-exams/${id}`, { method: "DELETE" });
+}

@@ -14,6 +14,7 @@ public enum ErrorCode {
     SUBJECT_NOT_FOUND(HttpStatus.NOT_FOUND, "SUBJECT_NOT_FOUND", "과목을 찾을 수 없습니다."),
     QUESTION_NOT_FOUND(HttpStatus.NOT_FOUND, "QUESTION_NOT_FOUND", "문제를 찾을 수 없습니다."),
     SOLVE_NOT_FOUND(HttpStatus.NOT_FOUND, "SOLVE_NOT_FOUND", "풀이 기록을 찾을 수 없습니다."),
+    MOCK_EXAM_NOT_FOUND(HttpStatus.NOT_FOUND, "MOCK_EXAM_NOT_FOUND", "모의고사를 찾을 수 없습니다."),
 
     // 401
     ADMIN_LOGIN_FAILED(HttpStatus.UNAUTHORIZED, "ADMIN_LOGIN_FAILED", "아이디 또는 비밀번호가 올바르지 않습니다."),
@@ -23,6 +24,7 @@ public enum ErrorCode {
     // 409
     GENERATION_ALREADY_RUNNING(HttpStatus.CONFLICT, "GENERATION_ALREADY_RUNNING", "이미 문제 생성이 진행 중입니다."),
     NICKNAME_DUPLICATE(HttpStatus.CONFLICT, "NICKNAME_DUPLICATE", "이미 사용 중인 닉네임입니다."),
+    MOCK_EXAM_INSUFFICIENT_QUESTIONS(HttpStatus.CONFLICT, "MOCK_EXAM_INSUFFICIENT_QUESTIONS", "문제가 부족하여 모의고사를 생성할 수 없습니다."),
 
     // 500
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "INTERNAL_SERVER_ERROR", "서버 오류가 발생했습니다."),

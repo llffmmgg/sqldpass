@@ -50,11 +50,14 @@ function getStreakDays(solves: SolveSummaryResponse[]): number {
 function getSubjectStats(solves: SolveSummaryResponse[], subjectMap: Record<number, string>) {
   const map: Record<number, { name: string; total: number; correct: number }> = {};
   for (const s of solves) {
-    if (!map[s.subjectId]) {
-      map[s.subjectId] = { name: subjectMap[s.subjectId] || `과목 ${s.subjectId}`, total: 0, correct: 0 };
+    // 모의고사 풀이는 과목별 통계에서 제외 (subjectId가 null)
+    if (s.subjectId == null) continue;
+    const sid = s.subjectId;
+    if (!map[sid]) {
+      map[sid] = { name: subjectMap[sid] || `과목 ${sid}`, total: 0, correct: 0 };
     }
-    map[s.subjectId].total += s.totalCount;
-    map[s.subjectId].correct += s.correctCount;
+    map[sid].total += s.totalCount;
+    map[sid].correct += s.correctCount;
   }
   return Object.entries(map)
     .map(([id, data]) => ({ id: Number(id), ...data, rate: data.total > 0 ? Math.round((data.correct / data.total) * 100) : 0 }))
@@ -282,7 +285,11 @@ function DashboardPageContent() {
                   >
                     <div className="min-w-0">
                       <p className="text-sm font-medium truncate">
-                        {subjectMap[solve.subjectId] || `과목 ${solve.subjectId}`}
+                        {solve.mockExamId != null
+                          ? `모의고사 #${solve.mockExamId}`
+                          : solve.subjectId != null
+                          ? subjectMap[solve.subjectId] || `과목 ${solve.subjectId}`
+                          : "풀이"}
                       </p>
                       <p className="text-xs text-muted">
                         {new Date(solve.solvedAt).toLocaleDateString("ko-KR")} &middot; {solve.correctCount}/{solve.totalCount} 정답

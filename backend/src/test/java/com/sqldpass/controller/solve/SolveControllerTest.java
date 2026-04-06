@@ -51,7 +51,7 @@ class SolveControllerTest {
     void submit() throws Exception {
         mockAuth();
         SolveAnswer answer = new SolveAnswer(1L, 42L, 1, 1, true);
-        Solve solve = new Solve(1L, 1L, 5L, 1, 1, 100, LocalDateTime.now(), List.of(answer));
+        Solve solve = new Solve(1L, 1L, 5L, null, 1, 1, 100, LocalDateTime.now(), List.of(answer));
         given(solveService.solve(eq(1L), any(SolveRequest.class))).willReturn(solve);
 
         mockMvc.perform(post("/api/solves")
@@ -69,7 +69,7 @@ class SolveControllerTest {
     @DisplayName("GET /api/solves 200 OK - 풀이 기록 목록")
     void getSolves() throws Exception {
         mockAuth();
-        Solve solve = new Solve(1L, 1L, 5L, 10, 7, 70, LocalDateTime.now(), List.of());
+        Solve solve = new Solve(1L, 1L, 5L, null, 10, 7, 70, LocalDateTime.now(), List.of());
         given(solveService.getMySolves(1L)).willReturn(List.of(solve));
 
         mockMvc.perform(get("/api/solves")

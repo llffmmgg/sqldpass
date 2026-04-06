@@ -75,7 +75,11 @@ function HistoryDetailContent({ params }: { params: Promise<{ id: string }> }) {
         {/* Score summary */}
         <div className="mt-6 rounded-xl border border-border bg-surface p-6 text-center">
           <p className="text-sm text-muted">
-            {subjectMap[solve.subjectId] || `과목 ${solve.subjectId}`}
+            {solve.mockExamId != null
+              ? `모의고사 #${solve.mockExamId}`
+              : solve.subjectId != null
+              ? subjectMap[solve.subjectId] || `과목 ${solve.subjectId}`
+              : "풀이"}
           </p>
           <p className="mt-2">
             <span className="text-5xl font-bold bg-gradient-to-r from-amber-400 to-amber-300 bg-clip-text text-transparent">

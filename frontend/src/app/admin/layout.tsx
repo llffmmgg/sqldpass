@@ -8,6 +8,7 @@ import { isAuthenticated, clearToken, getGenerationStatus, resetGeneration, type
 const SIDEBAR_LINKS = [
   { href: "/admin", label: "대시보드", icon: "📊" },
   { href: "/admin/questions", label: "문제 관리", icon: "📝" },
+  { href: "/admin/mock-exams", label: "모의고사", icon: "📚" },
   { href: "/admin/members", label: "회원 관리", icon: "👥" },
   { href: "/admin/generate", label: "문제 생성", icon: "🤖" },
 ];

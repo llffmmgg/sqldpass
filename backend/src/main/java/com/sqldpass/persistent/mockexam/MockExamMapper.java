@@ -1,0 +1,46 @@
+package com.sqldpass.persistent.mockexam;
+
+import java.util.List;
+
+import com.sqldpass.domain.mockexam.MockExam;
+import com.sqldpass.domain.mockexam.MockExamQuestion;
+import com.sqldpass.persistent.question.QuestionEntity;
+
+public class MockExamMapper {
+
+    private MockExamMapper() {
+    }
+
+    /** 문제 목록 포함 (상세 조회) */
+    public static MockExam toDomain(MockExamEntity entity) {
+        List<MockExamQuestion> questions = entity.getQuestions().stream()
+                .map(MockExamMapper::toDomain)
+                .toList();
+        return new MockExam(
+                entity.getId(),
+                entity.getName(),
+                entity.getSequence(),
+                entity.getCreatedAt(),
+                questions);
+    }
+
+    /** 문제 카운트만 (목록 조회) */
+    public static MockExam toSummary(MockExamEntity entity, int totalQuestionCount) {
+        return new MockExam(
+                entity.getId(),
+                entity.getName(),
+                entity.getSequence(),
+                entity.getCreatedAt(),
+                totalQuestionCount);
+    }
+
+    public static MockExamQuestion toDomain(MockExamQuestionEntity entity) {
+        QuestionEntity q = entity.getQuestion();
+        return new MockExamQuestion(
+                q.getId(),
+                entity.getDisplayOrder(),
+                q.getContent(),
+                q.getSubject().getId(),
+                q.getSubject().getName());
+    }
+}

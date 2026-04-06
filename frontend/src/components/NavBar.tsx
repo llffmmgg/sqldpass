@@ -10,6 +10,7 @@ import { type Theme, getInitialTheme, setStoredTheme, applyTheme } from "@/lib/t
 const NAV_LINKS = [
   { href: "/", label: "홈" },
   { href: "/solve", label: "문제 풀기" },
+  { href: "/mock-exams", label: "모의고사" },
   { href: "/dashboard", label: "대시보드" },
   { href: "/wrong-answers", label: "오답 노트" },
 ];
