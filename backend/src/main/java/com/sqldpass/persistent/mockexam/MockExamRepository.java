@@ -10,6 +10,6 @@ public interface MockExamRepository extends JpaRepository<MockExamEntity, Long> 
     @Query("SELECT MAX(m.sequence) FROM MockExamEntity m")
     Optional<Integer> findMaxSequence();
 
-    @Query("SELECT m FROM MockExamEntity m LEFT JOIN FETCH m.questions q LEFT JOIN FETCH q.subject WHERE m.id = :id")
+    @Query("SELECT m FROM MockExamEntity m LEFT JOIN FETCH m.questions q LEFT JOIN FETCH q.subject s LEFT JOIN FETCH s.parent WHERE m.id = :id")
     Optional<MockExamEntity> findByIdWithQuestions(Long id);
 }

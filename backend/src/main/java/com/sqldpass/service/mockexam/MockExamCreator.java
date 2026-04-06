@@ -1,6 +1,7 @@
 package com.sqldpass.service.mockexam;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -35,13 +36,20 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class MockExamCreator {
 
-    /** leaf subject id → 추출 문항 수 */
-    private static final Map<Long, Integer> DISTRIBUTION = Map.of(
-            3L, 5,
-            4L, 5,
-            5L, 14,
-            6L, 13,
-            7L, 13);
+    /**
+     * leaf subject id → 추출 문항 수.
+     * LinkedHashMap으로 순서 고정 — 실제 SQLD 시험처럼 1과목(3,4) 먼저, 2과목(5,6,7) 뒤.
+     */
+    private static final Map<Long, Integer> DISTRIBUTION;
+    static {
+        LinkedHashMap<Long, Integer> m = new LinkedHashMap<>();
+        m.put(3L, 5);   // 1과목: 데이터 모델링의 이해
+        m.put(4L, 5);   // 1과목: 데이터 모델과 SQL
+        m.put(5L, 14);  // 2과목: SQL 기본
+        m.put(6L, 13);  // 2과목: SQL 활용
+        m.put(7L, 13);  // 2과목: 관리 구문
+        DISTRIBUTION = m;
+    }
 
     private final MockExamRepository mockExamRepository;
     private final QuestionRepository questionRepository;

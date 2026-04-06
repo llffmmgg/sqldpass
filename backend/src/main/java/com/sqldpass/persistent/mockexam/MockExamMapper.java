@@ -5,6 +5,7 @@ import java.util.List;
 import com.sqldpass.domain.mockexam.MockExam;
 import com.sqldpass.domain.mockexam.MockExamQuestion;
 import com.sqldpass.persistent.question.QuestionEntity;
+import com.sqldpass.persistent.subject.SubjectEntity;
 
 public class MockExamMapper {
 
@@ -35,11 +36,14 @@ public class MockExamMapper {
     }
 
     public static MockExamQuestion toDomain(QuestionEntity q) {
+        // 실제 SQLD 시험처럼 상위 과목(1과목/2과목)을 표시. parent가 없으면 본인으로 폴백.
+        SubjectEntity leaf = q.getSubject();
+        SubjectEntity shown = leaf.getParent() != null ? leaf.getParent() : leaf;
         return new MockExamQuestion(
                 q.getId(),
                 q.getDisplayOrder() != null ? q.getDisplayOrder() : 0,
                 q.getContent(),
-                q.getSubject().getId(),
-                q.getSubject().getName());
+                shown.getId(),
+                shown.getName());
     }
 }

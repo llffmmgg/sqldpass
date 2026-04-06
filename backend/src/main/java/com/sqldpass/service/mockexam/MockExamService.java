@@ -43,7 +43,10 @@ public class MockExamService {
     @Transactional
     public MockExam create() {
         MockExamEntity created = mockExamCreator.create();
-        return MockExamMapper.toDomain(created);
+        // parent 과목까지 fetch한 상태로 리로드 (매퍼에서 N+1 방지)
+        MockExamEntity loaded = mockExamRepository.findByIdWithQuestions(created.getId())
+                .orElseThrow(() -> new SqldpassException(ErrorCode.MOCK_EXAM_NOT_FOUND));
+        return MockExamMapper.toDomain(loaded);
     }
 
     /** 모의고사 삭제 (관리자) */
