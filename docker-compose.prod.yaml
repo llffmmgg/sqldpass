@@ -55,7 +55,7 @@ services:
     deploy:
       resources:
         limits:
-          memory: 512M   # JVM + 앱 메모리 상한 (OOM 방지)
+          memory: 1G   # Spring AI 부팅에 필요한 메모리 (ARM 2GB 인스턴스에서 OS/DB 합쳐 1.5GB 사용)
 
   # ----------------------------------------------------------
   # MySQL 데이터베이스
