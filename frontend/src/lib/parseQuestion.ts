@@ -94,12 +94,11 @@ function classifyByLines(content: string): Segment[] {
       continue;
     }
 
-    // SQL 시작 줄
+    // SQL 시작 줄 — 세미콜론으로 끝나도 다음 줄이 SQL이면 같은 블록으로 병합
     if (isSqlStartLine(line)) {
       const sqlLines: string[] = [line];
-      let endedBySemicolon = /;\s*$/.test(line);
       i++;
-      while (i < lines.length && !endedBySemicolon) {
+      while (i < lines.length) {
         const next = lines[i];
         if (!next.trim()) {
           // 빈 줄 → SQL 블록 종료
@@ -112,7 +111,6 @@ function classifyByLines(content: string): Segment[] {
           !PROBABLY_TEXT.test(next)
         ) {
           sqlLines.push(next);
-          endedBySemicolon = /;\s*$/.test(next);
           i++;
         } else {
           break;
