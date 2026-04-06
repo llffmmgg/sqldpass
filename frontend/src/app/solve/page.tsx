@@ -125,7 +125,7 @@ function SolvePageContent() {
     return (
       <main className="min-h-screen bg-background text-foreground">
         <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6">
-          <h1 className="font-display text-3xl font-semibold tracking-tight sm:text-4xl">과목 선택</h1>
+          <h1 className="text-2xl font-bold sm:text-3xl">과목 선택</h1>
           <p className="mt-2 text-muted">풀고 싶은 과목을 선택하세요</p>
 
           <div className="mt-8 space-y-3">

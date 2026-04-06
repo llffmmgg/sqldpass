@@ -91,7 +91,7 @@ function WrongAnswersPageContent() {
   return (
     <main className="min-h-screen bg-background text-foreground">
       <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6">
-        <h1 className="font-display text-3xl font-semibold tracking-tight sm:text-4xl">오답 노트</h1>
+        <h1 className="text-2xl font-bold sm:text-3xl">오답 노트</h1>
         <p className="mt-2 text-sm text-muted">취약한 영역을 파악하고 집중 학습하세요.</p>
 
         {/* Stats */}

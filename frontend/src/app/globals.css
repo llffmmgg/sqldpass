@@ -41,7 +41,6 @@
   --color-glow: var(--glow);
   --color-accent-glow: var(--accent-glow);
   --font-sans: var(--font-sans-kr), Pretendard, system-ui, sans-serif;
-  --font-display: var(--font-fraunces), Georgia, serif;
   --font-mono: var(--font-jetbrains-mono), ui-monospace, monospace;
 }
 

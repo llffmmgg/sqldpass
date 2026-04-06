@@ -1,18 +1,12 @@
 import type { Metadata } from "next";
-import { IBM_Plex_Sans_KR, Fraunces, JetBrains_Mono } from "next/font/google";
+import { Noto_Sans_KR, JetBrains_Mono } from "next/font/google";
 import NavBar from "@/components/NavBar";
 import "./globals.css";
 
-const ibmPlexSansKr = IBM_Plex_Sans_KR({
+const notoSansKr = Noto_Sans_KR({
   variable: "--font-sans-kr",
   subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700"],
-});
-
-const fraunces = Fraunces({
-  variable: "--font-fraunces",
-  subsets: ["latin"],
-  axes: ["SOFT", "opsz"],
+  weight: ["400", "500", "600", "700"],
 });
 
 const jetbrainsMono = JetBrains_Mono({
@@ -39,7 +33,7 @@ export default function RootLayout({
   return (
     <html
       lang="ko"
-      className={`${ibmPlexSansKr.variable} ${fraunces.variable} ${jetbrainsMono.variable} h-full antialiased`}
+      className={`${notoSansKr.variable} ${jetbrainsMono.variable} h-full antialiased`}
       suppressHydrationWarning
     >
       <head>
