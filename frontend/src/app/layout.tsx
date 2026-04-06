@@ -1,11 +1,18 @@
 import type { Metadata } from "next";
-import { Space_Grotesk, JetBrains_Mono } from "next/font/google";
+import { IBM_Plex_Sans_KR, Fraunces, JetBrains_Mono } from "next/font/google";
 import NavBar from "@/components/NavBar";
 import "./globals.css";
 
-const spaceGrotesk = Space_Grotesk({
-  variable: "--font-space-grotesk",
+const ibmPlexSansKr = IBM_Plex_Sans_KR({
+  variable: "--font-sans-kr",
   subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700"],
+});
+
+const fraunces = Fraunces({
+  variable: "--font-fraunces",
+  subsets: ["latin"],
+  axes: ["SOFT", "opsz"],
 });
 
 const jetbrainsMono = JetBrains_Mono({
@@ -32,7 +39,7 @@ export default function RootLayout({
   return (
     <html
       lang="ko"
-      className={`${spaceGrotesk.variable} ${jetbrainsMono.variable} h-full antialiased`}
+      className={`${ibmPlexSansKr.variable} ${fraunces.variable} ${jetbrainsMono.variable} h-full antialiased`}
       suppressHydrationWarning
     >
       <head>

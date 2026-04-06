@@ -14,6 +14,7 @@ import {
 import { formatDate } from "@/lib/format";
 import { parseQuestion } from "@/lib/parseQuestion";
 import QuestionContent from "@/components/QuestionContent";
+import AuthGuard from "@/components/AuthGuard";
 import Spinner from "@/components/Spinner";
 import Link from "next/link";
 
@@ -36,6 +37,14 @@ function rateColor(rate: number) {
 }
 
 export default function WrongAnswersPage() {
+  return (
+    <AuthGuard>
+      <WrongAnswersPageContent />
+    </AuthGuard>
+  );
+}
+
+function WrongAnswersPageContent() {
   const [stats, setStats] = useState<WrongAnswerStatsResponse[]>([]);
   const [wrongAnswers, setWrongAnswers] = useState<WrongAnswerResponse[]>([]);
   const [subjects, setSubjects] = useState<{ id: number; name: string }[]>([]);
@@ -82,7 +91,7 @@ export default function WrongAnswersPage() {
   return (
     <main className="min-h-screen bg-background text-foreground">
       <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6">
-        <h1 className="text-2xl font-bold sm:text-3xl">오답 노트</h1>
+        <h1 className="font-display text-3xl font-semibold tracking-tight sm:text-4xl">오답 노트</h1>
         <p className="mt-2 text-sm text-muted">취약한 영역을 파악하고 집중 학습하세요.</p>
 
         {/* Stats */}

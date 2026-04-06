@@ -6,6 +6,7 @@ import { getSolve, getQuestionDetail, getSubjects, type SolveResponse, type Ques
 import { formatDate } from "@/lib/format";
 import { parseQuestion, OPTION_MARKERS } from "@/lib/parseQuestion";
 import QuestionContent from "@/components/QuestionContent";
+import AuthGuard from "@/components/AuthGuard";
 import Spinner from "@/components/Spinner";
 
 function buildSubjectMap(subjects: Subject[]): Record<number, string> {
@@ -20,6 +21,14 @@ function buildSubjectMap(subjects: Subject[]): Record<number, string> {
 }
 
 export default function HistoryDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  return (
+    <AuthGuard>
+      <HistoryDetailContent params={params} />
+    </AuthGuard>
+  );
+}
+
+function HistoryDetailContent({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const [solve, setSolve] = useState<SolveResponse | null>(null);
   const [details, setDetails] = useState<Record<number, QuestionDetail>>({});
@@ -59,8 +68,8 @@ export default function HistoryDetailPage({ params }: { params: Promise<{ id: st
     <main className="min-h-screen bg-background text-foreground">
       <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6">
         {/* Header */}
-        <Link href="/history" className="text-sm text-muted hover:text-foreground transition-colors">
-          &larr; 풀이 기록으로
+        <Link href="/dashboard" className="text-sm text-muted hover:text-foreground transition-colors">
+          &larr; 대시보드로
         </Link>
 
         {/* Score summary */}

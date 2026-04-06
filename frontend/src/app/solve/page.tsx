@@ -5,17 +5,27 @@ import {
   getSubjects,
   getQuestions,
   getQuestionDetail,
+  submitSolve,
   type Subject,
   type Question,
   type QuestionDetail,
 } from "@/lib/api";
 import { parseQuestion } from "@/lib/parseQuestion";
 import QuestionContent from "@/components/QuestionContent";
+import AuthGuard from "@/components/AuthGuard";
 import Spinner from "@/components/Spinner";
 
 type Phase = "select" | "solve";
 
 export default function SolvePage() {
+  return (
+    <AuthGuard>
+      <SolvePageContent />
+    </AuthGuard>
+  );
+}
+
+function SolvePageContent() {
   const [phase, setPhase] = useState<Phase>("select");
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [selectedSubject, setSelectedSubject] = useState<Subject | null>(null);
@@ -61,6 +71,13 @@ export default function SolvePage() {
     setSolvedCount((c) => c + 1);
     if (option === d.correctOption) {
       setCorrectCount((c) => c + 1);
+    }
+
+    if (selectedSubject) {
+      submitSolve({
+        subjectId: selectedSubject.id,
+        answers: [{ questionId: current.id, selectedOption: option }],
+      }).catch((e) => console.error("풀이 제출 실패:", e));
     }
   }
 
@@ -108,7 +125,7 @@ export default function SolvePage() {
     return (
       <main className="min-h-screen bg-background text-foreground">
         <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6">
-          <h1 className="text-2xl font-bold sm:text-3xl">과목 선택</h1>
+          <h1 className="font-display text-3xl font-semibold tracking-tight sm:text-4xl">과목 선택</h1>
           <p className="mt-2 text-muted">풀고 싶은 과목을 선택하세요</p>
 
           <div className="mt-8 space-y-3">

@@ -64,7 +64,7 @@ export default function Home() {
           </ScrollReveal>
 
           <ScrollReveal delay={1}>
-            <h1 className="mt-6 text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl lg:text-6xl">
+            <h1 className="mt-6 font-display text-4xl font-semibold tracking-tight sm:text-5xl md:text-6xl lg:text-7xl">
               <span className="bg-gradient-to-r from-amber-400 via-amber-300 to-amber-500 bg-clip-text text-transparent">
                 SQLD 합격
               </span>
@@ -122,7 +122,7 @@ export default function Home() {
       {/* Features */}
       <section className="mx-auto max-w-5xl px-4 py-24 sm:px-6 lg:px-8">
         <ScrollReveal>
-          <h2 className="text-center text-2xl font-bold sm:text-3xl">
+          <h2 className="text-center font-display text-3xl font-semibold tracking-tight sm:text-4xl">
             주요 기능
           </h2>
           <p className="mt-3 text-center text-muted">
@@ -230,7 +230,7 @@ export default function Home() {
 
         <div className="relative mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
           <ScrollReveal>
-            <h2 className="text-center text-2xl font-bold sm:text-3xl">
+            <h2 className="text-center font-display text-3xl font-semibold tracking-tight sm:text-4xl">
               문제 미리보기
             </h2>
             <p className="mt-3 text-center text-muted">
@@ -358,7 +358,7 @@ WHERE  dept_id = 10;`}</code>
         <div className="shimmer-line mx-auto mb-16 max-w-md" />
 
         <ScrollReveal>
-          <h2 className="text-2xl font-bold sm:text-3xl">
+          <h2 className="font-display text-3xl font-semibold tracking-tight sm:text-4xl">
             지금 바로 시작하세요
           </h2>
           <p className="mt-3 text-muted">
