@@ -13,6 +13,7 @@ import com.sqldpass.domain.question.Question;
 import com.sqldpass.service.admin.JwtProvider;
 import com.sqldpass.service.common.ErrorCode;
 import com.sqldpass.service.common.SqldpassException;
+import com.sqldpass.service.notification.DiscordNotifier;
 import com.sqldpass.service.question.QuestionService;
 
 import static org.mockito.BDDMockito.given;
@@ -31,6 +32,9 @@ class QuestionControllerTest {
 
     @MockitoBean
     private JwtProvider jwtProvider;
+
+    @MockitoBean
+    private DiscordNotifier discordNotifier;
 
     @Test
     @DisplayName("GET /api/questions 200 OK - 정답과 해설이 포함되지 않는다")

@@ -47,6 +47,11 @@ services:
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
       GOOGLE_GENAI_API_KEY: ${GOOGLE_GENAI_API_KEY}
       OPENAI_API_KEY: ${OPENAI_API_KEY}
+
+      # --- Discord 웹훅 ---
+      DISCORD_WEBHOOK_GENERATION: ${DISCORD_WEBHOOK_GENERATION}
+      DISCORD_WEBHOOK_SIGNUP: ${DISCORD_WEBHOOK_SIGNUP}
+      DISCORD_WEBHOOK_ERROR: ${DISCORD_WEBHOOK_ERROR}
     depends_on:
       db:
         condition: service_healthy   # DB healthcheck 통과 후 앱 시작

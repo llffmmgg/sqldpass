@@ -15,6 +15,7 @@ import com.sqldpass.controller.solve.dto.SolveRequest;
 import com.sqldpass.domain.solve.Solve;
 import com.sqldpass.domain.solve.SolveAnswer;
 import com.sqldpass.service.admin.JwtProvider;
+import com.sqldpass.service.notification.DiscordNotifier;
 import com.sqldpass.service.solve.SolveService;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -36,6 +37,9 @@ class SolveControllerTest {
 
     @MockitoBean
     private JwtProvider jwtProvider;
+
+    @MockitoBean
+    private DiscordNotifier discordNotifier;
 
     private void mockAuth() {
         given(jwtProvider.validateToken("test-token")).willReturn(true);

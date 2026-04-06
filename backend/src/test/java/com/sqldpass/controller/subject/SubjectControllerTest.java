@@ -11,6 +11,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import com.sqldpass.domain.subject.Subject;
 import com.sqldpass.service.admin.JwtProvider;
+import com.sqldpass.service.notification.DiscordNotifier;
 import com.sqldpass.service.subject.SubjectService;
 
 import static org.mockito.BDDMockito.given;
@@ -29,6 +30,9 @@ class SubjectControllerTest {
 
     @MockitoBean
     private JwtProvider jwtProvider;
+
+    @MockitoBean
+    private DiscordNotifier discordNotifier;
 
     @Test
     @DisplayName("GET /api/subjects 200 OK - 트리 구조로 반환")

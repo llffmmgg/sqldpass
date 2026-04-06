@@ -63,3 +63,8 @@ sqldpass:
   scheduler:
     generation-cron: "0 0 3 * * *"
     enabled: false
+  discord:
+    webhook:
+      generation: ${DISCORD_WEBHOOK_GENERATION:}
+      signup: ${DISCORD_WEBHOOK_SIGNUP:}
+      error: ${DISCORD_WEBHOOK_ERROR:}

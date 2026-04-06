@@ -2,6 +2,7 @@ package com.sqldpass.controller.common;
 
 import java.util.List;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
 
 import org.springframework.http.HttpStatus;
@@ -15,12 +16,17 @@ import org.springframework.web.context.request.async.AsyncRequestNotUsableExcept
 
 import com.sqldpass.service.common.ErrorCode;
 import com.sqldpass.service.common.SqldpassException;
+import com.sqldpass.service.notification.DiscordNotifier;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @RestControllerAdvice
+@RequiredArgsConstructor
 public class GlobalExceptionHandler {
+
+    private final DiscordNotifier discordNotifier;
 
     @ExceptionHandler(SqldpassException.class)
     public ResponseEntity<ErrorResponse> handleSqldpassException(SqldpassException e) {
@@ -71,8 +77,10 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorResponse> handleException(Exception e) {
+    public ResponseEntity<ErrorResponse> handleException(Exception e, HttpServletRequest request) {
         log.error("Unhandled exception", e);
+        // Discord 알림 — NoResourceFoundException 등 노이즈는 notifier 내부에서 필터링
+        discordNotifier.notifyException(e, request.getRequestURI());
         ErrorCode errorCode = ErrorCode.INTERNAL_SERVER_ERROR;
         ErrorResponse response = new ErrorResponse(
                 errorCode.getHttpStatus().value(), errorCode.getMessage(), errorCode.getCode());

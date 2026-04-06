@@ -5,7 +5,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.function.Consumer;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import com.sqldpass.service.generation.dto.*;
 
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -16,6 +16,7 @@ import com.sqldpass.persistent.question.QuestionEntity;
 import com.sqldpass.persistent.question.QuestionRepository;
 import com.sqldpass.persistent.subject.SubjectEntity;
 import com.sqldpass.persistent.subject.SubjectRepository;
+import com.sqldpass.service.notification.DiscordNotifier;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -28,6 +29,7 @@ public class QuestionGenerationService {
     private final GenerationLockService lockService;
     private final AiProvider generator;
     private final AiProvider verifier;
+    private final DiscordNotifier discordNotifier;
     private final int questionsPerSubject;
     private final boolean verificationEnabled;
     private final int maxCallsPerRun;
@@ -38,6 +40,7 @@ public class QuestionGenerationService {
             GenerationLockService lockService,
             @Qualifier("generator") AiProvider generator,
             @Qualifier("verifier") AiProvider verifier,
+            DiscordNotifier discordNotifier,
             @Value("${sqldpass.ai.generation.questions-per-subject:3}") int questionsPerSubject,
             @Value("${sqldpass.ai.generation.verification-enabled:true}") boolean verificationEnabled,
             @Value("${sqldpass.ai.generation.max-calls-per-run:50}") int maxCallsPerRun) {
@@ -46,6 +49,7 @@ public class QuestionGenerationService {
         this.lockService = lockService;
         this.generator = generator;
         this.verifier = verifier;
+        this.discordNotifier = discordNotifier;
         this.questionsPerSubject = questionsPerSubject;
         this.verificationEnabled = verificationEnabled;
         this.maxCallsPerRun = maxCallsPerRun;
@@ -57,8 +61,9 @@ public class QuestionGenerationService {
 
     public GenerationResult generateAll(int count, Consumer<GenerationEvent> eventListener) {
         lockService.acquire();
+        List<GeneratedQuestion> savedQuestions = new ArrayList<>();
         try {
-            GenerationResult result = doGenerate(count, eventListener);
+            GenerationResult result = doGenerate(count, eventListener, savedQuestions);
             try {
                 String resultJson = new ObjectMapper().writeValueAsString(
                         new com.sqldpass.controller.admin.dto.GenerationResultResponse(
@@ -68,6 +73,8 @@ public class QuestionGenerationService {
                 log.error("Failed to save generation result", e);
                 lockService.fail("결과 저장 실패: " + e.getMessage());
             }
+            // Discord 알림 — 생성 완료 시점
+            discordNotifier.notifyGenerationComplete(result, savedQuestions);
             return result;
         } catch (Exception e) {
             lockService.fail(e.getMessage());
@@ -75,7 +82,8 @@ public class QuestionGenerationService {
         }
     }
 
-    private GenerationResult doGenerate(int count, Consumer<GenerationEvent> eventListener) {
+    private GenerationResult doGenerate(int count, Consumer<GenerationEvent> eventListener,
+                                         List<GeneratedQuestion> savedQuestionsOut) {
         List<SubjectEntity> leafSubjects = subjectRepository.findByChildrenIsEmpty();
         int totalGenerated = 0;
         int totalVerified = 0;
@@ -181,6 +189,7 @@ public class QuestionGenerationService {
                                 question.explanation(), question.summary(), question.topic(), question.difficulty());
                         questionRepository.save(entity);
                         totalSaved++;
+                        savedQuestionsOut.add(question);
 
                         if (question.summary() != null) {
                             existingSummaries.add(question.summary());
