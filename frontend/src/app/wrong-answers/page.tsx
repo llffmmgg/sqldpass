@@ -82,9 +82,16 @@ function WrongAnswersPageContent() {
     }
     setExpandedId(questionId);
     if (!explanations[questionId]) {
-      getQuestionDetail(questionId).then((detail) => {
-        setExplanations((prev) => ({ ...prev, [questionId]: detail.explanation }));
-      });
+      getQuestionDetail(questionId)
+        .then((detail) => {
+          setExplanations((prev) => ({ ...prev, [questionId]: detail.explanation }));
+        })
+        .catch(() => {
+          setExplanations((prev) => ({
+            ...prev,
+            [questionId]: "해설을 불러오지 못했습니다. 다시 펼쳐 시도해주세요.",
+          }));
+        });
     }
   }
 

@@ -110,9 +110,12 @@ public class SolveService {
                 .toList();
     }
 
-    public Solve getSolve(Long id) {
-        return solveRepository.findById(id)
-                .map(SolveMapper::toDomain)
+    public Solve getSolve(Long id, Long memberId) {
+        SolveEntity entity = solveRepository.findById(id)
                 .orElseThrow(() -> new SqldpassException(ErrorCode.SOLVE_NOT_FOUND));
+        if (!entity.getMember().getId().equals(memberId)) {
+            throw new SqldpassException(ErrorCode.FORBIDDEN);
+        }
+        return SolveMapper.toDomain(entity);
     }
 }

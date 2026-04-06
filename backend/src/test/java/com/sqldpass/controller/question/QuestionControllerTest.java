@@ -2,6 +2,7 @@ package com.sqldpass.controller.question;
 
 import java.util.List;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,13 +37,22 @@ class QuestionControllerTest {
     @MockitoBean
     private DiscordNotifier discordNotifier;
 
+    private static final String AUTH_HEADER = "Bearer test-token";
+
+    @BeforeEach
+    void setUp() {
+        // /api/questions/** 는 MemberAuthInterceptor 보호 대상 — 유효 토큰으로 통과시킴
+        given(jwtProvider.validateToken("test-token")).willReturn(true);
+        given(jwtProvider.extractMemberId("test-token")).willReturn(1L);
+    }
+
     @Test
     @DisplayName("GET /api/questions 200 OK - 정답과 해설이 포함되지 않는다")
     void getQuestions() throws Exception {
         Question q = new Question(1L, 5L, "문제 내용", 2, "해설");
         given(questionService.getRandomQuestions(5L, 10)).willReturn(List.of(q));
 
-        mockMvc.perform(get("/api/questions").param("subjectId", "5"))
+        mockMvc.perform(get("/api/questions").param("subjectId", "5").header("Authorization", AUTH_HEADER))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").value(1))
                 .andExpect(jsonPath("$[0].content").value("문제 내용"))
@@ -56,7 +66,7 @@ class QuestionControllerTest {
         Question q = new Question(1L, 5L, "문제 내용", 2, "해설입니다");
         given(questionService.getQuestion(1L)).willReturn(q);
 
-        mockMvc.perform(get("/api/questions/1"))
+        mockMvc.perform(get("/api/questions/1").header("Authorization", AUTH_HEADER))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.correctOption").value(2))
                 .andExpect(jsonPath("$.explanation").value("해설입니다"));
@@ -68,8 +78,15 @@ class QuestionControllerTest {
         given(questionService.getQuestion(999L))
                 .willThrow(new SqldpassException(ErrorCode.QUESTION_NOT_FOUND));
 
-        mockMvc.perform(get("/api/questions/999"))
+        mockMvc.perform(get("/api/questions/999").header("Authorization", AUTH_HEADER))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.code").value("QUESTION_NOT_FOUND"));
+    }
+
+    @Test
+    @DisplayName("GET /api/questions 401 - 토큰 없으면 인증 실패")
+    void getQuestions_unauthorized() throws Exception {
+        mockMvc.perform(get("/api/questions").param("subjectId", "5"))
+                .andExpect(status().isUnauthorized());
     }
 }

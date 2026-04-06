@@ -36,6 +36,19 @@ function MockExamDetailContent() {
       .catch((e) => setError(e instanceof Error ? e.message : "모의고사를 불러올 수 없습니다."));
   }, [id]);
 
+  // 시험 진행 중 실수로 탭 닫기/새로고침 → 답안 소실 경고 (U1)
+  useEffect(() => {
+    if (result) return;
+    const answered = answers.size;
+    if (answered === 0) return;
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = "";
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [answers, result]);
+
   if (error) {
     return (
       <main className="min-h-screen bg-background text-foreground flex items-center justify-center">

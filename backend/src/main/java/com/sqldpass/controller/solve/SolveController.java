@@ -49,8 +49,9 @@ public class SolveController {
     }
 
     @GetMapping("/api/solves/{id}")
-    @Operation(summary = "풀이 상세 조회")
-    public SolveResponse getSolve(@PathVariable Long id) {
-        return SolveResponse.from(solveService.getSolve(id));
+    @Operation(summary = "풀이 상세 조회 (본인 것만)")
+    public SolveResponse getSolve(HttpServletRequest request, @PathVariable Long id) {
+        Long memberId = (Long) request.getAttribute("memberId");
+        return SolveResponse.from(solveService.getSolve(id, memberId));
     }
 }

@@ -1,6 +1,8 @@
 package com.sqldpass.persistent.question;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import org.springframework.data.domain.Page;
@@ -12,9 +14,24 @@ import org.springframework.data.repository.query.Param;
 
 public interface QuestionRepository extends JpaRepository<QuestionEntity, Long> {
 
-    /** 모의고사에 아직 편성되지 않은 문제만 과목별로 랜덤 추출 */
-    @Query(value = "SELECT * FROM question WHERE subject_id = :subjectId AND mock_exam_id IS NULL ORDER BY RAND() LIMIT :limit", nativeQuery = true)
-    List<QuestionEntity> findRandomBySubjectId(@Param("subjectId") Long subjectId, @Param("limit") int limit);
+    /** 모의고사 미편성 문제의 ID만 조회 — 샘플링 후보 풀로 사용 */
+    @Query("SELECT q.id FROM QuestionEntity q WHERE q.subject.id = :subjectId AND q.mockExam IS NULL")
+    List<Long> findAvailableIdsBySubjectId(@Param("subjectId") Long subjectId);
+
+    /**
+     * 과목별 랜덤 문항 추출 (모의고사 미편성 분).
+     * ORDER BY RAND() 대신 후보 ID를 가져와 JVM에서 셔플 → 필요한 만큼 IN-list로 조회.
+     * 풀이 커져도 full table scan + filesort 유발하지 않음.
+     */
+    default List<QuestionEntity> findRandomBySubjectId(Long subjectId, int limit) {
+        List<Long> candidateIds = new ArrayList<>(findAvailableIdsBySubjectId(subjectId));
+        if (candidateIds.isEmpty()) {
+            return List.of();
+        }
+        Collections.shuffle(candidateIds);
+        List<Long> picked = candidateIds.subList(0, Math.min(limit, candidateIds.size()));
+        return findAllById(picked);
+    }
 
     /** 모의고사 삭제 시 편성된 문제들을 풀로 복귀시킴 */
     @Modifying

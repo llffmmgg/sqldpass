@@ -34,8 +34,11 @@ function HistoryDetailContent({ params }: { params: Promise<{ id: string }> }) {
   const [details, setDetails] = useState<Record<number, QuestionDetail>>({});
   const [subjectMap, setSubjectMap] = useState<Record<number, string>>({});
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    setError(null);
+    setLoading(true);
     Promise.all([getSolve(Number(id)), getSubjects()])
       .then(([solveData, subjects]) => {
         setSolve(solveData);
@@ -51,8 +54,24 @@ function HistoryDetailContent({ params }: { params: Promise<{ id: string }> }) {
         }
         setDetails(map);
       })
+      .catch((e) => {
+        setError(e instanceof Error ? e.message : "풀이 내역을 불러올 수 없습니다.");
+      })
       .finally(() => setLoading(false));
   }, [id]);
+
+  if (error) {
+    return (
+      <main className="min-h-screen bg-background text-foreground">
+        <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6 text-center">
+          <p className="text-red-400">{error}</p>
+          <Link href="/dashboard" className="mt-4 inline-block text-sm text-muted hover:text-foreground">
+            ← 대시보드로
+          </Link>
+        </div>
+      </main>
+    );
+  }
 
   if (loading || !solve) {
     return (

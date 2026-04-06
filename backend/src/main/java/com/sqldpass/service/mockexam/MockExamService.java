@@ -24,11 +24,12 @@ public class MockExamService {
     private final QuestionRepository questionRepository;
     private final MockExamCreator mockExamCreator;
 
-    /** 모의고사 목록 조회 (최신 sequence 순) */
+    /** 모의고사 목록 조회 (최신 sequence 순) — 단일 GROUP BY 쿼리로 N+1 방지 */
     public List<MockExam> getAll() {
-        return mockExamRepository.findAll().stream()
-                .sorted((a, b) -> Integer.compare(b.getSequence(), a.getSequence()))
-                .map(e -> MockExamMapper.toSummary(e, e.getQuestions().size()))
+        return mockExamRepository.findAllWithQuestionCounts().stream()
+                .map(row -> MockExamMapper.toSummary(
+                        (MockExamEntity) row[0],
+                        ((Long) row[1]).intValue()))
                 .toList();
     }
 

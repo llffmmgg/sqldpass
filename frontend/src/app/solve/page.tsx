@@ -37,6 +37,7 @@ function SolvePageContent() {
   const [loading, setLoading] = useState(false);
   const [solvedCount, setSolvedCount] = useState(0);
   const [correctCount, setCorrectCount] = useState(0);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   useEffect(() => {
     getSubjects().then(setSubjects);
@@ -78,10 +79,29 @@ function SolvePageContent() {
     }
 
     if (selectedSubject) {
+      setSubmitError(null);
       submitSolve({
         subjectId: selectedSubject.id,
         answers: [{ questionId: current.id, selectedOption }],
-      }).catch((e) => console.error("풀이 제출 실패:", e));
+      }).catch((e) => {
+        console.error("풀이 제출 실패:", e);
+        setSubmitError(
+          e instanceof Error ? e.message : "풀이 기록 저장에 실패했습니다. 다음 문제로 넘기기 전에 재시도하세요."
+        );
+      });
+    }
+  }
+
+  async function retrySubmit() {
+    if (!selectedSubject || !current || selectedOption === null) return;
+    setSubmitError(null);
+    try {
+      await submitSolve({
+        subjectId: selectedSubject.id,
+        answers: [{ questionId: current.id, selectedOption }],
+      });
+    } catch (e) {
+      setSubmitError(e instanceof Error ? e.message : "다시 실패했습니다.");
     }
   }
 
@@ -258,6 +278,21 @@ function SolvePageContent() {
         {/* 정답 확인 후 해설 + 다음 버튼 */}
         {revealed && detail && (
           <div className="mt-4 space-y-4">
+            {/* 제출 실패 에러 배너 */}
+            {submitError && (
+              <div className="rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-300">
+                <div className="flex items-center justify-between gap-3">
+                  <span>풀이 기록 저장 실패: {submitError}</span>
+                  <button
+                    onClick={retrySubmit}
+                    className="shrink-0 rounded-md border border-red-500/60 px-3 py-1 text-xs font-medium hover:bg-red-500/20"
+                  >
+                    재시도
+                  </button>
+                </div>
+              </div>
+            )}
+
             {/* 결과 표시 */}
             <div
               className={`rounded-lg border px-4 py-3 text-sm ${
