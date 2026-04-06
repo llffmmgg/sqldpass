@@ -13,6 +13,7 @@ import org.springframework.web.bind.MissingRequestHeaderException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.async.AsyncRequestNotUsableException;
+import org.springframework.web.multipart.MultipartException;
 
 import com.sqldpass.service.common.ErrorCode;
 import com.sqldpass.service.common.SqldpassException;
@@ -74,6 +75,17 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(AsyncRequestNotUsableException.class)
     public void handleAsyncDisconnect(AsyncRequestNotUsableException e) {
         log.debug("클라이언트 연결 종료됨 (SSE disconnect)");
+    }
+
+    // 스캐너 봇이 보내는 잘못된 multipart 요청 — 500이 아니라 400으로 정정
+    // Discord 알림은 DiscordNotifier에서 필터링됨
+    @ExceptionHandler(MultipartException.class)
+    public ResponseEntity<ErrorResponse> handleMultipartException(MultipartException e) {
+        log.debug("Malformed multipart request: {}", e.getMessage());
+        ErrorCode errorCode = ErrorCode.INVALID_REQUEST_BODY;
+        ErrorResponse response = new ErrorResponse(
+                errorCode.getHttpStatus().value(), errorCode.getMessage(), errorCode.getCode());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
 
     @ExceptionHandler(Exception.class)

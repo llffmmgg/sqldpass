@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.multipart.MultipartException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import com.sqldpass.persistent.member.MemberEntity;
@@ -103,10 +104,9 @@ public class DiscordNotifier {
     // 서버 예외 알림
     // ----------------------------------------------------------
     public void notifyException(Exception ex, String requestPath) {
-        // 흔한 노이즈는 알림 제외 (404 스캐너 트래픽 등)
-        if (ex instanceof NoResourceFoundException) {
-            return;
-        }
+        // 흔한 노이즈는 알림 제외 (스캐너 봇 트래픽)
+        if (ex instanceof NoResourceFoundException) return;
+        if (ex instanceof MultipartException) return;
 
         String stackPreview = stackPreview(ex);
         String message = ex.getMessage() != null ? ex.getMessage() : "(no message)";
