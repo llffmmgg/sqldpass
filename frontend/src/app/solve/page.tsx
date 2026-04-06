@@ -10,7 +10,7 @@ import {
   type Question,
   type QuestionDetail,
 } from "@/lib/api";
-import { parseQuestion } from "@/lib/parseQuestion";
+import { parseQuestion, parseMarkdown } from "@/lib/parseQuestion";
 import QuestionContent from "@/components/QuestionContent";
 import AuthGuard from "@/components/AuthGuard";
 import Spinner from "@/components/Spinner";
@@ -273,9 +273,9 @@ function SolvePageContent() {
             {detail.explanation && (
               <div className="rounded-lg border border-border bg-surface px-4 py-3">
                 <p className="text-sm font-medium text-amber-400">해설</p>
-                <p className="mt-1 text-sm leading-relaxed text-muted">
-                  {detail.explanation}
-                </p>
+                <div className="mt-1 text-sm leading-relaxed text-muted">
+                  <QuestionContent segments={parseMarkdown(detail.explanation)} />
+                </div>
               </div>
             )}
 

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useState, use } from "react";
 import { getSolve, getQuestionDetail, getSubjects, type SolveResponse, type QuestionDetail, type Subject } from "@/lib/api";
 import { formatDate } from "@/lib/format";
-import { parseQuestion, OPTION_MARKERS } from "@/lib/parseQuestion";
+import { parseQuestion, parseMarkdown, OPTION_MARKERS } from "@/lib/parseQuestion";
 import QuestionContent from "@/components/QuestionContent";
 import AuthGuard from "@/components/AuthGuard";
 import Spinner from "@/components/Spinner";
@@ -156,9 +156,9 @@ function HistoryDetailContent({ params }: { params: Promise<{ id: string }> }) {
                     <summary className="cursor-pointer font-medium text-amber-400">
                       해설 보기
                     </summary>
-                    <p className="mt-2 leading-relaxed text-muted">
-                      {detail.explanation}
-                    </p>
+                    <div className="mt-2 leading-relaxed text-muted">
+                      <QuestionContent segments={parseMarkdown(detail.explanation)} />
+                    </div>
                   </details>
                 )}
               </div>

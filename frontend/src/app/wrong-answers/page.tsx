@@ -12,7 +12,7 @@ import {
   type QuestionDetail,
 } from "@/lib/api";
 import { formatDate } from "@/lib/format";
-import { parseQuestion } from "@/lib/parseQuestion";
+import { parseQuestion, parseMarkdown } from "@/lib/parseQuestion";
 import QuestionContent from "@/components/QuestionContent";
 import AuthGuard from "@/components/AuthGuard";
 import Spinner from "@/components/Spinner";
@@ -223,9 +223,13 @@ function WrongAnswersPageContent() {
                         </div>
                         <div className="rounded-lg border border-border px-3 py-3 text-sm">
                           <p className="font-medium text-amber-400">해설</p>
-                          <p className="mt-1 leading-relaxed text-muted">
-                            {explanations[wa.questionId] || "로딩 중..."}
-                          </p>
+                          <div className="mt-1 leading-relaxed text-muted">
+                            {explanations[wa.questionId] ? (
+                              <QuestionContent segments={parseMarkdown(explanations[wa.questionId])} />
+                            ) : (
+                              "로딩 중..."
+                            )}
+                          </div>
                         </div>
                       </div>
                     </div>
