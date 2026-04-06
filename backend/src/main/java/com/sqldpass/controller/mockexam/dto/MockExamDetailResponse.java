@@ -5,10 +5,13 @@ import java.util.List;
 
 import com.sqldpass.domain.mockexam.MockExam;
 import com.sqldpass.domain.mockexam.MockExamQuestion;
+import com.sqldpass.persistent.mockexam.ExamType;
+import com.sqldpass.persistent.question.QuestionType;
 
 public record MockExamDetailResponse(
         Long id,
         String name,
+        ExamType examType,
         int sequence,
         int totalQuestions,
         LocalDateTime createdAt,
@@ -18,6 +21,7 @@ public record MockExamDetailResponse(
             Long id,
             int displayOrder,
             String content,
+            QuestionType questionType,
             Long subjectId,
             String subjectName
     ) {
@@ -26,6 +30,7 @@ public record MockExamDetailResponse(
                     q.getQuestionId(),
                     q.getDisplayOrder(),
                     q.getContent(),
+                    q.getQuestionType(),
                     q.getSubjectId(),
                     q.getSubjectName());
         }
@@ -35,6 +40,7 @@ public record MockExamDetailResponse(
         return new MockExamDetailResponse(
                 mockExam.getId(),
                 mockExam.getName(),
+                mockExam.getExamType(),
                 mockExam.getSequence(),
                 mockExam.getTotalQuestions(),
                 mockExam.getCreatedAt(),

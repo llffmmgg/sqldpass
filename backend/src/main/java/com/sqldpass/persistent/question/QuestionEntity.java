@@ -6,6 +6,8 @@ import com.sqldpass.persistent.subject.SubjectEntity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -39,8 +41,21 @@ public class QuestionEntity extends BaseTimeEntity {
     @Column(nullable = false, columnDefinition = "TEXT")
     private String content;
 
-    @Column(name = "correct_option", nullable = false, columnDefinition = "TINYINT")
-    private int correctOption;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "question_type", nullable = false, length = 20)
+    private QuestionType questionType = QuestionType.MCQ;
+
+    /** MCQ일 때만 의미 있음. 비MCQ는 NULL */
+    @Column(name = "correct_option", columnDefinition = "TINYINT")
+    private Integer correctOption;
+
+    /** SHORT_ANSWER/DESCRIPTIVE 정답(모범답안) */
+    @Column(columnDefinition = "TEXT")
+    private String answer;
+
+    /** JSON 배열 문자열. SHORT_ANSWER: 허용 alias 리스트. DESCRIPTIVE: 채점 키워드 리스트 */
+    @Column(columnDefinition = "TEXT")
+    private String keywords;
 
     @Column(columnDefinition = "TEXT")
     private String explanation;

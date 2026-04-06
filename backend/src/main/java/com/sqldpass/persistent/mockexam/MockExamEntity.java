@@ -8,6 +8,8 @@ import com.sqldpass.persistent.question.QuestionEntity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -35,6 +37,10 @@ public class MockExamEntity extends BaseTimeEntity {
     @Column(nullable = false, length = 50)
     private String name;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "exam_type", nullable = false, length = 30)
+    private ExamType examType = ExamType.SQLD;
+
     @Column(name = "sequence", nullable = false)
     private int sequence;
 
@@ -43,7 +49,12 @@ public class MockExamEntity extends BaseTimeEntity {
     private List<QuestionEntity> questions = new ArrayList<>();
 
     public MockExamEntity(String name, int sequence) {
+        this(name, ExamType.SQLD, sequence);
+    }
+
+    public MockExamEntity(String name, ExamType examType, int sequence) {
         this.name = name;
+        this.examType = examType;
         this.sequence = sequence;
     }
 

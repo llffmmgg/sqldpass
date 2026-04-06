@@ -20,6 +20,7 @@ public class MockExamMapper {
         return new MockExam(
                 entity.getId(),
                 entity.getName(),
+                entity.getExamType(),
                 entity.getSequence(),
                 entity.getCreatedAt(),
                 questions);
@@ -30,19 +31,21 @@ public class MockExamMapper {
         return new MockExam(
                 entity.getId(),
                 entity.getName(),
+                entity.getExamType(),
                 entity.getSequence(),
                 entity.getCreatedAt(),
                 totalQuestionCount);
     }
 
     public static MockExamQuestion toDomain(QuestionEntity q) {
-        // 실제 SQLD 시험처럼 상위 과목(1과목/2과목)을 표시. parent가 없으면 본인으로 폴백.
+        // 상위 과목 표시 — SQLD는 "1과목:..", 정보처리기사는 "정보처리기사 실기". parent 없으면 본인.
         SubjectEntity leaf = q.getSubject();
         SubjectEntity shown = leaf.getParent() != null ? leaf.getParent() : leaf;
         return new MockExamQuestion(
                 q.getId(),
                 q.getDisplayOrder() != null ? q.getDisplayOrder() : 0,
                 q.getContent(),
+                q.getQuestionType(),
                 shown.getId(),
                 shown.getName());
     }

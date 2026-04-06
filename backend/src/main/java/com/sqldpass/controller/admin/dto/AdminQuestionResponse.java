@@ -9,7 +9,7 @@ public record AdminQuestionResponse(
         Long subjectId,
         String subjectName,
         String content,
-        int correctOption,
+        Integer correctOption,
         String explanation,
         String summary,
         LocalDateTime createdAt) {
