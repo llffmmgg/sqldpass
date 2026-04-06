@@ -114,9 +114,10 @@ function MockExamDetailContent() {
 
   async function handleSubmit() {
     if (!exam) return;
+    if (answeredCount === 0) return;
     if (answeredCount < total) {
       const ok = confirm(
-        `아직 ${total - answeredCount}문제 풀지 않았습니다. 그대로 제출할까요?`
+        `미답 ${total - answeredCount}문항은 오답으로 처리됩니다. 제출하시겠습니까?`
       );
       if (!ok) return;
     }
@@ -142,17 +143,31 @@ function MockExamDetailContent() {
   return (
     <main className="min-h-screen bg-background text-foreground">
       <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6">
-        {/* 상단 진행률 */}
-        <div className="flex items-center justify-between text-sm">
-          <span className="text-muted">{exam.name}</span>
-          <span className="font-medium">
-            {currentIdx + 1} / {total} ({answeredCount} 답안)
-          </span>
+        {/* 상단 상태 바 */}
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="min-w-0">
+            <p className="truncate text-xs text-muted">{exam.name}</p>
+            <p className="mt-0.5 text-lg font-bold tabular-nums">
+              {currentIdx + 1} <span className="text-muted">/</span> {total}
+              <span className="ml-2 text-xs font-medium text-muted">
+                답안 {answeredCount}/{total}
+              </span>
+            </p>
+          </div>
+          <button
+            onClick={handleSubmit}
+            disabled={submitting || answeredCount === 0}
+            className="shrink-0 rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-zinc-900 shadow-sm transition hover:bg-primary-hover disabled:opacity-40"
+          >
+            {submitting ? "제출 중..." : `제출하기 (${answeredCount}/${total})`}
+          </button>
         </div>
-        <div className="mt-2 h-1 overflow-hidden rounded-full bg-border">
+        <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-border">
           <div
-            className="h-full bg-primary transition-all"
-            style={{ width: `${((currentIdx + 1) / total) * 100}%` }}
+            className={`h-full transition-all ${
+              answeredCount === total ? "bg-primary" : "bg-amber-500/70"
+            }`}
+            style={{ width: `${(answeredCount / total) * 100}%` }}
           />
         </div>
 
@@ -192,7 +207,7 @@ function MockExamDetailContent() {
           </ul>
         </div>
 
-        {/* 이동 + 제출 */}
+        {/* 이동 */}
         <div className="mt-6 flex gap-3">
           <button
             onClick={goPrev}
@@ -201,22 +216,13 @@ function MockExamDetailContent() {
           >
             ← 이전
           </button>
-          {currentIdx < total - 1 ? (
-            <button
-              onClick={goNext}
-              className="flex-1 rounded-lg bg-primary py-3 text-sm font-semibold text-zinc-900 hover:bg-primary-hover"
-            >
-              다음 →
-            </button>
-          ) : (
-            <button
-              onClick={handleSubmit}
-              disabled={submitting}
-              className="flex-1 rounded-lg bg-primary py-3 text-sm font-semibold text-zinc-900 hover:bg-primary-hover disabled:opacity-50"
-            >
-              {submitting ? "제출 중..." : "제출"}
-            </button>
-          )}
+          <button
+            onClick={goNext}
+            disabled={currentIdx >= total - 1}
+            className="flex-1 rounded-lg border border-border bg-surface py-3 text-sm font-medium text-foreground disabled:opacity-30 hover:border-primary/40"
+          >
+            다음 →
+          </button>
         </div>
 
         {/* 빠른 이동 점프 */}
@@ -242,6 +248,27 @@ function MockExamDetailContent() {
               );
             })}
           </div>
+        </div>
+
+        {/* 하단 보조 제출 버튼 */}
+        <div className="mt-8">
+          <button
+            onClick={handleSubmit}
+            disabled={submitting || answeredCount === 0}
+            className="w-full rounded-xl bg-primary py-4 text-base font-bold text-zinc-900 shadow-sm transition hover:bg-primary-hover disabled:opacity-40"
+          >
+            {submitting ? "제출 중..." : "제출하기"}
+          </button>
+          {answeredCount < total && answeredCount > 0 && (
+            <p className="mt-2 text-center text-xs text-muted">
+              미답 {total - answeredCount}문항은 오답으로 처리됩니다
+            </p>
+          )}
+          {answeredCount === 0 && (
+            <p className="mt-2 text-center text-xs text-muted">
+              최소 1문항 이상 선택해야 제출할 수 있습니다
+            </p>
+          )}
         </div>
       </div>
     </main>
