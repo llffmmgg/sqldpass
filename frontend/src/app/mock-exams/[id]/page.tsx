@@ -1,13 +1,30 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import AuthGuard from "@/components/AuthGuard";
 import Spinner from "@/components/Spinner";
 import QuestionContent from "@/components/QuestionContent";
 import { parseQuestion } from "@/lib/parseQuestion";
-import { getMockExam, type MockExamDetail } from "@/lib/mockExamApi";
-import { submitSolve, type SolveResponse } from "@/lib/api";
+import {
+  getMockExam,
+  type MockExamDetail,
+  type MockExamQuestion,
+} from "@/lib/mockExamApi";
+import { submitSolve, type SolveAnswerRequest, type SolveResponse } from "@/lib/api";
+import { ExamBadge } from "@/app/mock-exams/page";
+
+interface AnswerState {
+  option?: number;
+  text?: string;
+}
+
+function hasAnswer(a?: AnswerState): boolean {
+  if (!a) return false;
+  if (a.option != null) return true;
+  if (a.text != null && a.text.trim() !== "") return true;
+  return false;
+}
 
 export default function MockExamDetailPage() {
   return (
@@ -25,7 +42,7 @@ function MockExamDetailContent() {
   const [exam, setExam] = useState<MockExamDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [currentIdx, setCurrentIdx] = useState(0);
-  const [answers, setAnswers] = useState<Map<number, number>>(new Map());
+  const [answers, setAnswers] = useState<Map<number, AnswerState>>(new Map());
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<SolveResponse | null>(null);
 
@@ -36,18 +53,22 @@ function MockExamDetailContent() {
       .catch((e) => setError(e instanceof Error ? e.message : "모의고사를 불러올 수 없습니다."));
   }, [id]);
 
-  // 시험 진행 중 실수로 탭 닫기/새로고침 → 답안 소실 경고 (U1)
+  const answeredCount = useMemo(
+    () => Array.from(answers.values()).filter(hasAnswer).length,
+    [answers]
+  );
+
+  // 시험 진행 중 실수로 탭 닫기/새로고침 → 답안 소실 경고
   useEffect(() => {
     if (result) return;
-    const answered = answers.size;
-    if (answered === 0) return;
+    if (answeredCount === 0) return;
     const handler = (e: BeforeUnloadEvent) => {
       e.preventDefault();
       e.returnValue = "";
     };
     window.addEventListener("beforeunload", handler);
     return () => window.removeEventListener("beforeunload", handler);
-  }, [answers, result]);
+  }, [answeredCount, result]);
 
   if (error) {
     return (
@@ -73,15 +94,42 @@ function MockExamDetailContent() {
     );
   }
 
+  const isEngineer = exam.examType === "ENGINEER_PRACTICAL";
+  // 시험 종류에 따른 액센트 색상 클래스
+  const accent = isEngineer
+    ? {
+        bg: "bg-emerald-500 hover:bg-emerald-400",
+        text: "text-emerald-300",
+        border: "border-emerald-500",
+        ring: "focus:ring-emerald-500/30 focus:border-emerald-500",
+        progress: "bg-emerald-500",
+        progressPartial: "bg-emerald-500/60",
+        chipActive: "bg-emerald-500 text-zinc-900",
+        chipAnswered: "bg-emerald-500/20 text-foreground",
+        hoverBorder: "hover:border-emerald-500/40",
+      }
+    : {
+        bg: "bg-primary hover:bg-primary-hover",
+        text: "text-amber-300",
+        border: "border-amber-500",
+        ring: "focus:ring-amber-500/30 focus:border-amber-500",
+        progress: "bg-primary",
+        progressPartial: "bg-amber-500/70",
+        chipActive: "bg-primary text-zinc-900",
+        chipAnswered: "bg-primary/20 text-foreground",
+        hoverBorder: "hover:border-amber-500/40",
+      };
+
   // 결과 화면
   if (result) {
     return (
       <main className="min-h-screen bg-background text-foreground">
         <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6">
-          <h1 className="text-2xl font-bold">{exam.name} 결과</h1>
+          <ExamBadge examType={exam.examType} />
+          <h1 className="mt-3 text-2xl font-bold">{exam.name} 결과</h1>
           <div className="mt-8 rounded-xl border border-border bg-surface p-8 text-center">
             <p className="text-sm text-muted">점수</p>
-            <p className="mt-2 text-5xl font-bold text-primary">{result.score}점</p>
+            <p className={`mt-2 text-5xl font-bold ${accent.text}`}>{result.score}점</p>
             <p className="mt-4 text-sm text-muted">
               {result.correctCount} / {result.totalCount} 정답
             </p>
@@ -95,7 +143,7 @@ function MockExamDetailContent() {
             </button>
             <button
               onClick={() => router.push(`/history/${result.id}`)}
-              className="flex-1 rounded-lg bg-primary py-3 text-sm font-semibold text-zinc-900 hover:bg-primary-hover"
+              className={`flex-1 rounded-lg ${accent.bg} py-3 text-sm font-semibold text-zinc-900`}
             >
               상세 보기
             </button>
@@ -108,13 +156,22 @@ function MockExamDetailContent() {
   const total = exam.questions.length;
   const current = exam.questions[currentIdx];
   const parsed = parseQuestion(current.content);
-  const selectedOption = answers.get(current.id) ?? null;
-  const answeredCount = answers.size;
+  const currentAnswer = answers.get(current.id);
+
+  function updateAnswer(questionId: number, updater: (prev: AnswerState) => AnswerState) {
+    setAnswers((prev) => {
+      const next = new Map(prev);
+      next.set(questionId, updater(prev.get(questionId) ?? {}));
+      return next;
+    });
+  }
 
   function selectOption(opt: number) {
-    const next = new Map(answers);
-    next.set(current.id, opt);
-    setAnswers(next);
+    updateAnswer(current.id, (prev) => ({ ...prev, option: opt }));
+  }
+
+  function setAnswerText(text: string) {
+    updateAnswer(current.id, (prev) => ({ ...prev, text }));
   }
 
   function goPrev() {
@@ -139,10 +196,13 @@ function MockExamDetailContent() {
     try {
       const payload = {
         mockExamId: exam.id,
-        answers: exam.questions.map((q) => ({
-          questionId: q.id,
-          selectedOption: answers.get(q.id) ?? 0,
-        })),
+        answers: exam.questions.map<SolveAnswerRequest>((q) => {
+          const a = answers.get(q.id);
+          if (q.questionType === "MCQ") {
+            return { questionId: q.id, selectedOption: a?.option ?? 0 };
+          }
+          return { questionId: q.id, answerText: a?.text ?? "" };
+        }),
       };
       const res = await submitSolve(payload);
       setResult(res);
@@ -153,14 +213,20 @@ function MockExamDetailContent() {
     }
   }
 
+  // 빠른 이동 그리드 — 20문항 이하면 5열, 이상이면 10열
+  const jumpGridCols = total <= 20 ? "grid-cols-5 sm:grid-cols-10" : "grid-cols-10";
+
   return (
     <main className="min-h-screen bg-background text-foreground">
       <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6">
         {/* 상단 상태 바 */}
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="min-w-0">
-            <p className="truncate text-xs text-muted">{exam.name}</p>
-            <p className="mt-0.5 text-lg font-bold tabular-nums">
+            <div className="flex items-center gap-2">
+              <ExamBadge examType={exam.examType} />
+              <p className="truncate text-xs text-muted">{exam.name}</p>
+            </div>
+            <p className="mt-1 text-lg font-bold tabular-nums">
               {currentIdx + 1} <span className="text-muted">/</span> {total}
               <span className="ml-2 text-xs font-medium text-muted">
                 답안 {answeredCount}/{total}
@@ -170,7 +236,7 @@ function MockExamDetailContent() {
           <button
             onClick={handleSubmit}
             disabled={submitting || answeredCount === 0}
-            className="shrink-0 rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-zinc-900 shadow-sm transition hover:bg-primary-hover disabled:opacity-40"
+            className={`shrink-0 rounded-lg ${accent.bg} px-5 py-2.5 text-sm font-semibold text-zinc-900 shadow-sm transition disabled:opacity-40`}
           >
             {submitting ? "제출 중..." : `제출하기 (${answeredCount}/${total})`}
           </button>
@@ -178,7 +244,7 @@ function MockExamDetailContent() {
         <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-border">
           <div
             className={`h-full transition-all ${
-              answeredCount === total ? "bg-primary" : "bg-amber-500/70"
+              answeredCount === total ? accent.progress : accent.progressPartial
             }`}
             style={{ width: `${(answeredCount / total) * 100}%` }}
           />
@@ -186,38 +252,43 @@ function MockExamDetailContent() {
 
         {/* 문제 */}
         <div className="mt-6 rounded-xl border border-border bg-surface p-6">
-          <p className="text-xs font-medium text-muted">{current.subjectName}</p>
-          <h2 className="mt-2 text-base font-semibold">
-            문항 {currentIdx + 1}
-          </h2>
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-xs font-medium text-muted">{current.subjectName}</p>
+            <QuestionTypeBadge type={current.questionType} />
+          </div>
+          <h2 className="mt-2 text-base font-semibold">문항 {currentIdx + 1}</h2>
           <div className="mt-4">
             <QuestionContent segments={parsed.segments} />
           </div>
 
-          {/* 4지선다 */}
-          <ul className="mt-6 space-y-2">
-            {parsed.options.map((optionText, idx) => {
-              const num = idx + 1;
-              const isSelected = selectedOption === num;
-              return (
-                <li key={num}>
-                  <button
-                    onClick={() => selectOption(num)}
-                    className={`w-full rounded-lg border px-4 py-3 text-left text-sm transition ${
-                      isSelected
-                        ? "border-amber-500 bg-amber-500/10 text-foreground"
-                        : "border-border hover:border-amber-500/40 hover:bg-amber-500/5"
-                    }`}
-                  >
-                    <span className="mr-3 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-current text-xs">
-                      {num}
-                    </span>
-                    {optionText}
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
+          {/* 입력 UI 분기 */}
+          <div className="mt-6">
+            {current.questionType === "MCQ" && parsed.options.length > 0 && (
+              <MCQOptions
+                options={parsed.options}
+                selected={currentAnswer?.option ?? null}
+                onSelect={selectOption}
+                accent={accent}
+              />
+            )}
+
+            {current.questionType === "SHORT_ANSWER" && (
+              <ShortAnswerInput
+                value={currentAnswer?.text ?? ""}
+                onChange={setAnswerText}
+                onEnter={goNext}
+                accent={accent}
+              />
+            )}
+
+            {current.questionType === "DESCRIPTIVE" && (
+              <DescriptiveInput
+                value={currentAnswer?.text ?? ""}
+                onChange={setAnswerText}
+                accent={accent}
+              />
+            )}
+          </div>
         </div>
 
         {/* 이동 */}
@@ -232,27 +303,27 @@ function MockExamDetailContent() {
           <button
             onClick={goNext}
             disabled={currentIdx >= total - 1}
-            className="flex-1 rounded-lg border border-border bg-surface py-3 text-sm font-medium text-foreground disabled:opacity-30 hover:border-primary/40"
+            className={`flex-1 rounded-lg border border-border bg-surface py-3 text-sm font-medium text-foreground disabled:opacity-30 ${accent.hoverBorder}`}
           >
             다음 →
           </button>
         </div>
 
-        {/* 빠른 이동 점프 */}
+        {/* 빠른 이동 */}
         <div className="mt-6">
           <p className="text-xs text-muted mb-2">빠른 이동</p>
-          <div className="grid grid-cols-10 gap-1.5">
+          <div className={`grid gap-1.5 ${jumpGridCols}`}>
             {exam.questions.map((q, i) => {
-              const answered = answers.has(q.id);
+              const answered = hasAnswer(answers.get(q.id));
               return (
                 <button
                   key={q.id}
                   onClick={() => setCurrentIdx(i)}
-                  className={`h-8 rounded text-xs font-medium transition ${
+                  className={`h-9 rounded text-xs font-medium transition ${
                     i === currentIdx
-                      ? "bg-primary text-zinc-900"
+                      ? accent.chipActive
                       : answered
-                      ? "bg-primary/20 text-foreground"
+                      ? accent.chipAnswered
                       : "bg-surface text-muted hover:bg-border"
                   }`}
                 >
@@ -268,7 +339,7 @@ function MockExamDetailContent() {
           <button
             onClick={handleSubmit}
             disabled={submitting || answeredCount === 0}
-            className="w-full rounded-xl bg-primary py-4 text-base font-bold text-zinc-900 shadow-sm transition hover:bg-primary-hover disabled:opacity-40"
+            className={`w-full rounded-xl ${accent.bg} py-4 text-base font-bold text-zinc-900 shadow-sm transition disabled:opacity-40`}
           >
             {submitting ? "제출 중..." : "제출하기"}
           </button>
@@ -279,11 +350,140 @@ function MockExamDetailContent() {
           )}
           {answeredCount === 0 && (
             <p className="mt-2 text-center text-xs text-muted">
-              최소 1문항 이상 선택해야 제출할 수 있습니다
+              최소 1문항 이상 답안을 작성해야 제출할 수 있습니다
             </p>
           )}
         </div>
       </div>
     </main>
+  );
+}
+
+// ================= 하위 컴포넌트 =================
+
+type Accent = {
+  bg: string;
+  text: string;
+  border: string;
+  ring: string;
+  progress: string;
+  progressPartial: string;
+  chipActive: string;
+  chipAnswered: string;
+  hoverBorder: string;
+};
+
+function QuestionTypeBadge({ type }: { type: MockExamQuestion["questionType"] }) {
+  if (type === "MCQ") {
+    return <span className="rounded-full border border-border px-2 py-0.5 text-[10px] font-medium text-muted">4지선다</span>;
+  }
+  if (type === "SHORT_ANSWER") {
+    return <span className="rounded-full border border-emerald-500/40 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-bold text-emerald-300">단답형</span>;
+  }
+  return <span className="rounded-full border border-cyan-500/40 bg-cyan-500/10 px-2 py-0.5 text-[10px] font-bold text-cyan-300">서술형</span>;
+}
+
+function MCQOptions({
+  options,
+  selected,
+  onSelect,
+  accent,
+}: {
+  options: string[];
+  selected: number | null;
+  onSelect: (n: number) => void;
+  accent: Accent;
+}) {
+  return (
+    <ul className="space-y-2">
+      {options.map((optionText, idx) => {
+        const num = idx + 1;
+        const isSelected = selected === num;
+        return (
+          <li key={num}>
+            <button
+              onClick={() => onSelect(num)}
+              className={`w-full rounded-lg border px-4 py-3 text-left text-sm transition ${
+                isSelected
+                  ? `${accent.border} bg-amber-500/10 text-foreground`
+                  : `border-border ${accent.hoverBorder} hover:bg-amber-500/5`
+              }`}
+            >
+              <span className="mr-3 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-current text-xs">
+                {num}
+              </span>
+              {optionText}
+            </button>
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
+function ShortAnswerInput({
+  value,
+  onChange,
+  onEnter,
+  accent,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  onEnter: () => void;
+  accent: Accent;
+}) {
+  return (
+    <div>
+      <label className="mb-2 block text-xs text-muted">정답 입력</label>
+      <input
+        type="text"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            onEnter();
+          }
+        }}
+        placeholder="정답을 입력하세요 (엔터: 다음 문제)"
+        className={`w-full rounded-lg border border-border bg-background px-4 py-3 font-mono text-sm text-foreground placeholder:text-muted/50 transition focus:outline-none focus:ring-2 ${accent.ring}`}
+        autoComplete="off"
+        spellCheck={false}
+      />
+      <p className="mt-2 text-xs text-muted/70">
+        대소문자, 앞뒤 공백은 자동으로 무시됩니다. 동의어/영문 표기도 정답으로 인정됩니다.
+      </p>
+    </div>
+  );
+}
+
+function DescriptiveInput({
+  value,
+  onChange,
+  accent,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  accent: Accent;
+}) {
+  return (
+    <div>
+      <label className="mb-2 block text-xs text-muted">서술형 답안</label>
+      <div className="relative">
+        <textarea
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          rows={8}
+          placeholder="개념을 설명하는 답안을 작성하세요. 핵심 키워드를 포함할수록 점수가 올라갑니다."
+          className={`w-full resize-y rounded-lg border border-border bg-background px-4 py-3 text-sm leading-relaxed text-foreground placeholder:text-muted/50 transition focus:outline-none focus:ring-2 ${accent.ring}`}
+        />
+        <span className="pointer-events-none absolute bottom-2 right-3 text-xs tabular-nums text-muted/60">
+          {value.length} 자
+        </span>
+      </div>
+      <p className="mt-2 text-xs text-muted/70">
+        채점 방식: 핵심 키워드 포함률 70% 이상 + 충분한 분량 → 정답, 40% 이상 → 부분점수.
+      </p>
+    </div>
   );
 }
