@@ -1,0 +1,105 @@
+# ============================================================
+# sqldpass 운영 배포용 Docker Compose
+# ============================================================
+#
+# 사용법:
+#   docker compose -f docker-compose.prod.yaml up -d
+#
+# 필수 조건:
+#   - 같은 디렉토리에 .env 파일 존재 (.env.example 참고)
+#   - ghcr.io 로그인 완료 (docker login ghcr.io)
+#
+# 구성:
+#   app — Spring Boot 백엔드 (ghcr.io에서 pull)
+#   db  — MySQL 8.0 (내부 네트워크만, 외부 접근 불가)
+# ============================================================
+
+services:
+  # ----------------------------------------------------------
+  # 백엔드 애플리케이션
+  # ----------------------------------------------------------
+  app:
+    image: ghcr.io/llffmmgg/sqldpass:prod
+    container_name: sqldpass-app
+    restart: unless-stopped   # 서버 재부팅 시 자동 재시작 (수동 stop 제외)
+    ports:
+      - "${APP_PORT:-8080}:8080"   # 호스트 포트 변경 가능 (기본값 8080)
+    environment:
+      # --- Spring 프로필 ---
+      SPRING_PROFILES_ACTIVE: prod
+
+      # --- 데이터베이스 접속 정보 ---
+      # 'db'는 같은 Docker 네트워크 내 MySQL 서비스의 호스트명
+      DB_URL: jdbc:mysql://db:3306/${MYSQL_DATABASE}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul
+      DB_USERNAME: ${MYSQL_USER}
+      DB_PASSWORD: ${MYSQL_PASSWORD}
+
+      # --- 인증 ---
+      JWT_SECRET: ${JWT_SECRET}
+      GOOGLE_OAUTH_CLIENT_ID: ${GOOGLE_OAUTH_CLIENT_ID}
+      GOOGLE_OAUTH_CLIENT_SECRET: ${GOOGLE_OAUTH_CLIENT_SECRET}
+
+      # --- 관리자 ---
+      ADMIN_USERNAME: ${ADMIN_USERNAME}
+      ADMIN_PASSWORD_HASH: ${ADMIN_PASSWORD_HASH}
+
+      # --- AI API 키 ---
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+      GOOGLE_GENAI_API_KEY: ${GOOGLE_GENAI_API_KEY}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+    depends_on:
+      db:
+        condition: service_healthy   # DB healthcheck 통과 후 앱 시작
+    networks:
+      - backend-net
+    deploy:
+      resources:
+        limits:
+          memory: 512M   # JVM + 앱 메모리 상한 (OOM 방지)
+
+  # ----------------------------------------------------------
+  # MySQL 데이터베이스
+  # ----------------------------------------------------------
+  db:
+    image: mysql:8.0
+    container_name: sqldpass-db
+    restart: unless-stopped
+    # ⚠️ ports 미설정 — 호스트에서 직접 접근 불가 (보안)
+    # 앱 컨테이너만 내부 네트워크(backend-net)를 통해 접근 가능
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE}          # 자동 생성될 데이터베이스명
+      MYSQL_USER: ${MYSQL_USER}                  # 앱 전용 사용자 (root 아님)
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}          # 앱 전용 비밀번호
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}  # root 비밀번호 (관리용)
+      TZ: Asia/Seoul
+    volumes:
+      - mysql-prod-data:/var/lib/mysql   # 컨테이너 재생성해도 데이터 유지
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    healthcheck:
+      # MySQL이 완전히 기동되었는지 확인 (앱 시작 전 대기에 사용)
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 10s      # 10초마다 체크
+      timeout: 5s         # 5초 내 응답 없으면 실패
+      retries: 5          # 5회 연속 실패 시 unhealthy
+      start_period: 30s   # 최초 30초는 실패해도 무시 (기동 시간 확보)
+    networks:
+      - backend-net
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+
+# ----------------------------------------------------------
+# 네트워크: app ↔ db 간 격리된 내부 통신
+# ----------------------------------------------------------
+networks:
+  backend-net:
+    driver: bridge
+
+# ----------------------------------------------------------
+# 볼륨: MySQL 데이터 영속 저장
+# 컨테이너를 삭제해도 데이터는 유지됨
+# 완전 삭제: docker volume rm sqldpass_mysql-prod-data
+# ----------------------------------------------------------
+volumes:
+  mysql-prod-data:
