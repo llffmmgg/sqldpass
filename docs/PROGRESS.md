@@ -20,59 +20,8 @@ SQLD 자격증 문제집 사이트 — AI 문제 생성, 풀이, 채점, 오답 
 
 ## 운영 인프라 아키텍처
 
-```mermaid
-graph TB
-    User[사용자 브라우저]
-    Admin[관리자]
+![sqldpass architecture](./sqldpass_architecture.svg)
 
-    subgraph Vercel
-        Frontend[Next.js<br/>www.sqldpass.com]
-    end
-
-    subgraph "OCI - E2.1.Micro #1 (nginx)"
-        Nginx[nginx<br/>api.sqldpass.com<br/>HTTPS/443]
-        Promtail1[Promtail]
-    end
-
-    subgraph "OCI - ARM 2GB (백엔드)"
-        Backend[Spring Boot<br/>:8080]
-        MySQL[(MySQL 8.0)]
-        Promtail2[Promtail]
-    end
-
-    subgraph "OCI - E2.1.Micro #2 (관측)"
-        Loki[Loki<br/>:3100]
-        Grafana[Grafana<br/>grafana.sqldpass.com]
-        NginxG[nginx]
-    end
-
-    subgraph "외부 서비스"
-        AI[Spring AI<br/>Anthropic/Gemini/OpenAI]
-        Google[Google OAuth]
-        GHCR[ghcr.io<br/>이미지 레지스트리]
-        Discord[Discord<br/>웹훅 알림]
-    end
-
-    User -->|HTTPS| Frontend
-    Frontend -->|Next.js rewrites<br/>HTTPS| Nginx
-    Nginx -->|VCN 내부<br/>HTTP :8080| Backend
-    Backend --> MySQL
-    Backend -.->|AI API 호출| AI
-    Backend -.->|OAuth 검증| Google
-    Backend -.->|이벤트 알림| Discord
-
-    Backend -.->|stdout 로그| Promtail2
-    Nginx -.->|stdout 로그| Promtail1
-    Promtail1 -->|VCN 내부<br/>HTTP :3100| Loki
-    Promtail2 -->|VCN 내부<br/>HTTP :3100| Loki
-    Loki --> Grafana
-    Admin -->|HTTPS| NginxG
-    NginxG --> Grafana
-
-    GitHub[GitHub Actions<br/>CI/CD] -->|이미지 빌드 + push| GHCR
-    GitHub -->|SSH + SCP| Backend
-    GHCR -.->|docker pull| Backend
-```
 
 ## 데이터 흐름 — 주요 시나리오
 
