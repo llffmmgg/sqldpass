@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,15 +35,19 @@ public class SolveService {
     private final MemberRepository memberRepository;
     private final SubjectRepository subjectRepository;
     private final MockExamRepository mockExamRepository;
+    private final GradingService gradingService;
+
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     public SolveService(SolveRepository solveRepository, QuestionRepository questionRepository,
                         MemberRepository memberRepository, SubjectRepository subjectRepository,
-                        MockExamRepository mockExamRepository) {
+                        MockExamRepository mockExamRepository, GradingService gradingService) {
         this.solveRepository = solveRepository;
         this.questionRepository = questionRepository;
         this.memberRepository = memberRepository;
         this.subjectRepository = subjectRepository;
         this.mockExamRepository = mockExamRepository;
+        this.gradingService = gradingService;
     }
 
     @Transactional
@@ -65,19 +70,25 @@ public class SolveService {
 
         int totalCount = request.answers().size();
 
-        // 정답 수 계산
-        int correctCount = 0;
+        // 모든 문제 존재 여부 확인
         for (SolveAnswerRequest answerReq : request.answers()) {
-            QuestionEntity question = questionMap.get(answerReq.questionId());
-            if (question == null) {
+            if (!questionMap.containsKey(answerReq.questionId())) {
                 throw new SqldpassException(ErrorCode.QUESTION_NOT_FOUND, "문제를 찾을 수 없습니다. id=" + answerReq.questionId());
-            }
-            if (answerReq.selectedOption() == question.getCorrectOption()) {
-                correctCount++;
             }
         }
 
-        int score = totalCount > 0 ? (int) Math.round((double) correctCount / totalCount * 100) : 0;
+        // 채점 — GradingService가 MCQ/SHORT_ANSWER/DESCRIPTIVE 분기
+        List<GradingService.GradingResult> results = request.answers().stream()
+                .map(req -> gradingService.grade(
+                        questionMap.get(req.questionId()),
+                        req.selectedOption(),
+                        req.answerText()))
+                .toList();
+
+        // 점수 집계 — 부분점수 합산 (서술형 고려)
+        double totalScore = results.stream().mapToDouble(GradingService.GradingResult::score).sum();
+        int correctCount = (int) results.stream().filter(GradingService.GradingResult::correct).count();
+        int score = totalCount > 0 ? (int) Math.round(totalScore / totalCount * 100) : 0;
 
         // 풀이 종류에 따라 SolveEntity 생성
         SolveEntity solveEntity;
@@ -91,12 +102,33 @@ public class SolveService {
             solveEntity = new SolveEntity(member, mockExam, totalCount, correctCount, score);
         }
 
-        for (SolveAnswerRequest answerReq : request.answers()) {
-            QuestionEntity question = questionMap.get(answerReq.questionId());
-            boolean isCorrect = answerReq.selectedOption() == question.getCorrectOption();
-            SolveAnswerEntity answerEntity = new SolveAnswerEntity(
-                    solveEntity, question, answerReq.selectedOption(), question.getCorrectOption(), isCorrect
-            );
+        // 답안별 엔티티 생성
+        for (int i = 0; i < request.answers().size(); i++) {
+            SolveAnswerRequest req = request.answers().get(i);
+            QuestionEntity question = questionMap.get(req.questionId());
+            GradingService.GradingResult result = results.get(i);
+
+            SolveAnswerEntity answerEntity;
+            if (question.getQuestionType() == null || question.getQuestionType().name().equals("MCQ")) {
+                answerEntity = new SolveAnswerEntity(
+                        solveEntity, question,
+                        req.selectedOption() != null ? req.selectedOption() : 0,
+                        question.getCorrectOption() != null ? question.getCorrectOption() : 0,
+                        result.correct());
+            } else {
+                String matchedJson;
+                try {
+                    matchedJson = OBJECT_MAPPER.writeValueAsString(result.matchedKeywords());
+                } catch (Exception e) {
+                    matchedJson = "[]";
+                }
+                answerEntity = new SolveAnswerEntity(
+                        solveEntity, question,
+                        req.answerText(),
+                        matchedJson,
+                        result.score(),
+                        result.correct());
+            }
             solveEntity.addAnswer(answerEntity);
         }
 

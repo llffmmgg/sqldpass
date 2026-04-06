@@ -83,9 +83,9 @@ class SolveServiceTest {
     @DisplayName("답안을 제출하면 채점 결과가 반환된다")
     void solve() {
         SolveRequest request = new SolveRequest(subject.getId(), null, List.of(
-                new SolveAnswerRequest(q1.getId(), 1),  // 정답
-                new SolveAnswerRequest(q2.getId(), 1),  // 오답 (정답: 2)
-                new SolveAnswerRequest(q3.getId(), 3)   // 정답
+                new SolveAnswerRequest(q1.getId(), 1, null),  // 정답
+                new SolveAnswerRequest(q2.getId(), 1, null),  // 오답 (정답: 2)
+                new SolveAnswerRequest(q3.getId(), 3, null)   // 정답
         ));
 
         Solve result = solveService.solve(member.getId(), request);
@@ -102,7 +102,7 @@ class SolveServiceTest {
     @DisplayName("내 풀이 기록을 조회하면 최신순으로 반환된다")
     void getMySolves() {
         SolveRequest request = new SolveRequest(subject.getId(), null, List.of(
-                new SolveAnswerRequest(q1.getId(), 1)
+                new SolveAnswerRequest(q1.getId(), 1, null)
         ));
         solveService.solve(member.getId(), request);
         entityManager.flush();

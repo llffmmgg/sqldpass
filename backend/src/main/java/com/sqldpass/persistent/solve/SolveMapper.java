@@ -29,11 +29,12 @@ public class SolveMapper {
     }
 
     public static SolveAnswer toDomain(SolveAnswerEntity entity) {
+        // 비-MCQ의 경우 selected/correct option이 NULL이므로 0으로 대체 (도메인은 int 유지).
         return new SolveAnswer(
                 entity.getId(),
                 entity.getQuestion().getId(),
-                entity.getSelectedOption(),
-                entity.getCorrectOption(),
+                entity.getSelectedOption() != null ? entity.getSelectedOption() : 0,
+                entity.getCorrectOption() != null ? entity.getCorrectOption() : 0,
                 entity.isCorrect()
         );
     }
