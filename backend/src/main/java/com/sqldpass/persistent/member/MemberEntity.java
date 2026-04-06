@@ -18,7 +18,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
 @Table(name = "member", uniqueConstraints = {
-    @UniqueConstraint(name = "uk_member_provider", columnNames = {"provider", "provider_id"})
+    @UniqueConstraint(name = "uk_member_provider", columnNames = {"provider", "provider_id"}),
+    @UniqueConstraint(name = "uk_member_nickname", columnNames = {"nickname"})
 })
 public class MemberEntity extends BaseTimeEntity {
 
@@ -38,6 +39,10 @@ public class MemberEntity extends BaseTimeEntity {
     public MemberEntity(String provider, String providerId, String nickname) {
         this.provider = provider;
         this.providerId = providerId;
+        this.nickname = nickname;
+    }
+
+    public void changeNickname(String nickname) {
         this.nickname = nickname;
     }
 }

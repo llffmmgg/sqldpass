@@ -28,8 +28,11 @@ public class AuthService {
         MemberEntity member = memberRepository.findByProviderAndProviderId("google", userInfo.sub())
                 .orElseGet(() -> {
                     isNew[0] = true;
+                    // 신규 가입 시 임시 닉네임 (providerId 일부 사용 → 유니크 보장)
+                    // 프론트엔드가 즉시 korean-random-words로 생성한 닉네임으로 PATCH할 예정
+                    String placeholder = "user_" + userInfo.sub().substring(0, Math.min(12, userInfo.sub().length()));
                     return memberRepository.save(
-                            new MemberEntity("google", userInfo.sub(), userInfo.name()));
+                            new MemberEntity("google", userInfo.sub(), placeholder));
                 });
 
         // Discord 알림 — 신규 가입 시점에만
@@ -38,9 +41,9 @@ public class AuthService {
         }
 
         String token = jwtProvider.createUserToken(member.getId());
-        return new AuthResult(token, member.getNickname());
+        return new AuthResult(token, member.getNickname(), isNew[0]);
     }
 
-    public record AuthResult(String token, String nickname) {
+    public record AuthResult(String token, String nickname, boolean isNew) {
     }
 }

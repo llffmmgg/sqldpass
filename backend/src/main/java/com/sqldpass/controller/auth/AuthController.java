@@ -25,6 +25,6 @@ public class AuthController {
     @Operation(summary = "Google 소셜 로그인")
     public OAuthLoginResponse loginWithGoogle(@Valid @RequestBody OAuthLoginRequest request) {
         AuthService.AuthResult result = authService.loginWithGoogle(request.code(), request.redirectUri());
-        return new OAuthLoginResponse(result.token(), result.nickname());
+        return new OAuthLoginResponse(result.token(), result.nickname(), result.isNew());
     }
 }

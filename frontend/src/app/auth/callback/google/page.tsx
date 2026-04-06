@@ -2,12 +2,33 @@
 
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { setAuth } from "@/lib/auth";
+import { setAuth, setNickname as saveNickname } from "@/lib/auth";
 import { fetchApi } from "@/lib/api";
+import { updateNickname } from "@/lib/memberApi";
+import { generateNickname } from "@/lib/nickname";
 
 interface LoginResponse {
   token: string;
   nickname: string;
+  isNew: boolean;
+}
+
+// 신규 가입 시 랜덤 닉네임 자동 생성 + PATCH (유니크 충돌 시 최대 5회 재시도)
+async function assignRandomNickname(): Promise<string> {
+  for (let i = 0; i < 5; i++) {
+    const candidate = generateNickname();
+    try {
+      const updated = await updateNickname(candidate);
+      return updated.nickname;
+    } catch (e) {
+      // 409(중복)면 다음 후보로 재시도, 그 외는 throw
+      if (e instanceof Error && e.message.includes("이미 사용 중")) {
+        continue;
+      }
+      throw e;
+    }
+  }
+  throw new Error("닉네임 생성에 실패했습니다. 잠시 후 다시 시도해주세요.");
 }
 
 function GoogleCallback() {
@@ -24,17 +45,32 @@ function GoogleCallback() {
 
     const redirectUri = `${window.location.origin}/auth/callback/google`;
 
-    fetchApi<LoginResponse>("/auth/login/google", {
-      method: "POST",
-      body: JSON.stringify({ code, redirectUri }),
-    })
-      .then((data) => {
+    (async () => {
+      try {
+        const data = await fetchApi<LoginResponse>("/auth/login/google", {
+          method: "POST",
+          body: JSON.stringify({ code, redirectUri }),
+        });
+
+        // 토큰 먼저 저장 → 후속 PATCH 호출에 Authorization 헤더 사용
         setAuth(data.token, data.nickname);
+
+        // 신규 가입이면 랜덤 닉네임 생성해서 교체
+        if (data.isNew) {
+          try {
+            const finalNickname = await assignRandomNickname();
+            saveNickname(finalNickname);
+          } catch (e) {
+            // 닉네임 생성 실패해도 일단 로그인은 완료된 상태 (placeholder 닉네임 유지)
+            console.error("자동 닉네임 생성 실패:", e);
+          }
+        }
+
         router.replace("/");
-      })
-      .catch((e) => {
-        setError(e.message || "로그인에 실패했습니다.");
-      });
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "로그인에 실패했습니다.");
+      }
+    })();
   }, [searchParams, router]);
 
   if (error) {

@@ -95,7 +95,13 @@ export default function NavBar() {
             </button>
             {loggedIn ? (
               <>
-                <span className="text-sm text-muted">{nickname}</span>
+                <Link
+                  href="/profile"
+                  className="text-sm text-muted transition-colors hover:text-foreground"
+                  title="프로필"
+                >
+                  {nickname}
+                </Link>
                 <button
                   onClick={handleLogout}
                   className="rounded-md px-3 py-1.5 text-sm font-medium text-muted transition-colors hover:text-foreground"

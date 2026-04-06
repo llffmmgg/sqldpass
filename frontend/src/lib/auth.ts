@@ -11,6 +11,10 @@ export function setAuth(token: string, nickname: string) {
   localStorage.setItem(NICKNAME_KEY, nickname);
 }
 
+export function setNickname(nickname: string) {
+  localStorage.setItem(NICKNAME_KEY, nickname);
+}
+
 export function clearAuth() {
   localStorage.removeItem(TOKEN_KEY);
   localStorage.removeItem(NICKNAME_KEY);
