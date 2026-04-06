@@ -29,6 +29,7 @@ on:
     paths:
       - 'backend/**'
       - 'docker-compose.prod.yaml'
+      - '.github/workflows/cd.yml'
 
 # ----------------------------------------------------------
 # 전역 환경변수
