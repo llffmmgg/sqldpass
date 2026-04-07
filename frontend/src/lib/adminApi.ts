@@ -164,6 +164,7 @@ export function resetGeneration() {
 export interface AdminMockExam {
   id: number;
   name: string;
+  examType: "SQLD" | "ENGINEER_PRACTICAL";
   sequence: number;
   totalQuestions: number;
   createdAt: string;
