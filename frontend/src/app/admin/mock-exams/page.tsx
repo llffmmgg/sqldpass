@@ -6,11 +6,12 @@ import {
   createMockExam,
   deleteMockExam,
   type AdminMockExam,
+  type CreateMockExamType,
 } from "@/lib/adminApi";
 
 export default function AdminMockExamsPage() {
   const [exams, setExams] = useState<AdminMockExam[] | null>(null);
-  const [creating, setCreating] = useState(false);
+  const [creating, setCreating] = useState<CreateMockExamType | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   async function load() {
@@ -26,16 +27,16 @@ export default function AdminMockExamsPage() {
     load();
   }, []);
 
-  async function handleCreate() {
-    setCreating(true);
+  async function handleCreate(examType: CreateMockExamType) {
+    setCreating(examType);
     setError(null);
     try {
-      await createMockExam();
+      await createMockExam(examType);
       await load();
     } catch (e) {
       setError(e instanceof Error ? e.message : "생성에 실패했습니다.");
     } finally {
-      setCreating(false);
+      setCreating(null);
     }
   }
 
@@ -51,15 +52,24 @@ export default function AdminMockExamsPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="text-2xl font-bold">모의고사 관리</h1>
-        <button
-          onClick={handleCreate}
-          disabled={creating}
-          className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-zinc-900 hover:bg-primary-hover disabled:opacity-50"
-        >
-          {creating ? "생성 중..." : "+ 새 모의고사 생성"}
-        </button>
+        <div className="flex flex-wrap gap-2">
+          <button
+            onClick={() => handleCreate("SQLD")}
+            disabled={creating !== null}
+            className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-zinc-900 hover:bg-primary-hover disabled:opacity-50"
+          >
+            {creating === "SQLD" ? "생성 중..." : "+ SQLD 모의고사"}
+          </button>
+          <button
+            onClick={() => handleCreate("ENGINEER_PRACTICAL")}
+            disabled={creating !== null}
+            className="rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-4 py-2 text-sm font-semibold text-emerald-300 transition-colors hover:bg-emerald-500/20 disabled:opacity-50"
+          >
+            {creating === "ENGINEER_PRACTICAL" ? "생성 중..." : "+ 정처기 실기 모의고사"}
+          </button>
+        </div>
       </div>
 
       {error && (

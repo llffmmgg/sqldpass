@@ -173,8 +173,13 @@ export function getAdminMockExams() {
   return adminFetch<AdminMockExam[]>("/mock-exams");
 }
 
-export function createMockExam() {
-  return adminFetch<AdminMockExam>("/mock-exams", { method: "POST" });
+export type CreateMockExamType = "SQLD" | "ENGINEER_PRACTICAL";
+
+export function createMockExam(examType: CreateMockExamType = "SQLD") {
+  return adminFetch<AdminMockExam>("/mock-exams", {
+    method: "POST",
+    body: JSON.stringify({ examType }),
+  });
 }
 
 export function deleteMockExam(id: number) {
