@@ -45,12 +45,18 @@ public class GenerationLockService {
         generationLockRepository.findById(1).ifPresent(GenerationLockEntity::reset);
     }
 
-    @Transactional(readOnly = true)
+    /**
+     * 상태 조회. stale(30분 초과 RUNNING) 감지 시 자동으로 FAILED로 정리하여
+     * 다음 폴링부터는 정상 FAILED 응답으로 고정된다. (이전: stale 응답만 하고 DB는 RUNNING 유지 → 경고 반복)
+     */
+    @Transactional
     public GenerationStatusResponse getStatus() {
         return generationLockRepository.findById(1)
                 .map(lock -> {
                     if (lock.isStale()) {
-                        return new GenerationStatusResponse("FAILED", "생성이 비정상적으로 오래 걸려 중단되었습니다.", lock.getStartedAt());
+                        String msg = "생성이 비정상적으로 오래 걸려 자동 중단되었습니다 (30분 초과).";
+                        lock.fail(msg);
+                        return new GenerationStatusResponse("FAILED", msg, null);
                     }
                     return new GenerationStatusResponse(lock.getStatus(), lock.getResult(), lock.getStartedAt());
                 })

@@ -95,9 +95,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     router.push("/admin/login");
   }
 
+  // stale 감지는 백엔드(30분)에 일임 — 백엔드가 stale 감지 시 자동으로 FAILED로 전환하므로
+  // 프론트에서 로컬 판정하지 않는다. 이전 버그: 프론트 15분 vs 백엔드 30분 불일치로 경고 오탐.
   const isRunning = genStatus?.status === "RUNNING";
-  const isStale = isRunning && genStatus?.startedAt &&
-    new Date(genStatus.startedAt).getTime() < Date.now() - 15 * 60 * 1000;
 
   return (
     <div className="flex min-h-screen bg-background text-foreground">
@@ -140,30 +140,16 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </div>
         )}
 
-        {isRunning && !isStale && (
+        {isRunning && (
           <div className="border-b border-amber-500/30 bg-amber-500/5 px-6 py-2 text-sm text-amber-400">
-            문제 생성이 진행 중입니다...
-          </div>
-        )}
-
-        {isRunning && isStale && (
-          <div className="border-b border-red-500/30 bg-red-500/5 px-6 py-2 flex items-center justify-between">
-            <span className="text-sm text-red-400">
-              생성이 비정상적으로 오래 걸리고 있습니다. (15분 초과)
-            </span>
-            <button
-              onClick={handleDismiss}
-              className="rounded border border-red-500/30 px-3 py-1 text-xs text-red-400 hover:bg-red-500/10"
-            >
-              강제 초기화
-            </button>
+            AI 문제 자동 생성이 진행 중입니다...
           </div>
         )}
 
         {completedResult && (
           <div className="border-b border-green-500/30 bg-green-500/5 px-6 py-3 flex items-center justify-between">
             <span className="text-sm text-green-400">
-              문제 생성 완료! 생성 {completedResult.totalGenerated}개 / 저장 {completedResult.totalSaved}개
+              AI 문제 생성 완료! 생성 {completedResult.totalGenerated}개 / 저장 {completedResult.totalSaved}개
               {completedResult.errors.length > 0 && ` / 오류 ${completedResult.errors.length}건`}
             </span>
             <button
@@ -178,7 +164,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         {failedMessage && !completedResult && (
           <div className="border-b border-red-500/30 bg-red-500/5 px-6 py-3 flex items-center justify-between">
             <span className="text-sm text-red-400">
-              문제 생성 실패: {failedMessage}
+              AI 문제 생성 실패: {failedMessage}
             </span>
             <button
               onClick={handleDismiss}

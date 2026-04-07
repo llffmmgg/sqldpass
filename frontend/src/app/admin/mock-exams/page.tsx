@@ -59,14 +59,17 @@ export default function AdminMockExamsPage() {
   const [exams, setExams] = useState<AdminMockExam[] | null>(null);
   const [creating, setCreating] = useState<CreateMockExamType | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [info, setInfo] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<TabId>("all");
 
-  async function load() {
+  async function load(): Promise<AdminMockExam[] | null> {
     try {
       const data = await getAdminMockExams();
       setExams(data);
+      return data;
     } catch (e) {
       setError(e instanceof Error ? e.message : "목록을 불러올 수 없습니다.");
+      return null;
     }
   }
 
@@ -77,11 +80,43 @@ export default function AdminMockExamsPage() {
   async function handleCreate(examType: CreateMockExamType) {
     setCreating(examType);
     setError(null);
+    setInfo(null);
+
+    // 생성 직전 목록의 최대 sequence 기록 (오탐 복구 판정용)
+    const prevMaxSeq =
+      (exams ?? [])
+        .filter((e) => e.examType === examType)
+        .reduce((max, e) => Math.max(max, e.sequence), 0);
+
     try {
       await createMockExam(examType);
       await load();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "생성에 실패했습니다.");
+      const originalMessage =
+        e instanceof Error ? e.message : "생성에 실패했습니다.";
+
+      // 네트워크 타임아웃이어도 백엔드가 실제로 저장했을 가능성 → 목록 재조회로 확인
+      const refreshed = await load();
+      if (refreshed) {
+        const recent = refreshed
+          .filter((e) => e.examType === examType)
+          .find(
+            (e) =>
+              e.sequence > prevMaxSeq &&
+              Date.now() - new Date(e.createdAt).getTime() < 180_000,
+          );
+        if (recent) {
+          // 실제로는 생성 성공한 케이스
+          setInfo(
+            `네트워크 응답이 지연되었지만 모의고사는 정상 생성되었습니다 (${recent.name}).`,
+          );
+          return;
+        }
+      }
+      // 진짜 실패
+      setError(
+        `${originalMessage} — 응답이 지연된 경우 잠시 후 목록을 새로고침해 확인해주세요.`,
+      );
     } finally {
       setCreating(null);
     }
@@ -178,6 +213,12 @@ export default function AdminMockExamsPage() {
           ))}
         </div>
       </div>
+
+      {info && (
+        <div className="mt-4 rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-3 text-sm text-emerald-300">
+          {info}
+        </div>
+      )}
 
       {error && (
         <div className="mt-4 rounded-lg border border-red-500/30 bg-red-500/5 p-3 text-sm text-red-400">
