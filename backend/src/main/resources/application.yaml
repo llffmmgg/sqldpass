@@ -55,7 +55,7 @@ sqldpass:
     password-hash: ${ADMIN_PASSWORD_HASH:$2a$10$zKXKfuTgKRvDGo2F00OyTe2R33XqdfRBxSaqf1VG1oc6Wdtsy.xPO}
   jwt:
     secret: ${JWT_SECRET:local-dev-secret-key-minimum-32-characters-long}
-    expiration: 3600000
+    expiration: 604800000
   ai:
     generator:
       provider: claude
