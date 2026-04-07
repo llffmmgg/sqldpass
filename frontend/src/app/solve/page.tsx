@@ -249,12 +249,14 @@ function SolvePageContent() {
           </div>
         </div>
 
-        {/* 문제 */}
-        <div className="mt-8 rounded-xl border border-border bg-surface p-6">
+        {/* 문제 — 모의고사 응시 페이지와 동일한 카드 구조 */}
+        <div className="mt-6 rounded-xl border border-border bg-surface p-6">
           <div className="flex items-center justify-between gap-2">
+            <p className="text-xs font-medium text-muted">{selectedSubject?.name}</p>
             <QuestionTypeBadge type={current.questionType} />
           </div>
-          <div className="mt-3">
+          <h2 className="mt-2 text-base font-semibold">문항 {solvedCount + 1}</h2>
+          <div className="mt-4">
             <QuestionContent content={parsed.body} />
           </div>
 

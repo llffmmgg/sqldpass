@@ -86,6 +86,70 @@ function CodeBlock({ language, value }: CodeBlockProps) {
   );
 }
 
+/**
+ * 평문 SQL 블록을 감지해서 ```sql ... ``` 으로 자동 래핑.
+ * 이미 펜스 안에 있는 코드는 건드리지 않는다.
+ *
+ * 배경: SQLD 레거시 문제는 SQL이 펜스 없이 평문으로 저장돼 있어
+ * react-markdown이 일반 단락으로 렌더 → 신택스 하이라이팅 X.
+ * 이 전처리로 모든 페이지에서 SQL이 코드 블록으로 표시됨.
+ */
+function ensureSqlFences(content: string): string {
+  if (!content) return content;
+  const lines = content.split("\n");
+  const out: string[] = [];
+  let i = 0;
+
+  const SQL_START = /^\s*(SELECT|INSERT|UPDATE|DELETE|CREATE|ALTER|DROP|WITH|MERGE|TRUNCATE)\b/i;
+  const SQL_CONT =
+    /^\s*(FROM|WHERE|AND|OR|GROUP\s+BY|ORDER\s+BY|HAVING|JOIN|INNER\s+JOIN|LEFT\s+JOIN|RIGHT\s+JOIN|FULL\s+JOIN|CROSS\s+JOIN|ON|UNION|UNION\s+ALL|INTERSECT|MINUS|EXCEPT|LIMIT|OFFSET|FETCH|VALUES|SET|RETURNING|WHEN|THEN|ELSE|END|CASE|INTO|USING|PARTITION\s+BY|WINDOW|RANGE|ROWS)\b/i;
+
+  while (i < lines.length) {
+    const line = lines[i];
+
+    // 1) 이미 펜스 안이면 닫는 펜스까지 통과
+    if (/^\s*```/.test(line)) {
+      out.push(line);
+      i++;
+      while (i < lines.length && !/^\s*```/.test(lines[i])) {
+        out.push(lines[i]);
+        i++;
+      }
+      if (i < lines.length) {
+        out.push(lines[i]);
+        i++;
+      }
+      continue;
+    }
+
+    // 2) SQL 시작 키워드 감지 → 같은 블록으로 묶어서 fence
+    if (SQL_START.test(line)) {
+      const sqlLines: string[] = [line];
+      i++;
+      while (i < lines.length) {
+        const next = lines[i];
+        if (next.trim() === "") break;
+        const isContinuation =
+          SQL_CONT.test(next) ||
+          /^\s{2,}/.test(next) ||
+          /^\s*[(),]/.test(next) ||
+          /^\s*(SELECT|INSERT|UPDATE|DELETE)\b/i.test(next);
+        if (!isContinuation) break;
+        sqlLines.push(next);
+        i++;
+      }
+      out.push("```sql");
+      out.push(...sqlLines);
+      out.push("```");
+      continue;
+    }
+
+    out.push(line);
+    i++;
+  }
+  return out.join("\n");
+}
+
 interface QuestionContentProps {
   content: string;
   className?: string;
@@ -189,7 +253,7 @@ export default function QuestionContent({
           },
         }}
       >
-        {content}
+        {ensureSqlFences(content)}
       </ReactMarkdown>
     </div>
   );
