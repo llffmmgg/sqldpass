@@ -15,7 +15,7 @@ export async function fetchApi<T>(path: string, options?: RequestInit): Promise<
 
   if (res.status === 401) {
     clearAuth();
-    window.location.href = "/";
+    window.location.replace("/");
     throw new Error("로그인이 필요합니다.");
   }
 
