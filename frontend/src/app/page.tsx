@@ -1,5 +1,6 @@
 import ScrollReveal from "@/components/ScrollReveal";
 import HeroCta from "@/components/HeroCta";
+import CertTerminal from "@/components/CertTerminal";
 
 export default function Home() {
   return (
@@ -29,57 +30,67 @@ export default function Home() {
         {/* Layer 6: Edge vignette for readability */}
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_50%_at_50%_50%,transparent_0%,var(--background)_100%)]" />
 
-        {/* Layer 7: SQL fragments scattered in margins */}
+        {/* Layer 7: Multi-language code fragments (SQL · C · Java · Python) */}
         {/* Left side */}
-        <span className="sql-frag sql-float-1 absolute top-[12%] left-[3%] font-mono text-[15px] text-foreground/[0.3] rotate-[-4deg] select-none pointer-events-none" aria-hidden="true">
+        <span className="sql-frag sql-float-1 absolute top-[12%] left-[3%] font-mono text-[15px] text-amber-300/[0.28] rotate-[-4deg] select-none pointer-events-none" aria-hidden="true">
           SELECT *
         </span>
-        <span className="sql-frag sql-float-2 absolute top-[35%] left-[5%] font-mono text-[11px] text-foreground/[0.22] rotate-[2deg] select-none pointer-events-none" aria-hidden="true">
-          WHERE dept_id = 10
+        <span className="sql-frag sql-float-2 absolute top-[35%] left-[5%] font-mono text-[11px] text-violet-300/[0.22] rotate-[2deg] select-none pointer-events-none" aria-hidden="true">
+          int *p = arr + 1;
         </span>
-        <span className="sql-frag sql-float-3 absolute top-[58%] left-[2%] font-mono text-[13px] text-foreground/[0.25] rotate-[-2deg] select-none pointer-events-none" aria-hidden="true">
+        <span className="sql-frag sql-float-3 absolute top-[58%] left-[2%] font-mono text-[13px] text-amber-300/[0.24] rotate-[-2deg] select-none pointer-events-none" aria-hidden="true">
           GROUP BY name
         </span>
-        <span className="sql-frag sql-float-4 absolute top-[78%] left-[6%] font-mono text-[12px] text-foreground/[0.2] rotate-[5deg] select-none pointer-events-none" aria-hidden="true">
-          INNER JOIN
+        <span className="sql-frag sql-float-4 absolute top-[78%] left-[6%] font-mono text-[12px] text-emerald-300/[0.22] rotate-[5deg] select-none pointer-events-none" aria-hidden="true">
+          def func(x, y=[]):
         </span>
         {/* Right side */}
-        <span className="sql-frag sql-float-5 absolute top-[18%] right-[4%] font-mono text-[13px] text-foreground/[0.25] rotate-[3deg] select-none pointer-events-none" aria-hidden="true">
-          ORDER BY 1 DESC
+        <span className="sql-frag sql-float-5 absolute top-[18%] right-[4%] font-mono text-[13px] text-sky-300/[0.24] rotate-[3deg] select-none pointer-events-none" aria-hidden="true">
+          public class Main
         </span>
-        <span className="sql-frag sql-float-6 absolute top-[42%] right-[2%] font-mono text-[15px] text-foreground/[0.3] rotate-[-3deg] select-none pointer-events-none" aria-hidden="true">
+        <span className="sql-frag sql-float-6 absolute top-[42%] right-[2%] font-mono text-[15px] text-amber-300/[0.28] rotate-[-3deg] select-none pointer-events-none" aria-hidden="true">
           COUNT(*)
         </span>
-        <span className="sql-frag sql-float-7 absolute top-[65%] right-[5%] font-mono text-[11px] text-foreground/[0.22] rotate-[4deg] select-none pointer-events-none" aria-hidden="true">
-          HAVING SUM &gt; 50000
+        <span className="sql-frag sql-float-7 absolute top-[65%] right-[5%] font-mono text-[11px] text-violet-300/[0.22] rotate-[4deg] select-none pointer-events-none" aria-hidden="true">
+          printf(&quot;%d\n&quot;, sum);
         </span>
-        <span className="sql-frag sql-float-8 absolute top-[85%] right-[3%] font-mono text-[12px] text-foreground/[0.25] rotate-[-5deg] select-none pointer-events-none" aria-hidden="true">
-          LEFT OUTER JOIN
+        <span className="sql-frag sql-float-8 absolute top-[85%] right-[3%] font-mono text-[12px] text-emerald-300/[0.22] rotate-[-5deg] select-none pointer-events-none" aria-hidden="true">
+          List&lt;String&gt; kws
         </span>
 
         <div className="relative mx-auto max-w-5xl px-4 py-32 text-center sm:px-6 sm:py-40 lg:px-8">
           <ScrollReveal>
-            <span className="inline-block rounded-full border border-violet-500/30 bg-violet-500/10 px-4 py-1.5 text-sm font-medium text-violet-400">
-              Beta
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-violet-500/30 bg-violet-500/10 px-4 py-1.5 text-sm font-medium text-violet-400">
+              <span className="relative flex h-1.5 w-1.5">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-violet-400 opacity-60" />
+                <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-violet-400" />
+              </span>
+              Beta · Multi-cert
             </span>
           </ScrollReveal>
 
           <ScrollReveal delay={1}>
             <h1 className="mt-6 text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl lg:text-6xl">
-              <span className="bg-gradient-to-r from-amber-400 via-amber-300 to-amber-500 bg-clip-text text-transparent">
-                SQLD 합격
-              </span>
-              ,
+              <span className="bg-gradient-to-r from-amber-400 via-amber-300 to-amber-500 bg-clip-text font-mono text-transparent">
+                SELECT
+              </span>{" "}
+              합격
               <br />
-              문제 풀이로 완성하세요
+              <span className="bg-gradient-to-r from-amber-400 via-amber-300 to-amber-500 bg-clip-text font-mono text-transparent">
+                FROM
+              </span>{" "}
+              당신의 코드
             </h1>
           </ScrollReveal>
 
           <ScrollReveal delay={2}>
             <p className="mx-auto mt-6 max-w-2xl text-base text-muted sm:text-lg">
-              실제 시험과 동일한 유형의 문제를 풀고, 오답을 분석하고,
+              <span className="font-mono text-amber-300/90">SQL</span> ·{" "}
+              <span className="font-mono text-violet-300/90">C</span> ·{" "}
+              <span className="font-mono text-sky-300/90">Java</span> ·{" "}
+              <span className="font-mono text-emerald-300/90">Python</span>
               <br className="hidden sm:block" />
-              취약 과목을 집중 학습하세요.
+              코드 기반 IT 자격증을 한 곳에서 실전 문제로 끝내세요.
             </p>
           </ScrollReveal>
 
@@ -90,6 +101,10 @@ export default function Home() {
           </ScrollReveal>
 
           <ScrollReveal delay={4}>
+            <CertTerminal />
+          </ScrollReveal>
+
+          <ScrollReveal delay={5}>
             <div className="mt-8 flex items-center justify-center gap-5 text-sm text-muted">
               <div className="flex items-center gap-1.5">
                 <svg className="h-4 w-4 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -142,10 +157,10 @@ export default function Home() {
                   />
                 </svg>
               </div>
-              <h3 className="mt-4 text-lg font-semibold">실전 문제 풀이</h3>
+              <h3 className="mt-4 text-lg font-semibold">AI 즉석 모의고사</h3>
               <p className="mt-2 text-sm leading-relaxed text-muted">
-                최신 출제 경향을 반영한 과목별 문제를 풀어보세요. 1과목 데이터
-                모델링, 2과목 SQL 활용 전 범위를 다룹니다.
+                누를 때마다 전혀 새로운 실전 세트가 생성됩니다. SQLD 50문항,
+                정처기 실기 20문항 — 매번 다른 분포로 실전처럼.
               </p>
             </div>
           </ScrollReveal>
@@ -171,10 +186,10 @@ export default function Home() {
                   />
                 </svg>
               </div>
-              <h3 className="mt-4 text-lg font-semibold">오답 분석</h3>
+              <h3 className="mt-4 text-lg font-semibold">오답 자동 복습</h3>
               <p className="mt-2 text-sm leading-relaxed text-muted">
-                틀린 문제를 자동으로 모아 취약 영역을 분석합니다. 해설과 함께
-                복습하세요.
+                자격증별로 틀린 문제만 모아 취약 영역을 분석합니다. 해설과 함께
+                집중 복습하세요.
               </p>
             </div>
           </ScrollReveal>
@@ -200,10 +215,10 @@ export default function Home() {
                   />
                 </svg>
               </div>
-              <h3 className="mt-4 text-lg font-semibold">풀이 기록 관리</h3>
+              <h3 className="mt-4 text-lg font-semibold">회차별 실력 추적</h3>
               <p className="mt-2 text-sm leading-relaxed text-muted">
-                회차별 점수 추이와 풀이 시간을 기록합니다. 목표 점수까지 얼마나
-                남았는지 한눈에 확인하세요.
+                회차별 점수 추이와 풀이 시간을 기록해, 합격 준비도를 한눈에
+                확인합니다.
               </p>
             </div>
           </ScrollReveal>
