@@ -14,6 +14,11 @@ public class SqldpassException extends RuntimeException {
         this.errorCode = errorCode;
     }
 
+    public SqldpassException(ErrorCode errorCode, String message, Throwable cause) {
+        super(message, cause);
+        this.errorCode = errorCode;
+    }
+
     public ErrorCode getErrorCode() {
         return errorCode;
     }

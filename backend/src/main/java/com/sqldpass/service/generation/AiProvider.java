@@ -4,6 +4,8 @@ import java.util.List;
 
 import org.springframework.ai.chat.client.ChatClient;
 
+import com.sqldpass.service.common.ErrorCode;
+import com.sqldpass.service.common.SqldpassException;
 import com.sqldpass.service.generation.dto.*;
 import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.JsonNode;
@@ -64,8 +66,11 @@ public class AiProvider {
                     questionsNode.toString(), new TypeReference<>() {});
             return new AiGenerationResponse(questions);
         } catch (Exception e) {
+            // 정처기는 "한 카테고리 실패 = 모의고사 전체 실패"이므로 예외를 삼키지 않고 상위로 전파.
+            // AI_GENERATION_FAILED(500)로 래핑 → GlobalExceptionHandler가 Discord 알림 전송.
             log.error("Failed to parse engineer generation response: {}", responseText, e);
-            return new AiGenerationResponse(List.of());
+            throw new SqldpassException(ErrorCode.AI_GENERATION_FAILED,
+                    "정처기 AI 응답 파싱 실패 [" + request.subjectName() + "]: " + e.getMessage(), e);
         }
     }
 

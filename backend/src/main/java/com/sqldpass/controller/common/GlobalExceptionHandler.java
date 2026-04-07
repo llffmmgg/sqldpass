@@ -30,8 +30,13 @@ public class GlobalExceptionHandler {
     private final DiscordNotifier discordNotifier;
 
     @ExceptionHandler(SqldpassException.class)
-    public ResponseEntity<ErrorResponse> handleSqldpassException(SqldpassException e) {
+    public ResponseEntity<ErrorResponse> handleSqldpassException(SqldpassException e, HttpServletRequest request) {
         ErrorCode errorCode = e.getErrorCode();
+        // 5xx 서버 에러는 Discord 알림 대상 (4xx 클라이언트 에러는 제외)
+        if (errorCode.getHttpStatus().is5xxServerError()) {
+            log.error("SqldpassException (5xx) at {}", request.getRequestURI(), e);
+            discordNotifier.notifyException(e, request.getRequestURI());
+        }
         ErrorResponse response = new ErrorResponse(
                 errorCode.getHttpStatus().value(), e.getMessage(), errorCode.getCode());
         return ResponseEntity.status(errorCode.getHttpStatus()).body(response);
