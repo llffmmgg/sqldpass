@@ -56,7 +56,7 @@ export default function Home() {
 
           <ScrollReveal delay={1}>
             <h1 className="mt-6 text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl lg:text-6xl">
-              SQLD · 정처기 실기,
+              SQLD · 정보처리기사 실기,
               <br />
               <span className="bg-gradient-to-r from-amber-400 via-amber-300 to-amber-500 bg-clip-text text-transparent">
                 무료 CBT 모의고사
