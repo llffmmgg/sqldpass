@@ -51,6 +51,14 @@ public interface QuestionRepository extends JpaRepository<QuestionEntity, Long> 
 
     long countBySubjectIdAndTopic(Long subjectId, String topic);
 
+    long countBySubjectId(Long subjectId);
+
+    @Query("SELECT q FROM QuestionEntity q JOIN FETCH q.subject s LEFT JOIN FETCH s.parent WHERE q.subject.id = :subjectId ORDER BY q.id ASC")
+    Page<QuestionEntity> findPublicBySubjectId(@Param("subjectId") Long subjectId, Pageable pageable);
+
+    @Query("SELECT q.id FROM QuestionEntity q ORDER BY q.id ASC")
+    List<Long> findAllPublicIds();
+
     @Query("SELECT q.summary FROM QuestionEntity q WHERE q.subject.id = :subjectId AND q.topic = :topic AND q.summary IS NOT NULL")
     List<String> findSummariesBySubjectIdAndTopic(@Param("subjectId") Long subjectId, @Param("topic") String topic);
 }
