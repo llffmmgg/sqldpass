@@ -70,9 +70,6 @@ export const metadata: Metadata = {
     title: "SQLD CBT · 정처기 실기 CBT 무료 모의고사 | SQLD Pass",
     description: SITE_DESCRIPTION,
   },
-  icons: {
-    icon: "/favicon.svg",
-  },
   verification: {
     google: "9wS1GcxcD3Gfl4FLj9PN9c5FdAnqKIudoectZCcf6KM",
     other: {

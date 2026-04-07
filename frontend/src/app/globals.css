@@ -401,6 +401,11 @@ details[open] summary .chevron-icon {
   will-change: translate;
 }
 
+/* SEO: 텍스트를 DOM 밖(CSS content)으로 옮겨 검색엔진 색인에서 제외 */
+.sql-frag::before {
+  content: attr(data-text);
+}
+
 .sql-float-1 { animation: sql-bob-up 5s ease-in-out infinite; }
 .sql-float-2 { animation: sql-bob-down 6s ease-in-out infinite; }
 .sql-float-3 { animation: sql-bob-up 7s ease-in-out infinite; }

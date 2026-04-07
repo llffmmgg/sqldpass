@@ -31,32 +31,17 @@ export default function Home() {
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_50%_at_50%_50%,transparent_0%,var(--background)_100%)]" />
 
         {/* Layer 7: Multi-language code fragments (SQL · C · Java · Python) */}
+        {/* SEO: 텍스트는 data-text → CSS content로 렌더링되어 검색 스니펫에 노출되지 않음 */}
         {/* Left side */}
-        <span className="sql-frag sql-float-1 absolute top-[12%] left-[3%] font-mono text-[15px] text-amber-300/[0.28] rotate-[-4deg] select-none pointer-events-none" aria-hidden="true">
-          SELECT *
-        </span>
-        <span className="sql-frag sql-float-2 absolute top-[35%] left-[5%] font-mono text-[11px] text-violet-300/[0.22] rotate-[2deg] select-none pointer-events-none" aria-hidden="true">
-          int *p = arr + 1;
-        </span>
-        <span className="sql-frag sql-float-3 absolute top-[58%] left-[2%] font-mono text-[13px] text-amber-300/[0.24] rotate-[-2deg] select-none pointer-events-none" aria-hidden="true">
-          GROUP BY name
-        </span>
-        <span className="sql-frag sql-float-4 absolute top-[78%] left-[6%] font-mono text-[12px] text-emerald-300/[0.22] rotate-[5deg] select-none pointer-events-none" aria-hidden="true">
-          def func(x, y=[]):
-        </span>
+        <span data-text="SELECT *" className="sql-frag sql-float-1 absolute top-[12%] left-[3%] font-mono text-[15px] text-amber-300/[0.28] rotate-[-4deg] select-none pointer-events-none" aria-hidden="true" />
+        <span data-text="int *p = arr + 1;" className="sql-frag sql-float-2 absolute top-[35%] left-[5%] font-mono text-[11px] text-violet-300/[0.22] rotate-[2deg] select-none pointer-events-none" aria-hidden="true" />
+        <span data-text="GROUP BY name" className="sql-frag sql-float-3 absolute top-[58%] left-[2%] font-mono text-[13px] text-amber-300/[0.24] rotate-[-2deg] select-none pointer-events-none" aria-hidden="true" />
+        <span data-text="def func(x, y=[]):" className="sql-frag sql-float-4 absolute top-[78%] left-[6%] font-mono text-[12px] text-emerald-300/[0.22] rotate-[5deg] select-none pointer-events-none" aria-hidden="true" />
         {/* Right side */}
-        <span className="sql-frag sql-float-5 absolute top-[18%] right-[4%] font-mono text-[13px] text-sky-300/[0.24] rotate-[3deg] select-none pointer-events-none" aria-hidden="true">
-          public class Main
-        </span>
-        <span className="sql-frag sql-float-6 absolute top-[42%] right-[2%] font-mono text-[15px] text-amber-300/[0.28] rotate-[-3deg] select-none pointer-events-none" aria-hidden="true">
-          COUNT(*)
-        </span>
-        <span className="sql-frag sql-float-7 absolute top-[65%] right-[5%] font-mono text-[11px] text-violet-300/[0.22] rotate-[4deg] select-none pointer-events-none" aria-hidden="true">
-          printf(&quot;%d\n&quot;, sum);
-        </span>
-        <span className="sql-frag sql-float-8 absolute top-[85%] right-[3%] font-mono text-[12px] text-emerald-300/[0.22] rotate-[-5deg] select-none pointer-events-none" aria-hidden="true">
-          List&lt;String&gt; kws
-        </span>
+        <span data-text="public class Main" className="sql-frag sql-float-5 absolute top-[18%] right-[4%] font-mono text-[13px] text-sky-300/[0.24] rotate-[3deg] select-none pointer-events-none" aria-hidden="true" />
+        <span data-text="COUNT(*)" className="sql-frag sql-float-6 absolute top-[42%] right-[2%] font-mono text-[15px] text-amber-300/[0.28] rotate-[-3deg] select-none pointer-events-none" aria-hidden="true" />
+        <span data-text='printf("%d\n", sum);' className="sql-frag sql-float-7 absolute top-[65%] right-[5%] font-mono text-[11px] text-violet-300/[0.22] rotate-[4deg] select-none pointer-events-none" aria-hidden="true" />
+        <span data-text="List<String> kws" className="sql-frag sql-float-8 absolute top-[85%] right-[3%] font-mono text-[12px] text-emerald-300/[0.22] rotate-[-5deg] select-none pointer-events-none" aria-hidden="true" />
 
         <div className="relative mx-auto max-w-5xl px-4 py-32 text-center sm:px-6 sm:py-40 lg:px-8">
           <ScrollReveal>
@@ -71,10 +56,10 @@ export default function Home() {
 
           <ScrollReveal delay={1}>
             <h1 className="mt-6 text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl lg:text-6xl">
-              IT 자격증,
+              SQLD · 정처기 실기,
               <br />
               <span className="bg-gradient-to-r from-amber-400 via-amber-300 to-amber-500 bg-clip-text text-transparent">
-                실전 모의고사
+                무료 CBT 모의고사
               </span>
               로 합격하세요
             </h1>
@@ -82,12 +67,9 @@ export default function Home() {
 
           <ScrollReveal delay={2}>
             <p className="mx-auto mt-6 max-w-2xl text-base text-muted sm:text-lg">
-              <span className="font-mono text-amber-300/90">SQL</span> ·{" "}
-              <span className="font-mono text-violet-300/90">C</span> ·{" "}
-              <span className="font-mono text-sky-300/90">Java</span> ·{" "}
-              <span className="font-mono text-emerald-300/90">Python</span>
-              <br className="hidden sm:block" />
-              IT 자격증을 한 곳에서 실전 문제로 끝내세요.
+              SQLD CBT · 정보처리기사 실기 CBT를 실제 시험과 동일한 환경에서
+              무료로 풀어보세요. 매번 새로 생성되는 AI 기출 문제, 오답 자동
+              복습, 회차별 실력 추적까지 한 곳에서.
             </p>
           </ScrollReveal>
 
