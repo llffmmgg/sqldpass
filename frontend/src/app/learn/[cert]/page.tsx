@@ -135,7 +135,7 @@ export default async function CertPage(
           {isEngineer ? "정처기 실기" : "SQLD"} 모의고사로 연습하세요
         </h2>
         <p className="mt-2 text-sm text-muted">
-          매번 새로 생성되는 실전형 {isEngineer ? "20" : "50"}문항 세트.
+          매번 새로 추가되는 실전형 {isEngineer ? "20" : "50"}문항 세트.
           로그인하고 바로 시작.
         </p>
         <Link

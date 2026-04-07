@@ -90,7 +90,7 @@ export default async function LearnPage() {
           실전 모의고사로 합격을 준비하세요
         </h2>
         <p className="mt-2 text-sm text-muted">
-          AI가 매번 새로 생성하는 실전형 세트, 오답 자동 복습, 회차별 실력
+          매번 새로 추가되는 실전형 세트, 오답 자동 복습, 회차별 실력
           추적을 무료로 이용할 수 있습니다.
         </p>
         <Link

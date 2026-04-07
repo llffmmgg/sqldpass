@@ -42,7 +42,7 @@ function MockExamsGuestPreview() {
             badge="SQLD"
             accent="amber"
             title="SQLD 50문항 모의고사"
-            desc="데이터 모델링 + SQL 활용. 매번 새로 생성되는 AI 기출 50문제를 제한 시간 안에."
+            desc="데이터 모델링 + SQL 활용. 매번 새로 추가되는 기출 50문제를 제한 시간 안에."
             onStart={startLogin}
           />
           <GuestExamCard
@@ -59,7 +59,7 @@ function MockExamsGuestPreview() {
           <ul className="mt-3 space-y-2 text-sm text-muted">
             <li className="flex gap-2"><span className="text-amber-400">✓</span> 회차별 점수와 풀이 시간이 자동 기록됩니다</li>
             <li className="flex gap-2"><span className="text-amber-400">✓</span> 틀린 문제만 모은 오답 노트가 자격증별로 누적됩니다</li>
-            <li className="flex gap-2"><span className="text-amber-400">✓</span> 매 응시마다 AI가 새로운 문제 세트를 생성합니다</li>
+            <li className="flex gap-2"><span className="text-amber-400">✓</span> 매 응시마다 새로운 문제 세트가 준비됩니다</li>
           </ul>
           <button
             onClick={startLogin}

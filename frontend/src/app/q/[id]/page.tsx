@@ -218,7 +218,7 @@ export default async function QuestionPage(
           이런 문제 20~50개를 한 번에 풀어보세요
         </h2>
         <p className="mt-2 text-sm text-muted">
-          매번 새로 생성되는 AI 모의고사 + 오답 자동 복습 + 회차별 실력 추적.
+          매번 새로 추가되는 모의고사 + 오답 자동 복습 + 회차별 실력 추적.
           회원가입 후 무료 이용.
         </p>
         <div className="mt-5 flex flex-wrap items-center justify-center gap-3">

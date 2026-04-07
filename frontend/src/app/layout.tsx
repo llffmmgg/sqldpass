@@ -17,7 +17,7 @@ const jetbrainsMono = JetBrains_Mono({
 const SITE_URL = "https://www.sqldpass.com";
 const SITE_NAME = "SQLD Pass";
 const SITE_DESCRIPTION =
-  "SQLD CBT · 정보처리기사 실기 CBT 무료 모의고사. 실제 시험과 동일한 환경에서 매번 새로 생성되는 AI 기출 문제를 풀고, 오답 자동 복습과 회차별 실력 추적까지. 무료로 시작하세요.";
+  "SQLD CBT · 정보처리기사 실기 CBT 무료 모의고사. 실제 시험과 동일한 환경에서 매번 새로 추가되는 기출 문제를 풀고, 오답 자동 복습과 회차별 실력 추적까지. 무료로 시작하세요.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -51,7 +51,7 @@ export const metadata: Metadata = {
     "무료 CBT",
     "IT 자격증",
     "자격증 문제집",
-    "AI 모의고사",
+    "랜덤 모의고사",
   ],
   authors: [{ name: "SQLD Pass" }],
   alternates: {

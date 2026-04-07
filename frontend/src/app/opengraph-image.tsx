@@ -45,7 +45,7 @@ export default async function OgImage() {
                 background: "#a78bfa",
               }}
             />
-            매번 새로운 AI 문제 · 무료 CBT
+            매번 새로 추가되는 문제 · 무료 CBT
           </div>
         </div>
 

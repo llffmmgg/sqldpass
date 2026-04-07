@@ -169,7 +169,7 @@ export default async function CategoryPage(
           {cat.name} 전체를 모의고사로 풀어보기
         </h2>
         <p className="mt-2 text-sm text-muted">
-          AI가 매번 새로 만드는 실전 세트로 연습하세요.
+          매번 새로 추가되는 실전 세트로 연습하세요.
         </p>
         <Link
           href="/mock-exams"

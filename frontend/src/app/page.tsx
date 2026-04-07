@@ -50,7 +50,7 @@ export default function Home() {
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-violet-400 opacity-60" />
                 <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-violet-400" />
               </span>
-              매번 새로운 AI 문제 · 무료 CBT
+              매번 새로 추가되는 문제 · 무료 CBT
             </span>
           </ScrollReveal>
 
@@ -68,7 +68,7 @@ export default function Home() {
           <ScrollReveal delay={2}>
             <p className="mx-auto mt-6 max-w-2xl text-base text-muted sm:text-lg">
               SQLD CBT · 정보처리기사 실기 CBT를 실제 시험과 동일한 환경에서
-              무료로 풀어보세요. 매번 새로 생성되는 AI 기출 문제, 오답 자동
+              무료로 풀어보세요. 매번 새로 추가되는 기출 문제, 오답 자동
               복습, 회차별 실력 추적까지 한 곳에서.
             </p>
           </ScrollReveal>
@@ -136,9 +136,9 @@ export default function Home() {
                   />
                 </svg>
               </div>
-              <h3 className="mt-4 text-lg font-semibold">AI 즉석 모의고사</h3>
+              <h3 className="mt-4 text-lg font-semibold">즉석 랜덤 모의고사</h3>
               <p className="mt-2 text-sm leading-relaxed text-muted">
-                누를 때마다 전혀 새로운 실전 세트가 생성됩니다. SQLD 50문항,
+                누를 때마다 새 문제로 구성된 실전 세트가 준비됩니다. SQLD 50문항,
                 정처기 실기 20문항 — 매번 다른 분포로 실전처럼.
               </p>
             </div>
