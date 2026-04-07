@@ -29,9 +29,14 @@ public class MockExamService {
     /** 모의고사 목록 조회 (최신 sequence 순) — 단일 GROUP BY 쿼리로 N+1 방지 */
     public List<MockExam> getAll() {
         return mockExamRepository.findAllWithQuestionCounts().stream()
-                .map(row -> MockExamMapper.toSummary(
-                        (MockExamEntity) row[0],
-                        ((Long) row[1]).intValue()))
+                .map(row -> {
+                    MockExamEntity exam = (MockExamEntity) row[0];
+                    int count = ((Long) row[1]).intValue();
+                    Double avg = row[2] != null ? ((Number) row[2]).doubleValue() : null;
+                    Integer min = row[3] != null ? ((Number) row[3]).intValue() : null;
+                    Integer max = row[4] != null ? ((Number) row[4]).intValue() : null;
+                    return MockExamMapper.toSummary(exam, count, avg, min, max);
+                })
                 .toList();
     }
 

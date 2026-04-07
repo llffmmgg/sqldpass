@@ -250,6 +250,7 @@ export default function AdminMockExamsPage() {
                   <th className="px-4 py-3 w-36">자격증</th>
                   <th className="px-4 py-3">이름</th>
                   <th className="px-4 py-3 w-20">문항</th>
+                  <th className="px-4 py-3 w-24">난이도</th>
                   <th className="px-4 py-3 w-32">생성일</th>
                   <th className="px-4 py-3 w-20 text-right">관리</th>
                 </tr>
@@ -275,6 +276,17 @@ export default function AdminMockExamsPage() {
                       </td>
                       <td className="px-4 py-3 font-medium">{exam.name}</td>
                       <td className="px-4 py-3">{exam.totalQuestions}</td>
+                      <td className="px-4 py-3">
+                        {exam.difficultyLabel ? (
+                          <span
+                            className={`inline-flex items-center rounded-md border px-2 py-0.5 text-[11px] font-medium ${difficultyTdClass(exam.difficultyLabel)}`}
+                          >
+                            {exam.difficultyLabel}
+                          </span>
+                        ) : (
+                          <span className="text-xs text-muted/60">-</span>
+                        )}
+                      </td>
                       <td className="px-4 py-3 text-muted">
                         {new Date(exam.createdAt).toLocaleDateString("ko-KR")}
                       </td>
@@ -299,6 +311,19 @@ export default function AdminMockExamsPage() {
 }
 
 // === 하위 컴포넌트 ===
+
+function difficultyTdClass(label: NonNullable<AdminMockExam["difficultyLabel"]>): string {
+  switch (label) {
+    case "쉬움":
+      return "border-emerald-500/40 bg-emerald-500/10 text-emerald-300";
+    case "보통":
+      return "border-amber-500/40 bg-amber-500/10 text-amber-300";
+    case "어려움":
+      return "border-red-500/40 bg-red-500/10 text-red-300";
+    case "혼합":
+      return "border-violet-500/40 bg-violet-500/10 text-violet-300";
+  }
+}
 
 function TabButton({
   label,

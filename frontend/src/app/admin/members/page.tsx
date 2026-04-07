@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { getMembers, type AdminMemberPage } from "@/lib/adminApi";
 import { formatDate } from "@/lib/format";
 
@@ -39,9 +40,19 @@ export default function AdminMembersPage() {
               </thead>
               <tbody>
                 {data.content.map((m) => (
-                  <tr key={m.id} className="border-b border-border/50">
+                  <tr
+                    key={m.id}
+                    className="border-b border-border/50 transition-colors hover:bg-surface/60"
+                  >
                     <td className="px-3 py-2 text-muted">{m.id}</td>
-                    <td className="px-3 py-2">{m.nickname}</td>
+                    <td className="px-3 py-2">
+                      <Link
+                        href={`/admin/members/${m.id}`}
+                        className="font-medium text-amber-400 hover:underline"
+                      >
+                        {m.nickname}
+                      </Link>
+                    </td>
                     <td className="px-3 py-2 text-muted">{m.email || "-"}</td>
                     <td className="px-3 py-2">
                       <span className="rounded bg-violet-500/10 px-2 py-0.5 text-xs text-violet-400">

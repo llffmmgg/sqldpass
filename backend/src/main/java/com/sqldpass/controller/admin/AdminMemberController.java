@@ -4,10 +4,12 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.sqldpass.controller.admin.dto.AdminMemberDashboardResponse;
 import com.sqldpass.controller.admin.dto.AdminMemberResponse;
 import com.sqldpass.service.admin.AdminMemberService;
 
@@ -31,5 +33,11 @@ public class AdminMemberController {
             @RequestParam(defaultValue = "0") @Min(0) int page,
             @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size) {
         return adminMemberService.getMembers(page, size);
+    }
+
+    @GetMapping("/api/admin/members/{memberId}/dashboard")
+    @Operation(summary = "특정 회원 학습 대시보드 (어드민용)")
+    public AdminMemberDashboardResponse getMemberDashboard(@PathVariable Long memberId) {
+        return adminMemberService.getDashboard(memberId);
     }
 }

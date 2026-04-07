@@ -26,15 +26,19 @@ public class MockExamMapper {
                 questions);
     }
 
-    /** 문제 카운트만 (목록 조회) */
-    public static MockExam toSummary(MockExamEntity entity, int totalQuestionCount) {
+    /** 문제 카운트 + 난이도 통계 (목록 조회용) */
+    public static MockExam toSummary(MockExamEntity entity, int totalQuestionCount,
+                                     Double avgDifficulty, Integer minDifficulty, Integer maxDifficulty) {
         return new MockExam(
                 entity.getId(),
                 entity.getName(),
                 entity.getExamType(),
                 entity.getSequence(),
                 entity.getCreatedAt(),
-                totalQuestionCount);
+                totalQuestionCount,
+                avgDifficulty,
+                minDifficulty,
+                maxDifficulty);
     }
 
     public static MockExamQuestion toDomain(QuestionEntity q) {

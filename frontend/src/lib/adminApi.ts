@@ -141,6 +141,50 @@ export function getMembers(page = 0, size = 20) {
   return adminFetch<AdminMemberPage>(`/members?page=${page}&size=${size}`);
 }
 
+// 어드민 - 유저 대시보드
+
+export interface AdminMemberDashboard {
+  member: {
+    id: number;
+    nickname: string;
+    provider: string;
+    createdAt: string;
+  };
+  stats: {
+    totalSolved: number;
+    totalCorrect: number;
+    overallRate: number;
+    streakDays: number;
+    totalSessions: number;
+  };
+  recentActivity: { date: string; count: number }[];
+  subjectStats: {
+    subjectId: number;
+    subjectName: string;
+    total: number;
+    correct: number;
+    rate: number;
+  }[];
+  weakSubjects: {
+    subjectId: number;
+    subjectName: string;
+    wrongCount: number;
+    wrongRate: number;
+  }[];
+  recentSolves: {
+    id: number;
+    solvedAt: string;
+    totalCount: number;
+    correctCount: number;
+    subjectId: number | null;
+    mockExamId: number | null;
+  }[];
+}
+
+export function getMemberDashboard(memberId: number) {
+  return adminFetch<AdminMemberDashboard>(`/members/${memberId}/dashboard`);
+}
+
 export interface GenerationStatus {
   status: "IDLE" | "RUNNING" | "COMPLETED" | "FAILED";
   result: string | null;
@@ -168,6 +212,8 @@ export interface AdminMockExam {
   sequence: number;
   totalQuestions: number;
   createdAt: string;
+  difficultyLabel: "쉬움" | "보통" | "어려움" | "혼합" | null;
+  avgDifficultyNormalized: number | null;
 }
 
 export function getAdminMockExams() {
