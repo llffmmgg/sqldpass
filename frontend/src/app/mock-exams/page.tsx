@@ -264,14 +264,6 @@ function MockExamCard({ exam }: { exam: MockExamSummary }) {
       </div>
       <h2 className="mt-3 text-lg font-semibold leading-tight">{exam.name}</h2>
       <p className="mt-2 text-sm text-muted">총 {exam.totalQuestions}문항</p>
-      {exam.avgDifficultyNormalized != null && (
-        <div className="mt-2 h-1 w-full rounded-full bg-zinc-800 overflow-hidden">
-          <div
-            className={`h-full ${difficultyBarColor(exam.difficultyLabel)}`}
-            style={{ width: `${Math.round((exam.avgDifficultyNormalized ?? 0) * 100)}%` }}
-          />
-        </div>
-      )}
       <p className="mt-1 text-xs text-muted/70">
         {new Date(exam.createdAt).toLocaleDateString("ko-KR")}
       </p>
@@ -296,23 +288,9 @@ function difficultyBadgeClass(label: NonNullable<MockExamSummary["difficultyLabe
     case "보통":
       return "border-amber-500/40 bg-amber-500/10 text-amber-300";
     case "어려움":
+      return "border-orange-500/40 bg-orange-500/10 text-orange-300";
+    case "매우 어려움":
       return "border-red-500/40 bg-red-500/10 text-red-300";
-    case "혼합":
-      return "border-violet-500/40 bg-violet-500/10 text-violet-300";
-  }
-}
-
-function difficultyBarColor(label: MockExamSummary["difficultyLabel"]): string {
-  if (!label) return "bg-zinc-600";
-  switch (label) {
-    case "쉬움":
-      return "bg-emerald-500";
-    case "보통":
-      return "bg-amber-500";
-    case "어려움":
-      return "bg-red-500";
-    case "혼합":
-      return "bg-violet-500";
   }
 }
 

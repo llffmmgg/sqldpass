@@ -319,9 +319,9 @@ function difficultyTdClass(label: NonNullable<AdminMockExam["difficultyLabel"]>)
     case "보통":
       return "border-amber-500/40 bg-amber-500/10 text-amber-300";
     case "어려움":
+      return "border-orange-500/40 bg-orange-500/10 text-orange-300";
+    case "매우 어려움":
       return "border-red-500/40 bg-red-500/10 text-red-300";
-    case "혼합":
-      return "border-violet-500/40 bg-violet-500/10 text-violet-300";
   }
 }
 

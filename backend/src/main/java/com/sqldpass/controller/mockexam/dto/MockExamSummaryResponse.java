@@ -12,14 +12,12 @@ public record MockExamSummaryResponse(
         int sequence,
         int totalQuestions,
         LocalDateTime createdAt,
-        /** "쉬움" / "보통" / "어려움" / "혼합" / null(데이터 없음) */
-        String difficultyLabel,
-        /** 0.0~1.0 정규화된 평균 난이도 (시험 종류마다 스케일이 달라 클라이언트에서 비교 용이) */
-        Double avgDifficultyNormalized
+        /** "쉬움" / "보통" / "어려움" / "매우 어려움" / null(데이터 없음) */
+        String difficultyLabel
 ) {
     public static MockExamSummaryResponse from(MockExam mockExam) {
         Double normalized = normalize(mockExam.getExamType(), mockExam.getAvgDifficulty());
-        String label = computeLabel(normalized, mockExam.getMinDifficulty(), mockExam.getMaxDifficulty());
+        String label = computeLabel(normalized);
 
         return new MockExamSummaryResponse(
                 mockExam.getId(),
@@ -28,8 +26,7 @@ public record MockExamSummaryResponse(
                 mockExam.getSequence(),
                 mockExam.getTotalQuestions(),
                 mockExam.getCreatedAt(),
-                label,
-                normalized);
+                label);
     }
 
     /**
@@ -47,15 +44,14 @@ public record MockExamSummaryResponse(
     }
 
     /**
-     * 정규화 값 + 분포 폭으로 라벨 결정.
-     * - max - min 이 4 이상이면 분포가 매우 넓다고 보고 "혼합"
-     * - 그 외 정규화 값으로 쉬움/보통/어려움 분류
+     * 정규화 값(0~1)을 4단계 라벨로 분류.
+     * 0.0~0.25 쉬움 / ~0.5 보통 / ~0.75 어려움 / ~1.0 매우 어려움
      */
-    private static String computeLabel(Double normalized, Integer min, Integer max) {
+    private static String computeLabel(Double normalized) {
         if (normalized == null) return null;
-        if (min != null && max != null && (max - min) >= 4) return "혼합";
-        if (normalized < 0.34) return "쉬움";
-        if (normalized < 0.67) return "보통";
-        return "어려움";
+        if (normalized < 0.25) return "쉬움";
+        if (normalized < 0.5) return "보통";
+        if (normalized < 0.75) return "어려움";
+        return "매우 어려움";
     }
 }

@@ -212,8 +212,7 @@ export interface AdminMockExam {
   sequence: number;
   totalQuestions: number;
   createdAt: string;
-  difficultyLabel: "쉬움" | "보통" | "어려움" | "혼합" | null;
-  avgDifficultyNormalized: number | null;
+  difficultyLabel: "쉬움" | "보통" | "어려움" | "매우 어려움" | null;
 }
 
 export function getAdminMockExams() {
