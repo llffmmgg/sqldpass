@@ -71,15 +71,12 @@ export default function Home() {
 
           <ScrollReveal delay={1}>
             <h1 className="mt-6 text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl lg:text-6xl">
-              <span className="bg-gradient-to-r from-amber-400 via-amber-300 to-amber-500 bg-clip-text font-mono text-transparent">
-                SELECT
-              </span>{" "}
-              합격
+              IT 자격증,
               <br />
-              <span className="bg-gradient-to-r from-amber-400 via-amber-300 to-amber-500 bg-clip-text font-mono text-transparent">
-                FROM
-              </span>{" "}
-              당신의 코드
+              <span className="bg-gradient-to-r from-amber-400 via-amber-300 to-amber-500 bg-clip-text text-transparent">
+                실전 모의고사
+              </span>
+              로 합격하세요
             </h1>
           </ScrollReveal>
 
@@ -90,7 +87,7 @@ export default function Home() {
               <span className="font-mono text-sky-300/90">Java</span> ·{" "}
               <span className="font-mono text-emerald-300/90">Python</span>
               <br className="hidden sm:block" />
-              코드 기반 IT 자격증을 한 곳에서 실전 문제로 끝내세요.
+              IT 자격증을 한 곳에서 실전 문제로 끝내세요.
             </p>
           </ScrollReveal>
 
