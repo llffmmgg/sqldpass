@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getPublicQuestionDetail } from "@/lib/publicApi";
+import QuestionContent from "@/components/QuestionContent";
 
 type Params = { id: string };
 
@@ -178,9 +179,7 @@ export default async function QuestionPage(
       <article className="mt-8 space-y-6">
         <section className="rounded-xl border border-border bg-surface p-6">
           <h2 className="text-sm font-semibold text-muted">문제</h2>
-          <pre className="mt-3 whitespace-pre-wrap break-words font-sans text-sm leading-relaxed text-foreground">
-            {q.content}
-          </pre>
+          <QuestionContent content={q.content} className="mt-3 text-foreground" />
         </section>
 
         <section className="rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-6">
@@ -190,9 +189,7 @@ export default async function QuestionPage(
               {q.correctOption ?? "-"}번
             </p>
           ) : (
-            <pre className="mt-2 whitespace-pre-wrap break-words font-sans text-base font-semibold text-foreground">
-              {q.answer ?? "-"}
-            </pre>
+            <QuestionContent content={q.answer ?? "-"} className="mt-2 text-foreground" />
           )}
           {q.keywords.length > 0 && (
             <div className="mt-3 flex flex-wrap gap-1.5">
@@ -211,9 +208,7 @@ export default async function QuestionPage(
         {q.explanation && (
           <section className="rounded-xl border border-border bg-surface p-6">
             <h2 className="text-sm font-semibold text-muted">해설</h2>
-            <pre className="mt-3 whitespace-pre-wrap break-words font-sans text-sm leading-relaxed text-foreground/90">
-              {q.explanation}
-            </pre>
+            <QuestionContent content={q.explanation} className="mt-3 text-foreground/90" />
           </section>
         )}
       </article>

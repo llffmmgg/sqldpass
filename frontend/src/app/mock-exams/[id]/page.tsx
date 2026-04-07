@@ -258,7 +258,7 @@ function MockExamDetailContent() {
           </div>
           <h2 className="mt-2 text-base font-semibold">문항 {currentIdx + 1}</h2>
           <div className="mt-4">
-            <QuestionContent segments={parsed.segments} />
+            <QuestionContent content={parsed.body} />
           </div>
 
           {/* 입력 UI 분기 */}

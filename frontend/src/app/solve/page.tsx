@@ -10,7 +10,7 @@ import {
   type Question,
   type QuestionDetail,
 } from "@/lib/api";
-import { parseQuestion, parseMarkdown } from "@/lib/parseQuestion";
+import { parseQuestion } from "@/lib/parseQuestion";
 import QuestionContent from "@/components/QuestionContent";
 import AuthGuard from "@/components/AuthGuard";
 import Spinner from "@/components/Spinner";
@@ -217,7 +217,7 @@ function SolvePageContent() {
 
         {/* 문제 */}
         <div className="mt-8 rounded-xl border border-border bg-surface p-6">
-          <QuestionContent segments={parsed.segments} />
+          <QuestionContent content={parsed.body} />
 
           <ul className="mt-6 space-y-2">
             {parsed.options.map((optionText, idx) => {
@@ -309,7 +309,7 @@ function SolvePageContent() {
               <div className="rounded-lg border border-border bg-surface px-4 py-3">
                 <p className="text-sm font-medium text-amber-400">해설</p>
                 <div className="mt-1 text-sm leading-relaxed text-muted">
-                  <QuestionContent segments={parseMarkdown(detail.explanation)} />
+                  <QuestionContent content={detail.explanation} />
                 </div>
               </div>
             )}
