@@ -1,4 +1,5 @@
 import ScrollReveal from "@/components/ScrollReveal";
+import HeroCta from "@/components/HeroCta";
 
 export default function Home() {
   return (
@@ -83,19 +84,8 @@ export default function Home() {
           </ScrollReveal>
 
           <ScrollReveal delay={3}>
-            <div className="mt-10 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
-              <a
-                href="/solve"
-                className="btn-glow inline-flex items-center rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-zinc-900 transition-all duration-300 hover:bg-primary-hover hover:scale-[1.03]"
-              >
-                무료로 시작하기
-              </a>
-              <a
-                href="#preview"
-                className="inline-flex items-center rounded-lg border border-border px-6 py-3 text-sm font-semibold text-foreground transition-all duration-300 hover:border-violet-500/50 hover:bg-violet-500/5"
-              >
-                문제 미리보기
-              </a>
+            <div className="mt-10">
+              <HeroCta />
             </div>
           </ScrollReveal>
 
