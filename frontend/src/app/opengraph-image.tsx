@@ -45,7 +45,7 @@ export default async function OgImage() {
                 background: "#a78bfa",
               }}
             />
-            Multi-cert
+            매번 새로운 AI 문제 · 무료 CBT
           </div>
         </div>
 

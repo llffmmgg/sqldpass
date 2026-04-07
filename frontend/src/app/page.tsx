@@ -50,7 +50,7 @@ export default function Home() {
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-violet-400 opacity-60" />
                 <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-violet-400" />
               </span>
-              Multi-cert
+              매번 새로운 AI 문제 · 무료 CBT
             </span>
           </ScrollReveal>
 
