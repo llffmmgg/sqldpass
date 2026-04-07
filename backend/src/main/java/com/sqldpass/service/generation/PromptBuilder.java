@@ -1,5 +1,6 @@
 package com.sqldpass.service.generation;
 
+import com.sqldpass.service.generation.EngineerTopicExamples.EngineerExample;
 import com.sqldpass.service.generation.dto.*;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -53,6 +54,34 @@ public class PromptBuilder {
             {"approved": true, "reason": "승인/거절 사유"}
             """;
 
+    static final String ENGINEER_GENERATION_SYSTEM_PROMPT = """
+            당신은 정보처리기사 실기 시험 출제위원입니다.
+            주어진 카테고리의 예시 문제를 참고하여, 최근 실기 출제 기조에 맞춰 어려운 변형 문제를 생성하세요.
+
+            규칙:
+            - 실제 정처기 실기 시험과 동일한 형식: 단답형(SHORT_ANSWER) 또는 약술형(DESCRIPTIVE)
+            - 객관식(MCQ)은 절대 만들지 말 것
+            - 예시의 questionType을 그대로 따를 것 (예시가 SHORT_ANSWER면 단답형으로, DESCRIPTIVE면 약술형으로)
+            - 코드형(C/Java/Python/SQL) 문제는 코드의 실행 결과를 묻는 단답형으로 작성
+            - 이론형 문제는 핵심 용어 단답 또는 개념 약술
+            - 최근 회차 기조 = 어렵게 (예시와 동일한 고난도 수준 유지)
+            - answer 필드: 정답(모범답안)
+            - keywords 필드: 단답형이면 허용 alias 리스트, 약술형이면 채점 키워드 리스트
+            - explanation: 풀이 과정/근거를 자세히
+            - summary: 200자 이내, 출제 관점 요약
+            - difficulty는 5(고난도) 고정
+
+            출력 전 자체 검증:
+            1. 코드형이면 직접 실행 결과가 answer와 맞는지 확인
+            2. answer가 명확하고 keywords가 채점에 충분한지 확인
+            3. 회피 관점 목록에 있는 주제와 겹치지 않는지 확인
+
+            반드시 아래 JSON 형식으로만 응답하세요:
+            {"questions": [
+              {"content": "...", "questionType": "SHORT_ANSWER", "answerText": "...", "keywords": ["..."], "explanation": "...", "summary": "...", "difficulty": 5}
+            ]}
+            """;
+
     static final String FIX_SYSTEM_PROMPT = """
             당신은 SQLD 시험 문제 수정 전문가입니다.
             검증에서 지적된 사항을 반영하여 문제를 수정하세요.
@@ -100,6 +129,37 @@ public class PromptBuilder {
         }
 
         sb.append("위 예시와 동일한 퀄리티로 기본/심화/고난도 각 1문제, 총 3문제를 생성하세요.");
+        return sb.toString();
+    }
+
+    /**
+     * 정처기 카테고리 생성용 프롬프트.
+     * - 예시 1개를 few-shot으로 제시하고
+     * - existingSummaries로 중복 회피 지시
+     * - count 만큼 변형 생성 요청
+     */
+    static String buildEngineerPrompt(AiGenerationRequest request, EngineerExample example) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("카테고리: ").append(request.subjectName()).append("\n");
+        sb.append("토픽 힌트: ").append(example.topic()).append("\n");
+        sb.append("문제 유형: ").append(example.questionType().name()).append("\n\n");
+
+        sb.append("예시 문제 (이 난이도/스타일/유형을 그대로 따르세요):\n\n");
+        sb.append("[고난도 예시]\n");
+        sb.append("문제: ").append(example.content()).append("\n");
+        sb.append("정답: ").append(example.answer()).append("\n");
+        sb.append("키워드: ").append(String.join(", ", example.keywords())).append("\n");
+        sb.append("해설: ").append(example.explanation()).append("\n\n");
+
+        if (request.existingSummaries() != null && !request.existingSummaries().isEmpty()) {
+            sb.append("이미 출제된 관점 (아래와 동일/유사한 관점은 피해주세요):\n");
+            sb.append(request.existingSummaries().stream()
+                    .collect(Collectors.joining("\n- ", "- ", "\n\n")));
+        }
+
+        sb.append("위 예시와 동일한 카테고리/유형/난이도(고난도)로 ")
+                .append(request.count())
+                .append("개의 서로 다른 변형 문제를 생성하세요.");
         return sb.toString();
     }
 

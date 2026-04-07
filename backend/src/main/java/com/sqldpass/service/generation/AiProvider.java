@@ -43,6 +43,32 @@ public class AiProvider {
         }
     }
 
+    /**
+     * 정처기 카테고리용 변형 문제 N개 생성.
+     * AiProvider 빈 자체는 동일하게 사용하되, 시스템 프롬프트와 user 프롬프트만 정처기 전용으로 분기.
+     */
+    public AiGenerationResponse generateEngineerQuestions(AiGenerationRequest request,
+                                                          EngineerTopicExamples.EngineerExample example) {
+        String prompt = PromptBuilder.buildEngineerPrompt(request, example);
+        String responseText = chatClient.prompt()
+                .system(PromptBuilder.ENGINEER_GENERATION_SYSTEM_PROMPT)
+                .user(prompt)
+                .call()
+                .content();
+
+        try {
+            String json = extractJson(responseText);
+            JsonNode root = objectMapper.readTree(json);
+            JsonNode questionsNode = root.has("questions") ? root.get("questions") : root;
+            List<GeneratedQuestion> questions = objectMapper.readValue(
+                    questionsNode.toString(), new TypeReference<>() {});
+            return new AiGenerationResponse(questions);
+        } catch (Exception e) {
+            log.error("Failed to parse engineer generation response: {}", responseText, e);
+            return new AiGenerationResponse(List.of());
+        }
+    }
+
     public AiVerificationResponse verifyQuestion(AiVerificationRequest request) {
         String prompt = PromptBuilder.buildVerificationPrompt(request);
         String responseText = chatClient.prompt()

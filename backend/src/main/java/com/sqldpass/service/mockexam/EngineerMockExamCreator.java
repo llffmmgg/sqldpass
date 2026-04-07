@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,31 +16,40 @@ import com.sqldpass.persistent.mockexam.MockExamEntity;
 import com.sqldpass.persistent.mockexam.MockExamRepository;
 import com.sqldpass.persistent.question.QuestionEntity;
 import com.sqldpass.persistent.question.QuestionRepository;
+import com.sqldpass.persistent.question.QuestionType;
 import com.sqldpass.persistent.subject.SubjectEntity;
 import com.sqldpass.persistent.subject.SubjectRepository;
 import com.sqldpass.service.common.ErrorCode;
 import com.sqldpass.service.common.SqldpassException;
+import com.sqldpass.service.generation.AiProvider;
+import com.sqldpass.service.generation.EngineerTopicExamples;
+import com.sqldpass.service.generation.EngineerTopicExamples.EngineerExample;
+import com.sqldpass.service.generation.dto.AiGenerationRequest;
+import com.sqldpass.service.generation.dto.AiGenerationResponse;
+import com.sqldpass.service.generation.dto.GeneratedQuestion;
 
-import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import tools.jackson.databind.ObjectMapper;
 
 /**
- * 정보처리기사 실기 모의고사 생성기 — 20문항 세트.
+ * 정보처리기사 실기 모의고사 즉석 생성기 — 20문항 세트.
  *
- * 실제 최근 회차 출제 경향을 반영한 4개 분포 템플릿 중 하나를 무작위 선택하여
- * 카테고리별로 샘플링한다. 같은 요청을 반복해도 매번 다른 분포가 나옴.
+ * 흐름:
+ *   1) 4개 분포 템플릿 중 1개 무작위 선택 (rotation)
+ *   2) 각 카테고리마다 EngineerTopicExamples의 고난도 예시를 few-shot으로 AI에 전달
+ *   3) AI가 변형 N개 생성 → QuestionEntity로 저장
+ *   4) 20문제를 MockExamEntity에 묶어 displayOrder 부여
  *
- * 카테고리 (9):
- *   C언어 · Java · Python · SQL · 소프트웨어 설계 · 데이터베이스 이론 · 네트워크/OS · 보안 · 신기술 동향
- *
- * 시드 27개(카테고리당 3개)에선 일부 템플릿만 성공. 사용자가 JSON을 확장하면 모든 템플릿 사용 가능.
+ * 풀에 사전 채울 필요 없음. 누를 때마다 전혀 새로운 모의고사가 생성됨.
+ * existingSummaries 회피 메커니즘으로 호출이 누적될수록 다양성이 확보됨.
  */
+@Slf4j
 @Component
-@RequiredArgsConstructor
 public class EngineerMockExamCreator {
 
     private static final String ROOT_SUBJECT_NAME = "정보처리기사 실기";
 
-    // 카테고리 이름 상수 (오타 방지)
+    // 카테고리 이름 상수 (EngineerTopicExamples 의 키와 일치)
     private static final String C = "C언어";
     private static final String JAVA = "Java";
     private static final String PY = "Python";
@@ -76,7 +86,19 @@ public class EngineerMockExamCreator {
     private final MockExamRepository mockExamRepository;
     private final QuestionRepository questionRepository;
     private final SubjectRepository subjectRepository;
+    private final AiProvider engineerAiProvider;
     private final Random random = new Random();
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
+    public EngineerMockExamCreator(MockExamRepository mockExamRepository,
+                                   QuestionRepository questionRepository,
+                                   SubjectRepository subjectRepository,
+                                   @Qualifier("generator") AiProvider engineerAiProvider) {
+        this.mockExamRepository = mockExamRepository;
+        this.questionRepository = questionRepository;
+        this.subjectRepository = subjectRepository;
+        this.engineerAiProvider = engineerAiProvider;
+    }
 
     @Transactional
     public MockExamEntity create() {
@@ -86,43 +108,96 @@ public class EngineerMockExamCreator {
 
         // 2) 템플릿 무작위 선택
         Map<String, Integer> distribution = TEMPLATES.get(random.nextInt(TEMPLATES.size()));
+        log.info("정처기 모의고사 생성 시작 - sequence={}, 분포={}", nextSeq, distribution);
 
-        // 3) 카테고리 이름 → subject id 매핑 (한 번만 조회)
+        // 3) 카테고리 → subject id 매핑 (한 번만 조회)
         SubjectEntity root = subjectRepository.findByNameAndParentIsNull(ROOT_SUBJECT_NAME)
                 .orElseThrow(() -> new SqldpassException(ErrorCode.SUBJECT_NOT_FOUND,
                         "'" + ROOT_SUBJECT_NAME + "' 루트 과목을 찾을 수 없습니다. V14 마이그레이션 미적용?"));
 
-        Map<String, Long> categoryIds = new HashMap<>();
+        Map<String, SubjectEntity> categorySubjects = new HashMap<>();
         for (String category : distribution.keySet()) {
             SubjectEntity leaf = subjectRepository.findByNameAndParentId(category, root.getId())
                     .orElseThrow(() -> new SqldpassException(ErrorCode.SUBJECT_NOT_FOUND,
                             "카테고리 '" + category + "'를 찾을 수 없습니다."));
-            categoryIds.put(category, leaf.getId());
+            categorySubjects.put(category, leaf);
         }
 
-        // 4) 카테고리별 샘플링 + 부족 검증
+        // 4) 카테고리별 AI 생성 + 저장
         List<QuestionEntity> picked = new ArrayList<>();
         for (Map.Entry<String, Integer> entry : distribution.entrySet()) {
             String category = entry.getKey();
             int needed = entry.getValue();
-            Long subjectId = categoryIds.get(category);
+            SubjectEntity subject = categorySubjects.get(category);
 
-            List<QuestionEntity> sub = questionRepository.findRandomBySubjectId(subjectId, needed);
-            if (sub.size() < needed) {
+            EngineerExample example = EngineerTopicExamples.get(category);
+            if (example == null) {
+                throw new SqldpassException(ErrorCode.MOCK_EXAM_INSUFFICIENT_QUESTIONS,
+                        "EngineerTopicExamples에 카테고리 '" + category + "' 예시가 없습니다.");
+            }
+
+            List<String> existingSummaries = questionRepository.findSummariesBySubjectId(subject.getId());
+
+            AiGenerationRequest request = new AiGenerationRequest(
+                    category, subject.getId(), example.topic(),
+                    existingSummaries, needed, ExamType.ENGINEER_PRACTICAL);
+
+            AiGenerationResponse response = engineerAiProvider.generateEngineerQuestions(request, example);
+            List<GeneratedQuestion> generated = response.questions();
+
+            if (generated == null || generated.size() < needed) {
                 throw new SqldpassException(
                         ErrorCode.MOCK_EXAM_INSUFFICIENT_QUESTIONS,
-                        String.format("'%s' 카테고리 미편성 문항이 부족합니다. (필요 %d, 보유 %d) — JSON 시드를 더 추가해주세요.",
-                                category, needed, sub.size()));
+                        String.format("'%s' AI 생성 실패 (필요 %d, 생성 %d) — AI 응답을 확인하세요.",
+                                category, needed, generated == null ? 0 : generated.size()));
             }
-            picked.addAll(sub);
+
+            // 응답 N개 → QuestionEntity 변환 + 저장
+            for (int i = 0; i < needed; i++) {
+                GeneratedQuestion gq = generated.get(i);
+                QuestionEntity entity = toEngineerEntity(subject, gq, example);
+                picked.add(questionRepository.save(entity));
+            }
         }
 
-        // 5) 저장 + 배정
-        MockExamEntity saved = mockExamRepository.save(new MockExamEntity(name, ExamType.ENGINEER_PRACTICAL, nextSeq));
+        // 5) MockExamEntity 저장 + 20문제 순서 부여
+        MockExamEntity saved = mockExamRepository.save(
+                new MockExamEntity(name, ExamType.ENGINEER_PRACTICAL, nextSeq));
         for (int i = 0; i < picked.size(); i++) {
             saved.linkQuestion(picked.get(i), i + 1);
         }
+        log.info("정처기 모의고사 생성 완료 - id={}, 문항수={}", saved.getId(), picked.size());
         return saved;
+    }
+
+    /** AI 생성 응답을 정처기 단답/약술형 QuestionEntity로 변환 */
+    private QuestionEntity toEngineerEntity(SubjectEntity subject, GeneratedQuestion gq, EngineerExample example) {
+        // questionType: 응답 우선, 없으면 예시의 유형 그대로
+        QuestionType qt;
+        try {
+            qt = gq.questionType() != null ? QuestionType.valueOf(gq.questionType()) : example.questionType();
+        } catch (IllegalArgumentException e) {
+            qt = example.questionType();
+        }
+        // MCQ가 잘못 들어온 경우 예시 유형으로 강제 교체
+        if (qt == QuestionType.MCQ) {
+            qt = example.questionType();
+        }
+
+        String answer = gq.answerText() != null ? gq.answerText() : "";
+        String keywordsJson;
+        try {
+            List<String> kws = gq.keywords() != null ? gq.keywords() : List.of();
+            keywordsJson = objectMapper.writeValueAsString(kws);
+        } catch (Exception e) {
+            keywordsJson = "[]";
+        }
+
+        return new QuestionEntity(
+                subject, gq.content(), qt,
+                answer, keywordsJson, gq.explanation(),
+                gq.summary(), example.topic(),
+                gq.difficulty() != null ? gq.difficulty() : 5);
     }
 
     // === 헬퍼 ===

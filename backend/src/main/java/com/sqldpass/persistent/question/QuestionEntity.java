@@ -94,6 +94,21 @@ public class QuestionEntity extends BaseTimeEntity {
         this.difficulty = difficulty;
     }
 
+    /** 정처기 단답/약술형 생성용 — correctOption 미사용, answer/keywords 사용 */
+    public QuestionEntity(SubjectEntity subject, String content, QuestionType questionType,
+                          String answer, String keywords, String explanation,
+                          String summary, String topic, Integer difficulty) {
+        this.subject = subject;
+        this.content = content;
+        this.questionType = questionType;
+        this.answer = answer;
+        this.keywords = keywords;
+        this.explanation = explanation;
+        this.summary = summary;
+        this.topic = topic;
+        this.difficulty = difficulty;
+    }
+
     public void update(String content, int correctOption, String explanation, String summary) {
         this.content = content;
         this.correctOption = correctOption;
