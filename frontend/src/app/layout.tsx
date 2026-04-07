@@ -14,7 +14,7 @@ const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],
 });
 
-const SITE_URL = "https://sqldpass.com";
+const SITE_URL = "https://www.sqldpass.com";
 const SITE_NAME = "SQLD Pass";
 const SITE_DESCRIPTION =
   "SQLD, 정보처리기사 실기 — IT 자격증을 실전 모의고사로 합격하세요. 매번 새로 생성되는 AI 문제, 오답 자동 복습, 회차별 실력 추적.";

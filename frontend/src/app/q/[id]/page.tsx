@@ -40,12 +40,12 @@ export async function generateMetadata(
   return {
     title,
     description,
-    alternates: { canonical: `https://sqldpass.com/q/${q.id}` },
+    alternates: { canonical: `https://www.sqldpass.com/q/${q.id}` },
     openGraph: {
       type: "article",
       title: `${title} | SQLD Pass`,
       description,
-      url: `https://sqldpass.com/q/${q.id}`,
+      url: `https://www.sqldpass.com/q/${q.id}`,
     },
     twitter: {
       card: "summary_large_image",
@@ -91,25 +91,25 @@ export default async function QuestionPage(
         "@type": "ListItem",
         position: 1,
         name: "자격증",
-        item: "https://sqldpass.com/learn",
+        item: "https://www.sqldpass.com/learn",
       },
       {
         "@type": "ListItem",
         position: 2,
         name: certTag,
-        item: `https://sqldpass.com/learn/${q.certSlug}`,
+        item: `https://www.sqldpass.com/learn/${q.certSlug}`,
       },
       {
         "@type": "ListItem",
         position: 3,
         name: q.categoryName,
-        item: `https://sqldpass.com/learn/${q.certSlug}/${categorySlug}`,
+        item: `https://www.sqldpass.com/learn/${q.certSlug}/${categorySlug}`,
       },
       {
         "@type": "ListItem",
         position: 4,
         name: `#${q.id}`,
-        item: `https://sqldpass.com/q/${q.id}`,
+        item: `https://www.sqldpass.com/q/${q.id}`,
       },
     ],
   };

@@ -38,11 +38,11 @@ export async function generateMetadata(
   return {
     title: meta.title,
     description: meta.description,
-    alternates: { canonical: `https://sqldpass.com/learn/${cert}` },
+    alternates: { canonical: `https://www.sqldpass.com/learn/${cert}` },
     openGraph: {
       title: `${meta.title} | SQLD Pass`,
       description: meta.description,
-      url: `https://sqldpass.com/learn/${cert}`,
+      url: `https://www.sqldpass.com/learn/${cert}`,
     },
   };
 }
@@ -72,13 +72,13 @@ export default async function CertPage(
         "@type": "ListItem",
         position: 1,
         name: "자격증",
-        item: "https://sqldpass.com/learn",
+        item: "https://www.sqldpass.com/learn",
       },
       {
         "@type": "ListItem",
         position: 2,
         name: isEngineer ? "정처기 실기" : "SQLD",
-        item: `https://sqldpass.com/learn/${cert}`,
+        item: `https://www.sqldpass.com/learn/${cert}`,
       },
     ],
   };

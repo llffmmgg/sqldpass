@@ -6,12 +6,12 @@ export const metadata: Metadata = {
   title: "자격증 기출문제 한눈에 보기",
   description:
     "SQLD, 정보처리기사 실기 등 IT 자격증의 기출 유형과 해설을 과목별로 확인하세요. 로그인 없이 바로 문제와 해설을 볼 수 있습니다.",
-  alternates: { canonical: "https://sqldpass.com/learn" },
+  alternates: { canonical: "https://www.sqldpass.com/learn" },
   openGraph: {
     title: "자격증 기출문제 한눈에 보기 | SQLD Pass",
     description:
       "SQLD, 정보처리기사 실기 등 IT 자격증의 기출 유형과 해설을 과목별로.",
-    url: "https://sqldpass.com/learn",
+    url: "https://www.sqldpass.com/learn",
   },
 };
 

@@ -5,7 +5,7 @@ import {
   getPublicCerts,
 } from "@/lib/publicApi";
 
-const SITE_URL = "https://sqldpass.com";
+const SITE_URL = "https://www.sqldpass.com";
 
 /**
  * 동적 사이트맵:
