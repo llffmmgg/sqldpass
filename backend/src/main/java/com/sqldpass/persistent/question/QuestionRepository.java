@@ -14,8 +14,18 @@ import org.springframework.data.repository.query.Param;
 
 public interface QuestionRepository extends JpaRepository<QuestionEntity, Long> {
 
-    /** 모의고사 미편성 문제의 ID만 조회 — 샘플링 후보 풀로 사용 */
-    @Query("SELECT q.id FROM QuestionEntity q WHERE q.subject.id = :subjectId AND q.mockExam IS NULL")
+    /**
+     * 카테고리(과목) 풀에서 사용 가능한 question id 조회.
+     *
+     * - SQLD: mockExam IS NULL 인 미편성 문제만 (모의고사로 편성되면 풀에서 빠짐)
+     * - 정처기 실기: 모의고사 편성 여부와 무관하게 모두 노출 (모의고사 생성이 곧 풀 적재)
+     *
+     * 자격증 구분은 question 자체에 컬럼이 없으므로 mockExam.examType 으로 판별한다.
+     * 정처기 문제는 항상 mockExam이 세팅된 상태로 생성되므로 examType=ENGINEER_PRACTICAL.
+     */
+    @Query("SELECT q.id FROM QuestionEntity q LEFT JOIN q.mockExam m " +
+            "WHERE q.subject.id = :subjectId " +
+            "  AND (m IS NULL OR m.examType = com.sqldpass.persistent.mockexam.ExamType.ENGINEER_PRACTICAL)")
     List<Long> findAvailableIdsBySubjectId(@Param("subjectId") Long subjectId);
 
     /**
