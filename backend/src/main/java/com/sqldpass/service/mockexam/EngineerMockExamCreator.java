@@ -1,13 +1,21 @@
 package com.sqldpass.service.mockexam;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,20 +42,22 @@ import tools.jackson.databind.ObjectMapper;
 /**
  * 정보처리기사 실기 모의고사 즉석 생성기 — 20문항 세트.
  *
- * 흐름:
- *   1) 4개 분포 템플릿 중 1개 무작위 선택 (rotation)
- *   2) 각 카테고리마다 EngineerTopicExamples의 고난도 예시를 few-shot으로 AI에 전달
- *   3) AI가 변형 N개 생성 → QuestionEntity로 저장
- *   4) 20문제를 MockExamEntity에 묶어 displayOrder 부여
- *
- * 풀에 사전 채울 필요 없음. 누를 때마다 전혀 새로운 모의고사가 생성됨.
- * existingSummaries 회피 메커니즘으로 호출이 누적될수록 다양성이 확보됨.
+ * 흐름 (시드 풀 다중화 + 중복 검증 버전):
+ *   1) 4개 분포 템플릿 중 1개 무작위 선택
+ *   2) 각 카테고리마다 EngineerTopicExamples 시드 풀에서 needed개 시드를 무작위 추출
+ *      → 시드별로 1개씩 변형 생성을 AI에 요청 (자연스러운 난이도 분산)
+ *   3) 직전 N개 정답/본문에서 forbidden identifiers + recentAnswers 추출 → 프롬프트에 주입
+ *   4) AI 응답 검증: 시드 식별자/최근 정답과의 충돌 감지 → 1회 재시도
+ *   5) 검증 통과한 문제를 QuestionEntity로 저장
+ *   6) 20문제를 MockExamEntity에 묶어 displayOrder 부여
  */
 @Slf4j
 @Component
 public class EngineerMockExamCreator {
 
     private static final String ROOT_SUBJECT_NAME = "정보처리기사 실기";
+    private static final int RECENT_LOOKBACK = 30; // 직전 30개에서 forbidden 시그널 추출
+    private static final int MAX_REGENERATION = 1; // 중복 발견 시 재시도 횟수
 
     // 카테고리 이름 상수 (EngineerTopicExamples 의 키와 일치)
     private static final String C = "C언어";
@@ -102,15 +112,12 @@ public class EngineerMockExamCreator {
 
     @Transactional
     public MockExamEntity create() {
-        // 1) 정처기 자격증 내 다음 sequence + 이름
         int nextSeq = mockExamRepository.findMaxSequenceByExamType(ExamType.ENGINEER_PRACTICAL).orElse(0) + 1;
         String name = "정보처리기사 실기 모의고사 " + nextSeq + "회";
 
-        // 2) 템플릿 무작위 선택
         Map<String, Integer> distribution = TEMPLATES.get(random.nextInt(TEMPLATES.size()));
         log.info("정처기 모의고사 생성 시작 - sequence={}, 분포={}", nextSeq, distribution);
 
-        // 3) 카테고리 → subject id 매핑 (한 번만 조회)
         SubjectEntity root = subjectRepository.findByNameAndParentIsNull(ROOT_SUBJECT_NAME)
                 .orElseThrow(() -> new SqldpassException(ErrorCode.SUBJECT_NOT_FOUND,
                         "'" + ROOT_SUBJECT_NAME + "' 루트 과목을 찾을 수 없습니다. V14 마이그레이션 미적용?"));
@@ -123,44 +130,55 @@ public class EngineerMockExamCreator {
             categorySubjects.put(category, leaf);
         }
 
-        // 4) 카테고리별 AI 생성 + 저장
+        // 회차 내부 정답 수집 (회차 내 중복도 함께 차단)
+        Set<String> exhibitedAnswersInThisExam = new HashSet<>();
+
         List<QuestionEntity> picked = new ArrayList<>();
         for (Map.Entry<String, Integer> entry : distribution.entrySet()) {
             String category = entry.getKey();
             int needed = entry.getValue();
             SubjectEntity subject = categorySubjects.get(category);
 
-            EngineerExample example = EngineerTopicExamples.get(category);
-            if (example == null) {
+            // 1) 시드 풀에서 needed개 시드 무작위 추출
+            List<EngineerExample> seeds = EngineerTopicExamples.randomFor(category, needed, random);
+            if (seeds.isEmpty() || seeds.size() < needed) {
                 throw new SqldpassException(ErrorCode.MOCK_EXAM_INSUFFICIENT_QUESTIONS,
-                        "EngineerTopicExamples에 카테고리 '" + category + "' 예시가 없습니다.");
+                        "카테고리 '" + category + "' 시드 풀이 부족합니다 (필요 " + needed + ", 보유 " + seeds.size() + ")");
             }
 
+            // 2) 회피 신호 수집: 시드 식별자 + 최근 출제 식별자 + 최근 정답
+            Pageable lookback = PageRequest.of(0, RECENT_LOOKBACK);
+            List<String> recentAnswers = questionRepository
+                    .findRecentAnswersBySubjectId(subject.getId(), lookback);
+            List<String> recentContents = questionRepository
+                    .findRecentContentsBySubjectId(subject.getId(), lookback);
             List<String> existingSummaries = questionRepository.findSummariesBySubjectId(subject.getId());
 
+            List<String> forbiddenIdentifiers = collectForbiddenIdentifiers(seeds, recentContents);
+
+            // 3) AI 호출 (1회차)
             AiGenerationRequest request = new AiGenerationRequest(
-                    category, subject.getId(), example.topic(),
+                    category, subject.getId(), seeds.get(0).topic(),
                     existingSummaries, needed, ExamType.ENGINEER_PRACTICAL);
+            List<GeneratedQuestion> generated = callAi(request, seeds, forbiddenIdentifiers, recentAnswers, needed);
 
-            AiGenerationResponse response = engineerAiProvider.generateEngineerQuestions(request, example);
-            List<GeneratedQuestion> generated = response.questions();
+            // 4) 중복 검증: 정답이 최근/회차내와 8자+ 일치 → 재시도
+            List<GeneratedQuestion> validated = validateAndRetry(
+                    request, seeds, forbiddenIdentifiers, recentAnswers,
+                    exhibitedAnswersInThisExam, generated, needed, category);
 
-            if (generated == null || generated.size() < needed) {
-                throw new SqldpassException(
-                        ErrorCode.MOCK_EXAM_INSUFFICIENT_QUESTIONS,
-                        String.format("'%s' AI 생성 실패 (필요 %d, 생성 %d) — AI 응답을 확인하세요.",
-                                category, needed, generated == null ? 0 : generated.size()));
-            }
-
-            // 응답 N개 → QuestionEntity 변환 + 저장
+            // 5) 저장 + 회차내 정답 풀에 등록
             for (int i = 0; i < needed; i++) {
-                GeneratedQuestion gq = generated.get(i);
-                QuestionEntity entity = toEngineerEntity(subject, gq, example);
+                GeneratedQuestion gq = validated.get(i);
+                EngineerExample seed = seeds.get(i);
+                QuestionEntity entity = toEngineerEntity(subject, gq, seed);
                 picked.add(questionRepository.save(entity));
+                if (gq.answerText() != null) {
+                    exhibitedAnswersInThisExam.add(normalizeAnswer(gq.answerText()));
+                }
             }
         }
 
-        // 5) MockExamEntity 저장 + 20문제 순서 부여
         MockExamEntity saved = mockExamRepository.save(
                 new MockExamEntity(name, ExamType.ENGINEER_PRACTICAL, nextSeq));
         for (int i = 0; i < picked.size(); i++) {
@@ -170,18 +188,149 @@ public class EngineerMockExamCreator {
         return saved;
     }
 
-    /** AI 생성 응답을 정처기 단답/약술형 QuestionEntity로 변환 */
-    private QuestionEntity toEngineerEntity(SubjectEntity subject, GeneratedQuestion gq, EngineerExample example) {
-        // questionType: 응답 우선, 없으면 예시의 유형 그대로
+    /** AI 호출 + 응답 길이 검증 */
+    private List<GeneratedQuestion> callAi(AiGenerationRequest request,
+                                           List<EngineerExample> seeds,
+                                           List<String> forbiddenIdentifiers,
+                                           List<String> recentAnswers,
+                                           int needed) {
+        AiGenerationResponse response = engineerAiProvider
+                .generateEngineerQuestions(request, seeds, forbiddenIdentifiers, recentAnswers);
+        List<GeneratedQuestion> generated = response.questions();
+        if (generated == null || generated.size() < needed) {
+            throw new SqldpassException(
+                    ErrorCode.MOCK_EXAM_INSUFFICIENT_QUESTIONS,
+                    String.format("'%s' AI 생성 실패 (필요 %d, 생성 %d) — AI 응답을 확인하세요.",
+                            request.subjectName(), needed, generated == null ? 0 : generated.size()));
+        }
+        return generated;
+    }
+
+    /**
+     * 생성 결과 중 정답이 (최근 출제 정답 ∪ 회차 내 이미 등록된 정답)과 8자+ 일치하는 문제가 있으면
+     * 강화된 회피 신호로 1회 재시도. 그래도 충돌이 남으면 그대로 통과(무한 루프 방지).
+     */
+    private List<GeneratedQuestion> validateAndRetry(AiGenerationRequest request,
+                                                     List<EngineerExample> seeds,
+                                                     List<String> forbiddenIdentifiers,
+                                                     List<String> recentAnswers,
+                                                     Set<String> exhibitedInExam,
+                                                     List<GeneratedQuestion> initial,
+                                                     int needed,
+                                                     String category) {
+        List<GeneratedQuestion> current = initial;
+        for (int attempt = 0; attempt <= MAX_REGENERATION; attempt++) {
+            List<String> conflicts = findAnswerConflicts(current, recentAnswers, exhibitedInExam, needed);
+            if (conflicts.isEmpty()) {
+                return current;
+            }
+            log.warn("정처기 카테고리 '{}' 정답 충돌 감지 (attempt={}): {}", category, attempt, conflicts);
+
+            if (attempt == MAX_REGENERATION) {
+                log.warn("정처기 카테고리 '{}' 재시도 한계 도달 - 충돌 잔존한 채로 통과", category);
+                return current;
+            }
+
+            // 강화된 forbidden 목록으로 재시도
+            List<String> strengthenedForbidden = new ArrayList<>(forbiddenIdentifiers);
+            List<String> strengthenedAnswers = new ArrayList<>(recentAnswers);
+            strengthenedAnswers.addAll(conflicts);
+            current = callAi(request, seeds, strengthenedForbidden, strengthenedAnswers, needed);
+        }
+        return current;
+    }
+
+    /** 정답이 최근 출제 정답 또는 회차 내 정답과 8자+ 일치하는지 검사 → 충돌 정답 리스트 반환 */
+    private List<String> findAnswerConflicts(List<GeneratedQuestion> generated,
+                                             List<String> recentAnswers,
+                                             Set<String> exhibitedInExam,
+                                             int needed) {
+        List<String> conflicts = new ArrayList<>();
+        Set<String> recentNormalized = new HashSet<>();
+        for (String r : recentAnswers) {
+            if (r != null && !r.isBlank()) {
+                recentNormalized.add(normalizeAnswer(r));
+            }
+        }
+        for (int i = 0; i < Math.min(needed, generated.size()); i++) {
+            String ans = generated.get(i).answerText();
+            if (ans == null || ans.isBlank()) continue;
+            String norm = normalizeAnswer(ans);
+            if (norm.length() < 8) continue; // 짧은 답(예: "2")은 회피 대상에서 제외
+            if (exhibitedInExam.contains(norm)) {
+                conflicts.add(ans);
+                continue;
+            }
+            for (String existing : recentNormalized) {
+                if (existing.length() >= 8 && (existing.equals(norm) || norm.contains(existing) || existing.contains(norm))) {
+                    conflicts.add(ans);
+                    break;
+                }
+            }
+        }
+        return conflicts;
+    }
+
+    /** 정답 비교를 위한 정규화: 공백 압축 + 소문자 */
+    private String normalizeAnswer(String s) {
+        return s.trim().replaceAll("\\s+", " ").toLowerCase();
+    }
+
+    /** 시드 식별자 + 최근 출제 본문에서 추출한 식별자 합집합 (최대 25개) */
+    private List<String> collectForbiddenIdentifiers(List<EngineerExample> seeds, List<String> recentContents) {
+        Set<String> all = new LinkedHashSet<>(EngineerTopicExamples.identifiersOfAll(seeds));
+        for (String content : recentContents) {
+            all.addAll(extractIdentifiersFromContent(content));
+            if (all.size() >= 25) break;
+        }
+        List<String> result = new ArrayList<>(all);
+        return result.subList(0, Math.min(result.size(), 25));
+    }
+
+    private static final Pattern CODE_FENCE = Pattern.compile("```[a-zA-Z]*\\s*([\\s\\S]*?)```");
+    private static final Pattern IDENT = Pattern.compile("[A-Za-z_][A-Za-z0-9_]{2,}");
+    private static final Set<String> RESERVED = new HashSet<>(Arrays.asList(
+            "int", "void", "char", "long", "short", "double", "float", "bool", "true", "false", "null",
+            "if", "else", "for", "while", "do", "switch", "case", "break", "continue", "return", "default",
+            "class", "interface", "abstract", "extends", "implements", "static", "final", "public", "private",
+            "protected", "new", "this", "super", "import", "package", "throws", "throw", "try", "catch", "finally",
+            "def", "lambda", "yield", "elif", "and", "or", "not", "self",
+            "print", "println", "printf", "input", "len", "range", "list", "dict", "tuple", "set", "str",
+            "include", "stdio", "main", "sizeof", "struct", "typedef", "enum", "union", "const", "extern",
+            "select", "from", "where", "group", "order", "having", "join", "inner", "outer", "left", "right",
+            "union", "all", "distinct", "asc", "desc", "limit", "offset", "into", "values", "table", "view",
+            "primary", "foreign", "key", "index", "create", "drop", "alter", "update", "delete", "insert",
+            "System", "out", "String", "Integer", "Double", "Float", "Object", "Boolean", "Math",
+            "Arrays", "Collections", "ArrayList", "HashMap", "HashSet", "List", "Map", "Set", "Stream",
+            "args", "stdin", "stdout", "stderr", "size", "length", "value", "result", "data", "item", "items"));
+
+    private List<String> extractIdentifiersFromContent(String content) {
+        if (content == null || content.isBlank()) return List.of();
+        List<String> found = new ArrayList<>();
+        Matcher fenceMatcher = CODE_FENCE.matcher(content);
+        while (fenceMatcher.find()) {
+            String code = fenceMatcher.group(1);
+            Matcher idMatcher = IDENT.matcher(code);
+            while (idMatcher.find()) {
+                String ident = idMatcher.group();
+                if (!RESERVED.contains(ident) && !RESERVED.contains(ident.toLowerCase())) {
+                    found.add(ident);
+                }
+            }
+        }
+        return found;
+    }
+
+    /** AI 생성 응답을 정처기 단답/약술형 QuestionEntity로 변환 (시드의 difficulty 계승) */
+    private QuestionEntity toEngineerEntity(SubjectEntity subject, GeneratedQuestion gq, EngineerExample seed) {
         QuestionType qt;
         try {
-            qt = gq.questionType() != null ? QuestionType.valueOf(gq.questionType()) : example.questionType();
+            qt = gq.questionType() != null ? QuestionType.valueOf(gq.questionType()) : seed.questionType();
         } catch (IllegalArgumentException e) {
-            qt = example.questionType();
+            qt = seed.questionType();
         }
-        // MCQ가 잘못 들어온 경우 예시 유형으로 강제 교체
         if (qt == QuestionType.MCQ) {
-            qt = example.questionType();
+            qt = seed.questionType();
         }
 
         String answer = gq.answerText() != null ? gq.answerText() : "";
@@ -193,14 +342,16 @@ public class EngineerMockExamCreator {
             keywordsJson = "[]";
         }
 
+        // 난이도: AI 응답이 있으면 그것을 사용하되, 시드의 difficulty가 우선
+        int difficulty = gq.difficulty() != null ? gq.difficulty() : seed.difficulty();
+
         return new QuestionEntity(
                 subject, gq.content(), qt,
                 answer, keywordsJson, gq.explanation(),
-                gq.summary(), example.topic(),
-                gq.difficulty() != null ? gq.difficulty() : 5);
+                gq.summary(), seed.topic(),
+                difficulty);
     }
 
-    // === 헬퍼 ===
     private static Map<String, Integer> ordered(Object... kv) {
         LinkedHashMap<String, Integer> m = new LinkedHashMap<>();
         for (int i = 0; i < kv.length; i += 2) {

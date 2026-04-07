@@ -46,12 +46,16 @@ public class AiProvider {
     }
 
     /**
-     * 정처기 카테고리용 변형 문제 N개 생성.
-     * AiProvider 빈 자체는 동일하게 사용하되, 시스템 프롬프트와 user 프롬프트만 정처기 전용으로 분기.
+     * 정처기 카테고리용 변형 문제 N개 생성 (시드 풀 다중화 버전).
+     * - examples: needed개의 서로 다른 시드 (카테고리 풀에서 추출됨)
+     * - forbiddenIdentifiers: 절대 사용 금지 식별자 (시드 + 누적 출제 식별자)
+     * - recentAnswers: 회피해야 할 정답 패턴
      */
     public AiGenerationResponse generateEngineerQuestions(AiGenerationRequest request,
-                                                          EngineerTopicExamples.EngineerExample example) {
-        String prompt = PromptBuilder.buildEngineerPrompt(request, example);
+                                                          List<EngineerTopicExamples.EngineerExample> examples,
+                                                          List<String> forbiddenIdentifiers,
+                                                          List<String> recentAnswers) {
+        String prompt = PromptBuilder.buildEngineerPrompt(request, examples, forbiddenIdentifiers, recentAnswers);
         String responseText = chatClient.prompt()
                 .system(PromptBuilder.ENGINEER_GENERATION_SYSTEM_PROMPT)
                 .user(prompt)

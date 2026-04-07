@@ -61,4 +61,12 @@ public interface QuestionRepository extends JpaRepository<QuestionEntity, Long> 
 
     @Query("SELECT q.summary FROM QuestionEntity q WHERE q.subject.id = :subjectId AND q.topic = :topic AND q.summary IS NOT NULL")
     List<String> findSummariesBySubjectIdAndTopic(@Param("subjectId") Long subjectId, @Param("topic") String topic);
+
+    /** 정처기 다양성 검증용 — 최근 N개 문제의 정답 텍스트 (subject scoped, 최신순) */
+    @Query("SELECT q.answer FROM QuestionEntity q WHERE q.subject.id = :subjectId AND q.answer IS NOT NULL ORDER BY q.id DESC")
+    List<String> findRecentAnswersBySubjectId(@Param("subjectId") Long subjectId, Pageable pageable);
+
+    /** 정처기 다양성 검증용 — 최근 N개 문제의 본문 (subject scoped, 최신순) */
+    @Query("SELECT q.content FROM QuestionEntity q WHERE q.subject.id = :subjectId ORDER BY q.id DESC")
+    List<String> findRecentContentsBySubjectId(@Param("subjectId") Long subjectId, Pageable pageable);
 }
