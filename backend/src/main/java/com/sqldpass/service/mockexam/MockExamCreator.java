@@ -8,6 +8,7 @@ import java.util.Map;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.sqldpass.persistent.mockexam.ExamType;
 import com.sqldpass.persistent.mockexam.MockExamEntity;
 import com.sqldpass.persistent.mockexam.MockExamRepository;
 import com.sqldpass.persistent.question.QuestionEntity;
@@ -56,9 +57,9 @@ public class MockExamCreator {
 
     @Transactional
     public MockExamEntity create() {
-        // 1) 다음 sequence 계산
-        int nextSeq = mockExamRepository.findMaxSequence().orElse(0) + 1;
-        String name = "모의고사 " + nextSeq;
+        // 1) SQLD 자격증 내 다음 sequence 계산
+        int nextSeq = mockExamRepository.findMaxSequenceByExamType(ExamType.SQLD).orElse(0) + 1;
+        String name = "SQLD 모의고사 " + nextSeq + "회";
 
         // 2) 각 과목별로 미편성 문제에서 랜덤 추출 + 부족 검증
         List<QuestionEntity> picked = new ArrayList<>();

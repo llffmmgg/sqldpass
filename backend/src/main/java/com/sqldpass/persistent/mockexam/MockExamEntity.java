@@ -26,7 +26,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
 @Table(name = "mock_exam", uniqueConstraints = {
-    @UniqueConstraint(name = "uk_mock_exam_sequence", columnNames = {"sequence"})
+    @UniqueConstraint(name = "uk_mock_exam_exam_type_sequence", columnNames = {"exam_type", "sequence"})
 })
 public class MockExamEntity extends BaseTimeEntity {
 

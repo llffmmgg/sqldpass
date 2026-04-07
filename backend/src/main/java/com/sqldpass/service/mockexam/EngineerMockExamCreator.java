@@ -102,8 +102,8 @@ public class EngineerMockExamCreator {
 
     @Transactional
     public MockExamEntity create() {
-        // 1) sequence + 이름
-        int nextSeq = mockExamRepository.findMaxSequence().orElse(0) + 1;
+        // 1) 정처기 자격증 내 다음 sequence + 이름
+        int nextSeq = mockExamRepository.findMaxSequenceByExamType(ExamType.ENGINEER_PRACTICAL).orElse(0) + 1;
         String name = "정보처리기사 실기 모의고사 " + nextSeq + "회";
 
         // 2) 템플릿 무작위 선택

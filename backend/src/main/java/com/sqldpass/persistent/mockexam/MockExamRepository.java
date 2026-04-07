@@ -5,11 +5,13 @@ import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 public interface MockExamRepository extends JpaRepository<MockExamEntity, Long> {
 
-    @Query("SELECT MAX(m.sequence) FROM MockExamEntity m")
-    Optional<Integer> findMaxSequence();
+    /** 자격증 유형별 MAX sequence — 자격증마다 1,2,3 독립 번호 부여에 사용 */
+    @Query("SELECT MAX(m.sequence) FROM MockExamEntity m WHERE m.examType = :examType")
+    Optional<Integer> findMaxSequenceByExamType(@Param("examType") ExamType examType);
 
     @Query("SELECT m FROM MockExamEntity m LEFT JOIN FETCH m.questions q LEFT JOIN FETCH q.subject s LEFT JOIN FETCH s.parent WHERE m.id = :id")
     Optional<MockExamEntity> findByIdWithQuestions(Long id);
