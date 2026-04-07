@@ -1,4 +1,4 @@
-import { getToken } from "@/lib/auth";
+import { getToken, clearAuth } from "@/lib/auth";
 
 const BASE = "/api";
 
@@ -12,6 +12,12 @@ export async function fetchApi<T>(path: string, options?: RequestInit): Promise<
       ...options?.headers,
     },
   });
+
+  if (res.status === 401) {
+    clearAuth();
+    window.location.href = "/";
+    throw new Error("로그인이 필요합니다.");
+  }
 
   if (!res.ok) {
     const error = await res.json().catch(() => ({ message: "요청에 실패했습니다." }));
