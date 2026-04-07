@@ -45,7 +45,7 @@ export default async function OgImage() {
                 background: "#a78bfa",
               }}
             />
-            Beta · Multi-cert
+            Multi-cert
           </div>
         </div>
 
