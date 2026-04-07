@@ -32,6 +32,7 @@ function SolvePageContent() {
   const [queue, setQueue] = useState<Question[]>([]);
   const [current, setCurrent] = useState<Question | null>(null);
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
+  const [answerText, setAnswerText] = useState<string>("");
   const [detail, setDetail] = useState<QuestionDetail | null>(null);
   const [revealed, setRevealed] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -47,15 +48,20 @@ function SolvePageContent() {
     return getQuestions(subjectId, 10);
   }
 
+  function resetCurrentInput() {
+    setSelectedOption(null);
+    setAnswerText("");
+    setRevealed(false);
+    setDetail(null);
+  }
+
   async function handleSelectSubject(subject: Subject) {
     setSelectedSubject(subject);
     setLoading(true);
     const qs = await fetchQuestions(subject.id);
     setQueue(qs.slice(1));
     setCurrent(qs[0] || null);
-    setSelectedOption(null);
-    setRevealed(false);
-    setDetail(null);
+    resetCurrentInput();
     setSolvedCount(0);
     setCorrectCount(0);
     setPhase("solve");
@@ -67,14 +73,34 @@ function SolvePageContent() {
     setSelectedOption(option);
   }
 
+  /** 현재 문제에 대해 응답이 작성됐는지 (제출 가능 여부) */
+  function hasAnswer(): boolean {
+    if (!current) return false;
+    if (current.questionType === "MCQ") return selectedOption !== null;
+    return answerText.trim().length > 0;
+  }
+
+  /** 단답형/약술형 정답 일치 판정 — 백엔드 채점 결과 대신 클라이언트 측 휴리스틱 */
+  function isClientSideCorrect(d: QuestionDetail): boolean {
+    if (d.questionType === "MCQ") {
+      return selectedOption === d.correctOption;
+    }
+    const norm = (s: string) => s.trim().toLowerCase().replace(/\s+/g, " ");
+    const submitted = norm(answerText);
+    if (!submitted) return false;
+    if (d.answer && norm(d.answer) === submitted) return true;
+    // keywords 중 하나라도 정확히 일치하면 정답
+    return d.keywords.some((k) => norm(k) === submitted);
+  }
+
   async function handleSubmit() {
-    if (revealed || !current || selectedOption === null) return;
+    if (revealed || !current || !hasAnswer()) return;
     setRevealed(true);
 
     const d = await getQuestionDetail(current.id);
     setDetail(d);
     setSolvedCount((c) => c + 1);
-    if (selectedOption === d.correctOption) {
+    if (isClientSideCorrect(d)) {
       setCorrectCount((c) => c + 1);
     }
 
@@ -82,7 +108,11 @@ function SolvePageContent() {
       setSubmitError(null);
       submitSolve({
         subjectId: selectedSubject.id,
-        answers: [{ questionId: current.id, selectedOption }],
+        answers: [{
+          questionId: current.id,
+          selectedOption: current.questionType === "MCQ" ? selectedOption ?? undefined : undefined,
+          answerText: current.questionType !== "MCQ" ? answerText : undefined,
+        }],
       }).catch((e) => {
         console.error("풀이 제출 실패:", e);
         setSubmitError(
@@ -93,12 +123,16 @@ function SolvePageContent() {
   }
 
   async function retrySubmit() {
-    if (!selectedSubject || !current || selectedOption === null) return;
+    if (!selectedSubject || !current) return;
     setSubmitError(null);
     try {
       await submitSolve({
         subjectId: selectedSubject.id,
-        answers: [{ questionId: current.id, selectedOption }],
+        answers: [{
+          questionId: current.id,
+          selectedOption: current.questionType === "MCQ" ? selectedOption ?? undefined : undefined,
+          answerText: current.questionType !== "MCQ" ? answerText : undefined,
+        }],
       });
     } catch (e) {
       setSubmitError(e instanceof Error ? e.message : "다시 실패했습니다.");
@@ -119,9 +153,7 @@ function SolvePageContent() {
 
     setCurrent(nextQueue[0] || null);
     setQueue(nextQueue.slice(1));
-    setSelectedOption(null);
-    setRevealed(false);
-    setDetail(null);
+    resetCurrentInput();
   }
 
   function handleReset() {
@@ -129,9 +161,7 @@ function SolvePageContent() {
     setSelectedSubject(null);
     setQueue([]);
     setCurrent(null);
-    setSelectedOption(null);
-    setRevealed(false);
-    setDetail(null);
+    resetCurrentInput();
     setSolvedCount(0);
     setCorrectCount(0);
   }
@@ -190,7 +220,11 @@ function SolvePageContent() {
   if (!current) return null;
 
   const parsed = parseQuestion(current.content);
-  const isCorrect = detail ? selectedOption === detail.correctOption : null;
+  const isCorrect = detail ? (
+    detail.questionType === "MCQ"
+      ? selectedOption === detail.correctOption
+      : isClientSideCorrect(detail)
+  ) : null;
 
   return (
     <main className="min-h-screen bg-background text-foreground">
@@ -217,49 +251,99 @@ function SolvePageContent() {
 
         {/* 문제 */}
         <div className="mt-8 rounded-xl border border-border bg-surface p-6">
-          <QuestionContent content={parsed.body} />
+          <div className="flex items-center justify-between gap-2">
+            <QuestionTypeBadge type={current.questionType} />
+          </div>
+          <div className="mt-3">
+            <QuestionContent content={parsed.body} />
+          </div>
 
-          <ul className="mt-6 space-y-2">
-            {parsed.options.map((optionText, idx) => {
-              const num = idx + 1;
-              const isSelected = selectedOption === num;
-              const isCorrectOption = detail?.correctOption === num;
+          {/* 입력 UI 분기 */}
+          {current.questionType === "MCQ" && (
+            <ul className="mt-6 space-y-2">
+              {parsed.options.map((optionText, idx) => {
+                const num = idx + 1;
+                const isSelected = selectedOption === num;
+                const isCorrectOption = detail?.correctOption === num;
 
-              let style = "border-border hover:border-amber-500/40 hover:bg-amber-500/5";
-              if (revealed) {
-                if (isCorrectOption) {
-                  style = "border-green-500 bg-green-500/10 text-green-400";
-                } else if (isSelected && !isCorrectOption) {
-                  style = "border-red-500 bg-red-500/10 text-red-400";
-                } else {
-                  style = "border-border opacity-50";
+                let style = "border-border hover:border-amber-500/40 hover:bg-amber-500/5";
+                if (revealed) {
+                  if (isCorrectOption) {
+                    style = "border-green-500 bg-green-500/10 text-green-400";
+                  } else if (isSelected && !isCorrectOption) {
+                    style = "border-red-500 bg-red-500/10 text-red-400";
+                  } else {
+                    style = "border-border opacity-50";
+                  }
+                } else if (isSelected) {
+                  style = "border-amber-500 bg-amber-500/10 text-foreground";
                 }
-              } else if (isSelected) {
-                style = "border-amber-500 bg-amber-500/10 text-foreground";
-              }
 
-              return (
-                <li key={num}>
-                  <button
-                    onClick={() => handleSelect(num)}
-                    disabled={revealed}
-                    className={`w-full rounded-lg border px-4 py-3 text-left text-sm transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 ${style} disabled:cursor-default`}
-                  >
-                    <span className="mr-3 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-current text-xs">
-                      {num}
-                    </span>
-                    {optionText}
-                    {revealed && isCorrectOption && (
-                      <span className="ml-2 text-green-400">&#10003;</span>
-                    )}
-                    {revealed && isSelected && !isCorrectOption && (
-                      <span className="ml-2 text-red-400">&#10007;</span>
-                    )}
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
+                return (
+                  <li key={num}>
+                    <button
+                      onClick={() => handleSelect(num)}
+                      disabled={revealed}
+                      className={`w-full rounded-lg border px-4 py-3 text-left text-sm transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 ${style} disabled:cursor-default`}
+                    >
+                      <span className="mr-3 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-current text-xs">
+                        {num}
+                      </span>
+                      {optionText}
+                      {revealed && isCorrectOption && (
+                        <span className="ml-2 text-green-400">&#10003;</span>
+                      )}
+                      {revealed && isSelected && !isCorrectOption && (
+                        <span className="ml-2 text-red-400">&#10007;</span>
+                      )}
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+
+          {current.questionType === "SHORT_ANSWER" && (
+            <div className="mt-6">
+              <label className="mb-2 block text-xs text-muted">정답 입력</label>
+              <input
+                type="text"
+                value={answerText}
+                onChange={(e) => setAnswerText(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !revealed) {
+                    e.preventDefault();
+                    handleSubmit();
+                  }
+                }}
+                disabled={revealed}
+                placeholder="정답을 입력하세요 (엔터: 제출)"
+                className="w-full rounded-lg border border-border bg-background px-4 py-3 font-mono text-sm text-foreground placeholder:text-muted/50 transition focus:outline-none focus:ring-2 focus:ring-amber-500/60 disabled:opacity-60"
+                autoComplete="off"
+                spellCheck={false}
+              />
+              <p className="mt-2 text-xs text-muted/70">
+                대소문자, 앞뒤 공백은 자동으로 무시됩니다.
+              </p>
+            </div>
+          )}
+
+          {current.questionType === "DESCRIPTIVE" && (
+            <div className="mt-6">
+              <label className="mb-2 block text-xs text-muted">서술형 답안</label>
+              <textarea
+                value={answerText}
+                onChange={(e) => setAnswerText(e.target.value)}
+                disabled={revealed}
+                rows={6}
+                placeholder="개념을 설명하는 답안을 작성하세요. 핵심 키워드를 포함할수록 점수가 올라갑니다."
+                className="w-full resize-y rounded-lg border border-border bg-background px-4 py-3 text-sm leading-relaxed text-foreground placeholder:text-muted/50 transition focus:outline-none focus:ring-2 focus:ring-amber-500/60 disabled:opacity-60"
+              />
+              <p className="mt-2 text-xs text-muted/70">
+                {answerText.length}자 · 채점은 모범답안과 키워드 일치율로 이루어집니다.
+              </p>
+            </div>
+          )}
         </div>
 
         {/* 제출 버튼 (미공개 상태) */}
@@ -267,7 +351,7 @@ function SolvePageContent() {
           <div className="mt-4 flex justify-center">
             <button
               onClick={handleSubmit}
-              disabled={selectedOption === null}
+              disabled={!hasAnswer()}
               className="rounded-lg bg-primary px-6 py-2.5 text-sm font-semibold text-zinc-900 transition hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-primary"
             >
               정답 제출
@@ -301,8 +385,37 @@ function SolvePageContent() {
                   : "border-red-500/30 bg-red-500/5 text-red-400"
               }`}
             >
-              {isCorrect ? "정답입니다!" : `오답입니다. 정답은 ${detail.correctOption}번입니다.`}
+              {isCorrect
+                ? "정답입니다!"
+                : detail.questionType === "MCQ"
+                ? `오답입니다. 정답은 ${detail.correctOption}번입니다.`
+                : `오답입니다. 모범답안: ${detail.answer ?? "(없음)"}`}
             </div>
+
+            {/* 비-MCQ 정답 패널 */}
+            {detail.questionType !== "MCQ" && (
+              <div className="rounded-lg border border-border bg-surface px-4 py-3">
+                <p className="text-xs font-medium text-muted">모범답안</p>
+                <p className="mt-1 font-mono text-sm text-foreground">{detail.answer ?? "-"}</p>
+                {detail.keywords.length > 0 && (
+                  <div className="mt-3">
+                    <p className="text-xs font-medium text-muted">
+                      {detail.questionType === "SHORT_ANSWER" ? "허용 표기" : "채점 키워드"}
+                    </p>
+                    <div className="mt-1 flex flex-wrap gap-1.5">
+                      {detail.keywords.map((kw, i) => (
+                        <span
+                          key={i}
+                          className="rounded bg-emerald-500/10 px-2 py-0.5 text-[11px] text-emerald-300"
+                        >
+                          {kw}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* 해설 */}
             {detail.explanation && (
@@ -328,4 +441,14 @@ function SolvePageContent() {
       </div>
     </main>
   );
+}
+
+function QuestionTypeBadge({ type }: { type: Question["questionType"] }) {
+  if (type === "MCQ") {
+    return <span className="rounded-full border border-border px-2 py-0.5 text-[10px] font-medium text-muted">4지선다</span>;
+  }
+  if (type === "SHORT_ANSWER") {
+    return <span className="rounded-full border border-emerald-500/40 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-bold text-emerald-300">단답형</span>;
+  }
+  return <span className="rounded-full border border-cyan-500/40 bg-cyan-500/10 px-2 py-0.5 text-[10px] font-bold text-cyan-300">서술형</span>;
 }

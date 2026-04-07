@@ -36,17 +36,26 @@ export interface Subject {
   children: Subject[];
 }
 
+export type QuestionType = "MCQ" | "SHORT_ANSWER" | "DESCRIPTIVE";
+
 export interface Question {
   id: number;
   subjectId: number;
   content: string;
+  questionType: QuestionType;
 }
 
 export interface QuestionDetail {
   id: number;
   subjectId: number;
   content: string;
-  correctOption: number;
+  questionType: QuestionType;
+  /** MCQ일 때만 존재 */
+  correctOption: number | null;
+  /** SHORT_ANSWER/DESCRIPTIVE의 모범답안 */
+  answer: string | null;
+  /** SHORT_ANSWER alias 또는 DESCRIPTIVE 채점 키워드 */
+  keywords: string[];
   explanation: string;
 }
 
