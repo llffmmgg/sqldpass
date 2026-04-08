@@ -139,6 +139,19 @@ export function deleteQuestion(id: number) {
   return adminFetch<void>(`/questions/${id}`, { method: "DELETE" });
 }
 
+export interface QuestionVerifyResult {
+  questionId: number;
+  subjectName: string;
+  summary: string | null;
+  reason: string;
+}
+
+export function verifyAllQuestions(limit: number, subjectId?: number) {
+  const params = new URLSearchParams({ limit: String(limit) });
+  if (subjectId) params.set("subjectId", String(subjectId));
+  return adminFetch<QuestionVerifyResult[]>(`/questions/verify?${params}`, { method: "POST" });
+}
+
 export function getMembers(page = 0, size = 20) {
   return adminFetch<AdminMemberPage>(`/members?page=${page}&size=${size}`);
 }

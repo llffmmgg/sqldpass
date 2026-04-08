@@ -20,8 +20,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
+
 import com.sqldpass.controller.admin.dto.AdminQuestionResponse;
 import com.sqldpass.controller.admin.dto.AdminQuestionUpdateRequest;
+import com.sqldpass.controller.admin.dto.QuestionVerifyResultResponse;
 import com.sqldpass.service.admin.AdminQuestionService;
 import com.sqldpass.service.admin.QuestionExportService;
 
@@ -91,6 +94,14 @@ public class AdminQuestionController {
         headers.set("X-Export-Count", String.valueOf(result.count()));
 
         return new ResponseEntity<>(body, headers, HttpStatus.OK);
+    }
+
+    @PostMapping("/api/admin/questions/verify")
+    @Operation(summary = "LLM 일괄 검증 — 의심 문제 ID 리스트 반환")
+    public List<QuestionVerifyResultResponse> verifyAll(
+            @RequestParam(required = false) Long subjectId,
+            @RequestParam(defaultValue = "100") @Min(1) @Max(2000) int limit) {
+        return adminQuestionService.verifyAll(subjectId, limit);
     }
 
     @PostMapping("/api/admin/questions/export/reset")
