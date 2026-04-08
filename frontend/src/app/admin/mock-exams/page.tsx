@@ -55,7 +55,7 @@ const CERTS: CertConfig[] = [
     id: "COMPUTER_LITERACY_1",
     label: "컴퓨터활용능력 1급 필기",
     shortLabel: "컴활 1급",
-    totalQuestions: 15,
+    totalQuestions: 60,
     accent: {
       badge: "border-sky-500/30 bg-sky-500/10 text-sky-300",
       button:

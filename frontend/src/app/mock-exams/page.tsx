@@ -178,7 +178,7 @@ function MockExamsListContent() {
       <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6">
         <h1 className="text-2xl font-bold sm:text-3xl">모의고사</h1>
         <p className="mt-2 text-sm text-muted">
-          SQLD 50문항 · 정처기 실기 20문항 · 컴활 1급 필기 15문항 모의고사 지원
+          SQLD 50문항 · 정처기 실기 20문항 · 컴활 1급 필기 60문항 모의고사 지원
         </p>
 
         {/* 필터 탭 */}

@@ -56,13 +56,13 @@ public class ComputerLiteracyMockExamCreator {
     private static final String SPREADSHEET = "스프레드시트 일반";
     private static final String DATABASE = "데이터베이스 일반";
 
-    /** 카테고리별 needed 문항 수 (시드 풀이 작은 단계라 mini 사이즈) */
+    /** 카테고리별 needed 문항 수 — 컴활 1급 필기 표준 60문항 (과목당 20문항) */
     private static final Map<String, Integer> DISTRIBUTION;
     static {
         LinkedHashMap<String, Integer> m = new LinkedHashMap<>();
-        m.put(COMPUTER, 5);
-        m.put(SPREADSHEET, 5);
-        m.put(DATABASE, 5);
+        m.put(COMPUTER, 20);
+        m.put(SPREADSHEET, 20);
+        m.put(DATABASE, 20);
         DISTRIBUTION = m;
     }
 
