@@ -8,8 +8,6 @@ import java.util.Map;
 import java.util.Random;
 
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,6 +22,7 @@ import com.sqldpass.persistent.subject.SubjectRepository;
 import com.sqldpass.service.common.ErrorCode;
 import com.sqldpass.service.common.SqldpassException;
 import com.sqldpass.service.generation.AiProvider;
+import com.sqldpass.service.generation.TopicExamples;
 import com.sqldpass.service.generation.dto.AiGenerationRequest;
 import com.sqldpass.service.generation.dto.AiGenerationResponse;
 import com.sqldpass.service.generation.dto.GeneratedQuestion;
@@ -33,38 +32,35 @@ import lombok.extern.slf4j.Slf4j;
 /**
  * SQLD 모의고사 생성기 — 정처기/컴활과 동일 패턴(시드 + AI 변형 + 사용자 지정 난이도).
  *
- * 시드 소스: 운영 DB에 이미 존재하는 SQLD 문제를 매번 카테고리별 needed개 무작위 추출.
- * (정처기/컴활은 코드 시드 풀, SQLD는 운영 누적 데이터를 시드로 활용 — 사용자 결정)
+ * 시드 소스: TopicExamples (HTML 기출 기반 토픽별 [기본/심화/고난도] JSON 시드).
  *
- * 표준 SQLD 시험 50문항 분포:
+ * 표준 SQLD 시험 50문항 분포 (실제 출제 비중 반영):
  * - 1과목: 데이터 모델링의 이해 (총 10문항)
  *   · 데이터 모델링의 이해 (id=3): 5문항
  *   · 데이터 모델과 SQL    (id=4): 5문항
  * - 2과목: SQL 기본 및 활용 (총 40문항)
- *   · SQL 기본 (id=5): 14문항
- *   · SQL 활용 (id=6): 13문항
- *   · 관리 구문 (id=7): 13문항
+ *   · SQL 기본 (id=5): 20문항
+ *   · SQL 활용 (id=6): 15문항
+ *   · 관리 구문 (id=7): 5문항  ← 실제 SQLD에서 관리 구문은 5~6문항 비중
  *
- * AI 호출당 시드 = 변형 = needed개. 시드별 1개씩 변형 → 사용자 지정 난이도로 강제 → DB 저장 → 모의고사 편성.
+ * 흐름: 카테고리 → TopicExamples.randomFor(needed) → AI 변형 → 사용자 지정 난이도로 강제 저장 → 편성.
  */
 @Slf4j
 @Component
 public class MockExamCreator {
 
-    private static final int RECENT_LOOKBACK = 30;
-
-    /** 카테고리(과목) ID → needed 문항 수. 표준 SQLD 50문항 분포. */
+    /** 카테고리(과목) ID → needed 문항 수. 실제 SQLD 출제 비중 반영. */
     private static final Map<Long, Integer> DISTRIBUTION;
-    /** 카테고리 ID → 표시 이름 (로깅·프롬프트용) */
+    /** 카테고리 ID → 표시 이름 (TopicExamples.SQLD_SUBJECT_TOPICS 키와 일치) */
     private static final Map<Long, String> CATEGORY_NAMES;
     static {
         LinkedHashMap<Long, Integer> dist = new LinkedHashMap<>();
-        dist.put(3L, 5);   // 1과목: 데이터 모델링의 이해
-        dist.put(4L, 5);   // 1과목: 데이터 모델과 SQL
-        dist.put(5L, 14);  // 2과목: SQL 기본
-        dist.put(6L, 13);  // 2과목: SQL 활용
-        dist.put(7L, 13);  // 2과목: 관리 구문
-        DISTRIBUTION = dist;
+        dist.put(3L, 5);   // 1과목: 데이터 모델링의 이해 (시드 15)
+        dist.put(4L, 5);   // 1과목: 데이터 모델과 SQL    (시드 6)
+        dist.put(5L, 20);  // 2과목: SQL 기본              (시드 27)
+        dist.put(6L, 15);  // 2과목: SQL 활용              (시드 24)
+        dist.put(7L, 5);   // 2과목: 관리 구문             (시드 6)
+        DISTRIBUTION = dist;  // 합 50
 
         LinkedHashMap<Long, String> names = new LinkedHashMap<>();
         names.put(3L, "데이터 모델링의 이해");
@@ -115,14 +111,14 @@ public class MockExamCreator {
             int needed = entry.getValue();
             String categoryName = CATEGORY_NAMES.get(subjectId);
 
-            // 1) DB에서 시드로 사용할 SQLD 문제 needed개 무작위 추출
-            List<QuestionEntity> seeds = questionRepository.findRandomBySubjectId(subjectId, needed);
-            if (seeds.size() < needed) {
+            // 1) TopicExamples에서 카테고리 시드 풀(토픽 × 3난이도) → needed개 무작위 추출
+            List<String> seedJsons = TopicExamples.randomFor(categoryName, needed, random);
+            if (seedJsons.size() < needed) {
                 throw new SqldpassException(
                         ErrorCode.MOCK_EXAM_INSUFFICIENT_QUESTIONS,
-                        String.format("SQLD 카테고리 '%s'(id=%d) 시드 풀이 부족합니다 (필요 %d, 보유 %d). " +
-                                        "어드민에서 AI 문제 생성으로 풀을 더 채워주세요.",
-                                categoryName, subjectId, needed, seeds.size()));
+                        String.format("SQLD 카테고리 '%s' TopicExamples 시드 풀이 부족합니다 (필요 %d, 보유 %d). " +
+                                        "TopicExamples.SQLD_SUBJECT_TOPICS에 토픽을 추가하거나 needed를 줄이세요.",
+                                categoryName, needed, seedJsons.size()));
             }
 
             // 2) 카테고리에 할당된 목표 난이도 슬롯 needed개 슬라이스
@@ -131,19 +127,18 @@ public class MockExamCreator {
             slotCursor += needed;
 
             // 3) 회피 신호 — 최근 출제 요약
-            Pageable lookback = PageRequest.of(0, RECENT_LOOKBACK);
             List<String> recentSummaries = questionRepository.findSummariesBySubjectId(subjectId);
 
             // 4) Subject 조회 (저장용)
             SubjectEntity subject = subjectRepository.findById(subjectId)
                     .orElseThrow(() -> new SqldpassException(ErrorCode.SUBJECT_NOT_FOUND));
 
-            // 5) AI 호출 — 시드 변형 + 목표 난이도
+            // 5) AI 호출 — 시드 변형 + 목표 난이도 (chunk 분할은 AiProvider 내부에서 자동)
             AiGenerationRequest request = new AiGenerationRequest(
                     categoryName, subjectId, categoryName,
                     recentSummaries, needed, ExamType.SQLD);
             AiGenerationResponse response = sqldAiProvider
-                    .generateSqldFromSeeds(request, seeds, targetDifficulties, recentSummaries);
+                    .generateSqldFromSeeds(request, seedJsons, targetDifficulties, recentSummaries);
             List<GeneratedQuestion> generated = response.questions();
             if (generated == null || generated.size() < needed) {
                 throw new SqldpassException(

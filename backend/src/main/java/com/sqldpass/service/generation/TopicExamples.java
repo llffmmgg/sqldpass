@@ -1,17 +1,37 @@
 package com.sqldpass.service.generation;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
 /**
  * 토픽별 Few-shot 예시 (HTML 기출 기반).
- * 각 토픽당 기본(0)/심화(1)/고난도(2) 3개씩.
+ * 각 토픽당 기본(0)/심화(1)/고난도(2) 3개씩 — JSON 문자열 형식.
+ *
+ * SQLD 모의고사 생성 시 카테고리(과목) → 토픽들 → 시드 풀 형태로 사용.
  */
-class TopicExamples {
+public final class TopicExamples {
 
     // 토픽 → [기본, 심화, 고난도] 예시 JSON
-    static final Map<String, List<String>> EXAMPLES = new LinkedHashMap<>();
+    public static final Map<String, List<String>> EXAMPLES = new LinkedHashMap<>();
+
+    /** SQLD 카테고리(과목) → 토픽 리스트 */
+    public static final Map<String, List<String>> SQLD_SUBJECT_TOPICS = new LinkedHashMap<>();
+    static {
+        SQLD_SUBJECT_TOPICS.put("데이터 모델링의 이해",
+                List.of("데이터 모델링 개요", "엔터티", "속성", "관계", "식별자"));
+        SQLD_SUBJECT_TOPICS.put("데이터 모델과 SQL",
+                List.of("정규화", "성능 데이터 모델링"));
+        SQLD_SUBJECT_TOPICS.put("SQL 기본",
+                List.of("DDL", "DML", "TCL", "WHERE절/조건", "함수", "NULL 처리 함수", "GROUP BY/HAVING", "ORDER BY", "제약조건"));
+        SQLD_SUBJECT_TOPICS.put("SQL 활용",
+                List.of("JOIN", "서브쿼리", "집합연산자", "ROLLUP/CUBE/GROUPING", "윈도우 함수", "계층형 질의", "PIVOT/UNPIVOT", "정규표현식"));
+        SQLD_SUBJECT_TOPICS.put("관리 구문",
+                List.of("DCL", "옵티마이저/인덱스"));
+    }
 
     static {
         EXAMPLES.put("데이터 모델링 개요", List.of(
@@ -250,5 +270,29 @@ class TopicExamples {
     }
 
     private TopicExamples() {
+    }
+
+    /**
+     * SQLD 카테고리(과목)에 대한 시드 JSON 풀에서 needed개 무작위 추출.
+     * 카테고리의 모든 토픽 × [기본/심화/고난도] = 시드 풀.
+     *
+     * 예: "SQL 기본" → 9 토픽 × 3 = 27개 시드 풀 → needed개 셔플 추출.
+     */
+    public static List<String> randomFor(String subjectName, int needed, Random random) {
+        List<String> topics = SQLD_SUBJECT_TOPICS.get(subjectName);
+        if (topics == null || topics.isEmpty()) return List.of();
+
+        List<String> pool = new ArrayList<>();
+        for (String topic : topics) {
+            List<String> seeds = EXAMPLES.get(topic);
+            if (seeds != null) pool.addAll(seeds);
+        }
+        if (pool.isEmpty()) return List.of();
+
+        Collections.shuffle(pool, random);
+        if (needed >= pool.size()) {
+            return new ArrayList<>(pool);
+        }
+        return new ArrayList<>(pool.subList(0, needed));
     }
 }

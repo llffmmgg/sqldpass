@@ -110,23 +110,23 @@ public class AiProvider {
     }
 
     /**
-     * SQLD 카테고리용 변형 문제 N개 생성 — 운영 DB의 기존 SQLD 문제를 시드로 사용.
+     * SQLD 카테고리용 변형 문제 N개 생성 — TopicExamples의 토픽별 [기본/심화/고난도] JSON 시드 사용.
      * needed가 MAX_QUESTIONS_PER_CALL을 초과하면 자동 chunk 분할.
      */
     public AiGenerationResponse generateSqldFromSeeds(AiGenerationRequest request,
-                                                      List<com.sqldpass.persistent.question.QuestionEntity> seeds,
+                                                      List<String> seedJsons,
                                                       List<Integer> targetDifficulties,
                                                       List<String> recentSummaries) {
-        if (seeds.size() <= MAX_QUESTIONS_PER_CALL) {
-            return callSqldOnce(request, seeds, targetDifficulties, recentSummaries);
+        if (seedJsons.size() <= MAX_QUESTIONS_PER_CALL) {
+            return callSqldOnce(request, seedJsons, targetDifficulties, recentSummaries);
         }
-        List<GeneratedQuestion> all = new ArrayList<>(seeds.size());
-        for (int start = 0; start < seeds.size(); start += MAX_QUESTIONS_PER_CALL) {
-            int end = Math.min(start + MAX_QUESTIONS_PER_CALL, seeds.size());
-            List<com.sqldpass.persistent.question.QuestionEntity> seedChunk = seeds.subList(start, end);
+        List<GeneratedQuestion> all = new ArrayList<>(seedJsons.size());
+        for (int start = 0; start < seedJsons.size(); start += MAX_QUESTIONS_PER_CALL) {
+            int end = Math.min(start + MAX_QUESTIONS_PER_CALL, seedJsons.size());
+            List<String> seedChunk = seedJsons.subList(start, end);
             List<Integer> diffChunk = targetDifficulties.subList(start, end);
             log.info("SQLD chunk 호출 [{}] {}~{}/{} (size={})",
-                    request.subjectName(), start, end, seeds.size(), seedChunk.size());
+                    request.subjectName(), start, end, seedJsons.size(), seedChunk.size());
             AiGenerationResponse partial = callSqldOnce(request, seedChunk, diffChunk, recentSummaries);
             if (partial.questions() == null || partial.questions().size() < seedChunk.size()) {
                 throw new SqldpassException(ErrorCode.AI_GENERATION_FAILED,
@@ -138,10 +138,10 @@ public class AiProvider {
     }
 
     private AiGenerationResponse callSqldOnce(AiGenerationRequest request,
-                                              List<com.sqldpass.persistent.question.QuestionEntity> seeds,
+                                              List<String> seedJsons,
                                               List<Integer> targetDifficulties,
                                               List<String> recentSummaries) {
-        String prompt = PromptBuilder.buildSqldSeedPrompt(request, seeds, targetDifficulties, recentSummaries);
+        String prompt = PromptBuilder.buildSqldSeedPrompt(request, seedJsons, targetDifficulties, recentSummaries);
         String responseText = chatClient.prompt()
                 .system(PromptBuilder.SQLD_SEED_GENERATION_SYSTEM_PROMPT)
                 .user(prompt)

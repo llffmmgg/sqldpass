@@ -1,6 +1,5 @@
 package com.sqldpass.service.generation;
 
-import com.sqldpass.persistent.question.QuestionEntity;
 import com.sqldpass.service.generation.ComputerLiteracyTopicExamples.CL1Example;
 import com.sqldpass.service.generation.EngineerTopicExamples.EngineerExample;
 import com.sqldpass.service.generation.dto.*;
@@ -308,34 +307,26 @@ public class PromptBuilder {
     }
 
     /**
-     * SQLD 카테고리 생성용 프롬프트 — 운영 DB의 기존 SQLD 문제를 시드로 사용.
-     * - seeds: 운영 DB에서 무작위 추출된 SQLD QuestionEntity N개
-     * - targetDifficulties: 각 문제의 목표 난이도(1~4) — seeds와 동일 길이
+     * SQLD 카테고리 생성용 프롬프트 — TopicExamples의 토픽별 [기본/심화/고난도] JSON 시드 사용.
+     * - seedJsons: TopicExamples.randomFor()로 추출된 JSON 시드 문자열 N개
+     * - targetDifficulties: 각 문제의 목표 난이도(1~4) — seedJsons와 동일 길이
      * - recentSummaries: 회피해야 할 최근 출제 관점
      */
     static String buildSqldSeedPrompt(AiGenerationRequest request,
-                                      List<QuestionEntity> seeds,
+                                      List<String> seedJsons,
                                       List<Integer> targetDifficulties,
                                       List<String> recentSummaries) {
         StringBuilder sb = new StringBuilder();
         sb.append("카테고리: ").append(request.subjectName()).append("\n");
-        sb.append("필요 문항 수: ").append(seeds.size()).append("개 (시드 1개당 변형 1개씩)\n\n");
+        sb.append("필요 문항 수: ").append(seedJsons.size()).append("개 (시드 1개당 변형 1개씩)\n\n");
 
-        for (int i = 0; i < seeds.size(); i++) {
-            QuestionEntity ex = seeds.get(i);
+        for (int i = 0; i < seedJsons.size(); i++) {
             int target = targetDifficulties.get(i);
             sb.append("[문제 #").append(i + 1)
                     .append(" — **목표 난이도: ").append(targetLabel(target))
                     .append(" (").append(target).append(")**]\n");
             sb.append("(아래 시드는 주제·패턴·함정 회피용 참고. 시드 자체 난이도는 무시하고 위 목표 난이도로 작성)\n");
-            sb.append("시드 본문: ").append(ex.getContent()).append("\n");
-            if (ex.getCorrectOption() != null) {
-                sb.append("시드 정답: ").append(ex.getCorrectOption()).append("번\n");
-            }
-            if (ex.getExplanation() != null) {
-                sb.append("시드 해설: ").append(ex.getExplanation()).append("\n");
-            }
-            sb.append("\n");
+            sb.append("시드 (JSON): ").append(seedJsons.get(i)).append("\n\n");
         }
 
         if (recentSummaries != null && !recentSummaries.isEmpty()) {
@@ -346,8 +337,8 @@ public class PromptBuilder {
         }
 
         sb.append("[지시]\n");
-        sb.append("- 위 ").append(seeds.size()).append("개 시드 각각에 대해 변형 1개씩, 정확히 ")
-                .append(seeds.size()).append("개의 문제를 생성하세요.\n");
+        sb.append("- 위 ").append(seedJsons.size()).append("개 시드 각각에 대해 변형 1개씩, 정확히 ")
+                .append(seedJsons.size()).append("개의 문제를 생성하세요.\n");
         sb.append("- **각 문제는 위에 명시된 목표 난이도를 반드시 따르세요. 시드 자체 난이도는 무시합니다.**\n");
         sb.append("- 본문 안에 ①②③④ 보기 4개를 모두 포함하세요. 시드의 SQL/테이블명/컬럼명 복제 금지.\n");
         sb.append("- correctOption 필드에 1~4 정수로 정답 번호를 반환하세요.\n");
