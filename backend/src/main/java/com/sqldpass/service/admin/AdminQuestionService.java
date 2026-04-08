@@ -9,7 +9,9 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import com.sqldpass.controller.admin.dto.AdminQuestionResponse;
 import com.sqldpass.controller.admin.dto.AdminQuestionUpdateRequest;
@@ -49,78 +51,115 @@ public class AdminQuestionService {
     private final SubjectRepository subjectRepository;
     private final QuestionVerificationRunRepository questionVerificationRunRepository;
     private final AiProvider verifier;
+    private final TransactionTemplate readOnlyTx;
+    private final TransactionTemplate writeTx;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     public AdminQuestionService(QuestionRepository questionRepository,
                                 SubjectRepository subjectRepository,
                                 QuestionVerificationRunRepository questionVerificationRunRepository,
-                                @Qualifier("verifier") AiProvider verifier) {
+                                @Qualifier("verifier") AiProvider verifier,
+                                PlatformTransactionManager transactionManager) {
         this.questionRepository = questionRepository;
         this.subjectRepository = subjectRepository;
         this.questionVerificationRunRepository = questionVerificationRunRepository;
         this.verifier = verifier;
+        this.readOnlyTx = new TransactionTemplate(transactionManager);
+        this.readOnlyTx.setReadOnly(true);
+        this.writeTx = new TransactionTemplate(transactionManager);
     }
 
-    @Transactional
+    /**
+     * 일괄 LLM 검증 — 트랜잭션을 3단계로 분리해 LLM 호출 중에는 DB 커넥션을 잡지 않는다.
+     *
+     *   1) Phase 1 (read-only tx): subject 조회 + 검증 대상 ID 페이징 → 엔티티 fetch → 스냅샷 DTO로 detach
+     *   2) Phase 2 (no tx): 스냅샷 기반으로 verifier LLM 호출, 결과 누적
+     *   3) Phase 3 (write tx): 성공한 ID에 verifiedAt 일괄 마킹 + 실행 이력 row 저장
+     *
+     * 결과적으로 LLM이 분 단위로 걸려도 HikariCP 커넥션을 그동안 점유하지 않음.
+     */
     public QuestionVerifyRunResponse verifyAll(ExamType examType, Long subjectId, int limit, boolean forceRecheck) {
         int requestedLimit = limit > 0 ? limit : 100;
-        SubjectEntity subject = subjectId != null
-                ? subjectRepository.findById(subjectId)
-                        .orElseThrow(() -> new SqldpassException(ErrorCode.SUBJECT_NOT_FOUND))
-                : null;
-        List<QuestionEntity> questions = fetchQuestionsForVerification(examType, subjectId, requestedLimit, !forceRecheck);
 
+        // ── Phase 1: 짧은 read tx — 대상 스냅샷 추출 ────────────────────────────
+        VerificationFetchResult fetched = readOnlyTx.execute(status -> {
+            SubjectEntity subject = subjectId != null
+                    ? subjectRepository.findById(subjectId)
+                            .orElseThrow(() -> new SqldpassException(ErrorCode.SUBJECT_NOT_FOUND))
+                    : null;
+
+            List<Long> ids = fetchIdsForVerification(examType, subjectId, requestedLimit, !forceRecheck);
+            if (ids.isEmpty()) {
+                return new VerificationFetchResult(subject, List.of());
+            }
+            List<QuestionEntity> entities = questionRepository.findByIdInWithSubjectAndParent(ids);
+            // ID 순서(=createdAt DESC) 보존
+            List<QuestionSnapshot> snapshots = ids.stream()
+                    .map(id -> entities.stream().filter(q -> q.getId().equals(id)).findFirst().orElse(null))
+                    .filter(java.util.Objects::nonNull)
+                    .map(this::toSnapshot)
+                    .toList();
+            return new VerificationFetchResult(subject, snapshots);
+        });
+
+        SubjectEntity subject = fetched.subject();
+        List<QuestionSnapshot> snapshots = fetched.snapshots();
+
+        // ── Phase 2: 트랜잭션 밖 — LLM 호출 루프 ─────────────────────────────────
         List<QuestionVerifyResultResponse> suspicious = new ArrayList<>();
+        List<Long> verifiedIds = new ArrayList<>();
         int processed = 0;
-        LocalDateTime completedAt = LocalDateTime.now();
 
-        for (QuestionEntity question : questions) {
+        for (QuestionSnapshot snap : snapshots) {
             try {
                 GeneratedQuestion generatedQuestion = new GeneratedQuestion(
-                        question.getContent(),
-                        question.getCorrectOption(),
-                        question.getExplanation(),
-                        question.getSummary(),
-                        question.getTopic(),
-                        question.getDifficulty(),
-                        question.getQuestionType() != null ? question.getQuestionType().name() : null,
-                        question.getAnswer(),
-                        parseKeywords(question.getKeywords()));
+                        snap.content(), snap.correctOption(), snap.explanation(), snap.summary(),
+                        snap.topic(), snap.difficulty(),
+                        snap.questionType() != null ? snap.questionType().name() : null,
+                        snap.answer(), snap.keywords());
                 AiVerificationResponse response = verifier.verifyQuestion(
-                        new AiVerificationRequest(resolveExamType(question), question.getSubject().getName(), generatedQuestion));
+                        new AiVerificationRequest(snap.examType(), snap.subjectName(), generatedQuestion));
                 if (!response.approved()) {
                     suspicious.add(new QuestionVerifyResultResponse(
-                            question.getId(), question.getSubject().getName(), question.getSummary(), response.reason()));
+                            snap.id(), snap.subjectName(), snap.summary(), response.reason()));
                 }
                 // 호출이 정상 끝났을 때만 검증 완료 마킹 — 실패한 문제는 다음 회차에 다시 잡히도록 유지
-                question.markVerified(completedAt);
+                verifiedIds.add(snap.id());
             } catch (Exception e) {
-                log.warn("Question #{} verification failed: {}", question.getId(), e.getMessage());
+                log.warn("Question #{} verification failed: {}", snap.id(), e.getMessage());
                 suspicious.add(new QuestionVerifyResultResponse(
-                        question.getId(),
-                        question.getSubject().getName(),
-                        question.getSummary(),
+                        snap.id(), snap.subjectName(), snap.summary(),
                         "검증 호출 실패: " + e.getMessage()));
             }
-
             processed++;
             if (processed % 20 == 0) {
-                log.info("LLM direct verification progress {}/{}", processed, questions.size());
+                log.info("LLM direct verification progress {}/{}", processed, snapshots.size());
             }
         }
 
-        QuestionVerificationRunEntity run = questionVerificationRunRepository.save(
-                new QuestionVerificationRunEntity(
-                        examType,
-                        subject,
-                        subject != null ? subject.getName() : null,
-                        requestedLimit,
-                        forceRecheck,
-                        processed,
-                        suspicious.size(),
-                        completedAt));
+        LocalDateTime completedAt = LocalDateTime.now();
+        int processedFinal = processed;
+        int suspiciousCount = suspicious.size();
 
-        log.info("LLM direct verification complete - processed={}, suspicious={}", processed, suspicious.size());
+        // ── Phase 3: 짧은 write tx — 일괄 markVerified + run 저장 ────────────────
+        QuestionVerificationRunEntity run = writeTx.execute(status -> {
+            if (!verifiedIds.isEmpty()) {
+                questionRepository.markVerifiedInBatch(verifiedIds, completedAt);
+            }
+            return questionVerificationRunRepository.save(
+                    new QuestionVerificationRunEntity(
+                            examType,
+                            subject,
+                            subject != null ? subject.getName() : null,
+                            requestedLimit,
+                            forceRecheck,
+                            processedFinal,
+                            suspiciousCount,
+                            completedAt));
+        });
+
+        log.info("LLM direct verification complete - processed={}, suspicious={}, verified={}",
+                processedFinal, suspiciousCount, verifiedIds.size());
 
         return new QuestionVerifyRunResponse(
                 run.getExamType(),
@@ -133,6 +172,57 @@ public class AdminQuestionService {
                 run.getCompletedAt(),
                 suspicious,
                 getVerifyHistory(5));
+    }
+
+    /** 검증 대상 ID 페이징 (시험·과목 필터 분기) */
+    private List<Long> fetchIdsForVerification(ExamType examType, Long subjectId,
+                                               int limit, boolean onlyUnverified) {
+        PageRequest pageable = PageRequest.of(0, limit);
+        if (examType == null) {
+            return questionRepository.findIdsForVerification(subjectId, onlyUnverified, pageable);
+        }
+        return switch (examType) {
+            case SQLD -> questionRepository.findSqldIdsForVerification(SQLD_EXCLUDED_ROOTS, subjectId, onlyUnverified, pageable);
+            case ENGINEER_PRACTICAL -> questionRepository.findIdsByRootNameForVerification(
+                    ENGINEER_ROOT_NAME, subjectId, onlyUnverified, pageable);
+            case COMPUTER_LITERACY_1 -> questionRepository.findIdsByRootNameForVerification(
+                    COMPUTER_LITERACY_ROOT_NAME, subjectId, onlyUnverified, pageable);
+        };
+    }
+
+    /** 검증 페치 결과 — Phase 1 출력 */
+    private record VerificationFetchResult(SubjectEntity subject, List<QuestionSnapshot> snapshots) {}
+
+    /** 트랜잭션 밖에서 LLM 호출에 사용할 detached 스냅샷 */
+    private record QuestionSnapshot(
+            Long id,
+            String subjectName,
+            ExamType examType,
+            String content,
+            QuestionType questionType,
+            Integer correctOption,
+            String answer,
+            List<String> keywords,
+            String explanation,
+            String summary,
+            String topic,
+            Integer difficulty
+    ) {}
+
+    private QuestionSnapshot toSnapshot(QuestionEntity q) {
+        return new QuestionSnapshot(
+                q.getId(),
+                q.getSubject().getName(),
+                resolveExamType(q),
+                q.getContent(),
+                q.getQuestionType(),
+                q.getCorrectOption(),
+                q.getAnswer(),
+                parseKeywords(q.getKeywords()),
+                q.getExplanation(),
+                q.getSummary(),
+                q.getTopic(),
+                q.getDifficulty());
     }
 
     public List<QuestionVerifyHistoryResponse> getVerifyHistory(int limit) {
@@ -204,21 +294,6 @@ public class AdminQuestionService {
 
     public long countToday() {
         return questionRepository.countByCreatedAtAfter(LocalDate.now().atStartOfDay());
-    }
-
-    private List<QuestionEntity> fetchQuestionsForVerification(ExamType examType, Long subjectId,
-                                                               int limit, boolean onlyUnverified) {
-        PageRequest pageable = PageRequest.of(0, limit);
-        if (examType == null) {
-            return questionRepository.findAllForVerification(subjectId, onlyUnverified, pageable);
-        }
-        return switch (examType) {
-            case SQLD -> questionRepository.findSqldForVerification(SQLD_EXCLUDED_ROOTS, subjectId, onlyUnverified, pageable);
-            case ENGINEER_PRACTICAL -> questionRepository.findByRootNameForVerification(
-                    ENGINEER_ROOT_NAME, subjectId, onlyUnverified, pageable);
-            case COMPUTER_LITERACY_1 -> questionRepository.findByRootNameForVerification(
-                    COMPUTER_LITERACY_ROOT_NAME, subjectId, onlyUnverified, pageable);
-        };
     }
 
     private ExamType resolveExamType(QuestionEntity question) {

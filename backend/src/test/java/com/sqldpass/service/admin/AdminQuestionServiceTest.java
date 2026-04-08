@@ -16,6 +16,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.transaction.PlatformTransactionManager;
 
 import com.sqldpass.controller.admin.dto.QuestionVerifyRunResponse;
 import com.sqldpass.persistent.mockexam.ExamType;
@@ -45,6 +47,9 @@ class AdminQuestionServiceTest {
     @Mock
     private AiProvider verifier;
 
+    @Mock
+    private PlatformTransactionManager transactionManager;
+
     @InjectMocks
     private AdminQuestionService adminQuestionService;
 
@@ -62,13 +67,17 @@ class AdminQuestionServiceTest {
                 "summary",
                 "topic",
                 3);
+        ReflectionTestUtils.setField(question, "id", 7L);
 
-        when(questionRepository.findByRootNameForVerification(
+        when(questionRepository.findIdsByRootNameForVerification(
                 eq("\uC815\uBCF4\uCC98\uB9AC\uAE30\uC0AC \uC2E4\uAE30"),
                 eq(null),
                 eq(true),
                 eq(PageRequest.of(0, 100))))
+                .thenReturn(List.of(7L));
+        when(questionRepository.findByIdInWithSubjectAndParent(List.of(7L)))
                 .thenReturn(List.of(question));
+        when(questionRepository.markVerifiedInBatch(any(), any())).thenReturn(1);
         when(questionVerificationRunRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
         when(questionVerificationRunRepository.findRecentRuns(PageRequest.of(0, 5))).thenReturn(List.of());
         when(verifier.verifyQuestion(any())).thenReturn(new AiVerificationResponse(true, "ok"));
@@ -85,7 +94,6 @@ class AdminQuestionServiceTest {
         assertThat(request.question().keywords()).containsExactly("alpha", "beta");
         assertThat(response.processedCount()).isEqualTo(1);
         assertThat(response.suspiciousCount()).isZero();
-        assertThat(question.getVerifiedAt()).isNotNull();
     }
 
     @Test
@@ -93,10 +101,14 @@ class AdminQuestionServiceTest {
         SubjectEntity root = new SubjectEntity(null, "SQL 기본", 1);
         SubjectEntity child = new SubjectEntity(root, "JOIN", 1);
         QuestionEntity question = new QuestionEntity(child, "mcq question", 2, "explanation", "summary", "topic", 2);
+        ReflectionTestUtils.setField(question, "id", 11L);
 
         when(subjectRepository.findById(10L)).thenReturn(Optional.of(child));
-        when(questionRepository.findSqldForVerification(any(), eq(10L), eq(true), eq(PageRequest.of(0, 20))))
+        when(questionRepository.findSqldIdsForVerification(any(), eq(10L), eq(true), eq(PageRequest.of(0, 20))))
+                .thenReturn(List.of(11L));
+        when(questionRepository.findByIdInWithSubjectAndParent(List.of(11L)))
                 .thenReturn(List.of(question));
+        when(questionRepository.markVerifiedInBatch(any(), any())).thenReturn(1);
         when(questionVerificationRunRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
         when(questionVerificationRunRepository.findRecentRuns(PageRequest.of(0, 5))).thenReturn(List.of());
         when(verifier.verifyQuestion(any())).thenReturn(new AiVerificationResponse(false, "의심"));

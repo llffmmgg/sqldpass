@@ -80,45 +80,63 @@ public interface QuestionRepository extends JpaRepository<QuestionEntity, Long> 
     @Query("SELECT q FROM QuestionEntity q JOIN FETCH q.subject ORDER BY q.createdAt DESC")
     Page<QuestionEntity> findAllWithSubject(Pageable pageable);
 
+    /**
+     * 검증 대상 ID 페이징 (JOIN FETCH 없이 ID만 — Pageable과 안전하게 조합).
+     * 페치는 별도 {@link #findByIdInWithSubjectAndParent(List)}로 분리.
+     */
     @Query("""
-            SELECT q FROM QuestionEntity q
-            JOIN FETCH q.subject s
-            LEFT JOIN FETCH s.parent p
-            WHERE (:subjectId IS NULL OR s.id = :subjectId OR p.id = :subjectId)
+            SELECT q.id FROM QuestionEntity q
+            LEFT JOIN q.subject.parent p
+            WHERE (:subjectId IS NULL OR q.subject.id = :subjectId OR p.id = :subjectId)
               AND (:onlyUnverified = false OR q.verifiedAt IS NULL)
             ORDER BY q.createdAt DESC
             """)
-    List<QuestionEntity> findAllForVerification(@Param("subjectId") Long subjectId,
-                                                @Param("onlyUnverified") boolean onlyUnverified,
-                                                Pageable pageable);
+    List<Long> findIdsForVerification(@Param("subjectId") Long subjectId,
+                                      @Param("onlyUnverified") boolean onlyUnverified,
+                                      Pageable pageable);
 
     @Query("""
-            SELECT q FROM QuestionEntity q
-            JOIN FETCH q.subject s
-            LEFT JOIN FETCH s.parent p
+            SELECT q.id FROM QuestionEntity q
+            JOIN q.subject s
+            LEFT JOIN s.parent p
             WHERE COALESCE(p.name, s.name) = :rootName
               AND (:subjectId IS NULL OR s.id = :subjectId OR p.id = :subjectId)
               AND (:onlyUnverified = false OR q.verifiedAt IS NULL)
             ORDER BY q.createdAt DESC
             """)
-    List<QuestionEntity> findByRootNameForVerification(@Param("rootName") String rootName,
-                                                       @Param("subjectId") Long subjectId,
-                                                       @Param("onlyUnverified") boolean onlyUnverified,
-                                                       Pageable pageable);
+    List<Long> findIdsByRootNameForVerification(@Param("rootName") String rootName,
+                                                @Param("subjectId") Long subjectId,
+                                                @Param("onlyUnverified") boolean onlyUnverified,
+                                                Pageable pageable);
 
     @Query("""
-            SELECT q FROM QuestionEntity q
-            JOIN FETCH q.subject s
-            LEFT JOIN FETCH s.parent p
+            SELECT q.id FROM QuestionEntity q
+            JOIN q.subject s
+            LEFT JOIN s.parent p
             WHERE COALESCE(p.name, s.name) NOT IN (:excludedRootNames)
               AND (:subjectId IS NULL OR s.id = :subjectId OR p.id = :subjectId)
               AND (:onlyUnverified = false OR q.verifiedAt IS NULL)
             ORDER BY q.createdAt DESC
             """)
-    List<QuestionEntity> findSqldForVerification(@Param("excludedRootNames") List<String> excludedRootNames,
-                                                 @Param("subjectId") Long subjectId,
-                                                 @Param("onlyUnverified") boolean onlyUnverified,
-                                                 Pageable pageable);
+    List<Long> findSqldIdsForVerification(@Param("excludedRootNames") List<String> excludedRootNames,
+                                          @Param("subjectId") Long subjectId,
+                                          @Param("onlyUnverified") boolean onlyUnverified,
+                                          Pageable pageable);
+
+    /** 검증 페이징과 페어로 — IN 절은 Pageable이 없어 in-memory pagination 경고에서 자유롭다. */
+    @Query("""
+            SELECT q FROM QuestionEntity q
+            JOIN FETCH q.subject s
+            LEFT JOIN FETCH s.parent p
+            WHERE q.id IN :ids
+            """)
+    List<QuestionEntity> findByIdInWithSubjectAndParent(@Param("ids") List<Long> ids);
+
+    /** 검증 완료 일괄 마킹 — N+1 dirty checking 없이 단일 UPDATE */
+    @Modifying
+    @Query("UPDATE QuestionEntity q SET q.verifiedAt = :verifiedAt WHERE q.id IN :ids")
+    int markVerifiedInBatch(@Param("ids") List<Long> ids,
+                            @Param("verifiedAt") LocalDateTime verifiedAt);
 
     boolean existsByContentHash(String contentHash);
 
