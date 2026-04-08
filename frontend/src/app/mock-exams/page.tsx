@@ -147,14 +147,11 @@ function MockExamsListContent() {
 
   const filtered = useMemo(() => {
     if (!exams) return null;
-    // 1) examType 필터 → 2) 미풀이 우선 → 3) 같은 그룹은 sequence 내림차순 (최신순)
+    // examType 필터 → sequence 내림차순 (최신 회차 우선). 풀이 여부와 무관.
     return exams
       .filter((e) => e.examType === filter)
       .slice()
-      .sort((a, b) => {
-        if (a.solved !== b.solved) return a.solved ? 1 : -1;
-        return b.sequence - a.sequence;
-      });
+      .sort((a, b) => b.sequence - a.sequence);
   }, [exams, filter]);
 
   if (error) {
