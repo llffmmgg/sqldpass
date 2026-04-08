@@ -95,7 +95,7 @@ export default function FeedbackModal({
     >
       <div className="flex min-h-full items-center justify-center p-4 sm:p-6">
         <div
-          className="w-full max-w-md rounded-2xl border border-border bg-surface p-6 shadow-xl"
+          className="w-full max-w-xl rounded-2xl border border-border bg-surface p-6 shadow-xl sm:p-8"
           onClick={(e) => e.stopPropagation()}
         >
         {/* 헤더 */}
@@ -166,15 +166,15 @@ export default function FeedbackModal({
             </div>
 
             {/* 내용 */}
-            <div className="mt-4">
+            <div className="mt-5">
               <p className="mb-2 text-xs font-medium text-muted">내용</p>
               <textarea
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
-                rows={6}
+                rows={10}
                 maxLength={2000}
                 placeholder="자세한 내용을 적어주세요. 어떤 상황에서, 어떤 문제가 있었는지 알려주시면 큰 도움이 됩니다."
-                className="w-full resize-y rounded-lg border border-border bg-background px-4 py-3 text-sm leading-relaxed text-foreground placeholder:text-muted/50 focus:outline-none focus:ring-2 focus:ring-amber-500/60"
+                className="block min-h-[220px] w-full resize-y rounded-lg border border-border bg-background px-4 py-3 text-sm leading-relaxed text-foreground placeholder:text-muted/50 focus:outline-none focus:ring-2 focus:ring-amber-500/60"
               />
               <div className="mt-1 flex items-center justify-between">
                 <p className="text-[11px] text-muted/70">함께 만들어가는 SQLD Pass 💛</p>
