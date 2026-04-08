@@ -111,10 +111,20 @@ export default function NavBar() {
               <>
                 <Link
                   href="/profile"
-                  className="text-sm text-muted transition-colors hover:text-foreground"
-                  title="프로필"
+                  className="group inline-flex items-center gap-1.5 rounded-md border border-border/60 bg-surface/60 px-2.5 py-1 text-sm text-muted transition-all hover:border-primary/40 hover:bg-surface hover:text-foreground"
+                  title="닉네임 변경 / 프로필"
                 >
-                  {nickname}
+                  <span>{nickname}</span>
+                  <svg
+                    className="h-3.5 w-3.5 opacity-60 transition-opacity group-hover:opacity-100"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                    aria-hidden="true"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
                 </Link>
                 <button
                   onClick={handleLogout}
@@ -207,7 +217,24 @@ export default function NavBar() {
             </button>
             {loggedIn ? (
               <div className="flex items-center justify-between px-3 py-2">
-                <span className="text-sm text-muted">{nickname}</span>
+                <Link
+                  href="/profile"
+                  onClick={() => setMenuOpen(false)}
+                  className="inline-flex items-center gap-1.5 rounded-md border border-border/60 bg-surface/60 px-2.5 py-1 text-sm text-muted transition-colors hover:border-primary/40 hover:text-foreground"
+                  title="닉네임 변경 / 프로필"
+                >
+                  <span>{nickname}</span>
+                  <svg
+                    className="h-3.5 w-3.5 opacity-60"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                    aria-hidden="true"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                </Link>
                 <button
                   onClick={() => { handleLogout(); setMenuOpen(false); }}
                   className="text-sm text-muted hover:text-foreground"
