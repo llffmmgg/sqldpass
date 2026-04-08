@@ -10,7 +10,6 @@ interface Props {
   onClose: () => void;
   defaultQuestionId?: number;
   defaultType?: FeedbackType;
-  placement?: "default" | "general";
 }
 
 const TYPE_OPTIONS: { value: FeedbackType; label: string }[] = [
@@ -25,7 +24,6 @@ export default function FeedbackModal({
   onClose,
   defaultQuestionId,
   defaultType,
-  placement = "default",
 }: Props) {
   const [type, setType] = useState<FeedbackType>(defaultType ?? (defaultQuestionId ? "QUESTION_ERROR" : "BUG"));
   const [content, setContent] = useState("");
@@ -90,17 +88,12 @@ export default function FeedbackModal({
     window.location.href = getGoogleLoginUrl();
   }
 
-  const wrapperClassName =
-    placement === "general"
-      ? "flex min-h-full items-start justify-center px-4 pb-12 pt-24 sm:pb-16 sm:pt-28"
-      : "flex min-h-full items-center justify-center px-4 py-12 sm:py-16";
-
   return (
     <div
       className="fixed inset-0 z-[60] overflow-y-auto bg-black/60 backdrop-blur-sm"
       onClick={onClose}
     >
-      <div className={wrapperClassName}>
+      <div className="flex min-h-full items-center justify-center px-4 py-12 sm:py-16">
         <div
           className="w-full max-w-xl rounded-2xl border border-border bg-surface p-6 shadow-xl sm:p-8"
           onClick={(e) => e.stopPropagation()}

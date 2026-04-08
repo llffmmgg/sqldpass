@@ -189,7 +189,6 @@ export default function NavBar() {
       <FeedbackModal
         open={feedbackOpen}
         onClose={() => setFeedbackOpen(false)}
-        placement="general"
       />
 
       {/* Mobile menu */}
