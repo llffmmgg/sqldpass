@@ -138,9 +138,6 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-full flex flex-col">
-        <div className="bg-amber-500 text-black text-center text-sm font-medium px-4 py-2">
-          ⚠️ 현재 일부 기능에 오류가 있어 해결 중입니다. 잠시 후 다시 시도해 주세요.
-        </div>
         <NavBar />
         <div className="flex-1">{children}</div>
       </body>
