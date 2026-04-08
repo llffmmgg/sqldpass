@@ -21,8 +21,7 @@ spring:
   flyway:
     enabled: true
     baseline-on-migrate: true
-    # 부팅 시 자동 repair: 이전 실패한 마이그레이션 row를 정리하고 재실행
-    repair-on-migrate: true
+    # 부팅 시 repair() → migrate() 는 FlywayConfig.repairThenMigrate() 빈에서 처리
   ai:
     chat:
       client:
