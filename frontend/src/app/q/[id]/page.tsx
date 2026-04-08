@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getPublicQuestionDetail } from "@/lib/publicApi";
 import QuestionContent from "@/components/QuestionContent";
+import ReportQuestionButton from "@/components/ReportQuestionButton";
 
 type Params = { id: string };
 
@@ -178,7 +179,10 @@ export default async function QuestionPage(
 
       <article className="mt-8 space-y-6">
         <section className="rounded-xl border border-border bg-surface p-6">
-          <h2 className="text-sm font-semibold text-muted">문제</h2>
+          <div className="flex items-center justify-between gap-2">
+            <h2 className="text-sm font-semibold text-muted">문제</h2>
+            <ReportQuestionButton questionId={q.id} />
+          </div>
           <QuestionContent content={q.content} className="mt-3 text-foreground" />
         </section>
 

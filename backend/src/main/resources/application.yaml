@@ -76,3 +76,4 @@ sqldpass:
       generation: ${DISCORD_WEBHOOK_GENERATION:}
       signup: ${DISCORD_WEBHOOK_SIGNUP:}
       error: ${DISCORD_WEBHOOK_ERROR:}
+      feedback: ${DISCORD_WEBHOOK_FEEDBACK:}

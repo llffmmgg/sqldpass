@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { isLoggedIn, getNickname, clearAuth } from "@/lib/auth";
 import { getGoogleLoginUrl } from "@/lib/oauth";
 import { type Theme, getInitialTheme, setStoredTheme, applyTheme } from "@/lib/theme";
+import FeedbackModal from "@/components/FeedbackModal";
 
 const NAV_LINKS = [
   { href: "/", label: "홈" },
@@ -22,6 +23,7 @@ export default function NavBar() {
   const [loggedIn, setLoggedIn] = useState(false);
   const [nickname, setNickname] = useState<string | null>(null);
   const [theme, setTheme] = useState<Theme>("dark");
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
 
   useEffect(() => {
     setLoggedIn(isLoggedIn());
@@ -79,6 +81,17 @@ export default function NavBar() {
           </ul>
 
           <div className="ml-4 flex items-center gap-2">
+            <button
+              onClick={() => setFeedbackOpen(true)}
+              className="flex h-8 items-center gap-1.5 rounded-md px-2.5 text-xs font-medium text-muted transition-colors hover:bg-amber-500/10 hover:text-amber-300"
+              aria-label="피드백 보내기"
+              title="건의/오류 제보"
+            >
+              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+              </svg>
+              피드백
+            </button>
             <button
               onClick={toggleTheme}
               className="flex h-8 w-8 items-center justify-center rounded-md text-muted transition-colors hover:text-foreground"
@@ -160,6 +173,8 @@ export default function NavBar() {
         </div>
       </nav>
 
+      <FeedbackModal open={feedbackOpen} onClose={() => setFeedbackOpen(false)} />
+
       {/* Mobile menu */}
       {menuOpen && (
         <div className="border-t border-border px-4 pb-3 sm:hidden">
@@ -181,6 +196,15 @@ export default function NavBar() {
             ))}
           </ul>
           <div className="mt-2 border-t border-border pt-2">
+            <button
+              onClick={() => { setFeedbackOpen(true); setMenuOpen(false); }}
+              className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-muted hover:bg-amber-500/10 hover:text-amber-300"
+            >
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+              </svg>
+              피드백 보내기
+            </button>
             {loggedIn ? (
               <div className="flex items-center justify-between px-3 py-2">
                 <span className="text-sm text-muted">{nickname}</span>

@@ -14,6 +14,7 @@ import { parseQuestion } from "@/lib/parseQuestion";
 import QuestionContent from "@/components/QuestionContent";
 import AuthGuard from "@/components/AuthGuard";
 import Spinner from "@/components/Spinner";
+import ReportQuestionButton from "@/components/ReportQuestionButton";
 
 type Phase = "select" | "solve";
 
@@ -331,7 +332,10 @@ function SolvePageContent() {
         <div className="mt-6 rounded-xl border border-border bg-surface p-6">
           <div className="flex items-center justify-between gap-2">
             <p className="text-xs font-medium text-muted">{selectedSubject?.name}</p>
-            <QuestionTypeBadge type={current.questionType} />
+            <div className="flex items-center gap-3">
+              <ReportQuestionButton questionId={current.id} />
+              <QuestionTypeBadge type={current.questionType} />
+            </div>
           </div>
           <h2 className="mt-2 text-base font-semibold">문항 {solvedCount + 1}</h2>
           <div className="mt-4">

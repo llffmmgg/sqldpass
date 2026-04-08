@@ -27,6 +27,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
                         "/api/wrong-answers/**",
                         "/api/members/**",
                         "/api/mock-exams/**",
-                        "/api/questions/**");
+                        "/api/questions/**",
+                        "/api/feedback/**");
     }
 }

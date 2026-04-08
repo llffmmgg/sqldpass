@@ -13,6 +13,7 @@ import org.springframework.web.client.RestClient;
 import org.springframework.web.multipart.MultipartException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
+import com.sqldpass.persistent.feedback.FeedbackEntity;
 import com.sqldpass.persistent.member.MemberEntity;
 import com.sqldpass.service.generation.dto.GeneratedQuestion;
 import com.sqldpass.service.generation.dto.GenerationResult;
@@ -41,15 +42,19 @@ public class DiscordNotifier {
     private final String generationWebhook;
     private final String signupWebhook;
     private final String errorWebhook;
+    private final String feedbackWebhook;
 
     public DiscordNotifier(
             @Value("${sqldpass.discord.webhook.generation:}") String generationWebhook,
             @Value("${sqldpass.discord.webhook.signup:}") String signupWebhook,
-            @Value("${sqldpass.discord.webhook.error:}") String errorWebhook) {
+            @Value("${sqldpass.discord.webhook.error:}") String errorWebhook,
+            @Value("${sqldpass.discord.webhook.feedback:}") String feedbackWebhook) {
         this.restClient = RestClient.create();
         this.generationWebhook = generationWebhook;
         this.signupWebhook = signupWebhook;
         this.errorWebhook = errorWebhook;
+        // 별도 채널이 설정되지 않았으면 signup 채널로 폴백 (운영자 확인용 채널)
+        this.feedbackWebhook = (feedbackWebhook == null || feedbackWebhook.isBlank()) ? signupWebhook : feedbackWebhook;
     }
 
     // ----------------------------------------------------------
@@ -98,6 +103,46 @@ public class DiscordNotifier {
                 ),
                 Instant.now().toString());
         sendAsync(signupWebhook, embed);
+    }
+
+    // ----------------------------------------------------------
+    // 사용자 피드백 알림
+    // ----------------------------------------------------------
+    public void notifyFeedback(FeedbackEntity fb, String nickname, String questionSummary) {
+        List<DiscordEmbed.Field> fields = new ArrayList<>();
+        fields.add(new DiscordEmbed.Field("타입", typeLabel(fb.getType().name()), true));
+        fields.add(new DiscordEmbed.Field("작성자", nickname != null ? nickname : "?", true));
+        fields.add(new DiscordEmbed.Field("ID", "#" + fb.getId(), true));
+        if (fb.getQuestionId() != null) {
+            String summary = questionSummary != null ? questionSummary : "(요약 없음)";
+            fields.add(new DiscordEmbed.Field("관련 문제", "#" + fb.getQuestionId() + " " + summary, false));
+        }
+        String content = fb.getContent();
+        if (content.length() > 800) {
+            content = content.substring(0, 800) + "...";
+        }
+        fields.add(new DiscordEmbed.Field("내용", content, false));
+        if (fb.getPageUrl() != null && !fb.getPageUrl().isBlank()) {
+            fields.add(new DiscordEmbed.Field("페이지", fb.getPageUrl(), false));
+        }
+
+        DiscordEmbed embed = new DiscordEmbed(
+                "📮 새 피드백",
+                "사용자가 피드백을 남겼습니다.",
+                COLOR_INFO,
+                fields,
+                Instant.now().toString());
+        sendAsync(feedbackWebhook, embed);
+    }
+
+    private String typeLabel(String type) {
+        return switch (type) {
+            case "QUESTION_ERROR" -> "🐞 문제 오류";
+            case "BUG" -> "🛠 사이트 버그";
+            case "FEATURE" -> "💡 기능 제안";
+            case "OTHER" -> "💬 기타";
+            default -> type;
+        };
     }
 
     // ----------------------------------------------------------

@@ -10,6 +10,7 @@ const SIDEBAR_LINKS = [
   { href: "/admin/questions", label: "문제 관리", icon: "📝" },
   { href: "/admin/mock-exams", label: "모의고사", icon: "📚" },
   { href: "/admin/members", label: "회원 관리", icon: "👥" },
+  { href: "/admin/feedback", label: "피드백", icon: "📮" },
   { href: "/admin/generate", label: "문제 생성", icon: "🤖" },
 ];
 

@@ -185,6 +185,44 @@ export function getMemberDashboard(memberId: number) {
   return adminFetch<AdminMemberDashboard>(`/members/${memberId}/dashboard`);
 }
 
+// 어드민 - 피드백
+
+export type FeedbackType = "QUESTION_ERROR" | "BUG" | "FEATURE" | "OTHER";
+export type FeedbackStatus = "NEW" | "REVIEWED" | "RESOLVED" | "WONTFIX";
+
+export interface AdminFeedback {
+  id: number;
+  type: FeedbackType;
+  memberId: number;
+  memberNickname: string | null;
+  questionId: number | null;
+  content: string;
+  pageUrl: string | null;
+  status: FeedbackStatus;
+  createdAt: string;
+}
+
+export interface AdminFeedbackPage {
+  content: AdminFeedback[];
+  totalElements: number;
+  totalPages: number;
+  number: number;
+  size: number;
+}
+
+export function getFeedbacks(status: FeedbackStatus | "ALL", page = 0, size = 20) {
+  const params = new URLSearchParams({ page: String(page), size: String(size) });
+  if (status !== "ALL") params.set("status", status);
+  return adminFetch<AdminFeedbackPage>(`/feedback?${params}`);
+}
+
+export function updateFeedbackStatus(id: number, status: FeedbackStatus) {
+  return adminFetch<AdminFeedback>(`/feedback/${id}/status`, {
+    method: "PATCH",
+    body: JSON.stringify({ status }),
+  });
+}
+
 export interface GenerationStatus {
   status: "IDLE" | "RUNNING" | "COMPLETED" | "FAILED";
   result: string | null;
