@@ -12,6 +12,7 @@ import com.sqldpass.controller.publicapi.dto.PublicDtos.PublicCategoryResponse;
 import com.sqldpass.controller.publicapi.dto.PublicDtos.PublicCertResponse;
 import com.sqldpass.controller.publicapi.dto.PublicDtos.PublicQuestionDetailResponse;
 import com.sqldpass.controller.publicapi.dto.PublicDtos.PublicQuestionPageResponse;
+import com.sqldpass.controller.publicapi.dto.PublicStatsResponse;
 import com.sqldpass.service.publicapi.PublicContentService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -29,6 +30,12 @@ import lombok.RequiredArgsConstructor;
 public class PublicContentController {
 
     private final PublicContentService publicContentService;
+
+    @GetMapping("/stats")
+    @Operation(summary = "랜딩 페이지 노출용 공개 통계 (회원 수 + 누적 풀이 수)")
+    public PublicStatsResponse getStats() {
+        return publicContentService.getStats();
+    }
 
     @GetMapping("/certs")
     @Operation(summary = "자격증 목록")

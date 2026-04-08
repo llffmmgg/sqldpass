@@ -14,8 +14,11 @@ import com.sqldpass.controller.publicapi.dto.PublicDtos.PublicCertResponse;
 import com.sqldpass.controller.publicapi.dto.PublicDtos.PublicQuestionDetailResponse;
 import com.sqldpass.controller.publicapi.dto.PublicDtos.PublicQuestionPageResponse;
 import com.sqldpass.controller.publicapi.dto.PublicDtos.PublicQuestionSummary;
+import com.sqldpass.controller.publicapi.dto.PublicStatsResponse;
+import com.sqldpass.persistent.member.MemberRepository;
 import com.sqldpass.persistent.question.QuestionEntity;
 import com.sqldpass.persistent.question.QuestionRepository;
+import com.sqldpass.persistent.solve.SolveAnswerRepository;
 import com.sqldpass.persistent.subject.SubjectEntity;
 import com.sqldpass.persistent.subject.SubjectRepository;
 import com.sqldpass.service.common.ErrorCode;
@@ -55,7 +58,19 @@ public class PublicContentService {
 
     private final SubjectRepository subjectRepository;
     private final QuestionRepository questionRepository;
+    private final MemberRepository memberRepository;
+    private final SolveAnswerRepository solveAnswerRepository;
     private final ObjectMapper objectMapper = new ObjectMapper();
+
+    /**
+     * 랜딩 페이지 노출용 공개 통계 — 회원 수 + 누적 풀이 수.
+     * 프론트엔드 ISR로 1시간에 1번만 호출되므로 별도 캐시 없음.
+     */
+    public PublicStatsResponse getStats() {
+        long totalMembers = memberRepository.count();
+        long totalSolves = solveAnswerRepository.count();
+        return new PublicStatsResponse(totalMembers, totalSolves);
+    }
 
     // =================== 자격증 목록 ===================
 

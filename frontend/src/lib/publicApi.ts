@@ -101,6 +101,16 @@ export function getPublicAllQuestionIds(): Promise<number[]> {
   return publicFetch("/questions/ids");
 }
 
+export interface PublicStats {
+  totalMembers: number;
+  totalSolves: number;
+}
+
+/** 랜딩 페이지 노출용 통계 (회원 수 + 누적 풀이 수) */
+export function getPublicStats(): Promise<PublicStats> {
+  return publicFetch("/stats");
+}
+
 // 카테고리 slug(cat-{id}) → id 역변환
 export function parseCategorySlug(slug: string): number | null {
   const m = /^cat-(\d+)$/.exec(slug);
