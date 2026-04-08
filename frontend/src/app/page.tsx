@@ -1,24 +1,38 @@
 import ScrollReveal from "@/components/ScrollReveal";
 import HeroCta from "@/components/HeroCta";
 import CertTerminal from "@/components/CertTerminal";
-import { getPublicStats, type PublicStats } from "@/lib/publicApi";
+import RankingSection from "@/components/RankingSection";
+import {
+  getPublicStats,
+  getPublicRanking,
+  type PublicStats,
+  type PublicRanking,
+} from "@/lib/publicApi";
 
 // ISR: 1시간마다 백그라운드에서 페이지 재생성
-// → 사용자 응답 시간은 정적 페이지급, DB 부담은 1시간에 회원/풀이 카운트 1번씩
+// → 사용자 응답 시간은 정적 페이지급, DB 부담은 1시간에 1번씩 (Caffeine 캐시까지 더해 이중 안전망)
 export const revalidate = 3600;
 
 async function fetchStatsSafe(): Promise<PublicStats> {
   try {
     return await getPublicStats();
   } catch (e) {
-    // 빌드 타임에 백엔드가 안 떠 있어도 페이지는 떠야 함 → fallback 0
     console.warn("[stats] fallback to zero:", e);
     return { totalMembers: 0, totalSolves: 0 };
   }
 }
 
+async function fetchRankingSafe(): Promise<PublicRanking> {
+  try {
+    return await getPublicRanking();
+  } catch (e) {
+    console.warn("[ranking] fallback to empty:", e);
+    return { entries: [], generatedAt: new Date().toISOString() };
+  }
+}
+
 export default async function Home() {
-  const stats = await fetchStatsSafe();
+  const [stats, ranking] = await Promise.all([fetchStatsSafe(), fetchRankingSafe()]);
   return (
     <main className="min-h-screen bg-background text-foreground">
       {/* Hero */}
@@ -219,6 +233,11 @@ export default async function Home() {
           </ScrollReveal>
         </div>
       </section>
+
+      {/* Ranking — TOP 30 학습자 */}
+      <ScrollReveal>
+        <RankingSection data={ranking} />
+      </ScrollReveal>
 
       {/* Preview */}
       <section

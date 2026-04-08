@@ -2,6 +2,7 @@ package com.sqldpass.persistent.solve;
 
 import java.util.List;
 
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -17,6 +18,21 @@ public interface SolveRepository extends JpaRepository<SolveEntity, Long> {
      */
     @Query("SELECT s.member.id, s.totalCount, s.createdAt FROM SolveEntity s WHERE s.member.id IN :memberIds")
     List<Object[]> findStatsByMemberIds(@Param("memberIds") List<Long> memberIds);
+
+    /**
+     * 랜딩 페이지 TOP N 랭킹 — 누적 정답 수 기준.
+     * 1문제 이상 푼 사용자만 (INNER JOIN solve), 동점은 가입 순(member.id ASC).
+     *
+     * 결과 row: [String nickname, Long totalCorrect]
+     */
+    @Query("""
+            SELECT m.nickname, SUM(s.correctCount)
+            FROM SolveEntity s
+            JOIN s.member m
+            GROUP BY m.id, m.nickname
+            ORDER BY SUM(s.correctCount) DESC, m.id ASC
+            """)
+    List<Object[]> findTopRanking(Pageable pageable);
 
     /**
      * 사용자가 푼 모의고사별 최고 점수 (정답 수 / 총 문항 수) 일괄 조회.

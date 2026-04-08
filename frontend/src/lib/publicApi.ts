@@ -111,6 +111,22 @@ export function getPublicStats(): Promise<PublicStats> {
   return publicFetch("/stats");
 }
 
+export interface PublicRankingEntry {
+  rank: number;
+  nickname: string;
+  totalCorrect: number;
+}
+
+export interface PublicRanking {
+  entries: PublicRankingEntry[];
+  generatedAt: string;
+}
+
+/** 랜딩 페이지 노출용 TOP 30 랭킹 (누적 정답 수) */
+export function getPublicRanking(): Promise<PublicRanking> {
+  return publicFetch("/ranking");
+}
+
 // 카테고리 slug(cat-{id}) → id 역변환
 export function parseCategorySlug(slug: string): number | null {
   const m = /^cat-(\d+)$/.exec(slug);

@@ -12,6 +12,7 @@ import com.sqldpass.controller.publicapi.dto.PublicDtos.PublicCategoryResponse;
 import com.sqldpass.controller.publicapi.dto.PublicDtos.PublicCertResponse;
 import com.sqldpass.controller.publicapi.dto.PublicDtos.PublicQuestionDetailResponse;
 import com.sqldpass.controller.publicapi.dto.PublicDtos.PublicQuestionPageResponse;
+import com.sqldpass.controller.publicapi.dto.PublicRankingResponse;
 import com.sqldpass.controller.publicapi.dto.PublicStatsResponse;
 import com.sqldpass.service.publicapi.PublicContentService;
 
@@ -35,6 +36,12 @@ public class PublicContentController {
     @Operation(summary = "랜딩 페이지 노출용 공개 통계 (회원 수 + 누적 풀이 수)")
     public PublicStatsResponse getStats() {
         return publicContentService.getStats();
+    }
+
+    @GetMapping("/ranking")
+    @Operation(summary = "랜딩 페이지 노출용 TOP 30 랭킹 (누적 정답 수)")
+    public PublicRankingResponse getRanking() {
+        return publicContentService.getTopRanking();
     }
 
     @GetMapping("/certs")

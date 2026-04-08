@@ -1,24 +1,29 @@
 package com.sqldpass.service.publicapi;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.sqldpass.config.CacheConfig;
 import com.sqldpass.controller.publicapi.dto.PublicDtos.PublicCategoryResponse;
 import com.sqldpass.controller.publicapi.dto.PublicDtos.PublicCertResponse;
 import com.sqldpass.controller.publicapi.dto.PublicDtos.PublicQuestionDetailResponse;
 import com.sqldpass.controller.publicapi.dto.PublicDtos.PublicQuestionPageResponse;
 import com.sqldpass.controller.publicapi.dto.PublicDtos.PublicQuestionSummary;
+import com.sqldpass.controller.publicapi.dto.PublicRankingResponse;
 import com.sqldpass.controller.publicapi.dto.PublicStatsResponse;
 import com.sqldpass.persistent.member.MemberRepository;
 import com.sqldpass.persistent.question.QuestionEntity;
 import com.sqldpass.persistent.question.QuestionRepository;
 import com.sqldpass.persistent.solve.SolveAnswerRepository;
+import com.sqldpass.persistent.solve.SolveRepository;
 import com.sqldpass.persistent.subject.SubjectEntity;
 import com.sqldpass.persistent.subject.SubjectRepository;
 import com.sqldpass.service.common.ErrorCode;
@@ -60,35 +65,40 @@ public class PublicContentService {
     private final QuestionRepository questionRepository;
     private final MemberRepository memberRepository;
     private final SolveAnswerRepository solveAnswerRepository;
+    private final SolveRepository solveRepository;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     // ----------------------------------------------------------
-    // 랜딩 페이지 통계 캐시 (로컬 인메모리, TTL 1시간)
+    // 랜딩 페이지 공개 캐시 (Caffeine, TTL 1시간 — CacheConfig에서 일괄 관리)
     // - ISR(1시간) + 백엔드 캐시(1시간) = 이중 안전망
-    // - 봇/스캐너가 /api/public/stats를 두드려도 DB 부담 0
-    // - Caffeine 같은 의존성 없이 volatile만으로 thread-safe
+    // - 봇/스캐너가 두드려도 DB 부담 사실상 0
     // ----------------------------------------------------------
-    private static final long STATS_CACHE_TTL_MS = 60 * 60 * 1000L; // 1시간
-    private volatile PublicStatsResponse cachedStats;
-    private volatile long cachedStatsAtMs;
 
     /**
      * 랜딩 페이지 노출용 공개 통계 — 회원 수 + 누적 풀이 수.
-     * 1시간 인메모리 캐시 → DB 부담 사실상 0.
      */
+    @Cacheable(CacheConfig.CACHE_PUBLIC_STATS)
     public PublicStatsResponse getStats() {
-        long now = System.currentTimeMillis();
-        PublicStatsResponse cached = this.cachedStats;
-        if (cached != null && (now - this.cachedStatsAtMs) < STATS_CACHE_TTL_MS) {
-            return cached;
-        }
-        // 캐시 미스 또는 만료 → DB 조회 후 갱신
         long totalMembers = memberRepository.count();
         long totalSolves = solveAnswerRepository.count();
-        PublicStatsResponse fresh = new PublicStatsResponse(totalMembers, totalSolves);
-        this.cachedStats = fresh;
-        this.cachedStatsAtMs = now;
-        return fresh;
+        return new PublicStatsResponse(totalMembers, totalSolves);
+    }
+
+    /**
+     * 랜딩 페이지 노출용 TOP 30 랭킹 — 누적 정답 수 기준.
+     * 1문제 이상 푼 사용자만 (INNER JOIN solve), 동점은 가입 순.
+     */
+    @Cacheable(CacheConfig.CACHE_PUBLIC_RANKING)
+    public PublicRankingResponse getTopRanking() {
+        List<Object[]> rows = solveRepository.findTopRanking(PageRequest.of(0, 30));
+        List<PublicRankingResponse.Entry> entries = new ArrayList<>(rows.size());
+        int rank = 1;
+        for (Object[] row : rows) {
+            String nickname = (String) row[0];
+            long totalCorrect = ((Number) row[1]).longValue();
+            entries.add(new PublicRankingResponse.Entry(rank++, nickname, totalCorrect));
+        }
+        return new PublicRankingResponse(entries, LocalDateTime.now());
     }
 
     // =================== 자격증 목록 ===================
