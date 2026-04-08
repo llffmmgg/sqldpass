@@ -90,13 +90,14 @@ export default function FeedbackModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center overflow-y-auto bg-black/60 px-4 py-12 backdrop-blur-sm sm:items-center sm:py-16"
+      className="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-sm"
       onClick={onClose}
     >
-      <div
-        className="my-auto w-full max-w-md rounded-2xl border border-border bg-surface p-6 shadow-xl"
-        onClick={(e) => e.stopPropagation()}
-      >
+      <div className="flex min-h-full items-center justify-center p-4 sm:p-6">
+        <div
+          className="w-full max-w-md rounded-2xl border border-border bg-surface p-6 shadow-xl"
+          onClick={(e) => e.stopPropagation()}
+        >
         {/* 헤더 */}
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-bold">💬 피드백 보내기</h2>
@@ -206,6 +207,7 @@ export default function FeedbackModal({
             </div>
           </>
         )}
+        </div>
       </div>
     </div>
   );
