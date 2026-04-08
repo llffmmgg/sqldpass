@@ -90,12 +90,13 @@ export default function FeedbackModal({
     window.location.href = getGoogleLoginUrl();
   }
 
-  // 모든 placement에서 항상 화면 정가운데. 컨텐츠가 길면 모달 박스 자체가 스크롤(max-h-[90vh]).
+  // 정가운데 + 위·아래 강제 여백 (py-16 = 128px). 컨텐츠가 길어도 절대 viewport 가장자리에 안 닿음.
+  // z-[60]: NavBar/sticky 헤더(z-50) 위로 떠서 시각적 충돌 방지.
   const overlayClassName =
-    "fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm sm:p-6";
+    "fixed inset-0 z-[60] flex items-center justify-center bg-black/60 px-4 py-16 backdrop-blur-sm sm:py-20";
 
   const panelClassName =
-    "flex max-h-[90vh] w-full max-w-xl flex-col overflow-y-auto rounded-2xl border border-border bg-surface p-6 shadow-xl sm:p-8";
+    "flex max-h-[calc(100vh-8rem)] w-full max-w-xl flex-col overflow-y-auto rounded-2xl border border-border bg-surface p-6 shadow-xl sm:max-h-[calc(100vh-10rem)] sm:p-8";
 
   return (
     <div
@@ -179,10 +180,10 @@ export default function FeedbackModal({
               <textarea
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
-                rows={7}
+                rows={5}
                 maxLength={2000}
                 placeholder="자세한 내용을 적어주세요. 어떤 상황에서, 어떤 문제가 있었는지 알려주시면 큰 도움이 됩니다."
-                className="block w-full resize-none rounded-lg border border-border bg-background px-4 py-3 text-sm leading-relaxed text-foreground placeholder:text-muted/50 focus:outline-none focus:ring-2 focus:ring-amber-500/60"
+                className="block w-full resize-y rounded-lg border border-border bg-background px-4 py-3 text-sm leading-relaxed text-foreground placeholder:text-muted/50 focus:outline-none focus:ring-2 focus:ring-amber-500/60"
               />
               <div className="mt-1 flex items-center justify-between">
                 <p className="text-[11px] text-muted/70">함께 만들어가는 SQLD Pass 💛</p>
