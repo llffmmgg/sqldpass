@@ -104,12 +104,8 @@ export default function AdminMockExamsPage() {
         .reduce((max, e) => Math.max(max, e.sequence), 0);
 
     try {
-      // 정처기/컴활에만 난이도 전달, SQLD는 undefined
-      const difficultyArg =
-        examType === "ENGINEER_PRACTICAL" || examType === "COMPUTER_LITERACY_1"
-          ? engineerDifficulty
-          : undefined;
-      await createMockExam(examType, difficultyArg);
+      // SQLD/정처기/컴활 모두 난이도 전달 (모든 자격증이 통일된 시드+AI 변형 패턴)
+      await createMockExam(examType, engineerDifficulty);
       await load();
     } catch (e) {
       const originalMessage =
@@ -234,12 +230,11 @@ export default function AdminMockExamsPage() {
         </div>
       </div>
 
-      {/* 평균 난이도 선택 (정처기/컴활 탭 또는 전체 탭에서만 노출) */}
-      {(activeTab === "all" || activeTab === "ENGINEER_PRACTICAL" || activeTab === "COMPUTER_LITERACY_1") && (
-        <div className="mt-3 rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-3">
+      {/* 평균 난이도 선택 (모든 자격증 공통) */}
+      <div className="mt-3 rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-3">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div className="text-xs text-emerald-300">
-              <span className="font-semibold">정처기/컴활 평균 난이도:</span>{" "}
+              <span className="font-semibold">평균 난이도 (SQLD/정처기/컴활 공통):</span>{" "}
               <span className="text-emerald-300/70">
                 {engineerDifficulty === "EASY" && "쉬움 위주"}
                 {engineerDifficulty === "NORMAL" && "보통 위주"}
@@ -271,7 +266,6 @@ export default function AdminMockExamsPage() {
             </div>
           </div>
         </div>
-      )}
 
       {info && (
         <div className="mt-4 rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-3 text-sm text-emerald-300">

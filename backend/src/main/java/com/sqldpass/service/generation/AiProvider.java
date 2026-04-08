@@ -81,6 +81,35 @@ public class AiProvider {
     }
 
     /**
+     * SQLD 카테고리용 변형 문제 N개 생성 — 운영 DB의 기존 SQLD 문제를 시드로 사용.
+     * 정처기/컴활 패턴과 동일하되 시드 소스가 코드 시드 풀이 아닌 DB QuestionEntity.
+     */
+    public AiGenerationResponse generateSqldFromSeeds(AiGenerationRequest request,
+                                                      List<com.sqldpass.persistent.question.QuestionEntity> seeds,
+                                                      List<Integer> targetDifficulties,
+                                                      List<String> recentSummaries) {
+        String prompt = PromptBuilder.buildSqldSeedPrompt(request, seeds, targetDifficulties, recentSummaries);
+        String responseText = chatClient.prompt()
+                .system(PromptBuilder.SQLD_SEED_GENERATION_SYSTEM_PROMPT)
+                .user(prompt)
+                .call()
+                .content();
+
+        try {
+            String json = extractJson(responseText);
+            JsonNode root = objectMapper.readTree(json);
+            JsonNode questionsNode = root.has("questions") ? root.get("questions") : root;
+            List<GeneratedQuestion> questions = objectMapper.readValue(
+                    questionsNode.toString(), new TypeReference<>() {});
+            return new AiGenerationResponse(questions);
+        } catch (Exception e) {
+            log.error("Failed to parse SQLD seed generation response: {}", responseText, e);
+            throw new SqldpassException(ErrorCode.AI_GENERATION_FAILED,
+                    "SQLD AI 응답 파싱 실패 [" + request.subjectName() + "]: " + e.getMessage(), e);
+        }
+    }
+
+    /**
      * 컴활 1급 필기 카테고리용 변형 문제 N개 생성 (시드 풀 + 사용자 지정 난이도).
      */
     public AiGenerationResponse generateComputerLiteracyQuestions(AiGenerationRequest request,

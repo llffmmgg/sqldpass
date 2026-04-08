@@ -64,7 +64,7 @@ public class MockExamService {
     public MockExam create(ExamType examType, MockExamDifficulty difficulty) {
         ExamType type = examType != null ? examType : ExamType.SQLD;
         MockExamEntity created = switch (type) {
-            case SQLD -> mockExamCreator.create();
+            case SQLD -> mockExamCreator.create(difficulty);
             case ENGINEER_PRACTICAL -> engineerMockExamCreator.create(difficulty);
             case COMPUTER_LITERACY_1 -> computerLiteracyMockExamCreator.create(difficulty);
         };
