@@ -227,13 +227,14 @@ export default function AdminMockExamsPage() {
             <div className="text-xs text-emerald-300">
               <span className="font-semibold">정처기 평균 난이도:</span>{" "}
               <span className="text-emerald-300/70">
-                {engineerDifficulty === "EASY" && "쉬움 위주 (12 / 6 / 2)"}
-                {engineerDifficulty === "NORMAL" && "보통 위주 (5 / 10 / 5)"}
-                {engineerDifficulty === "HARD" && "어려움 위주 (2 / 6 / 12)"}
+                {engineerDifficulty === "EASY" && "쉬움 위주 (L1 12 / L2 6 / L3 2 / L4 0)"}
+                {engineerDifficulty === "NORMAL" && "보통 위주 (L1 4 / L2 10 / L3 5 / L4 1)"}
+                {engineerDifficulty === "HARD" && "어려움 위주 (L1 1 / L2 5 / L3 10 / L4 4)"}
+                {engineerDifficulty === "VERY_HARD" && "매우 어려움 위주 (L1 0 / L2 2 / L3 6 / L4 12)"}
               </span>
             </div>
-            <div className="flex gap-2">
-              {(["EASY", "NORMAL", "HARD"] as const).map((d) => (
+            <div className="flex flex-wrap gap-2">
+              {(["EASY", "NORMAL", "HARD", "VERY_HARD"] as const).map((d) => (
                 <button
                   key={d}
                   onClick={() => setEngineerDifficulty(d)}
@@ -244,7 +245,13 @@ export default function AdminMockExamsPage() {
                       : "border border-emerald-500/30 text-emerald-300/70 hover:bg-emerald-500/10"
                   }`}
                 >
-                  {d === "EASY" ? "쉬움" : d === "NORMAL" ? "보통" : "어려움"}
+                  {d === "EASY"
+                    ? "쉬움"
+                    : d === "NORMAL"
+                      ? "보통"
+                      : d === "HARD"
+                        ? "어려움"
+                        : "매우 어려움"}
                 </button>
               ))}
             </div>

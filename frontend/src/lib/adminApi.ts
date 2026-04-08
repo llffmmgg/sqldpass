@@ -262,7 +262,7 @@ export function getAdminMockExams() {
 export type CreateMockExamType = "SQLD" | "ENGINEER_PRACTICAL";
 
 /** 정처기 모의고사 평균 난이도. SQLD는 무시됨. */
-export type MockExamCreationDifficulty = "EASY" | "NORMAL" | "HARD";
+export type MockExamCreationDifficulty = "EASY" | "NORMAL" | "HARD" | "VERY_HARD";
 
 export function createMockExam(
   examType: CreateMockExamType = "SQLD",

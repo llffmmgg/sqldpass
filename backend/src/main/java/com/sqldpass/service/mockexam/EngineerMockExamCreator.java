@@ -225,32 +225,40 @@ public class EngineerMockExamCreator {
     }
 
     /**
-     * 사용자 지정 평균 난이도(EASY/NORMAL/HARD)에 따라
-     * 전체 문항 수만큼의 난이도 슬롯 리스트를 만들고 셔플하여 반환.
+     * 사용자 지정 평균 난이도에 따라
+     * 전체 문항 수만큼의 난이도 슬롯 리스트(1~4)를 만들고 셔플하여 반환.
      *
-     * 분포 (20문제 기준):
-     * - EASY:   60/30/10  → 12 / 6 / 2
-     * - NORMAL: 25/50/25  → 5  / 10 / 5
-     * - HARD:   10/30/60  → 2  / 6  / 12
+     * 분포 (20문제 기준 — L1/L2/L3/L4):
+     * - EASY:      60/30/10/0  → 12/6/2/0
+     * - NORMAL:    20/50/25/5  → 4/10/5/1
+     * - HARD:      5/25/50/20  → 1/5/10/4
+     * - VERY_HARD: 0/10/30/60  → 0/2/6/12
      */
     private List<Integer> buildDifficultySlots(MockExamDifficulty difficulty, int totalQuestions) {
         int[] dist = switch (difficulty) {
-            case EASY -> new int[]{60, 30, 10};
-            case NORMAL -> new int[]{25, 50, 25};
-            case HARD -> new int[]{10, 30, 60};
+            case EASY -> new int[]{60, 30, 10, 0};
+            case NORMAL -> new int[]{20, 50, 25, 5};
+            case HARD -> new int[]{5, 25, 50, 20};
+            case VERY_HARD -> new int[]{0, 10, 30, 60};
         };
         int l1 = Math.round(totalQuestions * dist[0] / 100f);
         int l2 = Math.round(totalQuestions * dist[1] / 100f);
-        int l3 = totalQuestions - l1 - l2; // 반올림 오차 보정
-        if (l3 < 0) {
-            // 극단적 보정: l2에서 깎음
-            l2 += l3;
-            l3 = 0;
+        int l3 = Math.round(totalQuestions * dist[2] / 100f);
+        int l4 = totalQuestions - l1 - l2 - l3; // 반올림 오차 보정
+        if (l4 < 0) {
+            // 극단적 보정: l3에서 깎음 (그래도 음수면 l2)
+            l3 += l4;
+            l4 = 0;
+            if (l3 < 0) {
+                l2 += l3;
+                l3 = 0;
+            }
         }
         List<Integer> slots = new ArrayList<>(totalQuestions);
         for (int i = 0; i < l1; i++) slots.add(1);
         for (int i = 0; i < l2; i++) slots.add(2);
         for (int i = 0; i < l3; i++) slots.add(3);
+        for (int i = 0; i < l4; i++) slots.add(4);
         Collections.shuffle(slots, random);
         return slots;
     }
