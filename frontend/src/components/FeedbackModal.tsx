@@ -90,14 +90,13 @@ export default function FeedbackModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm sm:p-6"
       onClick={onClose}
     >
-      <div className="flex min-h-full items-center justify-center p-4 sm:p-6">
-        <div
-          className="w-full max-w-xl rounded-2xl border border-border bg-surface p-6 shadow-xl sm:p-8"
-          onClick={(e) => e.stopPropagation()}
-        >
+      <div
+        className="flex max-h-[90vh] w-full max-w-xl flex-col overflow-y-auto rounded-2xl border border-border bg-surface p-6 shadow-xl sm:p-8"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* 헤더 */}
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-bold">💬 피드백 보내기</h2>
@@ -171,10 +170,10 @@ export default function FeedbackModal({
               <textarea
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
-                rows={10}
+                rows={7}
                 maxLength={2000}
                 placeholder="자세한 내용을 적어주세요. 어떤 상황에서, 어떤 문제가 있었는지 알려주시면 큰 도움이 됩니다."
-                className="block min-h-[220px] w-full resize-y rounded-lg border border-border bg-background px-4 py-3 text-sm leading-relaxed text-foreground placeholder:text-muted/50 focus:outline-none focus:ring-2 focus:ring-amber-500/60"
+                className="block w-full resize-none rounded-lg border border-border bg-background px-4 py-3 text-sm leading-relaxed text-foreground placeholder:text-muted/50 focus:outline-none focus:ring-2 focus:ring-amber-500/60"
               />
               <div className="mt-1 flex items-center justify-between">
                 <p className="text-[11px] text-muted/70">함께 만들어가는 SQLD Pass 💛</p>
@@ -207,7 +206,6 @@ export default function FeedbackModal({
             </div>
           </>
         )}
-        </div>
       </div>
     </div>
   );

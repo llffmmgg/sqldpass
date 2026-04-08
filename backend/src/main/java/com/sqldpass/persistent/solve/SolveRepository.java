@@ -21,7 +21,8 @@ public interface SolveRepository extends JpaRepository<SolveEntity, Long> {
 
     /**
      * 랜딩 페이지 TOP N 랭킹 — 누적 정답 수 기준.
-     * 1문제 이상 푼 사용자만 (INNER JOIN solve), 동점은 가입 순(member.id ASC).
+     * 1문제 이상 풀고 정답이 1개 이상인 사용자만 (HAVING SUM > 0).
+     * 동점은 가입 순(member.id ASC).
      *
      * 결과 row: [String nickname, Long totalCorrect]
      */
@@ -30,6 +31,7 @@ public interface SolveRepository extends JpaRepository<SolveEntity, Long> {
             FROM SolveEntity s
             JOIN s.member m
             GROUP BY m.id, m.nickname
+            HAVING SUM(s.correctCount) > 0
             ORDER BY SUM(s.correctCount) DESC, m.id ASC
             """)
     List<Object[]> findTopRanking(Pageable pageable);
