@@ -54,6 +54,9 @@ export default function NavBar() {
     router.push("/");
   }
 
+  // 어드민 영역은 자체 헤더/사이드바를 가지므로 사용자용 NavBar를 숨김
+  if (pathname.startsWith("/admin")) return null;
+
   return (
     <header className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur">
       <nav className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3 sm:px-6">
