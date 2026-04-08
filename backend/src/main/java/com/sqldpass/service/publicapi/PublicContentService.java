@@ -62,14 +62,33 @@ public class PublicContentService {
     private final SolveAnswerRepository solveAnswerRepository;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
+    // ----------------------------------------------------------
+    // 랜딩 페이지 통계 캐시 (로컬 인메모리, TTL 1시간)
+    // - ISR(1시간) + 백엔드 캐시(1시간) = 이중 안전망
+    // - 봇/스캐너가 /api/public/stats를 두드려도 DB 부담 0
+    // - Caffeine 같은 의존성 없이 volatile만으로 thread-safe
+    // ----------------------------------------------------------
+    private static final long STATS_CACHE_TTL_MS = 60 * 60 * 1000L; // 1시간
+    private volatile PublicStatsResponse cachedStats;
+    private volatile long cachedStatsAtMs;
+
     /**
      * 랜딩 페이지 노출용 공개 통계 — 회원 수 + 누적 풀이 수.
-     * 프론트엔드 ISR로 1시간에 1번만 호출되므로 별도 캐시 없음.
+     * 1시간 인메모리 캐시 → DB 부담 사실상 0.
      */
     public PublicStatsResponse getStats() {
+        long now = System.currentTimeMillis();
+        PublicStatsResponse cached = this.cachedStats;
+        if (cached != null && (now - this.cachedStatsAtMs) < STATS_CACHE_TTL_MS) {
+            return cached;
+        }
+        // 캐시 미스 또는 만료 → DB 조회 후 갱신
         long totalMembers = memberRepository.count();
         long totalSolves = solveAnswerRepository.count();
-        return new PublicStatsResponse(totalMembers, totalSolves);
+        PublicStatsResponse fresh = new PublicStatsResponse(totalMembers, totalSolves);
+        this.cachedStats = fresh;
+        this.cachedStatsAtMs = now;
+        return fresh;
     }
 
     // =================== 자격증 목록 ===================
