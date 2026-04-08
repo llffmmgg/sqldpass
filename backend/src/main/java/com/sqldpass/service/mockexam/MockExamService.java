@@ -7,6 +7,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.sqldpass.domain.mockexam.MockExam;
 import com.sqldpass.persistent.mockexam.ExamType;
+import com.sqldpass.persistent.mockexam.MockExamDifficulty;
 import com.sqldpass.persistent.mockexam.MockExamEntity;
 import com.sqldpass.persistent.mockexam.MockExamMapper;
 import com.sqldpass.persistent.mockexam.MockExamRepository;
@@ -50,10 +51,20 @@ public class MockExamService {
     /** 신규 모의고사 생성 (관리자 호출). examType null 이면 SQLD 기본값. */
     @Transactional
     public MockExam create(ExamType examType) {
+        return create(examType, null);
+    }
+
+    /**
+     * 신규 모의고사 생성 (관리자 호출, 난이도 지정 가능).
+     * - difficulty는 정처기에만 적용. SQLD는 무시.
+     * - difficulty null이면 NORMAL 기본값(EngineerMockExamCreator 내부 처리).
+     */
+    @Transactional
+    public MockExam create(ExamType examType, MockExamDifficulty difficulty) {
         ExamType type = examType != null ? examType : ExamType.SQLD;
         MockExamEntity created = switch (type) {
             case SQLD -> mockExamCreator.create();
-            case ENGINEER_PRACTICAL -> engineerMockExamCreator.create();
+            case ENGINEER_PRACTICAL -> engineerMockExamCreator.create(difficulty);
         };
         // parent 과목까지 fetch한 상태로 리로드 (매퍼에서 N+1 방지)
         MockExamEntity loaded = mockExamRepository.findByIdWithQuestions(created.getId())

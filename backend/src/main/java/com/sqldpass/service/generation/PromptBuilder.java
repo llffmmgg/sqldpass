@@ -57,37 +57,47 @@ public class PromptBuilder {
 
     static final String ENGINEER_GENERATION_SYSTEM_PROMPT = """
             당신은 정보처리기사 실기 시험 출제위원입니다.
-            아래 시드 예시들은 "이 정도 깊이/완성도/품질"의 기준이며, 절대 그 코드/식별자/구조를 복제해서는 안 됩니다.
+            아래 시드 예시들은 "주제·패턴·식별자 회피용 참고자료"입니다.
+            절대 그 코드/식별자/구조를 복제해서는 안 됩니다.
             매번 새로운 개념·새로운 함정·새로운 변수명으로 출제하세요.
 
-            규칙:
+            **난이도 규칙 (매우 중요):**
+            - 시드의 difficulty 값은 무시하세요.
+            - 각 문제마다 사용자 측에서 별도로 지정한 **목표 난이도(targetDifficulty)** 를 따르세요.
+            - 1 = 쉬움 (기초 개념·간단한 코드 한두 줄·표준 함수 사용 결과)
+            - 2 = 보통 (실무 수준 난이도·약간의 응용·여러 단계 추론)
+            - 3 = 어려움 (고난도·미묘한 함정·복잡한 흐름 추적·잘 알려지지 않은 케이스)
+            - 같은 시드 주제라도 목표 난이도에 따라 코드 길이/복잡도/요구 추론량을 조정하세요.
+
+            출제 형식 규칙:
             - 실제 정처기 실기 시험과 동일한 형식: 단답형(SHORT_ANSWER) 또는 약술형(DESCRIPTIVE)
             - 객관식(MCQ)은 절대 만들지 말 것
             - 시드별로 매핑된 questionType을 그대로 따를 것
             - 코드형(C/Java/Python/SQL) 문제는 코드의 실행 결과를 묻는 단답형으로 작성
             - 이론형 문제는 핵심 용어 단답 또는 개념 약술
-            - 시드의 difficulty(1=기본, 3=중급, 5=고난도)와 동일한 난이도로 작성할 것
             - answer 필드: 정답(모범답안)
             - keywords 필드: 단답형이면 허용 alias 리스트, 약술형이면 채점 키워드 리스트
             - explanation: 풀이 과정/근거를 자세히
             - summary: 200자 이내, 출제 관점 요약
-            - difficulty 필드는 시드의 difficulty 값을 그대로 사용
+            - difficulty 필드: 사용자가 지정한 목표 난이도(1/2/3)를 그대로 반환
 
             절대 금지:
             - 시드의 함수명/클래스명/변수명을 그대로 사용 (변형해도 인식 가능하면 안 됨)
             - 시드의 코드 구조를 그대로 따라하기 (재귀를 재귀로, Shape→Circle 같은 단순 치환)
             - 시드와 동일한 주제·동일한 함정 (다른 개념·다른 함정으로 작성)
             - 회피 식별자/회피 정답 목록에 있는 항목과의 중복
+            - 목표 난이도가 1(쉬움)인데 어려운 문제 작성, 또는 그 반대
 
             출력 전 자체 검증:
             1. 코드형이면 직접 실행 결과가 answer와 맞는지 확인
             2. answer가 명확하고 keywords가 채점에 충분한지 확인
             3. 시드 식별자 / 회피 식별자 / 회피 정답과 겹치지 않는지 확인
-            4. 다양한 출제 의도(실행 결과 예측 / 빈칸 채우기 / 약술 / 잘못 짚기) 중 시드와 다른 각도 선택
+            4. 각 문제의 난이도가 지정된 목표 난이도와 일치하는지 확인
+            5. 다양한 출제 의도(실행 결과 예측 / 빈칸 채우기 / 약술 / 잘못 짚기) 중 시드와 다른 각도 선택
 
             반드시 아래 JSON 형식으로만 응답하세요. questions 배열의 길이는 입력된 시드 개수와 정확히 일치해야 합니다:
             {"questions": [
-              {"content": "...", "questionType": "SHORT_ANSWER", "answerText": "...", "keywords": ["..."], "explanation": "...", "summary": "...", "difficulty": 3}
+              {"content": "...", "questionType": "SHORT_ANSWER", "answerText": "...", "keywords": ["..."], "explanation": "...", "summary": "...", "difficulty": 2}
             ]}
             """;
 
@@ -142,14 +152,15 @@ public class PromptBuilder {
     }
 
     /**
-     * 정처기 카테고리 생성용 프롬프트 (시드 풀 다중화 버전).
-     * - N개의 서로 다른 시드를 "퀄리티 기준 + 회피 대상"으로 동시에 제공
+     * 정처기 카테고리 생성용 프롬프트 (시드 풀 다중화 + 사용자 지정 난이도 버전).
+     * - N개의 서로 다른 시드를 "주제·식별자 회피용 참고자료"로 제공
      * - 각 시드별로 1개씩 변형 생성 요청 (N개 시드 → N개 문제)
-     * - 시드의 난이도를 그대로 계승 (자연스러운 난이도 분산)
+     * - **각 문제별로 사용자 지정 targetDifficulty(1/2/3)를 강제** — 시드 난이도는 무시
      * - existingSummaries + forbiddenIdentifiers + recentAnswers로 중복 회피
      */
     static String buildEngineerPrompt(AiGenerationRequest request,
                                       List<EngineerExample> examples,
+                                      List<Integer> targetDifficulties,
                                       List<String> forbiddenIdentifiers,
                                       List<String> recentAnswers) {
         StringBuilder sb = new StringBuilder();
@@ -158,13 +169,17 @@ public class PromptBuilder {
 
         for (int i = 0; i < examples.size(); i++) {
             EngineerExample ex = examples.get(i);
-            sb.append("[시드 #").append(i + 1).append(" - 난이도 ").append(ex.difficulty()).append("]\n");
+            int target = targetDifficulties.get(i);
+            sb.append("[문제 #").append(i + 1)
+                    .append(" — **목표 난이도: ").append(targetLabel(target))
+                    .append(" (").append(target).append(")**]\n");
+            sb.append("(아래 시드는 주제·패턴·식별자 회피용 참고. 시드 자체 난이도는 무시하고 위 목표 난이도로 작성)\n");
             sb.append("토픽 힌트: ").append(ex.topic()).append("\n");
             sb.append("문제 유형: ").append(ex.questionType().name()).append("\n");
-            sb.append("문제: ").append(ex.content()).append("\n");
-            sb.append("정답: ").append(ex.answer()).append("\n");
-            sb.append("키워드: ").append(String.join(", ", ex.keywords())).append("\n");
-            sb.append("해설: ").append(ex.explanation()).append("\n\n");
+            sb.append("시드 본문: ").append(ex.content()).append("\n");
+            sb.append("시드 정답: ").append(ex.answer()).append("\n");
+            sb.append("시드 키워드: ").append(String.join(", ", ex.keywords())).append("\n");
+            sb.append("시드 해설: ").append(ex.explanation()).append("\n\n");
         }
 
         if (forbiddenIdentifiers != null && !forbiddenIdentifiers.isEmpty()) {
@@ -191,10 +206,21 @@ public class PromptBuilder {
         sb.append("[지시]\n");
         sb.append("- 위 ").append(examples.size()).append("개 시드 각각에 대해 변형 1개씩, 정확히 ")
                 .append(examples.size()).append("개의 문제를 생성하세요.\n");
-        sb.append("- 각 변형은 매핑된 시드의 난이도/유형/카테고리를 유지하되, 다른 개념·다른 식별자·다른 코드 구조여야 합니다.\n");
+        sb.append("- **각 문제는 위에 명시된 목표 난이도를 반드시 따르세요. 시드 자체 난이도는 무시합니다.**\n");
+        sb.append("- 각 변형은 매핑된 시드의 유형/카테고리를 유지하되, 다른 개념·다른 식별자·다른 코드 구조여야 합니다.\n");
         sb.append("- 시드의 정답 형식(예: \"2 4 1 6 1 3\" 같은 숫자 나열)이 있다면 다른 형식으로 출제하세요.\n");
-        sb.append("- 응답 questions 배열의 i번째 원소는 시드 #").append("(i+1)에 대응되어야 합니다.\n");
+        sb.append("- difficulty 필드에는 각 문제의 목표 난이도(1/2/3)를 그대로 반환하세요.\n");
+        sb.append("- 응답 questions 배열의 i번째 원소는 문제 #(i+1)에 대응되어야 합니다.\n");
         return sb.toString();
+    }
+
+    private static String targetLabel(int difficulty) {
+        return switch (difficulty) {
+            case 1 -> "쉬움";
+            case 2 -> "보통";
+            case 3 -> "어려움";
+            default -> "보통";
+        };
     }
 
     static String buildVerificationPrompt(AiVerificationRequest request) {

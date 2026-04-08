@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.sqldpass.controller.admin.dto.CreateMockExamRequest;
 import com.sqldpass.controller.mockexam.dto.MockExamSummaryResponse;
 import com.sqldpass.persistent.mockexam.ExamType;
+import com.sqldpass.persistent.mockexam.MockExamDifficulty;
 import com.sqldpass.service.mockexam.MockExamService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -38,11 +39,12 @@ public class AdminMockExamController {
     }
 
     @PostMapping
-    @Operation(summary = "신규 모의고사 생성", description = "body.examType 생략 시 SQLD (4지선다 50문항). ENGINEER_PRACTICAL 지정 시 정보처리기사 실기 (단답/서술 20문항).")
+    @Operation(summary = "신규 모의고사 생성", description = "body.examType 생략 시 SQLD (4지선다 50문항). ENGINEER_PRACTICAL 지정 시 정보처리기사 실기 (단답/서술 20문항). difficulty(EASY/NORMAL/HARD)는 정처기에만 적용.")
     @ResponseStatus(HttpStatus.CREATED)
     public MockExamSummaryResponse create(@RequestBody(required = false) CreateMockExamRequest body) {
         ExamType type = (body != null && body.examType() != null) ? body.examType() : ExamType.SQLD;
-        return MockExamSummaryResponse.from(mockExamService.create(type));
+        MockExamDifficulty difficulty = (body != null) ? body.difficulty() : null;
+        return MockExamSummaryResponse.from(mockExamService.create(type, difficulty));
     }
 
     @DeleteMapping("/{id}")

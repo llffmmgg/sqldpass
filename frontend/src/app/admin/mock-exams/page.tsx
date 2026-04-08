@@ -7,6 +7,7 @@ import {
   deleteMockExam,
   type AdminMockExam,
   type CreateMockExamType,
+  type MockExamCreationDifficulty,
 } from "@/lib/adminApi";
 
 /**
@@ -61,6 +62,8 @@ export default function AdminMockExamsPage() {
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<TabId>("all");
+  // 정처기 생성 시 사용할 평균 난이도 (SQLD는 무시)
+  const [engineerDifficulty, setEngineerDifficulty] = useState<MockExamCreationDifficulty>("NORMAL");
 
   async function load(): Promise<AdminMockExam[] | null> {
     try {
@@ -89,7 +92,10 @@ export default function AdminMockExamsPage() {
         .reduce((max, e) => Math.max(max, e.sequence), 0);
 
     try {
-      await createMockExam(examType);
+      // 정처기에만 난이도 전달, SQLD는 undefined
+      const difficultyArg =
+        examType === "ENGINEER_PRACTICAL" ? engineerDifficulty : undefined;
+      await createMockExam(examType, difficultyArg);
       await load();
     } catch (e) {
       const originalMessage =
@@ -213,6 +219,38 @@ export default function AdminMockExamsPage() {
           ))}
         </div>
       </div>
+
+      {/* 정처기 난이도 선택 (정처기 탭 또는 전체 탭에서만 노출) */}
+      {(activeTab === "all" || activeTab === "ENGINEER_PRACTICAL") && (
+        <div className="mt-3 rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-3">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div className="text-xs text-emerald-300">
+              <span className="font-semibold">정처기 평균 난이도:</span>{" "}
+              <span className="text-emerald-300/70">
+                {engineerDifficulty === "EASY" && "쉬움 위주 (12 / 6 / 2)"}
+                {engineerDifficulty === "NORMAL" && "보통 위주 (5 / 10 / 5)"}
+                {engineerDifficulty === "HARD" && "어려움 위주 (2 / 6 / 12)"}
+              </span>
+            </div>
+            <div className="flex gap-2">
+              {(["EASY", "NORMAL", "HARD"] as const).map((d) => (
+                <button
+                  key={d}
+                  onClick={() => setEngineerDifficulty(d)}
+                  disabled={creating !== null}
+                  className={`rounded px-3 py-1 text-xs font-medium transition-colors ${
+                    engineerDifficulty === d
+                      ? "bg-emerald-500/30 text-emerald-200 ring-1 ring-emerald-400/50"
+                      : "border border-emerald-500/30 text-emerald-300/70 hover:bg-emerald-500/10"
+                  }`}
+                >
+                  {d === "EASY" ? "쉬움" : d === "NORMAL" ? "보통" : "어려움"}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {info && (
         <div className="mt-4 rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-3 text-sm text-emerald-300">

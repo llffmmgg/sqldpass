@@ -2,6 +2,7 @@ package com.sqldpass.service.mockexam;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -22,6 +23,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.sqldpass.persistent.mockexam.ExamType;
+import com.sqldpass.persistent.mockexam.MockExamDifficulty;
 import com.sqldpass.persistent.mockexam.MockExamEntity;
 import com.sqldpass.persistent.mockexam.MockExamRepository;
 import com.sqldpass.persistent.question.QuestionEntity;
@@ -118,11 +120,23 @@ public class EngineerMockExamCreator {
 
     @Transactional
     public MockExamEntity create() {
+        return create(MockExamDifficulty.NORMAL);
+    }
+
+    @Transactional
+    public MockExamEntity create(MockExamDifficulty mockExamDifficulty) {
+        MockExamDifficulty difficulty = mockExamDifficulty != null ? mockExamDifficulty : MockExamDifficulty.NORMAL;
         int nextSeq = mockExamRepository.findMaxSequenceByExamType(ExamType.ENGINEER_PRACTICAL).orElse(0) + 1;
-        String name = "정보처리기사 실기 모의고사 " + nextSeq + "회";
+        String name = "정보처리기사 실기 모의고사 " + nextSeq + "회 (" + difficulty.label() + ")";
 
         Map<String, Integer> distribution = TEMPLATES.get(random.nextInt(TEMPLATES.size()));
-        log.info("정처기 모의고사 생성 시작 - sequence={}, 분포={}", nextSeq, distribution);
+        int totalQuestions = distribution.values().stream().mapToInt(Integer::intValue).sum();
+
+        // 사용자 지정 평균 난이도에 따른 분포 슬롯 (셔플된 [1,1,2,2,2,3,3,...])
+        List<Integer> difficultySlots = buildDifficultySlots(difficulty, totalQuestions);
+
+        log.info("정처기 모의고사 생성 시작 - sequence={}, 분포={}, 평균난이도={}, 슬롯={}",
+                nextSeq, distribution, difficulty, difficultySlots);
 
         SubjectEntity root = subjectRepository.findByNameAndParentIsNull(ROOT_SUBJECT_NAME)
                 .orElseThrow(() -> new SqldpassException(ErrorCode.SUBJECT_NOT_FOUND,
@@ -140,6 +154,7 @@ public class EngineerMockExamCreator {
         Set<String> exhibitedAnswersInThisExam = new HashSet<>();
 
         List<QuestionEntity> picked = new ArrayList<>();
+        int slotCursor = 0; // difficultySlots 진행 인덱스
         for (Map.Entry<String, Integer> entry : distribution.entrySet()) {
             String category = entry.getKey();
             int needed = entry.getValue();
@@ -152,6 +167,11 @@ public class EngineerMockExamCreator {
                         "카테고리 '" + category + "' 시드 풀이 부족합니다 (필요 " + needed + ", 보유 " + seeds.size() + ")");
             }
 
+            // 1-1) 이 카테고리에 할당된 목표 난이도 슬롯 needed개 슬라이스
+            List<Integer> targetDifficulties = new ArrayList<>(
+                    difficultySlots.subList(slotCursor, slotCursor + needed));
+            slotCursor += needed;
+
             // 2) 회피 신호 수집: 시드 식별자 + 최근 출제 식별자 + 최근 정답
             Pageable lookback = PageRequest.of(0, RECENT_LOOKBACK);
             List<String> recentAnswers = questionRepository
@@ -162,22 +182,23 @@ public class EngineerMockExamCreator {
 
             List<String> forbiddenIdentifiers = collectForbiddenIdentifiers(seeds, recentContents);
 
-            // 3) AI 호출 (1회차)
+            // 3) AI 호출 (1회차) — 목표 난이도 전달
             AiGenerationRequest request = new AiGenerationRequest(
                     category, subject.getId(), seeds.get(0).topic(),
                     existingSummaries, needed, ExamType.ENGINEER_PRACTICAL);
-            List<GeneratedQuestion> generated = callAi(request, seeds, forbiddenIdentifiers, recentAnswers, needed);
+            List<GeneratedQuestion> generated = callAi(request, seeds, targetDifficulties, forbiddenIdentifiers, recentAnswers, needed);
 
             // 4) 중복 검증: 정답이 최근/회차내와 8자+ 일치 → 재시도
             List<GeneratedQuestion> validated = validateAndRetry(
-                    request, seeds, forbiddenIdentifiers, recentAnswers,
+                    request, seeds, targetDifficulties, forbiddenIdentifiers, recentAnswers,
                     exhibitedAnswersInThisExam, generated, needed, category);
 
-            // 5) 저장 + 회차내 정답 풀에 등록
+            // 5) 저장 + 회차내 정답 풀에 등록 — 사용자 지정 난이도로 저장
             for (int i = 0; i < needed; i++) {
                 GeneratedQuestion gq = validated.get(i);
                 EngineerExample seed = seeds.get(i);
-                QuestionEntity entity = toEngineerEntity(subject, gq, seed);
+                int targetDifficulty = targetDifficulties.get(i);
+                QuestionEntity entity = toEngineerEntity(subject, gq, seed, targetDifficulty);
                 picked.add(questionRepository.save(entity));
                 if (gq.answerText() != null) {
                     exhibitedAnswersInThisExam.add(normalizeAnswer(gq.answerText()));
@@ -203,14 +224,46 @@ public class EngineerMockExamCreator {
         return saved;
     }
 
+    /**
+     * 사용자 지정 평균 난이도(EASY/NORMAL/HARD)에 따라
+     * 전체 문항 수만큼의 난이도 슬롯 리스트를 만들고 셔플하여 반환.
+     *
+     * 분포 (20문제 기준):
+     * - EASY:   60/30/10  → 12 / 6 / 2
+     * - NORMAL: 25/50/25  → 5  / 10 / 5
+     * - HARD:   10/30/60  → 2  / 6  / 12
+     */
+    private List<Integer> buildDifficultySlots(MockExamDifficulty difficulty, int totalQuestions) {
+        int[] dist = switch (difficulty) {
+            case EASY -> new int[]{60, 30, 10};
+            case NORMAL -> new int[]{25, 50, 25};
+            case HARD -> new int[]{10, 30, 60};
+        };
+        int l1 = Math.round(totalQuestions * dist[0] / 100f);
+        int l2 = Math.round(totalQuestions * dist[1] / 100f);
+        int l3 = totalQuestions - l1 - l2; // 반올림 오차 보정
+        if (l3 < 0) {
+            // 극단적 보정: l2에서 깎음
+            l2 += l3;
+            l3 = 0;
+        }
+        List<Integer> slots = new ArrayList<>(totalQuestions);
+        for (int i = 0; i < l1; i++) slots.add(1);
+        for (int i = 0; i < l2; i++) slots.add(2);
+        for (int i = 0; i < l3; i++) slots.add(3);
+        Collections.shuffle(slots, random);
+        return slots;
+    }
+
     /** AI 호출 + 응답 길이 검증 */
     private List<GeneratedQuestion> callAi(AiGenerationRequest request,
                                            List<EngineerExample> seeds,
+                                           List<Integer> targetDifficulties,
                                            List<String> forbiddenIdentifiers,
                                            List<String> recentAnswers,
                                            int needed) {
         AiGenerationResponse response = engineerAiProvider
-                .generateEngineerQuestions(request, seeds, forbiddenIdentifiers, recentAnswers);
+                .generateEngineerQuestions(request, seeds, targetDifficulties, forbiddenIdentifiers, recentAnswers);
         List<GeneratedQuestion> generated = response.questions();
         if (generated == null || generated.size() < needed) {
             throw new SqldpassException(
@@ -227,6 +280,7 @@ public class EngineerMockExamCreator {
      */
     private List<GeneratedQuestion> validateAndRetry(AiGenerationRequest request,
                                                      List<EngineerExample> seeds,
+                                                     List<Integer> targetDifficulties,
                                                      List<String> forbiddenIdentifiers,
                                                      List<String> recentAnswers,
                                                      Set<String> exhibitedInExam,
@@ -250,7 +304,7 @@ public class EngineerMockExamCreator {
             List<String> strengthenedForbidden = new ArrayList<>(forbiddenIdentifiers);
             List<String> strengthenedAnswers = new ArrayList<>(recentAnswers);
             strengthenedAnswers.addAll(conflicts);
-            current = callAi(request, seeds, strengthenedForbidden, strengthenedAnswers, needed);
+            current = callAi(request, seeds, targetDifficulties, strengthenedForbidden, strengthenedAnswers, needed);
         }
         return current;
     }
@@ -336,8 +390,8 @@ public class EngineerMockExamCreator {
         return found;
     }
 
-    /** AI 생성 응답을 정처기 단답/약술형 QuestionEntity로 변환 (시드의 difficulty 계승) */
-    private QuestionEntity toEngineerEntity(SubjectEntity subject, GeneratedQuestion gq, EngineerExample seed) {
+    /** AI 생성 응답을 정처기 단답/약술형 QuestionEntity로 변환 (사용자 지정 난이도 사용) */
+    private QuestionEntity toEngineerEntity(SubjectEntity subject, GeneratedQuestion gq, EngineerExample seed, int targetDifficulty) {
         QuestionType qt;
         try {
             qt = gq.questionType() != null ? QuestionType.valueOf(gq.questionType()) : seed.questionType();
@@ -357,14 +411,12 @@ public class EngineerMockExamCreator {
             keywordsJson = "[]";
         }
 
-        // 난이도: AI 응답이 있으면 그것을 사용하되, 시드의 difficulty가 우선
-        int difficulty = gq.difficulty() != null ? gq.difficulty() : seed.difficulty();
-
+        // 난이도: 사용자가 지정한 targetDifficulty를 강제 사용 (AI/시드 값 무시)
         return new QuestionEntity(
                 subject, gq.content(), qt,
                 answer, keywordsJson, gq.explanation(),
                 gq.summary(), seed.topic(),
-                difficulty);
+                targetDifficulty);
     }
 
     private static Map<String, Integer> ordered(Object... kv) {

@@ -46,16 +46,18 @@ public class AiProvider {
     }
 
     /**
-     * 정처기 카테고리용 변형 문제 N개 생성 (시드 풀 다중화 버전).
+     * 정처기 카테고리용 변형 문제 N개 생성 (시드 풀 다중화 + 사용자 지정 난이도 버전).
      * - examples: needed개의 서로 다른 시드 (카테고리 풀에서 추출됨)
+     * - targetDifficulties: 각 문제의 목표 난이도(1/2/3) — examples와 동일 길이
      * - forbiddenIdentifiers: 절대 사용 금지 식별자 (시드 + 누적 출제 식별자)
      * - recentAnswers: 회피해야 할 정답 패턴
      */
     public AiGenerationResponse generateEngineerQuestions(AiGenerationRequest request,
                                                           List<EngineerTopicExamples.EngineerExample> examples,
+                                                          List<Integer> targetDifficulties,
                                                           List<String> forbiddenIdentifiers,
                                                           List<String> recentAnswers) {
-        String prompt = PromptBuilder.buildEngineerPrompt(request, examples, forbiddenIdentifiers, recentAnswers);
+        String prompt = PromptBuilder.buildEngineerPrompt(request, examples, targetDifficulties, forbiddenIdentifiers, recentAnswers);
         String responseText = chatClient.prompt()
                 .system(PromptBuilder.ENGINEER_GENERATION_SYSTEM_PROMPT)
                 .user(prompt)

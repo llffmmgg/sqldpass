@@ -261,10 +261,16 @@ export function getAdminMockExams() {
 
 export type CreateMockExamType = "SQLD" | "ENGINEER_PRACTICAL";
 
-export function createMockExam(examType: CreateMockExamType = "SQLD") {
+/** 정처기 모의고사 평균 난이도. SQLD는 무시됨. */
+export type MockExamCreationDifficulty = "EASY" | "NORMAL" | "HARD";
+
+export function createMockExam(
+  examType: CreateMockExamType = "SQLD",
+  difficulty?: MockExamCreationDifficulty,
+) {
   return adminFetch<AdminMockExam>("/mock-exams", {
     method: "POST",
-    body: JSON.stringify({ examType }),
+    body: JSON.stringify({ examType, difficulty }),
   });
 }
 
