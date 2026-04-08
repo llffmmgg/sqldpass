@@ -61,7 +61,7 @@ class QuestionServiceTest {
     @Test
     @DisplayName("과목별 랜덤 문제를 조회하면 지정한 개수만큼 반환된다")
     void getRandomQuestions() {
-        List<Question> questions = questionService.getRandomQuestions(subject.getId(), 2);
+        List<Question> questions = questionService.getRandomQuestions(subject.getId(), null, 2);
 
         assertThat(questions).hasSize(2);
         assertThat(questions.get(0).getSubjectId()).isEqualTo(subject.getId());

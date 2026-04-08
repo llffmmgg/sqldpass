@@ -50,7 +50,7 @@ class QuestionControllerTest {
     @DisplayName("GET /api/questions 200 OK - 정답과 해설이 포함되지 않는다")
     void getQuestions() throws Exception {
         Question q = new Question(1L, 5L, "문제 내용", 2, "해설");
-        given(questionService.getRandomQuestions(5L, 10)).willReturn(List.of(q));
+        given(questionService.getRandomQuestions(5L, 1L, 10)).willReturn(List.of(q));
 
         mockMvc.perform(get("/api/questions").param("subjectId", "5").header("Authorization", AUTH_HEADER))
                 .andExpect(status().isOk())

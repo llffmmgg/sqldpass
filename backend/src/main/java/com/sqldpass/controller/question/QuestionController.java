@@ -11,6 +11,7 @@ import com.sqldpass.controller.question.dto.QuestionDetailResponse;
 import com.sqldpass.controller.question.dto.QuestionResponse;
 import com.sqldpass.service.question.QuestionService;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 
@@ -29,11 +30,13 @@ public class QuestionController {
     private final QuestionService questionService;
 
     @GetMapping("/api/questions")
-    @Operation(summary = "과목별 랜덤 문제 조회", description = "정답과 해설은 포함하지 않는다")
+    @Operation(summary = "과목별 랜덤 문제 조회", description = "정답과 해설은 포함하지 않는다. 로그인 사용자의 경우 푼 문제는 풀 맨 뒤로 밀린다.")
     public List<QuestionResponse> getQuestions(
+            HttpServletRequest request,
             @RequestParam Long subjectId,
             @RequestParam(defaultValue = "10") @Min(1) @Max(50) int size) {
-        return questionService.getRandomQuestions(subjectId, size).stream()
+        Long memberId = (Long) request.getAttribute("memberId");
+        return questionService.getRandomQuestions(subjectId, memberId, size).stream()
                 .map(QuestionResponse::from)
                 .toList();
     }

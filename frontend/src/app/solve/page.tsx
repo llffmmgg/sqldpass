@@ -25,6 +25,14 @@ export default function SolvePage() {
   );
 }
 
+type PastEntry = {
+  question: Question;
+  selectedOption: number | null;
+  answerText: string;
+  revealed: boolean;
+  detail: QuestionDetail | null;
+};
+
 function SolvePageContent() {
   const [phase, setPhase] = useState<Phase>("select");
   const [subjects, setSubjects] = useState<Subject[]>([]);
@@ -39,10 +47,28 @@ function SolvePageContent() {
   const [solvedCount, setSolvedCount] = useState(0);
   const [correctCount, setCorrectCount] = useState(0);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  /** 이전 문제로 돌아가기 위한 스택 (브라우저 뒤로가기와 연동) */
+  const [pastEntries, setPastEntries] = useState<PastEntry[]>([]);
 
   useEffect(() => {
     getSubjects().then(setSubjects);
   }, []);
+
+  // 브라우저 뒤로가기 처리: 이전 문제 복원, 첫 문제면 과목 선택으로
+  useEffect(() => {
+    function onPopState() {
+      if (phase !== "solve") return;
+      if (pastEntries.length > 0) {
+        goPrevious();
+      } else {
+        // 첫 문제 → 과목 선택 화면으로 (히스토리 엔트리는 이미 popstate로 한 칸 빠져나옴)
+        handleReset(false);
+      }
+    }
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  });
 
   async function fetchQuestions(subjectId: number): Promise<Question[]> {
     return getQuestions(subjectId, 10);
@@ -64,8 +90,31 @@ function SolvePageContent() {
     resetCurrentInput();
     setSolvedCount(0);
     setCorrectCount(0);
+    setPastEntries([]);
     setPhase("solve");
     setLoading(false);
+    // 히스토리에 solve 진입 마크 (뒤로가기 시 select 로 돌아갈 수 있도록)
+    if (typeof window !== "undefined") {
+      window.history.pushState({ solve: 0 }, "");
+    }
+  }
+
+  /** 이전 문제로 복원 — popstate 핸들러에서 호출 */
+  function goPrevious() {
+    setPastEntries((prev) => {
+      if (prev.length === 0) return prev;
+      const last = prev[prev.length - 1];
+      // 현재 보고 있던 문제를 큐 앞으로 다시 넣음
+      if (current) {
+        setQueue((q) => [current, ...q]);
+      }
+      setCurrent(last.question);
+      setSelectedOption(last.selectedOption);
+      setAnswerText(last.answerText);
+      setRevealed(last.revealed);
+      setDetail(last.detail);
+      return prev.slice(0, -1);
+    });
   }
 
   function handleSelect(option: number) {
@@ -140,7 +189,7 @@ function SolvePageContent() {
   }
 
   async function handleNext() {
-    if (!selectedSubject) return;
+    if (!selectedSubject || !current) return;
 
     let nextQueue = [...queue];
 
@@ -151,16 +200,45 @@ function SolvePageContent() {
       setLoading(false);
     }
 
+    // 현재 문제를 past 스택에 저장 (브라우저 뒤로가기로 복원 가능)
+    setPastEntries((prev) => [
+      ...prev,
+      {
+        question: current,
+        selectedOption,
+        answerText,
+        revealed,
+        detail,
+      },
+    ]);
+
     setCurrent(nextQueue[0] || null);
     setQueue(nextQueue.slice(1));
     resetCurrentInput();
+
+    // 히스토리 엔트리 추가 (다음 뒤로가기에서 이 문제로 돌아오게)
+    if (typeof window !== "undefined") {
+      window.history.pushState({ solve: pastEntries.length + 1 }, "");
+    }
   }
 
-  function handleReset() {
+  /**
+   * @param popHistory true면 그동안 push한 히스토리 엔트리를 정리한다 (수동 ← 과목 선택 버튼 클릭).
+   *                  false면 popstate 핸들러가 이미 한 칸 뒤로 보낸 후 호출된 것이라 정리 불필요.
+   */
+  function handleReset(popHistory: boolean = true) {
+    if (popHistory && typeof window !== "undefined") {
+      const pushed = pastEntries.length + 1; // pastEntries 개수 + handleSelectSubject에서의 1
+      if (pushed > 0) {
+        window.history.go(-pushed);
+        // popstate가 phase=select 시점에서 발생하면 일찍 리턴되므로 안전
+      }
+    }
     setPhase("select");
     setSelectedSubject(null);
     setQueue([]);
     setCurrent(null);
+    setPastEntries([]);
     resetCurrentInput();
     setSolvedCount(0);
     setCorrectCount(0);
@@ -232,7 +310,7 @@ function SolvePageContent() {
         {/* 상단 바 */}
         <div className="flex items-center justify-between">
           <button
-            onClick={handleReset}
+            onClick={() => handleReset()}
             className="text-sm text-muted hover:text-foreground transition-colors"
           >
             &larr; 과목 선택

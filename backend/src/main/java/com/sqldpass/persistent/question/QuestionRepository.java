@@ -48,6 +48,33 @@ public interface QuestionRepository extends JpaRepository<QuestionEntity, Long> 
     @Query("UPDATE QuestionEntity q SET q.mockExam = null, q.displayOrder = null WHERE q.mockExam.id = :mockExamId")
     int releaseFromMockExam(@Param("mockExamId") Long mockExamId);
 
+    /**
+     * 무한 풀이 — 사용자가 푼 문제는 풀 맨 뒤로 밀려서 같은 문제 반복 노출이 줄어든다.
+     * - 한 번도 안 푼 문제 우선 (recent_id IS NULL)
+     * - 그 다음 가장 오래 전에 푼 문제 (recent_id ASC)
+     * - 동률은 RAND()
+     * - 정처기 모의고사에 편성된 문제도 풀에 노출 (findAvailableIdsBySubjectId 와 동일 정책)
+     */
+    @Query(value = """
+            SELECT q.id FROM question q
+            LEFT JOIN (
+                SELECT sa.question_id, MAX(sa.id) AS recent_id
+                FROM solve_answer sa
+                JOIN solve s ON sa.solve_id = s.id
+                WHERE s.member_id = :memberId
+                GROUP BY sa.question_id
+            ) recent ON recent.question_id = q.id
+            LEFT JOIN mock_exam me ON me.id = q.mock_exam_id
+            WHERE q.subject_id = :subjectId
+              AND (q.mock_exam_id IS NULL OR me.exam_type = 'ENGINEER_PRACTICAL')
+            ORDER BY (recent.recent_id IS NULL) DESC, recent.recent_id ASC, RAND()
+            LIMIT :size
+            """, nativeQuery = true)
+    List<Long> findIdsBySubjectIdRecencyOrdered(
+            @Param("subjectId") Long subjectId,
+            @Param("memberId") Long memberId,
+            @Param("size") int size);
+
     @Query("SELECT q.summary FROM QuestionEntity q WHERE q.subject.id = :subjectId AND q.summary IS NOT NULL")
     List<String> findSummariesBySubjectId(@Param("subjectId") Long subjectId);
 
