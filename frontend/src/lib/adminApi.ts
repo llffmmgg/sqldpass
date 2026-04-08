@@ -271,3 +271,59 @@ export function createMockExam(examType: CreateMockExamType = "SQLD") {
 export function deleteMockExam(id: number) {
   return adminFetch<void>(`/mock-exams/${id}`, { method: "DELETE" });
 }
+
+// ----------------------------------------------------------
+// LLM 검증용 Markdown export
+// ----------------------------------------------------------
+
+export type ExportExamType = "SQLD" | "ENGINEER_PRACTICAL";
+
+/**
+ * 문제를 .md 파일로 다운로드. 다운로드 즉시 백엔드에서 export 마크가 찍힘.
+ * - force=false: 미export(신규) 문제만
+ * - force=true: 이미 마크된 것까지 포함
+ *
+ * @returns 다운로드된 문제 수 (X-Export-Count 헤더)
+ */
+export async function exportQuestions(examType: ExportExamType, force: boolean = false): Promise<number> {
+  const token = getToken();
+  const url = `${BASE}/questions/export?examType=${examType}&force=${force}`;
+  const res = await fetch(url, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+
+  if (res.status === 401) {
+    clearToken();
+    window.location.href = "/admin/login";
+    throw new Error("인증이 만료되었습니다.");
+  }
+  if (!res.ok) {
+    throw new Error(`다운로드 실패: ${res.status}`);
+  }
+
+  const blob = await res.blob();
+  const cdHeader = res.headers.get("Content-Disposition") ?? "";
+  const match = cdHeader.match(/filename="?([^";]+)"?/);
+  const filename = match?.[1] ?? `sqldpass-${examType.toLowerCase()}.md`;
+  const count = parseInt(res.headers.get("X-Export-Count") ?? "0", 10);
+
+  const a = document.createElement("a");
+  const objectUrl = URL.createObjectURL(blob);
+  a.href = objectUrl;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(objectUrl);
+
+  return count;
+}
+
+/** 지정 examType의 export 마크 일괄 리셋. 리셋된 행 수 반환. */
+export async function resetExportMark(examType: ExportExamType): Promise<number> {
+  const data = await adminFetch<{ reset: number }>(
+    `/questions/export/reset?examType=${examType}`,
+    { method: "POST" },
+  );
+  return data.reset;
+}

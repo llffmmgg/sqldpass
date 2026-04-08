@@ -1,5 +1,7 @@
 package com.sqldpass.persistent.question;
 
+import java.time.LocalDateTime;
+
 import com.sqldpass.persistent.common.BaseTimeEntity;
 import com.sqldpass.persistent.mockexam.MockExamEntity;
 import com.sqldpass.persistent.subject.SubjectEntity;
@@ -75,6 +77,10 @@ public class QuestionEntity extends BaseTimeEntity {
 
     @Column(name = "display_order")
     private Integer displayOrder;
+
+    /** 어드민 LLM 검증용 export 마크. NULL이면 한 번도 export 안 됨. */
+    @Column(name = "exported_at")
+    private LocalDateTime exportedAt;
 
     public QuestionEntity(SubjectEntity subject, String content, int correctOption, String explanation) {
         this.subject = subject;

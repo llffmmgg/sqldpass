@@ -106,4 +106,69 @@ public interface QuestionRepository extends JpaRepository<QuestionEntity, Long> 
     /** 정처기 다양성 검증용 — 최근 N개 문제의 본문 (subject scoped, 최신순) */
     @Query("SELECT q.content FROM QuestionEntity q WHERE q.subject.id = :subjectId ORDER BY q.id DESC")
     List<String> findRecentContentsBySubjectId(@Param("subjectId") Long subjectId, Pageable pageable);
+
+    // ----------------------------------------------------------
+    // 어드민 LLM 검증용 Markdown export
+    // ----------------------------------------------------------
+
+    /**
+     * 정처기 export 대상 조회. 루트 subject 이름이 "정보처리기사 실기"인 모든 문제.
+     * onlyUnexported=true면 exported_at IS NULL인 것만.
+     */
+    @Query("""
+            SELECT q FROM QuestionEntity q
+            JOIN FETCH q.subject s
+            LEFT JOIN s.parent p
+            WHERE COALESCE(p.name, s.name) = :rootName
+              AND (:onlyUnexported = false OR q.exportedAt IS NULL)
+            ORDER BY q.id ASC
+            """)
+    List<QuestionEntity> findEngineerForExport(@Param("rootName") String rootName,
+                                               @Param("onlyUnexported") boolean onlyUnexported);
+
+    /**
+     * SQLD export 대상 조회. 루트 subject 이름이 "정보처리기사 실기"가 아닌 모든 문제.
+     * onlyUnexported=true면 exported_at IS NULL인 것만.
+     */
+    @Query("""
+            SELECT q FROM QuestionEntity q
+            JOIN FETCH q.subject s
+            LEFT JOIN s.parent p
+            WHERE COALESCE(p.name, s.name) <> :engineerRootName
+              AND (:onlyUnexported = false OR q.exportedAt IS NULL)
+            ORDER BY q.id ASC
+            """)
+    List<QuestionEntity> findSqldForExport(@Param("engineerRootName") String engineerRootName,
+                                           @Param("onlyUnexported") boolean onlyUnexported);
+
+    /** ID 목록을 일괄 export 마크 */
+    @Modifying
+    @Query("UPDATE QuestionEntity q SET q.exportedAt = :now WHERE q.id IN :ids")
+    int markAsExported(@Param("ids") List<Long> ids, @Param("now") LocalDateTime now);
+
+    /** 정처기 export 마크 일괄 리셋 */
+    @Modifying
+    @Query("""
+            UPDATE QuestionEntity q SET q.exportedAt = NULL
+            WHERE q.id IN (
+                SELECT q2.id FROM QuestionEntity q2
+                JOIN q2.subject s
+                LEFT JOIN s.parent p
+                WHERE COALESCE(p.name, s.name) = :rootName
+            )
+            """)
+    int resetEngineerExportMark(@Param("rootName") String rootName);
+
+    /** SQLD export 마크 일괄 리셋 */
+    @Modifying
+    @Query("""
+            UPDATE QuestionEntity q SET q.exportedAt = NULL
+            WHERE q.id IN (
+                SELECT q2.id FROM QuestionEntity q2
+                JOIN q2.subject s
+                LEFT JOIN s.parent p
+                WHERE COALESCE(p.name, s.name) <> :engineerRootName
+            )
+            """)
+    int resetSqldExportMark(@Param("engineerRootName") String engineerRootName);
 }
