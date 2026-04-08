@@ -220,7 +220,7 @@ public class AiProvider {
     public AiVerificationResponse verifyQuestion(AiVerificationRequest request) {
         String prompt = PromptBuilder.buildVerificationPrompt(request);
         String responseText = chatClient.prompt()
-                .system(PromptBuilder.VERIFICATION_SYSTEM_PROMPT)
+                .system(PromptBuilder.buildVerificationSystemPrompt(request))
                 .user(prompt)
                 .call()
                 .content();

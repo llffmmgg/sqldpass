@@ -27,53 +27,39 @@ import com.sqldpass.service.common.ErrorCode;
 import com.sqldpass.service.common.SqldpassException;
 import com.sqldpass.service.generation.AiProvider;
 import com.sqldpass.service.generation.QuestionContentHasher;
+import com.sqldpass.service.generation.SqldMcqGenerationValidator;
 import com.sqldpass.service.generation.TopicExamples;
-import com.sqldpass.service.notification.DiscordNotifier;
 import com.sqldpass.service.generation.dto.AiGenerationRequest;
 import com.sqldpass.service.generation.dto.AiGenerationResponse;
 import com.sqldpass.service.generation.dto.GeneratedQuestion;
+import com.sqldpass.service.notification.DiscordNotifier;
 
 import lombok.extern.slf4j.Slf4j;
 
-/**
- * SQLD 모의고사 생성기 — 정처기/컴활과 동일 패턴(시드 + AI 변형 + 사용자 지정 난이도).
- *
- * 시드 소스: TopicExamples (HTML 기출 기반 토픽별 [기본/심화/고난도] JSON 시드).
- *
- * 표준 SQLD 시험 50문항 분포 (실제 출제 비중 반영):
- * - 1과목: 데이터 모델링의 이해 (총 10문항)
- *   · 데이터 모델링의 이해 (id=3): 5문항
- *   · 데이터 모델과 SQL    (id=4): 5문항
- * - 2과목: SQL 기본 및 활용 (총 40문항)
- *   · SQL 기본 (id=5): 20문항
- *   · SQL 활용 (id=6): 15문항
- *   · 관리 구문 (id=7): 5문항  ← 실제 SQLD에서 관리 구문은 5~6문항 비중
- *
- * 흐름: 카테고리 → TopicExamples.randomFor(needed) → AI 변형 → 사용자 지정 난이도로 강제 저장 → 편성.
- */
 @Slf4j
 @Component
 public class MockExamCreator {
 
-    /** 카테고리(과목) ID → needed 문항 수. 실제 SQLD 출제 비중 반영. */
+    private static final int MAX_REGENERATION = 2;
+
     private static final Map<Long, Integer> DISTRIBUTION;
-    /** 카테고리 ID → 표시 이름 (TopicExamples.SQLD_SUBJECT_TOPICS 키와 일치) */
     private static final Map<Long, String> CATEGORY_NAMES;
+
     static {
         LinkedHashMap<Long, Integer> dist = new LinkedHashMap<>();
-        dist.put(3L, 5);   // 1과목: 데이터 모델링의 이해 (시드 15)
-        dist.put(4L, 5);   // 1과목: 데이터 모델과 SQL    (시드 6)
-        dist.put(5L, 20);  // 2과목: SQL 기본              (시드 27)
-        dist.put(6L, 15);  // 2과목: SQL 활용              (시드 24)
-        dist.put(7L, 5);   // 2과목: 관리 구문             (시드 6)
-        DISTRIBUTION = dist;  // 합 50
+        dist.put(3L, 5);
+        dist.put(4L, 5);
+        dist.put(5L, 20);
+        dist.put(6L, 15);
+        dist.put(7L, 5);
+        DISTRIBUTION = dist;
 
         LinkedHashMap<Long, String> names = new LinkedHashMap<>();
-        names.put(3L, "데이터 모델링의 이해");
-        names.put(4L, "데이터 모델과 SQL");
-        names.put(5L, "SQL 기본");
-        names.put(6L, "SQL 활용");
-        names.put(7L, "관리 구문");
+        names.put(3L, "\uB370\uC774\uD130 \uBAA8\uB378\uB9C1\uC758 \uC774\uD574");
+        names.put(4L, "\uB370\uC774\uD130 \uBAA8\uB378\uACFC SQL");
+        names.put(5L, "SQL \uAE30\uBCF8");
+        names.put(6L, "SQL \uD65C\uC6A9");
+        names.put(7L, "\uAD00\uB9AC \uAD6C\uBB38");
         CATEGORY_NAMES = names;
     }
 
@@ -105,81 +91,66 @@ public class MockExamCreator {
     public MockExamEntity create(MockExamDifficulty mockExamDifficulty) {
         MockExamDifficulty difficulty = mockExamDifficulty != null ? mockExamDifficulty : MockExamDifficulty.NORMAL;
         int nextSeq = mockExamRepository.findMaxSequenceByExamType(ExamType.SQLD).orElse(0) + 1;
-        String name = "SQLD 모의고사 " + nextSeq + "회";
+        String name = "SQLD \uBAA8\uC758\uACE0\uC0AC " + nextSeq + "\uD68C";
 
         int totalQuestions = DISTRIBUTION.values().stream().mapToInt(Integer::intValue).sum();
         List<Integer> difficultySlots = buildDifficultySlots(difficulty, totalQuestions);
 
-        log.info("SQLD 모의고사 생성 시작 - sequence={}, 평균난이도={}, 총문항={}",
+        log.info("SQLD mock exam generation started - sequence={}, difficulty={}, totalQuestions={}",
                 nextSeq, difficulty, totalQuestions);
 
         List<QuestionEntity> picked = new ArrayList<>();
         Set<String> exhibitedHashes = new HashSet<>();
         int slotCursor = 0;
+
         for (Map.Entry<Long, Integer> entry : DISTRIBUTION.entrySet()) {
             Long subjectId = entry.getKey();
             int needed = entry.getValue();
             String categoryName = CATEGORY_NAMES.get(subjectId);
 
-            // 1) TopicExamples에서 카테고리 시드 풀(토픽 × 3난이도) → needed개 무작위 추출
             List<String> seedJsons = TopicExamples.randomFor(categoryName, needed, random);
             if (seedJsons.size() < needed) {
                 throw new SqldpassException(
                         ErrorCode.MOCK_EXAM_INSUFFICIENT_QUESTIONS,
-                        String.format("SQLD 카테고리 '%s' TopicExamples 시드 풀이 부족합니다 (필요 %d, 보유 %d). " +
-                                        "TopicExamples.SQLD_SUBJECT_TOPICS에 토픽을 추가하거나 needed를 줄이세요.",
+                        String.format("SQLD category '%s' does not have enough seeds (needed=%d, available=%d)",
                                 categoryName, needed, seedJsons.size()));
             }
 
-            // 2) 카테고리에 할당된 목표 난이도 슬롯 needed개 슬라이스
             List<Integer> targetDifficulties = new ArrayList<>(
                     difficultySlots.subList(slotCursor, slotCursor + needed));
             slotCursor += needed;
 
-            // 3) 회피 신호 — 최근 출제 요약
             List<String> recentSummaries = questionRepository.findSummariesBySubjectId(subjectId);
+            Set<String> knownSummaryKeys = recentSummaries.stream()
+                    .map(SqldMcqGenerationValidator::normalizeSummary)
+                    .filter(key -> key != null && !key.isBlank())
+                    .collect(Collectors.toCollection(HashSet::new));
 
-            // 4) Subject 조회 (저장용)
             SubjectEntity subject = subjectRepository.findById(subjectId)
                     .orElseThrow(() -> new SqldpassException(ErrorCode.SUBJECT_NOT_FOUND));
 
-            // 5) AI 호출 — 시드 변형 + 목표 난이도 (chunk 분할은 AiProvider 내부에서 자동)
             AiGenerationRequest request = new AiGenerationRequest(
                     categoryName, subjectId, categoryName,
                     recentSummaries, needed, ExamType.SQLD);
-            AiGenerationResponse response = sqldAiProvider
-                    .generateSqldFromSeeds(request, seedJsons, targetDifficulties, recentSummaries);
-            List<GeneratedQuestion> generated = response.questions();
-            if (generated == null || generated.size() < needed) {
-                throw new SqldpassException(
-                        ErrorCode.MOCK_EXAM_INSUFFICIENT_QUESTIONS,
-                        String.format("'%s' SQLD AI 생성 실패 (필요 %d, 생성 %d)",
-                                categoryName, needed, generated == null ? 0 : generated.size()));
-            }
 
-            // 6) 본문 hash 중복 검증 — 회차 내 + DB 기존과 충돌 시 1회 재시도
-            if (hasHashConflict(generated, needed, exhibitedHashes)) {
-                log.warn("SQLD 카테고리 '{}' 본문 hash 중복 감지 — 1회 재시도", categoryName);
-                response = sqldAiProvider
-                        .generateSqldFromSeeds(request, seedJsons, targetDifficulties, recentSummaries);
-                generated = response.questions();
-                if (generated == null || generated.size() < needed) {
-                    throw new SqldpassException(
-                            ErrorCode.MOCK_EXAM_INSUFFICIENT_QUESTIONS,
-                            String.format("'%s' SQLD 재시도 실패 (필요 %d, 생성 %d)",
-                                    categoryName, needed, generated == null ? 0 : generated.size()));
-                }
-            }
+            List<GeneratedQuestion> generated = validateAndRetry(
+                    request, seedJsons, targetDifficulties, recentSummaries,
+                    knownSummaryKeys, exhibitedHashes, needed, categoryName);
 
-            // 7) 저장 — 사용자 지정 난이도로 강제 + content_hash 등록
             for (int i = 0; i < needed; i++) {
-                GeneratedQuestion gq = generated.get(i);
+                GeneratedQuestion question = generated.get(i);
                 int targetDifficulty = targetDifficulties.get(i);
-                String hash = QuestionContentHasher.hashOf(gq.content());
-                QuestionEntity entity = toQuestionEntity(subject, gq, targetDifficulty);
+                String hash = QuestionContentHasher.hashOf(question.content());
+
+                QuestionEntity entity = toQuestionEntity(subject, question, targetDifficulty);
                 entity.assignContentHash(hash);
                 picked.add(questionRepository.save(entity));
                 exhibitedHashes.add(hash);
+
+                String summaryKey = SqldMcqGenerationValidator.normalizeSummary(question.summary());
+                if (summaryKey != null) {
+                    knownSummaryKeys.add(summaryKey);
+                }
             }
         }
 
@@ -187,7 +158,8 @@ public class MockExamCreator {
         for (int i = 0; i < picked.size(); i++) {
             saved.linkQuestion(picked.get(i), i + 1);
         }
-        log.info("SQLD 모의고사 생성 완료 - id={}, 문항수={}", saved.getId(), picked.size());
+
+        log.info("SQLD mock exam generation completed - id={}, questionCount={}", saved.getId(), picked.size());
 
         Map<String, Long> categoryDist = picked.stream()
                 .collect(Collectors.groupingBy(
@@ -199,7 +171,6 @@ public class MockExamCreator {
         return saved;
     }
 
-    /** 사용자 지정 평균 난이도 → 분포 슬롯 (정처기/컴활과 동일 4단계) */
     private List<Integer> buildDifficultySlots(MockExamDifficulty difficulty, int totalQuestions) {
         int[] dist = switch (difficulty) {
             case EASY -> new int[]{60, 30, 10, 0};
@@ -207,6 +178,7 @@ public class MockExamCreator {
             case HARD -> new int[]{5, 25, 50, 20};
             case VERY_HARD -> new int[]{0, 10, 30, 60};
         };
+
         int l1 = Math.round(totalQuestions * dist[0] / 100f);
         int l2 = Math.round(totalQuestions * dist[1] / 100f);
         int l3 = Math.round(totalQuestions * dist[2] / 100f);
@@ -219,6 +191,7 @@ public class MockExamCreator {
                 l3 = 0;
             }
         }
+
         List<Integer> slots = new ArrayList<>(totalQuestions);
         for (int i = 0; i < l1; i++) slots.add(1);
         for (int i = 0; i < l2; i++) slots.add(2);
@@ -228,26 +201,100 @@ public class MockExamCreator {
         return slots;
     }
 
-    /** 회차 내 hash 또는 DB 기존 hash와 충돌하는 본문이 하나라도 있는지 검사 */
-    private boolean hasHashConflict(List<GeneratedQuestion> generated, int needed, Set<String> exhibited) {
-        for (int i = 0; i < needed && i < generated.size(); i++) {
-            String h = QuestionContentHasher.hashOf(generated.get(i).content());
-            if (exhibited.contains(h) || questionRepository.existsByContentHash(h)) {
-                return true;
+    private List<GeneratedQuestion> validateAndRetry(AiGenerationRequest request,
+                                                     List<String> seedJsons,
+                                                     List<Integer> targetDifficulties,
+                                                     List<String> recentSummaries,
+                                                     Set<String> knownSummaryKeys,
+                                                     Set<String> exhibitedHashes,
+                                                     int needed,
+                                                     String categoryName) {
+        List<String> summaryHints = new ArrayList<>(recentSummaries);
+        List<GeneratedQuestion> current = callAi(request, seedJsons, targetDifficulties, summaryHints, needed);
+
+        for (int attempt = 0; attempt <= MAX_REGENERATION; attempt++) {
+            List<String> issues = findIssues(current, needed, knownSummaryKeys, exhibitedHashes);
+            if (issues.isEmpty()) {
+                return current;
             }
+
+            log.warn("SQLD category '{}' generated invalid payload (attempt={}): {}",
+                    categoryName, attempt, issues);
+
+            if (attempt == MAX_REGENERATION) {
+                throw new SqldpassException(
+                        ErrorCode.MOCK_EXAM_INSUFFICIENT_QUESTIONS,
+                        String.format("'%s' SQLD generation payload is invalid: %s",
+                                categoryName, String.join(" | ", issues)));
+            }
+
+            current.stream()
+                    .map(GeneratedQuestion::summary)
+                    .filter(summary -> summary != null && !summary.isBlank())
+                    .forEach(summaryHints::add);
+            current = callAi(request, seedJsons, targetDifficulties, summaryHints, needed);
         }
-        return false;
+
+        throw new SqldpassException(ErrorCode.MOCK_EXAM_INSUFFICIENT_QUESTIONS,
+                "'" + categoryName + "' SQLD regeneration loop ended unexpectedly");
     }
 
-    /** AI 응답을 4지선다 객관식 QuestionEntity로 변환 (사용자 지정 난이도 사용) */
-    private QuestionEntity toQuestionEntity(SubjectEntity subject, GeneratedQuestion gq, int targetDifficulty) {
-        int correctOption = gq.correctOption() != null ? gq.correctOption() : 1;
+    private List<GeneratedQuestion> callAi(AiGenerationRequest request,
+                                           List<String> seedJsons,
+                                           List<Integer> targetDifficulties,
+                                           List<String> recentSummaries,
+                                           int needed) {
+        AiGenerationResponse response = sqldAiProvider
+                .generateSqldFromSeeds(request, seedJsons, targetDifficulties, recentSummaries);
+        List<GeneratedQuestion> generated = response.questions();
+        if (generated == null || generated.size() < needed) {
+            throw new SqldpassException(
+                    ErrorCode.MOCK_EXAM_INSUFFICIENT_QUESTIONS,
+                    String.format("'%s' SQLD AI generation failed (needed=%d, generated=%d)",
+                            request.subjectName(), needed, generated == null ? 0 : generated.size()));
+        }
+        return generated;
+    }
+
+    private List<String> findIssues(List<GeneratedQuestion> generated,
+                                    int needed,
+                                    Set<String> knownSummaryKeys,
+                                    Set<String> exhibitedHashes) {
+        List<String> issues = new ArrayList<>();
+        Set<String> batchSummaryKeys = new HashSet<>(knownSummaryKeys);
+        Set<String> batchHashes = new HashSet<>(exhibitedHashes);
+
+        for (int i = 0; i < needed && i < generated.size(); i++) {
+            GeneratedQuestion question = generated.get(i);
+            List<String> basicIssues = SqldMcqGenerationValidator.basicIssues(question);
+            if (!basicIssues.isEmpty()) {
+                issues.add("Question " + (i + 1) + ": " + String.join(", ", basicIssues));
+                continue;
+            }
+
+            String summaryKey = SqldMcqGenerationValidator.normalizeSummary(question.summary());
+            if (summaryKey != null && !batchSummaryKeys.add(summaryKey)) {
+                issues.add("Question " + (i + 1) + ": summary duplicates an existing question");
+            }
+
+            String hash = QuestionContentHasher.hashOf(question.content());
+            if (!batchHashes.add(hash) || questionRepository.existsByContentHash(hash)) {
+                issues.add("Question " + (i + 1) + ": content duplicates an existing question");
+            }
+        }
+
+        return issues;
+    }
+
+    private QuestionEntity toQuestionEntity(SubjectEntity subject,
+                                            GeneratedQuestion question,
+                                            int targetDifficulty) {
         return new QuestionEntity(
                 subject,
-                gq.content(),
-                correctOption,
-                gq.explanation(),
-                gq.summary(),
+                question.content(),
+                question.correctOption(),
+                question.explanation(),
+                question.summary(),
                 null,
                 targetDifficulty
         );

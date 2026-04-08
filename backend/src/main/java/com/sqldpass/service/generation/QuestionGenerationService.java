@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import com.sqldpass.persistent.mockexam.ExamType;
 import com.sqldpass.persistent.question.QuestionEntity;
 import com.sqldpass.persistent.question.QuestionRepository;
 import com.sqldpass.persistent.subject.SubjectEntity;
@@ -123,6 +124,10 @@ public class QuestionGenerationService {
                 try {
                     List<String> existingSummaries = questionRepository.findSummariesBySubjectIdAndTopic(
                             subject.getId(), topic);
+                    Set<String> existingSummaryKeys = existingSummaries.stream()
+                            .map(SqldMcqGenerationValidator::normalizeSummary)
+                            .filter(key -> key != null && !key.isBlank())
+                            .collect(java.util.stream.Collectors.toCollection(HashSet::new));
 
                     AiGenerationRequest request = new AiGenerationRequest(
                             subject.getName(), subject.getId(), topic, existingSummaries, 3);
@@ -148,11 +153,18 @@ public class QuestionGenerationService {
                         question = new GeneratedQuestion(
                                 question.content(), question.correctOption(), question.explanation(),
                                 question.summary(), topic, question.difficulty());
+                        List<String> validationIssues = SqldMcqGenerationValidator.basicIssues(question);
+                        if (!validationIssues.isEmpty()) {
+                            log.warn("Invalid SQLD generation payload for topic '{}': {}", topic, validationIssues);
+                            errors.add("생성 실패 [" + topic + "]: " + String.join(", ", validationIssues));
+                            continue;
+                        }
                         // 현재 사용하지 않음
                         if (verificationEnabled && callCount < maxCallsPerRun) {
                             try {
                                 Thread.sleep(10000);
-                                AiVerificationRequest verifyRequest = new AiVerificationRequest(subject.getName(), question);
+                                AiVerificationRequest verifyRequest = new AiVerificationRequest(
+                                        ExamType.SQLD, subject.getName(), question);
                                 AiVerificationResponse verifyResponse = verifier.verifyQuestion(verifyRequest);
                                 callCount++;
 
@@ -176,14 +188,23 @@ public class QuestionGenerationService {
                                 }
                                 totalVerified++;
                             } catch (Exception e) {
-                                log.error("Verification failed for topic '{}', saving anyway", topic, e);
+                                log.error("Verification failed for topic '{}', skipping save", topic, e);
                                 errors.add("검증 실패 [" + topic + "]: " + e.getMessage());
+                                continue;
                             }
                         } else {
                             totalVerified++;
                         }
 
-                        if (question.summary() != null && existingSummaries.contains(question.summary())) {
+                        validationIssues = SqldMcqGenerationValidator.basicIssues(question);
+                        if (!validationIssues.isEmpty()) {
+                            log.warn("Invalid SQLD generation payload after verification for topic '{}': {}", topic, validationIssues);
+                            errors.add("생성 실패 [" + topic + "]: " + String.join(", ", validationIssues));
+                            continue;
+                        }
+
+                        String summaryKey = SqldMcqGenerationValidator.normalizeSummary(question.summary());
+                        if (summaryKey != null && existingSummaryKeys.contains(summaryKey)) {
                             log.info("Duplicate summary detected, skipping: {}", question.summary());
                             continue;
                         }
@@ -207,6 +228,9 @@ public class QuestionGenerationService {
 
                         if (question.summary() != null) {
                             existingSummaries.add(question.summary());
+                        }
+                        if (summaryKey != null) {
+                            existingSummaryKeys.add(summaryKey);
                         }
                     }
 

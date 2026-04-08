@@ -22,7 +22,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 
-@Tag(name = "관리자 — 모의고사", description = "모의고사 생성/관리 API")
+@Tag(name = "\uAD00\uB9AC\uC790 - \uBAA8\uC758\uACE0\uC0AC", description = "\uBAA8\uC758\uACE0\uC0AC \uC0DD\uC131/\uAD00\uB9AC API")
 @RestController
 @RequestMapping("/api/admin/mock-exams")
 @RequiredArgsConstructor
@@ -31,7 +31,7 @@ public class AdminMockExamController {
     private final MockExamService mockExamService;
 
     @GetMapping
-    @Operation(summary = "모의고사 목록 (관리자)")
+    @Operation(summary = "\uBAA8\uC758\uACE0\uC0AC \uBAA9\uB85D (\uAD00\uB9AC\uC790)")
     public List<MockExamSummaryResponse> list() {
         return mockExamService.getAll().stream()
                 .map(MockExamSummaryResponse::from)
@@ -39,7 +39,10 @@ public class AdminMockExamController {
     }
 
     @PostMapping
-    @Operation(summary = "신규 모의고사 생성", description = "body.examType 생략 시 SQLD (4지선다 50문항). ENGINEER_PRACTICAL 지정 시 정보처리기사 실기 (단답/서술 20문항). difficulty(EASY/NORMAL/HARD)는 정처기에만 적용.")
+    @Operation(
+            summary = "\uC2E0\uADDC \uBAA8\uC758\uACE0\uC0AC \uC0DD\uC131",
+            description = "body.examType \uC0DD\uB7B5 \uC2DC SQLD. difficulty(EASY/NORMAL/HARD/VERY_HARD)\uB294 SQLD, \uC815\uCC98\uAE30 \uC2E4\uAE30, \uCEF4\uD65C 1\uAE09 \uBAA8\uB450\uC5D0 \uC801\uC6A9\uB429\uB2C8\uB2E4."
+    )
     @ResponseStatus(HttpStatus.CREATED)
     public MockExamSummaryResponse create(@RequestBody(required = false) CreateMockExamRequest body) {
         ExamType type = (body != null && body.examType() != null) ? body.examType() : ExamType.SQLD;
@@ -48,7 +51,7 @@ public class AdminMockExamController {
     }
 
     @DeleteMapping("/{id}")
-    @Operation(summary = "모의고사 삭제")
+    @Operation(summary = "\uBAA8\uC758\uACE0\uC0AC \uC0AD\uC81C")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable Long id) {
         mockExamService.delete(id);

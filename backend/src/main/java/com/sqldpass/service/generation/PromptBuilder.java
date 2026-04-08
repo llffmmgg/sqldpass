@@ -1,5 +1,7 @@
 package com.sqldpass.service.generation;
 
+import com.sqldpass.persistent.mockexam.ExamType;
+import com.sqldpass.persistent.question.QuestionType;
 import com.sqldpass.service.generation.ComputerLiteracyTopicExamples.CL1Example;
 import com.sqldpass.service.generation.EngineerTopicExamples.EngineerExample;
 import com.sqldpass.service.generation.dto.*;
@@ -410,12 +412,108 @@ public class PromptBuilder {
         return sb.toString();
     }
 
-    static String buildVerificationPrompt(AiVerificationRequest request) {
+    static String buildLegacyVerificationPrompt(AiVerificationRequest request) {
         GeneratedQuestion q = request.question();
         return "과목: " + request.subjectName() + "\n\n" +
                 "문제:\n" + q.content() + "\n\n" +
                 "정답: " + q.correctOption() + "번\n\n" +
                 "해설:\n" + q.explanation();
+    }
+
+    static String buildVerificationSystemPrompt(AiVerificationRequest request) {
+        return switch (resolveExamType(request)) {
+            case ENGINEER_PRACTICAL -> """
+                    당신은 정보처리기사 실기 문제 검수 전문가입니다.
+                    주어진 문제, 모범답안, 채점 키워드, 해설이 서로 일관적인지 검토하세요.
+
+                    검토 기준:
+                    1. 문제 유형(questionType)에 맞는 정답(answerText)인지
+                    2. keywords가 채점 기준으로 충분하고 answerText와 모순되지 않는지
+                    3. 해설이 정답 근거를 정확히 설명하는지
+                    4. 문제 표현이 명확하고 난이도가 요청된 수준과 어긋나지 않는지
+
+                    반드시 아래 JSON 형식으로만 응답하세요.
+                    {"approved": true, "reason": "확인/거절 사유"}
+                    """;
+            case COMPUTER_LITERACY_1 -> """
+                    당신은 컴퓨터활용능력 1급 실기 객관식 문제 검수 전문가입니다.
+                    주어진 문제, 정답 번호, 해설이 서로 일관적인지 검토하세요.
+
+                    검토 기준:
+                    1. 정답 번호가 실제로 맞는지
+                    2. 오답 선택지가 명확하게 틀렸는지
+                    3. 해설이 정답과 오답의 이유를 모두 설명하는지
+                    4. 문제 표현이 명확하고 난이도가 요청된 수준과 어긋나지 않는지
+
+                    반드시 아래 JSON 형식으로만 응답하세요.
+                    {"approved": true, "reason": "확인/거절 사유"}
+                    """;
+            case SQLD -> """
+                    당신은 SQLD 객관식 문제 검수 전문가입니다.
+                    주어진 문제, 정답 번호, 해설이 서로 일관적인지 검토하세요.
+
+                    검토 기준:
+                    1. 정답 번호가 실제로 맞는지
+                    2. 오답 선택지가 명확하게 틀렸는지
+                    3. 해설이 정답과 오답의 이유를 모두 설명하는지
+                    4. 문제 표현이 명확하고 난이도가 요청된 수준과 어긋나지 않는지
+
+                    반드시 아래 JSON 형식으로만 응답하세요.
+                    {"approved": true, "reason": "확인/거절 사유"}
+                    """;
+        };
+    }
+
+    static String buildVerificationPrompt(AiVerificationRequest request) {
+        GeneratedQuestion q = request.question();
+        QuestionType questionType = resolveQuestionType(q);
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("시험 유형: ").append(resolveExamType(request)).append("\n");
+        sb.append("과목: ").append(request.subjectName()).append("\n");
+        if (q.topic() != null && !q.topic().isBlank()) {
+            sb.append("토픽: ").append(q.topic()).append("\n");
+        }
+        if (q.summary() != null && !q.summary().isBlank()) {
+            sb.append("요약: ").append(q.summary()).append("\n");
+        }
+        if (q.difficulty() != null) {
+            sb.append("난이도: ").append(q.difficulty()).append("\n");
+        }
+        sb.append("문제 유형: ").append(questionType.name()).append("\n\n");
+        sb.append("문제:\n").append(q.content()).append("\n\n");
+
+        if (questionType == QuestionType.MCQ) {
+            sb.append("정답 번호: ")
+                    .append(q.correctOption() == null ? "(없음)" : q.correctOption())
+                    .append("\n\n");
+        } else {
+            sb.append("모범 답안:\n")
+                    .append(q.answerText() == null || q.answerText().isBlank() ? "(없음)" : q.answerText())
+                    .append("\n\n");
+            if (q.keywords() != null && !q.keywords().isEmpty()) {
+                sb.append("채점 키워드: ").append(String.join(", ", q.keywords())).append("\n\n");
+            }
+        }
+
+        sb.append("해설:\n")
+                .append(q.explanation() == null || q.explanation().isBlank() ? "(없음)" : q.explanation());
+        return sb.toString();
+    }
+
+    private static ExamType resolveExamType(AiVerificationRequest request) {
+        return request.examType() != null ? request.examType() : ExamType.SQLD;
+    }
+
+    private static QuestionType resolveQuestionType(GeneratedQuestion question) {
+        if (question.questionType() == null || question.questionType().isBlank()) {
+            return QuestionType.MCQ;
+        }
+        try {
+            return QuestionType.valueOf(question.questionType());
+        } catch (IllegalArgumentException e) {
+            return QuestionType.MCQ;
+        }
     }
 
     static String buildFixPrompt(GeneratedQuestion question, String reason) {

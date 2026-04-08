@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.sqldpass.controller.admin.dto.AdminQuestionResponse;
 import com.sqldpass.controller.admin.dto.AdminQuestionUpdateRequest;
 import com.sqldpass.controller.admin.dto.QuestionVerifyResultResponse;
+import com.sqldpass.persistent.mockexam.ExamType;
 import com.sqldpass.persistent.question.QuestionEntity;
 import com.sqldpass.persistent.question.QuestionRepository;
 import com.sqldpass.service.common.ErrorCode;
@@ -23,14 +24,20 @@ import com.sqldpass.service.generation.dto.AiVerificationResponse;
 import com.sqldpass.service.generation.dto.GeneratedQuestion;
 
 import lombok.extern.slf4j.Slf4j;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.ObjectMapper;
 
 @Slf4j
 @Service
 @Transactional(readOnly = true)
 public class AdminQuestionService {
 
+    private static final String ENGINEER_ROOT_NAME = "\uC815\uBCF4\uCC98\uB9AC\uAE30\uC0AC \uC2E4\uAE30";
+    private static final String COMPUTER_LITERACY_ROOT_NAME = "\uCEF4\uD4E8\uD130\uD65C\uC6A9\uB2A5\uB825 1\uAE09 \uC2E4\uAE30";
+
     private final QuestionRepository questionRepository;
     private final AiProvider verifier;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     public AdminQuestionService(QuestionRepository questionRepository,
                                 @Qualifier("verifier") AiProvider verifier) {
@@ -62,16 +69,16 @@ public class AdminQuestionService {
             try {
                 GeneratedQuestion gq = new GeneratedQuestion(
                         q.getContent(),
-                        q.getCorrectOption() != null ? q.getCorrectOption() : 1,
+                        q.getCorrectOption(),
                         q.getExplanation(),
                         q.getSummary(),
                         q.getTopic(),
                         q.getDifficulty(),
                         q.getQuestionType() != null ? q.getQuestionType().name() : null,
                         q.getAnswer(),
-                        null);
+                        parseKeywords(q.getKeywords()));
                 AiVerificationResponse resp = verifier.verifyQuestion(
-                        new AiVerificationRequest(q.getSubject().getName(), gq));
+                        new AiVerificationRequest(resolveExamType(q), q.getSubject().getName(), gq));
                 if (!resp.approved()) {
                     suspicious.add(new QuestionVerifyResultResponse(
                             q.getId(), q.getSubject().getName(), q.getSummary(), resp.reason()));
@@ -128,5 +135,30 @@ public class AdminQuestionService {
 
     public long countToday() {
         return questionRepository.countByCreatedAtAfter(LocalDate.now().atStartOfDay());
+    }
+
+    private ExamType resolveExamType(QuestionEntity question) {
+        String rootName = question.getSubject().getParent() != null
+                ? question.getSubject().getParent().getName()
+                : question.getSubject().getName();
+        if (ENGINEER_ROOT_NAME.equals(rootName)) {
+            return ExamType.ENGINEER_PRACTICAL;
+        }
+        if (COMPUTER_LITERACY_ROOT_NAME.equals(rootName)) {
+            return ExamType.COMPUTER_LITERACY_1;
+        }
+        return ExamType.SQLD;
+    }
+
+    private List<String> parseKeywords(String rawKeywords) {
+        if (rawKeywords == null || rawKeywords.isBlank()) {
+            return null;
+        }
+        try {
+            return objectMapper.readValue(rawKeywords, new TypeReference<List<String>>() {});
+        } catch (Exception e) {
+            log.warn("Failed to parse keywords JSON for verification, using raw text");
+            return List.of(rawKeywords);
+        }
     }
 }

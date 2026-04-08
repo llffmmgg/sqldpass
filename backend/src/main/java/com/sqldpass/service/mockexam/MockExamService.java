@@ -28,7 +28,6 @@ public class MockExamService {
     private final EngineerMockExamCreator engineerMockExamCreator;
     private final ComputerLiteracyMockExamCreator computerLiteracyMockExamCreator;
 
-    /** 모의고사 목록 조회 (최신 sequence 순) — 단일 GROUP BY 쿼리로 N+1 방지 */
     public List<MockExam> getAll() {
         return mockExamRepository.findAllWithQuestionCounts().stream()
                 .map(row -> {
@@ -42,23 +41,21 @@ public class MockExamService {
                 .toList();
     }
 
-    /** 모의고사 상세 (50문항 포함, 정답 미포함) */
     public MockExam get(Long id) {
         MockExamEntity entity = mockExamRepository.findByIdWithQuestions(id)
                 .orElseThrow(() -> new SqldpassException(ErrorCode.MOCK_EXAM_NOT_FOUND));
         return MockExamMapper.toDomain(entity);
     }
 
-    /** 신규 모의고사 생성 (관리자 호출). examType null 이면 SQLD 기본값. */
     @Transactional
     public MockExam create(ExamType examType) {
         return create(examType, null);
     }
 
     /**
-     * 신규 모의고사 생성 (관리자 호출, 난이도 지정 가능).
-     * - difficulty는 정처기에만 적용. SQLD는 무시.
-     * - difficulty null이면 NORMAL 기본값(EngineerMockExamCreator 내부 처리).
+     * Create a new mock exam with an optional difficulty preset.
+     * The preset is forwarded to SQLD, engineer practical, and computer literacy creators.
+     * When null, each creator falls back to NORMAL.
      */
     @Transactional
     public MockExam create(ExamType examType, MockExamDifficulty difficulty) {
@@ -68,19 +65,17 @@ public class MockExamService {
             case ENGINEER_PRACTICAL -> engineerMockExamCreator.create(difficulty);
             case COMPUTER_LITERACY_1 -> computerLiteracyMockExamCreator.create(difficulty);
         };
-        // parent 과목까지 fetch한 상태로 리로드 (매퍼에서 N+1 방지)
+
         MockExamEntity loaded = mockExamRepository.findByIdWithQuestions(created.getId())
                 .orElseThrow(() -> new SqldpassException(ErrorCode.MOCK_EXAM_NOT_FOUND));
         return MockExamMapper.toDomain(loaded);
     }
 
-    /** 모의고사 삭제 (관리자) */
     @Transactional
     public void delete(Long id) {
         if (!mockExamRepository.existsById(id)) {
             throw new SqldpassException(ErrorCode.MOCK_EXAM_NOT_FOUND);
         }
-        // 편성된 문제들을 풀로 복귀(FK 해제) 후 모의고사 삭제
         questionRepository.releaseFromMockExam(id);
         mockExamRepository.deleteById(id);
     }
