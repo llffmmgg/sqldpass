@@ -18,6 +18,11 @@ const CERT_META: Record<CertSlug, { title: string; description: string }> = {
     description:
       "정보처리기사 실기 카테고리별 기출 유형 — C언어, Java, Python, SQL, 소프트웨어 설계, 데이터베이스, 네트워크/OS, 보안, 신기술 동향.",
   },
+  "computer-literacy-1": {
+    title: "컴퓨터활용능력 1급 필기 기출문제 · 과목별 해설",
+    description:
+      "컴퓨터활용능력 1급 필기 — 컴퓨터 일반, 스프레드시트 일반, 데이터베이스 일반 60문항 4지선다 기출 유형과 해설.",
+  },
 };
 
 export async function generateStaticParams() {

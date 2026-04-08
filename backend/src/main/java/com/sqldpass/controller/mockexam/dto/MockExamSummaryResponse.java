@@ -47,10 +47,11 @@ public record MockExamSummaryResponse(
      * 시험 종류별 난이도 스케일을 0.0~1.0으로 정규화한다.
      * - SQLD: 0(기본) ~ 2(고난도) → avg / 2.0
      * - 정처기 실기: 1(쉬움) ~ 4(매우 어려움) → (avg - 1) / 3.0
+     * - 컴활 1급 필기: 1(쉬움) ~ 4(매우 어려움) → (avg - 1) / 3.0  (정처기와 동일 4단계)
      */
     private static Double normalize(ExamType examType, Double avg) {
         if (avg == null) return null;
-        if (examType == ExamType.ENGINEER_PRACTICAL) {
+        if (examType == ExamType.ENGINEER_PRACTICAL || examType == ExamType.COMPUTER_LITERACY_1) {
             return Math.max(0.0, Math.min(1.0, (avg - 1.0) / 3.0));
         }
         // SQLD 및 기본

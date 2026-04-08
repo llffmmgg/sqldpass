@@ -80,6 +80,35 @@ public class AiProvider {
         }
     }
 
+    /**
+     * 컴활 1급 필기 카테고리용 변형 문제 N개 생성 (시드 풀 + 사용자 지정 난이도).
+     */
+    public AiGenerationResponse generateComputerLiteracyQuestions(AiGenerationRequest request,
+                                                                  List<ComputerLiteracyTopicExamples.CL1Example> examples,
+                                                                  List<Integer> targetDifficulties,
+                                                                  List<String> recentSummaries,
+                                                                  List<String> recentAnswers) {
+        String prompt = PromptBuilder.buildComputerLiteracyPrompt(request, examples, targetDifficulties, recentSummaries, recentAnswers);
+        String responseText = chatClient.prompt()
+                .system(PromptBuilder.COMPUTER_LITERACY_GENERATION_SYSTEM_PROMPT)
+                .user(prompt)
+                .call()
+                .content();
+
+        try {
+            String json = extractJson(responseText);
+            JsonNode root = objectMapper.readTree(json);
+            JsonNode questionsNode = root.has("questions") ? root.get("questions") : root;
+            List<GeneratedQuestion> questions = objectMapper.readValue(
+                    questionsNode.toString(), new TypeReference<>() {});
+            return new AiGenerationResponse(questions);
+        } catch (Exception e) {
+            log.error("Failed to parse computer literacy generation response: {}", responseText, e);
+            throw new SqldpassException(ErrorCode.AI_GENERATION_FAILED,
+                    "컴활 AI 응답 파싱 실패 [" + request.subjectName() + "]: " + e.getMessage(), e);
+        }
+    }
+
     public AiVerificationResponse verifyQuestion(AiVerificationRequest request) {
         String prompt = PromptBuilder.buildVerificationPrompt(request);
         String responseText = chatClient.prompt()

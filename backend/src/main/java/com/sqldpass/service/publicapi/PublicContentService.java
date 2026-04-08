@@ -53,13 +53,18 @@ public class PublicContentService {
 
     public static final String SQLD_SLUG = "sqld";
     public static final String ENGINEER_SLUG = "engineer";
+    public static final String COMPUTER_LITERACY_SLUG = "computer-literacy-1";
     public static final String SQLD_NAME = "SQLD";
     public static final String ENGINEER_NAME = "정보처리기사 실기";
+    public static final String COMPUTER_LITERACY_NAME = "컴퓨터활용능력 1급 필기";
     private static final String ENGINEER_ROOT_SUBJECT_NAME = "정보처리기사 실기";
+    private static final String COMPUTER_LITERACY_ROOT_SUBJECT_NAME = "컴퓨터활용능력 1급 필기";
     private static final String SQLD_DESCRIPTION =
             "SQL 개발자(SQLD) 자격증 준비 — 1과목 데이터 모델링, 2과목 SQL 기본/활용 기출문제와 해설.";
     private static final String ENGINEER_DESCRIPTION =
             "정보처리기사 실기 준비 — C언어, Java, Python, SQL, 소프트웨어 설계, 데이터베이스, 네트워크/OS, 보안, 신기술 동향 기출 유형과 해설.";
+    private static final String COMPUTER_LITERACY_DESCRIPTION =
+            "컴퓨터활용능력 1급 필기 — 컴퓨터 일반, 스프레드시트 일반, 데이터베이스 일반 60문항 4지선다 기출 유형과 해설.";
 
     private final SubjectRepository subjectRepository;
     private final QuestionRepository questionRepository;
@@ -106,13 +111,16 @@ public class PublicContentService {
     public List<PublicCertResponse> listCerts() {
         List<PublicCategoryResponse> sqldCats = listSqldCategories();
         List<PublicCategoryResponse> engCats = listEngineerCategories();
+        List<PublicCategoryResponse> cl1Cats = listComputerLiteracyCategories();
 
         int sqldTotal = sqldCats.stream().mapToInt(PublicCategoryResponse::questionCount).sum();
         int engTotal = engCats.stream().mapToInt(PublicCategoryResponse::questionCount).sum();
+        int cl1Total = cl1Cats.stream().mapToInt(PublicCategoryResponse::questionCount).sum();
 
         return List.of(
                 new PublicCertResponse(SQLD_SLUG, SQLD_NAME, SQLD_DESCRIPTION, sqldTotal, sqldCats.size()),
-                new PublicCertResponse(ENGINEER_SLUG, ENGINEER_NAME, ENGINEER_DESCRIPTION, engTotal, engCats.size()));
+                new PublicCertResponse(ENGINEER_SLUG, ENGINEER_NAME, ENGINEER_DESCRIPTION, engTotal, engCats.size()),
+                new PublicCertResponse(COMPUTER_LITERACY_SLUG, COMPUTER_LITERACY_NAME, COMPUTER_LITERACY_DESCRIPTION, cl1Total, cl1Cats.size()));
     }
 
     // =================== 카테고리 목록 ===================
@@ -121,6 +129,7 @@ public class PublicContentService {
         return switch (certSlug) {
             case SQLD_SLUG -> listSqldCategories();
             case ENGINEER_SLUG -> listEngineerCategories();
+            case COMPUTER_LITERACY_SLUG -> listComputerLiteracyCategories();
             default -> throw new SqldpassException(ErrorCode.SUBJECT_NOT_FOUND, "알 수 없는 자격증: " + certSlug);
         };
     }
@@ -130,6 +139,7 @@ public class PublicContentService {
         List<PublicCategoryResponse> result = new ArrayList<>();
         for (SubjectEntity root : roots) {
             if (ENGINEER_ROOT_SUBJECT_NAME.equals(root.getName())) continue; // 정처기 루트 제외
+            if (COMPUTER_LITERACY_ROOT_SUBJECT_NAME.equals(root.getName())) continue; // 컴활 루트 제외
             List<SubjectEntity> children = subjectRepository.findByParentIdOrderByDisplayOrder(root.getId());
             for (SubjectEntity child : children) {
                 int count = (int) questionRepository.countBySubjectId(child.getId());
@@ -140,7 +150,15 @@ public class PublicContentService {
     }
 
     private List<PublicCategoryResponse> listEngineerCategories() {
-        SubjectEntity root = subjectRepository.findByNameAndParentIsNull(ENGINEER_ROOT_SUBJECT_NAME).orElse(null);
+        return listSingleRootCategories(ENGINEER_ROOT_SUBJECT_NAME);
+    }
+
+    private List<PublicCategoryResponse> listComputerLiteracyCategories() {
+        return listSingleRootCategories(COMPUTER_LITERACY_ROOT_SUBJECT_NAME);
+    }
+
+    private List<PublicCategoryResponse> listSingleRootCategories(String rootName) {
+        SubjectEntity root = subjectRepository.findByNameAndParentIsNull(rootName).orElse(null);
         if (root == null) return List.of();
         List<SubjectEntity> children = subjectRepository.findByParentIdOrderByDisplayOrder(root.getId());
         List<PublicCategoryResponse> result = new ArrayList<>();
@@ -188,6 +206,9 @@ public class PublicContentService {
         if (parent != null && ENGINEER_ROOT_SUBJECT_NAME.equals(parent.getName())) {
             certSlug = ENGINEER_SLUG;
             certName = ENGINEER_NAME;
+        } else if (parent != null && COMPUTER_LITERACY_ROOT_SUBJECT_NAME.equals(parent.getName())) {
+            certSlug = COMPUTER_LITERACY_SLUG;
+            certName = COMPUTER_LITERACY_NAME;
         } else {
             certSlug = SQLD_SLUG;
             certName = SQLD_NAME;

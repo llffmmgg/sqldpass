@@ -26,6 +26,7 @@ public class MockExamService {
     private final QuestionRepository questionRepository;
     private final MockExamCreator mockExamCreator;
     private final EngineerMockExamCreator engineerMockExamCreator;
+    private final ComputerLiteracyMockExamCreator computerLiteracyMockExamCreator;
 
     /** 모의고사 목록 조회 (최신 sequence 순) — 단일 GROUP BY 쿼리로 N+1 방지 */
     public List<MockExam> getAll() {
@@ -65,6 +66,7 @@ public class MockExamService {
         MockExamEntity created = switch (type) {
             case SQLD -> mockExamCreator.create();
             case ENGINEER_PRACTICAL -> engineerMockExamCreator.create(difficulty);
+            case COMPUTER_LITERACY_1 -> computerLiteracyMockExamCreator.create(difficulty);
         };
         // parent 과목까지 fetch한 상태로 리로드 (매퍼에서 N+1 방지)
         MockExamEntity loaded = mockExamRepository.findByIdWithQuestions(created.getId())
