@@ -64,7 +64,10 @@ public class AdminQuestionService {
     @Transactional
     public QuestionVerifyRunResponse verifyAll(ExamType examType, Long subjectId, int limit, boolean forceRecheck) {
         int requestedLimit = limit > 0 ? limit : 100;
-        SubjectEntity subject = subjectId != null ? subjectRepository.findById(subjectId).orElse(null) : null;
+        SubjectEntity subject = subjectId != null
+                ? subjectRepository.findById(subjectId)
+                        .orElseThrow(() -> new SqldpassException(ErrorCode.SUBJECT_NOT_FOUND))
+                : null;
         List<QuestionEntity> questions = fetchQuestionsForVerification(examType, subjectId, requestedLimit, !forceRecheck);
 
         List<QuestionVerifyResultResponse> suspicious = new ArrayList<>();
@@ -89,6 +92,8 @@ public class AdminQuestionService {
                     suspicious.add(new QuestionVerifyResultResponse(
                             question.getId(), question.getSubject().getName(), question.getSummary(), response.reason()));
                 }
+                // 호출이 정상 끝났을 때만 검증 완료 마킹 — 실패한 문제는 다음 회차에 다시 잡히도록 유지
+                question.markVerified(completedAt);
             } catch (Exception e) {
                 log.warn("Question #{} verification failed: {}", question.getId(), e.getMessage());
                 suspicious.add(new QuestionVerifyResultResponse(
@@ -98,7 +103,6 @@ public class AdminQuestionService {
                         "검증 호출 실패: " + e.getMessage()));
             }
 
-            question.markVerified(completedAt);
             processed++;
             if (processed % 20 == 0) {
                 log.info("LLM direct verification progress {}/{}", processed, questions.size());

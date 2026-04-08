@@ -29,12 +29,12 @@ type SubjectOption = {
 };
 
 const ENGINEER_ROOT_NAME = "정보처리기사 실기";
-const COMPUTER_LITERACY_ROOT_NAME = "컴퓨터활용능력 1급 실기";
+const COMPUTER_LITERACY_ROOT_NAME = "컴퓨터활용능력 1급 필기";
 
 const EXAM_LABEL: Record<VerificationExamType, string> = {
   SQLD: "SQLD",
   ENGINEER_PRACTICAL: "정보처리기사 실기",
-  COMPUTER_LITERACY_1: "컴활 1급 실기",
+  COMPUTER_LITERACY_1: "컴활 1급 필기",
 };
 
 function resolveExamType(rootName: string): VerificationExamType {
@@ -228,7 +228,7 @@ export default function AdminQuestionsPage() {
               <option value="ALL">전체 시험</option>
               <option value="SQLD">SQLD</option>
               <option value="ENGINEER_PRACTICAL">정보처리기사 실기</option>
-              <option value="COMPUTER_LITERACY_1">컴활 1급 실기</option>
+              <option value="COMPUTER_LITERACY_1">컴활 1급 필기</option>
             </select>
           </label>
 
@@ -377,7 +377,7 @@ export default function AdminQuestionsPage() {
             onReset={handleResetMark}
           />
           <ExportGroup
-            label="컴활 1급 실기"
+            label="컴활 1급 필기"
             examType="COMPUTER_LITERACY_1"
             exportingKey={exportingKey}
             onExport={handleExport}
