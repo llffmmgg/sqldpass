@@ -8,6 +8,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
+import java.util.TreeMap;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
@@ -26,6 +28,7 @@ import com.sqldpass.service.common.SqldpassException;
 import com.sqldpass.service.generation.AiProvider;
 import com.sqldpass.service.generation.QuestionContentHasher;
 import com.sqldpass.service.generation.TopicExamples;
+import com.sqldpass.service.notification.DiscordNotifier;
 import com.sqldpass.service.generation.dto.AiGenerationRequest;
 import com.sqldpass.service.generation.dto.AiGenerationResponse;
 import com.sqldpass.service.generation.dto.GeneratedQuestion;
@@ -78,16 +81,19 @@ public class MockExamCreator {
     private final QuestionRepository questionRepository;
     private final SubjectRepository subjectRepository;
     private final AiProvider sqldAiProvider;
+    private final DiscordNotifier discordNotifier;
     private final Random random = new Random();
 
     public MockExamCreator(MockExamRepository mockExamRepository,
                            QuestionRepository questionRepository,
                            SubjectRepository subjectRepository,
-                           @Qualifier("generator") AiProvider sqldAiProvider) {
+                           @Qualifier("generator") AiProvider sqldAiProvider,
+                           DiscordNotifier discordNotifier) {
         this.mockExamRepository = mockExamRepository;
         this.questionRepository = questionRepository;
         this.subjectRepository = subjectRepository;
         this.sqldAiProvider = sqldAiProvider;
+        this.discordNotifier = discordNotifier;
     }
 
     @Transactional
@@ -182,6 +188,14 @@ public class MockExamCreator {
             saved.linkQuestion(picked.get(i), i + 1);
         }
         log.info("SQLD 모의고사 생성 완료 - id={}, 문항수={}", saved.getId(), picked.size());
+
+        Map<String, Long> categoryDist = picked.stream()
+                .collect(Collectors.groupingBy(
+                        q -> q.getSubject().getName(),
+                        TreeMap::new,
+                        Collectors.counting()));
+        discordNotifier.notifyMockExamGenerated("SQLD", saved, picked.size(), categoryDist);
+
         return saved;
     }
 

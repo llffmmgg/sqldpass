@@ -9,6 +9,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
+import java.util.TreeMap;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.domain.PageRequest;
@@ -31,6 +33,7 @@ import com.sqldpass.service.generation.AiProvider;
 import com.sqldpass.service.generation.ComputerLiteracyTopicExamples;
 import com.sqldpass.service.generation.ComputerLiteracyTopicExamples.CL1Example;
 import com.sqldpass.service.generation.QuestionContentHasher;
+import com.sqldpass.service.notification.DiscordNotifier;
 import com.sqldpass.service.generation.dto.AiGenerationRequest;
 import com.sqldpass.service.generation.dto.AiGenerationResponse;
 import com.sqldpass.service.generation.dto.GeneratedQuestion;
@@ -76,16 +79,19 @@ public class ComputerLiteracyMockExamCreator {
     private final QuestionRepository questionRepository;
     private final SubjectRepository subjectRepository;
     private final AiProvider computerLiteracyAiProvider;
+    private final DiscordNotifier discordNotifier;
     private final Random random = new Random();
 
     public ComputerLiteracyMockExamCreator(MockExamRepository mockExamRepository,
                                            QuestionRepository questionRepository,
                                            SubjectRepository subjectRepository,
-                                           @Qualifier("generator") AiProvider computerLiteracyAiProvider) {
+                                           @Qualifier("generator") AiProvider computerLiteracyAiProvider,
+                                           DiscordNotifier discordNotifier) {
         this.mockExamRepository = mockExamRepository;
         this.questionRepository = questionRepository;
         this.subjectRepository = subjectRepository;
         this.computerLiteracyAiProvider = computerLiteracyAiProvider;
+        this.discordNotifier = discordNotifier;
     }
 
     @Transactional
@@ -189,6 +195,13 @@ public class ComputerLiteracyMockExamCreator {
             saved.linkQuestion(picked.get(i), i + 1);
         }
         log.info("컴활 모의고사 생성 완료 - id={}, 문항수={}", saved.getId(), picked.size());
+
+        Map<String, Long> categoryDist = picked.stream()
+                .collect(Collectors.groupingBy(
+                        q -> q.getSubject().getName(),
+                        TreeMap::new,
+                        Collectors.counting()));
+        discordNotifier.notifyMockExamGenerated("컴퓨터활용능력 1급 필기", saved, picked.size(), categoryDist);
 
         return saved;
     }

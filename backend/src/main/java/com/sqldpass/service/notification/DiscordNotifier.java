@@ -89,11 +89,12 @@ public class DiscordNotifier {
     }
 
     // ----------------------------------------------------------
-    // 정처기 모의고사 생성 완료 알림 (generation 채널 재사용)
+    // 모의고사 생성 완료 알림 — SQLD/정처기/컴활 공통 (generation 채널 재사용)
     // ----------------------------------------------------------
-    public void notifyEngineerMockExamGenerated(MockExamEntity exam,
-                                                int questionCount,
-                                                Map<String, Long> categoryDistribution) {
+    public void notifyMockExamGenerated(String certLabel,
+                                        MockExamEntity exam,
+                                        int questionCount,
+                                        Map<String, Long> categoryDistribution) {
         List<DiscordEmbed.Field> fields = new ArrayList<>();
         fields.add(new DiscordEmbed.Field("모의고사", exam.getName(), false));
         fields.add(new DiscordEmbed.Field("문항 수", String.valueOf(questionCount), true));
@@ -107,8 +108,8 @@ public class DiscordNotifier {
         }
 
         DiscordEmbed embed = new DiscordEmbed(
-                "🛠 정처기 실기 모의고사 생성 완료",
-                "새 정처기 모의고사가 생성되었습니다.",
+                "🛠 " + certLabel + " 모의고사 생성 완료",
+                "새 " + certLabel + " 모의고사가 생성되었습니다.",
                 COLOR_SUCCESS,
                 fields,
                 Instant.now().toString());

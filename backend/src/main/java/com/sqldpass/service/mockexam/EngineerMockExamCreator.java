@@ -234,7 +234,7 @@ public class EngineerMockExamCreator {
                         q -> q.getSubject().getName(),
                         TreeMap::new,
                         Collectors.counting()));
-        discordNotifier.notifyEngineerMockExamGenerated(saved, picked.size(), categoryDist);
+        discordNotifier.notifyMockExamGenerated("정보처리기사 실기", saved, picked.size(), categoryDist);
 
         return saved;
     }

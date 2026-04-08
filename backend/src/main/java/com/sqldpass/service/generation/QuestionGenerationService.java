@@ -2,7 +2,9 @@ package com.sqldpass.service.generation;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Consumer;
 
 import tools.jackson.databind.ObjectMapper;
@@ -85,6 +87,8 @@ public class QuestionGenerationService {
     private GenerationResult doGenerate(int count, Consumer<GenerationEvent> eventListener,
                                          List<GeneratedQuestion> savedQuestionsOut) {
         List<SubjectEntity> leafSubjects = subjectRepository.findByChildrenIsEmpty();
+        // 한 배치 내 본문 hash 누적 — 회차 간(DB) + 회차 내 모두 차단
+        Set<String> exhibitedHashes = new HashSet<>();
         int totalGenerated = 0;
         int totalVerified = 0;
         int totalSaved = 0;
@@ -184,10 +188,20 @@ public class QuestionGenerationService {
                             continue;
                         }
 
+                        // 본문 hash dedup — 배치 내 + DB 기존 모두 차단
+                        String contentHash = QuestionContentHasher.hashOf(question.content());
+                        if (exhibitedHashes.contains(contentHash)
+                                || questionRepository.existsByContentHash(contentHash)) {
+                            log.info("Duplicate content hash detected, skipping: {}", question.summary());
+                            continue;
+                        }
+
                         QuestionEntity entity = new QuestionEntity(
                                 subject, question.content(), question.correctOption(),
                                 question.explanation(), question.summary(), question.topic(), question.difficulty());
+                        entity.assignContentHash(contentHash);
                         questionRepository.save(entity);
+                        exhibitedHashes.add(contentHash);
                         totalSaved++;
                         savedQuestionsOut.add(question);
 
