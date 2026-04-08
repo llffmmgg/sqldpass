@@ -11,6 +11,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 
@@ -67,7 +68,12 @@ public class AdminQuestionService {
         this.verifier = verifier;
         this.readOnlyTx = new TransactionTemplate(transactionManager);
         this.readOnlyTx.setReadOnly(true);
+        this.readOnlyTx.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
         this.writeTx = new TransactionTemplate(transactionManager);
+        // verifyAll 외부에 클래스 레벨 @Transactional(readOnly=true)가 걸려 있어
+        // 기본 PROPAGATION_REQUIRED로 join하면 write가 read-only 커넥션에서 실행됨.
+        // REQUIRES_NEW로 outer tx를 suspend하고 독립 write tx 생성.
+        this.writeTx.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
     }
 
     /**
