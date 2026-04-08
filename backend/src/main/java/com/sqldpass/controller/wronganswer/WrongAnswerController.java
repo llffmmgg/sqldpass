@@ -3,10 +3,15 @@ package com.sqldpass.controller.wronganswer;
 import java.util.List;
 
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.sqldpass.controller.wronganswer.dto.WrongAnswerResponse;
+import com.sqldpass.controller.wronganswer.dto.WrongAnswerRetryRequest;
+import com.sqldpass.controller.wronganswer.dto.WrongAnswerRetryResponse;
 import com.sqldpass.controller.wronganswer.dto.WrongAnswerStatsResponse;
 import com.sqldpass.service.wronganswer.WrongAnswerService;
 
@@ -24,7 +29,7 @@ public class WrongAnswerController {
     private final WrongAnswerService wrongAnswerService;
 
     @GetMapping("/api/wrong-answers")
-    @Operation(summary = "오답 문제 목록")
+    @Operation(summary = "오답 문제 목록 (마지막 풀이가 틀린 문제)")
     public List<WrongAnswerResponse> getWrongAnswers(
             HttpServletRequest request,
             @RequestParam(required = false) Long subjectId) {
@@ -37,5 +42,15 @@ public class WrongAnswerController {
     public List<WrongAnswerStatsResponse> getStats(HttpServletRequest request) {
         Long memberId = (Long) request.getAttribute("memberId");
         return wrongAnswerService.getStats(memberId);
+    }
+
+    @PostMapping("/api/wrong-answers/{questionId}/retry")
+    @Operation(summary = "오답 다시 풀기 (단일 문제). 정답 시 다음 조회부터 자동으로 목록에서 제거됨.")
+    public WrongAnswerRetryResponse retry(
+            HttpServletRequest request,
+            @PathVariable Long questionId,
+            @RequestBody WrongAnswerRetryRequest body) {
+        Long memberId = (Long) request.getAttribute("memberId");
+        return wrongAnswerService.retry(memberId, questionId, body.selectedOption(), body.answerText());
     }
 }

@@ -152,3 +152,23 @@ export function getWrongAnswers(subjectId?: number) {
 export function getWrongAnswerStats() {
   return fetchApi<WrongAnswerStatsResponse[]>("/wrong-answers/stats");
 }
+
+export interface WrongAnswerRetryRequest {
+  selectedOption?: number;
+  answerText?: string;
+}
+
+export interface WrongAnswerRetryResponse {
+  correct: boolean;
+  correctOption: number | null;
+  correctAnswer: string | null;
+  explanation: string | null;
+}
+
+/** 오답 다시 풀기 — 정답이면 다음 조회 시 자동으로 목록에서 사라짐 */
+export function retryWrongAnswer(questionId: number, body: WrongAnswerRetryRequest) {
+  return fetchApi<WrongAnswerRetryResponse>(`/wrong-answers/${questionId}/retry`, {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+}
