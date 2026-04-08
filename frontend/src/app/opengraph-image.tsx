@@ -52,6 +52,8 @@ export default async function OgImage() {
         <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
           <div
             style={{
+              display: "flex",
+              flexDirection: "column",
               fontSize: 88,
               fontWeight: 800,
               lineHeight: 1.1,
@@ -115,8 +117,17 @@ export default async function OgImage() {
             >
               S
             </div>
-            <div style={{ color: "#fafafa", fontSize: 32, fontWeight: 700 }}>
-              SQLD <span style={{ color: "#fbbf24" }}>Pass</span>
+            <div
+              style={{
+                display: "flex",
+                gap: 8,
+                color: "#fafafa",
+                fontSize: 32,
+                fontWeight: 700,
+              }}
+            >
+              <span>SQLD</span>
+              <span style={{ color: "#fbbf24" }}>Pass</span>
             </div>
           </div>
           <div style={{ fontFamily: "monospace", fontSize: 22 }}>
