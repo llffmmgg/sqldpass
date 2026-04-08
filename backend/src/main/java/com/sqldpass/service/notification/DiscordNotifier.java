@@ -15,6 +15,7 @@ import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import com.sqldpass.persistent.feedback.FeedbackEntity;
 import com.sqldpass.persistent.member.MemberEntity;
+import com.sqldpass.persistent.mockexam.MockExamEntity;
 import com.sqldpass.service.generation.dto.GeneratedQuestion;
 import com.sqldpass.service.generation.dto.GenerationResult;
 
@@ -53,8 +54,7 @@ public class DiscordNotifier {
         this.generationWebhook = generationWebhook;
         this.signupWebhook = signupWebhook;
         this.errorWebhook = errorWebhook;
-        // 별도 채널이 설정되지 않았으면 signup 채널로 폴백 (운영자 확인용 채널)
-        this.feedbackWebhook = (feedbackWebhook == null || feedbackWebhook.isBlank()) ? signupWebhook : feedbackWebhook;
+        this.feedbackWebhook = feedbackWebhook;
     }
 
     // ----------------------------------------------------------
@@ -83,6 +83,33 @@ public class DiscordNotifier {
                 "🤖 AI 문제 생성 완료",
                 result.totalSaved() > 0 ? "새 문제가 저장되었습니다." : "저장된 문제가 없습니다.",
                 result.totalSaved() > 0 ? COLOR_SUCCESS : COLOR_ERROR,
+                fields,
+                Instant.now().toString());
+        sendAsync(generationWebhook, embed);
+    }
+
+    // ----------------------------------------------------------
+    // 정처기 모의고사 생성 완료 알림 (generation 채널 재사용)
+    // ----------------------------------------------------------
+    public void notifyEngineerMockExamGenerated(MockExamEntity exam,
+                                                int questionCount,
+                                                Map<String, Long> categoryDistribution) {
+        List<DiscordEmbed.Field> fields = new ArrayList<>();
+        fields.add(new DiscordEmbed.Field("모의고사", exam.getName(), false));
+        fields.add(new DiscordEmbed.Field("문항 수", String.valueOf(questionCount), true));
+        fields.add(new DiscordEmbed.Field("모의고사 ID", "#" + exam.getId(), true));
+
+        if (categoryDistribution != null && !categoryDistribution.isEmpty()) {
+            StringBuilder sb = new StringBuilder();
+            categoryDistribution.forEach((category, count) ->
+                    sb.append("• ").append(category).append(": ").append(count).append("문항\n"));
+            fields.add(new DiscordEmbed.Field("카테고리 분포", sb.toString().trim(), false));
+        }
+
+        DiscordEmbed embed = new DiscordEmbed(
+                "🛠 정처기 실기 모의고사 생성 완료",
+                "새 정처기 모의고사가 생성되었습니다.",
+                COLOR_SUCCESS,
                 fields,
                 Instant.now().toString());
         sendAsync(generationWebhook, embed);

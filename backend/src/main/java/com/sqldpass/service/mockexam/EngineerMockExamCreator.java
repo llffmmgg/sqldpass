@@ -10,8 +10,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.domain.PageRequest;
@@ -35,6 +37,7 @@ import com.sqldpass.service.generation.EngineerTopicExamples.EngineerExample;
 import com.sqldpass.service.generation.dto.AiGenerationRequest;
 import com.sqldpass.service.generation.dto.AiGenerationResponse;
 import com.sqldpass.service.generation.dto.GeneratedQuestion;
+import com.sqldpass.service.notification.DiscordNotifier;
 
 import lombok.extern.slf4j.Slf4j;
 import tools.jackson.databind.ObjectMapper;
@@ -97,17 +100,20 @@ public class EngineerMockExamCreator {
     private final QuestionRepository questionRepository;
     private final SubjectRepository subjectRepository;
     private final AiProvider engineerAiProvider;
+    private final DiscordNotifier discordNotifier;
     private final Random random = new Random();
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     public EngineerMockExamCreator(MockExamRepository mockExamRepository,
                                    QuestionRepository questionRepository,
                                    SubjectRepository subjectRepository,
-                                   @Qualifier("generator") AiProvider engineerAiProvider) {
+                                   @Qualifier("generator") AiProvider engineerAiProvider,
+                                   DiscordNotifier discordNotifier) {
         this.mockExamRepository = mockExamRepository;
         this.questionRepository = questionRepository;
         this.subjectRepository = subjectRepository;
         this.engineerAiProvider = engineerAiProvider;
+        this.discordNotifier = discordNotifier;
     }
 
     @Transactional
@@ -185,6 +191,15 @@ public class EngineerMockExamCreator {
             saved.linkQuestion(picked.get(i), i + 1);
         }
         log.info("정처기 모의고사 생성 완료 - id={}, 문항수={}", saved.getId(), picked.size());
+
+        // 디스코드 알림 (generation 채널 재사용) — 실패해도 비즈니스 로직에 영향 없음
+        Map<String, Long> categoryDist = picked.stream()
+                .collect(Collectors.groupingBy(
+                        q -> q.getSubject().getName(),
+                        TreeMap::new,
+                        Collectors.counting()));
+        discordNotifier.notifyEngineerMockExamGenerated(saved, picked.size(), categoryDist);
+
         return saved;
     }
 
