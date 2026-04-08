@@ -10,6 +10,7 @@ interface Props {
   onClose: () => void;
   defaultQuestionId?: number;
   defaultType?: FeedbackType;
+  placement?: "default" | "general";
 }
 
 const TYPE_OPTIONS: { value: FeedbackType; label: string }[] = [
@@ -24,6 +25,7 @@ export default function FeedbackModal({
   onClose,
   defaultQuestionId,
   defaultType,
+  placement = "default",
 }: Props) {
   const [type, setType] = useState<FeedbackType>(defaultType ?? (defaultQuestionId ? "QUESTION_ERROR" : "BUG"));
   const [content, setContent] = useState("");
@@ -88,13 +90,23 @@ export default function FeedbackModal({
     window.location.href = getGoogleLoginUrl();
   }
 
+  const overlayClassName =
+    placement === "general"
+      ? "fixed inset-0 z-50 flex items-start justify-center bg-black/60 p-4 pt-20 backdrop-blur-sm sm:p-6 sm:pt-24 md:items-center md:pt-10"
+      : "fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm sm:p-6";
+
+  const panelClassName =
+    placement === "general"
+      ? "flex max-h-[calc(100vh-6rem)] w-full max-w-xl flex-col overflow-y-auto rounded-2xl border border-border bg-surface p-6 shadow-xl sm:max-h-[calc(100vh-8rem)] sm:p-8 md:max-h-[90vh]"
+      : "flex max-h-[90vh] w-full max-w-xl flex-col overflow-y-auto rounded-2xl border border-border bg-surface p-6 shadow-xl sm:p-8";
+
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm sm:p-6"
+      className={overlayClassName}
       onClick={onClose}
     >
       <div
-        className="flex max-h-[90vh] w-full max-w-xl flex-col overflow-y-auto rounded-2xl border border-border bg-surface p-6 shadow-xl sm:p-8"
+        className={panelClassName}
         onClick={(e) => e.stopPropagation()}
       >
         {/* 헤더 */}
