@@ -36,6 +36,7 @@ import com.sqldpass.service.common.SqldpassException;
 import com.sqldpass.service.generation.AiProvider;
 import com.sqldpass.service.generation.EngineerTopicExamples;
 import com.sqldpass.service.generation.EngineerTopicExamples.EngineerExample;
+import com.sqldpass.service.generation.QuestionContentHasher;
 import com.sqldpass.service.generation.dto.AiGenerationRequest;
 import com.sqldpass.service.generation.dto.AiGenerationResponse;
 import com.sqldpass.service.generation.dto.GeneratedQuestion;
@@ -152,6 +153,8 @@ public class EngineerMockExamCreator {
 
         // 회차 내부 정답 수집 (회차 내 중복도 함께 차단)
         Set<String> exhibitedAnswersInThisExam = new HashSet<>();
+        // 회차 내부 본문 hash 수집 (정처기/SQLD/컴활 공통 회피 신호)
+        Set<String> exhibitedHashes = new HashSet<>();
 
         List<QuestionEntity> picked = new ArrayList<>();
         int slotCursor = 0; // difficultySlots 진행 인덱스
@@ -193,13 +196,25 @@ public class EngineerMockExamCreator {
                     request, seeds, targetDifficulties, forbiddenIdentifiers, recentAnswers,
                     exhibitedAnswersInThisExam, generated, needed, category);
 
-            // 5) 저장 + 회차내 정답 풀에 등록 — 사용자 지정 난이도로 저장
+            // 4-1) 본문 hash 중복 검증 — 회차 내 + DB 기존과 충돌 시 1회 재시도
+            if (hasHashConflict(validated, needed, exhibitedHashes)) {
+                log.warn("정처기 카테고리 '{}' 본문 hash 중복 감지 — 1회 재시도", category);
+                List<GeneratedQuestion> retried = callAi(request, seeds, targetDifficulties, forbiddenIdentifiers, recentAnswers, needed);
+                validated = validateAndRetry(
+                        request, seeds, targetDifficulties, forbiddenIdentifiers, recentAnswers,
+                        exhibitedAnswersInThisExam, retried, needed, category);
+            }
+
+            // 5) 저장 + 회차내 정답/hash 풀에 등록 — 사용자 지정 난이도로 저장
             for (int i = 0; i < needed; i++) {
                 GeneratedQuestion gq = validated.get(i);
                 EngineerExample seed = seeds.get(i);
                 int targetDifficulty = targetDifficulties.get(i);
+                String hash = QuestionContentHasher.hashOf(gq.content());
                 QuestionEntity entity = toEngineerEntity(subject, gq, seed, targetDifficulty);
+                entity.assignContentHash(hash);
                 picked.add(questionRepository.save(entity));
+                exhibitedHashes.add(hash);
                 if (gq.answerText() != null) {
                     exhibitedAnswersInThisExam.add(normalizeAnswer(gq.answerText()));
                 }
@@ -346,6 +361,17 @@ public class EngineerMockExamCreator {
             }
         }
         return conflicts;
+    }
+
+    /** 회차 내 hash 또는 DB 기존 hash와 충돌하는 본문이 하나라도 있는지 검사 */
+    private boolean hasHashConflict(List<GeneratedQuestion> generated, int needed, Set<String> exhibited) {
+        for (int i = 0; i < needed && i < generated.size(); i++) {
+            String h = QuestionContentHasher.hashOf(generated.get(i).content());
+            if (exhibited.contains(h) || questionRepository.existsByContentHash(h)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /** 정답 비교를 위한 정규화: 공백 압축 + 소문자 */

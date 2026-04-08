@@ -3,10 +3,12 @@ package com.sqldpass.service.mockexam;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.domain.PageRequest;
@@ -28,6 +30,7 @@ import com.sqldpass.service.common.SqldpassException;
 import com.sqldpass.service.generation.AiProvider;
 import com.sqldpass.service.generation.ComputerLiteracyTopicExamples;
 import com.sqldpass.service.generation.ComputerLiteracyTopicExamples.CL1Example;
+import com.sqldpass.service.generation.QuestionContentHasher;
 import com.sqldpass.service.generation.dto.AiGenerationRequest;
 import com.sqldpass.service.generation.dto.AiGenerationResponse;
 import com.sqldpass.service.generation.dto.GeneratedQuestion;
@@ -115,6 +118,7 @@ public class ComputerLiteracyMockExamCreator {
         }
 
         List<QuestionEntity> picked = new ArrayList<>();
+        Set<String> exhibitedHashes = new HashSet<>();
         int slotCursor = 0;
         for (Map.Entry<String, Integer> entry : DISTRIBUTION.entrySet()) {
             String category = entry.getKey();
@@ -153,12 +157,29 @@ public class ComputerLiteracyMockExamCreator {
                                 category, needed, generated == null ? 0 : generated.size()));
             }
 
-            // 5) 저장 + 사용자 지정 난이도로 difficulty 강제
+            // 5) 본문 hash 중복 검증 — 회차 내 + DB 기존과 충돌 시 1회 재시도
+            if (hasHashConflict(generated, needed, exhibitedHashes)) {
+                log.warn("컴활 카테고리 '{}' 본문 hash 중복 감지 — 1회 재시도", category);
+                response = computerLiteracyAiProvider
+                        .generateComputerLiteracyQuestions(request, seeds, targetDifficulties, recentSummaries, recentAnswers);
+                generated = response.questions();
+                if (generated == null || generated.size() < needed) {
+                    throw new SqldpassException(
+                            ErrorCode.MOCK_EXAM_INSUFFICIENT_QUESTIONS,
+                            String.format("'%s' 컴활 재시도 실패 (필요 %d, 생성 %d)",
+                                    category, needed, generated == null ? 0 : generated.size()));
+                }
+            }
+
+            // 6) 저장 + 사용자 지정 난이도로 difficulty 강제 + content_hash 등록
             for (int i = 0; i < needed; i++) {
                 GeneratedQuestion gq = generated.get(i);
                 int targetDifficulty = targetDifficulties.get(i);
+                String hash = QuestionContentHasher.hashOf(gq.content());
                 QuestionEntity entity = toQuestionEntity(subject, gq, targetDifficulty);
+                entity.assignContentHash(hash);
                 picked.add(questionRepository.save(entity));
+                exhibitedHashes.add(hash);
             }
         }
 
@@ -199,6 +220,17 @@ public class ComputerLiteracyMockExamCreator {
         for (int i = 0; i < l4; i++) slots.add(4);
         Collections.shuffle(slots, random);
         return slots;
+    }
+
+    /** 회차 내 hash 또는 DB 기존 hash와 충돌하는 본문이 하나라도 있는지 검사 */
+    private boolean hasHashConflict(List<GeneratedQuestion> generated, int needed, Set<String> exhibited) {
+        for (int i = 0; i < needed && i < generated.size(); i++) {
+            String h = QuestionContentHasher.hashOf(generated.get(i).content());
+            if (exhibited.contains(h) || questionRepository.existsByContentHash(h)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /** AI 응답을 4지선다 객관식 QuestionEntity로 변환 (사용자 지정 난이도 사용) */

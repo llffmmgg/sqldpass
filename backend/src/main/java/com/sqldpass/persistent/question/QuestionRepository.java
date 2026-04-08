@@ -80,6 +80,8 @@ public interface QuestionRepository extends JpaRepository<QuestionEntity, Long> 
     @Query("SELECT q FROM QuestionEntity q JOIN FETCH q.subject ORDER BY q.createdAt DESC")
     Page<QuestionEntity> findAllWithSubject(Pageable pageable);
 
+    boolean existsByContentHash(String contentHash);
+
     long countByCreatedAtAfter(LocalDateTime dateTime);
 
     long countBySubjectIdAndTopic(Long subjectId, String topic);

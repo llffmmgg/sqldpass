@@ -82,6 +82,10 @@ public class QuestionEntity extends BaseTimeEntity {
     @Column(name = "exported_at")
     private LocalDateTime exportedAt;
 
+    /** 본문 normalize → SHA-256 hex. 모의고사 회차 간/내 중복 검증용. NULL 허용 (legacy 호환) */
+    @Column(name = "content_hash", length = 64)
+    private String contentHash;
+
     public QuestionEntity(SubjectEntity subject, String content, int correctOption, String explanation) {
         this.subject = subject;
         this.content = content;
@@ -125,6 +129,10 @@ public class QuestionEntity extends BaseTimeEntity {
     public void assignToMockExam(MockExamEntity mockExam, int displayOrder) {
         this.mockExam = mockExam;
         this.displayOrder = displayOrder;
+    }
+
+    public void assignContentHash(String hash) {
+        this.contentHash = hash;
     }
 
     public void releaseFromMockExam() {
