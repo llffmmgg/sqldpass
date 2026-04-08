@@ -66,7 +66,7 @@ sqldpass:
     generator:
       provider: claude
     verifier:
-      provider: gemini
+      provider: claude
     generation:
       questions-per-subject: 3
       verification-enabled: false
