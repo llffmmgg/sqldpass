@@ -1,5 +1,6 @@
 package com.sqldpass.service.generation;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.ai.chat.client.ChatClient;
@@ -15,6 +16,14 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class AiProvider {
+
+    /**
+     * 한 번의 AI 호출에서 생성할 최대 문제 수.
+     * Claude Sonnet 4 출력 한도 8192 토큰을 초과하지 않도록 안전 마진 확보.
+     * 객관식(보기4 + 해설)은 1문항당 ~500 토큰. 단답형은 ~300 토큰.
+     * needed가 이 값을 초과하면 자동으로 분할 호출.
+     */
+    private static final int MAX_QUESTIONS_PER_CALL = 8;
 
     private final ChatClient chatClient;
     private final ObjectMapper objectMapper;
@@ -47,16 +56,38 @@ public class AiProvider {
 
     /**
      * 정처기 카테고리용 변형 문제 N개 생성 (시드 풀 다중화 + 사용자 지정 난이도 버전).
-     * - examples: needed개의 서로 다른 시드 (카테고리 풀에서 추출됨)
-     * - targetDifficulties: 각 문제의 목표 난이도(1/2/3) — examples와 동일 길이
-     * - forbiddenIdentifiers: 절대 사용 금지 식별자 (시드 + 누적 출제 식별자)
-     * - recentAnswers: 회피해야 할 정답 패턴
+     * needed가 MAX_QUESTIONS_PER_CALL을 초과하면 자동 chunk 분할 호출 후 결과 합치기.
      */
     public AiGenerationResponse generateEngineerQuestions(AiGenerationRequest request,
                                                           List<EngineerTopicExamples.EngineerExample> examples,
                                                           List<Integer> targetDifficulties,
                                                           List<String> forbiddenIdentifiers,
                                                           List<String> recentAnswers) {
+        if (examples.size() <= MAX_QUESTIONS_PER_CALL) {
+            return callEngineerOnce(request, examples, targetDifficulties, forbiddenIdentifiers, recentAnswers);
+        }
+        List<GeneratedQuestion> all = new ArrayList<>(examples.size());
+        for (int start = 0; start < examples.size(); start += MAX_QUESTIONS_PER_CALL) {
+            int end = Math.min(start + MAX_QUESTIONS_PER_CALL, examples.size());
+            List<EngineerTopicExamples.EngineerExample> seedChunk = examples.subList(start, end);
+            List<Integer> diffChunk = targetDifficulties.subList(start, end);
+            log.info("정처기 chunk 호출 [{}] {}~{}/{} (size={})",
+                    request.subjectName(), start, end, examples.size(), seedChunk.size());
+            AiGenerationResponse partial = callEngineerOnce(request, seedChunk, diffChunk, forbiddenIdentifiers, recentAnswers);
+            if (partial.questions() == null || partial.questions().size() < seedChunk.size()) {
+                throw new SqldpassException(ErrorCode.AI_GENERATION_FAILED,
+                        "정처기 chunk 실패 [" + request.subjectName() + "] " + start + "~" + end);
+            }
+            all.addAll(partial.questions().subList(0, seedChunk.size()));
+        }
+        return new AiGenerationResponse(all);
+    }
+
+    private AiGenerationResponse callEngineerOnce(AiGenerationRequest request,
+                                                  List<EngineerTopicExamples.EngineerExample> examples,
+                                                  List<Integer> targetDifficulties,
+                                                  List<String> forbiddenIdentifiers,
+                                                  List<String> recentAnswers) {
         String prompt = PromptBuilder.buildEngineerPrompt(request, examples, targetDifficulties, forbiddenIdentifiers, recentAnswers);
         String responseText = chatClient.prompt()
                 .system(PromptBuilder.ENGINEER_GENERATION_SYSTEM_PROMPT)
@@ -72,8 +103,6 @@ public class AiProvider {
                     questionsNode.toString(), new TypeReference<>() {});
             return new AiGenerationResponse(questions);
         } catch (Exception e) {
-            // 정처기는 "한 카테고리 실패 = 모의고사 전체 실패"이므로 예외를 삼키지 않고 상위로 전파.
-            // AI_GENERATION_FAILED(500)로 래핑 → GlobalExceptionHandler가 Discord 알림 전송.
             log.error("Failed to parse engineer generation response: {}", responseText, e);
             throw new SqldpassException(ErrorCode.AI_GENERATION_FAILED,
                     "정처기 AI 응답 파싱 실패 [" + request.subjectName() + "]: " + e.getMessage(), e);
@@ -82,12 +111,36 @@ public class AiProvider {
 
     /**
      * SQLD 카테고리용 변형 문제 N개 생성 — 운영 DB의 기존 SQLD 문제를 시드로 사용.
-     * 정처기/컴활 패턴과 동일하되 시드 소스가 코드 시드 풀이 아닌 DB QuestionEntity.
+     * needed가 MAX_QUESTIONS_PER_CALL을 초과하면 자동 chunk 분할.
      */
     public AiGenerationResponse generateSqldFromSeeds(AiGenerationRequest request,
                                                       List<com.sqldpass.persistent.question.QuestionEntity> seeds,
                                                       List<Integer> targetDifficulties,
                                                       List<String> recentSummaries) {
+        if (seeds.size() <= MAX_QUESTIONS_PER_CALL) {
+            return callSqldOnce(request, seeds, targetDifficulties, recentSummaries);
+        }
+        List<GeneratedQuestion> all = new ArrayList<>(seeds.size());
+        for (int start = 0; start < seeds.size(); start += MAX_QUESTIONS_PER_CALL) {
+            int end = Math.min(start + MAX_QUESTIONS_PER_CALL, seeds.size());
+            List<com.sqldpass.persistent.question.QuestionEntity> seedChunk = seeds.subList(start, end);
+            List<Integer> diffChunk = targetDifficulties.subList(start, end);
+            log.info("SQLD chunk 호출 [{}] {}~{}/{} (size={})",
+                    request.subjectName(), start, end, seeds.size(), seedChunk.size());
+            AiGenerationResponse partial = callSqldOnce(request, seedChunk, diffChunk, recentSummaries);
+            if (partial.questions() == null || partial.questions().size() < seedChunk.size()) {
+                throw new SqldpassException(ErrorCode.AI_GENERATION_FAILED,
+                        "SQLD chunk 실패 [" + request.subjectName() + "] " + start + "~" + end);
+            }
+            all.addAll(partial.questions().subList(0, seedChunk.size()));
+        }
+        return new AiGenerationResponse(all);
+    }
+
+    private AiGenerationResponse callSqldOnce(AiGenerationRequest request,
+                                              List<com.sqldpass.persistent.question.QuestionEntity> seeds,
+                                              List<Integer> targetDifficulties,
+                                              List<String> recentSummaries) {
         String prompt = PromptBuilder.buildSqldSeedPrompt(request, seeds, targetDifficulties, recentSummaries);
         String responseText = chatClient.prompt()
                 .system(PromptBuilder.SQLD_SEED_GENERATION_SYSTEM_PROMPT)
@@ -111,12 +164,38 @@ public class AiProvider {
 
     /**
      * 컴활 1급 필기 카테고리용 변형 문제 N개 생성 (시드 풀 + 사용자 지정 난이도).
+     * needed가 MAX_QUESTIONS_PER_CALL을 초과하면 자동 chunk 분할.
      */
     public AiGenerationResponse generateComputerLiteracyQuestions(AiGenerationRequest request,
                                                                   List<ComputerLiteracyTopicExamples.CL1Example> examples,
                                                                   List<Integer> targetDifficulties,
                                                                   List<String> recentSummaries,
                                                                   List<String> recentAnswers) {
+        if (examples.size() <= MAX_QUESTIONS_PER_CALL) {
+            return callCl1Once(request, examples, targetDifficulties, recentSummaries, recentAnswers);
+        }
+        List<GeneratedQuestion> all = new ArrayList<>(examples.size());
+        for (int start = 0; start < examples.size(); start += MAX_QUESTIONS_PER_CALL) {
+            int end = Math.min(start + MAX_QUESTIONS_PER_CALL, examples.size());
+            List<ComputerLiteracyTopicExamples.CL1Example> seedChunk = examples.subList(start, end);
+            List<Integer> diffChunk = targetDifficulties.subList(start, end);
+            log.info("컴활 chunk 호출 [{}] {}~{}/{} (size={})",
+                    request.subjectName(), start, end, examples.size(), seedChunk.size());
+            AiGenerationResponse partial = callCl1Once(request, seedChunk, diffChunk, recentSummaries, recentAnswers);
+            if (partial.questions() == null || partial.questions().size() < seedChunk.size()) {
+                throw new SqldpassException(ErrorCode.AI_GENERATION_FAILED,
+                        "컴활 chunk 실패 [" + request.subjectName() + "] " + start + "~" + end);
+            }
+            all.addAll(partial.questions().subList(0, seedChunk.size()));
+        }
+        return new AiGenerationResponse(all);
+    }
+
+    private AiGenerationResponse callCl1Once(AiGenerationRequest request,
+                                             List<ComputerLiteracyTopicExamples.CL1Example> examples,
+                                             List<Integer> targetDifficulties,
+                                             List<String> recentSummaries,
+                                             List<String> recentAnswers) {
         String prompt = PromptBuilder.buildComputerLiteracyPrompt(request, examples, targetDifficulties, recentSummaries, recentAnswers);
         String responseText = chatClient.prompt()
                 .system(PromptBuilder.COMPUTER_LITERACY_GENERATION_SYSTEM_PROMPT)

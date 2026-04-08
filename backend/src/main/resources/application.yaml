@@ -32,7 +32,9 @@ spring:
       chat:
         options:
           model: claude-sonnet-4-20250514
-          max-tokens: 4096
+          # 8192 = Claude Sonnet 4 출력 토큰 한도. 모의고사 한 카테고리 needed가 큰 경우(SQLD 14개, 컴활 10개)
+          # 출력 잘림 방지. 그 이상 needed가 필요하면 분할 호출 구현 필요.
+          max-tokens: 8192
           # 정처기 모의고사 다양성 확보를 위해 결정성을 낮춤
           temperature: 0.9
           top-p: 0.95

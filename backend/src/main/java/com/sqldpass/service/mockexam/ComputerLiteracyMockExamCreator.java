@@ -56,7 +56,10 @@ public class ComputerLiteracyMockExamCreator {
     private static final String SPREADSHEET = "스프레드시트 일반";
     private static final String DATABASE = "데이터베이스 일반";
 
-    /** 카테고리별 needed 문항 수 — 컴활 1급 필기 표준 60문항 (과목당 20문항) */
+    /**
+     * 카테고리별 needed 문항 수 — 컴활 1급 필기 표준 60문항(과목당 20).
+     * AiProvider의 chunk 분할 로직(MAX_QUESTIONS_PER_CALL=8)이 큰 needed를 자동 분할.
+     */
     private static final Map<String, Integer> DISTRIBUTION;
     static {
         LinkedHashMap<String, Integer> m = new LinkedHashMap<>();
