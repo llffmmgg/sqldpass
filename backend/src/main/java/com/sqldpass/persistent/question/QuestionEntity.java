@@ -126,6 +126,27 @@ public class QuestionEntity extends BaseTimeEntity {
         this.summary = summary;
     }
 
+    /** 어드민 MCQ 수정 — answer/keywords는 건드리지 않음 */
+    public void updateMcq(String content, int correctOption, String explanation, String summary) {
+        this.content = content;
+        this.questionType = QuestionType.MCQ;
+        this.correctOption = correctOption;
+        this.explanation = explanation;
+        this.summary = summary;
+    }
+
+    /** 어드민 단답/약술형 수정 — correct_option은 NULL로 강제, answer/keywords 갱신 */
+    public void updateShortAnswer(String content, QuestionType questionType, String answer,
+                                  String keywordsJson, String explanation, String summary) {
+        this.content = content;
+        this.questionType = questionType;
+        this.correctOption = null;
+        this.answer = answer;
+        this.keywords = keywordsJson;
+        this.explanation = explanation;
+        this.summary = summary;
+    }
+
     public void assignToMockExam(MockExamEntity mockExam, int displayOrder) {
         this.mockExam = mockExam;
         this.displayOrder = displayOrder;

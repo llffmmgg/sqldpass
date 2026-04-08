@@ -16,6 +16,7 @@ import com.sqldpass.controller.admin.dto.QuestionVerifyResultResponse;
 import com.sqldpass.persistent.mockexam.ExamType;
 import com.sqldpass.persistent.question.QuestionEntity;
 import com.sqldpass.persistent.question.QuestionRepository;
+import com.sqldpass.persistent.question.QuestionType;
 import com.sqldpass.service.common.ErrorCode;
 import com.sqldpass.service.common.SqldpassException;
 import com.sqldpass.service.generation.AiProvider;
@@ -117,7 +118,31 @@ public class AdminQuestionService {
     public AdminQuestionResponse updateQuestion(Long id, AdminQuestionUpdateRequest request) {
         QuestionEntity entity = questionRepository.findById(id)
                 .orElseThrow(() -> new SqldpassException(ErrorCode.QUESTION_NOT_FOUND));
-        entity.update(request.content(), request.correctOption(), request.explanation(), request.summary());
+
+        QuestionType qt;
+        try {
+            qt = QuestionType.valueOf(request.questionType());
+        } catch (IllegalArgumentException e) {
+            throw new SqldpassException(ErrorCode.INVALID_INPUT, "유효하지 않은 questionType: " + request.questionType());
+        }
+
+        if (qt == QuestionType.MCQ) {
+            if (request.correctOption() == null) {
+                throw new SqldpassException(ErrorCode.INVALID_INPUT, "MCQ 문제는 정답 옵션(1~4)이 필수입니다.");
+            }
+            entity.updateMcq(request.content(), request.correctOption(), request.explanation(), request.summary());
+        } else {
+            String keywordsJson = null;
+            if (request.keywords() != null && !request.keywords().isEmpty()) {
+                try {
+                    keywordsJson = objectMapper.writeValueAsString(request.keywords());
+                } catch (Exception e) {
+                    throw new SqldpassException(ErrorCode.INVALID_INPUT, "keywords 직렬화 실패: " + e.getMessage());
+                }
+            }
+            entity.updateShortAnswer(request.content(), qt, request.answer(), keywordsJson,
+                    request.explanation(), request.summary());
+        }
         return AdminQuestionResponse.from(entity);
     }
 

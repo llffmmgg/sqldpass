@@ -61,15 +61,30 @@ export interface AdminStats {
   todayQuestions: number;
 }
 
+export type AdminQuestionType = "MCQ" | "SHORT_ANSWER" | "DESCRIPTIVE";
+
 export interface AdminQuestion {
   id: number;
   subjectId: number;
   subjectName: string;
   content: string;
-  correctOption: number;
+  questionType: AdminQuestionType;
+  correctOption: number | null;
+  answer: string | null;
+  keywords: string[] | null;
   explanation: string;
   summary: string | null;
   createdAt: string;
+}
+
+export interface AdminQuestionUpdatePayload {
+  content: string;
+  questionType: AdminQuestionType;
+  correctOption: number | null;
+  answer: string | null;
+  keywords: string[] | null;
+  explanation: string;
+  summary: string | null;
 }
 
 export interface AdminQuestionPage {
@@ -128,7 +143,7 @@ export function getQuestion(id: number) {
   return adminFetch<AdminQuestion>(`/questions/${id}`);
 }
 
-export function updateQuestion(id: number, data: { content: string; correctOption: number; explanation: string; summary: string | null }) {
+export function updateQuestion(id: number, data: AdminQuestionUpdatePayload) {
   return adminFetch<AdminQuestion>(`/questions/${id}`, {
     method: "PUT",
     body: JSON.stringify(data),

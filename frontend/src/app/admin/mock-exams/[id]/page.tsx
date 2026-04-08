@@ -115,8 +115,13 @@ function QuestionEditCard({
   initial: AdminQuestion;
   onUpdated: (q: AdminQuestion) => void;
 }) {
+  const isMcq = initial.questionType === "MCQ";
+  const initialKeywordsText = (initial.keywords ?? []).join(", ");
+
   const [content, setContent] = useState(initial.content);
-  const [correctOption, setCorrectOption] = useState(initial.correctOption);
+  const [correctOption, setCorrectOption] = useState<number>(initial.correctOption ?? 1);
+  const [answer, setAnswer] = useState(initial.answer ?? "");
+  const [keywordsText, setKeywordsText] = useState(initialKeywordsText);
   const [explanation, setExplanation] = useState(initial.explanation);
   const [summary, setSummary] = useState(initial.summary ?? "");
   const [saving, setSaving] = useState(false);
@@ -125,7 +130,9 @@ function QuestionEditCard({
 
   const dirty =
     content !== initial.content ||
-    correctOption !== initial.correctOption ||
+    (isMcq && correctOption !== (initial.correctOption ?? 1)) ||
+    (!isMcq && answer !== (initial.answer ?? "")) ||
+    (!isMcq && keywordsText !== initialKeywordsText) ||
     explanation !== initial.explanation ||
     (summary || null) !== (initial.summary || null);
 
@@ -133,9 +140,16 @@ function QuestionEditCard({
     setSaving(true);
     setError(null);
     try {
+      const keywords = keywordsText
+        .split(",")
+        .map((s) => s.trim())
+        .filter((s) => s.length > 0);
       const updated = await updateQuestion(initial.id, {
         content,
-        correctOption,
+        questionType: initial.questionType,
+        correctOption: isMcq ? correctOption : null,
+        answer: isMcq ? null : (answer || null),
+        keywords: isMcq ? null : (keywords.length > 0 ? keywords : null),
         explanation,
         summary: summary.trim() ? summary : null,
       });
@@ -150,7 +164,9 @@ function QuestionEditCard({
 
   function handleReset() {
     setContent(initial.content);
-    setCorrectOption(initial.correctOption);
+    setCorrectOption(initial.correctOption ?? 1);
+    setAnswer(initial.answer ?? "");
+    setKeywordsText(initialKeywordsText);
     setExplanation(initial.explanation);
     setSummary(initial.summary ?? "");
     setError(null);
@@ -165,6 +181,9 @@ function QuestionEditCard({
           </span>
           <span className="rounded bg-zinc-500/10 px-2 py-0.5 text-xs text-muted">
             ID {initial.id}
+          </span>
+          <span className="rounded bg-violet-500/10 px-2 py-0.5 text-xs text-violet-300">
+            {initial.questionType}
           </span>
           <span className="text-xs text-muted">{initial.subjectName}</span>
         </div>
@@ -201,29 +220,58 @@ function QuestionEditCard({
           />
         </Field>
 
-        <div className="grid gap-3 sm:grid-cols-[120px_1fr]">
-          <Field label="정답 옵션">
-            <select
-              value={correctOption}
-              onChange={(e) => setCorrectOption(Number(e.target.value))}
-              className="w-full rounded border border-border bg-background px-3 py-2 text-sm"
-            >
-              {[1, 2, 3, 4].map((n) => (
-                <option key={n} value={n}>
-                  {n}번
-                </option>
-              ))}
-            </select>
-          </Field>
-          <Field label="요약 (summary)">
-            <input
-              value={summary}
-              onChange={(e) => setSummary(e.target.value)}
-              placeholder="(선택)"
-              className="w-full rounded border border-border bg-background px-3 py-2 text-sm"
-            />
-          </Field>
-        </div>
+        {isMcq ? (
+          <div className="grid gap-3 sm:grid-cols-[120px_1fr]">
+            <Field label="정답 옵션">
+              <select
+                value={correctOption}
+                onChange={(e) => setCorrectOption(Number(e.target.value))}
+                className="w-full rounded border border-border bg-background px-3 py-2 text-sm"
+              >
+                {[1, 2, 3, 4].map((n) => (
+                  <option key={n} value={n}>
+                    {n}번
+                  </option>
+                ))}
+              </select>
+            </Field>
+            <Field label="요약 (summary)">
+              <input
+                value={summary}
+                onChange={(e) => setSummary(e.target.value)}
+                placeholder="(선택)"
+                className="w-full rounded border border-border bg-background px-3 py-2 text-sm"
+              />
+            </Field>
+          </div>
+        ) : (
+          <>
+            <Field label="정답 (answer)">
+              <textarea
+                value={answer}
+                onChange={(e) => setAnswer(e.target.value)}
+                rows={Math.min(8, Math.max(2, answer.split("\n").length + 1))}
+                className="w-full rounded border border-border bg-background px-3 py-2 text-xs"
+              />
+            </Field>
+            <Field label="키워드 / Alias (쉼표 구분 — 단답형은 alias, 약술형은 채점 키워드)">
+              <input
+                value={keywordsText}
+                onChange={(e) => setKeywordsText(e.target.value)}
+                placeholder="예: OTU, O T U"
+                className="w-full rounded border border-border bg-background px-3 py-2 text-xs"
+              />
+            </Field>
+            <Field label="요약 (summary)">
+              <input
+                value={summary}
+                onChange={(e) => setSummary(e.target.value)}
+                placeholder="(선택)"
+                className="w-full rounded border border-border bg-background px-3 py-2 text-sm"
+              />
+            </Field>
+          </>
+        )}
 
         <Field label="해설 (explanation)">
           <textarea
