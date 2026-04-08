@@ -90,23 +90,21 @@ export default function FeedbackModal({
     window.location.href = getGoogleLoginUrl();
   }
 
-  // 정가운데 + 위·아래 강제 여백 (py-16 = 128px). 컨텐츠가 길어도 절대 viewport 가장자리에 안 닿음.
-  // z-[60]: NavBar/sticky 헤더(z-50) 위로 떠서 시각적 충돌 방지.
-  const overlayClassName =
-    "fixed inset-0 z-[60] flex items-center justify-center bg-black/60 px-4 py-16 backdrop-blur-sm sm:py-20";
-
-  const panelClassName =
-    "flex max-h-[calc(100vh-8rem)] w-full max-w-xl flex-col overflow-y-auto rounded-2xl border border-border bg-surface p-6 shadow-xl sm:max-h-[calc(100vh-10rem)] sm:p-8";
-
+  // Tailwind 정석 모달 패턴:
+  // - 외부 div: fixed + overflow-y-auto (전체 viewport, 컨텐츠 길면 외부가 스크롤)
+  // - flex wrapper: min-h-full + items-center (짧으면 가운데, 길면 자연 위치)
+  // - 모달 박스: max-h 없음 → 자연 크기, 위쪽 절대 안 잘림
+  // z-[60]: NavBar(z-50) 위
   return (
     <div
-      className={overlayClassName}
+      className="fixed inset-0 z-[60] overflow-y-auto bg-black/60 backdrop-blur-sm"
       onClick={onClose}
     >
-      <div
-        className={panelClassName}
-        onClick={(e) => e.stopPropagation()}
-      >
+      <div className="flex min-h-full items-center justify-center px-4 py-12 sm:py-16">
+        <div
+          className="w-full max-w-xl rounded-2xl border border-border bg-surface p-6 shadow-xl sm:p-8"
+          onClick={(e) => e.stopPropagation()}
+        >
         {/* 헤더 */}
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-bold">💬 피드백 보내기</h2>
@@ -216,6 +214,7 @@ export default function FeedbackModal({
             </div>
           </>
         )}
+        </div>
       </div>
     </div>
   );
