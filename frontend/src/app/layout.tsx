@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
 import { Noto_Sans_KR, JetBrains_Mono } from "next/font/google";
+import Script from "next/script";
 import NavBar from "@/components/NavBar";
 import "./globals.css";
+
+const GA_ID = "G-MPQ2F9201M";
 
 const notoSansKr = Noto_Sans_KR({
   variable: "--font-sans-kr",
@@ -138,6 +141,18 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-full flex flex-col">
+        <Script
+          src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`}
+          strategy="afterInteractive"
+        />
+        <Script id="ga4-init" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', '${GA_ID}');
+          `}
+        </Script>
         <div className="border-b border-amber-400/30 bg-amber-50 dark:bg-amber-500/10 px-4 py-2.5 text-center text-sm text-amber-900 dark:text-amber-200">
           <span className="mr-1">📢</span>
           일부 문제의 정답·해설에 오류가 확인되어 점검 중입니다. 빠르게 수정해 두겠습니다. 학습에 불편을 드려 죄송합니다 🙇
