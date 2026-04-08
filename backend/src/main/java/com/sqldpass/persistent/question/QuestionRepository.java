@@ -17,15 +17,13 @@ public interface QuestionRepository extends JpaRepository<QuestionEntity, Long> 
     /**
      * 카테고리(과목) 풀에서 사용 가능한 question id 조회.
      *
-     * - SQLD: mockExam IS NULL 인 미편성 문제만 (모의고사로 편성되면 풀에서 빠짐)
-     * - 정처기 실기: 모의고사 편성 여부와 무관하게 모두 노출 (모의고사 생성이 곧 풀 적재)
-     *
-     * 자격증 구분은 question 자체에 컬럼이 없으므로 mockExam.examType 으로 판별한다.
-     * 정처기 문제는 항상 mockExam이 세팅된 상태로 생성되므로 examType=ENGINEER_PRACTICAL.
+     * SQLD/정처기 모두 mockExam 편성 여부와 무관하게 모두 노출.
+     * (이전 정책: SQLD는 mockExam IS NULL만 → "관리 구문" 같은 좁은 카테고리는
+     *  모의고사 생성으로 풀이 고갈되어 /solve에서 문제가 안 보이는 문제 발생.
+     *  사용자별 "푼 문제 후순위" 로직이 별도로 있으므로 모의고사 풀이와의
+     *  체감 중복은 작음.)
      */
-    @Query("SELECT q.id FROM QuestionEntity q LEFT JOIN q.mockExam m " +
-            "WHERE q.subject.id = :subjectId " +
-            "  AND (m IS NULL OR m.examType = com.sqldpass.persistent.mockexam.ExamType.ENGINEER_PRACTICAL)")
+    @Query("SELECT q.id FROM QuestionEntity q WHERE q.subject.id = :subjectId")
     List<Long> findAvailableIdsBySubjectId(@Param("subjectId") Long subjectId);
 
     /**
@@ -53,7 +51,7 @@ public interface QuestionRepository extends JpaRepository<QuestionEntity, Long> 
      * - 한 번도 안 푼 문제 우선 (recent_id IS NULL)
      * - 그 다음 가장 오래 전에 푼 문제 (recent_id ASC)
      * - 동률은 RAND()
-     * - 정처기 모의고사에 편성된 문제도 풀에 노출 (findAvailableIdsBySubjectId 와 동일 정책)
+     * - SQLD/정처기 모두 모의고사 편성 여부와 무관하게 풀에 노출 (findAvailableIdsBySubjectId 와 동일 정책)
      */
     @Query(value = """
             SELECT q.id FROM question q
@@ -64,9 +62,7 @@ public interface QuestionRepository extends JpaRepository<QuestionEntity, Long> 
                 WHERE s.member_id = :memberId
                 GROUP BY sa.question_id
             ) recent ON recent.question_id = q.id
-            LEFT JOIN mock_exam me ON me.id = q.mock_exam_id
             WHERE q.subject_id = :subjectId
-              AND (q.mock_exam_id IS NULL OR me.exam_type = 'ENGINEER_PRACTICAL')
             ORDER BY (recent.recent_id IS NULL) DESC, recent.recent_id ASC, RAND()
             LIMIT :size
             """, nativeQuery = true)
