@@ -284,11 +284,13 @@ export default function AdminQuestionsPage() {
         </div>
 
         {verifyRun && (
-          <div className="mt-4 grid gap-3 md:grid-cols-4">
+          <div className="mt-4 grid gap-3 md:grid-cols-3 xl:grid-cols-6">
             <SummaryCard label="검증 범위" value={formatVerifyScope(verifyRun)} />
             <SummaryCard label="처리 건수" value={`${verifyRun.processedCount}건`} />
             <SummaryCard label="의심 문제" value={`${verifyRun.suspiciousCount}건`} accent />
-            <SummaryCard label="완료 시각" value={formatDate(verifyRun.completedAt)} />
+            <SummaryCard label="자동 수정" value={`${verifyRun.fixedCount}건`} />
+            <SummaryCard label="수동 검토" value={`${verifyRun.unfixableCount}건`} />
+            <SummaryCard label="판단 불가" value={`${verifyRun.errorCount}건`} />
           </div>
         )}
 
@@ -343,11 +345,26 @@ export default function AdminQuestionsPage() {
                       {formatDate(history.completedAt)} · 요청 {history.limitRequested}건 · 처리 {history.processedCount}건
                     </p>
                   </div>
-                  <div className="flex items-center gap-3">
+                  <div className="flex flex-wrap items-center gap-2">
                     <span className="text-muted">{history.forceRecheck ? "재검증 포함" : "미검증만"}</span>
                     <span className="rounded bg-amber-500/10 px-2 py-1 text-amber-300">
-                      의심 {history.suspiciousCount}건
+                      의심 {history.suspiciousCount}
                     </span>
+                    {history.fixedCount > 0 && (
+                      <span className="rounded bg-emerald-500/10 px-2 py-1 text-emerald-300">
+                        자동수정 {history.fixedCount}
+                      </span>
+                    )}
+                    {history.unfixableCount > 0 && (
+                      <span className="rounded bg-rose-500/10 px-2 py-1 text-rose-300">
+                        수동 {history.unfixableCount}
+                      </span>
+                    )}
+                    {history.errorCount > 0 && (
+                      <span className="rounded bg-zinc-500/10 px-2 py-1 text-zinc-300">
+                        에러 {history.errorCount}
+                      </span>
+                    )}
                   </div>
                 </li>
               ))}

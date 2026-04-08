@@ -13,6 +13,9 @@ public record QuestionVerifyRunResponse(
         boolean forceRecheck,
         int processedCount,
         int suspiciousCount,
+        int fixedCount,
+        int unfixableCount,
+        int errorCount,
         LocalDateTime completedAt,
         List<QuestionVerifyResultResponse> suspiciousQuestions,
         List<QuestionVerifyHistoryResponse> recentRuns

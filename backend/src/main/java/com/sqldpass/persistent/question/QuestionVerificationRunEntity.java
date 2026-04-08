@@ -53,12 +53,25 @@ public class QuestionVerificationRunEntity {
     @Column(name = "suspicious_count", nullable = false)
     private int suspiciousCount;
 
+    /** 자동 fix가 성공해 DB에 반영된 문제 수 */
+    @Column(name = "fixed_count", nullable = false)
+    private int fixedCount;
+
+    /** 거절됐지만 자동 fix가 실패해 수동 검토가 필요한 문제 수 */
+    @Column(name = "unfixable_count", nullable = false)
+    private int unfixableCount;
+
+    /** UNKNOWN(빈 응답/파싱 실패)으로 다음 회차에 재시도되는 문제 수 */
+    @Column(name = "error_count", nullable = false)
+    private int errorCount;
+
     @Column(name = "completed_at", nullable = false)
     private LocalDateTime completedAt;
 
     public QuestionVerificationRunEntity(ExamType examType, SubjectEntity subject, String subjectName,
                                          int limitRequested, boolean forceRecheck,
                                          int processedCount, int suspiciousCount,
+                                         int fixedCount, int unfixableCount, int errorCount,
                                          LocalDateTime completedAt) {
         this.examType = examType;
         this.subject = subject;
@@ -67,6 +80,9 @@ public class QuestionVerificationRunEntity {
         this.forceRecheck = forceRecheck;
         this.processedCount = processedCount;
         this.suspiciousCount = suspiciousCount;
+        this.fixedCount = fixedCount;
+        this.unfixableCount = unfixableCount;
+        this.errorCount = errorCount;
         this.completedAt = completedAt;
     }
 }

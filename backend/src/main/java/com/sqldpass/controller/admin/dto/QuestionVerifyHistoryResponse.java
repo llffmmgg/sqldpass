@@ -14,6 +14,9 @@ public record QuestionVerifyHistoryResponse(
         boolean forceRecheck,
         int processedCount,
         int suspiciousCount,
+        int fixedCount,
+        int unfixableCount,
+        int errorCount,
         LocalDateTime completedAt
 ) {
     public static QuestionVerifyHistoryResponse from(QuestionVerificationRunEntity entity) {
@@ -26,6 +29,9 @@ public record QuestionVerifyHistoryResponse(
                 entity.isForceRecheck(),
                 entity.getProcessedCount(),
                 entity.getSuspiciousCount(),
+                entity.getFixedCount(),
+                entity.getUnfixableCount(),
+                entity.getErrorCount(),
                 entity.getCompletedAt());
     }
 }

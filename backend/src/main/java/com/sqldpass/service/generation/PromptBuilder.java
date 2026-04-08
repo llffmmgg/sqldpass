@@ -204,6 +204,43 @@ public class PromptBuilder {
             {"content": "...", "correctOption": 1, "explanation": "...", "summary": "...", "difficulty": 1}
             """;
 
+    /** MCQ 자동 수정 (SQLD/컴활 공용) — 보기 4개 + correctOption 1~4 + explanation. */
+    static final String MCQ_FIX_SYSTEM_PROMPT = """
+            당신은 4지선다 객관식 시험 문제 수정 전문가입니다.
+            검증에서 지적된 사항을 반영하여 문제 본문, 보기, 정답, 해설을 수정하세요.
+            본문(content)에는 ①②③④ 4개 보기가 모두 포함되어야 하고,
+            correctOption은 1~4 중 하나여야 합니다.
+            해설(explanation)은 왜 그 보기가 정답이고 다른 보기가 틀렸는지 명확히 설명해야 합니다.
+            수정이 불가능(예: 정답 자체가 보기에 없음, 본문이 깨져 복구 불가)하면 {"fixable": false}만 반환하세요.
+
+            반드시 아래 JSON 형식으로만 응답하세요 (다른 텍스트 금지):
+            {"content": "...", "correctOption": 1, "explanation": "...", "summary": "...", "difficulty": 1}
+            """;
+
+    /** 정처기 단답형 자동 수정 — answer + keywords(alias 배열). */
+    static final String SHORT_ANSWER_FIX_SYSTEM_PROMPT = """
+            당신은 정보처리기사 실기 단답형 문제 수정 전문가입니다.
+            검증에서 지적된 사항을 반영해 문제 본문, 모범 답안(answerText), 채점 alias(keywords)를 수정하세요.
+            keywords는 답안과 동등하게 인정 가능한 표현들의 배열입니다 (예: ["OTU","O T U","otu"]).
+            모범 답안이 alias 중 하나에 포함되어야 하며, 해설은 왜 그 답이 맞는지 단계별로 설명해야 합니다.
+            수정이 불가능하면 {"fixable": false}만 반환하세요.
+
+            반드시 아래 JSON 형식으로만 응답하세요 (다른 텍스트 금지):
+            {"content": "...", "questionType": "SHORT_ANSWER", "answerText": "...", "keywords": ["..."], "explanation": "...", "summary": "...", "difficulty": 1}
+            """;
+
+    /** 정처기 약술형 자동 수정 — answer(모범) + keywords(채점 키워드). */
+    static final String DESCRIPTIVE_FIX_SYSTEM_PROMPT = """
+            당신은 정보처리기사 실기 약술형 문제 수정 전문가입니다.
+            검증에서 지적된 사항을 반영해 문제 본문, 모범 답안(answerText), 채점 키워드(keywords)를 수정하세요.
+            keywords는 답안에 반드시 포함되어야 할 핵심 용어들의 배열입니다 — 부분 점수 채점에 사용됩니다.
+            모범 답안에는 keywords가 모두 자연스럽게 포함되어 있어야 합니다.
+            수정이 불가능하면 {"fixable": false}만 반환하세요.
+
+            반드시 아래 JSON 형식으로만 응답하세요 (다른 텍스트 금지):
+            {"content": "...", "questionType": "DESCRIPTIVE", "answerText": "...", "keywords": ["..."], "explanation": "...", "summary": "...", "difficulty": 1}
+            """;
+
     // 주제(subject name) → 토픽 목록
     static final Map<String, List<String>> SUBJECT_TOPICS = new LinkedHashMap<>() {{
         put("데이터 모델링의 이해", List.of("데이터 모델링 개요", "엔터티", "속성", "관계", "식별자"));
@@ -519,11 +556,95 @@ public class PromptBuilder {
     static String buildFixPrompt(GeneratedQuestion question, String reason) {
         return "검증 사유: " + reason + "\n\n" +
                 "원본 문제:\n" +
-                "{\"content\": \"" + question.content().replace("\"", "\\\"") + "\", " +
+                "{\"content\": \"" + escape(question.content()) + "\", " +
                 "\"correctOption\": " + question.correctOption() + ", " +
-                "\"explanation\": \"" + question.explanation().replace("\"", "\\\"") + "\", " +
-                "\"summary\": \"" + question.summary() + "\", " +
+                "\"explanation\": \"" + escape(question.explanation()) + "\", " +
+                "\"summary\": \"" + escape(question.summary()) + "\", " +
                 "\"difficulty\": " + question.difficulty() + "}\n\n" +
                 "위 사유를 반영하여 수정한 문제를 JSON으로 반환하세요.";
+    }
+
+    static String buildShortAnswerFixPrompt(GeneratedQuestion question, String reason) {
+        return "검증 사유: " + reason + "\n\n" +
+                "원본 문제 (단답형):\n" +
+                "{\"content\": \"" + escape(question.content()) + "\", " +
+                "\"questionType\": \"SHORT_ANSWER\", " +
+                "\"answerText\": \"" + escape(nullSafe(question.answerText())) + "\", " +
+                "\"keywords\": " + (question.keywords() != null ? question.keywords().toString() : "[]") + ", " +
+                "\"explanation\": \"" + escape(nullSafe(question.explanation())) + "\", " +
+                "\"summary\": \"" + escape(nullSafe(question.summary())) + "\", " +
+                "\"difficulty\": " + question.difficulty() + "}\n\n" +
+                "위 사유를 반영하여 수정한 문제를 JSON으로 반환하세요. " +
+                "answerText가 keywords 중 하나와 정확히 일치(혹은 alias)하도록 보장하세요.";
+    }
+
+    static String buildDescriptiveFixPrompt(GeneratedQuestion question, String reason) {
+        return "검증 사유: " + reason + "\n\n" +
+                "원본 문제 (약술형):\n" +
+                "{\"content\": \"" + escape(question.content()) + "\", " +
+                "\"questionType\": \"DESCRIPTIVE\", " +
+                "\"answerText\": \"" + escape(nullSafe(question.answerText())) + "\", " +
+                "\"keywords\": " + (question.keywords() != null ? question.keywords().toString() : "[]") + ", " +
+                "\"explanation\": \"" + escape(nullSafe(question.explanation())) + "\", " +
+                "\"summary\": \"" + escape(nullSafe(question.summary())) + "\", " +
+                "\"difficulty\": " + question.difficulty() + "}\n\n" +
+                "위 사유를 반영하여 수정한 문제를 JSON으로 반환하세요. " +
+                "keywords의 모든 항목이 answerText 안에 자연스럽게 포함되어야 합니다.";
+    }
+
+    /**
+     * 배치 검증 시스템 프롬프트 — 단건과 같은 시험·과목 규칙을 그대로 가져오되,
+     * "여러 문제를 받아 results 배열로 답하라" 지시를 끝에 덧붙임.
+     */
+    static String buildBatchVerificationSystemPrompt(AiVerificationRequest request) {
+        return buildVerificationSystemPrompt(request) + "\n\n" +
+                "여러 문제를 한 번에 받아 각 문제별 판정 결과를 results 배열로 반환합니다. " +
+                "반드시 아래 JSON 형식으로만 응답하세요 (다른 텍스트 금지):\n" +
+                "{\"results\":[" +
+                "{\"index\":0,\"approved\":true}," +
+                "{\"index\":1,\"approved\":false,\"reason\":\"정답이 2가 아니라 3\",\"fixable\":true}" +
+                "]}\n" +
+                "- index는 입력에 표시된 순번 그대로 사용하세요.\n" +
+                "- approved=false일 때만 reason과 fixable을 포함하세요.\n" +
+                "- fixable=true는 본문/정답을 합리적으로 수정하면 정상화 가능한 경우, " +
+                "fixable=false는 문제 자체가 복구 불가한 경우입니다.";
+    }
+
+    static String buildBatchVerificationUserPrompt(java.util.List<AiVerificationRequest> requests) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("아래 ").append(requests.size()).append("개 문제를 각각 판정하세요.\n\n");
+        for (int i = 0; i < requests.size(); i++) {
+            GeneratedQuestion q = requests.get(i).question();
+            sb.append("=== #").append(i).append(" ===\n");
+            sb.append("content: ").append(nullSafe(q.content())).append("\n");
+            if (q.questionType() != null) {
+                sb.append("type: ").append(q.questionType()).append("\n");
+            }
+            if (q.correctOption() != null) {
+                sb.append("correctOption: ").append(q.correctOption()).append("\n");
+            }
+            if (q.answerText() != null) {
+                sb.append("answer: ").append(q.answerText()).append("\n");
+            }
+            if (q.keywords() != null && !q.keywords().isEmpty()) {
+                sb.append("keywords: ").append(q.keywords()).append("\n");
+            }
+            if (q.explanation() != null) {
+                sb.append("explanation: ").append(q.explanation()).append("\n");
+            }
+            sb.append("\n");
+        }
+        sb.append("응답: results 배열로 반환.");
+        return sb.toString();
+    }
+
+    private static String escape(String s) {
+        if (s == null) return "";
+        return s.replace("\\", "\\\\").replace("\"", "\\\"")
+                .replace("\n", "\\n").replace("\r", "");
+    }
+
+    private static String nullSafe(String s) {
+        return s == null ? "" : s;
     }
 }

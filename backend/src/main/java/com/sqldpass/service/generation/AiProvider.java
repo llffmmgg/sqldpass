@@ -217,33 +217,126 @@ public class AiProvider {
         }
     }
 
+    /** 단일 검증 — UNKNOWN(빈 응답/파싱 실패)일 땐 throw 대신 outcome으로 표현. */
     public AiVerificationResponse verifyQuestion(AiVerificationRequest request) {
         String prompt = PromptBuilder.buildVerificationPrompt(request);
-        String responseText = chatClient.prompt()
-                .system(PromptBuilder.buildVerificationSystemPrompt(request))
-                .user(prompt)
-                .call()
-                .content();
+        String responseText = safeCall(
+                PromptBuilder.buildVerificationSystemPrompt(request), prompt);
+
+        if (responseText == null || responseText.isBlank()) {
+            log.warn("Verification empty response for [{}]", request.subjectName());
+            return AiVerificationResponse.ofUnknown("LLM 빈 응답");
+        }
 
         try {
             String json = extractJson(responseText);
             JsonNode root = objectMapper.readTree(json);
-            boolean approved = root.get("approved").asBoolean();
+            boolean approved = root.has("approved") && root.get("approved").asBoolean();
             String reason = root.has("reason") ? root.get("reason").asText() : "";
-            return new AiVerificationResponse(approved, reason);
+            Boolean fixable = root.has("fixable") ? root.get("fixable").asBoolean() : null;
+            return approved
+                    ? AiVerificationResponse.ofApproved()
+                    : AiVerificationResponse.ofRejected(reason, fixable);
         } catch (Exception e) {
-            log.error("Failed to parse verification response: {}", responseText, e);
-            return new AiVerificationResponse(false, "파싱 실패");
+            log.warn("Failed to parse verification response: {}", responseText, e);
+            return AiVerificationResponse.ofUnknown("파싱 실패");
         }
     }
 
-    public GeneratedQuestion fixQuestion(GeneratedQuestion question, String reason) {
-        String prompt = PromptBuilder.buildFixPrompt(question, reason);
-        String responseText = chatClient.prompt()
-                .system(PromptBuilder.FIX_SYSTEM_PROMPT)
-                .user(prompt)
-                .call()
-                .content();
+    /**
+     * 배치 검증 — N문제를 한 번의 LLM 호출로 판정.
+     * 응답은 {"results":[{"index":0,"approved":true},{"index":1,"approved":false,"reason":"...","fixable":true},...]} 형식.
+     * 파싱 실패/길이 불일치 시 모두 UNKNOWN으로 채움 (다음 회차 재시도).
+     */
+    public List<AiVerificationResponse> verifyQuestionsBatch(List<AiVerificationRequest> requests) {
+        if (requests == null || requests.isEmpty()) return List.of();
+
+        // 같은 시험·과목끼리만 들어온다고 가정 — 호출자가 묶어서 보낸다.
+        AiVerificationRequest first = requests.get(0);
+        String systemPrompt = PromptBuilder.buildBatchVerificationSystemPrompt(first);
+        String userPrompt = PromptBuilder.buildBatchVerificationUserPrompt(requests);
+
+        String responseText = safeCall(systemPrompt, userPrompt);
+        if (responseText == null || responseText.isBlank()) {
+            log.warn("Batch verification empty response — retrying once");
+            responseText = safeCall(systemPrompt, userPrompt);
+        }
+
+        if (responseText == null || responseText.isBlank()) {
+            log.warn("Batch verification still empty after retry — marking all UNKNOWN");
+            return fillUnknown(requests.size(), "LLM 빈 응답");
+        }
+
+        try {
+            String json = extractJson(responseText);
+            JsonNode root = objectMapper.readTree(json);
+            JsonNode resultsNode = root.has("results") ? root.get("results") : root;
+            if (!resultsNode.isArray()) {
+                log.warn("Batch verification response not an array: {}", responseText);
+                return fillUnknown(requests.size(), "응답 포맷 오류");
+            }
+
+            List<AiVerificationResponse> out = new ArrayList<>(requests.size());
+            for (int i = 0; i < requests.size(); i++) out.add(null);
+
+            for (JsonNode item : resultsNode) {
+                int idx = item.has("index") ? item.get("index").asInt(-1) : -1;
+                if (idx < 0 || idx >= requests.size()) continue;
+                boolean approved = item.has("approved") && item.get("approved").asBoolean();
+                String reason = item.has("reason") ? item.get("reason").asText() : "";
+                Boolean fixable = item.has("fixable") ? item.get("fixable").asBoolean() : null;
+                out.set(idx, approved
+                        ? AiVerificationResponse.ofApproved()
+                        : AiVerificationResponse.ofRejected(reason, fixable));
+            }
+            // 비어 있는 슬롯은 UNKNOWN으로
+            for (int i = 0; i < out.size(); i++) {
+                if (out.get(i) == null) {
+                    out.set(i, AiVerificationResponse.ofUnknown("응답에 누락"));
+                }
+            }
+            return out;
+        } catch (Exception e) {
+            log.warn("Failed to parse batch verification response: {}", responseText, e);
+            return fillUnknown(requests.size(), "파싱 실패");
+        }
+    }
+
+    private List<AiVerificationResponse> fillUnknown(int n, String reason) {
+        List<AiVerificationResponse> out = new ArrayList<>(n);
+        for (int i = 0; i < n; i++) out.add(AiVerificationResponse.ofUnknown(reason));
+        return out;
+    }
+
+    /**
+     * 거절된 문제를 LLM에게 수정 요청.
+     * questionType별로 다른 system prompt + user prompt를 사용 (MCQ / SHORT_ANSWER / DESCRIPTIVE).
+     */
+    public GeneratedQuestion fixQuestion(GeneratedQuestion question, String reason,
+                                         com.sqldpass.persistent.mockexam.ExamType examType,
+                                         com.sqldpass.persistent.question.QuestionType questionType) {
+        String systemPrompt;
+        String userPrompt;
+        switch (questionType) {
+            case SHORT_ANSWER -> {
+                systemPrompt = PromptBuilder.SHORT_ANSWER_FIX_SYSTEM_PROMPT;
+                userPrompt = PromptBuilder.buildShortAnswerFixPrompt(question, reason);
+            }
+            case DESCRIPTIVE -> {
+                systemPrompt = PromptBuilder.DESCRIPTIVE_FIX_SYSTEM_PROMPT;
+                userPrompt = PromptBuilder.buildDescriptiveFixPrompt(question, reason);
+            }
+            default -> {
+                systemPrompt = PromptBuilder.MCQ_FIX_SYSTEM_PROMPT;
+                userPrompt = PromptBuilder.buildFixPrompt(question, reason);
+            }
+        }
+
+        String responseText = safeCall(systemPrompt, userPrompt);
+        if (responseText == null || responseText.isBlank()) {
+            log.warn("Fix empty response (type={})", questionType);
+            return null;
+        }
 
         try {
             String json = extractJson(responseText);
@@ -253,7 +346,28 @@ public class AiProvider {
             }
             return objectMapper.readValue(json, GeneratedQuestion.class);
         } catch (Exception e) {
-            log.error("Failed to parse fix response: {}", responseText, e);
+            log.warn("Failed to parse fix response: {}", responseText, e);
+            return null;
+        }
+    }
+
+    /** 호환용 — 기존 호출자를 위해 유지. SQLD MCQ로 가정. */
+    public GeneratedQuestion fixQuestion(GeneratedQuestion question, String reason) {
+        return fixQuestion(question, reason,
+                com.sqldpass.persistent.mockexam.ExamType.SQLD,
+                com.sqldpass.persistent.question.QuestionType.MCQ);
+    }
+
+    /** Spring AI ChatClient의 빈 응답/예외를 한 곳에서 처리. */
+    private String safeCall(String systemPrompt, String userPrompt) {
+        try {
+            return chatClient.prompt()
+                    .system(systemPrompt)
+                    .user(userPrompt)
+                    .call()
+                    .content();
+        } catch (Exception e) {
+            log.warn("ChatClient call failed: {}", e.getMessage());
             return null;
         }
     }

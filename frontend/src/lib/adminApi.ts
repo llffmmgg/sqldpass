@@ -172,6 +172,9 @@ export interface QuestionVerifyHistory {
   forceRecheck: boolean;
   processedCount: number;
   suspiciousCount: number;
+  fixedCount: number;
+  unfixableCount: number;
+  errorCount: number;
   completedAt: string;
 }
 
@@ -183,6 +186,9 @@ export interface QuestionVerifyRun {
   forceRecheck: boolean;
   processedCount: number;
   suspiciousCount: number;
+  fixedCount: number;
+  unfixableCount: number;
+  errorCount: number;
   completedAt: string;
   suspiciousQuestions: QuestionVerifyResult[];
   recentRuns: QuestionVerifyHistory[];

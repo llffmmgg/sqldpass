@@ -138,6 +138,50 @@ public interface QuestionRepository extends JpaRepository<QuestionEntity, Long> 
     int markVerifiedInBatch(@Param("ids") List<Long> ids,
                             @Param("verifiedAt") LocalDateTime verifiedAt);
 
+    /**
+     * 검증 트리아지 — 어떤 문제를 LLM에 먼저 보낼지 정렬.
+     * 우선순위:
+     *   1) 사용자 피드백(QUESTION_ERROR, NEW/IN_PROGRESS) 있는 문제
+     *   2) 시도 ≥ 5 & 정답률 < 20%
+     *   3) 미검증 (verified_at IS NULL)
+     *   4) 그 외 (force 모드일 때만 — onlyUnverified=false)
+     * 시험 필터(ENGINEER/CL1/SQLD)는 service 레이어에서 rootName 파라미터로 분기.
+     */
+    @Query(value = """
+            SELECT q.id
+            FROM question q
+            LEFT JOIN subject s ON s.id = q.subject_id
+            LEFT JOIN subject p ON p.id = s.parent_id
+            LEFT JOIN (
+                SELECT question_id, COUNT(*) AS err_cnt
+                FROM feedback
+                WHERE type = 'QUESTION_ERROR' AND status IN ('NEW','IN_PROGRESS')
+                GROUP BY question_id
+            ) fb ON fb.question_id = q.id
+            LEFT JOIN (
+                SELECT question_id,
+                       AVG(CASE WHEN is_correct THEN 1.0 ELSE 0.0 END) AS rate,
+                       COUNT(*) AS cnt
+                FROM solve_answer
+                GROUP BY question_id
+            ) st ON st.question_id = q.id
+            WHERE (:rootName IS NULL OR COALESCE(p.name, s.name) = :rootName)
+              AND (:excludedRootNames IS NULL OR COALESCE(p.name, s.name) NOT IN (:excludedRootNames))
+              AND (:subjectId IS NULL OR s.id = :subjectId OR p.id = :subjectId)
+              AND (:onlyUnverified = false OR q.verified_at IS NULL)
+            ORDER BY
+              (CASE WHEN fb.err_cnt IS NOT NULL THEN 1 ELSE 0 END) DESC,
+              (CASE WHEN st.cnt >= 5 AND st.rate < 0.2 THEN 1 ELSE 0 END) DESC,
+              (CASE WHEN q.verified_at IS NULL THEN 1 ELSE 0 END) DESC,
+              q.created_at DESC
+            LIMIT :lim
+            """, nativeQuery = true)
+    List<Long> findTriageIdsForVerification(@Param("rootName") String rootName,
+                                            @Param("excludedRootNames") List<String> excludedRootNames,
+                                            @Param("subjectId") Long subjectId,
+                                            @Param("onlyUnverified") boolean onlyUnverified,
+                                            @Param("lim") int limit);
+
     boolean existsByContentHash(String contentHash);
 
     long countByCreatedAtAfter(LocalDateTime dateTime);
