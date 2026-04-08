@@ -86,6 +86,8 @@ export interface AdminMember {
   nickname: string;
   email: string | null;
   createdAt: string;
+  totalSolved: number;
+  streakDays: number;
 }
 
 export interface AdminMemberPage {

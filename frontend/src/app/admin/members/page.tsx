@@ -33,6 +33,8 @@ export default function AdminMembersPage() {
                 <tr className="border-b border-border text-left text-muted">
                   <th className="px-3 py-2">ID</th>
                   <th className="px-3 py-2">닉네임</th>
+                  <th className="px-3 py-2 text-right">풀이 수</th>
+                  <th className="px-3 py-2 text-right">연속 접속</th>
                   <th className="px-3 py-2">이메일</th>
                   <th className="px-3 py-2">가입 방식</th>
                   <th className="px-3 py-2">가입일</th>
@@ -52,6 +54,22 @@ export default function AdminMembersPage() {
                       >
                         {m.nickname}
                       </Link>
+                    </td>
+                    <td className="px-3 py-2 text-right tabular-nums">
+                      {m.totalSolved > 0 ? (
+                        <span className="font-semibold">{m.totalSolved.toLocaleString()}</span>
+                      ) : (
+                        <span className="text-muted/50">0</span>
+                      )}
+                    </td>
+                    <td className="px-3 py-2 text-right tabular-nums">
+                      {m.streakDays > 0 ? (
+                        <span className="inline-flex items-center gap-0.5 font-semibold text-amber-300">
+                          🔥 {m.streakDays}일
+                        </span>
+                      ) : (
+                        <span className="text-muted/50">-</span>
+                      )}
                     </td>
                     <td className="px-3 py-2 text-muted">{m.email || "-"}</td>
                     <td className="px-3 py-2">

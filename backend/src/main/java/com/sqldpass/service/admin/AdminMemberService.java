@@ -51,8 +51,69 @@ public class AdminMemberService {
     }
 
     public Page<AdminMemberResponse> getMembers(int page, int size) {
-        return memberRepository.findAll(PageRequest.of(page, size, Sort.by("createdAt").descending()))
-                .map(AdminMemberResponse::from);
+        Page<MemberEntity> memberPage = memberRepository.findAll(
+                PageRequest.of(page, size, Sort.by("createdAt").descending()));
+
+        // 페이지 내 멤버들에 대한 인라인 통계를 batch로 계산 (N+1 방지)
+        List<Long> memberIds = memberPage.getContent().stream().map(MemberEntity::getId).toList();
+        Map<Long, MemberInlineStats> statsByMember = computeInlineStats(memberIds);
+
+        return memberPage.map(m -> {
+            MemberInlineStats s = statsByMember.getOrDefault(m.getId(), MemberInlineStats.EMPTY);
+            return AdminMemberResponse.from(m, s.totalSolved, s.streakDays);
+        });
+    }
+
+    /** 멤버 인라인 통계 (목록용 — 누적 풀이 수 + 연속 접속일). */
+    private record MemberInlineStats(int totalSolved, int streakDays) {
+        static final MemberInlineStats EMPTY = new MemberInlineStats(0, 0);
+    }
+
+    private Map<Long, MemberInlineStats> computeInlineStats(List<Long> memberIds) {
+        if (memberIds.isEmpty()) return Map.of();
+
+        // [member_id, totalCount, createdAt] 단일 배치 쿼리
+        List<Object[]> rows = solveRepository.findStatsByMemberIds(memberIds);
+
+        // memberId → 풀이 합계
+        Map<Long, Integer> totalsByMember = new HashMap<>();
+        // memberId → 풀이가 있었던 LocalDate 집합
+        Map<Long, java.util.Set<LocalDate>> datesByMember = new HashMap<>();
+
+        ZoneId zone = ZoneId.systemDefault();
+        for (Object[] row : rows) {
+            Long memberId = ((Number) row[0]).longValue();
+            int totalCount = ((Number) row[1]).intValue();
+            LocalDateTime createdAt = (LocalDateTime) row[2];
+
+            totalsByMember.merge(memberId, totalCount, Integer::sum);
+            datesByMember
+                    .computeIfAbsent(memberId, k -> new java.util.HashSet<>())
+                    .add(createdAt.atZone(zone).toLocalDate());
+        }
+
+        Map<Long, MemberInlineStats> result = new HashMap<>();
+        for (Long memberId : memberIds) {
+            int total = totalsByMember.getOrDefault(memberId, 0);
+            java.util.Set<LocalDate> dates = datesByMember.getOrDefault(memberId, java.util.Set.of());
+            int streak = computeStreakFromDates(dates);
+            result.put(memberId, new MemberInlineStats(total, streak));
+        }
+        return result;
+    }
+
+    /** 오늘(혹은 어제)부터 거꾸로 세면서 연속 일 수 계산. */
+    private int computeStreakFromDates(java.util.Set<LocalDate> dates) {
+        if (dates.isEmpty()) return 0;
+        ZoneId zone = ZoneId.systemDefault();
+        LocalDate today = LocalDate.now(zone);
+        LocalDate cursor = dates.contains(today) ? today : today.minusDays(1);
+        int streak = 0;
+        while (dates.contains(cursor)) {
+            streak++;
+            cursor = cursor.minusDays(1);
+        }
+        return streak;
     }
 
     /**
