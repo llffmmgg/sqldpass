@@ -15,6 +15,7 @@ import QuestionContent from "@/components/QuestionContent";
 import AuthGuard from "@/components/AuthGuard";
 import Spinner from "@/components/Spinner";
 import ReportQuestionButton from "@/components/ReportQuestionButton";
+import { GradingDisclaimerModal } from "@/components/GradingDisclaimerModal";
 
 type Phase = "select" | "solve";
 
@@ -257,6 +258,7 @@ function SolvePageContent() {
   if (phase === "select") {
     return (
       <main className="min-h-screen bg-background text-foreground">
+        <GradingDisclaimerModal />
         <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6">
           <h1 className="text-2xl font-bold sm:text-3xl">과목 선택</h1>
           <p className="mt-2 text-muted">풀고 싶은 과목을 선택하세요</p>

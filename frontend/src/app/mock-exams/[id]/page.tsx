@@ -14,6 +14,7 @@ import {
 } from "@/lib/mockExamApi";
 import { submitSolve, type SolveAnswerRequest, type SolveResponse } from "@/lib/api";
 import { ExamBadge } from "@/app/mock-exams/page";
+import { GradingDisclaimerModal } from "@/components/GradingDisclaimerModal";
 
 interface AnswerState {
   option?: number;
@@ -219,6 +220,7 @@ function MockExamDetailContent() {
 
   return (
     <main className="min-h-screen bg-background text-foreground">
+      <GradingDisclaimerModal />
       <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6">
         {/* 상단 상태 바 */}
         <div className="flex flex-wrap items-center justify-between gap-3">
