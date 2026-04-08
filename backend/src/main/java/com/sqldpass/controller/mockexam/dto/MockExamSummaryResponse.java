@@ -13,11 +13,22 @@ public record MockExamSummaryResponse(
         int totalQuestions,
         LocalDateTime createdAt,
         /** "쉬움" / "보통" / "어려움" / "매우 어려움" / null(데이터 없음) */
-        String difficultyLabel
+        String difficultyLabel,
+        /** 로그인 사용자가 이 모의고사를 한 번이라도 풀었는지 (비로그인 false) */
+        boolean solved,
+        /** 사용자의 최고 정답 수 (미풀이 또는 비로그인 시 null) */
+        Integer bestCorrectCount,
+        /** 사용자의 최고 풀이 시 총 문항 수 (미풀이 또는 비로그인 시 null) */
+        Integer bestTotalCount
 ) {
     public static MockExamSummaryResponse from(MockExam mockExam) {
+        return from(mockExam, null, null);
+    }
+
+    public static MockExamSummaryResponse from(MockExam mockExam, Integer bestCorrect, Integer bestTotal) {
         Double normalized = normalize(mockExam.getExamType(), mockExam.getAvgDifficulty());
         String label = computeLabel(mockExam.getExamType(), normalized);
+        boolean solved = bestCorrect != null && bestTotal != null;
 
         return new MockExamSummaryResponse(
                 mockExam.getId(),
@@ -26,7 +37,10 @@ public record MockExamSummaryResponse(
                 mockExam.getSequence(),
                 mockExam.getTotalQuestions(),
                 mockExam.getCreatedAt(),
-                label);
+                label,
+                solved,
+                bestCorrect,
+                bestTotal);
     }
 
     /**

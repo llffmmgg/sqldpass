@@ -147,7 +147,14 @@ function MockExamsListContent() {
 
   const filtered = useMemo(() => {
     if (!exams) return null;
-    return exams.filter((e) => e.examType === filter);
+    // 1) examType 필터 → 2) 미풀이 우선 → 3) 같은 그룹은 sequence 내림차순 (최신순)
+    return exams
+      .filter((e) => e.examType === filter)
+      .slice()
+      .sort((a, b) => {
+        if (a.solved !== b.solved) return a.solved ? 1 : -1;
+        return b.sequence - a.sequence;
+      });
   }, [exams, filter]);
 
   if (error) {
@@ -259,7 +266,17 @@ function MockExamCard({ exam }: { exam: MockExamSummary }) {
         </div>
       </div>
       <h2 className="mt-3 text-lg font-semibold leading-tight">{exam.name}</h2>
-      <p className="mt-2 text-sm text-muted">총 {exam.totalQuestions}문항</p>
+      <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-muted">
+        <span>총 {exam.totalQuestions}문항</span>
+        {exam.solved && exam.bestCorrectCount != null && exam.bestTotalCount != null && (
+          <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/40 bg-emerald-500/10 px-2 py-0.5 text-[11px] font-medium text-emerald-300">
+            ✓ 풀이 완료
+            <span className="opacity-80 tabular-nums">
+              · 최고 {exam.bestCorrectCount}/{exam.bestTotalCount}
+            </span>
+          </span>
+        )}
+      </div>
       <p className="mt-1 text-xs text-muted/70">
         {new Date(exam.createdAt).toLocaleDateString("ko-KR")}
       </p>
