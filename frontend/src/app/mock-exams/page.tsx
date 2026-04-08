@@ -132,12 +132,12 @@ function GuestExamCard({
   );
 }
 
-type Filter = "ALL" | ExamType;
+type Filter = ExamType;
 
 function MockExamsListContent() {
   const [exams, setExams] = useState<MockExamSummary[] | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [filter, setFilter] = useState<Filter>("ALL");
+  const [filter, setFilter] = useState<Filter>("SQLD");
 
   useEffect(() => {
     getMockExams()
@@ -147,7 +147,6 @@ function MockExamsListContent() {
 
   const filtered = useMemo(() => {
     if (!exams) return null;
-    if (filter === "ALL") return exams;
     return exams.filter((e) => e.examType === filter);
   }, [exams, filter]);
 
@@ -177,7 +176,6 @@ function MockExamsListContent() {
 
         {/* 필터 탭 */}
         <div className="mt-6 flex gap-2 rounded-lg border border-border bg-surface p-1 text-sm">
-          <FilterTab label="전체" count={exams.length} active={filter === "ALL"} onClick={() => setFilter("ALL")} />
           <FilterTab
             label="SQLD"
             count={exams.filter((e) => e.examType === "SQLD").length}
@@ -196,9 +194,7 @@ function MockExamsListContent() {
 
         {filtered.length === 0 ? (
           <div className="mt-12 rounded-xl border border-border bg-surface p-8 text-center text-muted">
-            {filter === "ALL"
-              ? "아직 등록된 모의고사가 없습니다. 관리자가 새 모의고사를 만들면 여기 표시됩니다."
-              : "해당 시험의 모의고사가 아직 없습니다."}
+            해당 시험의 모의고사가 아직 없습니다.
           </div>
         ) : (
           <div className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-2">
