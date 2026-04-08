@@ -90,17 +90,17 @@ export default function FeedbackModal({
     window.location.href = getGoogleLoginUrl();
   }
 
-  // Tailwind 정석 모달 패턴:
-  // - 외부 div: fixed + overflow-y-auto (전체 viewport, 컨텐츠 길면 외부가 스크롤)
-  // - flex wrapper: min-h-full + items-center (짧으면 가운데, 길면 자연 위치)
-  // - 모달 박스: max-h 없음 → 자연 크기, 위쪽 절대 안 잘림
-  // z-[60]: NavBar(z-50) 위
+  const wrapperClassName =
+    placement === "general"
+      ? "flex min-h-full items-start justify-center px-4 pb-12 pt-24 sm:pb-16 sm:pt-28"
+      : "flex min-h-full items-center justify-center px-4 py-12 sm:py-16";
+
   return (
     <div
       className="fixed inset-0 z-[60] overflow-y-auto bg-black/60 backdrop-blur-sm"
       onClick={onClose}
     >
-      <div className="flex min-h-full items-center justify-center px-4 py-12 sm:py-16">
+      <div className={wrapperClassName}>
         <div
           className="w-full max-w-xl rounded-2xl border border-border bg-surface p-6 shadow-xl sm:p-8"
           onClick={(e) => e.stopPropagation()}
