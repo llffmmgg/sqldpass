@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import {
   getAdminMockExams,
@@ -344,12 +345,20 @@ export default function AdminMockExamsPage() {
                         {new Date(exam.createdAt).toLocaleDateString("ko-KR")}
                       </td>
                       <td className="px-4 py-3 text-right">
-                        <button
-                          onClick={() => handleDelete(exam.id, exam.name)}
-                          className="text-xs text-red-400 hover:text-red-300"
-                        >
-                          삭제
-                        </button>
+                        <div className="flex items-center justify-end gap-3">
+                          <Link
+                            href={`/admin/mock-exams/${exam.id}`}
+                            className="text-xs text-violet-300 hover:text-violet-200"
+                          >
+                            수정
+                          </Link>
+                          <button
+                            onClick={() => handleDelete(exam.id, exam.name)}
+                            className="text-xs text-red-400 hover:text-red-300"
+                          >
+                            삭제
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );
