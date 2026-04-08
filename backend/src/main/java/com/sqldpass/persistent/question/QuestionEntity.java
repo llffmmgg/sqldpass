@@ -82,6 +82,10 @@ public class QuestionEntity extends BaseTimeEntity {
     @Column(name = "exported_at")
     private LocalDateTime exportedAt;
 
+    /** 어드민 직접 LLM 검증 완료 시각. 수정되면 다시 NULL로 돌아감. */
+    @Column(name = "verified_at")
+    private LocalDateTime verifiedAt;
+
     /** 본문 normalize → SHA-256 hex. 모의고사 회차 간/내 중복 검증용. NULL 허용 (legacy 호환) */
     @Column(name = "content_hash", length = 64)
     private String contentHash;
@@ -124,6 +128,7 @@ public class QuestionEntity extends BaseTimeEntity {
         this.correctOption = correctOption;
         this.explanation = explanation;
         this.summary = summary;
+        this.verifiedAt = null;
     }
 
     /** 어드민 MCQ 수정 — answer/keywords는 건드리지 않음 */
@@ -133,6 +138,9 @@ public class QuestionEntity extends BaseTimeEntity {
         this.correctOption = correctOption;
         this.explanation = explanation;
         this.summary = summary;
+        this.answer = null;
+        this.keywords = null;
+        this.verifiedAt = null;
     }
 
     /** 어드민 단답/약술형 수정 — correct_option은 NULL로 강제, answer/keywords 갱신 */
@@ -145,6 +153,11 @@ public class QuestionEntity extends BaseTimeEntity {
         this.keywords = keywordsJson;
         this.explanation = explanation;
         this.summary = summary;
+        this.verifiedAt = null;
+    }
+
+    public void markVerified(LocalDateTime verifiedAt) {
+        this.verifiedAt = verifiedAt;
     }
 
     public void assignToMockExam(MockExamEntity mockExam, int displayOrder) {

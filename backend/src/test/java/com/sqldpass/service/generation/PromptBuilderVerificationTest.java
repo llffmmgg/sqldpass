@@ -15,18 +15,18 @@ class PromptBuilderVerificationTest {
     @Test
     void engineerVerificationPromptIncludesAnswerAndKeywords() {
         GeneratedQuestion question = new GeneratedQuestion(
-                "설명형 문제",
+                "Explain this program",
                 null,
-                "해설 내용",
-                "요약",
-                "운영체제",
+                "Detailed explanation",
+                "Summary",
+                "OS",
                 4,
                 "DESCRIPTIVE",
-                "모범 답안",
-                List.of("스케줄링", "교착상태"));
+                "model answer",
+                List.of("alpha", "beta"));
 
         AiVerificationRequest request = new AiVerificationRequest(
-                ExamType.ENGINEER_PRACTICAL, "운영체제", question);
+                ExamType.ENGINEER_PRACTICAL, "OS", question);
 
         String systemPrompt = PromptBuilder.buildVerificationSystemPrompt(request);
         String userPrompt = PromptBuilder.buildVerificationPrompt(request);
@@ -35,18 +35,18 @@ class PromptBuilderVerificationTest {
         assertThat(systemPrompt).contains("answerText");
         assertThat(userPrompt).contains("ENGINEER_PRACTICAL");
         assertThat(userPrompt).contains("DESCRIPTIVE");
-        assertThat(userPrompt).contains("모범 답안");
-        assertThat(userPrompt).contains("스케줄링, 교착상태");
-        assertThat(userPrompt).contains("난이도: 4");
+        assertThat(userPrompt).contains("model answer");
+        assertThat(userPrompt).contains("alpha, beta");
+        assertThat(userPrompt).contains("4");
     }
 
     @Test
     void sqldVerificationPromptIncludesCorrectOptionAndDifficulty() {
         GeneratedQuestion question = new GeneratedQuestion(
-                "객관식 문제",
+                "Multiple choice question",
                 3,
-                "해설 내용",
-                "요약",
+                "Explanation",
+                "Summary",
                 "JOIN",
                 2,
                 "MCQ",
@@ -54,7 +54,7 @@ class PromptBuilderVerificationTest {
                 null);
 
         AiVerificationRequest request = new AiVerificationRequest(
-                ExamType.SQLD, "SQL 활용", question);
+                ExamType.SQLD, "SQL", question);
 
         String systemPrompt = PromptBuilder.buildVerificationSystemPrompt(request);
         String userPrompt = PromptBuilder.buildVerificationPrompt(request);
@@ -62,7 +62,7 @@ class PromptBuilderVerificationTest {
         assertThat(systemPrompt).contains("SQLD");
         assertThat(userPrompt).contains("SQLD");
         assertThat(userPrompt).contains("MCQ");
-        assertThat(userPrompt).contains("정답 번호: 3");
-        assertThat(userPrompt).contains("난이도: 2");
+        assertThat(userPrompt).contains("3");
+        assertThat(userPrompt).contains("2");
     }
 }

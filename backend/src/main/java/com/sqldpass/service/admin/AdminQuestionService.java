@@ -1,6 +1,7 @@
 package com.sqldpass.service.admin;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -12,11 +13,17 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.sqldpass.controller.admin.dto.AdminQuestionResponse;
 import com.sqldpass.controller.admin.dto.AdminQuestionUpdateRequest;
+import com.sqldpass.controller.admin.dto.QuestionVerifyHistoryResponse;
 import com.sqldpass.controller.admin.dto.QuestionVerifyResultResponse;
+import com.sqldpass.controller.admin.dto.QuestionVerifyRunResponse;
 import com.sqldpass.persistent.mockexam.ExamType;
 import com.sqldpass.persistent.question.QuestionEntity;
 import com.sqldpass.persistent.question.QuestionRepository;
 import com.sqldpass.persistent.question.QuestionType;
+import com.sqldpass.persistent.question.QuestionVerificationRunEntity;
+import com.sqldpass.persistent.question.QuestionVerificationRunRepository;
+import com.sqldpass.persistent.subject.SubjectEntity;
+import com.sqldpass.persistent.subject.SubjectRepository;
 import com.sqldpass.service.common.ErrorCode;
 import com.sqldpass.service.common.SqldpassException;
 import com.sqldpass.service.generation.AiProvider;
@@ -35,67 +42,100 @@ public class AdminQuestionService {
 
     private static final String ENGINEER_ROOT_NAME = "\uC815\uBCF4\uCC98\uB9AC\uAE30\uC0AC \uC2E4\uAE30";
     private static final String COMPUTER_LITERACY_ROOT_NAME = "\uCEF4\uD4E8\uD130\uD65C\uC6A9\uB2A5\uB825 1\uAE09 \uC2E4\uAE30";
+    private static final List<String> SQLD_EXCLUDED_ROOTS = List.of(
+            ENGINEER_ROOT_NAME, COMPUTER_LITERACY_ROOT_NAME);
 
     private final QuestionRepository questionRepository;
+    private final SubjectRepository subjectRepository;
+    private final QuestionVerificationRunRepository questionVerificationRunRepository;
     private final AiProvider verifier;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     public AdminQuestionService(QuestionRepository questionRepository,
+                                SubjectRepository subjectRepository,
+                                QuestionVerificationRunRepository questionVerificationRunRepository,
                                 @Qualifier("verifier") AiProvider verifier) {
         this.questionRepository = questionRepository;
+        this.subjectRepository = subjectRepository;
+        this.questionVerificationRunRepository = questionVerificationRunRepository;
         this.verifier = verifier;
     }
 
-    /**
-     * 의심 문제 일괄 LLM 검증.
-     * subjectId가 주어지면 그 과목만, 아니면 전체.
-     * limit으로 비용 폭주 방지 (0이면 전체).
-     * approved=false인 ID + 사유만 반환.
-     */
-    public List<QuestionVerifyResultResponse> verifyAll(Long subjectId, int limit) {
-        List<QuestionEntity> questions;
-        if (subjectId != null) {
-            questions = questionRepository
-                    .findBySubjectIdWithSubject(subjectId, PageRequest.of(0, limit > 0 ? limit : 10000))
-                    .getContent();
-        } else {
-            questions = questionRepository
-                    .findAllWithSubject(PageRequest.of(0, limit > 0 ? limit : 10000))
-                    .getContent();
-        }
+    @Transactional
+    public QuestionVerifyRunResponse verifyAll(ExamType examType, Long subjectId, int limit, boolean forceRecheck) {
+        int requestedLimit = limit > 0 ? limit : 100;
+        SubjectEntity subject = subjectId != null ? subjectRepository.findById(subjectId).orElse(null) : null;
+        List<QuestionEntity> questions = fetchQuestionsForVerification(examType, subjectId, requestedLimit, !forceRecheck);
 
         List<QuestionVerifyResultResponse> suspicious = new ArrayList<>();
         int processed = 0;
-        for (QuestionEntity q : questions) {
+        LocalDateTime completedAt = LocalDateTime.now();
+
+        for (QuestionEntity question : questions) {
             try {
-                GeneratedQuestion gq = new GeneratedQuestion(
-                        q.getContent(),
-                        q.getCorrectOption(),
-                        q.getExplanation(),
-                        q.getSummary(),
-                        q.getTopic(),
-                        q.getDifficulty(),
-                        q.getQuestionType() != null ? q.getQuestionType().name() : null,
-                        q.getAnswer(),
-                        parseKeywords(q.getKeywords()));
-                AiVerificationResponse resp = verifier.verifyQuestion(
-                        new AiVerificationRequest(resolveExamType(q), q.getSubject().getName(), gq));
-                if (!resp.approved()) {
+                GeneratedQuestion generatedQuestion = new GeneratedQuestion(
+                        question.getContent(),
+                        question.getCorrectOption(),
+                        question.getExplanation(),
+                        question.getSummary(),
+                        question.getTopic(),
+                        question.getDifficulty(),
+                        question.getQuestionType() != null ? question.getQuestionType().name() : null,
+                        question.getAnswer(),
+                        parseKeywords(question.getKeywords()));
+                AiVerificationResponse response = verifier.verifyQuestion(
+                        new AiVerificationRequest(resolveExamType(question), question.getSubject().getName(), generatedQuestion));
+                if (!response.approved()) {
                     suspicious.add(new QuestionVerifyResultResponse(
-                            q.getId(), q.getSubject().getName(), q.getSummary(), resp.reason()));
+                            question.getId(), question.getSubject().getName(), question.getSummary(), response.reason()));
                 }
             } catch (Exception e) {
-                log.warn("문제 #{} 검증 실패: {}", q.getId(), e.getMessage());
+                log.warn("Question #{} verification failed: {}", question.getId(), e.getMessage());
                 suspicious.add(new QuestionVerifyResultResponse(
-                        q.getId(), q.getSubject().getName(), q.getSummary(), "검증 호출 실패: " + e.getMessage()));
+                        question.getId(),
+                        question.getSubject().getName(),
+                        question.getSummary(),
+                        "검증 호출 실패: " + e.getMessage()));
             }
+
+            question.markVerified(completedAt);
             processed++;
             if (processed % 20 == 0) {
-                log.info("LLM 일괄 검증 진행 {}/{}", processed, questions.size());
+                log.info("LLM direct verification progress {}/{}", processed, questions.size());
             }
         }
-        log.info("LLM 일괄 검증 완료 - 검사 {}개, 의심 {}개", processed, suspicious.size());
-        return suspicious;
+
+        QuestionVerificationRunEntity run = questionVerificationRunRepository.save(
+                new QuestionVerificationRunEntity(
+                        examType,
+                        subject,
+                        subject != null ? subject.getName() : null,
+                        requestedLimit,
+                        forceRecheck,
+                        processed,
+                        suspicious.size(),
+                        completedAt));
+
+        log.info("LLM direct verification complete - processed={}, suspicious={}", processed, suspicious.size());
+
+        return new QuestionVerifyRunResponse(
+                run.getExamType(),
+                run.getSubject() != null ? run.getSubject().getId() : null,
+                run.getSubjectName(),
+                run.getLimitRequested(),
+                run.isForceRecheck(),
+                run.getProcessedCount(),
+                run.getSuspiciousCount(),
+                run.getCompletedAt(),
+                suspicious,
+                getVerifyHistory(5));
+    }
+
+    public List<QuestionVerifyHistoryResponse> getVerifyHistory(int limit) {
+        int size = limit > 0 ? limit : 5;
+        return questionVerificationRunRepository.findRecentRuns(PageRequest.of(0, size)).stream()
+                .map(QuestionVerifyHistoryResponse::from)
+                .toList();
     }
 
     public Page<AdminQuestionResponse> getQuestions(Long subjectId, int page, int size) {
@@ -119,14 +159,14 @@ public class AdminQuestionService {
         QuestionEntity entity = questionRepository.findById(id)
                 .orElseThrow(() -> new SqldpassException(ErrorCode.QUESTION_NOT_FOUND));
 
-        QuestionType qt;
+        QuestionType questionType;
         try {
-            qt = QuestionType.valueOf(request.questionType());
+            questionType = QuestionType.valueOf(request.questionType());
         } catch (IllegalArgumentException e) {
             throw new SqldpassException(ErrorCode.INVALID_INPUT, "유효하지 않은 questionType: " + request.questionType());
         }
 
-        if (qt == QuestionType.MCQ) {
+        if (questionType == QuestionType.MCQ) {
             if (request.correctOption() == null) {
                 throw new SqldpassException(ErrorCode.INVALID_INPUT, "MCQ 문제는 정답 옵션(1~4)이 필수입니다.");
             }
@@ -140,7 +180,7 @@ public class AdminQuestionService {
                     throw new SqldpassException(ErrorCode.INVALID_INPUT, "keywords 직렬화 실패: " + e.getMessage());
                 }
             }
-            entity.updateShortAnswer(request.content(), qt, request.answer(), keywordsJson,
+            entity.updateShortAnswer(request.content(), questionType, request.answer(), keywordsJson,
                     request.explanation(), request.summary());
         }
         return AdminQuestionResponse.from(entity);
@@ -160,6 +200,21 @@ public class AdminQuestionService {
 
     public long countToday() {
         return questionRepository.countByCreatedAtAfter(LocalDate.now().atStartOfDay());
+    }
+
+    private List<QuestionEntity> fetchQuestionsForVerification(ExamType examType, Long subjectId,
+                                                               int limit, boolean onlyUnverified) {
+        PageRequest pageable = PageRequest.of(0, limit);
+        if (examType == null) {
+            return questionRepository.findAllForVerification(subjectId, onlyUnverified, pageable);
+        }
+        return switch (examType) {
+            case SQLD -> questionRepository.findSqldForVerification(SQLD_EXCLUDED_ROOTS, subjectId, onlyUnverified, pageable);
+            case ENGINEER_PRACTICAL -> questionRepository.findByRootNameForVerification(
+                    ENGINEER_ROOT_NAME, subjectId, onlyUnverified, pageable);
+            case COMPUTER_LITERACY_1 -> questionRepository.findByRootNameForVerification(
+                    COMPUTER_LITERACY_ROOT_NAME, subjectId, onlyUnverified, pageable);
+        };
     }
 
     private ExamType resolveExamType(QuestionEntity question) {

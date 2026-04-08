@@ -24,7 +24,9 @@ import java.util.List;
 
 import com.sqldpass.controller.admin.dto.AdminQuestionResponse;
 import com.sqldpass.controller.admin.dto.AdminQuestionUpdateRequest;
-import com.sqldpass.controller.admin.dto.QuestionVerifyResultResponse;
+import com.sqldpass.controller.admin.dto.QuestionVerifyHistoryResponse;
+import com.sqldpass.controller.admin.dto.QuestionVerifyRunResponse;
+import com.sqldpass.persistent.mockexam.ExamType;
 import com.sqldpass.service.admin.AdminQuestionService;
 import com.sqldpass.service.admin.QuestionExportService;
 
@@ -98,10 +100,19 @@ public class AdminQuestionController {
 
     @PostMapping("/api/admin/questions/verify")
     @Operation(summary = "LLM 일괄 검증 — 의심 문제 ID 리스트 반환")
-    public List<QuestionVerifyResultResponse> verifyAll(
+    public QuestionVerifyRunResponse verifyAll(
+            @RequestParam(required = false) ExamType examType,
             @RequestParam(required = false) Long subjectId,
-            @RequestParam(defaultValue = "100") @Min(1) @Max(2000) int limit) {
-        return adminQuestionService.verifyAll(subjectId, limit);
+            @RequestParam(defaultValue = "100") @Min(1) @Max(2000) int limit,
+            @RequestParam(defaultValue = "false") boolean force) {
+        return adminQuestionService.verifyAll(examType, subjectId, limit, force);
+    }
+
+    @GetMapping("/api/admin/questions/verify/history")
+    @Operation(summary = "LLM 직검증 최근 실행 이력")
+    public List<QuestionVerifyHistoryResponse> getVerifyHistory(
+            @RequestParam(defaultValue = "5") @Min(1) @Max(20) int limit) {
+        return adminQuestionService.getVerifyHistory(limit);
     }
 
     @PostMapping("/api/admin/questions/export/reset")

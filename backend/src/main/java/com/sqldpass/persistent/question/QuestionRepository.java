@@ -80,6 +80,46 @@ public interface QuestionRepository extends JpaRepository<QuestionEntity, Long> 
     @Query("SELECT q FROM QuestionEntity q JOIN FETCH q.subject ORDER BY q.createdAt DESC")
     Page<QuestionEntity> findAllWithSubject(Pageable pageable);
 
+    @Query("""
+            SELECT q FROM QuestionEntity q
+            JOIN FETCH q.subject s
+            LEFT JOIN FETCH s.parent p
+            WHERE (:subjectId IS NULL OR s.id = :subjectId OR p.id = :subjectId)
+              AND (:onlyUnverified = false OR q.verifiedAt IS NULL)
+            ORDER BY q.createdAt DESC
+            """)
+    List<QuestionEntity> findAllForVerification(@Param("subjectId") Long subjectId,
+                                                @Param("onlyUnverified") boolean onlyUnverified,
+                                                Pageable pageable);
+
+    @Query("""
+            SELECT q FROM QuestionEntity q
+            JOIN FETCH q.subject s
+            LEFT JOIN FETCH s.parent p
+            WHERE COALESCE(p.name, s.name) = :rootName
+              AND (:subjectId IS NULL OR s.id = :subjectId OR p.id = :subjectId)
+              AND (:onlyUnverified = false OR q.verifiedAt IS NULL)
+            ORDER BY q.createdAt DESC
+            """)
+    List<QuestionEntity> findByRootNameForVerification(@Param("rootName") String rootName,
+                                                       @Param("subjectId") Long subjectId,
+                                                       @Param("onlyUnverified") boolean onlyUnverified,
+                                                       Pageable pageable);
+
+    @Query("""
+            SELECT q FROM QuestionEntity q
+            JOIN FETCH q.subject s
+            LEFT JOIN FETCH s.parent p
+            WHERE COALESCE(p.name, s.name) NOT IN (:excludedRootNames)
+              AND (:subjectId IS NULL OR s.id = :subjectId OR p.id = :subjectId)
+              AND (:onlyUnverified = false OR q.verifiedAt IS NULL)
+            ORDER BY q.createdAt DESC
+            """)
+    List<QuestionEntity> findSqldForVerification(@Param("excludedRootNames") List<String> excludedRootNames,
+                                                 @Param("subjectId") Long subjectId,
+                                                 @Param("onlyUnverified") boolean onlyUnverified,
+                                                 Pageable pageable);
+
     boolean existsByContentHash(String contentHash);
 
     long countByCreatedAtAfter(LocalDateTime dateTime);

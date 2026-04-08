@@ -161,10 +161,50 @@ export interface QuestionVerifyResult {
   reason: string;
 }
 
-export function verifyAllQuestions(limit: number, subjectId?: number) {
-  const params = new URLSearchParams({ limit: String(limit) });
-  if (subjectId) params.set("subjectId", String(subjectId));
-  return adminFetch<QuestionVerifyResult[]>(`/questions/verify?${params}`, { method: "POST" });
+export type VerificationExamType = "SQLD" | "ENGINEER_PRACTICAL" | "COMPUTER_LITERACY_1";
+
+export interface QuestionVerifyHistory {
+  runId: number;
+  examType: VerificationExamType | null;
+  subjectId: number | null;
+  subjectName: string | null;
+  limitRequested: number;
+  forceRecheck: boolean;
+  processedCount: number;
+  suspiciousCount: number;
+  completedAt: string;
+}
+
+export interface QuestionVerifyRun {
+  examType: VerificationExamType | null;
+  subjectId: number | null;
+  subjectName: string | null;
+  requestedLimit: number;
+  forceRecheck: boolean;
+  processedCount: number;
+  suspiciousCount: number;
+  completedAt: string;
+  suspiciousQuestions: QuestionVerifyResult[];
+  recentRuns: QuestionVerifyHistory[];
+}
+
+export interface VerifyAllQuestionsParams {
+  limit: number;
+  subjectId?: number;
+  examType?: VerificationExamType;
+  force?: boolean;
+}
+
+export function verifyAllQuestions(params: VerifyAllQuestionsParams) {
+  const query = new URLSearchParams({ limit: String(params.limit) });
+  if (params.subjectId) query.set("subjectId", String(params.subjectId));
+  if (params.examType) query.set("examType", params.examType);
+  if (params.force) query.set("force", "true");
+  return adminFetch<QuestionVerifyRun>(`/questions/verify?${query}`, { method: "POST" });
+}
+
+export function getQuestionVerifyHistory(limit = 5) {
+  return adminFetch<QuestionVerifyHistory[]>(`/questions/verify/history?limit=${limit}`);
 }
 
 export function getMembers(page = 0, size = 20) {
@@ -289,7 +329,7 @@ export function getAdminMockExams() {
 
 export type CreateMockExamType = "SQLD" | "ENGINEER_PRACTICAL" | "COMPUTER_LITERACY_1";
 
-/** 정처기 모의고사 평균 난이도. SQLD는 무시됨. */
+/** 생성 시 난이도는 SQLD, 정처기 실기, 컴활 1급 모두에 적용된다. */
 export type MockExamCreationDifficulty = "EASY" | "NORMAL" | "HARD" | "VERY_HARD";
 
 export function createMockExam(
