@@ -248,7 +248,7 @@ export function resetGeneration() {
 export interface AdminMockExam {
   id: number;
   name: string;
-  examType: "SQLD" | "ENGINEER_PRACTICAL";
+  examType: "SQLD" | "ENGINEER_PRACTICAL" | "COMPUTER_LITERACY_1";
   sequence: number;
   totalQuestions: number;
   createdAt: string;
@@ -259,7 +259,7 @@ export function getAdminMockExams() {
   return adminFetch<AdminMockExam[]>("/mock-exams");
 }
 
-export type CreateMockExamType = "SQLD" | "ENGINEER_PRACTICAL";
+export type CreateMockExamType = "SQLD" | "ENGINEER_PRACTICAL" | "COMPUTER_LITERACY_1";
 
 /** 정처기 모의고사 평균 난이도. SQLD는 무시됨. */
 export type MockExamCreationDifficulty = "EASY" | "NORMAL" | "HARD" | "VERY_HARD";
@@ -282,7 +282,7 @@ export function deleteMockExam(id: number) {
 // LLM 검증용 Markdown export
 // ----------------------------------------------------------
 
-export type ExportExamType = "SQLD" | "ENGINEER_PRACTICAL";
+export type ExportExamType = "SQLD" | "ENGINEER_PRACTICAL" | "COMPUTER_LITERACY_1";
 
 /**
  * 문제를 .md 파일로 다운로드. 다운로드 즉시 백엔드에서 export 마크가 찍힘.

@@ -108,7 +108,7 @@ public interface QuestionRepository extends JpaRepository<QuestionEntity, Long> 
     // ----------------------------------------------------------
 
     /**
-     * 정처기 export 대상 조회. 루트 subject 이름이 "정보처리기사 실기"인 모든 문제.
+     * 단일 루트(정처기/컴활) export 대상 조회.
      * onlyUnexported=true면 exported_at IS NULL인 것만.
      */
     @Query("""
@@ -123,18 +123,18 @@ public interface QuestionRepository extends JpaRepository<QuestionEntity, Long> 
                                                @Param("onlyUnexported") boolean onlyUnexported);
 
     /**
-     * SQLD export 대상 조회. 루트 subject 이름이 "정보처리기사 실기"가 아닌 모든 문제.
+     * SQLD export 대상 조회. 루트 subject 이름이 정처기/컴활 루트가 아닌 모든 문제.
      * onlyUnexported=true면 exported_at IS NULL인 것만.
      */
     @Query("""
             SELECT q FROM QuestionEntity q
             JOIN FETCH q.subject s
             LEFT JOIN s.parent p
-            WHERE COALESCE(p.name, s.name) <> :engineerRootName
+            WHERE COALESCE(p.name, s.name) NOT IN (:excludedRootNames)
               AND (:onlyUnexported = false OR q.exportedAt IS NULL)
             ORDER BY q.id ASC
             """)
-    List<QuestionEntity> findSqldForExport(@Param("engineerRootName") String engineerRootName,
+    List<QuestionEntity> findSqldForExport(@Param("excludedRootNames") List<String> excludedRootNames,
                                            @Param("onlyUnexported") boolean onlyUnexported);
 
     /** ID 목록을 일괄 export 마크 */
@@ -142,7 +142,7 @@ public interface QuestionRepository extends JpaRepository<QuestionEntity, Long> 
     @Query("UPDATE QuestionEntity q SET q.exportedAt = :now WHERE q.id IN :ids")
     int markAsExported(@Param("ids") List<Long> ids, @Param("now") LocalDateTime now);
 
-    /** 정처기 export 마크 일괄 리셋 */
+    /** 단일 루트(정처기/컴활) export 마크 일괄 리셋 */
     @Modifying
     @Query("""
             UPDATE QuestionEntity q SET q.exportedAt = NULL
@@ -155,7 +155,7 @@ public interface QuestionRepository extends JpaRepository<QuestionEntity, Long> 
             """)
     int resetEngineerExportMark(@Param("rootName") String rootName);
 
-    /** SQLD export 마크 일괄 리셋 */
+    /** SQLD export 마크 일괄 리셋 (정처기/컴활 루트 제외) */
     @Modifying
     @Query("""
             UPDATE QuestionEntity q SET q.exportedAt = NULL
@@ -163,8 +163,8 @@ public interface QuestionRepository extends JpaRepository<QuestionEntity, Long> 
                 SELECT q2.id FROM QuestionEntity q2
                 JOIN q2.subject s
                 LEFT JOIN s.parent p
-                WHERE COALESCE(p.name, s.name) <> :engineerRootName
+                WHERE COALESCE(p.name, s.name) NOT IN (:excludedRootNames)
             )
             """)
-    int resetSqldExportMark(@Param("engineerRootName") String engineerRootName);
+    int resetSqldExportMark(@Param("excludedRootNames") List<String> excludedRootNames);
 }

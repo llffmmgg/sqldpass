@@ -51,6 +51,18 @@ const CERTS: CertConfig[] = [
       tabActive: "border-emerald-400 text-emerald-300",
     },
   },
+  {
+    id: "COMPUTER_LITERACY_1",
+    label: "컴퓨터활용능력 1급 필기",
+    shortLabel: "컴활 1급",
+    totalQuestions: 15,
+    accent: {
+      badge: "border-sky-500/30 bg-sky-500/10 text-sky-300",
+      button:
+        "border border-sky-500/40 bg-sky-500/10 text-sky-300 hover:bg-sky-500/20 disabled:opacity-50",
+      tabActive: "border-sky-400 text-sky-300",
+    },
+  },
   // + 새 자격증 추가 시 여기에 항목 추가
 ];
 
@@ -92,9 +104,11 @@ export default function AdminMockExamsPage() {
         .reduce((max, e) => Math.max(max, e.sequence), 0);
 
     try {
-      // 정처기에만 난이도 전달, SQLD는 undefined
+      // 정처기/컴활에만 난이도 전달, SQLD는 undefined
       const difficultyArg =
-        examType === "ENGINEER_PRACTICAL" ? engineerDifficulty : undefined;
+        examType === "ENGINEER_PRACTICAL" || examType === "COMPUTER_LITERACY_1"
+          ? engineerDifficulty
+          : undefined;
       await createMockExam(examType, difficultyArg);
       await load();
     } catch (e) {
@@ -220,17 +234,17 @@ export default function AdminMockExamsPage() {
         </div>
       </div>
 
-      {/* 정처기 난이도 선택 (정처기 탭 또는 전체 탭에서만 노출) */}
-      {(activeTab === "all" || activeTab === "ENGINEER_PRACTICAL") && (
+      {/* 평균 난이도 선택 (정처기/컴활 탭 또는 전체 탭에서만 노출) */}
+      {(activeTab === "all" || activeTab === "ENGINEER_PRACTICAL" || activeTab === "COMPUTER_LITERACY_1") && (
         <div className="mt-3 rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-3">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div className="text-xs text-emerald-300">
-              <span className="font-semibold">정처기 평균 난이도:</span>{" "}
+              <span className="font-semibold">정처기/컴활 평균 난이도:</span>{" "}
               <span className="text-emerald-300/70">
-                {engineerDifficulty === "EASY" && "쉬움 위주 (L1 12 / L2 6 / L3 2 / L4 0)"}
-                {engineerDifficulty === "NORMAL" && "보통 위주 (L1 4 / L2 10 / L3 5 / L4 1)"}
-                {engineerDifficulty === "HARD" && "어려움 위주 (L1 1 / L2 5 / L3 10 / L4 4)"}
-                {engineerDifficulty === "VERY_HARD" && "매우 어려움 위주 (L1 0 / L2 2 / L3 6 / L4 12)"}
+                {engineerDifficulty === "EASY" && "쉬움 위주"}
+                {engineerDifficulty === "NORMAL" && "보통 위주"}
+                {engineerDifficulty === "HARD" && "어려움 위주"}
+                {engineerDifficulty === "VERY_HARD" && "매우 어려움 위주"}
               </span>
             </div>
             <div className="flex flex-wrap gap-2">

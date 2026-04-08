@@ -30,8 +30,12 @@ import lombok.RequiredArgsConstructor;
 public class QuestionExportService {
 
     private static final String ENGINEER_ROOT_NAME = "정보처리기사 실기";
+    private static final String COMPUTER_LITERACY_ROOT_NAME = "컴퓨터활용능력 1급 필기";
+    private static final List<String> SINGLE_ROOT_EXCLUSIONS = List.of(ENGINEER_ROOT_NAME, COMPUTER_LITERACY_ROOT_NAME);
+
     private static final String EXAM_TYPE_SQLD = "SQLD";
     private static final String EXAM_TYPE_ENGINEER = "ENGINEER_PRACTICAL";
+    private static final String EXAM_TYPE_COMPUTER_LITERACY = "COMPUTER_LITERACY_1";
 
     private final QuestionRepository questionRepository;
 
@@ -65,8 +69,9 @@ public class QuestionExportService {
     @Transactional
     public int resetMark(String examType) {
         return switch (examType) {
-            case EXAM_TYPE_SQLD -> questionRepository.resetSqldExportMark(ENGINEER_ROOT_NAME);
+            case EXAM_TYPE_SQLD -> questionRepository.resetSqldExportMark(SINGLE_ROOT_EXCLUSIONS);
             case EXAM_TYPE_ENGINEER -> questionRepository.resetEngineerExportMark(ENGINEER_ROOT_NAME);
+            case EXAM_TYPE_COMPUTER_LITERACY -> questionRepository.resetEngineerExportMark(COMPUTER_LITERACY_ROOT_NAME);
             default -> throw new SqldpassException(ErrorCode.INVALID_INPUT,
                     "알 수 없는 examType: " + examType);
         };
@@ -75,9 +80,11 @@ public class QuestionExportService {
     private List<QuestionEntity> fetchByExamType(String examType, boolean onlyUnexported) {
         return switch (examType) {
             case EXAM_TYPE_SQLD ->
-                    questionRepository.findSqldForExport(ENGINEER_ROOT_NAME, onlyUnexported);
+                    questionRepository.findSqldForExport(SINGLE_ROOT_EXCLUSIONS, onlyUnexported);
             case EXAM_TYPE_ENGINEER ->
                     questionRepository.findEngineerForExport(ENGINEER_ROOT_NAME, onlyUnexported);
+            case EXAM_TYPE_COMPUTER_LITERACY ->
+                    questionRepository.findEngineerForExport(COMPUTER_LITERACY_ROOT_NAME, onlyUnexported);
             default -> throw new SqldpassException(ErrorCode.INVALID_INPUT,
                     "알 수 없는 examType: " + examType);
         };

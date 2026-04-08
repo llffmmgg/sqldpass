@@ -52,7 +52,12 @@ export default function AdminQuestionsPage() {
   }
 
   async function handleResetMark(examType: ExportExamType) {
-    const label = examType === "SQLD" ? "SQLD" : "정처기";
+    const label =
+      examType === "SQLD"
+        ? "SQLD"
+        : examType === "ENGINEER_PRACTICAL"
+          ? "정처기"
+          : "컴활 1급";
     if (!confirm(`${label}의 export 마크를 모두 초기화합니다. 계속할까요?`)) return;
     const key = `${examType}-reset`;
     setExportingKey(key);
@@ -77,7 +82,7 @@ export default function AdminQuestionsPage() {
           문제를 .md 파일로 다운로드 → 외부 LLM에 던져 검증 → 결과 보고 어드민에서 수정.
           신규 다운로드는 한 번 받은 문제를 다음에 자동으로 제외합니다.
         </p>
-        <div className="mt-3 grid gap-3 sm:grid-cols-2">
+        <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           <ExportGroup
             label="SQLD"
             examType="SQLD"
@@ -88,6 +93,13 @@ export default function AdminQuestionsPage() {
           <ExportGroup
             label="정처기 실기"
             examType="ENGINEER_PRACTICAL"
+            exportingKey={exportingKey}
+            onExport={handleExport}
+            onReset={handleResetMark}
+          />
+          <ExportGroup
+            label="컴활 1급 필기"
+            examType="COMPUTER_LITERACY_1"
             exportingKey={exportingKey}
             onExport={handleExport}
             onReset={handleResetMark}

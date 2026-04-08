@@ -178,7 +178,7 @@ function MockExamsListContent() {
       <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6">
         <h1 className="text-2xl font-bold sm:text-3xl">모의고사</h1>
         <p className="mt-2 text-sm text-muted">
-          SQLD 50문항 · 정보처리기사 실기 20문항 모의고사 모두 지원
+          SQLD 50문항 · 정처기 실기 20문항 · 컴활 1급 필기 15문항 모의고사 지원
         </p>
 
         {/* 필터 탭 */}
@@ -196,6 +196,13 @@ function MockExamsListContent() {
             active={filter === "ENGINEER_PRACTICAL"}
             onClick={() => setFilter("ENGINEER_PRACTICAL")}
             accent="emerald"
+          />
+          <FilterTab
+            label="컴활 1급"
+            count={exams.filter((e) => e.examType === "COMPUTER_LITERACY_1").length}
+            active={filter === "COMPUTER_LITERACY_1"}
+            onClick={() => setFilter("COMPUTER_LITERACY_1")}
+            accent="sky"
           />
         </div>
 
@@ -226,13 +233,15 @@ function FilterTab({
   count: number;
   active: boolean;
   onClick: () => void;
-  accent?: "amber" | "emerald";
+  accent?: "amber" | "emerald" | "sky";
 }) {
   const activeClass =
     accent === "emerald"
       ? "bg-emerald-500/15 text-emerald-300 ring-1 ring-emerald-500/30"
       : accent === "amber"
       ? "bg-amber-500/15 text-amber-300 ring-1 ring-amber-500/30"
+      : accent === "sky"
+      ? "bg-sky-500/15 text-sky-300 ring-1 ring-sky-500/30"
       : "bg-border text-foreground";
   return (
     <button
@@ -248,10 +257,17 @@ function FilterTab({
 
 function MockExamCard({ exam }: { exam: MockExamSummary }) {
   const isEngineer = exam.examType === "ENGINEER_PRACTICAL";
-  const hoverBorder = isEngineer ? "hover:border-emerald-500/40" : "hover:border-amber-500/40";
+  const isCl1 = exam.examType === "COMPUTER_LITERACY_1";
+  const hoverBorder = isEngineer
+    ? "hover:border-emerald-500/40"
+    : isCl1
+      ? "hover:border-sky-500/40"
+      : "hover:border-amber-500/40";
   const glow = isEngineer
     ? "hover:shadow-[0_0_20px_rgba(16,185,129,0.2)]"
-    : "hover:shadow-[0_0_16px_var(--glow)]";
+    : isCl1
+      ? "hover:shadow-[0_0_20px_rgba(14,165,233,0.2)]"
+      : "hover:shadow-[0_0_16px_var(--glow)]";
 
   return (
     <Link
@@ -313,6 +329,14 @@ export function ExamBadge({ examType }: { examType: ExamType }) {
       <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/40 bg-emerald-500/10 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-300">
         <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
         정처기 실기
+      </span>
+    );
+  }
+  if (examType === "COMPUTER_LITERACY_1") {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full border border-sky-500/40 bg-sky-500/10 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-sky-300">
+        <span className="h-1.5 w-1.5 rounded-full bg-sky-400" />
+        컴활 1급
       </span>
     );
   }
