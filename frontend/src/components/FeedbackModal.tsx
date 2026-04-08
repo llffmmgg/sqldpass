@@ -90,11 +90,11 @@ export default function FeedbackModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm sm:items-center"
+      className="fixed inset-0 z-50 flex items-end justify-center overflow-y-auto bg-black/60 px-4 py-12 backdrop-blur-sm sm:items-center sm:py-16"
       onClick={onClose}
     >
       <div
-        className="w-full max-w-md rounded-t-2xl border border-border bg-surface p-6 shadow-xl sm:rounded-2xl"
+        className="my-auto w-full max-w-md rounded-2xl border border-border bg-surface p-6 shadow-xl"
         onClick={(e) => e.stopPropagation()}
       >
         {/* 헤더 */}
