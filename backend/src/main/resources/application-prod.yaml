@@ -1,3 +1,6 @@
+server:
+  shutdown: graceful
+
 spring:
   datasource:
     url: ${DB_URL}
@@ -7,6 +10,8 @@ spring:
     properties:
       hibernate:
         format_sql: false
+  lifecycle:
+    timeout-per-shutdown-phase: 20s
 
 # Actuator: 헬스체크 엔드포인트만 노출 (보안)
 # /actuator/health — 배포 후 정상 기동 확인에 사용
