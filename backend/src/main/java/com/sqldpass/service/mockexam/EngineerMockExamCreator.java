@@ -127,7 +127,7 @@ public class EngineerMockExamCreator {
     public MockExamEntity create(MockExamDifficulty mockExamDifficulty) {
         MockExamDifficulty difficulty = mockExamDifficulty != null ? mockExamDifficulty : MockExamDifficulty.NORMAL;
         int nextSeq = mockExamRepository.findMaxSequenceByExamType(ExamType.ENGINEER_PRACTICAL).orElse(0) + 1;
-        String name = "정보처리기사 실기 모의고사 " + nextSeq + "회 (" + difficulty.label() + ")";
+        String name = "정보처리기사 실기 모의고사 " + nextSeq + "회";
 
         Map<String, Integer> distribution = TEMPLATES.get(random.nextInt(TEMPLATES.size()));
         int totalQuestions = distribution.values().stream().mapToInt(Integer::intValue).sum();
