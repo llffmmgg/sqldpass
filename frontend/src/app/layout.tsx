@@ -3,6 +3,7 @@ import { Noto_Sans_KR, JetBrains_Mono } from "next/font/google";
 import Script from "next/script";
 import { Suspense } from "react";
 import NavBar from "@/components/NavBar";
+import Footer from "@/components/Footer";
 import { SiteNoticeBanner } from "@/components/SiteNoticeBanner";
 import GAPageview from "@/components/GAPageview";
 import "./globals.css";
@@ -163,6 +164,7 @@ export default function RootLayout({
         <SiteNoticeBanner />
         <NavBar />
         <div className="flex-1">{children}</div>
+        <Footer />
       </body>
     </html>
   );
