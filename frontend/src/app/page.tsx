@@ -1,5 +1,6 @@
 import ScrollReveal from "@/components/ScrollReveal";
 import HeroCta from "@/components/HeroCta";
+import EngineerExamCountdown from "@/components/EngineerExamCountdown";
 import { SiteNoticeModal } from "@/components/SiteNoticeModal";
 import CertChips from "@/components/CertChips";
 import PreviewTabs from "@/components/PreviewTabs";
@@ -85,6 +86,12 @@ export default async function Home() {
           <ScrollReveal delay={4}>
             <div className="mt-10">
               <HeroCta />
+            </div>
+          </ScrollReveal>
+
+          <ScrollReveal delay={4}>
+            <div className="mt-6">
+              <EngineerExamCountdown />
             </div>
           </ScrollReveal>
 
