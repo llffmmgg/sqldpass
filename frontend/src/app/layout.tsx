@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Noto_Sans_KR, JetBrains_Mono } from "next/font/google";
+import { Noto_Sans_KR, JetBrains_Mono, Caveat } from "next/font/google";
 import Script from "next/script";
 import { Suspense } from "react";
 import NavBar from "@/components/NavBar";
@@ -20,6 +20,12 @@ const notoSansKr = Noto_Sans_KR({
 const jetbrainsMono = JetBrains_Mono({
   variable: "--font-jetbrains-mono",
   subsets: ["latin"],
+});
+
+const caveat = Caveat({
+  variable: "--font-caveat",
+  subsets: ["latin"],
+  weight: ["700"],
 });
 
 const SITE_URL = "https://www.sqldpass.com";
@@ -134,7 +140,7 @@ export default function RootLayout({
   return (
     <html
       lang="ko"
-      className={`${notoSansKr.variable} ${jetbrainsMono.variable} h-full antialiased`}
+      className={`${notoSansKr.variable} ${jetbrainsMono.variable} ${caveat.variable} h-full antialiased`}
       suppressHydrationWarning
     >
       <head>

@@ -324,10 +324,15 @@ function MockExamCard({ exam }: { exam: MockExamSummary }) {
       href={`/mock-exams/${exam.id}`}
       className={`relative block rounded-xl border border-border bg-surface p-5 transition-all hover:-translate-y-0.5 ${hoverBorder} ${glow}`}
     >
-      {/* 풀이 완료 마크 — 우상단 코너 ribbon */}
-      {exam.solved && (
-        <span className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full border border-emerald-500/40 bg-emerald-500/15 px-2 py-0.5 text-[10px] font-bold text-emerald-300 shadow-sm">
-          ✓ 풀이 완료
+      {/* 풀이 완료 마크 — 손글씨 빨간 색연필 채점 느낌 */}
+      {exam.solved && exam.bestCorrectCount != null && exam.bestTotalCount != null && (
+        <span
+          className="pointer-events-none absolute right-2 top-1 select-none font-[family-name:var(--font-caveat)] text-3xl font-bold leading-none text-red-500/90 sm:text-4xl"
+          style={{ transform: "rotate(-12deg)" }}
+        >
+          {exam.bestCorrectCount}
+          <span className="text-2xl sm:text-3xl">/</span>
+          {exam.bestTotalCount}
         </span>
       )}
 
@@ -349,11 +354,6 @@ function MockExamCard({ exam }: { exam: MockExamSummary }) {
       <h2 className="mt-3 text-lg font-semibold leading-tight">{exam.name}</h2>
       <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-muted">
         <span>총 {exam.totalQuestions}문항</span>
-        {exam.solved && exam.bestCorrectCount != null && exam.bestTotalCount != null && (
-          <span className="text-xs text-emerald-300/80 tabular-nums">
-            최고 {exam.bestCorrectCount}/{exam.bestTotalCount}
-          </span>
-        )}
       </div>
       <p className="mt-1 text-xs text-muted/70">
         {new Date(exam.createdAt).toLocaleDateString("ko-KR")}
