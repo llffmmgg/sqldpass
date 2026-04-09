@@ -6,6 +6,7 @@ import { setAuth, setNickname as saveNickname } from "@/lib/auth";
 import { fetchApi } from "@/lib/api";
 import { updateNickname } from "@/lib/memberApi";
 import { generateNickname } from "@/lib/nickname";
+import { trackEvent, setUserProperties } from "@/lib/gtag";
 
 interface LoginResponse {
   token: string;
@@ -54,6 +55,13 @@ function GoogleCallback() {
 
         // 토큰 먼저 저장 → 후속 PATCH 호출에 Authorization 헤더 사용
         setAuth(data.token, data.nickname);
+
+        // GA4 — 회원가입/로그인 이벤트 + 사용자 속성
+        setUserProperties({ plan_type: "free" });
+        if (data.isNew) {
+          trackEvent("sign_up", { method: "google" });
+        }
+        trackEvent("login", { method: "google" });
 
         // 신규 가입이면 랜덤 닉네임 생성해서 교체
         if (data.isNew) {

@@ -8,6 +8,7 @@ import { parseQuestion, OPTION_MARKERS } from "@/lib/parseQuestion";
 import QuestionContent from "@/components/QuestionContent";
 import AuthGuard from "@/components/AuthGuard";
 import Spinner from "@/components/Spinner";
+import { trackEvent } from "@/lib/gtag";
 
 function buildSubjectMap(subjects: Subject[]): Record<number, string> {
   const map: Record<number, string> = {};
@@ -43,6 +44,13 @@ function HistoryDetailContent({ params }: { params: Promise<{ id: string }> }) {
       .then(([solveData, subjects]) => {
         setSolve(solveData);
         setSubjectMap(buildSubjectMap(subjects));
+        // GA4 — 결과 페이지 조회
+        trackEvent("view_result", {
+          solve_id: solveData.id,
+          mock_exam_id: solveData.mockExamId ?? undefined,
+          subject_id: solveData.subjectId ?? undefined,
+          score: solveData.score,
+        });
         return Promise.all(
           solveData.answers.map((a) => getQuestionDetail(a.questionId))
         );

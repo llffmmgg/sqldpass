@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { isLoggedIn, getNickname } from "@/lib/auth";
+import { trackEvent } from "@/lib/gtag";
 
 /**
  * 랜딩 히어로 CTA — 로그인 상태에 따라 문구/링크 분기 + 닉네임 개인화 배지.
@@ -57,6 +58,7 @@ export default function HeroCta() {
       <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
         <Link
           href={primary.href}
+          onClick={() => trackEvent("click_cta", { cta: "primary", label: primary.label, authed })}
           className="btn-glow inline-flex items-center rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-zinc-900 transition-all duration-300 hover:bg-primary-hover hover:scale-[1.03]"
         >
           {primary.label}
@@ -75,6 +77,7 @@ export default function HeroCta() {
         </Link>
         <Link
           href={secondary.href}
+          onClick={() => trackEvent("click_cta", { cta: "secondary", label: secondary.label, authed })}
           className="inline-flex items-center rounded-lg border border-border px-6 py-3 text-sm font-semibold text-foreground transition-all duration-300 hover:border-violet-500/50 hover:bg-violet-500/5"
         >
           {secondary.label}

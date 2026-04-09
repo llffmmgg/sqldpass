@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import { Noto_Sans_KR, JetBrains_Mono } from "next/font/google";
 import Script from "next/script";
+import { Suspense } from "react";
 import NavBar from "@/components/NavBar";
 import { SiteNoticeBanner } from "@/components/SiteNoticeBanner";
+import GAPageview from "@/components/GAPageview";
 import "./globals.css";
 
 const GA_ID = "G-MPQ2F9201M";
@@ -150,10 +152,14 @@ export default function RootLayout({
           {`
             window.dataLayer = window.dataLayer || [];
             function gtag(){dataLayer.push(arguments);}
+            window.gtag = gtag;
             gtag('js', new Date());
-            gtag('config', '${GA_ID}');
+            gtag('config', '${GA_ID}', { send_page_view: false });
           `}
         </Script>
+        <Suspense fallback={null}>
+          <GAPageview />
+        </Suspense>
         <SiteNoticeBanner />
         <NavBar />
         <div className="flex-1">{children}</div>

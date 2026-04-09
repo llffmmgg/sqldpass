@@ -15,6 +15,7 @@ import {
 import { submitSolve, type SolveAnswerRequest, type SolveResponse } from "@/lib/api";
 import { ExamBadge } from "@/app/mock-exams/page";
 import { GradingDisclaimerModal } from "@/components/GradingDisclaimerModal";
+import { trackEvent } from "@/lib/gtag";
 
 interface AnswerState {
   option?: number;
@@ -51,7 +52,15 @@ function MockExamDetailContent() {
   useEffect(() => {
     if (!id) return;
     getMockExam(id)
-      .then(setExam)
+      .then((data) => {
+        setExam(data);
+        // GA4 — 모의고사 시작
+        trackEvent("start_exam", {
+          exam_id: data.id,
+          exam_type: data.examType,
+          exam_name: data.name,
+        });
+      })
       .catch((e) => setError(e instanceof Error ? e.message : "모의고사를 불러올 수 없습니다."));
   }, [id]);
 
@@ -208,6 +217,14 @@ function MockExamDetailContent() {
       };
       const res = await submitSolve(payload);
       setResult(res);
+      // GA4 — 모의고사 완료
+      trackEvent("complete_exam", {
+        exam_id: exam.id,
+        exam_type: exam.examType,
+        score: res.score,
+        correct_count: res.correctCount,
+        total_count: res.totalCount,
+      });
     } catch (e) {
       alert(e instanceof Error ? e.message : "제출에 실패했습니다.");
     } finally {

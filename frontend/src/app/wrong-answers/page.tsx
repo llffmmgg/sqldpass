@@ -19,6 +19,7 @@ import QuestionContent from "@/components/QuestionContent";
 import AuthGuard from "@/components/AuthGuard";
 import Spinner from "@/components/Spinner";
 import Link from "next/link";
+import { trackEvent } from "@/lib/gtag";
 
 function getLeafSubjects(subjects: Subject[]): { id: number; name: string }[] {
   const leaves: { id: number; name: string }[] = [];
@@ -55,6 +56,11 @@ export default function WrongAnswersPage() {
 }
 
 function WrongAnswersPageContent() {
+  // GA4 — 오답노트 페이지 진입 (1회만)
+  useEffect(() => {
+    trackEvent("review_wrong");
+  }, []);
+
   const [stats, setStats] = useState<WrongAnswerStatsResponse[]>([]);
   const [wrongAnswers, setWrongAnswers] = useState<WrongAnswerResponse[]>([]);
   const [subjects, setSubjects] = useState<{ id: number; name: string }[]>([]);
