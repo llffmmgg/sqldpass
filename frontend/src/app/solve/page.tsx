@@ -22,6 +22,46 @@ type Phase = "select" | "solve" | "session-complete";
 
 const SET_SIZE = 10;
 
+/** root subject 이름으로 자격증 종류와 시각 톤을 판정 */
+type CertTone = {
+  certLabel: string;
+  certBadge: string; // 짧은 약어
+  /** Tailwind 색 — 좌측 컬러 바, 카드 hover 액센트, 뱃지 */
+  bar: string;
+  badge: string;
+  hover: string;
+};
+
+const SQLD_TONE: CertTone = {
+  certLabel: "SQLD",
+  certBadge: "SQLD",
+  bar: "bg-amber-500/60 group-hover:bg-amber-400",
+  badge: "border-amber-500/40 bg-amber-500/10 text-amber-300",
+  hover: "hover:border-amber-500/40 hover:bg-amber-500/[0.04]",
+};
+
+const ENGINEER_TONE: CertTone = {
+  certLabel: "정보처리기사 실기",
+  certBadge: "정처기 실기",
+  bar: "bg-emerald-500/60 group-hover:bg-emerald-400",
+  badge: "border-emerald-500/40 bg-emerald-500/10 text-emerald-300",
+  hover: "hover:border-emerald-500/40 hover:bg-emerald-500/[0.04]",
+};
+
+const COMPUTER_LITERACY_TONE: CertTone = {
+  certLabel: "컴퓨터활용능력 1급",
+  certBadge: "컴활 1급",
+  bar: "bg-sky-500/60 group-hover:bg-sky-400",
+  badge: "border-sky-500/40 bg-sky-500/10 text-sky-300",
+  hover: "hover:border-sky-500/40 hover:bg-sky-500/[0.04]",
+};
+
+function detectCertTone(rootName: string): CertTone {
+  if (rootName === "정보처리기사 실기") return ENGINEER_TONE;
+  if (rootName === "컴퓨터활용능력 1급 필기") return COMPUTER_LITERACY_TONE;
+  return SQLD_TONE; // SQLD 는 "1과목/2과목" 두 root 모두 포함
+}
+
 export default function SolvePage() {
   return (
     <AuthGuard>
@@ -54,6 +94,8 @@ function SolvePageContent() {
   const [submitError, setSubmitError] = useState<string | null>(null);
   /** 이전 문제로 돌아가기 위한 스택 (브라우저 뒤로가기와 연동) */
   const [pastEntries, setPastEntries] = useState<PastEntry[]>([]);
+  /** 이번 세션에서 풀고 있는 10문제 — 종료 후 "같은 10문제 다시 풀기"용 */
+  const [sessionQuestions, setSessionQuestions] = useState<Question[]>([]);
 
   useEffect(() => {
     getSubjects().then(setSubjects);
@@ -112,10 +154,8 @@ function SolvePageContent() {
     setDetail(null);
   }
 
-  async function handleSelectSubject(subject: Subject) {
-    setSelectedSubject(subject);
-    setLoading(true);
-    const qs = await fetchQuestions(subject.id);
+  function startSessionWithQuestions(qs: Question[]) {
+    setSessionQuestions(qs);
     setQueue(qs.slice(1));
     setCurrent(qs[0] || null);
     resetCurrentInput();
@@ -123,28 +163,32 @@ function SolvePageContent() {
     setCorrectCount(0);
     setPastEntries([]);
     setPhase("solve");
-    setLoading(false);
     if (typeof window !== "undefined") {
       window.history.pushState({ solve: 0 }, "");
     }
   }
 
-  /** 같은 과목으로 새 세션 시작 — 종료 카드의 "다시 풀기" 진입점 */
-  async function restartSession() {
+  async function handleSelectSubject(subject: Subject) {
+    setSelectedSubject(subject);
+    setLoading(true);
+    const qs = await fetchQuestions(subject.id);
+    setLoading(false);
+    startSessionWithQuestions(qs);
+  }
+
+  /** 같은 10문제를 그대로 다시 풀기 — fetch 없이 상태만 리셋 */
+  function replaySameSession() {
+    if (sessionQuestions.length === 0) return;
+    startSessionWithQuestions(sessionQuestions);
+  }
+
+  /** 같은 과목에서 새 랜덤 10문제 fetch */
+  async function newRandomSession() {
     if (!selectedSubject) return;
     setLoading(true);
     const qs = await fetchQuestions(selectedSubject.id);
-    setQueue(qs.slice(1));
-    setCurrent(qs[0] || null);
-    resetCurrentInput();
-    setSolvedCount(0);
-    setCorrectCount(0);
-    setPastEntries([]);
-    setPhase("solve");
     setLoading(false);
-    if (typeof window !== "undefined") {
-      window.history.pushState({ solve: 0 }, "");
-    }
+    startSessionWithQuestions(qs);
   }
 
   /** 이전 문제로 복원 — popstate 핸들러에서 호출 */
@@ -284,6 +328,7 @@ function SolvePageContent() {
     setQueue([]);
     setCurrent(null);
     setPastEntries([]);
+    setSessionQuestions([]);
     resetCurrentInput();
     setSolvedCount(0);
     setCorrectCount(0);
@@ -299,6 +344,16 @@ function SolvePageContent() {
 
   // ── 1. 과목 선택 ─────────────────────────────────────────
   if (phase === "select") {
+    // 자격증별로 root 묶기 (SQLD는 "1과목/2과목" 두 root를 한 그룹으로 합침)
+    const certGroups = new Map<string, { tone: CertTone; roots: Subject[] }>();
+    for (const root of subjects) {
+      const tone = detectCertTone(root.name);
+      if (!certGroups.has(tone.certLabel)) {
+        certGroups.set(tone.certLabel, { tone, roots: [] });
+      }
+      certGroups.get(tone.certLabel)!.roots.push(root);
+    }
+
     return (
       <main className="min-h-screen bg-background text-foreground">
         <GradingDisclaimerModal />
@@ -308,32 +363,57 @@ function SolvePageContent() {
             과목 하나를 골라 {SET_SIZE}문제 한 세트를 풀어보세요.
           </p>
 
-          <div className="mt-10 space-y-7">
-            {subjects.map((parent) => {
-              const items = parent.children.length > 0 ? parent.children : [parent];
-              return (
-                <div key={parent.id}>
-                  <h2 className="text-xs font-semibold uppercase tracking-wider text-muted/70">
-                    {parent.name}
-                  </h2>
-                  <div className="mt-2.5 grid grid-cols-1 gap-2 sm:grid-cols-2">
-                    {items.map((child) => (
-                      <button
-                        key={child.id}
-                        onClick={() => handleSelectSubject(child)}
-                        className="group flex items-center gap-3 rounded-lg border border-border bg-surface px-4 py-3 text-left transition-all duration-200 hover:border-amber-500/40 hover:bg-amber-500/[0.03]"
-                      >
-                        <span className="h-9 w-1 shrink-0 rounded-full bg-amber-500/60 transition-colors group-hover:bg-amber-400" />
-                        <span className="flex-1 text-sm font-medium">{child.name}</span>
-                        <span className="text-xs text-muted/60 transition-transform group-hover:translate-x-0.5">
-                          →
-                        </span>
-                      </button>
-                    ))}
-                  </div>
+          <div className="mt-10 space-y-10">
+            {Array.from(certGroups.values()).map(({ tone, roots }) => (
+              <section key={tone.certLabel}>
+                {/* 자격증 헤더 — 색상 뱃지로 강한 시각 구분 */}
+                <div className="flex items-center gap-2">
+                  <span
+                    className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-[11px] font-bold ${tone.badge}`}
+                  >
+                    {tone.certBadge}
+                  </span>
+                  <span className="h-px flex-1 bg-border/60" />
                 </div>
-              );
-            })}
+
+                {/* root 별로 세부 그룹 */}
+                <div className="mt-4 space-y-5">
+                  {roots.map((root) => {
+                    const items = root.children.length > 0 ? root.children : [root];
+                    // SQLD 만 root가 2개 (1과목/2과목)라 sub-heading 노출
+                    // 정처기/컴활은 root가 1개라 sub-heading 생략 (중복 정보)
+                    const showSubHeading =
+                      tone === SQLD_TONE && root.children.length > 0;
+                    return (
+                      <div key={root.id}>
+                        {showSubHeading && (
+                          <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted/70">
+                            {root.name}
+                          </h3>
+                        )}
+                        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                          {items.map((child) => (
+                            <button
+                              key={child.id}
+                              onClick={() => handleSelectSubject(child)}
+                              className={`group flex items-center gap-3 rounded-lg border border-border bg-surface px-4 py-3 text-left transition-all duration-200 ${tone.hover}`}
+                            >
+                              <span
+                                className={`h-9 w-1 shrink-0 rounded-full transition-colors ${tone.bar}`}
+                              />
+                              <span className="flex-1 text-sm font-medium">{child.name}</span>
+                              <span className="text-xs text-muted/60 transition-transform group-hover:translate-x-0.5">
+                                →
+                              </span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </section>
+            ))}
           </div>
 
           {subjects.length === 0 && (
@@ -387,27 +467,47 @@ function SolvePageContent() {
 
             <p className="mt-4 text-sm leading-relaxed text-muted">{ment}</p>
 
-            <div className="mt-8 flex flex-wrap gap-2">
+            {/* 핵심 분기 — 같은 10문제 vs 새 10문제 */}
+            <div className="mt-8 grid grid-cols-1 gap-2 sm:grid-cols-2">
               <button
-                onClick={restartSession}
-                className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-zinc-900 transition-all hover:bg-primary-hover hover:scale-[1.02]"
+                onClick={replaySameSession}
+                className="group flex items-center justify-between gap-3 rounded-xl border border-amber-500/40 bg-amber-500/[0.08] px-5 py-4 text-left transition-all hover:border-amber-500/60 hover:bg-amber-500/[0.12]"
               >
-                다시 풀기
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-amber-200">같은 10문제 다시</p>
+                  <p className="mt-0.5 text-xs text-muted">방금 푼 문제로 약점 굳히기</p>
+                </div>
+                <svg className="h-5 w-5 shrink-0 text-amber-300 transition-transform group-hover:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                 </svg>
               </button>
+              <button
+                onClick={newRandomSession}
+                className="group flex items-center justify-between gap-3 rounded-xl bg-primary px-5 py-4 text-left text-zinc-900 transition-all hover:bg-primary-hover hover:scale-[1.01]"
+              >
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold">새 10문제</p>
+                  <p className="mt-0.5 text-xs text-zinc-800/80">다른 랜덤 문제로 한 세트 더</p>
+                </div>
+                <svg className="h-5 w-5 shrink-0 transition-transform group-hover:translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                </svg>
+              </button>
+            </div>
+
+            {/* 보조 액션 — 텍스트 링크 */}
+            <div className="mt-5 flex flex-wrap items-center gap-5 text-sm text-muted">
               <Link
                 href={selectedSubject ? `/wrong-answers?subjectId=${selectedSubject.id}` : "/wrong-answers"}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface px-5 py-2.5 text-sm font-semibold text-foreground transition-colors hover:border-amber-500/40 hover:bg-amber-500/5"
+                className="transition-colors hover:text-foreground"
               >
-                약한 문제 복습
+                약한 문제 복습 →
               </Link>
               <button
                 onClick={() => handleReset()}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface px-5 py-2.5 text-sm font-semibold text-muted transition-colors hover:text-foreground"
+                className="transition-colors hover:text-foreground"
               >
-                과목 선택
+                다른 과목 선택 →
               </button>
             </div>
           </div>
