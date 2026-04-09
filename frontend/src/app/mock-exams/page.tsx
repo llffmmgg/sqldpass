@@ -3,7 +3,12 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import Spinner from "@/components/Spinner";
-import { getMockExams, type ExamType, type MockExamSummary } from "@/lib/mockExamApi";
+import {
+  getMockExams,
+  type EngineerTemplateKey,
+  type ExamType,
+  type MockExamSummary,
+} from "@/lib/mockExamApi";
 import { isLoggedIn } from "@/lib/auth";
 import { getGoogleLoginUrl } from "@/lib/oauth";
 
@@ -133,11 +138,31 @@ function GuestExamCard({
 }
 
 type Filter = ExamType;
+type DifficultyFilter = "ALL" | NonNullable<MockExamSummary["difficultyLabel"]>;
+type TemplateFilter = "ALL" | EngineerTemplateKey;
+
+const DIFFICULTY_OPTIONS: { value: DifficultyFilter; label: string }[] = [
+  { value: "ALL", label: "전체" },
+  { value: "쉬움", label: "쉬움" },
+  { value: "보통", label: "보통" },
+  { value: "어려움", label: "어려움" },
+  { value: "매우 어려움", label: "매우 어려움" },
+];
+
+const TEMPLATE_OPTIONS: { value: TemplateFilter; label: string }[] = [
+  { value: "ALL", label: "전체 유형" },
+  { value: "PROGRAMMING_HEAVY", label: "프로그래밍 편중형" },
+  { value: "THEORY_HEAVY", label: "이론 편중형" },
+  { value: "BALANCED", label: "균형형" },
+  { value: "DB_HEAVY", label: "DB 강조형" },
+];
 
 function MockExamsListContent() {
   const [exams, setExams] = useState<MockExamSummary[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<Filter>("SQLD");
+  const [difficultyFilter, setDifficultyFilter] = useState<DifficultyFilter>("ALL");
+  const [templateFilter, setTemplateFilter] = useState<TemplateFilter>("ALL");
 
   useEffect(() => {
     getMockExams()
@@ -145,14 +170,24 @@ function MockExamsListContent() {
       .catch((e) => setError(e instanceof Error ? e.message : "목록을 불러올 수 없습니다."));
   }, []);
 
+  // 자격증 탭이 바뀌면 부필터 리셋 (정처기 → SQLD로 옮길 때 templateFilter가 살아있으면 결과 0)
+  useEffect(() => {
+    setTemplateFilter("ALL");
+  }, [filter]);
+
   const filtered = useMemo(() => {
     if (!exams) return null;
-    // examType 필터 → sequence 내림차순 (최신 회차 우선). 풀이 여부와 무관.
     return exams
       .filter((e) => e.examType === filter)
+      .filter((e) => difficultyFilter === "ALL" || e.difficultyLabel === difficultyFilter)
+      .filter((e) =>
+        filter === "ENGINEER_PRACTICAL" && templateFilter !== "ALL"
+          ? e.templateKey === templateFilter
+          : true,
+      )
       .slice()
       .sort((a, b) => b.sequence - a.sequence);
-  }, [exams, filter]);
+  }, [exams, filter, difficultyFilter, templateFilter]);
 
   if (error) {
     return (
@@ -201,6 +236,24 @@ function MockExamsListContent() {
             onClick={() => setFilter("COMPUTER_LITERACY_1")}
             accent="sky"
           />
+        </div>
+
+        {/* 부필터: 난이도 + (정처기일 때만) 분포 유형 */}
+        <div className="mt-3 flex flex-col gap-2">
+          <SubFilterRow
+            label="난이도"
+            options={DIFFICULTY_OPTIONS}
+            value={difficultyFilter}
+            onChange={(v) => setDifficultyFilter(v as DifficultyFilter)}
+          />
+          {filter === "ENGINEER_PRACTICAL" && (
+            <SubFilterRow
+              label="유형"
+              options={TEMPLATE_OPTIONS}
+              value={templateFilter}
+              onChange={(v) => setTemplateFilter(v as TemplateFilter)}
+            />
+          )}
         </div>
 
         {filtered.length === 0 ? (
@@ -269,31 +322,36 @@ function MockExamCard({ exam }: { exam: MockExamSummary }) {
   return (
     <Link
       href={`/mock-exams/${exam.id}`}
-      className={`block rounded-xl border border-border bg-surface p-5 transition-all hover:-translate-y-0.5 ${hoverBorder} ${glow}`}
+      className={`relative block rounded-xl border border-border bg-surface p-5 transition-all hover:-translate-y-0.5 ${hoverBorder} ${glow}`}
     >
-      <div className="flex items-center justify-between gap-2">
-        <ExamBadge examType={exam.examType} />
-        <div className="flex items-center gap-2">
-          <DifficultyBadge label={exam.difficultyLabel} />
-          <span className="text-xs text-muted tabular-nums">#{exam.sequence}</span>
-        </div>
-      </div>
-      <h2 className="mt-3 text-lg font-semibold leading-tight">{exam.name}</h2>
-      {exam.templateLabel && (
-        <div className="mt-1.5">
-          <span className="inline-flex items-center rounded-full border border-emerald-500/40 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-medium text-emerald-300">
-            {exam.templateLabel}
-          </span>
-        </div>
+      {/* 풀이 완료 마크 — 우상단 코너 ribbon */}
+      {exam.solved && (
+        <span className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full border border-emerald-500/40 bg-emerald-500/15 px-2 py-0.5 text-[10px] font-bold text-emerald-300 shadow-sm">
+          ✓ 풀이 완료
+        </span>
       )}
+
+      {/* 상단: 자격증 + (정처기) 템플릿 뱃지 */}
+      <div className="flex flex-wrap items-center gap-1.5 pr-20">
+        <ExamBadge examType={exam.examType} />
+        {exam.templateKey && exam.templateLabel && (
+          <TemplateBadge templateKey={exam.templateKey} label={exam.templateLabel} />
+        )}
+      </div>
+
+      {/* 메타 라인: 난이도 + 회차 */}
+      <div className="mt-2 flex items-center gap-2">
+        <DifficultyBadge label={exam.difficultyLabel} />
+        <span className="text-xs text-muted tabular-nums">#{exam.sequence}</span>
+      </div>
+
+      {/* 본문 */}
+      <h2 className="mt-3 text-lg font-semibold leading-tight">{exam.name}</h2>
       <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-muted">
         <span>총 {exam.totalQuestions}문항</span>
         {exam.solved && exam.bestCorrectCount != null && exam.bestTotalCount != null && (
-          <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/40 bg-emerald-500/10 px-2 py-0.5 text-[11px] font-medium text-emerald-300">
-            ✓ 풀이 완료
-            <span className="opacity-80 tabular-nums">
-              · 최고 {exam.bestCorrectCount}/{exam.bestTotalCount}
-            </span>
+          <span className="text-xs text-emerald-300/80 tabular-nums">
+            최고 {exam.bestCorrectCount}/{exam.bestTotalCount}
           </span>
         )}
       </div>
@@ -301,6 +359,61 @@ function MockExamCard({ exam }: { exam: MockExamSummary }) {
         {new Date(exam.createdAt).toLocaleDateString("ko-KR")}
       </p>
     </Link>
+  );
+}
+
+const TEMPLATE_BADGE_CLASS: Record<EngineerTemplateKey, string> = {
+  PROGRAMMING_HEAVY: "border-blue-500/40 bg-blue-500/10 text-blue-300",
+  THEORY_HEAVY: "border-purple-500/40 bg-purple-500/10 text-purple-300",
+  BALANCED: "border-slate-500/40 bg-slate-500/10 text-slate-300",
+  DB_HEAVY: "border-orange-500/40 bg-orange-500/10 text-orange-300",
+};
+
+function TemplateBadge({
+  templateKey,
+  label,
+}: {
+  templateKey: EngineerTemplateKey;
+  label: string;
+}) {
+  const cls = TEMPLATE_BADGE_CLASS[templateKey];
+  return (
+    <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold ${cls}`}>
+      {label}
+    </span>
+  );
+}
+
+function SubFilterRow({
+  label,
+  options,
+  value,
+  onChange,
+}: {
+  label: string;
+  options: { value: string; label: string }[];
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      <span className="text-[11px] font-medium text-muted">{label}</span>
+      <div className="flex flex-wrap gap-1">
+        {options.map((opt) => (
+          <button
+            key={opt.value}
+            onClick={() => onChange(opt.value)}
+            className={`rounded-full border px-2.5 py-0.5 text-[11px] font-medium transition ${
+              value === opt.value
+                ? "border-foreground bg-foreground/10 text-foreground"
+                : "border-border text-muted hover:text-foreground"
+            }`}
+          >
+            {opt.label}
+          </button>
+        ))}
+      </div>
+    </div>
   );
 }
 
