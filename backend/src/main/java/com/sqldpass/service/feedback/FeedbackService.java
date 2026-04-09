@@ -65,6 +65,12 @@ public class FeedbackService {
         return FeedbackMapper.toDomain(saved);
     }
 
+    public java.util.List<Feedback> getMine(Long memberId) {
+        return feedbackRepository.findByMemberIdOrderByCreatedAtDesc(memberId).stream()
+                .map(FeedbackMapper::toDomain)
+                .toList();
+    }
+
     public Page<Feedback> getAll(FeedbackStatus status, int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
         Page<FeedbackEntity> result = (status != null)

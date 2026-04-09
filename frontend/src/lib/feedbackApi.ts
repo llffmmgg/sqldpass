@@ -19,7 +19,14 @@ export interface FeedbackResponseDto {
   content: string;
   pageUrl: string | null;
   status: FeedbackStatus;
+  adminReply: string | null;
+  repliedAt: string | null;
   createdAt: string;
+}
+
+/** 내가 작성한 피드백 목록 (어드민 답변 포함) */
+export function getMyFeedbacks() {
+  return fetchApi<FeedbackResponseDto[]>("/feedback/me");
 }
 
 /** 피드백 제출 — 로그인 필수 (401이면 fetchApi가 홈으로 리다이렉트) */

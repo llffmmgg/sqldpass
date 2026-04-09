@@ -1,6 +1,9 @@
 package com.sqldpass.controller.feedback;
 
+import java.util.List;
+
 import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -32,5 +35,15 @@ public class FeedbackController {
         Long memberId = (Long) request.getAttribute("memberId");
         Feedback created = feedbackService.create(memberId, body);
         return FeedbackResponse.from(created, feedbackService.resolveNickname(memberId));
+    }
+
+    @GetMapping("/api/feedback/me")
+    @Operation(summary = "내가 작성한 피드백 목록 (어드민 답변 포함)")
+    public List<FeedbackResponse> getMine(HttpServletRequest request) {
+        Long memberId = (Long) request.getAttribute("memberId");
+        String nickname = feedbackService.resolveNickname(memberId);
+        return feedbackService.getMine(memberId).stream()
+                .map(f -> FeedbackResponse.from(f, nickname))
+                .toList();
     }
 }

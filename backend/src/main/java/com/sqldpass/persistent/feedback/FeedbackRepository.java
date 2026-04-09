@@ -13,6 +13,8 @@ public interface FeedbackRepository extends JpaRepository<FeedbackEntity, Long> 
 
     Page<FeedbackEntity> findAllByOrderByCreatedAtDesc(Pageable pageable);
 
+    java.util.List<FeedbackEntity> findByMemberIdOrderByCreatedAtDesc(Long memberId);
+
     @Modifying
     @Query("update FeedbackEntity f set f.memberId = null where f.memberId = :memberId")
     int nullifyMember(@Param("memberId") Long memberId);
