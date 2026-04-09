@@ -8,12 +8,14 @@ import { getSubjects, type Subject } from "@/lib/api";
 import {
   deleteQuestion,
   exportQuestions,
+  getQuestion,
   getQuestionVerifyHistory,
   getQuestions,
   getVerifyIssueCounts,
   getVerifyIssues,
   resetExportMark,
   verifyAllQuestions,
+  type AdminQuestion,
   type AdminQuestionPage,
   type ExportExamType,
   type QuestionVerifyHistory,
@@ -103,6 +105,70 @@ export default function AdminQuestionsPage() {
       setIssueCounts(counts);
     } catch {
       /* ignore */
+    }
+  }
+
+  /** AdminQuestion → markdown 텍스트 */
+  function questionToMarkdown(q: AdminQuestion): string {
+    const lines: string[] = [];
+    lines.push(`# 문제 #${q.id}`);
+    lines.push("");
+    lines.push(`- 과목: ${q.subjectName}`);
+    lines.push(`- 유형: ${q.questionType}`);
+    if (q.summary) lines.push(`- 요약: ${q.summary}`);
+    lines.push(`- 생성: ${q.createdAt}`);
+    lines.push("");
+    lines.push("## 본문");
+    lines.push("");
+    lines.push(q.content ?? "");
+    lines.push("");
+    if (q.questionType === "MCQ") {
+      lines.push("## 정답");
+      lines.push("");
+      lines.push(`정답: ${q.correctOption}번`);
+    } else {
+      lines.push("## 모범 답안");
+      lines.push("");
+      lines.push(q.answer ?? "");
+      if (q.keywords && q.keywords.length > 0) {
+        lines.push("");
+        lines.push(`키워드: ${q.keywords.join(", ")}`);
+      }
+    }
+    lines.push("");
+    lines.push("## 해설");
+    lines.push("");
+    lines.push(q.explanation ?? "");
+    lines.push("");
+    return lines.join("\n");
+  }
+
+  async function copyIssueAsMarkdown(id: number) {
+    try {
+      const q = await getQuestion(id);
+      const md = questionToMarkdown(q);
+      await navigator.clipboard.writeText(md);
+      alert(`#${id} 마크다운 복사됨`);
+    } catch (e) {
+      alert(`복사 실패: ${e instanceof Error ? e.message : String(e)}`);
+    }
+  }
+
+  async function downloadIssueAsMarkdown(id: number) {
+    try {
+      const q = await getQuestion(id);
+      const md = questionToMarkdown(q);
+      const blob = new Blob([md], { type: "text/markdown;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `question-${id}.md`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      alert(`다운로드 실패: ${e instanceof Error ? e.message : String(e)}`);
     }
   }
 
@@ -449,12 +515,30 @@ export default function AdminQuestionsPage() {
                         <p className="mt-1 truncate text-foreground/70">{it.contentPreview}</p>
                       )}
                     </div>
-                    <Link
-                      href={`/admin/questions/${it.id}`}
-                      className="shrink-0 rounded border border-border px-2 py-1 hover:text-foreground"
-                    >
-                      수정
-                    </Link>
+                    <div className="flex shrink-0 items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => copyIssueAsMarkdown(it.id)}
+                        className="rounded border border-border px-2 py-1 text-muted hover:text-foreground"
+                        title="마크다운 클립보드 복사"
+                      >
+                        MD 복사
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => downloadIssueAsMarkdown(it.id)}
+                        className="rounded border border-border px-2 py-1 text-muted hover:text-foreground"
+                        title=".md 파일로 다운로드"
+                      >
+                        .md
+                      </button>
+                      <Link
+                        href={`/admin/questions/${it.id}`}
+                        className="rounded border border-border px-2 py-1 hover:text-foreground"
+                      >
+                        수정
+                      </Link>
+                    </div>
                   </li>
                 ))}
               </ul>

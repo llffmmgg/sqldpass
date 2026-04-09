@@ -51,7 +51,9 @@ public class AdminMemberService {
     }
 
     public Page<AdminMemberResponse> getMembers(int page, int size) {
-        Page<MemberEntity> memberPage = memberRepository.findAll(
+        // 랭킹용 더미 시드(provider='SEED', V20 마이그레이션)는 어드민 목록에서 숨김
+        Page<MemberEntity> memberPage = memberRepository.findByProviderNot(
+                "SEED",
                 PageRequest.of(page, size, Sort.by("createdAt").descending()));
 
         // 페이지 내 멤버들에 대한 인라인 통계를 batch로 계산 (N+1 방지)
