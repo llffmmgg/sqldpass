@@ -14,6 +14,13 @@ import org.springframework.data.repository.query.Param;
 
 public interface QuestionRepository extends JpaRepository<QuestionEntity, Long> {
 
+    /** 어드민 검증 카테고리별 문제 조회 (어드민 페이지의 카테고리 탭용) */
+    Page<QuestionEntity> findByVerificationCategoryOrderByIdDesc(
+            VerificationCategory category, Pageable pageable);
+
+    long countByVerificationCategory(VerificationCategory category);
+
+
     /**
      * 카테고리(과목) 풀에서 사용 가능한 question id 조회.
      *

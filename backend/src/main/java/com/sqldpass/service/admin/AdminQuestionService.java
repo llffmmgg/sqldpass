@@ -118,6 +118,8 @@ public class AdminQuestionService {
         List<QuestionVerifyResultResponse> suspicious = new ArrayList<>();
         List<Long> verifiedIds = new ArrayList<>();          // APPROVED 또는 fix 성공
         Map<Long, FixedQuestionPayload> fixedPayloads = new java.util.LinkedHashMap<>();
+        List<Long> manualReviewIds = new ArrayList<>();      // REJECTED + fix 실패
+        List<Long> errorIds = new ArrayList<>();             // UNKNOWN
         int suspiciousCount = 0;
         int fixedCount = 0;
         int unfixableCount = 0;
@@ -177,6 +179,7 @@ public class AdminQuestionService {
                             }
                             if (!fixedOk) {
                                 unfixableCount++;
+                                manualReviewIds.add(snap.id());
                             }
                             suspicious.add(new QuestionVerifyResultResponse(
                                     snap.id(), snap.subjectName(), snap.summary(),
@@ -184,6 +187,7 @@ public class AdminQuestionService {
                         }
                         case UNKNOWN -> {
                             errorCount++;
+                            errorIds.add(snap.id());
                             suspicious.add(new QuestionVerifyResultResponse(
                                     snap.id(), snap.subjectName(), snap.summary(),
                                     "판단 불가: " + outcome.reason()));
@@ -203,7 +207,8 @@ public class AdminQuestionService {
 
         // ── Phase 3: 짧은 write tx — fix 적용 + verifiedAt 마킹 + run 저장 ─────
         QuestionVerificationRunEntity run = writeTx.execute(status -> {
-            // 1) 자동 fix 적용 — fix된 문제는 update*() 안에서 verifiedAt = null로 자동 리셋됨
+            // 1) 자동 fix 적용 — fix된 문제는 update*() 안에서 verifiedAt/category 자동 리셋
+            //    리셋 직후 category 를 AUTO_FIXED 로 다시 세팅
             if (!fixedPayloads.isEmpty()) {
                 List<Long> fixIds = new ArrayList<>(fixedPayloads.keySet());
                 List<QuestionEntity> targets = questionRepository.findByIdInWithSubjectAndParent(fixIds);
@@ -213,11 +218,32 @@ public class AdminQuestionService {
                     QuestionEntity entity = byId.get(e.getKey());
                     if (entity == null) continue;
                     applyFix(entity, e.getValue());
+                    entity.setVerificationCategory(
+                            com.sqldpass.persistent.question.VerificationCategory.AUTO_FIXED);
                 }
             }
-            // 2) APPROVED 일괄 마킹
+            // 2) APPROVED 일괄 마킹 (markVerified 가 category=NONE 으로 리셋함)
             if (!verifiedIds.isEmpty()) {
                 questionRepository.markVerifiedInBatch(verifiedIds, completedAt);
+            }
+            // 3) MANUAL_REVIEW / ERROR 카테고리 마킹 — 본문은 안 건드리고 카테고리만
+            List<Long> nonFixIds = new ArrayList<>();
+            nonFixIds.addAll(manualReviewIds);
+            nonFixIds.addAll(errorIds);
+            if (!nonFixIds.isEmpty()) {
+                List<QuestionEntity> targets = questionRepository.findByIdInWithSubjectAndParent(nonFixIds);
+                Map<Long, QuestionEntity> byId = targets.stream()
+                        .collect(java.util.stream.Collectors.toMap(QuestionEntity::getId, q -> q));
+                for (Long id : manualReviewIds) {
+                    QuestionEntity e = byId.get(id);
+                    if (e != null) e.setVerificationCategory(
+                            com.sqldpass.persistent.question.VerificationCategory.MANUAL_REVIEW);
+                }
+                for (Long id : errorIds) {
+                    QuestionEntity e = byId.get(id);
+                    if (e != null) e.setVerificationCategory(
+                            com.sqldpass.persistent.question.VerificationCategory.ERROR);
+                }
             }
             return questionVerificationRunRepository.save(
                     new QuestionVerificationRunEntity(
@@ -251,6 +277,28 @@ public class AdminQuestionService {
                 run.getCompletedAt(),
                 suspicious,
                 getVerifyHistory(5));
+    }
+
+    /** 어드민 검증 카테고리별 문제 목록 (페이지네이션) */
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
+    public org.springframework.data.domain.Page<com.sqldpass.controller.admin.dto.VerificationIssueResponse> getVerifyIssues(
+            com.sqldpass.persistent.question.VerificationCategory category, int page, int size) {
+        org.springframework.data.domain.Pageable pageable =
+                org.springframework.data.domain.PageRequest.of(page, size);
+        return questionRepository.findByVerificationCategoryOrderByIdDesc(category, pageable)
+                .map(com.sqldpass.controller.admin.dto.VerificationIssueResponse::from);
+    }
+
+    /** 카테고리별 미해결 개수 — 어드민 페이지 탭 배지용 */
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
+    public java.util.Map<String, Long> getVerifyIssueCounts() {
+        java.util.Map<String, Long> result = new java.util.LinkedHashMap<>();
+        for (com.sqldpass.persistent.question.VerificationCategory c
+                : com.sqldpass.persistent.question.VerificationCategory.values()) {
+            if (c == com.sqldpass.persistent.question.VerificationCategory.NONE) continue;
+            result.put(c.name(), questionRepository.countByVerificationCategory(c));
+        }
+        return result;
     }
 
     /** 트리아지 정렬로 검증 대상 ID 추출 — 피드백/저정답률/미검증 우선 */

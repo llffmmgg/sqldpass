@@ -10,13 +10,17 @@ import {
   exportQuestions,
   getQuestionVerifyHistory,
   getQuestions,
+  getVerifyIssueCounts,
+  getVerifyIssues,
   resetExportMark,
   verifyAllQuestions,
   type AdminQuestionPage,
   type ExportExamType,
   type QuestionVerifyHistory,
   type QuestionVerifyRun,
+  type VerificationCategory,
   type VerificationExamType,
+  type VerificationIssue,
 } from "@/lib/adminApi";
 import { formatDate } from "@/lib/format";
 
@@ -86,12 +90,45 @@ export default function AdminQuestionsPage() {
   const [verifying, setVerifying] = useState(false);
   const [verifyRun, setVerifyRun] = useState<QuestionVerifyRun | null>(null);
 
+  // 카테고리별 미해결 문제 조회
+  const [issueCounts, setIssueCounts] = useState<Record<VerificationCategory, number> | null>(null);
+  const [issueTab, setIssueTab] = useState<VerificationCategory>("MANUAL_REVIEW");
+  const [issuePage, setIssuePage] = useState(0);
+  const [issueData, setIssueData] = useState<{ items: VerificationIssue[]; totalPages: number; totalElements: number } | null>(null);
+  const [issueLoading, setIssueLoading] = useState(false);
+
+  async function refreshIssueCounts() {
+    try {
+      const counts = await getVerifyIssueCounts();
+      setIssueCounts(counts);
+    } catch {
+      /* ignore */
+    }
+  }
+
+  async function loadIssues(category: VerificationCategory, p: number) {
+    setIssueLoading(true);
+    try {
+      const r = await getVerifyIssues(category, p, 20);
+      setIssueData({ items: r.content, totalPages: r.totalPages, totalElements: r.totalElements });
+    } catch {
+      setIssueData({ items: [], totalPages: 0, totalElements: 0 });
+    } finally {
+      setIssueLoading(false);
+    }
+  }
+
   const subjectOptions = buildSubjectOptions(subjects, verifyExamType);
 
   useEffect(() => {
     getSubjects().then(setSubjects);
     getQuestionVerifyHistory(5).then(setVerifyHistory);
+    refreshIssueCounts();
   }, []);
+
+  useEffect(() => {
+    loadIssues(issueTab, issuePage);
+  }, [issueTab, issuePage]);
 
   useEffect(() => {
     if (verifySubjectId && !subjectOptions.some((option) => option.id === verifySubjectId)) {
@@ -137,6 +174,10 @@ export default function AdminQuestionsPage() {
       });
       setVerifyRun(run);
       setVerifyHistory(run.recentRuns);
+      // 검증 후 카테고리 카운트와 현재 탭 리스트 갱신
+      refreshIssueCounts();
+      loadIssues(issueTab, 0);
+      setIssuePage(0);
     } catch (e) {
       alert(`검증 실패: ${e instanceof Error ? e.message : String(e)}`);
     } finally {
@@ -327,6 +368,123 @@ export default function AdminQuestionsPage() {
             )}
           </div>
         )}
+
+        {/* 카테고리별 미해결 문제 */}
+        <div className="mt-8 rounded-lg border border-border bg-background p-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-semibold text-foreground">검증 카테고리별 미해결 문제</h3>
+            <button
+              type="button"
+              onClick={() => {
+                refreshIssueCounts();
+                loadIssues(issueTab, issuePage);
+              }}
+              className="text-xs text-muted hover:text-foreground"
+            >
+              새로고침
+            </button>
+          </div>
+          <p className="mt-1 text-xs text-muted">
+            문제를 수정하면 해당 카테고리에서 자동으로 빠집니다 (verification_category → NONE).
+          </p>
+
+          <div className="mt-3 flex gap-1">
+            {([
+              { key: "MANUAL_REVIEW", label: "수동 검토", color: "amber" },
+              { key: "AUTO_FIXED", label: "자동 수정 (검토 권장)", color: "violet" },
+              { key: "ERROR", label: "판단 불가 / 에러", color: "rose" },
+            ] as const).map((tab) => {
+              const active = issueTab === tab.key;
+              const count = issueCounts?.[tab.key] ?? 0;
+              return (
+                <button
+                  key={tab.key}
+                  type="button"
+                  onClick={() => {
+                    setIssueTab(tab.key);
+                    setIssuePage(0);
+                  }}
+                  className={`relative -mb-px flex items-center gap-2 border-b-2 px-3 py-2 text-xs font-medium transition ${
+                    active
+                      ? `border-${tab.color}-500 text-${tab.color}-300`
+                      : "border-transparent text-muted hover:text-foreground"
+                  }`}
+                >
+                  <span>{tab.label}</span>
+                  <span
+                    className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold ${
+                      count > 0 ? "bg-amber-500/20 text-amber-300" : "bg-zinc-700/50 text-muted"
+                    }`}
+                  >
+                    {count}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+
+          {issueLoading && <p className="mt-3 text-xs text-muted">로딩 중…</p>}
+
+          {!issueLoading && issueData && issueData.items.length === 0 && (
+            <p className="mt-4 text-center text-xs text-muted">이 카테고리에 해당하는 문제가 없습니다.</p>
+          )}
+
+          {!issueLoading && issueData && issueData.items.length > 0 && (
+            <>
+              <ul className="mt-3 space-y-1 max-h-96 overflow-y-auto">
+                {issueData.items.map((it) => (
+                  <li
+                    key={it.id}
+                    className="flex items-start gap-2 rounded border border-border bg-surface px-3 py-2 text-xs"
+                  >
+                    <span className="rounded bg-zinc-700/40 px-1.5 py-0.5 font-mono tabular-nums text-muted">#{it.id}</span>
+                    <div className="min-w-0 flex-1">
+                      {it.subjectName && (
+                        <span className="rounded bg-violet-500/10 px-1.5 py-0.5 font-medium text-violet-400">
+                          {it.subjectName}
+                        </span>
+                      )}
+                      {it.summary && <span className="ml-2 text-muted">{it.summary}</span>}
+                      {it.contentPreview && (
+                        <p className="mt-1 truncate text-foreground/70">{it.contentPreview}</p>
+                      )}
+                    </div>
+                    <Link
+                      href={`/admin/questions/${it.id}`}
+                      className="shrink-0 rounded border border-border px-2 py-1 hover:text-foreground"
+                    >
+                      수정
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+
+              {issueData.totalPages > 1 && (
+                <div className="mt-3 flex items-center justify-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setIssuePage((p) => Math.max(0, p - 1))}
+                    disabled={issuePage === 0}
+                    className="rounded border border-border px-2 py-1 text-xs disabled:opacity-30"
+                  >
+                    이전
+                  </button>
+                  <span className="text-xs text-muted">
+                    {issuePage + 1} / {issueData.totalPages} ({issueData.totalElements}건)
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setIssuePage((p) => p + 1)}
+                    disabled={issuePage >= issueData.totalPages - 1}
+                    className="rounded border border-border px-2 py-1 text-xs disabled:opacity-30"
+                  >
+                    다음
+                  </button>
+                </div>
+              )}
+            </>
+          )}
+        </div>
 
         <div className="mt-6">
           <h3 className="text-xs font-semibold text-muted">최근 실행 이력</h3>

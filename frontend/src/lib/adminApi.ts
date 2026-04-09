@@ -213,6 +213,33 @@ export function getQuestionVerifyHistory(limit = 5) {
   return adminFetch<QuestionVerifyHistory[]>(`/questions/verify/history?limit=${limit}`);
 }
 
+export type VerificationCategory = "AUTO_FIXED" | "MANUAL_REVIEW" | "ERROR";
+
+export interface VerificationIssue {
+  id: number;
+  subjectName: string | null;
+  summary: string | null;
+  contentPreview: string | null;
+  category: VerificationCategory;
+}
+
+export interface VerificationIssuePage {
+  content: VerificationIssue[];
+  totalElements: number;
+  totalPages: number;
+  number: number;
+  size: number;
+}
+
+export function getVerifyIssues(category: VerificationCategory, page = 0, size = 20) {
+  const params = new URLSearchParams({ category, page: String(page), size: String(size) });
+  return adminFetch<VerificationIssuePage>(`/questions/verify/issues?${params}`);
+}
+
+export function getVerifyIssueCounts() {
+  return adminFetch<Record<VerificationCategory, number>>("/questions/verify/issues/counts");
+}
+
 export function getMembers(page = 0, size = 20) {
   return adminFetch<AdminMemberPage>(`/members?page=${page}&size=${size}`);
 }

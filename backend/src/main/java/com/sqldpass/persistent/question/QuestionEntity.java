@@ -28,7 +28,8 @@ import lombok.NoArgsConstructor;
 @Entity
 @Table(name = "question", indexes = {
     @Index(name = "idx_question_subject_id", columnList = "subject_id"),
-    @Index(name = "idx_question_subject_mock", columnList = "subject_id, mock_exam_id")
+    @Index(name = "idx_question_subject_mock", columnList = "subject_id, mock_exam_id"),
+    @Index(name = "idx_question_verification_category", columnList = "verification_category")
 })
 public class QuestionEntity extends BaseTimeEntity {
 
@@ -86,6 +87,11 @@ public class QuestionEntity extends BaseTimeEntity {
     @Column(name = "verified_at")
     private LocalDateTime verifiedAt;
 
+    /** 마지막 검증 결과 카테고리. 어드민이 카테고리별 목록을 조회하기 위해 영속화. 수정 시 NONE 으로 리셋. */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "verification_category", nullable = false, length = 20)
+    private VerificationCategory verificationCategory = VerificationCategory.NONE;
+
     /** 본문 normalize → SHA-256 hex. 모의고사 회차 간/내 중복 검증용. NULL 허용 (legacy 호환) */
     @Column(name = "content_hash", length = 64)
     private String contentHash;
@@ -129,6 +135,7 @@ public class QuestionEntity extends BaseTimeEntity {
         this.explanation = explanation;
         this.summary = summary;
         this.verifiedAt = null;
+        this.verificationCategory = VerificationCategory.NONE;
     }
 
     /** 어드민 MCQ 수정 — answer/keywords는 건드리지 않음 */
@@ -141,6 +148,7 @@ public class QuestionEntity extends BaseTimeEntity {
         this.answer = null;
         this.keywords = null;
         this.verifiedAt = null;
+        this.verificationCategory = VerificationCategory.NONE;
     }
 
     /** 어드민 단답/약술형 수정 — correct_option은 NULL로 강제, answer/keywords 갱신 */
@@ -154,10 +162,16 @@ public class QuestionEntity extends BaseTimeEntity {
         this.explanation = explanation;
         this.summary = summary;
         this.verifiedAt = null;
+        this.verificationCategory = VerificationCategory.NONE;
     }
 
     public void markVerified(LocalDateTime verifiedAt) {
         this.verifiedAt = verifiedAt;
+        this.verificationCategory = VerificationCategory.NONE;
+    }
+
+    public void setVerificationCategory(VerificationCategory category) {
+        this.verificationCategory = category;
     }
 
     public void assignToMockExam(MockExamEntity mockExam, int displayOrder) {

@@ -108,6 +108,21 @@ public class AdminQuestionController {
         return adminQuestionService.verifyAll(examType, subjectId, limit, force);
     }
 
+    @GetMapping("/api/admin/questions/verify/issues")
+    @Operation(summary = "검증 카테고리별 문제 목록 (AUTO_FIXED / MANUAL_REVIEW / ERROR)")
+    public org.springframework.data.domain.Page<com.sqldpass.controller.admin.dto.VerificationIssueResponse> getVerifyIssues(
+            @RequestParam com.sqldpass.persistent.question.VerificationCategory category,
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size) {
+        return adminQuestionService.getVerifyIssues(category, page, size);
+    }
+
+    @GetMapping("/api/admin/questions/verify/issues/counts")
+    @Operation(summary = "카테고리별 미해결 문제 개수")
+    public Map<String, Long> getVerifyIssueCounts() {
+        return adminQuestionService.getVerifyIssueCounts();
+    }
+
     @GetMapping("/api/admin/questions/verify/history")
     @Operation(summary = "LLM 직검증 최근 실행 이력")
     public List<QuestionVerifyHistoryResponse> getVerifyHistory(
