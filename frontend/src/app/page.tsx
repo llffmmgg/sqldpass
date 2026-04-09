@@ -1,5 +1,6 @@
 import ScrollReveal from "@/components/ScrollReveal";
 import HeroCta from "@/components/HeroCta";
+import { SiteNoticeModal } from "@/components/SiteNoticeModal";
 import CertTerminal from "@/components/CertTerminal";
 import RankingSection from "@/components/RankingSection";
 import {
@@ -35,6 +36,7 @@ export default async function Home() {
   const [stats, ranking] = await Promise.all([fetchStatsSafe(), fetchRankingSafe()]);
   return (
     <main className="min-h-screen bg-background text-foreground">
+      <SiteNoticeModal />
       {/* Hero */}
       <section className="relative overflow-hidden">
         {/* Layer 1: Ambient base gradient — fills the void */}
