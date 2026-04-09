@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import Spinner from "@/components/Spinner";
 import {
   getMockExams,
@@ -24,7 +25,11 @@ export default function MockExamsPage() {
   }, []);
 
   if (authChecked && authed) {
-    return <MockExamsListContent />;
+    return (
+      <Suspense fallback={null}>
+        <MockExamsListContent />
+      </Suspense>
+    );
   }
   return <MockExamsGuestPreview />;
 }
@@ -158,9 +163,27 @@ const TEMPLATE_OPTIONS: { value: TemplateFilter; label: string }[] = [
 ];
 
 function MockExamsListContent() {
+  const searchParams = useSearchParams();
+  const certParam = searchParams?.get("cert");
+  const initialFilter: Filter =
+    certParam === "ENGINEER_PRACTICAL" || certParam === "COMPUTER_LITERACY_1" || certParam === "SQLD"
+      ? certParam
+      : "SQLD";
+
   const [exams, setExams] = useState<MockExamSummary[] | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [filter, setFilter] = useState<Filter>("SQLD");
+  const [filter, setFilter] = useState<Filter>(initialFilter);
+
+  // URL 파라미터가 바뀌면 (드롭다운 클릭 등) 필터도 따라감
+  useEffect(() => {
+    if (
+      certParam === "ENGINEER_PRACTICAL" ||
+      certParam === "COMPUTER_LITERACY_1" ||
+      certParam === "SQLD"
+    ) {
+      setFilter(certParam);
+    }
+  }, [certParam]);
   const [difficultyFilter, setDifficultyFilter] = useState<DifficultyFilter>("ALL");
   const [templateFilter, setTemplateFilter] = useState<TemplateFilter>("ALL");
 

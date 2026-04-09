@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
 import {
   getSubjects,
   getQuestions,
@@ -65,7 +66,9 @@ function detectCertTone(rootName: string): CertTone {
 export default function SolvePage() {
   return (
     <AuthGuard>
-      <SolvePageContent />
+      <Suspense fallback={null}>
+        <SolvePageContent />
+      </Suspense>
     </AuthGuard>
   );
 }
@@ -79,6 +82,9 @@ type PastEntry = {
 };
 
 function SolvePageContent() {
+  const searchParams = useSearchParams();
+  const certParam = searchParams?.get("cert");
+
   const [phase, setPhase] = useState<Phase>("select");
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [selectedSubject, setSelectedSubject] = useState<Subject | null>(null);
@@ -354,6 +360,17 @@ function SolvePageContent() {
       certGroups.get(tone.certLabel)!.roots.push(root);
     }
 
+    // ?cert= URL 파라미터로 특정 자격증만 필터링
+    const certKeyToLabel: Record<string, string> = {
+      SQLD: "SQLD",
+      ENGINEER_PRACTICAL: "정보처리기사 실기",
+      COMPUTER_LITERACY_1: "컴퓨터활용능력 1급",
+    };
+    const filterLabel = certParam ? certKeyToLabel[certParam] : null;
+    const visibleGroups = filterLabel
+      ? Array.from(certGroups.values()).filter((g) => g.tone.certLabel === filterLabel)
+      : Array.from(certGroups.values());
+
     return (
       <main className="min-h-screen bg-background text-foreground">
         <GradingDisclaimerModal />
@@ -364,7 +381,7 @@ function SolvePageContent() {
           </p>
 
           <div className="mt-10 space-y-10">
-            {Array.from(certGroups.values()).map(({ tone, roots }) => (
+            {visibleGroups.map(({ tone, roots }) => (
               <section key={tone.certLabel}>
                 {/* 자격증 헤더 — 색상 뱃지로 강한 시각 구분 */}
                 <div className="flex items-center gap-2">

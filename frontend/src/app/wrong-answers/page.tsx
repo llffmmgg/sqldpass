@@ -34,6 +34,34 @@ function getLeafSubjects(subjects: Subject[]): { id: number; name: string }[] {
   return leaves;
 }
 
+/** root subject 이름으로 자격증 키 판정 */
+type CertKey = "SQLD" | "ENGINEER_PRACTICAL" | "COMPUTER_LITERACY_1";
+
+const CERT_META: Record<CertKey, { label: string; dot: string; border: string; order: number }> = {
+  SQLD: { label: "SQLD", dot: "bg-amber-400", border: "border-amber-500/30", order: 0 },
+  ENGINEER_PRACTICAL: { label: "정보처리기사 실기", dot: "bg-emerald-400", border: "border-emerald-500/30", order: 1 },
+  COMPUTER_LITERACY_1: { label: "컴퓨터활용능력 1급 필기", dot: "bg-sky-400", border: "border-sky-500/30", order: 2 },
+};
+
+function detectCertFromRootName(rootName: string): CertKey {
+  if (rootName === "정보처리기사 실기") return "ENGINEER_PRACTICAL";
+  if (rootName === "컴퓨터활용능력 1급 필기") return "COMPUTER_LITERACY_1";
+  return "SQLD";
+}
+
+/** leaf 과목명 → 소속 자격증 매핑 */
+function buildCertLookup(rawSubjects: Subject[]): Map<string, CertKey> {
+  const map = new Map<string, CertKey>();
+  for (const root of rawSubjects) {
+    const cert = detectCertFromRootName(root.name);
+    map.set(root.name, cert);
+    for (const child of root.children) {
+      map.set(child.name, cert);
+    }
+  }
+  return map;
+}
+
 interface RetryState {
   selectedOption?: number;
   answerText?: string;
@@ -66,6 +94,7 @@ function WrongAnswersPageContent() {
   const [stats, setStats] = useState<WrongAnswerStatsResponse[]>([]);
   const [wrongAnswers, setWrongAnswers] = useState<WrongAnswerResponse[]>([]);
   const [subjects, setSubjects] = useState<{ id: number; name: string }[]>([]);
+  const [rawSubjects, setRawSubjects] = useState<Subject[]>([]);
   const initialSubject = (() => {
     const v = searchParams?.get("subjectId");
     const n = v ? Number(v) : NaN;
@@ -99,6 +128,7 @@ function WrongAnswersPageContent() {
         setStats(statsData);
         setWrongAnswers(wrongData);
         setSubjects(getLeafSubjects(subjectsData));
+        setRawSubjects(subjectsData);
       })
       .finally(() => setLoading(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -231,12 +261,161 @@ function WrongAnswersPageContent() {
     return arr;
   }, [wrongAnswers, sortMode]);
 
+  // 자격증 → 토픽(leaf) → 문제 그룹화. 정렬은 sortedAnswers의 순서를 보존.
+  const certLookup = useMemo(() => buildCertLookup(rawSubjects), [rawSubjects]);
+  const groupedAnswers = useMemo(() => {
+    type Topic = { topicName: string; items: WrongAnswerResponse[] };
+    type CertGroup = { certKey: CertKey; topics: Map<string, Topic> };
+    const certs = new Map<CertKey, CertGroup>();
+    for (const wa of sortedAnswers) {
+      const cert = certLookup.get(wa.subjectName) ?? "SQLD";
+      if (!certs.has(cert)) certs.set(cert, { certKey: cert, topics: new Map() });
+      const group = certs.get(cert)!;
+      if (!group.topics.has(wa.subjectName)) {
+        group.topics.set(wa.subjectName, { topicName: wa.subjectName, items: [] });
+      }
+      group.topics.get(wa.subjectName)!.items.push(wa);
+    }
+    // CERT_META.order 기준으로 정렬, 토픽은 items 수 내림차순
+    return Array.from(certs.values())
+      .sort((a, b) => CERT_META[a.certKey].order - CERT_META[b.certKey].order)
+      .map((g) => ({
+        certKey: g.certKey,
+        topics: Array.from(g.topics.values()).sort((a, b) => b.items.length - a.items.length),
+        total: Array.from(g.topics.values()).reduce((sum, t) => sum + t.items.length, 0),
+      }));
+  }, [sortedAnswers, certLookup]);
+
   // 상단 한 줄 요약용
   const totalUnresolved = wrongAnswers.length;
   const topWeak = useMemo(
     () => [...stats].filter((s) => s.wrongCount > 0).sort((a, b) => b.wrongRate - a.wrongRate)[0] ?? null,
     [stats]
   );
+
+  // 카드 렌더러 — 그룹화된 컬렉션에서 재사용
+  function renderWrongAnswerCard(wa: WrongAnswerResponse) {
+    const isExpanded = expandedId === wa.questionId;
+    const isMastered = masteredIds.has(wa.questionId);
+    const detail = details[wa.questionId];
+    const state = retryState[wa.questionId] ?? {};
+    const parsed = detail ? parseQuestion(detail.content) : null;
+
+    const priority: "high" | "mid" | "low" =
+      wa.wrongCount >= 3 ? "high" : wa.wrongCount === 2 ? "mid" : "low";
+
+    const borderClass = isMastered
+      ? "border-green-500/60 bg-green-500/10 opacity-60 scale-95 border"
+      : priority === "high"
+      ? "border border-border border-l-4 border-l-red-500/70"
+      : priority === "mid"
+      ? "border border-border border-l-4 border-l-amber-500/70"
+      : "border border-border";
+
+    const wrongCountBadge = (() => {
+      if (priority === "high") return { dot: "🔴", color: "text-red-400" };
+      if (priority === "mid") return { dot: "🟡", color: "text-amber-400" };
+      return { dot: "⚪", color: "text-muted" };
+    })();
+
+    return (
+      <div
+        key={wa.questionId}
+        className={`rounded-lg bg-surface px-5 py-4 transition-all duration-500 ${borderClass}`}
+      >
+        <div className="cursor-pointer" onClick={() => handleExpand(wa.questionId)}>
+          <div className="flex items-start justify-between gap-3">
+            <p className="flex-1 text-base leading-relaxed line-clamp-3 whitespace-pre-line">
+              {wa.questionContent}
+            </p>
+            <svg
+              className={`h-4 w-4 shrink-0 text-muted transition-transform ${
+                isExpanded ? "rotate-180" : ""
+              }`}
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+            </svg>
+          </div>
+          <div className="mt-2 flex items-center gap-2">
+            <span className={`inline-flex items-center gap-1 text-xs ${wrongCountBadge.color}`}>
+              <span aria-hidden="true">{wrongCountBadge.dot}</span>
+              {wa.wrongCount}회 틀림
+            </span>
+            <span className="text-xs text-muted">{formatRelativeDate(wa.lastWrongAt)}</span>
+          </div>
+        </div>
+
+        <div
+          className={`grid transition-all duration-300 ease-in-out ${
+            isExpanded ? "grid-rows-[1fr] opacity-100 mt-3" : "grid-rows-[0fr] opacity-0"
+          }`}
+        >
+          <div className="overflow-hidden">
+            {!detail ? (
+              <div className="py-4 text-center text-sm text-muted">로딩 중...</div>
+            ) : (
+              <div className="space-y-3">
+                <div className="rounded-lg border border-border px-3 py-3">
+                  <QuestionContent content={parsed?.body ?? ""} />
+                </div>
+
+                {isMastered && (
+                  <div className="rounded-lg border border-green-500/40 bg-green-500/10 px-4 py-3 text-center">
+                    <p className="text-base font-semibold text-green-300">🎉 정답! 마스터 완료</p>
+                    <p className="mt-1 text-xs text-green-400/80">잠시 후 목록에서 사라집니다</p>
+                  </div>
+                )}
+
+                {!isMastered && !state.result?.correct && (
+                  <RetrySolverInline
+                    detail={detail}
+                    parsedOptions={parsed?.options ?? []}
+                    state={state}
+                    onChange={(patch) => setRetryField(wa.questionId, patch)}
+                    onSubmit={() => handleSubmitRetry(wa.questionId)}
+                  />
+                )}
+
+                {state.result && !state.result.correct && (
+                  <div className="space-y-3">
+                    <div className="rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-3">
+                      <p className="text-sm font-semibold text-red-300">❌ 다시 도전!</p>
+                      {detail.questionType === "MCQ" ? (
+                        <p className="mt-1 text-sm text-red-200/90">
+                          정답: <span className="font-bold">{state.result.correctOption}번</span>
+                        </p>
+                      ) : (
+                        <p className="mt-1 text-sm text-red-200/90">
+                          모범답안:{" "}
+                          <span className="font-mono">{state.result.correctAnswer}</span>
+                        </p>
+                      )}
+                    </div>
+                    <div className="rounded-lg border border-border px-3 py-3 text-sm">
+                      <p className="font-medium text-amber-400">해설</p>
+                      <div className="mt-1 leading-relaxed text-muted">
+                        <QuestionContent content={state.result.explanation ?? ""} />
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => handleRetryAgain(wa.questionId)}
+                      className="w-full rounded-lg border border-amber-500/40 bg-amber-500/10 py-2 text-sm font-semibold text-amber-300 transition hover:bg-amber-500/20"
+                    >
+                      🔁 다시 풀어보기
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <main className="min-h-screen bg-background text-foreground">
@@ -342,133 +521,38 @@ function WrongAnswersPageContent() {
               </div>
             )}
 
-            {!loading &&
-              sortedAnswers.map((wa) => {
-                const isExpanded = expandedId === wa.questionId;
-                const isMastered = masteredIds.has(wa.questionId);
-                const detail = details[wa.questionId];
-                const state = retryState[wa.questionId] ?? {};
-                const parsed = detail ? parseQuestion(detail.content) : null;
-
-                // 우선순위에 따른 시각 차별
-                const priority: "high" | "mid" | "low" =
-                  wa.wrongCount >= 3 ? "high" : wa.wrongCount === 2 ? "mid" : "low";
-
-                const borderClass = isMastered
-                  ? "border-green-500/60 bg-green-500/10 opacity-60 scale-95 border"
-                  : priority === "high"
-                  ? "border border-border border-l-4 border-l-red-500/70"
-                  : priority === "mid"
-                  ? "border border-border border-l-4 border-l-amber-500/70"
-                  : "border border-border";
-
-                const wrongCountBadge = (() => {
-                  if (priority === "high") return { dot: "🔴", color: "text-red-400" };
-                  if (priority === "mid") return { dot: "🟡", color: "text-amber-400" };
-                  return { dot: "⚪", color: "text-muted" };
-                })();
-
-                return (
-                  <div
-                    key={wa.questionId}
-                    className={`rounded-lg bg-surface px-5 py-4 transition-all duration-500 ${borderClass}`}
-                  >
-                    <div className="cursor-pointer" onClick={() => handleExpand(wa.questionId)}>
-                      <div className="flex items-start justify-between gap-3">
-                        <p className="flex-1 text-base leading-relaxed line-clamp-3 whitespace-pre-line">
-                          {wa.questionContent}
-                        </p>
-                        <svg
-                          className={`h-4 w-4 shrink-0 text-muted transition-transform ${
-                            isExpanded ? "rotate-180" : ""
-                          }`}
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                          strokeWidth={2}
-                        >
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                        </svg>
-                      </div>
-                      <div className="mt-2 flex items-center gap-2">
-                        <span className="rounded bg-violet-500/10 px-2 py-0.5 text-xs font-medium text-violet-400">
-                          {wa.subjectName}
-                        </span>
-                        <span className={`inline-flex items-center gap-1 text-xs ${wrongCountBadge.color}`}>
-                          <span aria-hidden="true">{wrongCountBadge.dot}</span>
-                          {wa.wrongCount}회 틀림
-                        </span>
-                        <span className="text-xs text-muted">{formatRelativeDate(wa.lastWrongAt)}</span>
-                      </div>
+            {!loading && sortedAnswers.length > 0 && (
+              <div className="space-y-8">
+                {groupedAnswers.map((group) => (
+                  <section key={group.certKey}>
+                    <div className={`flex items-center gap-2 border-b ${CERT_META[group.certKey].border} pb-2`}>
+                      <span className={`h-2 w-2 rounded-full ${CERT_META[group.certKey].dot}`} />
+                      <h2 className="text-base font-bold text-foreground">
+                        {CERT_META[group.certKey].label}
+                      </h2>
+                      <span className="text-xs tabular-nums text-muted">{group.total}건</span>
                     </div>
 
-                    <div
-                      className={`grid transition-all duration-300 ease-in-out ${
-                        isExpanded ? "grid-rows-[1fr] opacity-100 mt-3" : "grid-rows-[0fr] opacity-0"
-                      }`}
-                    >
-                      <div className="overflow-hidden">
-                        {!detail ? (
-                          <div className="py-4 text-center text-sm text-muted">로딩 중...</div>
-                        ) : (
+                    <div className="mt-4 space-y-6">
+                      {group.topics.map((topic) => (
+                        <div key={topic.topicName}>
+                          <h3 className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted">
+                            <span>{topic.topicName}</span>
+                            <span className="rounded-full bg-border px-1.5 py-0.5 text-[10px] tabular-nums text-muted/80">
+                              {topic.items.length}
+                            </span>
+                          </h3>
                           <div className="space-y-3">
-                            <div className="rounded-lg border border-border px-3 py-3">
-                              <QuestionContent content={parsed?.body ?? ""} />
-                            </div>
-
-                            {isMastered && (
-                              <div className="rounded-lg border border-green-500/40 bg-green-500/10 px-4 py-3 text-center">
-                                <p className="text-base font-semibold text-green-300">🎉 정답! 마스터 완료</p>
-                                <p className="mt-1 text-xs text-green-400/80">잠시 후 목록에서 사라집니다</p>
-                              </div>
-                            )}
-
-                            {!isMastered && !state.result?.correct && (
-                              <RetrySolverInline
-                                detail={detail}
-                                parsedOptions={parsed?.options ?? []}
-                                state={state}
-                                onChange={(patch) => setRetryField(wa.questionId, patch)}
-                                onSubmit={() => handleSubmitRetry(wa.questionId)}
-                              />
-                            )}
-
-                            {state.result && !state.result.correct && (
-                              <div className="space-y-3">
-                                <div className="rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-3">
-                                  <p className="text-sm font-semibold text-red-300">❌ 다시 도전!</p>
-                                  {detail.questionType === "MCQ" ? (
-                                    <p className="mt-1 text-sm text-red-200/90">
-                                      정답: <span className="font-bold">{state.result.correctOption}번</span>
-                                    </p>
-                                  ) : (
-                                    <p className="mt-1 text-sm text-red-200/90">
-                                      모범답안:{" "}
-                                      <span className="font-mono">{state.result.correctAnswer}</span>
-                                    </p>
-                                  )}
-                                </div>
-                                <div className="rounded-lg border border-border px-3 py-3 text-sm">
-                                  <p className="font-medium text-amber-400">해설</p>
-                                  <div className="mt-1 leading-relaxed text-muted">
-                                    <QuestionContent content={state.result.explanation ?? ""} />
-                                  </div>
-                                </div>
-                                <button
-                                  onClick={() => handleRetryAgain(wa.questionId)}
-                                  className="w-full rounded-lg border border-amber-500/40 bg-amber-500/10 py-2 text-sm font-semibold text-amber-300 transition hover:bg-amber-500/20"
-                                >
-                                  🔁 다시 풀어보기
-                                </button>
-                              </div>
-                            )}
+                            {topic.items.map((wa) => renderWrongAnswerCard(wa))}
                           </div>
-                        )}
-                      </div>
+                        </div>
+                      ))}
                     </div>
-                  </div>
-                );
-              })}
+                  </section>
+                ))}
+              </div>
+            )}
+
           </div>
         </section>
       </div>

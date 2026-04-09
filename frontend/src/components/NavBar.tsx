@@ -9,12 +9,34 @@ import { type Theme, getInitialTheme, setStoredTheme, applyTheme } from "@/lib/t
 import FeedbackModal from "@/components/FeedbackModal";
 import NotificationBell from "@/components/NotificationBell";
 
-const NAV_LINKS = [
-  { href: "/", label: "홈" },
-  { href: "/solve", label: "문제 풀기" },
-  { href: "/mock-exams", label: "모의고사" },
-  { href: "/dashboard", label: "대시보드" },
-  { href: "/wrong-answers", label: "오답 노트" },
+type CertKey = "SQLD" | "ENGINEER_PRACTICAL" | "COMPUTER_LITERACY_1";
+
+const CERT_OPTIONS: { key: CertKey; label: string; sub: string; dot: string }[] = [
+  { key: "SQLD", label: "SQLD", sub: "SQL 개발자 자격증", dot: "bg-amber-400" },
+  { key: "ENGINEER_PRACTICAL", label: "정보처리기사 실기", sub: "단답·약술 + 코드 풀이", dot: "bg-emerald-400" },
+  { key: "COMPUTER_LITERACY_1", label: "컴활 1급 필기", sub: "60문항 4지선다", dot: "bg-sky-400" },
+];
+
+type NavItem =
+  | { kind: "link"; href: string; label: string }
+  | { kind: "dropdown"; label: string; basePath: string; build: (cert: CertKey) => string };
+
+const NAV_LINKS: NavItem[] = [
+  { kind: "link", href: "/", label: "홈" },
+  {
+    kind: "dropdown",
+    label: "문제 풀기",
+    basePath: "/solve",
+    build: (cert) => `/solve?cert=${cert}`,
+  },
+  {
+    kind: "dropdown",
+    label: "모의고사",
+    basePath: "/mock-exams",
+    build: (cert) => `/mock-exams?cert=${cert}`,
+  },
+  { kind: "link", href: "/dashboard", label: "대시보드" },
+  { kind: "link", href: "/wrong-answers", label: "오답 노트" },
 ];
 
 export default function NavBar() {
@@ -73,20 +95,33 @@ export default function NavBar() {
         {/* Desktop */}
         <div className="hidden items-center gap-1 sm:flex">
           <ul className="flex gap-1">
-            {NAV_LINKS.map((link) => (
-              <li key={link.href}>
-                <Link
-                  href={link.href}
-                  className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
-                    isActive(link.href)
-                      ? "bg-primary/10 text-primary"
-                      : "text-muted hover:text-foreground"
-                  }`}
-                >
-                  {link.label}
-                </Link>
-              </li>
-            ))}
+            {NAV_LINKS.map((item) => {
+              if (item.kind === "link") {
+                return (
+                  <li key={item.href}>
+                    <Link
+                      href={item.href}
+                      className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+                        isActive(item.href)
+                          ? "bg-primary/10 text-primary"
+                          : "text-muted hover:text-foreground"
+                      }`}
+                    >
+                      {item.label}
+                    </Link>
+                  </li>
+                );
+              }
+              return (
+                <NavDropdown
+                  key={item.basePath}
+                  label={item.label}
+                  active={isActive(item.basePath)}
+                  basePath={item.basePath}
+                  buildHref={item.build}
+                />
+              );
+            })}
           </ul>
 
           <div className="ml-4 flex items-center gap-2">
@@ -202,21 +237,43 @@ export default function NavBar() {
       {menuOpen && (
         <div className="border-t border-border px-4 pb-3 sm:hidden">
           <ul>
-            {NAV_LINKS.map((link) => (
-              <li key={link.href}>
-                <Link
-                  href={link.href}
-                  onClick={() => setMenuOpen(false)}
-                  className={`block rounded-md px-3 py-2 text-sm font-medium transition-colors ${
-                    isActive(link.href)
-                      ? "bg-primary/10 text-primary"
-                      : "text-muted hover:text-foreground"
-                  }`}
-                >
-                  {link.label}
-                </Link>
-              </li>
-            ))}
+            {NAV_LINKS.map((item) => {
+              if (item.kind === "link") {
+                return (
+                  <li key={item.href}>
+                    <Link
+                      href={item.href}
+                      onClick={() => setMenuOpen(false)}
+                      className={`block rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+                        isActive(item.href)
+                          ? "bg-primary/10 text-primary"
+                          : "text-muted hover:text-foreground"
+                      }`}
+                    >
+                      {item.label}
+                    </Link>
+                  </li>
+                );
+              }
+              return (
+                <li key={item.basePath}>
+                  <div className="mt-1 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-muted/60">
+                    {item.label}
+                  </div>
+                  {CERT_OPTIONS.map((cert) => (
+                    <Link
+                      key={cert.key}
+                      href={item.build(cert.key)}
+                      onClick={() => setMenuOpen(false)}
+                      className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-muted hover:bg-surface hover:text-foreground"
+                    >
+                      <span className={`h-1.5 w-1.5 rounded-full ${cert.dot}`} />
+                      {cert.label}
+                    </Link>
+                  ))}
+                </li>
+              );
+            })}
           </ul>
           <div className="mt-2 border-t border-border pt-2">
             <button
@@ -273,5 +330,77 @@ export default function NavBar() {
         </div>
       )}
     </header>
+  );
+}
+
+/**
+ * 자격증 드롭다운 — hover/focus 시 자격증 3개 노출.
+ * 클릭 시 ?cert= 파라미터와 함께 해당 페이지로 이동.
+ */
+function NavDropdown({
+  label,
+  active,
+  basePath,
+  buildHref,
+}: {
+  label: string;
+  active: boolean;
+  basePath: string;
+  buildHref: (cert: CertKey) => string;
+}) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <li
+      className="relative"
+      onMouseEnter={() => setOpen(true)}
+      onMouseLeave={() => setOpen(false)}
+    >
+      <Link
+        href={basePath}
+        onFocus={() => setOpen(true)}
+        onBlur={() => setOpen(false)}
+        className={`inline-flex items-center gap-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+          active
+            ? "bg-primary/10 text-primary"
+            : "text-muted hover:text-foreground"
+        }`}
+      >
+        {label}
+        <svg
+          className={`h-3 w-3 transition-transform ${open ? "rotate-180" : ""}`}
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={2.5}
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+        </svg>
+      </Link>
+      {open && (
+        <div
+          className="absolute left-0 top-full z-50 min-w-[240px] pt-2"
+          onMouseEnter={() => setOpen(true)}
+          onMouseLeave={() => setOpen(false)}
+        >
+          <div className="overflow-hidden rounded-lg border border-border bg-background/95 shadow-xl backdrop-blur">
+            {CERT_OPTIONS.map((cert) => (
+              <Link
+                key={cert.key}
+                href={buildHref(cert.key)}
+                onClick={() => setOpen(false)}
+                className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-surface"
+              >
+                <span className={`h-2 w-2 shrink-0 rounded-full ${cert.dot}`} />
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-foreground">{cert.label}</p>
+                  <p className="mt-0.5 text-xs text-muted">{cert.sub}</p>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
+    </li>
   );
 }
