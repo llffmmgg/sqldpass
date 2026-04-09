@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -83,13 +84,23 @@ export default function NavBar() {
   return (
     <header className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur">
       <nav className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3 sm:px-6">
-        <Link href="/" className="flex flex-col leading-none text-foreground">
-          <span className="text-xl font-bold tracking-tight">
-            sqld<span className="text-primary">pass</span>
-          </span>
-          <span className="mt-1 hidden text-xs text-muted sm:block">
-            SQLD · 정처기 실기 · 컴활 1급
-          </span>
+        <Link href="/" className="flex items-center gap-2.5 text-foreground">
+          <Image
+            src="/logo.png"
+            alt="sqldpass 로고"
+            width={40}
+            height={40}
+            priority
+            className="h-10 w-10 shrink-0 object-contain"
+          />
+          <div className="flex flex-col leading-none">
+            <span className="text-xl font-bold tracking-tight">
+              sqld<span className="text-primary">pass</span>
+            </span>
+            <span className="mt-1 hidden text-xs text-muted sm:block">
+              SQLD · 정처기 실기 · 컴활 1급
+            </span>
+          </div>
         </Link>
 
         {/* Desktop */}
