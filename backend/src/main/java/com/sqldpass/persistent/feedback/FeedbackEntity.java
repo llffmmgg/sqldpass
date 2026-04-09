@@ -1,5 +1,7 @@
 package com.sqldpass.persistent.feedback;
 
+import java.time.LocalDateTime;
+
 import com.sqldpass.persistent.common.BaseTimeEntity;
 
 import jakarta.persistence.Column;
@@ -51,6 +53,12 @@ public class FeedbackEntity extends BaseTimeEntity {
     @Column(nullable = false, length = 20)
     private FeedbackStatus status = FeedbackStatus.NEW;
 
+    @Column(name = "admin_reply", columnDefinition = "TEXT")
+    private String adminReply;
+
+    @Column(name = "replied_at")
+    private LocalDateTime repliedAt;
+
     public FeedbackEntity(FeedbackType type, Long memberId, Long questionId,
                           String content, String pageUrl) {
         this.type = type;
@@ -63,5 +71,15 @@ public class FeedbackEntity extends BaseTimeEntity {
 
     public void changeStatus(FeedbackStatus status) {
         this.status = status;
+    }
+
+    /**
+     * 어드민 답변 작성. 답변 본문과 시각을 저장하고 status 를 RESOLVED 로 전이한다.
+     * 알림 발송 여부는 호출 측(Service)이 prev status 를 보고 판단한다.
+     */
+    public void writeReply(String reply) {
+        this.adminReply = reply;
+        this.repliedAt = LocalDateTime.now();
+        this.status = FeedbackStatus.RESOLVED;
     }
 }

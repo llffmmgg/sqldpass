@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import {
   getFeedbacks,
   updateFeedbackStatus,
+  replyFeedback,
   type AdminFeedback,
   type AdminFeedbackPage,
   type FeedbackStatus,
@@ -42,6 +43,50 @@ export default function AdminFeedbackPage() {
   const [page, setPage] = useState(0);
   const [loading, setLoading] = useState(true);
   const [updatingId, setUpdatingId] = useState<number | null>(null);
+  const [replyDrafts, setReplyDrafts] = useState<Record<number, string>>({});
+  const [editingReplyId, setEditingReplyId] = useState<number | null>(null);
+  const [replySavingId, setReplySavingId] = useState<number | null>(null);
+
+  function applyUpdatedFeedback(updated: AdminFeedback, prevStatus: FeedbackStatus) {
+    const droppedFromFilter = filter !== "ALL" && updated.status !== filter && updated.status !== prevStatus;
+    setData((prev) => {
+      if (!prev) return prev;
+      if (droppedFromFilter) {
+        return {
+          ...prev,
+          content: prev.content.filter((x) => x.id !== updated.id),
+          totalElements: prev.totalElements - 1,
+        };
+      }
+      return {
+        ...prev,
+        content: prev.content.map((x) => (x.id === updated.id ? updated : x)),
+      };
+    });
+  }
+
+  async function handleReplySave(fb: AdminFeedback) {
+    const draft = (replyDrafts[fb.id] ?? fb.adminReply ?? "").trim();
+    if (!draft) {
+      alert("답변 내용을 입력해주세요.");
+      return;
+    }
+    setReplySavingId(fb.id);
+    try {
+      const updated = await replyFeedback(fb.id, draft);
+      applyUpdatedFeedback(updated, fb.status);
+      setEditingReplyId(null);
+      setReplyDrafts((prev) => {
+        const next = { ...prev };
+        delete next[fb.id];
+        return next;
+      });
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "답변 저장 실패");
+    } finally {
+      setReplySavingId(null);
+    }
+  }
 
   useEffect(() => {
     setLoading(true);
@@ -168,6 +213,74 @@ export default function AdminFeedbackPage() {
                     페이지: <span className="font-mono">{fb.pageUrl}</span>
                   </p>
                 )}
+
+                {/* 어드민 답변 영역 */}
+                <div className="mt-4 border-t border-border/60 pt-3">
+                  {fb.adminReply && editingReplyId !== fb.id ? (
+                    <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-3">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-[11px] font-semibold uppercase tracking-wide text-emerald-300">
+                          어드민 답변 {fb.repliedAt && `· ${formatDate(fb.repliedAt)}`}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEditingReplyId(fb.id);
+                            setReplyDrafts((prev) => ({ ...prev, [fb.id]: fb.adminReply ?? "" }));
+                          }}
+                          className="text-[11px] text-muted hover:text-foreground"
+                        >
+                          수정
+                        </button>
+                      </div>
+                      <p className="mt-2 whitespace-pre-wrap break-words text-sm leading-relaxed text-emerald-100/90">
+                        {fb.adminReply}
+                      </p>
+                    </div>
+                  ) : (
+                    <div>
+                      <label className="text-[11px] font-semibold uppercase tracking-wide text-muted">
+                        답변 작성 (저장 시 자동 처리완료 + 작성자 알림)
+                      </label>
+                      <textarea
+                        value={replyDrafts[fb.id] ?? fb.adminReply ?? ""}
+                        onChange={(e) =>
+                          setReplyDrafts((prev) => ({ ...prev, [fb.id]: e.target.value }))
+                        }
+                        rows={3}
+                        maxLength={2000}
+                        placeholder="사용자에게 전달할 답변을 입력하세요."
+                        className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-amber-500/60 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
+                      />
+                      <div className="mt-2 flex items-center justify-end gap-2">
+                        {editingReplyId === fb.id && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setEditingReplyId(null);
+                              setReplyDrafts((prev) => {
+                                const next = { ...prev };
+                                delete next[fb.id];
+                                return next;
+                              });
+                            }}
+                            className="rounded-md border border-border bg-background px-3 py-1 text-xs text-muted hover:text-foreground"
+                          >
+                            취소
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => handleReplySave(fb)}
+                          disabled={replySavingId === fb.id}
+                          className="rounded-md bg-amber-500 px-3 py-1 text-xs font-semibold text-zinc-900 transition hover:bg-amber-400 disabled:opacity-50"
+                        >
+                          {replySavingId === fb.id ? "저장 중…" : "답변 저장"}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
             ))}
           </div>

@@ -16,6 +16,8 @@ public final class FeedbackMapper {
                 entity.getContent(),
                 entity.getPageUrl(),
                 entity.getStatus(),
+                entity.getAdminReply(),
+                entity.getRepliedAt(),
                 entity.getCreatedAt(),
                 entity.getUpdatedAt());
     }

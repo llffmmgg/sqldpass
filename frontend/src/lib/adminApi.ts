@@ -275,6 +275,8 @@ export interface AdminFeedback {
   content: string;
   pageUrl: string | null;
   status: FeedbackStatus;
+  adminReply: string | null;
+  repliedAt: string | null;
   createdAt: string;
 }
 
@@ -296,6 +298,14 @@ export function updateFeedbackStatus(id: number, status: FeedbackStatus) {
   return adminFetch<AdminFeedback>(`/feedback/${id}/status`, {
     method: "PATCH",
     body: JSON.stringify({ status }),
+  });
+}
+
+/** 어드민 답변 작성 — 자동 RESOLVED 처리 + 작성자에게 알림 발송 */
+export function replyFeedback(id: number, reply: string) {
+  return adminFetch<AdminFeedback>(`/feedback/${id}/reply`, {
+    method: "PATCH",
+    body: JSON.stringify({ reply }),
   });
 }
 

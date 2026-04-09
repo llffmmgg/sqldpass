@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.sqldpass.controller.admin.dto.UpdateFeedbackReplyRequest;
 import com.sqldpass.controller.admin.dto.UpdateFeedbackStatusRequest;
 import com.sqldpass.controller.feedback.dto.FeedbackResponse;
 import com.sqldpass.domain.feedback.Feedback;
@@ -45,6 +46,14 @@ public class AdminFeedbackController {
     public FeedbackResponse updateStatus(@PathVariable Long id,
                                           @Valid @RequestBody UpdateFeedbackStatusRequest body) {
         Feedback updated = feedbackService.updateStatus(id, body.status());
+        return FeedbackResponse.from(updated, feedbackService.resolveNickname(updated.getMemberId()));
+    }
+
+    @PatchMapping("/api/admin/feedback/{id}/reply")
+    @Operation(summary = "피드백 답변 작성 (자동 RESOLVED + 작성자 알림)")
+    public FeedbackResponse reply(@PathVariable Long id,
+                                   @Valid @RequestBody UpdateFeedbackReplyRequest body) {
+        Feedback updated = feedbackService.reply(id, body.reply());
         return FeedbackResponse.from(updated, feedbackService.resolveNickname(updated.getMemberId()));
     }
 }

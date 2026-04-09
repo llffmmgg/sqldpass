@@ -15,6 +15,8 @@ public record FeedbackResponse(
         String content,
         String pageUrl,
         FeedbackStatus status,
+        String adminReply,
+        LocalDateTime repliedAt,
         LocalDateTime createdAt
 ) {
     public static FeedbackResponse from(Feedback f, String memberNickname) {
@@ -27,6 +29,8 @@ public record FeedbackResponse(
                 f.getContent(),
                 f.getPageUrl(),
                 f.getStatus(),
+                f.getAdminReply(),
+                f.getRepliedAt(),
                 f.getCreatedAt());
     }
 }

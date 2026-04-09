@@ -17,11 +17,14 @@ public class Feedback {
     private final String content;
     private final String pageUrl;
     private final FeedbackStatus status;
+    private final String adminReply;
+    private final LocalDateTime repliedAt;
     private final LocalDateTime createdAt;
     private final LocalDateTime updatedAt;
 
     public Feedback(Long id, FeedbackType type, Long memberId, Long questionId,
                     String content, String pageUrl, FeedbackStatus status,
+                    String adminReply, LocalDateTime repliedAt,
                     LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.id = id;
         this.type = type;
@@ -30,6 +33,8 @@ public class Feedback {
         this.content = content;
         this.pageUrl = pageUrl;
         this.status = status;
+        this.adminReply = adminReply;
+        this.repliedAt = repliedAt;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
     }

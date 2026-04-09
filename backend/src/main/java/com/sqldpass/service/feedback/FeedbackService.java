@@ -97,6 +97,35 @@ public class FeedbackService {
         return FeedbackMapper.toDomain(entity);
     }
 
+    /**
+     * 어드민 답변 저장. status 를 RESOLVED 로 자동 전이하고,
+     * 이전 status 가 RESOLVED 가 아니었을 때만 작성자에게 알림 1건을 발송한다.
+     * (수정 저장 시 알림 중복 방지)
+     */
+    @Transactional
+    public Feedback reply(Long id, String replyText) {
+        FeedbackEntity entity = feedbackRepository.findById(id)
+                .orElseThrow(() -> new SqldpassException(ErrorCode.FEEDBACK_NOT_FOUND));
+        FeedbackStatus prev = entity.getStatus();
+        entity.writeReply(replyText);
+
+        if (prev != FeedbackStatus.RESOLVED && entity.getMemberId() != null) {
+            String body = replyText;
+            if (body.length() > 200) {
+                body = body.substring(0, 200) + "…";
+            }
+            notificationService.notify(
+                    entity.getMemberId(),
+                    "FEEDBACK_RESOLVED",
+                    "건의사항에 답변이 도착했습니다",
+                    body,
+                    "/mypage/feedback",
+                    entity.getId());
+        }
+
+        return FeedbackMapper.toDomain(entity);
+    }
+
     public String resolveNickname(Long memberId) {
         if (memberId == null) return "탈퇴한 회원";
         return memberRepository.findById(memberId)
