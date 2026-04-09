@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.sqldpass.controller.admin.dto.CreateMockExamRequest;
 import com.sqldpass.controller.mockexam.dto.MockExamSummaryResponse;
+import com.sqldpass.persistent.mockexam.EngineerExamTemplate;
 import com.sqldpass.persistent.mockexam.ExamType;
 import com.sqldpass.persistent.mockexam.MockExamDifficulty;
 import com.sqldpass.service.mockexam.MockExamService;
@@ -47,7 +48,8 @@ public class AdminMockExamController {
     public MockExamSummaryResponse create(@RequestBody(required = false) CreateMockExamRequest body) {
         ExamType type = (body != null && body.examType() != null) ? body.examType() : ExamType.SQLD;
         MockExamDifficulty difficulty = (body != null) ? body.difficulty() : null;
-        return MockExamSummaryResponse.from(mockExamService.create(type, difficulty));
+        EngineerExamTemplate engineerTemplate = (body != null) ? body.engineerTemplate() : null;
+        return MockExamSummaryResponse.from(mockExamService.create(type, difficulty, engineerTemplate));
     }
 
     @DeleteMapping("/{id}")

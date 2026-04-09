@@ -6,10 +6,22 @@ import {
   getAdminMockExams,
   createMockExam,
   deleteMockExam,
+  ENGINEER_TEMPLATE_LABEL,
   type AdminMockExam,
   type CreateMockExamType,
+  type EngineerTemplate,
   type MockExamCreationDifficulty,
 } from "@/lib/adminApi";
+
+type EngineerTemplateChoice = EngineerTemplate | "RANDOM";
+
+const ENGINEER_TEMPLATE_OPTIONS: { value: EngineerTemplateChoice; label: string }[] = [
+  { value: "RANDOM", label: "랜덤" },
+  { value: "PROGRAMMING_HEAVY", label: ENGINEER_TEMPLATE_LABEL.PROGRAMMING_HEAVY },
+  { value: "THEORY_HEAVY", label: ENGINEER_TEMPLATE_LABEL.THEORY_HEAVY },
+  { value: "BALANCED", label: ENGINEER_TEMPLATE_LABEL.BALANCED },
+  { value: "DB_HEAVY", label: ENGINEER_TEMPLATE_LABEL.DB_HEAVY },
+];
 
 /**
  * 자격증 레지스트리 — 새 자격증 추가 시 이 배열에만 항목을 추가하면
@@ -77,6 +89,8 @@ export default function AdminMockExamsPage() {
   const [activeTab, setActiveTab] = useState<TabId>("all");
   // 정처기 생성 시 사용할 평균 난이도 (SQLD는 무시)
   const [engineerDifficulty, setEngineerDifficulty] = useState<MockExamCreationDifficulty>("NORMAL");
+  // 정처기 분포 템플릿 선택 (RANDOM이면 백엔드가 4개 중 랜덤)
+  const [engineerTemplate, setEngineerTemplate] = useState<EngineerTemplateChoice>("RANDOM");
 
   async function load(): Promise<AdminMockExam[] | null> {
     try {
@@ -105,8 +119,12 @@ export default function AdminMockExamsPage() {
         .reduce((max, e) => Math.max(max, e.sequence), 0);
 
     try {
-      // SQLD/정처기/컴활 모두 난이도 전달 (모든 자격증이 통일된 시드+AI 변형 패턴)
-      await createMockExam(examType, engineerDifficulty);
+      // SQLD/정처기/컴활 모두 난이도 전달. 정처기일 때만 템플릿 전달.
+      const templateArg =
+        examType === "ENGINEER_PRACTICAL" && engineerTemplate !== "RANDOM"
+          ? engineerTemplate
+          : null;
+      await createMockExam(examType, engineerDifficulty, templateArg);
       await load();
     } catch (e) {
       const originalMessage =
@@ -231,6 +249,38 @@ export default function AdminMockExamsPage() {
         </div>
       </div>
 
+      {/* 정처기 분포 템플릿 선택 (정처기 탭 또는 전체 탭에서만 의미 있음) */}
+      {(activeTab === "all" || activeTab === "ENGINEER_PRACTICAL") && (
+        <div className="mt-3 rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-3">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div className="text-xs text-emerald-300">
+              <span className="font-semibold">정처기 분포 템플릿:</span>{" "}
+              <span className="text-emerald-300/70">
+                {engineerTemplate === "RANDOM"
+                  ? "4개 템플릿 중 랜덤"
+                  : ENGINEER_TEMPLATE_LABEL[engineerTemplate]}
+              </span>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {ENGINEER_TEMPLATE_OPTIONS.map((opt) => (
+                <button
+                  key={opt.value}
+                  onClick={() => setEngineerTemplate(opt.value)}
+                  disabled={creating !== null}
+                  className={`rounded px-3 py-1 text-xs font-medium transition-colors ${
+                    engineerTemplate === opt.value
+                      ? "bg-emerald-500/30 text-emerald-200 ring-1 ring-emerald-400/50"
+                      : "border border-emerald-500/30 text-emerald-300/70 hover:bg-emerald-500/10"
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* 평균 난이도 선택 (모든 자격증 공통) */}
       <div className="mt-3 rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-3">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
@@ -328,7 +378,16 @@ export default function AdminMockExamsPage() {
                           {cert?.shortLabel ?? exam.examType}
                         </span>
                       </td>
-                      <td className="px-4 py-3 font-medium">{exam.name}</td>
+                      <td className="px-4 py-3 font-medium">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span>{exam.name}</span>
+                          {exam.templateLabel && (
+                            <span className="inline-flex items-center rounded-md border border-emerald-500/40 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-medium text-emerald-300">
+                              {exam.templateLabel}
+                            </span>
+                          )}
+                        </div>
+                      </td>
                       <td className="px-4 py-3">{exam.totalQuestions}</td>
                       <td className="px-4 py-3">
                         {exam.difficultyLabel ? (

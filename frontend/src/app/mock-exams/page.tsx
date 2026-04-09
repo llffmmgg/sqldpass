@@ -279,6 +279,13 @@ function MockExamCard({ exam }: { exam: MockExamSummary }) {
         </div>
       </div>
       <h2 className="mt-3 text-lg font-semibold leading-tight">{exam.name}</h2>
+      {exam.templateLabel && (
+        <div className="mt-1.5">
+          <span className="inline-flex items-center rounded-full border border-emerald-500/40 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-medium text-emerald-300">
+            {exam.templateLabel}
+          </span>
+        </div>
+      )}
       <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-muted">
         <span>총 {exam.totalQuestions}문항</span>
         {exam.solved && exam.bestCorrectCount != null && exam.bestTotalCount != null && (

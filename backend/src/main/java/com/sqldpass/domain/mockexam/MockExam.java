@@ -3,6 +3,7 @@ package com.sqldpass.domain.mockexam;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import com.sqldpass.persistent.mockexam.EngineerExamTemplate;
 import com.sqldpass.persistent.mockexam.ExamType;
 
 import lombok.Getter;
@@ -23,9 +24,17 @@ public class MockExam {
     private final Integer minDifficulty;
     private final Integer maxDifficulty;
 
+    /** 정처기 실기 분포 템플릿. SQLD/컴활/구 정처기는 null. */
+    private final EngineerExamTemplate template;
+
     /** 상세 조회용 — 문제 목록 포함. 난이도 통계는 questions에서 직접 계산. */
     public MockExam(Long id, String name, ExamType examType, int sequence, LocalDateTime createdAt,
                     List<MockExamQuestion> questions) {
+        this(id, name, examType, sequence, createdAt, questions, null);
+    }
+
+    public MockExam(Long id, String name, ExamType examType, int sequence, LocalDateTime createdAt,
+                    List<MockExamQuestion> questions, EngineerExamTemplate template) {
         this.id = id;
         this.name = name;
         this.examType = examType != null ? examType : ExamType.SQLD;
@@ -33,16 +42,21 @@ public class MockExam {
         this.createdAt = createdAt;
         this.questions = questions != null ? questions : List.of();
         this.totalQuestions = this.questions.size();
-        // 상세 조회 경로에서는 MockExamQuestion에 difficulty가 포함되지 않으므로 null로 둔다.
-        // (필요해지면 MockExamQuestion 에 difficulty 필드를 추가할 것)
         this.avgDifficulty = null;
         this.minDifficulty = null;
         this.maxDifficulty = null;
+        this.template = template;
     }
 
     /** 목록 조회용 — 문제 카운트 + 난이도 통계 */
     public MockExam(Long id, String name, ExamType examType, int sequence, LocalDateTime createdAt,
                     int totalQuestions, Double avgDifficulty, Integer minDifficulty, Integer maxDifficulty) {
+        this(id, name, examType, sequence, createdAt, totalQuestions, avgDifficulty, minDifficulty, maxDifficulty, null);
+    }
+
+    public MockExam(Long id, String name, ExamType examType, int sequence, LocalDateTime createdAt,
+                    int totalQuestions, Double avgDifficulty, Integer minDifficulty, Integer maxDifficulty,
+                    EngineerExamTemplate template) {
         this.id = id;
         this.name = name;
         this.examType = examType != null ? examType : ExamType.SQLD;
@@ -53,5 +67,6 @@ public class MockExam {
         this.avgDifficulty = avgDifficulty;
         this.minDifficulty = minDifficulty;
         this.maxDifficulty = maxDifficulty;
+        this.template = template;
     }
 }

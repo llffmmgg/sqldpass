@@ -3,6 +3,7 @@ package com.sqldpass.controller.mockexam.dto;
 import java.time.LocalDateTime;
 
 import com.sqldpass.domain.mockexam.MockExam;
+import com.sqldpass.persistent.mockexam.EngineerExamTemplate;
 import com.sqldpass.persistent.mockexam.ExamType;
 
 public record MockExamSummaryResponse(
@@ -15,7 +16,9 @@ public record MockExamSummaryResponse(
         String difficultyLabel,
         boolean solved,
         Integer bestCorrectCount,
-        Integer bestTotalCount
+        Integer bestTotalCount,
+        String templateKey,
+        String templateLabel
 ) {
     public static MockExamSummaryResponse from(MockExam mockExam) {
         return from(mockExam, null, null);
@@ -25,6 +28,9 @@ public record MockExamSummaryResponse(
         Double normalized = normalize(mockExam.getAvgDifficulty());
         String label = computeLabel(normalized);
         boolean solved = bestCorrect != null && bestTotal != null;
+        EngineerExamTemplate template = mockExam.getTemplate();
+        String templateKey = template != null ? template.name() : null;
+        String templateLabel = template != null ? template.getDisplayName() : null;
 
         return new MockExamSummaryResponse(
                 mockExam.getId(),
@@ -36,7 +42,9 @@ public record MockExamSummaryResponse(
                 label,
                 solved,
                 bestCorrect,
-                bestTotal);
+                bestTotal,
+                templateKey,
+                templateLabel);
     }
 
     /**

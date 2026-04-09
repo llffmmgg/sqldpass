@@ -49,20 +49,26 @@ public class MockExamService {
 
     @Transactional
     public MockExam create(ExamType examType) {
-        return create(examType, null);
+        return create(examType, null, null);
+    }
+
+    @Transactional
+    public MockExam create(ExamType examType, MockExamDifficulty difficulty) {
+        return create(examType, difficulty, null);
     }
 
     /**
-     * Create a new mock exam with an optional difficulty preset.
-     * The preset is forwarded to SQLD, engineer practical, and computer literacy creators.
-     * When null, each creator falls back to NORMAL.
+     * Create a new mock exam with an optional difficulty preset and engineer template.
+     * - difficulty is forwarded to all 3 creators (null → NORMAL).
+     * - engineerTemplate is only used for ENGINEER_PRACTICAL (null → 랜덤 선택).
      */
     @Transactional
-    public MockExam create(ExamType examType, MockExamDifficulty difficulty) {
+    public MockExam create(ExamType examType, MockExamDifficulty difficulty,
+                           com.sqldpass.persistent.mockexam.EngineerExamTemplate engineerTemplate) {
         ExamType type = examType != null ? examType : ExamType.SQLD;
         MockExamEntity created = switch (type) {
             case SQLD -> mockExamCreator.create(difficulty);
-            case ENGINEER_PRACTICAL -> engineerMockExamCreator.create(difficulty);
+            case ENGINEER_PRACTICAL -> engineerMockExamCreator.create(difficulty, engineerTemplate);
             case COMPUTER_LITERACY_1 -> computerLiteracyMockExamCreator.create(difficulty);
         };
 

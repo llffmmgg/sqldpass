@@ -370,6 +370,19 @@ export function resetGeneration() {
 
 // 모의고사 관리
 
+export type EngineerTemplate =
+  | "PROGRAMMING_HEAVY"
+  | "THEORY_HEAVY"
+  | "BALANCED"
+  | "DB_HEAVY";
+
+export const ENGINEER_TEMPLATE_LABEL: Record<EngineerTemplate, string> = {
+  PROGRAMMING_HEAVY: "프로그래밍 편중형",
+  THEORY_HEAVY: "이론 편중형",
+  BALANCED: "균형형",
+  DB_HEAVY: "DB 강조형",
+};
+
 export interface AdminMockExam {
   id: number;
   name: string;
@@ -378,6 +391,8 @@ export interface AdminMockExam {
   totalQuestions: number;
   createdAt: string;
   difficultyLabel: "쉬움" | "보통" | "어려움" | "매우 어려움" | null;
+  templateKey: EngineerTemplate | null;
+  templateLabel: string | null;
 }
 
 export function getAdminMockExams() {
@@ -392,10 +407,11 @@ export type MockExamCreationDifficulty = "EASY" | "NORMAL" | "HARD" | "VERY_HARD
 export function createMockExam(
   examType: CreateMockExamType = "SQLD",
   difficulty?: MockExamCreationDifficulty,
+  engineerTemplate?: EngineerTemplate | null,
 ) {
   return adminFetch<AdminMockExam>("/mock-exams", {
     method: "POST",
-    body: JSON.stringify({ examType, difficulty }),
+    body: JSON.stringify({ examType, difficulty, engineerTemplate: engineerTemplate ?? null }),
   });
 }
 

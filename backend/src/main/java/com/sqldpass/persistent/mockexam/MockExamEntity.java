@@ -44,18 +44,27 @@ public class MockExamEntity extends BaseTimeEntity {
     @Column(name = "sequence", nullable = false)
     private int sequence;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "template", length = 32)
+    private EngineerExamTemplate template;
+
     @OneToMany(mappedBy = "mockExam")
     @OrderBy("displayOrder ASC")
     private List<QuestionEntity> questions = new ArrayList<>();
 
     public MockExamEntity(String name, int sequence) {
-        this(name, ExamType.SQLD, sequence);
+        this(name, ExamType.SQLD, sequence, null);
     }
 
     public MockExamEntity(String name, ExamType examType, int sequence) {
+        this(name, examType, sequence, null);
+    }
+
+    public MockExamEntity(String name, ExamType examType, int sequence, EngineerExamTemplate template) {
         this.name = name;
         this.examType = examType;
         this.sequence = sequence;
+        this.template = template;
     }
 
     /** 양방향 동기화 — 문제에 모의고사 배정 + 컬렉션에도 추가 */

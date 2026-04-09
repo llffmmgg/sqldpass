@@ -20,7 +20,17 @@ export interface MockExamSummary {
   bestCorrectCount: number | null;
   /** 사용자의 최고 풀이 시 총 문항 수 (미풀이/비로그인 시 null) */
   bestTotalCount: number | null;
+  /** 정처기 실기 분포 템플릿 키 (다른 시험/구 정처기는 null) */
+  templateKey: EngineerTemplateKey | null;
+  /** 정처기 분포 템플릿 한글 라벨 */
+  templateLabel: string | null;
 }
+
+export type EngineerTemplateKey =
+  | "PROGRAMMING_HEAVY"
+  | "THEORY_HEAVY"
+  | "BALANCED"
+  | "DB_HEAVY";
 
 export interface MockExamQuestion {
   id: number;

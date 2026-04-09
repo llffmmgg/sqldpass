@@ -22,6 +22,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.sqldpass.persistent.mockexam.EngineerExamTemplate;
 import com.sqldpass.persistent.mockexam.ExamType;
 import com.sqldpass.persistent.mockexam.MockExamDifficulty;
 import com.sqldpass.persistent.mockexam.MockExamEntity;
@@ -76,28 +77,37 @@ public class EngineerMockExamCreator {
     private static final String SEC = "보안";
     private static final String NEW = "신기술 동향";
 
-    /** 템플릿 A — 프로그래밍 편중 */
-    private static final Map<String, Integer> TEMPLATE_A = ordered(
-            C, 2, JAVA, 3, PY, 2, SQL, 2,
-            DESIGN, 3, DB, 2, NETOS, 2, SEC, 2, NEW, 2);
+    /** 프로그래밍 편중형 — 2024 전 회차 + 2025 1·3회 패턴, 코딩 9문 중심 */
+    private static final Map<String, Integer> TEMPLATE_PROGRAMMING_HEAVY = ordered(
+            C, 3, JAVA, 3, PY, 3, SQL, 2,
+            DESIGN, 2, DB, 2, NETOS, 2, SEC, 2, NEW, 1);
 
-    /** 템플릿 B — 이론 편중 */
-    private static final Map<String, Integer> TEMPLATE_B = ordered(
-            C, 1, JAVA, 2, PY, 1, SQL, 2,
+    /** 이론 편중형 — 2025 2회 패턴, SQL 0문 / 이론 위주 (난이도 조정 회차) */
+    private static final Map<String, Integer> TEMPLATE_THEORY_HEAVY = ordered(
+            C, 2, JAVA, 2, PY, 2, SQL, 0,
             DESIGN, 4, DB, 3, NETOS, 3, SEC, 2, NEW, 2);
 
-    /** 템플릿 C — 균형형 (가장 최근 회차 유사) */
-    private static final Map<String, Integer> TEMPLATE_C = ordered(
-            C, 2, JAVA, 2, PY, 2, SQL, 3,
+    /** 균형형 — 2023 전 회차 패턴, 안정적 구성 */
+    private static final Map<String, Integer> TEMPLATE_BALANCED = ordered(
+            C, 3, JAVA, 2, PY, 2, SQL, 2,
             DESIGN, 3, DB, 2, NETOS, 2, SEC, 2, NEW, 2);
 
-    /** 템플릿 D — DB/SQL 강조 */
-    private static final Map<String, Integer> TEMPLATE_D = ordered(
-            C, 2, JAVA, 2, PY, 1, SQL, 4,
-            DESIGN, 2, DB, 4, NETOS, 2, SEC, 2, NEW, 1);
+    /** DB 강조형 — 2025 3회 패턴, SQL/DB 비중 최대 */
+    private static final Map<String, Integer> TEMPLATE_DB_HEAVY = ordered(
+            C, 2, JAVA, 3, PY, 2, SQL, 4,
+            DESIGN, 2, DB, 4, NETOS, 1, SEC, 1, NEW, 1);
 
-    private static final List<Map<String, Integer>> TEMPLATES = List.of(
-            TEMPLATE_A, TEMPLATE_B, TEMPLATE_C, TEMPLATE_D);
+    private static final Map<EngineerExamTemplate, Map<String, Integer>> TEMPLATES_BY_KEY = Map.of(
+            EngineerExamTemplate.PROGRAMMING_HEAVY, TEMPLATE_PROGRAMMING_HEAVY,
+            EngineerExamTemplate.THEORY_HEAVY, TEMPLATE_THEORY_HEAVY,
+            EngineerExamTemplate.BALANCED, TEMPLATE_BALANCED,
+            EngineerExamTemplate.DB_HEAVY, TEMPLATE_DB_HEAVY);
+
+    private static final List<EngineerExamTemplate> TEMPLATE_KEYS = List.of(
+            EngineerExamTemplate.PROGRAMMING_HEAVY,
+            EngineerExamTemplate.THEORY_HEAVY,
+            EngineerExamTemplate.BALANCED,
+            EngineerExamTemplate.DB_HEAVY);
 
     private final MockExamRepository mockExamRepository;
     private final QuestionRepository questionRepository;
@@ -121,23 +131,31 @@ public class EngineerMockExamCreator {
 
     @Transactional
     public MockExamEntity create() {
-        return create(MockExamDifficulty.NORMAL);
+        return create(MockExamDifficulty.NORMAL, null);
     }
 
     @Transactional
     public MockExamEntity create(MockExamDifficulty mockExamDifficulty) {
+        return create(mockExamDifficulty, null);
+    }
+
+    @Transactional
+    public MockExamEntity create(MockExamDifficulty mockExamDifficulty, EngineerExamTemplate templateKey) {
         MockExamDifficulty difficulty = mockExamDifficulty != null ? mockExamDifficulty : MockExamDifficulty.NORMAL;
         int nextSeq = mockExamRepository.findMaxSequenceByExamType(ExamType.ENGINEER_PRACTICAL).orElse(0) + 1;
         String name = "정보처리기사 실기 모의고사 " + nextSeq + "회";
 
-        Map<String, Integer> distribution = TEMPLATES.get(random.nextInt(TEMPLATES.size()));
+        EngineerExamTemplate selectedTemplate = templateKey != null
+                ? templateKey
+                : TEMPLATE_KEYS.get(random.nextInt(TEMPLATE_KEYS.size()));
+        Map<String, Integer> distribution = TEMPLATES_BY_KEY.get(selectedTemplate);
         int totalQuestions = distribution.values().stream().mapToInt(Integer::intValue).sum();
 
         // 사용자 지정 평균 난이도에 따른 분포 슬롯 (셔플된 [1,1,2,2,2,3,3,...])
         List<Integer> difficultySlots = buildDifficultySlots(difficulty, totalQuestions);
 
-        log.info("정처기 모의고사 생성 시작 - sequence={}, 분포={}, 평균난이도={}, 슬롯={}",
-                nextSeq, distribution, difficulty, difficultySlots);
+        log.info("정처기 모의고사 생성 시작 - sequence={}, 템플릿={}, 분포={}, 평균난이도={}, 슬롯={}",
+                nextSeq, selectedTemplate, distribution, difficulty, difficultySlots);
 
         SubjectEntity root = subjectRepository.findByNameAndParentIsNull(ROOT_SUBJECT_NAME)
                 .orElseThrow(() -> new SqldpassException(ErrorCode.SUBJECT_NOT_FOUND,
@@ -161,6 +179,10 @@ public class EngineerMockExamCreator {
         for (Map.Entry<String, Integer> entry : distribution.entrySet()) {
             String category = entry.getKey();
             int needed = entry.getValue();
+            if (needed == 0) {
+                // 템플릿이 해당 카테고리를 0문으로 지정 (예: 이론 편중형의 SQL=0)
+                continue;
+            }
             SubjectEntity subject = categorySubjects.get(category);
 
             // 1) 시드 풀에서 needed개 시드 무작위 추출
@@ -222,7 +244,7 @@ public class EngineerMockExamCreator {
         }
 
         MockExamEntity saved = mockExamRepository.save(
-                new MockExamEntity(name, ExamType.ENGINEER_PRACTICAL, nextSeq));
+                new MockExamEntity(name, ExamType.ENGINEER_PRACTICAL, nextSeq, selectedTemplate));
         for (int i = 0; i < picked.size(); i++) {
             saved.linkQuestion(picked.get(i), i + 1);
         }
