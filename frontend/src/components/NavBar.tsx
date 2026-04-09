@@ -94,7 +94,7 @@ export default function NavBar() {
 
         {/* Desktop */}
         <div className="hidden items-center gap-1 sm:flex">
-          <ul className="flex gap-1">
+          <ul className="flex items-center gap-1">
             {NAV_LINKS.map((item) => {
               if (item.kind === "link") {
                 return (
