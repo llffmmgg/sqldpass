@@ -1,5 +1,7 @@
 "use client";
 
+/* eslint-disable react-hooks/set-state-in-effect -- 마운트 시 localStorage 닉네임 + API 페치는 effect 내 setState 필요 */
+
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import {
@@ -47,10 +49,11 @@ function getStreakDays(solves: SolveSummaryResponse[]): number {
   return streak;
 }
 
-function getSubjectStats(solves: SolveSummaryResponse[], subjectMap: Record<number, string>) {
+type SubjectStat = { id: number; name: string; total: number; correct: number; rate: number };
+
+function getSubjectStats(solves: SolveSummaryResponse[], subjectMap: Record<number, string>): SubjectStat[] {
   const map: Record<number, { name: string; total: number; correct: number }> = {};
   for (const s of solves) {
-    // 모의고사 풀이는 과목별 통계에서 제외 (subjectId가 null)
     if (s.subjectId == null) continue;
     const sid = s.subjectId;
     if (!map[sid]) {
@@ -59,9 +62,56 @@ function getSubjectStats(solves: SolveSummaryResponse[], subjectMap: Record<numb
     map[sid].total += s.totalCount;
     map[sid].correct += s.correctCount;
   }
-  return Object.entries(map)
-    .map(([id, data]) => ({ id: Number(id), ...data, rate: data.total > 0 ? Math.round((data.correct / data.total) * 100) : 0 }))
-    .sort((a, b) => b.total - a.total);
+  return Object.entries(map).map(([id, data]) => ({
+    id: Number(id),
+    ...data,
+    rate: data.total > 0 ? Math.round((data.correct / data.total) * 100) : 0,
+  }));
+}
+
+type MergedSubject = {
+  id: number;
+  name: string;
+  rate: number;
+  correct: number;
+  total: number;
+  wrongCount: number;
+  wrongRate: number;
+};
+
+/** subjectStats(정답률) + weakStats(오답수)를 한 행으로 합치고, 약한 과목 우선 정렬 */
+function mergeSubjectStats(
+  subjectStats: SubjectStat[],
+  weakStats: WrongAnswerStatsResponse[]
+): MergedSubject[] {
+  const wrongById = new Map<number, WrongAnswerStatsResponse>();
+  for (const w of weakStats) wrongById.set(w.subjectId, w);
+
+  // 풀이가 있는 과목 + 오답만 있는 과목 모두 포함
+  const ids = new Set<number>();
+  for (const s of subjectStats) ids.add(s.id);
+  for (const w of weakStats) if (w.wrongCount > 0) ids.add(w.subjectId);
+
+  const merged: MergedSubject[] = [];
+  for (const id of ids) {
+    const s = subjectStats.find((x) => x.id === id);
+    const w = wrongById.get(id);
+    merged.push({
+      id,
+      name: s?.name ?? w?.subjectName ?? `과목 ${id}`,
+      rate: s?.rate ?? 0,
+      correct: s?.correct ?? 0,
+      total: s?.total ?? 0,
+      wrongCount: w?.wrongCount ?? 0,
+      wrongRate: w?.wrongRate ?? 0,
+    });
+  }
+  // 약한 순: 오답률 desc → 정답률 asc
+  merged.sort((a, b) => {
+    if (b.wrongRate !== a.wrongRate) return b.wrongRate - a.wrongRate;
+    return a.rate - b.rate;
+  });
+  return merged;
 }
 
 function getRecentActivity(solves: SolveSummaryResponse[]): { date: string; count: number }[] {
@@ -70,7 +120,6 @@ function getRecentActivity(solves: SolveSummaryResponse[]): { date: string; coun
     const date = new Date(s.solvedAt).toISOString().slice(0, 10);
     map[date] = (map[date] || 0) + s.totalCount;
   }
-  // 최근 14일
   const result: { date: string; count: number }[] = [];
   const today = new Date();
   for (let i = 13; i >= 0; i--) {
@@ -82,10 +131,24 @@ function getRecentActivity(solves: SolveSummaryResponse[]): { date: string; coun
   return result;
 }
 
+const DOW = ["일", "월", "화", "수", "목", "금", "토"];
+
 function rateColor(rate: number) {
   if (rate >= 80) return "text-green-400";
   if (rate >= 60) return "text-amber-400";
   return "text-red-400";
+}
+
+function rateBarColor(rate: number) {
+  if (rate >= 80) return "bg-green-500";
+  if (rate >= 60) return "bg-amber-500";
+  return "bg-red-500";
+}
+
+function rateAccentBorder(rate: number) {
+  if (rate >= 80) return "bg-green-500";
+  if (rate >= 60) return "bg-amber-500";
+  return "bg-red-500";
 }
 
 export default function DashboardPage() {
@@ -114,21 +177,24 @@ function DashboardPageContent() {
       .finally(() => setLoading(false));
   }, []);
 
-  if (loading) return <main className="min-h-screen bg-background flex items-center justify-center"><Spinner /></main>;
+  if (loading)
+    return (
+      <main className="min-h-screen bg-background flex items-center justify-center">
+        <Spinner />
+      </main>
+    );
 
   const totalSolved = solves.reduce((acc, s) => acc + s.totalCount, 0);
   const totalCorrect = solves.reduce((acc, s) => acc + s.correctCount, 0);
   const overallRate = totalSolved > 0 ? Math.round((totalCorrect / totalSolved) * 100) : 0;
   const streak = getStreakDays(solves);
   const subjectStats = getSubjectStats(solves, subjectMap);
+  const merged = mergeSubjectStats(subjectStats, weakStats);
   const activity = getRecentActivity(solves);
   const maxActivity = Math.max(...activity.map((a) => a.count), 1);
 
-  // 취약 과목 top 3
-  const weakSubjects = [...weakStats]
-    .filter((s) => s.wrongCount > 0)
-    .sort((a, b) => b.wrongRate - a.wrongRate)
-    .slice(0, 3);
+  // 가장 약한 과목 — 오답이 있는 것 중 첫 번째
+  const focus = merged.find((m) => m.wrongCount > 0) ?? null;
 
   return (
     <main className="min-h-screen bg-background text-foreground">
@@ -138,7 +204,7 @@ function DashboardPageContent() {
           <h1 className="text-2xl font-bold sm:text-3xl">
             {nickname ? `${nickname}님의 학습 현황` : "학습 대시보드"}
           </h1>
-          <p className="mt-1 text-sm text-muted">SQLD 합격을 향한 여정을 한눈에 확인하세요.</p>
+          <p className="mt-1 text-sm text-muted">합격을 향한 여정을 한눈에 확인하세요.</p>
         </div>
 
         {/* 빈 상태 */}
@@ -155,47 +221,99 @@ function DashboardPageContent() {
               href="/solve"
               className="mt-6 inline-block rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-zinc-900 transition-colors hover:bg-primary-hover"
             >
-              문제 풀러 가기
+              오늘의 학습 시작
             </Link>
           </div>
         )}
 
         {totalSolved > 0 && (
           <>
-            {/* 핵심 지표 카드 */}
-            <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
-              <div className="rounded-xl border border-border bg-surface p-4">
-                <p className="text-xs font-medium text-muted">총 풀이</p>
-                <p className="mt-1 text-2xl font-bold">{totalSolved}<span className="ml-1 text-sm font-normal text-muted">문제</span></p>
-              </div>
-              <div className="rounded-xl border border-border bg-surface p-4">
-                <p className="text-xs font-medium text-muted">정답률</p>
-                <p className={`mt-1 text-2xl font-bold ${rateColor(overallRate)}`}>{overallRate}<span className="ml-0.5 text-sm font-normal">%</span></p>
-              </div>
-              <div className="rounded-xl border border-border bg-surface p-4">
-                <p className="text-xs font-medium text-muted">연속 학습</p>
-                <p className="mt-1 text-2xl font-bold text-primary">{streak}<span className="ml-1 text-sm font-normal text-muted">일</span></p>
-              </div>
-              <div className="rounded-xl border border-border bg-surface p-4">
-                <p className="text-xs font-medium text-muted">풀이 세션</p>
-                <p className="mt-1 text-2xl font-bold">{solves.length}<span className="ml-1 text-sm font-normal text-muted">회</span></p>
+            {/* ── Today's Focus — 가장 큰 카드 ─────────────────────── */}
+            <div className="mt-8 rounded-2xl border border-amber-500/20 bg-gradient-to-br from-amber-500/[0.08] via-amber-500/[0.04] to-transparent p-6 sm:p-7">
+              <div className="flex flex-wrap items-start justify-between gap-4">
+                <div className="min-w-0 flex-1">
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-amber-300">
+                    오늘의 학습
+                  </p>
+                  {focus ? (
+                    <>
+                      <h2 className="mt-2 text-xl font-bold sm:text-2xl">
+                        <span className="text-amber-300">{focus.name}</span> 부터 다시 풀어보세요
+                      </h2>
+                      <p className="mt-1 text-sm text-muted">
+                        오답 {focus.wrongCount}개 · 오답률 {Math.round(focus.wrongRate)}%
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <h2 className="mt-2 text-xl font-bold sm:text-2xl">
+                        오늘도 한 세트 풀어볼까요?
+                      </h2>
+                      <p className="mt-1 text-sm text-muted">오답이 모두 정리됐습니다. 새 문제로 실력을 더 다져보세요.</p>
+                    </>
+                  )}
+                </div>
+                <Link
+                  href={focus ? `/wrong-answers?subjectId=${focus.id}` : "/solve"}
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-zinc-900 transition-all hover:bg-primary-hover hover:scale-[1.02]"
+                >
+                  {focus ? "복습 시작" : "문제 풀기"}
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                  </svg>
+                </Link>
               </div>
             </div>
 
-            {/* 최근 14일 활동 */}
+            {/* ── KPI — 보조 정보로 강등 (작은 패딩, 작은 폰트) ──────── */}
+            <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
+              <div className="rounded-lg border border-border bg-surface p-3">
+                <p className="text-[11px] font-medium text-muted">총 풀이</p>
+                <p className="mt-0.5 text-xl font-bold">
+                  {totalSolved}
+                  <span className="ml-1 text-xs font-normal text-muted">문제</span>
+                </p>
+              </div>
+              <div className="rounded-lg border border-border bg-surface p-3">
+                <p className="text-[11px] font-medium text-muted">정답률</p>
+                <p className={`mt-0.5 text-xl font-bold ${rateColor(overallRate)}`}>
+                  {overallRate}
+                  <span className="ml-0.5 text-xs font-normal">%</span>
+                </p>
+              </div>
+              <div className="rounded-lg border border-border bg-surface p-3">
+                <p className="text-[11px] font-medium text-muted">연속 학습</p>
+                <p className="mt-0.5 text-xl font-bold text-primary">
+                  {streak}
+                  <span className="ml-1 text-xs font-normal text-muted">일</span>
+                </p>
+              </div>
+              <div className="rounded-lg border border-border bg-surface p-3">
+                <p className="text-[11px] font-medium text-muted">풀이 세션</p>
+                <p className="mt-0.5 text-xl font-bold">
+                  {solves.length}
+                  <span className="ml-1 text-xs font-normal text-muted">회</span>
+                </p>
+              </div>
+            </div>
+
+            {/* ── 최근 2주 학습량 ──────────────────────────────────── */}
             <div className="mt-6 rounded-xl border border-border bg-surface p-5">
               <h2 className="text-sm font-semibold">최근 2주 학습량</h2>
-              <div className="mt-4 flex items-end gap-1.5 h-24">
+              <div className="mt-4 flex items-end gap-1.5 h-28">
                 {activity.map((day) => {
-                  const height = day.count > 0 ? Math.max((day.count / maxActivity) * 100, 8) : 4;
+                  const height = day.count > 0 ? Math.max((day.count / maxActivity) * 100, 10) : 4;
                   const isToday = day.date === new Date().toISOString().slice(0, 10);
                   return (
-                    <div key={day.date} className="flex flex-1 flex-col items-center gap-1">
+                    <div key={day.date} className="flex flex-1 flex-col items-center justify-end gap-1 min-w-[10px]">
+                      {day.count > 0 && (
+                        <span className={`text-[10px] font-medium tabular-nums ${isToday ? "text-primary" : "text-muted/70"}`}>
+                          {day.count}
+                        </span>
+                      )}
                       <div
                         className={`w-full rounded-sm transition-all ${
-                          day.count > 0
-                            ? isToday ? "bg-primary" : "bg-primary/50"
-                            : "bg-border/50"
+                          day.count > 0 ? (isToday ? "bg-primary" : "bg-primary/50") : "bg-border/50"
                         }`}
                         style={{ height: `${height}%` }}
                         title={`${day.date}: ${day.count}문제`}
@@ -204,102 +322,129 @@ function DashboardPageContent() {
                   );
                 })}
               </div>
-              <div className="mt-2 flex justify-between text-[10px] text-muted/60">
-                <span>{activity[0]?.date.slice(5)}</span>
-                <span>오늘</span>
-              </div>
-            </div>
-
-            {/* 과목별 정답률 + 취약 과목 */}
-            <div className="mt-6 grid gap-6 sm:grid-cols-2">
-              {/* 과목별 정답률 */}
-              <div className="rounded-xl border border-border bg-surface p-5">
-                <h2 className="text-sm font-semibold">과목별 정답률</h2>
-                <div className="mt-4 space-y-3">
-                  {subjectStats.map((s) => (
-                    <div key={s.id}>
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="truncate">{s.name}</span>
-                        <span className={`ml-2 font-semibold ${rateColor(s.rate)}`}>{s.rate}%</span>
-                      </div>
-                      <div className="mt-1 h-1.5 w-full rounded-full bg-border/50">
-                        <div
-                          className={`h-full rounded-full transition-all ${
-                            s.rate >= 80 ? "bg-green-500" : s.rate >= 60 ? "bg-amber-500" : "bg-red-500"
-                          }`}
-                          style={{ width: `${s.rate}%` }}
-                        />
-                      </div>
-                      <p className="mt-0.5 text-[11px] text-muted/60">{s.correct}/{s.total} 정답</p>
-                    </div>
-                  ))}
-                  {subjectStats.length === 0 && (
-                    <p className="text-sm text-muted">데이터가 없습니다.</p>
-                  )}
-                </div>
-              </div>
-
-              {/* 취약 과목 */}
-              <div className="rounded-xl border border-border bg-surface p-5">
-                <h2 className="text-sm font-semibold">취약 영역 TOP 3</h2>
-                <div className="mt-4 space-y-3">
-                  {weakSubjects.map((s, i) => (
-                    <div key={s.subjectId} className="flex items-start gap-3">
-                      <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
-                        i === 0 ? "bg-red-500/15 text-red-400" : "bg-surface border border-border text-muted"
-                      }`}>
-                        {i + 1}
-                      </span>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm font-medium truncate">{s.subjectName}</p>
-                        <p className="text-xs text-muted">
-                          오답 {s.wrongCount}회 &middot; 오답률 {Math.round(s.wrongRate)}%
-                        </p>
-                      </div>
-                      <Link
-                        href={`/solve`}
-                        className="shrink-0 rounded-md border border-border px-2.5 py-1 text-xs text-muted transition-colors hover:border-primary/40 hover:text-primary"
-                      >
-                        학습하기
-                      </Link>
-                    </div>
-                  ))}
-                  {weakSubjects.length === 0 && (
-                    <p className="text-sm text-muted">오답 데이터가 없습니다.</p>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* 최근 풀이 기록 */}
-            <div className="mt-6 rounded-xl border border-border bg-surface p-5">
-              <div className="flex items-center justify-between">
-                <h2 className="text-sm font-semibold">최근 풀이</h2>
-              </div>
-              <div className="mt-4 space-y-2">
-                {solves.slice(0, 5).map((solve) => (
-                  <Link
-                    key={solve.id}
-                    href={`/history/${solve.id}`}
-                    className="flex items-center justify-between rounded-lg px-3 py-2.5 transition-colors hover:bg-background"
-                  >
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium truncate">
-                        {solve.mockExamId != null
-                          ? `모의고사 #${solve.mockExamId}`
-                          : solve.subjectId != null
-                          ? subjectMap[solve.subjectId] || `과목 ${solve.subjectId}`
-                          : "풀이"}
-                      </p>
-                      <p className="text-xs text-muted">
-                        {new Date(solve.solvedAt).toLocaleDateString("ko-KR")} &middot; {solve.correctCount}/{solve.totalCount} 정답
-                      </p>
-                    </div>
-                    <span className={`text-lg font-bold ${rateColor(solve.score)}`}>
-                      {solve.score}<span className="text-xs font-normal text-muted">점</span>
+              <div className="mt-2 flex gap-1.5">
+                {activity.map((day) => {
+                  const dow = DOW[new Date(day.date).getDay()];
+                  const isToday = day.date === new Date().toISOString().slice(0, 10);
+                  return (
+                    <span
+                      key={day.date}
+                      className={`flex flex-1 justify-center text-[10px] tabular-nums min-w-[10px] ${
+                        isToday ? "font-semibold text-primary" : "text-muted/60"
+                      }`}
+                    >
+                      {dow}
                     </span>
-                  </Link>
-                ))}
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* ── 과목별 학습 현황 (정답률 + 오답수 통합) ─────────────── */}
+            <div className="mt-6 rounded-xl border border-border bg-surface p-5">
+              <h2 className="text-sm font-semibold">과목별 학습 현황</h2>
+              <p className="mt-1 text-xs text-muted/70">약한 순으로 정렬됩니다</p>
+              <div className="mt-4 space-y-2.5">
+                {merged.length === 0 && (
+                  <p className="text-sm text-muted">데이터가 없습니다.</p>
+                )}
+                {merged.map((m, i) => {
+                  const isTopWeak = i === 0 && m.wrongCount > 0;
+                  return (
+                    <div
+                      key={m.id}
+                      className={`relative flex items-center gap-3 rounded-lg px-3 py-2.5 transition-colors ${
+                        isTopWeak ? "bg-red-500/[0.04]" : ""
+                      }`}
+                    >
+                      {/* 좌측 컬러 바 */}
+                      <span
+                        className={`h-10 w-1 shrink-0 rounded-full ${rateAccentBorder(m.rate)}`}
+                      />
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="truncate text-sm font-medium">{m.name}</span>
+                          <span className={`shrink-0 text-sm font-semibold tabular-nums ${rateColor(m.rate)}`}>
+                            {m.rate}%
+                          </span>
+                        </div>
+                        <div className="mt-1.5 h-1 w-full rounded-full bg-border/50">
+                          <div
+                            className={`h-full rounded-full transition-all ${rateBarColor(m.rate)}`}
+                            style={{ width: `${m.rate}%` }}
+                          />
+                        </div>
+                        <div className="mt-1 flex items-center justify-between text-[11px] text-muted/70">
+                          <span>
+                            {m.correct}/{m.total} 정답
+                            {m.wrongCount > 0 && <> · {m.wrongCount}개 오답</>}
+                          </span>
+                          {m.wrongCount > 0 && (
+                            <Link
+                              href={`/wrong-answers?subjectId=${m.id}`}
+                              className="rounded text-amber-400/80 transition-colors hover:text-amber-300"
+                            >
+                              이 과목 복습 →
+                            </Link>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* ── 최근 풀이 ──────────────────────────────────────── */}
+            <div className="mt-6 rounded-xl border border-border bg-surface p-5">
+              <h2 className="text-sm font-semibold">최근 풀이</h2>
+              <div className="mt-4 space-y-2">
+                {solves.slice(0, 5).map((solve) => {
+                  const isMock = solve.mockExamId != null;
+                  const label = isMock
+                    ? `모의고사 #${solve.mockExamId}`
+                    : solve.subjectId != null
+                    ? subjectMap[solve.subjectId] || `과목 ${solve.subjectId}`
+                    : "풀이";
+                  return (
+                    <Link
+                      key={solve.id}
+                      href={`/history/${solve.id}`}
+                      className="flex items-center justify-between gap-3 rounded-lg px-3 py-2.5 transition-colors hover:bg-background"
+                    >
+                      <div className="flex min-w-0 items-center gap-2.5">
+                        <span
+                          className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-md ${
+                            isMock ? "bg-violet-500/10 text-violet-400" : "bg-amber-500/10 text-amber-400"
+                          }`}
+                          aria-hidden="true"
+                          title={isMock ? "모의고사" : "과목별"}
+                        >
+                          {isMock ? (
+                            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5.586a1 1 0 0 1 .707.293l5.414 5.414a1 1 0 0 1 .293.707V19a2 2 0 0 1-2 2z" />
+                            </svg>
+                          ) : (
+                            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25" />
+                            </svg>
+                          )}
+                        </span>
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-medium">{label}</p>
+                          <p className="text-xs text-muted">
+                            {new Date(solve.solvedAt).toLocaleDateString("ko-KR")} ·{" "}
+                            {solve.correctCount}/{solve.totalCount} 정답
+                          </p>
+                        </div>
+                      </div>
+                      <span className={`shrink-0 text-lg font-bold ${rateColor(solve.score)}`}>
+                        {solve.score}
+                        <span className="text-xs font-normal text-muted">점</span>
+                      </span>
+                    </Link>
+                  );
+                })}
               </div>
             </div>
           </>

@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   getWrongAnswers,
   getWrongAnswerStats,
@@ -13,7 +14,7 @@ import {
   type QuestionDetail,
   type WrongAnswerRetryResponse,
 } from "@/lib/api";
-import { formatDate } from "@/lib/format";
+import { formatRelativeDate } from "@/lib/format";
 import { parseQuestion } from "@/lib/parseQuestion";
 import QuestionContent from "@/components/QuestionContent";
 import AuthGuard from "@/components/AuthGuard";
@@ -33,12 +34,6 @@ function getLeafSubjects(subjects: Subject[]): { id: number; name: string }[] {
   return leaves;
 }
 
-function rateColor(rate: number) {
-  if (rate > 50) return { bar: "bg-red-500", text: "text-red-400" };
-  if (rate > 30) return { bar: "bg-amber-500", text: "text-amber-400" };
-  return { bar: "bg-green-500", text: "text-green-400" };
-}
-
 interface RetryState {
   selectedOption?: number;
   answerText?: string;
@@ -47,16 +42,23 @@ interface RetryState {
   error?: string;
 }
 
+type SortMode = "priority" | "recent";
+
 export default function WrongAnswersPage() {
   return (
     <AuthGuard>
-      <WrongAnswersPageContent />
+      <Suspense fallback={<main className="min-h-screen bg-background flex items-center justify-center"><Spinner /></main>}>
+        <WrongAnswersPageContent />
+      </Suspense>
     </AuthGuard>
   );
 }
 
 function WrongAnswersPageContent() {
-  // GA4 — 오답노트 페이지 진입 (1회만)
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // GA4 — 오답노트 페이지 진입
   useEffect(() => {
     trackEvent("review_wrong");
   }, []);
@@ -64,7 +66,13 @@ function WrongAnswersPageContent() {
   const [stats, setStats] = useState<WrongAnswerStatsResponse[]>([]);
   const [wrongAnswers, setWrongAnswers] = useState<WrongAnswerResponse[]>([]);
   const [subjects, setSubjects] = useState<{ id: number; name: string }[]>([]);
-  const [selectedSubject, setSelectedSubject] = useState<number | null>(null);
+  const initialSubject = (() => {
+    const v = searchParams?.get("subjectId");
+    const n = v ? Number(v) : NaN;
+    return Number.isFinite(n) && n > 0 ? n : null;
+  })();
+  const [selectedSubject, setSelectedSubject] = useState<number | null>(initialSubject);
+  const [sortMode, setSortMode] = useState<SortMode>("priority");
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [details, setDetails] = useState<Record<number, QuestionDetail>>({});
@@ -84,7 +92,7 @@ function WrongAnswersPageContent() {
   useEffect(() => {
     Promise.all([
       getWrongAnswerStats(),
-      getWrongAnswers(),
+      getWrongAnswers(initialSubject ?? undefined),
       getSubjects(),
     ])
       .then(([statsData, wrongData, subjectsData]) => {
@@ -93,12 +101,16 @@ function WrongAnswersPageContent() {
         setSubjects(getLeafSubjects(subjectsData));
       })
       .finally(() => setLoading(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   function handleSubjectFilter(subjectId: number | null) {
     setSelectedSubject(subjectId);
     setLoading(true);
     setExpandedId(null);
+    // URL 동기화 (딥링크)
+    const next = subjectId ? `/wrong-answers?subjectId=${subjectId}` : "/wrong-answers";
+    router.replace(next);
     getWrongAnswers(subjectId ?? undefined)
       .then(setWrongAnswers)
       .finally(() => setLoading(false));
@@ -116,7 +128,6 @@ function WrongAnswersPageContent() {
           setDetails((prev) => ({ ...prev, [questionId]: detail }));
         })
         .catch(() => {
-          // 로딩 실패 — 상태에 에러 표시
           setRetryState((prev) => ({
             ...prev,
             [questionId]: { ...prev[questionId], error: "문제를 불러오지 못했습니다." },
@@ -137,7 +148,6 @@ function WrongAnswersPageContent() {
     const detail = details[questionId];
     if (!detail) return;
 
-    // 입력 검증
     if (detail.questionType === "MCQ") {
       if (!state.selectedOption) {
         setRetryField(questionId, { error: "답을 선택해주세요." });
@@ -159,7 +169,6 @@ function WrongAnswersPageContent() {
       setRetryField(questionId, { result: res, submitting: false });
 
       if (res.correct) {
-        // 마스터 애니메이션 → 1.5초 후 목록 갱신
         setMasteredIds((prev) => new Set(prev).add(questionId));
         setTimeout(() => {
           reloadList().then(() => {
@@ -169,7 +178,6 @@ function WrongAnswersPageContent() {
               return next;
             });
             setExpandedId(null);
-            // 상태 정리
             setRetryState((prev) => {
               const next = { ...prev };
               delete next[questionId];
@@ -187,12 +195,48 @@ function WrongAnswersPageContent() {
   }
 
   function handleRetryAgain(questionId: number) {
-    // 오답 후 다시 시도 — 입력 초기화
     setRetryState((prev) => ({
       ...prev,
       [questionId]: { submitting: false },
     }));
   }
+
+  // 오답이 있는 leaf 과목만 필터에 노출, 카운트 뱃지 계산
+  const wrongCountBySubject = useMemo(() => {
+    const map = new Map<number, number>();
+    for (const s of stats) {
+      if (s.wrongCount > 0) map.set(s.subjectId, s.wrongCount);
+    }
+    return map;
+  }, [stats]);
+
+  const visibleSubjectFilters = useMemo(
+    () => subjects.filter((s) => wrongCountBySubject.has(s.id)),
+    [subjects, wrongCountBySubject]
+  );
+
+  // 정렬 적용
+  const sortedAnswers = useMemo(() => {
+    const arr = [...wrongAnswers];
+    if (sortMode === "priority") {
+      arr.sort((a, b) => {
+        if (b.wrongCount !== a.wrongCount) return b.wrongCount - a.wrongCount;
+        return new Date(b.lastWrongAt).getTime() - new Date(a.lastWrongAt).getTime();
+      });
+    } else {
+      arr.sort(
+        (a, b) => new Date(b.lastWrongAt).getTime() - new Date(a.lastWrongAt).getTime()
+      );
+    }
+    return arr;
+  }, [wrongAnswers, sortMode]);
+
+  // 상단 한 줄 요약용
+  const totalUnresolved = wrongAnswers.length;
+  const topWeak = useMemo(
+    () => [...stats].filter((s) => s.wrongCount > 0).sort((a, b) => b.wrongRate - a.wrongRate)[0] ?? null,
+    [stats]
+  );
 
   return (
     <main className="min-h-screen bg-background text-foreground">
@@ -202,41 +246,25 @@ function WrongAnswersPageContent() {
           틀린 문제를 다시 풀어 마스터하세요. 다시 맞히면 목록에서 자동으로 사라집니다.
         </p>
 
-        {/* Stats */}
-        {stats.length > 0 && (
-          <section className="mt-8">
-            <h2 className="text-lg font-semibold">취약 영역 분석</h2>
-            <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
-              {stats.map((stat) => {
-                const color = rateColor(stat.wrongRate);
-                return (
-                  <div
-                    key={stat.subjectId}
-                    className="rounded-xl border border-border bg-surface p-5"
-                  >
-                    <p className="text-sm font-medium">{stat.subjectName}</p>
-                    <div className="mt-3 h-2 rounded-full bg-border">
-                      <div
-                        className={`h-full rounded-full transition-all duration-500 ${color.bar}`}
-                        style={{ width: `${stat.wrongRate}%` }}
-                      />
-                    </div>
-                    <p className={`mt-2 text-sm ${color.text}`}>
-                      {stat.wrongCount}문제 미해결 / {stat.totalSolved}문제 시도 ({stat.wrongRate}%)
-                    </p>
-                  </div>
-                );
-              })}
-            </div>
-          </section>
+        {/* 한 줄 요약 — 기존 「취약 영역 분석」 카드 대체 */}
+        {totalUnresolved > 0 && (
+          <p className="mt-3 text-xs text-muted/80">
+            총 <span className="font-semibold text-foreground">{totalUnresolved}개</span> 미해결
+            {topWeak && (
+              <>
+                {" "}· 가장 취약:{" "}
+                <span className="font-semibold text-red-300">
+                  {topWeak.subjectName} ({topWeak.wrongRate}%)
+                </span>
+              </>
+            )}
+          </p>
         )}
 
         {/* Wrong answer list */}
-        <section className="mt-12">
-          <h2 className="text-lg font-semibold">오답 문제</h2>
-
-          {/* Subject filter pills */}
-          <div className="mt-4 flex flex-wrap gap-2">
+        <section className="mt-8">
+          {/* 필터 + 정렬 */}
+          <div className="flex flex-wrap items-center gap-2">
             <button
               onClick={() => handleSubjectFilter(null)}
               className={`rounded-full px-3 py-1 text-sm font-medium transition-colors ${
@@ -245,27 +273,59 @@ function WrongAnswersPageContent() {
                   : "border border-border text-muted hover:border-amber-500/40"
               }`}
             >
-              전체
+              전체 <span className="ml-1 text-[11px] tabular-nums opacity-70">{totalUnresolved}</span>
             </button>
-            {subjects.map((s) => (
+            {visibleSubjectFilters.map((s) => {
+              const count = wrongCountBySubject.get(s.id) ?? 0;
+              const isActive = selectedSubject === s.id;
+              return (
+                <button
+                  key={s.id}
+                  onClick={() => handleSubjectFilter(s.id)}
+                  className={`rounded-full px-3 py-1 text-sm font-medium transition-colors ${
+                    isActive
+                      ? "bg-primary text-zinc-900"
+                      : "border border-border text-muted hover:border-amber-500/40"
+                  }`}
+                >
+                  {s.name}{" "}
+                  <span className={`ml-1 text-[11px] tabular-nums ${isActive ? "opacity-80" : "opacity-70"}`}>
+                    {count}
+                  </span>
+                </button>
+              );
+            })}
+
+            {/* 정렬 토글 */}
+            <div className="ml-auto flex items-center gap-1 text-xs">
               <button
-                key={s.id}
-                onClick={() => handleSubjectFilter(s.id)}
-                className={`rounded-full px-3 py-1 text-sm font-medium transition-colors ${
-                  selectedSubject === s.id
-                    ? "bg-primary text-zinc-900"
-                    : "border border-border text-muted hover:border-amber-500/40"
+                onClick={() => setSortMode("priority")}
+                className={`rounded px-2 py-1 transition-colors ${
+                  sortMode === "priority"
+                    ? "text-foreground font-semibold"
+                    : "text-muted hover:text-foreground"
                 }`}
               >
-                {s.name}
+                오답 많은 순
               </button>
-            ))}
+              <span className="text-muted/40">·</span>
+              <button
+                onClick={() => setSortMode("recent")}
+                className={`rounded px-2 py-1 transition-colors ${
+                  sortMode === "recent"
+                    ? "text-foreground font-semibold"
+                    : "text-muted hover:text-foreground"
+                }`}
+              >
+                최근순
+              </button>
+            </div>
           </div>
 
           <div className="mt-4 space-y-3">
             {loading && <Spinner />}
 
-            {!loading && wrongAnswers.length === 0 && (
+            {!loading && sortedAnswers.length === 0 && (
               <div className="py-16 text-center">
                 <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-green-500/10 border border-green-500/20">
                   <svg className="h-8 w-8 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -283,26 +343,37 @@ function WrongAnswersPageContent() {
             )}
 
             {!loading &&
-              wrongAnswers.map((wa) => {
+              sortedAnswers.map((wa) => {
                 const isExpanded = expandedId === wa.questionId;
                 const isMastered = masteredIds.has(wa.questionId);
                 const detail = details[wa.questionId];
                 const state = retryState[wa.questionId] ?? {};
                 const parsed = detail ? parseQuestion(detail.content) : null;
 
+                // 우선순위에 따른 시각 차별
+                const priority: "high" | "mid" | "low" =
+                  wa.wrongCount >= 3 ? "high" : wa.wrongCount === 2 ? "mid" : "low";
+
+                const borderClass = isMastered
+                  ? "border-green-500/60 bg-green-500/10 opacity-60 scale-95 border"
+                  : priority === "high"
+                  ? "border border-border border-l-4 border-l-red-500/70"
+                  : priority === "mid"
+                  ? "border border-border border-l-4 border-l-amber-500/70"
+                  : "border border-border";
+
+                const wrongCountBadge = (() => {
+                  if (priority === "high") return { dot: "🔴", color: "text-red-400" };
+                  if (priority === "mid") return { dot: "🟡", color: "text-amber-400" };
+                  return { dot: "⚪", color: "text-muted" };
+                })();
+
                 return (
                   <div
                     key={wa.questionId}
-                    className={`rounded-lg border bg-surface px-5 py-4 transition-all duration-500 ${
-                      isMastered
-                        ? "scale-95 border-green-500/60 bg-green-500/10 opacity-60"
-                        : "border-border"
-                    }`}
+                    className={`rounded-lg bg-surface px-5 py-4 transition-all duration-500 ${borderClass}`}
                   >
-                    <div
-                      className="cursor-pointer"
-                      onClick={() => handleExpand(wa.questionId)}
-                    >
+                    <div className="cursor-pointer" onClick={() => handleExpand(wa.questionId)}>
                       <div className="flex items-start justify-between gap-3">
                         <p className="flex-1 text-sm leading-relaxed line-clamp-3 whitespace-pre-line">
                           {wa.questionContent}
@@ -323,12 +394,11 @@ function WrongAnswersPageContent() {
                         <span className="rounded bg-violet-500/10 px-2 py-0.5 text-xs font-medium text-violet-400">
                           {wa.subjectName}
                         </span>
-                        <span className="text-xs text-red-400">
-                          {wa.wrongCount}회 오답
+                        <span className={`inline-flex items-center gap-1 text-xs ${wrongCountBadge.color}`}>
+                          <span aria-hidden="true">{wrongCountBadge.dot}</span>
+                          {wa.wrongCount}회 틀림
                         </span>
-                        <span className="text-xs text-muted">
-                          {formatDate(wa.lastWrongAt)}
-                        </span>
+                        <span className="text-xs text-muted">{formatRelativeDate(wa.lastWrongAt)}</span>
                       </div>
                     </div>
 
@@ -342,24 +412,17 @@ function WrongAnswersPageContent() {
                           <div className="py-4 text-center text-sm text-muted">로딩 중...</div>
                         ) : (
                           <div className="space-y-3">
-                            {/* 본문 */}
                             <div className="rounded-lg border border-border px-3 py-3">
                               <QuestionContent content={parsed?.body ?? ""} />
                             </div>
 
-                            {/* 마스터 완료 메시지 */}
                             {isMastered && (
                               <div className="rounded-lg border border-green-500/40 bg-green-500/10 px-4 py-3 text-center">
-                                <p className="text-base font-semibold text-green-300">
-                                  🎉 정답! 마스터 완료
-                                </p>
-                                <p className="mt-1 text-xs text-green-400/80">
-                                  잠시 후 목록에서 사라집니다
-                                </p>
+                                <p className="text-base font-semibold text-green-300">🎉 정답! 마스터 완료</p>
+                                <p className="mt-1 text-xs text-green-400/80">잠시 후 목록에서 사라집니다</p>
                               </div>
                             )}
 
-                            {/* 풀이 영역 */}
                             {!isMastered && !state.result?.correct && (
                               <RetrySolverInline
                                 detail={detail}
@@ -370,20 +433,18 @@ function WrongAnswersPageContent() {
                               />
                             )}
 
-                            {/* 결과: 오답일 때 정답+해설 노출 */}
                             {state.result && !state.result.correct && (
                               <div className="space-y-3">
                                 <div className="rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-3">
-                                  <p className="text-sm font-semibold text-red-300">
-                                    ❌ 다시 도전!
-                                  </p>
+                                  <p className="text-sm font-semibold text-red-300">❌ 다시 도전!</p>
                                   {detail.questionType === "MCQ" ? (
                                     <p className="mt-1 text-sm text-red-200/90">
                                       정답: <span className="font-bold">{state.result.correctOption}번</span>
                                     </p>
                                   ) : (
                                     <p className="mt-1 text-sm text-red-200/90">
-                                      모범답안: <span className="font-mono">{state.result.correctAnswer}</span>
+                                      모범답안:{" "}
+                                      <span className="font-mono">{state.result.correctAnswer}</span>
                                     </p>
                                   )}
                                 </div>
@@ -454,9 +515,7 @@ function RetrySolverInline({
               >
                 <span
                   className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
-                    isSelected
-                      ? "bg-amber-500/30 text-amber-100"
-                      : "bg-border text-muted"
+                    isSelected ? "bg-amber-500/30 text-amber-100" : "bg-border text-muted"
                   }`}
                 >
                   {optionNumber}
@@ -477,9 +536,7 @@ function RetrySolverInline({
         />
       )}
 
-      {state.error && (
-        <p className="text-xs text-red-400">{state.error}</p>
-      )}
+      {state.error && <p className="text-xs text-red-400">{state.error}</p>}
 
       <button
         onClick={onSubmit}
