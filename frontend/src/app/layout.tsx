@@ -9,6 +9,7 @@ import GAPageview from "@/components/GAPageview";
 import "./globals.css";
 
 const GA_ID = "G-MPQ2F9201M";
+const ADSENSE_CLIENT = "ca-pub-6512792395955186";
 
 const notoSansKr = Noto_Sans_KR({
   variable: "--font-sans-kr",
@@ -148,6 +149,12 @@ export default function RootLayout({
         <Script
           src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`}
           strategy="afterInteractive"
+        />
+        <Script
+          id="adsense-loader"
+          src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_CLIENT}`}
+          strategy="afterInteractive"
+          crossOrigin="anonymous"
         />
         <Script id="ga4-init" strategy="afterInteractive">
           {`
