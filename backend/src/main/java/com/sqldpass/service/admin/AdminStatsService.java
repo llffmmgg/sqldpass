@@ -26,6 +26,8 @@ public class AdminStatsService {
     public AdminStatsResponse getStats() {
         return new AdminStatsResponse(
                 adminQuestionService.countAll(),
+                adminQuestionService.countVerified(),
+                adminQuestionService.countUnverified(),
                 memberRepository.count(),
                 solveRepository.count(),
                 adminQuestionService.countToday());

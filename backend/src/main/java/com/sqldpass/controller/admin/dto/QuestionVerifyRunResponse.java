@@ -2,6 +2,7 @@ package com.sqldpass.controller.admin.dto;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 import com.sqldpass.persistent.mockexam.ExamType;
 
@@ -18,6 +19,8 @@ public record QuestionVerifyRunResponse(
         int errorCount,
         LocalDateTime completedAt,
         List<QuestionVerifyResultResponse> suspiciousQuestions,
-        List<QuestionVerifyHistoryResponse> recentRuns
+        List<QuestionVerifyHistoryResponse> recentRuns,
+        /** "unfixable" / "fixed" / "error" → bucket별 markdown 본문 */
+        Map<String, String> markdownByBucket
 ) {
 }

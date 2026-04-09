@@ -191,6 +191,10 @@ public interface QuestionRepository extends JpaRepository<QuestionEntity, Long> 
 
     boolean existsByContentHash(String contentHash);
 
+    long countByVerifiedAtIsNotNull();
+
+    long countByVerifiedAtIsNull();
+
     long countByCreatedAtAfter(LocalDateTime dateTime);
 
     long countBySubjectIdAndTopic(Long subjectId, String topic);

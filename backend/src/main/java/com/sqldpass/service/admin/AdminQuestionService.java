@@ -118,8 +118,12 @@ public class AdminQuestionService {
         List<QuestionVerifyResultResponse> suspicious = new ArrayList<>();
         List<Long> verifiedIds = new ArrayList<>();          // APPROVED 또는 fix 성공
         Map<Long, FixedQuestionPayload> fixedPayloads = new java.util.LinkedHashMap<>();
-        List<Long> manualReviewIds = new ArrayList<>();      // REJECTED + fix 실패
-        List<Long> errorIds = new ArrayList<>();             // UNKNOWN
+        List<Long> manualReviewIds = new ArrayList<>();      // REJECTED + fix 실패 (카테고리 마킹용)
+        List<Long> errorIds = new ArrayList<>();             // UNKNOWN (카테고리 마킹용)
+        // bucket별 결과 누적 (md 빌드용)
+        List<ProcessedItem> unfixableItems = new ArrayList<>();
+        List<ProcessedItem> fixedItems = new ArrayList<>();
+        List<ProcessedItem> errorItems = new ArrayList<>();
         int suspiciousCount = 0;
         int fixedCount = 0;
         int unfixableCount = 0;
@@ -164,22 +168,24 @@ public class AdminQuestionService {
                         case REJECTED -> {
                             suspiciousCount++;
                             String reason = outcome.reason();
-                            String suggestedFix = null;
                             boolean fixedOk = false;
+                            FixedQuestionPayload fix = null;
 
                             // 자동 fix 시도 (회차당 1회)
                             if (Boolean.TRUE.equals(outcome.fixable()) || outcome.fixable() == null) {
-                                FixedQuestionPayload fix = tryAutoFix(snap, reason);
+                                fix = tryAutoFix(snap, reason);
                                 if (fix != null) {
                                     fixedPayloads.put(snap.id(), fix);
                                     fixedOk = true;
                                     fixedCount++;
-                                    suggestedFix = "자동 수정 적용됨";
                                 }
                             }
-                            if (!fixedOk) {
+                            if (fixedOk) {
+                                fixedItems.add(new ProcessedItem(snap, reason, fix));
+                            } else {
                                 unfixableCount++;
                                 manualReviewIds.add(snap.id());
+                                unfixableItems.add(new ProcessedItem(snap, reason, null));
                             }
                             suspicious.add(new QuestionVerifyResultResponse(
                                     snap.id(), snap.subjectName(), snap.summary(),
@@ -188,6 +194,7 @@ public class AdminQuestionService {
                         case UNKNOWN -> {
                             errorCount++;
                             errorIds.add(snap.id());
+                            errorItems.add(new ProcessedItem(snap, outcome.reason(), null));
                             suspicious.add(new QuestionVerifyResultResponse(
                                     snap.id(), snap.subjectName(), snap.summary(),
                                     "판단 불가: " + outcome.reason()));
@@ -263,6 +270,14 @@ public class AdminQuestionService {
         log.info("Batch verification complete - processed={}, suspicious={}, fixed={}, unfixable={}, error={}",
                 processedFinal, suspiciousFinal, fixedFinal, unfixableFinal, errorFinal);
 
+        Map<String, String> markdownByBucket = new java.util.LinkedHashMap<>();
+        markdownByBucket.put("unfixable",
+                buildBucketMarkdown("수동 검토", unfixableItems, examType, completedAt, "unfixable"));
+        markdownByBucket.put("fixed",
+                buildBucketMarkdown("자동 수정 (검토 권장)", fixedItems, examType, completedAt, "fixed"));
+        markdownByBucket.put("error",
+                buildBucketMarkdown("판단 불가 / 에러", errorItems, examType, completedAt, "error"));
+
         return new QuestionVerifyRunResponse(
                 run.getExamType(),
                 run.getSubject() != null ? run.getSubject().getId() : null,
@@ -276,7 +291,8 @@ public class AdminQuestionService {
                 run.getErrorCount(),
                 run.getCompletedAt(),
                 suspicious,
-                getVerifyHistory(5));
+                getVerifyHistory(5),
+                markdownByBucket);
     }
 
     /** 어드민 검증 카테고리별 문제 목록 (페이지네이션) */
@@ -391,6 +407,104 @@ public class AdminQuestionService {
     /** Phase 2 → Phase 3 전달용 fix payload */
     private record FixedQuestionPayload(QuestionType questionType, GeneratedQuestion fixed) {}
 
+    /** bucket(수동/자동수정/에러)별 결과 누적 — md 빌드용 */
+    private record ProcessedItem(QuestionSnapshot snapshot, String reason, FixedQuestionPayload fixed) {}
+
+    /**
+     * bucket markdown 빌드 — 한 분류의 모든 문제를 한 문서로.
+     * unfixable: 본문 + 보기/정답 + 사유 + 어드민 링크
+     * fixed:     사유 + 변경 요약 + 새 본문/정답
+     * error:     사유만 (다음 회차 재시도 안내)
+     */
+    private String buildBucketMarkdown(String label, List<ProcessedItem> items,
+                                       ExamType examType, LocalDateTime completedAt,
+                                       String bucketKey) {
+        StringBuilder sb = new StringBuilder();
+        String examLabel = examType != null ? examType.name() : "전체 시험";
+        sb.append("# ").append(label).append(" (").append(items.size()).append("건)")
+                .append(" — ").append(examLabel)
+                .append(" / ").append(completedAt).append("\n\n");
+
+        if (items.isEmpty()) {
+            sb.append("> 이 분류에 해당하는 문제가 없습니다.\n");
+            return sb.toString();
+        }
+
+        for (ProcessedItem item : items) {
+            QuestionSnapshot s = item.snapshot();
+            sb.append("## #").append(s.id()).append(" — ").append(s.subjectName());
+            if (s.topic() != null && !s.topic().isBlank()) {
+                sb.append(" / ").append(s.topic());
+            }
+            sb.append("\n");
+
+            if (s.summary() != null && !s.summary().isBlank()) {
+                sb.append("- 요약: ").append(s.summary()).append("\n");
+            }
+            sb.append("- 유형: ").append(s.questionType() != null ? s.questionType().name() : "MCQ").append("\n");
+            if (s.difficulty() != null) {
+                sb.append("- 난이도: ").append(s.difficulty()).append("\n");
+            }
+            sb.append("- 사유: ").append(item.reason() == null ? "(없음)" : item.reason()).append("\n");
+            sb.append("- 어드민 수정: https://www.sqldpass.com/admin/questions/").append(s.id()).append("\n\n");
+
+            if ("error".equals(bucketKey)) {
+                sb.append("> LLM 빈 응답 — 다음 회차 자동 재시도 예정. 본문 첨부 생략.\n\n---\n\n");
+                continue;
+            }
+
+            // 본문
+            sb.append("### 본문\n");
+            sb.append("```\n").append(nullSafe(s.content())).append("\n```\n\n");
+
+            // 보기/정답
+            sb.append("### 보기/정답 (현재 DB)\n");
+            if (s.questionType() == QuestionType.MCQ || s.questionType() == null) {
+                sb.append("- correctOption: ").append(s.correctOption()).append("\n");
+            } else {
+                sb.append("- answer: ").append(nullSafe(s.answer())).append("\n");
+                if (s.keywords() != null && !s.keywords().isEmpty()) {
+                    sb.append("- keywords: ").append(s.keywords()).append("\n");
+                }
+            }
+            if (s.explanation() != null) {
+                sb.append("- explanation:\n```\n").append(s.explanation()).append("\n```\n");
+            }
+            sb.append("\n");
+
+            // 자동 수정 적용된 변경
+            if ("fixed".equals(bucketKey) && item.fixed() != null) {
+                GeneratedQuestion fx = item.fixed().fixed();
+                sb.append("### 적용된 변경 (자동 수정)\n");
+                if (item.fixed().questionType() == QuestionType.MCQ) {
+                    sb.append("- correctOption: ").append(s.correctOption())
+                            .append(" → ").append(fx.correctOption()).append("\n");
+                } else {
+                    sb.append("- answer: ").append(nullSafe(s.answer()))
+                            .append(" → ").append(nullSafe(fx.answerText())).append("\n");
+                    if (fx.keywords() != null) {
+                        sb.append("- keywords → ").append(fx.keywords()).append("\n");
+                    }
+                }
+                sb.append("- explanation 길이: ")
+                        .append(s.explanation() == null ? 0 : s.explanation().length())
+                        .append(" → ")
+                        .append(fx.explanation() == null ? 0 : fx.explanation().length()).append("\n");
+                sb.append("\n#### 새 본문\n```\n").append(nullSafe(fx.content())).append("\n```\n\n");
+                if (fx.explanation() != null) {
+                    sb.append("#### 새 해설\n```\n").append(fx.explanation()).append("\n```\n\n");
+                }
+            }
+
+            sb.append("---\n\n");
+        }
+        return sb.toString();
+    }
+
+    private static String nullSafe(String s) {
+        return s == null ? "" : s;
+    }
+
     /** 검증 페치 결과 — Phase 1 출력 */
     private record VerificationFetchResult(SubjectEntity subject, List<QuestionSnapshot> snapshots) {}
 
@@ -491,6 +605,14 @@ public class AdminQuestionService {
 
     public long countAll() {
         return questionRepository.count();
+    }
+
+    public long countVerified() {
+        return questionRepository.countByVerifiedAtIsNotNull();
+    }
+
+    public long countUnverified() {
+        return questionRepository.countByVerifiedAtIsNull();
     }
 
     public long countToday() {

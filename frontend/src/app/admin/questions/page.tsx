@@ -7,16 +7,19 @@ import { useRouter } from "next/navigation";
 import { getSubjects, type Subject } from "@/lib/api";
 import {
   deleteQuestion,
+  downloadBucketMarkdown,
   exportQuestions,
   getQuestion,
   getQuestionVerifyHistory,
   getQuestions,
+  getStats,
   getVerifyIssueCounts,
   getVerifyIssues,
   resetExportMark,
   verifyAllQuestions,
   type AdminQuestion,
   type AdminQuestionPage,
+  type AdminStats,
   type ExportExamType,
   type QuestionVerifyHistory,
   type QuestionVerifyRun,
@@ -91,6 +94,7 @@ export default function AdminQuestionsPage() {
   const [forceRecheck, setForceRecheck] = useState(false);
   const [verifying, setVerifying] = useState(false);
   const [verifyRun, setVerifyRun] = useState<QuestionVerifyRun | null>(null);
+  const [stats, setStats] = useState<AdminStats | null>(null);
 
   // 카테고리별 미해결 문제 조회
   const [issueCounts, setIssueCounts] = useState<Record<VerificationCategory, number> | null>(null);
@@ -186,10 +190,15 @@ export default function AdminQuestionsPage() {
 
   const subjectOptions = buildSubjectOptions(subjects, verifyExamType);
 
+  function refreshStats() {
+    getStats().then(setStats).catch(() => {});
+  }
+
   useEffect(() => {
     getSubjects().then(setSubjects);
     getQuestionVerifyHistory(5).then(setVerifyHistory);
     refreshIssueCounts();
+    refreshStats();
   }, []);
 
   useEffect(() => {
@@ -240,10 +249,11 @@ export default function AdminQuestionsPage() {
       });
       setVerifyRun(run);
       setVerifyHistory(run.recentRuns);
-      // 검증 후 카테고리 카운트와 현재 탭 리스트 갱신
+      // 검증 후 카테고리 카운트, 탭 리스트, 전체 stats 모두 갱신
       refreshIssueCounts();
       loadIssues(issueTab, 0);
       setIssuePage(0);
+      refreshStats();
     } catch (e) {
       alert(`검증 실패: ${e instanceof Error ? e.message : String(e)}`);
     } finally {
@@ -297,6 +307,23 @@ export default function AdminQuestionsPage() {
   return (
     <div>
       <h1 className="text-2xl font-bold">문제 관리</h1>
+
+      {stats && (
+        <div className="mt-4 grid gap-3 sm:grid-cols-3">
+          <SummaryCard label="전체 문제" value={`${stats.totalQuestions}건`} />
+          <SummaryCard
+            label="검증 완료"
+            value={
+              stats.totalQuestions > 0
+                ? `${stats.verifiedQuestions}건 (${Math.round(
+                    (stats.verifiedQuestions / stats.totalQuestions) * 100,
+                  )}%)`
+                : `${stats.verifiedQuestions}건`
+            }
+          />
+          <SummaryCard label="미검증" value={`${stats.unverifiedQuestions}건`} accent />
+        </div>
+      )}
 
       <section className="mt-6 rounded-lg border border-border bg-surface p-4">
         <h2 className="text-sm font-semibold text-muted">문제 ID로 바로 이동</h2>
@@ -395,9 +422,54 @@ export default function AdminQuestionsPage() {
             <SummaryCard label="검증 범위" value={formatVerifyScope(verifyRun)} />
             <SummaryCard label="처리 건수" value={`${verifyRun.processedCount}건`} />
             <SummaryCard label="의심 문제" value={`${verifyRun.suspiciousCount}건`} accent />
-            <SummaryCard label="자동 수정" value={`${verifyRun.fixedCount}건`} />
-            <SummaryCard label="수동 검토" value={`${verifyRun.unfixableCount}건`} />
-            <SummaryCard label="판단 불가" value={`${verifyRun.errorCount}건`} />
+            <SummaryCard
+              label="자동 수정 (검토 권장)"
+              value={`${verifyRun.fixedCount}건`}
+              action={
+                verifyRun.fixedCount > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => downloadBucketMarkdown(verifyRun, "fixed")}
+                    className="rounded border border-emerald-500/40 bg-emerald-500/10 px-2 py-0.5 text-[10px] text-emerald-300 hover:bg-emerald-500/20"
+                    title="자동 수정 결과 md 다운로드"
+                  >
+                    📥 md
+                  </button>
+                )
+              }
+            />
+            <SummaryCard
+              label="수동 검토"
+              value={`${verifyRun.unfixableCount}건`}
+              action={
+                verifyRun.unfixableCount > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => downloadBucketMarkdown(verifyRun, "unfixable")}
+                    className="rounded border border-amber-500/40 bg-amber-500/10 px-2 py-0.5 text-[10px] text-amber-300 hover:bg-amber-500/20"
+                    title="수동 검토 대상 md 다운로드"
+                  >
+                    📥 md
+                  </button>
+                )
+              }
+            />
+            <SummaryCard
+              label="판단 불가 / 에러"
+              value={`${verifyRun.errorCount}건`}
+              action={
+                verifyRun.errorCount > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => downloadBucketMarkdown(verifyRun, "error")}
+                    className="rounded border border-zinc-500/40 bg-zinc-500/10 px-2 py-0.5 text-[10px] text-zinc-300 hover:bg-zinc-500/20"
+                    title="판단 불가 목록 md 다운로드"
+                  >
+                    📥 md
+                  </button>
+                )
+              }
+            />
           </div>
         )}
 
@@ -710,10 +782,23 @@ export default function AdminQuestionsPage() {
   );
 }
 
-function SummaryCard({ label, value, accent = false }: { label: string; value: string; accent?: boolean }) {
+function SummaryCard({
+  label,
+  value,
+  accent = false,
+  action,
+}: {
+  label: string;
+  value: string;
+  accent?: boolean;
+  action?: React.ReactNode;
+}) {
   return (
     <div className="rounded border border-border bg-background px-3 py-3">
-      <p className="text-xs text-muted">{label}</p>
+      <div className="flex items-start justify-between gap-2">
+        <p className="text-xs text-muted">{label}</p>
+        {action}
+      </div>
       <p className={`mt-1 text-sm font-semibold ${accent ? "text-amber-300" : "text-foreground"}`}>{value}</p>
     </div>
   );

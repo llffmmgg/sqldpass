@@ -56,6 +56,8 @@ export interface LoginResponse {
 
 export interface AdminStats {
   totalQuestions: number;
+  verifiedQuestions: number;
+  unverifiedQuestions: number;
   totalMembers: number;
   totalSolves: number;
   todayQuestions: number;
@@ -192,6 +194,31 @@ export interface QuestionVerifyRun {
   completedAt: string;
   suspiciousQuestions: QuestionVerifyResult[];
   recentRuns: QuestionVerifyHistory[];
+  markdownByBucket: {
+    unfixable: string;
+    fixed: string;
+    error: string;
+  };
+}
+
+export type VerifyBucket = "unfixable" | "fixed" | "error";
+
+export function downloadBucketMarkdown(
+  run: QuestionVerifyRun,
+  bucket: VerifyBucket,
+) {
+  const md = run.markdownByBucket?.[bucket];
+  if (!md || md.trim().length === 0) return;
+  const blob = new Blob([md], { type: "text/markdown;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  const ts = run.completedAt.replace(/[:.]/g, "-");
+  a.download = `${bucket}-${ts}.md`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 }
 
 export interface VerifyAllQuestionsParams {
