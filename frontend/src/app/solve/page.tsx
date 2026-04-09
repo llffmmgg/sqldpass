@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import {
   getSubjects,
@@ -17,7 +18,9 @@ import Spinner from "@/components/Spinner";
 import ReportQuestionButton from "@/components/ReportQuestionButton";
 import { GradingDisclaimerModal } from "@/components/GradingDisclaimerModal";
 
-type Phase = "select" | "solve";
+type Phase = "select" | "solve" | "session-complete";
+
+const SET_SIZE = 10;
 
 export default function SolvePage() {
   return (
@@ -63,17 +66,43 @@ function SolvePageContent() {
       if (pastEntries.length > 0) {
         goPrevious();
       } else {
-        // 첫 문제 → 과목 선택 화면으로 (히스토리 엔트리는 이미 popstate로 한 칸 빠져나옴)
         handleReset(false);
       }
     }
     window.addEventListener("popstate", onPopState);
     return () => window.removeEventListener("popstate", onPopState);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   });
 
+  // 키보드 단축키 — 1~4 옵션 선택 / Enter 제출 또는 다음
+  // input/textarea 포커스 시에는 동작 안 함 (입력 필드 자체 핸들러 우선)
+  useEffect(() => {
+    if (phase !== "solve" || !current) return;
+    function onKey(e: KeyboardEvent) {
+      const tag = (document.activeElement?.tagName || "").toLowerCase();
+      if (tag === "input" || tag === "textarea") return;
+
+      if (current?.questionType === "MCQ" && !revealed) {
+        if (e.key >= "1" && e.key <= "4") {
+          handleSelect(Number(e.key));
+          return;
+        }
+      }
+      if (e.key === "Enter") {
+        e.preventDefault();
+        if (revealed) {
+          handleNext();
+        } else if (hasAnswer()) {
+          handleSubmit();
+        }
+      }
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase, current, revealed, selectedOption, answerText]);
+
   async function fetchQuestions(subjectId: number): Promise<Question[]> {
-    return getQuestions(subjectId, 10);
+    return getQuestions(subjectId, SET_SIZE);
   }
 
   function resetCurrentInput() {
@@ -95,7 +124,24 @@ function SolvePageContent() {
     setPastEntries([]);
     setPhase("solve");
     setLoading(false);
-    // 히스토리에 solve 진입 마크 (뒤로가기 시 select 로 돌아갈 수 있도록)
+    if (typeof window !== "undefined") {
+      window.history.pushState({ solve: 0 }, "");
+    }
+  }
+
+  /** 같은 과목으로 새 세션 시작 — 종료 카드의 "다시 풀기" 진입점 */
+  async function restartSession() {
+    if (!selectedSubject) return;
+    setLoading(true);
+    const qs = await fetchQuestions(selectedSubject.id);
+    setQueue(qs.slice(1));
+    setCurrent(qs[0] || null);
+    resetCurrentInput();
+    setSolvedCount(0);
+    setCorrectCount(0);
+    setPastEntries([]);
+    setPhase("solve");
+    setLoading(false);
     if (typeof window !== "undefined") {
       window.history.pushState({ solve: 0 }, "");
     }
@@ -106,7 +152,6 @@ function SolvePageContent() {
     setPastEntries((prev) => {
       if (prev.length === 0) return prev;
       const last = prev[prev.length - 1];
-      // 현재 보고 있던 문제를 큐 앞으로 다시 넣음
       if (current) {
         setQueue((q) => [current, ...q]);
       }
@@ -124,14 +169,12 @@ function SolvePageContent() {
     setSelectedOption(option);
   }
 
-  /** 현재 문제에 대해 응답이 작성됐는지 (제출 가능 여부) */
   function hasAnswer(): boolean {
     if (!current) return false;
     if (current.questionType === "MCQ") return selectedOption !== null;
     return answerText.trim().length > 0;
   }
 
-  /** 단답형/약술형 정답 일치 판정 — 백엔드 채점 결과 대신 클라이언트 측 휴리스틱 */
   function isClientSideCorrect(d: QuestionDetail): boolean {
     if (d.questionType === "MCQ") {
       return selectedOption === d.correctOption;
@@ -140,7 +183,6 @@ function SolvePageContent() {
     const submitted = norm(answerText);
     if (!submitted) return false;
     if (d.answer && norm(d.answer) === submitted) return true;
-    // keywords 중 하나라도 정확히 일치하면 정답
     return d.keywords.some((k) => norm(k) === submitted);
   }
 
@@ -159,11 +201,13 @@ function SolvePageContent() {
       setSubmitError(null);
       submitSolve({
         subjectId: selectedSubject.id,
-        answers: [{
-          questionId: current.id,
-          selectedOption: current.questionType === "MCQ" ? selectedOption ?? undefined : undefined,
-          answerText: current.questionType !== "MCQ" ? answerText : undefined,
-        }],
+        answers: [
+          {
+            questionId: current.id,
+            selectedOption: current.questionType === "MCQ" ? selectedOption ?? undefined : undefined,
+            answerText: current.questionType !== "MCQ" ? answerText : undefined,
+          },
+        ],
       }).catch((e) => {
         console.error("풀이 제출 실패:", e);
         setSubmitError(
@@ -179,11 +223,13 @@ function SolvePageContent() {
     try {
       await submitSolve({
         subjectId: selectedSubject.id,
-        answers: [{
-          questionId: current.id,
-          selectedOption: current.questionType === "MCQ" ? selectedOption ?? undefined : undefined,
-          answerText: current.questionType !== "MCQ" ? answerText : undefined,
-        }],
+        answers: [
+          {
+            questionId: current.id,
+            selectedOption: current.questionType === "MCQ" ? selectedOption ?? undefined : undefined,
+            answerText: current.questionType !== "MCQ" ? answerText : undefined,
+          },
+        ],
       });
     } catch (e) {
       setSubmitError(e instanceof Error ? e.message : "다시 실패했습니다.");
@@ -193,16 +239,19 @@ function SolvePageContent() {
   async function handleNext() {
     if (!selectedSubject || !current) return;
 
-    let nextQueue = [...queue];
+    // 세션 종료 (10문제 풀이 완료)
+    if (solvedCount >= SET_SIZE) {
+      setPhase("session-complete");
+      return;
+    }
 
-    // 큐가 비면 새로 가져오기
+    let nextQueue = [...queue];
     if (nextQueue.length === 0) {
       setLoading(true);
       nextQueue = await fetchQuestions(selectedSubject.id);
       setLoading(false);
     }
 
-    // 현재 문제를 past 스택에 저장 (브라우저 뒤로가기로 복원 가능)
     setPastEntries((prev) => [
       ...prev,
       {
@@ -218,22 +267,16 @@ function SolvePageContent() {
     setQueue(nextQueue.slice(1));
     resetCurrentInput();
 
-    // 히스토리 엔트리 추가 (다음 뒤로가기에서 이 문제로 돌아오게)
     if (typeof window !== "undefined") {
       window.history.pushState({ solve: pastEntries.length + 1 }, "");
     }
   }
 
-  /**
-   * @param popHistory true면 그동안 push한 히스토리 엔트리를 정리한다 (수동 ← 과목 선택 버튼 클릭).
-   *                  false면 popstate 핸들러가 이미 한 칸 뒤로 보낸 후 호출된 것이라 정리 불필요.
-   */
   function handleReset(popHistory: boolean = true) {
     if (popHistory && typeof window !== "undefined") {
-      const pushed = pastEntries.length + 1; // pastEntries 개수 + handleSelectSubject에서의 1
+      const pushed = pastEntries.length + 1;
       if (pushed > 0) {
         window.history.go(-pushed);
-        // popstate가 phase=select 시점에서 발생하면 일찍 리턴되므로 안전
       }
     }
     setPhase("select");
@@ -254,84 +297,175 @@ function SolvePageContent() {
     );
   }
 
-  // 과목 선택
+  // ── 1. 과목 선택 ─────────────────────────────────────────
   if (phase === "select") {
     return (
       <main className="min-h-screen bg-background text-foreground">
         <GradingDisclaimerModal />
         <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6">
           <h1 className="text-2xl font-bold sm:text-3xl">과목 선택</h1>
-          <p className="mt-2 text-muted">풀고 싶은 과목을 선택하세요</p>
+          <p className="mt-2 text-sm text-muted">
+            과목 하나를 골라 {SET_SIZE}문제 한 세트를 풀어보세요.
+          </p>
 
-          <div className="mt-8 space-y-3">
-            {subjects.map((parent) => (
-              <div key={parent.id}>
-                <h2 className="text-sm font-medium text-muted mb-2">
-                  {parent.name}
-                </h2>
-                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                  {(parent.children.length > 0
-                    ? parent.children
-                    : [parent]
-                  ).map((child) => (
-                    <button
-                      key={child.id}
-                      onClick={() => handleSelectSubject(child)}
-                      className="rounded-lg border border-border bg-surface px-4 py-3 text-left text-sm font-medium transition-all duration-300 hover:-translate-y-0.5 hover:border-amber-500/40 hover:shadow-[0_0_16px_var(--glow)]"
-                    >
-                      {child.name}
-                    </button>
-                  ))}
+          <div className="mt-10 space-y-7">
+            {subjects.map((parent) => {
+              const items = parent.children.length > 0 ? parent.children : [parent];
+              return (
+                <div key={parent.id}>
+                  <h2 className="text-xs font-semibold uppercase tracking-wider text-muted/70">
+                    {parent.name}
+                  </h2>
+                  <div className="mt-2.5 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                    {items.map((child) => (
+                      <button
+                        key={child.id}
+                        onClick={() => handleSelectSubject(child)}
+                        className="group flex items-center gap-3 rounded-lg border border-border bg-surface px-4 py-3 text-left transition-all duration-200 hover:border-amber-500/40 hover:bg-amber-500/[0.03]"
+                      >
+                        <span className="h-9 w-1 shrink-0 rounded-full bg-amber-500/60 transition-colors group-hover:bg-amber-400" />
+                        <span className="flex-1 text-sm font-medium">{child.name}</span>
+                        <span className="text-xs text-muted/60 transition-transform group-hover:translate-x-0.5">
+                          →
+                        </span>
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           {subjects.length === 0 && (
-            <p className="mt-8 text-center text-muted">
-              과목 데이터를 불러오는 중...
-            </p>
+            <p className="mt-8 text-center text-muted">과목 데이터를 불러오는 중...</p>
           )}
+
+          {/* 보조 액션 */}
+          <div className="mt-12 flex items-center justify-center gap-6 text-sm text-muted">
+            <Link href="/wrong-answers" className="transition-colors hover:text-foreground">
+              오답 노트 →
+            </Link>
+            <span className="text-border">·</span>
+            <Link href="/mock-exams" className="transition-colors hover:text-foreground">
+              모의고사 →
+            </Link>
+          </div>
         </div>
       </main>
     );
   }
 
-  // 문제 풀기
+  // ── 3. 세션 종료 카드 ────────────────────────────────────
+  if (phase === "session-complete") {
+    const rate = SET_SIZE > 0 ? Math.round((correctCount / SET_SIZE) * 100) : 0;
+    const ment =
+      rate >= 90
+        ? "완벽해요! 같은 과목을 더 풀어볼까요?"
+        : rate >= 70
+        ? "잘하고 있어요. 한 세트 더 풀면 손에 더 익을 거예요."
+        : "괜찮아요. 약한 문제부터 다시 한 번 풀어보세요.";
+    const rateColor = rate >= 90 ? "text-green-300" : rate >= 70 ? "text-amber-300" : "text-rose-300";
+
+    return (
+      <main className="min-h-screen bg-background text-foreground">
+        <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6">
+          <div className="rounded-2xl border border-amber-500/20 bg-gradient-to-br from-amber-500/[0.08] via-amber-500/[0.04] to-transparent p-8 sm:p-10">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-amber-300">
+              세션 완료
+            </p>
+            <h1 className="mt-2 text-3xl font-bold sm:text-4xl">
+              {selectedSubject?.name}
+            </h1>
+
+            <div className="mt-6 flex items-end gap-4">
+              <span className={`text-6xl font-bold tabular-nums sm:text-7xl ${rateColor}`}>
+                {correctCount}
+                <span className="text-3xl text-muted/60">/{SET_SIZE}</span>
+              </span>
+              <span className={`mb-2 text-2xl font-bold tabular-nums ${rateColor}`}>{rate}%</span>
+            </div>
+
+            <p className="mt-4 text-sm leading-relaxed text-muted">{ment}</p>
+
+            <div className="mt-8 flex flex-wrap gap-2">
+              <button
+                onClick={restartSession}
+                className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-zinc-900 transition-all hover:bg-primary-hover hover:scale-[1.02]"
+              >
+                다시 풀기
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+              </button>
+              <Link
+                href={selectedSubject ? `/wrong-answers?subjectId=${selectedSubject.id}` : "/wrong-answers"}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface px-5 py-2.5 text-sm font-semibold text-foreground transition-colors hover:border-amber-500/40 hover:bg-amber-500/5"
+              >
+                약한 문제 복습
+              </Link>
+              <button
+                onClick={() => handleReset()}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface px-5 py-2.5 text-sm font-semibold text-muted transition-colors hover:text-foreground"
+              >
+                과목 선택
+              </button>
+            </div>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  // ── 2. 문제 풀이 ─────────────────────────────────────────
   if (!current) return null;
 
   const parsed = parseQuestion(current.content);
-  const isCorrect = detail ? (
-    detail.questionType === "MCQ"
+  const isCorrect = detail
+    ? detail.questionType === "MCQ"
       ? selectedOption === detail.correctOption
       : isClientSideCorrect(detail)
-  ) : null;
+    : null;
+
+  // 진행 바: 현재 N번째 = solvedCount + (revealed ? 0 : 1) — 풀이 중일 땐 그 문제까지 카운트
+  const currentNumber = Math.min(solvedCount + 1, SET_SIZE);
+  const progressPct = Math.min((solvedCount / SET_SIZE) * 100, 100);
 
   return (
-    <main className="min-h-screen bg-background text-foreground">
-      <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6">
+    <main className="min-h-screen bg-background text-foreground pb-24">
+      <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6">
         {/* 상단 바 */}
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-3">
           <button
             onClick={() => handleReset()}
-            className="text-sm text-muted hover:text-foreground transition-colors"
+            className="text-sm text-muted transition-colors hover:text-foreground"
           >
-            &larr; 과목 선택
+            ← 과목 선택
           </button>
-          <div className="flex items-center gap-3">
-            <span className="text-sm text-muted">
-              {selectedSubject?.name}
+          <span className="truncate text-sm text-muted">{selectedSubject?.name}</span>
+          <span className="rounded-full border border-border bg-surface/60 px-2.5 py-0.5 text-xs tabular-nums text-muted">
+            {correctCount}/{solvedCount} 정답
+          </span>
+        </div>
+
+        {/* 진행 바 */}
+        <div className="mt-5">
+          <div className="flex items-center justify-between text-[11px] text-muted">
+            <span className="tabular-nums">
+              <span className="font-semibold text-foreground">{currentNumber}</span>
+              <span className="text-muted/60"> / {SET_SIZE}</span>
             </span>
-            {solvedCount > 0 && (
-              <span className="rounded bg-surface border border-border px-2 py-0.5 text-xs text-muted">
-                {correctCount}/{solvedCount} 정답
-              </span>
-            )}
+            <span className="tabular-nums">{Math.round(progressPct)}%</span>
+          </div>
+          <div className="mt-1.5 h-1 w-full overflow-hidden rounded-full bg-border/40">
+            <div
+              className="h-full rounded-full bg-amber-500 transition-all duration-500 ease-out"
+              style={{ width: `${progressPct}%` }}
+            />
           </div>
         </div>
 
-        {/* 문제 — 모의고사 응시 페이지와 동일한 카드 구조 */}
-        <div className="mt-6 rounded-xl border border-border bg-surface p-6">
+        {/* 문제 카드 */}
+        <div className="mt-5 rounded-xl border border-border bg-surface p-6 sm:p-7">
           <div className="flex items-center justify-between gap-2">
             <p className="text-xs font-medium text-muted">{selectedSubject?.name}</p>
             <div className="flex items-center gap-3">
@@ -339,12 +473,12 @@ function SolvePageContent() {
               <QuestionTypeBadge type={current.questionType} />
             </div>
           </div>
-          <h2 className="mt-2 text-base font-semibold">문항 {solvedCount + 1}</h2>
-          <div className="mt-4">
+
+          <div className="mt-5 text-base leading-relaxed">
             <QuestionContent content={parsed.body} />
           </div>
 
-          {/* 입력 UI 분기 */}
+          {/* 입력 UI */}
           {current.questionType === "MCQ" && (
             <ul className="mt-6 space-y-2">
               {parsed.options.map((optionText, idx) => {
@@ -355,14 +489,14 @@ function SolvePageContent() {
                 let style = "border-border hover:border-amber-500/40 hover:bg-amber-500/5";
                 if (revealed) {
                   if (isCorrectOption) {
-                    style = "border-green-500 bg-green-500/10 text-green-400";
+                    style = "border-green-500/60 bg-green-500/10 text-green-300";
                   } else if (isSelected && !isCorrectOption) {
-                    style = "border-red-500 bg-red-500/10 text-red-400";
+                    style = "border-red-500/60 bg-red-500/10 text-red-300";
                   } else {
                     style = "border-border opacity-50";
                   }
                 } else if (isSelected) {
-                  style = "border-amber-500 bg-amber-500/10 text-foreground";
+                  style = "border-amber-500/60 bg-amber-500/10 text-foreground ring-1 ring-amber-400/40";
                 }
 
                 return (
@@ -370,18 +504,24 @@ function SolvePageContent() {
                     <button
                       onClick={() => handleSelect(num)}
                       disabled={revealed}
-                      className={`w-full rounded-lg border px-4 py-3 text-left text-sm transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 ${style} disabled:cursor-default`}
+                      className={`flex w-full items-start gap-3 rounded-lg border px-4 py-3 text-left text-sm leading-relaxed transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 ${style} disabled:cursor-default`}
                     >
-                      <span className="mr-3 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-current text-xs">
+                      <span
+                        className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
+                          isSelected && !revealed
+                            ? "bg-amber-500/30 text-amber-100"
+                            : revealed && isCorrectOption
+                            ? "bg-green-500/30 text-green-100"
+                            : revealed && isSelected
+                            ? "bg-red-500/30 text-red-100"
+                            : "border border-current text-current"
+                        }`}
+                      >
                         {num}
                       </span>
-                      {optionText}
-                      {revealed && isCorrectOption && (
-                        <span className="ml-2 text-green-400">&#10003;</span>
-                      )}
-                      {revealed && isSelected && !isCorrectOption && (
-                        <span className="ml-2 text-red-400">&#10007;</span>
-                      )}
+                      <span className="flex-1">{optionText}</span>
+                      {revealed && isCorrectOption && <span className="text-green-400">✓</span>}
+                      {revealed && isSelected && !isCorrectOption && <span className="text-red-400">✗</span>}
                     </button>
                   </li>
                 );
@@ -408,9 +548,7 @@ function SolvePageContent() {
                 autoComplete="off"
                 spellCheck={false}
               />
-              <p className="mt-2 text-xs text-muted/70">
-                대소문자, 앞뒤 공백은 자동으로 무시됩니다.
-              </p>
+              <p className="mt-2 text-xs text-muted/70">대소문자, 앞뒤 공백은 자동으로 무시됩니다.</p>
             </div>
           )}
 
@@ -434,20 +572,22 @@ function SolvePageContent() {
 
         {/* 제출 버튼 (미공개 상태) */}
         {!revealed && (
-          <div className="mt-4 flex justify-center">
+          <div className="mt-5 flex justify-center">
             <button
               onClick={handleSubmit}
               disabled={!hasAnswer()}
-              className="rounded-lg bg-primary px-6 py-2.5 text-sm font-semibold text-zinc-900 transition hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-primary"
+              className={`rounded-lg bg-primary px-7 py-2.5 text-sm font-semibold text-zinc-900 transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-primary ${
+                hasAnswer() ? "hover:bg-primary-hover hover:scale-[1.02] shadow-[0_0_18px_rgba(245,158,11,0.25)]" : ""
+              }`}
             >
               정답 제출
             </button>
           </div>
         )}
 
-        {/* 정답 확인 후 해설 + 다음 버튼 */}
+        {/* 정답 확인 후: 결과 띠 + 해설 */}
         {revealed && detail && (
-          <div className="mt-4 space-y-4">
+          <div className="mt-5 space-y-4">
             {/* 제출 실패 에러 배너 */}
             {submitError && (
               <div className="rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-300">
@@ -463,19 +603,31 @@ function SolvePageContent() {
               </div>
             )}
 
-            {/* 결과 표시 */}
+            {/* 결과 띠 + 인라인 다음 버튼 */}
             <div
-              className={`rounded-lg border px-4 py-3 text-sm ${
+              className={`flex flex-wrap items-center justify-between gap-3 rounded-lg border px-5 py-4 ${
                 isCorrect
-                  ? "border-green-500/30 bg-green-500/5 text-green-400"
-                  : "border-red-500/30 bg-red-500/5 text-red-400"
+                  ? "border-green-500/40 bg-green-500/[0.08]"
+                  : "border-red-500/40 bg-red-500/[0.08]"
               }`}
             >
-              {isCorrect
-                ? "정답입니다!"
-                : detail.questionType === "MCQ"
-                ? `오답입니다. 정답은 ${detail.correctOption}번입니다.`
-                : `오답입니다. 모범답안: ${detail.answer ?? "(없음)"}`}
+              <div className={`flex items-center gap-2 text-sm font-semibold ${isCorrect ? "text-green-300" : "text-red-300"}`}>
+                <span className="text-lg">{isCorrect ? "✓" : "✗"}</span>
+                {isCorrect
+                  ? "정답입니다!"
+                  : detail.questionType === "MCQ"
+                  ? `오답 — 정답은 ${detail.correctOption}번입니다.`
+                  : `오답 — 모범답안: ${detail.answer ?? "(없음)"}`}
+              </div>
+              <button
+                onClick={handleNext}
+                className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-xs font-semibold text-zinc-900 transition-all hover:bg-primary-hover hover:scale-[1.02]"
+              >
+                {solvedCount >= SET_SIZE ? "결과 보기" : "다음 문제"}
+                <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                </svg>
+              </button>
             </div>
 
             {/* 비-MCQ 정답 패널 */}
@@ -512,29 +664,45 @@ function SolvePageContent() {
                 </div>
               </div>
             )}
-
-            {/* 다음 문제 */}
-            <div className="flex justify-center">
-              <button
-                onClick={handleNext}
-                className="rounded-lg bg-primary px-6 py-2.5 text-sm font-semibold text-zinc-900 transition hover:bg-primary-hover"
-              >
-                다음 문제
-              </button>
-            </div>
           </div>
         )}
       </div>
+
+      {/* 화면 하단 fixed 다음 버튼 — 해설 길어도 한 번에 누르기 */}
+      {revealed && detail && (
+        <button
+          onClick={handleNext}
+          className="fixed bottom-6 right-6 z-50 inline-flex items-center gap-1.5 rounded-full bg-primary px-5 py-3 text-sm font-semibold text-zinc-900 shadow-[0_0_24px_rgba(245,158,11,0.45)] transition-all hover:bg-primary-hover hover:scale-[1.05]"
+          aria-label={solvedCount >= SET_SIZE ? "결과 보기" : "다음 문제"}
+        >
+          {solvedCount >= SET_SIZE ? "결과 보기" : "다음 문제"}
+          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+          </svg>
+        </button>
+      )}
     </main>
   );
 }
 
 function QuestionTypeBadge({ type }: { type: Question["questionType"] }) {
   if (type === "MCQ") {
-    return <span className="rounded-full border border-border px-2 py-0.5 text-[10px] font-medium text-muted">4지선다</span>;
+    return (
+      <span className="rounded-full border border-border px-2 py-0.5 text-[10px] font-medium text-muted">
+        4지선다
+      </span>
+    );
   }
   if (type === "SHORT_ANSWER") {
-    return <span className="rounded-full border border-emerald-500/40 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-bold text-emerald-300">단답형</span>;
+    return (
+      <span className="rounded-full border border-emerald-500/40 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-bold text-emerald-300">
+        단답형
+      </span>
+    );
   }
-  return <span className="rounded-full border border-cyan-500/40 bg-cyan-500/10 px-2 py-0.5 text-[10px] font-bold text-cyan-300">서술형</span>;
+  return (
+    <span className="rounded-full border border-cyan-500/40 bg-cyan-500/10 px-2 py-0.5 text-[10px] font-bold text-cyan-300">
+      서술형
+    </span>
+  );
 }
