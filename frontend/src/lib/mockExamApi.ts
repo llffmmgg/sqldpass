@@ -5,6 +5,8 @@ export type QuestionType = "MCQ" | "SHORT_ANSWER" | "DESCRIPTIVE";
 
 export type DifficultyLabel = "쉬움" | "보통" | "어려움" | "매우 어려움";
 
+export type MockExamVisibility = "DRAFT" | "PUBLISHED" | "PREMIUM";
+
 export interface MockExamSummary {
   id: number;
   name: string;
@@ -24,6 +26,8 @@ export interface MockExamSummary {
   templateKey: EngineerTemplateKey | null;
   /** 정처기 분포 템플릿 한글 라벨 */
   templateLabel: string | null;
+  /** 공개 상태 — 백엔드 enum (사용자 목록은 PUBLISHED/PREMIUM만, 어드민은 DRAFT 포함) */
+  visibility: MockExamVisibility;
 }
 
 export type EngineerTemplateKey =

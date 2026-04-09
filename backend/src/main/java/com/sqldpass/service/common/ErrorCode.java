@@ -15,6 +15,7 @@ public enum ErrorCode {
     QUESTION_NOT_FOUND(HttpStatus.NOT_FOUND, "QUESTION_NOT_FOUND", "문제를 찾을 수 없습니다."),
     SOLVE_NOT_FOUND(HttpStatus.NOT_FOUND, "SOLVE_NOT_FOUND", "풀이 기록을 찾을 수 없습니다."),
     MOCK_EXAM_NOT_FOUND(HttpStatus.NOT_FOUND, "MOCK_EXAM_NOT_FOUND", "모의고사를 찾을 수 없습니다."),
+    MOCK_EXAM_LOCKED(HttpStatus.FORBIDDEN, "MOCK_EXAM_LOCKED", "프리미엄 모의고사입니다. 잠금을 해제해야 풀이할 수 있습니다."),
     FEEDBACK_NOT_FOUND(HttpStatus.NOT_FOUND, "FEEDBACK_NOT_FOUND", "피드백을 찾을 수 없습니다."),
     NOTICE_NOT_FOUND(HttpStatus.NOT_FOUND, "NOTICE_NOT_FOUND", "공지사항을 찾을 수 없습니다."),
     NOTIFICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "NOTIFICATION_NOT_FOUND", "알림을 찾을 수 없습니다."),

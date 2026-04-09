@@ -308,21 +308,27 @@ function FilterTab({
 function MockExamCard({ exam }: { exam: MockExamSummary }) {
   const isEngineer = exam.examType === "ENGINEER_PRACTICAL";
   const isCl1 = exam.examType === "COMPUTER_LITERACY_1";
-  const hoverBorder = isEngineer
-    ? "hover:border-emerald-500/40"
-    : isCl1
-      ? "hover:border-sky-500/40"
-      : "hover:border-amber-500/40";
-  const glow = isEngineer
-    ? "hover:shadow-[0_0_20px_rgba(16,185,129,0.2)]"
-    : isCl1
-      ? "hover:shadow-[0_0_20px_rgba(14,165,233,0.2)]"
-      : "hover:shadow-[0_0_16px_var(--glow)]";
+  const isPremium = exam.visibility === "PREMIUM";
+  const hoverBorder = isPremium
+    ? "hover:border-amber-500/60"
+    : isEngineer
+      ? "hover:border-emerald-500/40"
+      : isCl1
+        ? "hover:border-sky-500/40"
+        : "hover:border-amber-500/40";
+  const glow = isPremium
+    ? "hover:shadow-[0_0_24px_rgba(245,158,11,0.25)]"
+    : isEngineer
+      ? "hover:shadow-[0_0_20px_rgba(16,185,129,0.2)]"
+      : isCl1
+        ? "hover:shadow-[0_0_20px_rgba(14,165,233,0.2)]"
+        : "hover:shadow-[0_0_16px_var(--glow)]";
 
+  // PREMIUM 카드는 클릭 시 detail 페이지로 (404/403 화면이 잠금 안내)
   return (
     <Link
       href={`/mock-exams/${exam.id}`}
-      className={`relative block rounded-xl border border-border bg-surface p-5 transition-all hover:-translate-y-0.5 ${hoverBorder} ${glow}`}
+      className={`relative block rounded-xl border ${isPremium ? "border-amber-500/40 bg-gradient-to-br from-amber-500/[0.05] to-surface" : "border-border bg-surface"} p-5 transition-all hover:-translate-y-0.5 ${hoverBorder} ${glow}`}
     >
       {/* 풀이 완료 마크 — 손글씨 빨간 색연필 채점 느낌 */}
       {exam.solved && exam.bestCorrectCount != null && exam.bestTotalCount != null && (
@@ -336,11 +342,16 @@ function MockExamCard({ exam }: { exam: MockExamSummary }) {
         </span>
       )}
 
-      {/* 상단: 자격증 + (정처기) 템플릿 뱃지 */}
+      {/* 상단: 자격증 + (정처기) 템플릿 뱃지 + 프리미엄 잠금 */}
       <div className="flex flex-wrap items-center gap-1.5 pr-20">
         <ExamBadge examType={exam.examType} />
         {exam.templateKey && exam.templateLabel && (
           <TemplateBadge templateKey={exam.templateKey} label={exam.templateLabel} />
+        )}
+        {isPremium && (
+          <span className="inline-flex items-center gap-1 rounded-full border border-amber-500/50 bg-amber-500/15 px-2 py-0.5 text-[10px] font-bold text-amber-300">
+            🔒 프리미엄
+          </span>
         )}
       </div>
 

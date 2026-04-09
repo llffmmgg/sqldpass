@@ -44,7 +44,8 @@ public class MockExamController {
             }
         }
 
-        return mockExamService.getAll().stream()
+        // 사용자 노출은 DRAFT 제외 (PUBLISHED + PREMIUM만 — PREMIUM은 프론트에서 잠금 표시)
+        return mockExamService.getAllForUser().stream()
                 .map(exam -> {
                     int[] best = bestScoreMap.get(exam.getId());
                     return best != null
@@ -57,6 +58,7 @@ public class MockExamController {
     @GetMapping("/{id}")
     @Operation(summary = "모의고사 상세 (50문항 포함, 정답 미포함)")
     public MockExamDetailResponse get(@PathVariable Long id) {
-        return MockExamDetailResponse.from(mockExamService.get(id));
+        // PREMIUM이면 403 LOCKED, DRAFT면 404
+        return MockExamDetailResponse.from(mockExamService.getForUser(id));
     }
 }

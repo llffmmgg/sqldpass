@@ -447,6 +447,8 @@ export const ENGINEER_TEMPLATE_LABEL: Record<EngineerTemplate, string> = {
   DB_HEAVY: "DB 강조형",
 };
 
+export type MockExamVisibility = "DRAFT" | "PUBLISHED" | "PREMIUM";
+
 export interface AdminMockExam {
   id: number;
   name: string;
@@ -457,6 +459,14 @@ export interface AdminMockExam {
   difficultyLabel: "쉬움" | "보통" | "어려움" | "매우 어려움" | null;
   templateKey: EngineerTemplate | null;
   templateLabel: string | null;
+  visibility: MockExamVisibility;
+}
+
+export function changeMockExamVisibility(id: number, visibility: MockExamVisibility) {
+  return adminFetch<AdminMockExam>(`/mock-exams/${id}/visibility`, {
+    method: "PATCH",
+    body: JSON.stringify({ visibility }),
+  });
 }
 
 export function getAdminMockExams() {

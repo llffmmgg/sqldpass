@@ -82,13 +82,26 @@ function MockExamDetailContent() {
   }, [answeredCount, result]);
 
   if (error) {
+    const isLocked = error.includes("프리미엄");
     return (
-      <main className="min-h-screen bg-background text-foreground flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-red-400">{error}</p>
+      <main className="min-h-screen bg-background text-foreground flex items-center justify-center px-4">
+        <div className="max-w-md text-center">
+          {isLocked ? (
+            <>
+              <div className="text-6xl">🔒</div>
+              <h1 className="mt-4 text-2xl font-bold text-amber-300">프리미엄 모의고사</h1>
+              <p className="mt-3 text-sm text-muted leading-relaxed">
+                이 회차는 잠금 컨텐츠입니다. 결제 후 잠금을 해제하면 풀이할 수 있습니다.
+                <br />
+                결제 시스템은 곧 오픈됩니다.
+              </p>
+            </>
+          ) : (
+            <p className="text-red-400">{error}</p>
+          )}
           <button
             onClick={() => router.push("/mock-exams")}
-            className="mt-4 text-sm text-muted hover:text-foreground"
+            className="mt-6 rounded-lg border border-border px-4 py-2 text-sm text-muted hover:text-foreground"
           >
             ← 모의고사 목록으로
           </button>

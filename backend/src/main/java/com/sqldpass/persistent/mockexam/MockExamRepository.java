@@ -16,9 +16,16 @@ public interface MockExamRepository extends JpaRepository<MockExamEntity, Long> 
     @Query("SELECT m FROM MockExamEntity m LEFT JOIN FETCH m.questions q LEFT JOIN FETCH q.subject s LEFT JOIN FETCH s.parent WHERE m.id = :id")
     Optional<MockExamEntity> findByIdWithQuestions(Long id);
 
-    /** 목록 조회 — 한 번의 GROUP BY 쿼리로 exam + 문항 수 + 난이도 통계 동시 조회 (N+1 방지) */
+    /** 어드민용 — 모든 visibility(DRAFT/PUBLISHED/PREMIUM) 포함. N+1 방지 GROUP BY */
     @Query("SELECT m, COUNT(q), AVG(q.difficulty), MIN(q.difficulty), MAX(q.difficulty) " +
             "FROM MockExamEntity m LEFT JOIN m.questions q " +
             "GROUP BY m ORDER BY m.sequence DESC")
     List<Object[]> findAllWithQuestionCounts();
+
+    /** 사용자용 — DRAFT 제외 (PUBLISHED + PREMIUM만 노출, PREMIUM은 프론트에서 잠금) */
+    @Query("SELECT m, COUNT(q), AVG(q.difficulty), MIN(q.difficulty), MAX(q.difficulty) " +
+            "FROM MockExamEntity m LEFT JOIN m.questions q " +
+            "WHERE m.visibility <> com.sqldpass.persistent.mockexam.MockExamVisibility.DRAFT " +
+            "GROUP BY m ORDER BY m.sequence DESC")
+    List<Object[]> findUserVisibleWithQuestionCounts();
 }

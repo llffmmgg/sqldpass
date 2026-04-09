@@ -30,7 +30,18 @@ public interface QuestionRepository extends JpaRepository<QuestionEntity, Long> 
      *  사용자별 "푼 문제 후순위" 로직이 별도로 있으므로 모의고사 풀이와의
      *  체감 중복은 작음.)
      */
-    @Query("SELECT q.id FROM QuestionEntity q WHERE q.subject.id = :subjectId")
+    /**
+     * 풀이 풀 후보 — 해당 과목의 문제 중 DRAFT/PREMIUM 회차에 묶인 것은 제외.
+     *  - 문제가 어느 모의고사에도 안 묶여 있으면(mock_exam IS NULL) 포함
+     *  - PUBLISHED 회차에 묶인 문제도 포함
+     *  - DRAFT/PREMIUM 회차에 묶인 문제는 제외 (premium 잠금 + 비공개)
+     */
+    @Query("""
+            SELECT q.id FROM QuestionEntity q
+            LEFT JOIN q.mockExam m
+            WHERE q.subject.id = :subjectId
+              AND (m IS NULL OR m.visibility = com.sqldpass.persistent.mockexam.MockExamVisibility.PUBLISHED)
+            """)
     List<Long> findAvailableIdsBySubjectId(@Param("subjectId") Long subjectId);
 
     /**
@@ -62,6 +73,7 @@ public interface QuestionRepository extends JpaRepository<QuestionEntity, Long> 
      */
     @Query(value = """
             SELECT q.id FROM question q
+            LEFT JOIN mock_exam me ON me.id = q.mock_exam_id
             LEFT JOIN (
                 SELECT sa.question_id, MAX(sa.id) AS recent_id
                 FROM solve_answer sa
@@ -70,6 +82,7 @@ public interface QuestionRepository extends JpaRepository<QuestionEntity, Long> 
                 GROUP BY sa.question_id
             ) recent ON recent.question_id = q.id
             WHERE q.subject_id = :subjectId
+              AND (me.id IS NULL OR me.visibility = 'PUBLISHED')
             ORDER BY (recent.recent_id IS NULL) DESC, recent.recent_id ASC, RAND()
             LIMIT :size
             """, nativeQuery = true)

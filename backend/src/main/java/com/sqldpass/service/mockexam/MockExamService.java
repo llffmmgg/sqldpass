@@ -11,6 +11,7 @@ import com.sqldpass.persistent.mockexam.MockExamDifficulty;
 import com.sqldpass.persistent.mockexam.MockExamEntity;
 import com.sqldpass.persistent.mockexam.MockExamMapper;
 import com.sqldpass.persistent.mockexam.MockExamRepository;
+import com.sqldpass.persistent.mockexam.MockExamVisibility;
 import com.sqldpass.persistent.question.QuestionRepository;
 import com.sqldpass.service.common.ErrorCode;
 import com.sqldpass.service.common.SqldpassException;
@@ -28,8 +29,18 @@ public class MockExamService {
     private final EngineerMockExamCreator engineerMockExamCreator;
     private final ComputerLiteracyMockExamCreator computerLiteracyMockExamCreator;
 
+    /** 어드민용 — DRAFT 포함 전체 회차 */
     public List<MockExam> getAll() {
-        return mockExamRepository.findAllWithQuestionCounts().stream()
+        return mapRows(mockExamRepository.findAllWithQuestionCounts());
+    }
+
+    /** 사용자용 — DRAFT 제외 (PUBLISHED + PREMIUM만) */
+    public List<MockExam> getAllForUser() {
+        return mapRows(mockExamRepository.findUserVisibleWithQuestionCounts());
+    }
+
+    private List<MockExam> mapRows(List<Object[]> rows) {
+        return rows.stream()
                 .map(row -> {
                     MockExamEntity exam = (MockExamEntity) row[0];
                     int count = ((Long) row[1]).intValue();
@@ -41,9 +52,34 @@ public class MockExamService {
                 .toList();
     }
 
+    /** 어드민 — visibility 변경 */
+    @Transactional
+    public MockExam changeVisibility(Long id, MockExamVisibility visibility) {
+        MockExamEntity entity = mockExamRepository.findById(id)
+                .orElseThrow(() -> new SqldpassException(ErrorCode.MOCK_EXAM_NOT_FOUND));
+        entity.changeVisibility(visibility);
+        return MockExamMapper.toSummary(entity, entity.getQuestions().size(), null, null, null);
+    }
+
     public MockExam get(Long id) {
         MockExamEntity entity = mockExamRepository.findByIdWithQuestions(id)
                 .orElseThrow(() -> new SqldpassException(ErrorCode.MOCK_EXAM_NOT_FOUND));
+        return MockExamMapper.toDomain(entity);
+    }
+
+    /**
+     * 사용자용 상세 조회 — DRAFT는 NOT_FOUND, PREMIUM은 잠금(예외).
+     * 결제 시스템 도입 후 권한 있는 사용자만 PREMIUM 통과시키도록 확장.
+     */
+    public MockExam getForUser(Long id) {
+        MockExamEntity entity = mockExamRepository.findByIdWithQuestions(id)
+                .orElseThrow(() -> new SqldpassException(ErrorCode.MOCK_EXAM_NOT_FOUND));
+        if (entity.getVisibility() == MockExamVisibility.DRAFT) {
+            throw new SqldpassException(ErrorCode.MOCK_EXAM_NOT_FOUND);
+        }
+        if (entity.getVisibility() == MockExamVisibility.PREMIUM) {
+            throw new SqldpassException(ErrorCode.MOCK_EXAM_LOCKED);
+        }
         return MockExamMapper.toDomain(entity);
     }
 

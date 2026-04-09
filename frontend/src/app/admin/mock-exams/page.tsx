@@ -6,11 +6,13 @@ import {
   getAdminMockExams,
   createMockExam,
   deleteMockExam,
+  changeMockExamVisibility,
   ENGINEER_TEMPLATE_LABEL,
   type AdminMockExam,
   type CreateMockExamType,
   type EngineerTemplate,
   type MockExamCreationDifficulty,
+  type MockExamVisibility,
 } from "@/lib/adminApi";
 
 type EngineerTemplateChoice = EngineerTemplate | "RANDOM";
@@ -164,6 +166,15 @@ export default function AdminMockExamsPage() {
       await load();
     } catch (e) {
       alert(e instanceof Error ? e.message : "삭제 실패");
+    }
+  }
+
+  async function handleVisibility(id: number, visibility: MockExamVisibility) {
+    try {
+      await changeMockExamVisibility(id, visibility);
+      await load();
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "공개 상태 변경 실패");
     }
   }
 
@@ -355,6 +366,7 @@ export default function AdminMockExamsPage() {
                   <th className="px-4 py-3">이름</th>
                   <th className="px-4 py-3 w-20">문항</th>
                   <th className="px-4 py-3 w-24">난이도</th>
+                  <th className="px-4 py-3 w-44">공개 상태</th>
                   <th className="px-4 py-3 w-32">생성일</th>
                   <th className="px-4 py-3 w-20 text-right">관리</th>
                 </tr>
@@ -400,6 +412,12 @@ export default function AdminMockExamsPage() {
                           <span className="text-xs text-muted/60">-</span>
                         )}
                       </td>
+                      <td className="px-4 py-3">
+                        <VisibilityControl
+                          current={exam.visibility}
+                          onChange={(v) => handleVisibility(exam.id, v)}
+                        />
+                      </td>
                       <td className="px-4 py-3 text-muted">
                         {new Date(exam.createdAt).toLocaleDateString("ko-KR")}
                       </td>
@@ -432,6 +450,50 @@ export default function AdminMockExamsPage() {
 }
 
 // === 하위 컴포넌트 ===
+
+const VISIBILITY_OPTIONS: { value: MockExamVisibility; label: string; cls: string }[] = [
+  {
+    value: "DRAFT",
+    label: "비공개",
+    cls: "border-zinc-500/40 bg-zinc-500/10 text-zinc-300",
+  },
+  {
+    value: "PUBLISHED",
+    label: "공개",
+    cls: "border-emerald-500/40 bg-emerald-500/10 text-emerald-300",
+  },
+  {
+    value: "PREMIUM",
+    label: "프리미엄",
+    cls: "border-amber-500/40 bg-amber-500/10 text-amber-300",
+  },
+];
+
+function VisibilityControl({
+  current,
+  onChange,
+}: {
+  current: MockExamVisibility;
+  onChange: (v: MockExamVisibility) => void;
+}) {
+  return (
+    <div className="flex flex-wrap gap-1">
+      {VISIBILITY_OPTIONS.map((opt) => (
+        <button
+          key={opt.value}
+          onClick={() => onChange(opt.value)}
+          className={`rounded border px-2 py-0.5 text-[10px] font-medium transition-colors ${
+            current === opt.value
+              ? `${opt.cls} ring-1 ring-current`
+              : "border-border text-muted hover:text-foreground"
+          }`}
+        >
+          {opt.label}
+        </button>
+      ))}
+    </div>
+  );
+}
 
 function difficultyTdClass(label: NonNullable<AdminMockExam["difficultyLabel"]>): string {
   switch (label) {

@@ -48,6 +48,10 @@ public class MockExamEntity extends BaseTimeEntity {
     @Column(name = "template", length = 32)
     private EngineerExamTemplate template;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "visibility", nullable = false, length = 20)
+    private MockExamVisibility visibility = MockExamVisibility.DRAFT;
+
     @OneToMany(mappedBy = "mockExam")
     @OrderBy("displayOrder ASC")
     private List<QuestionEntity> questions = new ArrayList<>();
@@ -65,11 +69,19 @@ public class MockExamEntity extends BaseTimeEntity {
         this.examType = examType;
         this.sequence = sequence;
         this.template = template;
+        this.visibility = MockExamVisibility.DRAFT;
     }
 
     /** 양방향 동기화 — 문제에 모의고사 배정 + 컬렉션에도 추가 */
     public void linkQuestion(QuestionEntity question, int displayOrder) {
         question.assignToMockExam(this, displayOrder);
         this.questions.add(question);
+    }
+
+    public void changeVisibility(MockExamVisibility visibility) {
+        if (visibility == null) {
+            throw new IllegalArgumentException("visibility는 null일 수 없습니다.");
+        }
+        this.visibility = visibility;
     }
 }

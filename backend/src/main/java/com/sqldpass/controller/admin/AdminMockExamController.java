@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -17,6 +18,7 @@ import com.sqldpass.controller.mockexam.dto.MockExamSummaryResponse;
 import com.sqldpass.persistent.mockexam.EngineerExamTemplate;
 import com.sqldpass.persistent.mockexam.ExamType;
 import com.sqldpass.persistent.mockexam.MockExamDifficulty;
+import com.sqldpass.persistent.mockexam.MockExamVisibility;
 import com.sqldpass.service.mockexam.MockExamService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -51,6 +53,17 @@ public class AdminMockExamController {
         EngineerExamTemplate engineerTemplate = (body != null) ? body.engineerTemplate() : null;
         return MockExamSummaryResponse.from(mockExamService.create(type, difficulty, engineerTemplate));
     }
+
+    @PatchMapping("/{id}/visibility")
+    @Operation(summary = "모의고사 공개 상태 변경 (DRAFT/PUBLISHED/PREMIUM)")
+    public MockExamSummaryResponse changeVisibility(
+            @PathVariable Long id,
+            @RequestBody ChangeVisibilityRequest body) {
+        return MockExamSummaryResponse.from(
+                mockExamService.changeVisibility(id, body.visibility()));
+    }
+
+    public record ChangeVisibilityRequest(MockExamVisibility visibility) {}
 
     @DeleteMapping("/{id}")
     @Operation(summary = "\uBAA8\uC758\uACE0\uC0AC \uC0AD\uC81C")

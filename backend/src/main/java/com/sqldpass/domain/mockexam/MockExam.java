@@ -5,6 +5,7 @@ import java.util.List;
 
 import com.sqldpass.persistent.mockexam.EngineerExamTemplate;
 import com.sqldpass.persistent.mockexam.ExamType;
+import com.sqldpass.persistent.mockexam.MockExamVisibility;
 
 import lombok.Getter;
 
@@ -27,14 +28,23 @@ public class MockExam {
     /** 정처기 실기 분포 템플릿. SQLD/컴활/구 정처기는 null. */
     private final EngineerExamTemplate template;
 
+    /** 공개 상태 (DRAFT/PUBLISHED/PREMIUM) */
+    private final MockExamVisibility visibility;
+
     /** 상세 조회용 — 문제 목록 포함. 난이도 통계는 questions에서 직접 계산. */
     public MockExam(Long id, String name, ExamType examType, int sequence, LocalDateTime createdAt,
                     List<MockExamQuestion> questions) {
-        this(id, name, examType, sequence, createdAt, questions, null);
+        this(id, name, examType, sequence, createdAt, questions, null, MockExamVisibility.PUBLISHED);
     }
 
     public MockExam(Long id, String name, ExamType examType, int sequence, LocalDateTime createdAt,
                     List<MockExamQuestion> questions, EngineerExamTemplate template) {
+        this(id, name, examType, sequence, createdAt, questions, template, MockExamVisibility.PUBLISHED);
+    }
+
+    public MockExam(Long id, String name, ExamType examType, int sequence, LocalDateTime createdAt,
+                    List<MockExamQuestion> questions, EngineerExamTemplate template,
+                    MockExamVisibility visibility) {
         this.id = id;
         this.name = name;
         this.examType = examType != null ? examType : ExamType.SQLD;
@@ -46,17 +56,24 @@ public class MockExam {
         this.minDifficulty = null;
         this.maxDifficulty = null;
         this.template = template;
+        this.visibility = visibility != null ? visibility : MockExamVisibility.PUBLISHED;
     }
 
     /** 목록 조회용 — 문제 카운트 + 난이도 통계 */
     public MockExam(Long id, String name, ExamType examType, int sequence, LocalDateTime createdAt,
                     int totalQuestions, Double avgDifficulty, Integer minDifficulty, Integer maxDifficulty) {
-        this(id, name, examType, sequence, createdAt, totalQuestions, avgDifficulty, minDifficulty, maxDifficulty, null);
+        this(id, name, examType, sequence, createdAt, totalQuestions, avgDifficulty, minDifficulty, maxDifficulty, null, MockExamVisibility.PUBLISHED);
     }
 
     public MockExam(Long id, String name, ExamType examType, int sequence, LocalDateTime createdAt,
                     int totalQuestions, Double avgDifficulty, Integer minDifficulty, Integer maxDifficulty,
                     EngineerExamTemplate template) {
+        this(id, name, examType, sequence, createdAt, totalQuestions, avgDifficulty, minDifficulty, maxDifficulty, template, MockExamVisibility.PUBLISHED);
+    }
+
+    public MockExam(Long id, String name, ExamType examType, int sequence, LocalDateTime createdAt,
+                    int totalQuestions, Double avgDifficulty, Integer minDifficulty, Integer maxDifficulty,
+                    EngineerExamTemplate template, MockExamVisibility visibility) {
         this.id = id;
         this.name = name;
         this.examType = examType != null ? examType : ExamType.SQLD;
@@ -68,5 +85,6 @@ public class MockExam {
         this.minDifficulty = minDifficulty;
         this.maxDifficulty = maxDifficulty;
         this.template = template;
+        this.visibility = visibility != null ? visibility : MockExamVisibility.PUBLISHED;
     }
 }

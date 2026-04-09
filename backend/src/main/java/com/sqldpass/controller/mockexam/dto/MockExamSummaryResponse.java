@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import com.sqldpass.domain.mockexam.MockExam;
 import com.sqldpass.persistent.mockexam.EngineerExamTemplate;
 import com.sqldpass.persistent.mockexam.ExamType;
+import com.sqldpass.persistent.mockexam.MockExamVisibility;
 
 public record MockExamSummaryResponse(
         Long id,
@@ -18,7 +19,8 @@ public record MockExamSummaryResponse(
         Integer bestCorrectCount,
         Integer bestTotalCount,
         String templateKey,
-        String templateLabel
+        String templateLabel,
+        MockExamVisibility visibility
 ) {
     public static MockExamSummaryResponse from(MockExam mockExam) {
         return from(mockExam, null, null);
@@ -44,7 +46,8 @@ public record MockExamSummaryResponse(
                 bestCorrect,
                 bestTotal,
                 templateKey,
-                templateLabel);
+                templateLabel,
+                mockExam.getVisibility());
     }
 
     /**
