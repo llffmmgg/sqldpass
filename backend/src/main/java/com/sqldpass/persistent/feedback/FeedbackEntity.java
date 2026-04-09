@@ -35,7 +35,7 @@ public class FeedbackEntity extends BaseTimeEntity {
     @Column(nullable = false, length = 30)
     private FeedbackType type;
 
-    @Column(name = "member_id", nullable = false)
+    @Column(name = "member_id")
     private Long memberId;
 
     @Column(name = "question_id")

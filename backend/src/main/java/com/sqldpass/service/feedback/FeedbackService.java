@@ -98,9 +98,9 @@ public class FeedbackService {
     }
 
     public String resolveNickname(Long memberId) {
-        if (memberId == null) return "?";
+        if (memberId == null) return "탈퇴한 회원";
         return memberRepository.findById(memberId)
                 .map(MemberEntity::getNickname)
-                .orElse("?");
+                .orElse("탈퇴한 회원");
     }
 }

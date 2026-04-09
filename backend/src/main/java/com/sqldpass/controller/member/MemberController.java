@@ -1,10 +1,13 @@
 package com.sqldpass.controller.member;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.RequestAttribute;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.sqldpass.controller.member.dto.MemberMeResponse;
@@ -29,6 +32,13 @@ public class MemberController {
     @Operation(summary = "내 정보 조회")
     public MemberMeResponse getMe(@RequestAttribute("memberId") Long memberId) {
         return memberService.getMe(memberId);
+    }
+
+    @DeleteMapping("/me")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @Operation(summary = "회원 탈퇴 (hard delete)")
+    public void withdraw(@RequestAttribute("memberId") Long memberId) {
+        memberService.withdraw(memberId);
     }
 
     @PatchMapping("/me/nickname")

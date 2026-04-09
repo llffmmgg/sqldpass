@@ -12,6 +12,13 @@ public interface SolveRepository extends JpaRepository<SolveEntity, Long> {
     List<SolveEntity> findByMemberIdOrderByCreatedAtDesc(Long memberId);
 
     /**
+     * 회원 탈퇴 시 사용. orphanRemoval=true 가 적용된 SolveAnswerEntity 를 cascade 시키기 위해
+     * 엔티티를 fetch 한 뒤 deleteAll 로 호출하는 방식이 안전하므로,
+     * 호출부에서 findAllByMember_Id → deleteAllInBatch 가 아닌 deleteAll 을 사용한다.
+     */
+    List<SolveEntity> findAllByMember_Id(Long memberId);
+
+    /**
      * 어드민 멤버 목록의 인라인 통계용 — 여러 멤버의 풀이 (memberId, totalCount, createdAt) 만 batch로 가져옴.
      * 결과 row: [Long memberId, Integer totalCount, LocalDateTime createdAt]
      * JVM에서 group by memberId 로 묶어 누적 풀이 수와 streak 일을 계산한다.

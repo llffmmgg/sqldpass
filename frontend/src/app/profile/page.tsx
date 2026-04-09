@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { isLoggedIn, setNickname as saveNickname } from "@/lib/auth";
-import { getMe, updateNickname, type MemberMe } from "@/lib/memberApi";
+import { isLoggedIn, setNickname as saveNickname, clearAuth } from "@/lib/auth";
+import { getMe, updateNickname, withdrawMember, type MemberMe } from "@/lib/memberApi";
 import { generateNickname } from "@/lib/nickname";
 import LoginRequired from "@/components/LoginRequired";
 
@@ -15,6 +15,29 @@ export default function ProfilePage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [authChecked, setAuthChecked] = useState(false);
+  const [withdrawOpen, setWithdrawOpen] = useState(false);
+  const [withdrawConfirm, setWithdrawConfirm] = useState("");
+  const [withdrawing, setWithdrawing] = useState(false);
+  const [withdrawError, setWithdrawError] = useState<string | null>(null);
+
+  const WITHDRAW_PHRASE = "탈퇴합니다";
+
+  async function handleWithdraw() {
+    if (withdrawConfirm.trim() !== WITHDRAW_PHRASE) {
+      setWithdrawError(`"${WITHDRAW_PHRASE}" 를 정확히 입력해주세요.`);
+      return;
+    }
+    setWithdrawing(true);
+    setWithdrawError(null);
+    try {
+      await withdrawMember();
+      clearAuth();
+      router.replace("/");
+    } catch (e) {
+      setWithdrawError(e instanceof Error ? e.message : "탈퇴 처리에 실패했습니다.");
+      setWithdrawing(false);
+    }
+  }
 
   useEffect(() => {
     if (!isLoggedIn()) {
@@ -124,6 +147,27 @@ export default function ProfilePage() {
           </div>
         )}
 
+        {me && (
+          <div className="mt-8 rounded-xl border border-rose-500/20 bg-rose-500/5 p-6">
+            <h2 className="text-sm font-semibold text-rose-300">위험 구역</h2>
+            <p className="mt-1 text-xs text-muted">
+              탈퇴 시 풀이 기록과 받은 알림이 모두 삭제되며 복구할 수 없습니다.
+              작성한 건의사항은 운영을 위해 익명으로 보존됩니다.
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                setWithdrawOpen(true);
+                setWithdrawConfirm("");
+                setWithdrawError(null);
+              }}
+              className="mt-4 rounded-lg border border-rose-500/40 bg-rose-500/10 px-4 py-2 text-sm font-medium text-rose-200 transition hover:bg-rose-500/20"
+            >
+              회원 탈퇴
+            </button>
+          </div>
+        )}
+
         <button
           onClick={() => router.back()}
           className="mt-6 text-sm text-muted hover:text-foreground"
@@ -131,6 +175,52 @@ export default function ProfilePage() {
           ← 돌아가기
         </button>
       </div>
+
+      {withdrawOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
+          <div className="mx-4 w-full max-w-md rounded-xl border border-border bg-background p-6 shadow-2xl">
+            <h3 className="text-lg font-bold text-foreground">회원 탈퇴</h3>
+            <p className="mt-2 text-sm text-muted">
+              이 작업은 되돌릴 수 없습니다. 풀이 기록·알림이 영구 삭제됩니다.
+            </p>
+            <p className="mt-4 text-xs text-muted">
+              계속하려면 아래에 <span className="font-semibold text-rose-300">{WITHDRAW_PHRASE}</span> 를 입력하세요.
+            </p>
+            <input
+              type="text"
+              value={withdrawConfirm}
+              onChange={(e) => {
+                setWithdrawConfirm(e.target.value);
+                setWithdrawError(null);
+              }}
+              disabled={withdrawing}
+              autoFocus
+              className="mt-2 w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm focus:border-rose-500/60 focus:outline-none focus:ring-2 focus:ring-rose-500/30"
+            />
+            {withdrawError && (
+              <p className="mt-2 text-xs text-rose-400">{withdrawError}</p>
+            )}
+            <div className="mt-6 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setWithdrawOpen(false)}
+                disabled={withdrawing}
+                className="rounded-lg border border-border bg-surface px-4 py-2 text-sm text-muted transition hover:text-foreground disabled:opacity-50"
+              >
+                취소
+              </button>
+              <button
+                type="button"
+                onClick={handleWithdraw}
+                disabled={withdrawing || withdrawConfirm.trim() !== WITHDRAW_PHRASE}
+                className="rounded-lg bg-rose-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-rose-600 disabled:opacity-50"
+              >
+                {withdrawing ? "처리 중…" : "탈퇴하기"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
