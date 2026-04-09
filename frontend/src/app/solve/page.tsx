@@ -604,7 +604,7 @@ function SolvePageContent() {
                     <button
                       onClick={() => handleSelect(num)}
                       disabled={revealed}
-                      className={`flex w-full items-start gap-3 rounded-lg border px-4 py-3 text-left text-sm leading-relaxed transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 ${style} disabled:cursor-default`}
+                      className={`flex w-full items-start gap-3 rounded-lg border px-4 py-3 text-left text-base leading-relaxed transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 ${style} disabled:cursor-default`}
                     >
                       <span
                         className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
@@ -644,7 +644,7 @@ function SolvePageContent() {
                 }}
                 disabled={revealed}
                 placeholder="정답을 입력하세요 (엔터: 제출)"
-                className="w-full rounded-lg border border-border bg-background px-4 py-3 font-mono text-sm text-foreground placeholder:text-muted/50 transition focus:outline-none focus:ring-2 focus:ring-amber-500/60 disabled:opacity-60"
+                className="w-full rounded-lg border border-border bg-background px-4 py-3 font-mono text-base text-foreground placeholder:text-muted/50 transition focus:outline-none focus:ring-2 focus:ring-amber-500/60 disabled:opacity-60"
                 autoComplete="off"
                 spellCheck={false}
               />
@@ -661,7 +661,7 @@ function SolvePageContent() {
                 disabled={revealed}
                 rows={6}
                 placeholder="개념을 설명하는 답안을 작성하세요. 핵심 키워드를 포함할수록 점수가 올라갑니다."
-                className="w-full resize-y rounded-lg border border-border bg-background px-4 py-3 text-sm leading-relaxed text-foreground placeholder:text-muted/50 transition focus:outline-none focus:ring-2 focus:ring-amber-500/60 disabled:opacity-60"
+                className="w-full resize-y rounded-lg border border-border bg-background px-4 py-3 text-base leading-relaxed text-foreground placeholder:text-muted/50 transition focus:outline-none focus:ring-2 focus:ring-amber-500/60 disabled:opacity-60"
               />
               <p className="mt-2 text-xs text-muted/70">
                 {answerText.length}자 · 채점은 모범답안과 키워드 일치율로 이루어집니다.
@@ -734,7 +734,7 @@ function SolvePageContent() {
             {detail.questionType !== "MCQ" && (
               <div className="rounded-lg border border-border bg-surface px-4 py-3">
                 <p className="text-xs font-medium text-muted">모범답안</p>
-                <p className="mt-1 font-mono text-sm text-foreground">{detail.answer ?? "-"}</p>
+                <p className="mt-1 font-mono text-base text-foreground">{detail.answer ?? "-"}</p>
                 {detail.keywords.length > 0 && (
                   <div className="mt-3">
                     <p className="text-xs font-medium text-muted">
@@ -758,8 +758,8 @@ function SolvePageContent() {
             {/* 해설 */}
             {detail.explanation && (
               <div className="rounded-lg border border-border bg-surface px-4 py-3">
-                <p className="text-sm font-medium text-amber-400">해설</p>
-                <div className="mt-1 text-sm leading-relaxed text-muted">
+                <p className="text-base font-medium text-amber-400">해설</p>
+                <div className="mt-1 text-base leading-relaxed text-muted">
                   <QuestionContent content={detail.explanation} />
                 </div>
               </div>

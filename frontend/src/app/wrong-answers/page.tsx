@@ -242,7 +242,7 @@ function WrongAnswersPageContent() {
     <main className="min-h-screen bg-background text-foreground">
       <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6">
         <h1 className="text-2xl font-bold sm:text-3xl">오답 노트</h1>
-        <p className="mt-2 text-sm text-muted">
+        <p className="mt-2 text-base text-muted">
           틀린 문제를 다시 풀어 마스터하세요. 다시 맞히면 목록에서 자동으로 사라집니다.
         </p>
 
@@ -375,7 +375,7 @@ function WrongAnswersPageContent() {
                   >
                     <div className="cursor-pointer" onClick={() => handleExpand(wa.questionId)}>
                       <div className="flex items-start justify-between gap-3">
-                        <p className="flex-1 text-sm leading-relaxed line-clamp-3 whitespace-pre-line">
+                        <p className="flex-1 text-base leading-relaxed line-clamp-3 whitespace-pre-line">
                           {wa.questionContent}
                         </p>
                         <svg

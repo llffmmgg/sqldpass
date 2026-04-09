@@ -61,7 +61,7 @@ export default async function LearnPage() {
                 </span>
               </div>
               <h2 className="mt-4 text-xl font-bold">{cert.name}</h2>
-              <p className="mt-2 text-sm leading-relaxed text-muted">
+              <p className="mt-2 text-base leading-relaxed text-muted">
                 {cert.description}
               </p>
               <div className="mt-6 flex items-center gap-1.5 text-sm font-medium text-amber-300">
@@ -86,10 +86,10 @@ export default async function LearnPage() {
       )}
 
       <section className="mt-16 rounded-xl border border-border bg-surface/50 p-6">
-        <h2 className="text-lg font-semibold">
+        <h2 className="text-xl font-semibold">
           실전 모의고사로 합격을 준비하세요
         </h2>
-        <p className="mt-2 text-sm text-muted">
+        <p className="mt-2 text-base text-muted">
           매번 새로 추가되는 실전형 세트, 오답 자동 복습, 회차별 실력
           추적을 무료로 이용할 수 있습니다.
         </p>
