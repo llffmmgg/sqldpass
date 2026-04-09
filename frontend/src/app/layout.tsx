@@ -23,45 +23,50 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 const SITE_URL = "https://www.sqldpass.com";
-const SITE_NAME = "SQLD Pass";
+const SITE_NAME = "sqldpass";
 const SITE_DESCRIPTION =
-  "SQLD CBT · 정보처리기사 실기 CBT 무료 모의고사. 실제 시험과 동일한 환경에서 매번 새로 추가되는 기출 문제를 풀고, 오답 자동 복습과 회차별 실력 추적까지. 무료로 시작하세요.";
+  "SQLD · 정보처리기사 실기 · 컴퓨터활용능력 1급 필기 무료 CBT 모의고사. 매번 새로 추가되는 기출 변형 문제, 오답 자동 복습, 회차별 실력 추적까지 한 곳에서.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: "SQLD CBT 모의고사 · 정보처리기사 실기 CBT 무료 문제풀이 | SQLD Pass",
-    template: "%s | SQLD Pass",
+    default: "SQLD · 정처기 실기 · 컴활 1급 필기 무료 CBT 모의고사 | sqldpass",
+    template: "%s | sqldpass",
   },
   description: SITE_DESCRIPTION,
   keywords: [
+    // SQLD
     "SQLD",
     "SQLD CBT",
     "SQLD 모의고사",
     "SQLD 기출",
-    "SQLD 기출문제",
-    "SQLD 문제",
-    "SQLD 무료",
     "SQL 개발자",
     "SQL 개발자 자격증",
-    "정보처리기사 CBT",
+    // 정보처리기사 실기
     "정보처리기사 실기",
+    "정보처리기사 CBT",
     "정보처리기사 실기 CBT",
     "정보처리기사 실기 모의고사",
-    "정보처리기사 실기 기출",
     "정처기",
     "정처기 실기",
     "정처기 실기 CBT",
     "정처기 실기 모의고사",
-    "정처기 실기 기출",
-    "정처기 CBT",
-    "CBT",
+    // 컴퓨터활용능력 1급
+    "컴활 1급",
+    "컴활 1급 필기",
+    "컴활 필기 CBT",
+    "컴활 모의고사",
+    "컴퓨터활용능력 1급",
+    "컴퓨터활용능력 1급 필기",
+    // 공통
+    "자격증 CBT",
     "무료 CBT",
+    "자격증 모의고사",
+    "자격증 기출",
     "IT 자격증",
-    "자격증 문제집",
     "랜덤 모의고사",
   ],
-  authors: [{ name: "SQLD Pass" }],
+  authors: [{ name: "sqldpass" }],
   alternates: {
     canonical: SITE_URL,
   },
@@ -69,13 +74,13 @@ export const metadata: Metadata = {
     type: "website",
     url: SITE_URL,
     siteName: SITE_NAME,
-    title: "SQLD CBT · 정처기 실기 CBT 무료 모의고사 | SQLD Pass",
+    title: "SQLD · 정처기 실기 · 컴활 1급 필기 무료 CBT 모의고사",
     description: SITE_DESCRIPTION,
     locale: "ko_KR",
   },
   twitter: {
     card: "summary_large_image",
-    title: "SQLD CBT · 정처기 실기 CBT 무료 모의고사 | SQLD Pass",
+    title: "SQLD · 정처기 실기 · 컴활 1급 필기 무료 CBT 모의고사",
     description: SITE_DESCRIPTION,
   },
   verification: {

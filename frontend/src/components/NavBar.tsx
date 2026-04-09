@@ -61,8 +61,13 @@ export default function NavBar() {
   return (
     <header className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur">
       <nav className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3 sm:px-6">
-        <Link href="/" className="text-lg font-bold tracking-tight text-foreground">
-          SQLD <span className="text-primary">Pass</span>
+        <Link href="/" className="flex flex-col leading-none text-foreground">
+          <span className="text-lg font-bold tracking-tight">
+            sqld<span className="text-primary">pass</span>
+          </span>
+          <span className="mt-0.5 hidden text-[10px] text-muted sm:block">
+            SQLD · 정처기 실기 · 컴활 1급
+          </span>
         </Link>
 
         {/* Desktop */}

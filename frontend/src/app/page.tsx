@@ -210,11 +210,6 @@ export default async function Home() {
           </a>
         </ScrollReveal>
       </section>
-
-      {/* ── Footer ─────────────────────────────────────────── */}
-      <footer className="footer-gradient-border py-8 text-center text-sm text-muted">
-        <p>&copy; 2025 SQLD Pass. All rights reserved.</p>
-      </footer>
     </main>
   );
 }
