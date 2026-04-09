@@ -20,6 +20,7 @@ import com.sqldpass.persistent.question.QuestionRepository;
 import com.sqldpass.service.common.ErrorCode;
 import com.sqldpass.service.common.SqldpassException;
 import com.sqldpass.service.notification.DiscordNotifier;
+import com.sqldpass.service.notification.NotificationService;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,6 +35,7 @@ public class FeedbackService {
     private final MemberRepository memberRepository;
     private final QuestionRepository questionRepository;
     private final DiscordNotifier discordNotifier;
+    private final NotificationService notificationService;
 
     @Transactional
     public Feedback create(Long memberId, CreateFeedbackRequest req) {
@@ -75,7 +77,23 @@ public class FeedbackService {
     public Feedback updateStatus(Long id, FeedbackStatus status) {
         FeedbackEntity entity = feedbackRepository.findById(id)
                 .orElseThrow(() -> new SqldpassException(ErrorCode.FEEDBACK_NOT_FOUND));
+        FeedbackStatus prev = entity.getStatus();
         entity.changeStatus(status);
+
+        if (status == FeedbackStatus.RESOLVED && prev != FeedbackStatus.RESOLVED) {
+            String preview = entity.getContent();
+            if (preview != null && preview.length() > 60) {
+                preview = preview.substring(0, 60) + "…";
+            }
+            notificationService.notify(
+                    entity.getMemberId(),
+                    "FEEDBACK_RESOLVED",
+                    "건의사항이 해결되었습니다",
+                    preview,
+                    "/mypage/feedback",
+                    entity.getId());
+        }
+
         return FeedbackMapper.toDomain(entity);
     }
 

@@ -7,6 +7,7 @@ import { isLoggedIn, getNickname, clearAuth } from "@/lib/auth";
 import { getGoogleLoginUrl } from "@/lib/oauth";
 import { type Theme, getInitialTheme, setStoredTheme, applyTheme } from "@/lib/theme";
 import FeedbackModal from "@/components/FeedbackModal";
+import NotificationBell from "@/components/NotificationBell";
 
 const NAV_LINKS = [
   { href: "/", label: "홈" },
@@ -95,6 +96,7 @@ export default function NavBar() {
               </svg>
               피드백
             </button>
+            {loggedIn && <NotificationBell />}
             <button
               onClick={toggleTheme}
               className="flex h-8 w-8 items-center justify-center rounded-md text-muted transition-colors hover:text-foreground"
