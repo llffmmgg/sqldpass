@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Noto_Sans_KR, JetBrains_Mono } from "next/font/google";
 import Script from "next/script";
 import NavBar from "@/components/NavBar";
+import { SiteNoticeBanner } from "@/components/SiteNoticeBanner";
 import "./globals.css";
 
 const GA_ID = "G-MPQ2F9201M";
@@ -153,6 +154,7 @@ export default function RootLayout({
             gtag('config', '${GA_ID}');
           `}
         </Script>
+        <SiteNoticeBanner />
         <NavBar />
         <div className="flex-1">{children}</div>
       </body>

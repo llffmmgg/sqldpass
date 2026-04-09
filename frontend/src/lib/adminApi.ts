@@ -299,6 +299,57 @@ export function updateFeedbackStatus(id: number, status: FeedbackStatus) {
   });
 }
 
+// 어드민 - 공지사항
+
+export type NoticeDisplayType = "BANNER" | "MODAL";
+
+export interface AdminNotice {
+  id: number;
+  displayType: NoticeDisplayType;
+  title: string | null;
+  body: string;
+  active: boolean;
+  version: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface NoticePayload {
+  displayType: NoticeDisplayType;
+  title: string | null;
+  body: string;
+  active: boolean;
+}
+
+export function listNotices() {
+  return adminFetch<AdminNotice[]>("/notices");
+}
+
+export function createNotice(payload: NoticePayload) {
+  return adminFetch<AdminNotice>("/notices", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function updateNotice(id: number, payload: NoticePayload) {
+  return adminFetch<AdminNotice>(`/notices/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function setNoticeActive(id: number, active: boolean) {
+  return adminFetch<AdminNotice>(`/notices/${id}/active`, {
+    method: "PATCH",
+    body: JSON.stringify({ active }),
+  });
+}
+
+export function deleteNotice(id: number) {
+  return adminFetch<void>(`/notices/${id}`, { method: "DELETE" });
+}
+
 export interface GenerationStatus {
   status: "IDLE" | "RUNNING" | "COMPLETED" | "FAILED";
   result: string | null;
