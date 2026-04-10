@@ -44,11 +44,12 @@ export default async function BlogPage() {
     <main className="mx-auto max-w-4xl px-4 py-12 sm:px-6 lg:px-8">
       <header className="mb-10 flex items-center gap-5">
         <Image
-          src="/blog-mascot.png"
+          src="/blog-mascot.webp"
           alt="시험 준비 팁 마스코트"
           width={160}
           height={160}
           className="shrink-0"
+          priority
         />
         <div>
           <h1 className="text-3xl font-bold sm:text-4xl">시험 준비 팁</h1>

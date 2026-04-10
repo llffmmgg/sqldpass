@@ -459,11 +459,12 @@ function WrongAnswersPageContent() {
       <div className="mx-auto max-w-4xl px-4 py-16 sm:px-6 lg:px-8">
         <div className="flex items-center gap-5">
           <Image
-            src="/wrong-answer-mascot.png"
+            src="/wrong-answer-mascot.webp"
             alt="오답노트 마스코트"
             width={220}
             height={220}
             className="shrink-0"
+            priority
           />
           <div>
             <h1 className="text-3xl font-bold sm:text-4xl">오답 노트</h1>
