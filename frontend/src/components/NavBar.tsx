@@ -353,8 +353,8 @@ function NavDropdown({
       onMouseEnter={() => setOpen(true)}
       onMouseLeave={() => setOpen(false)}
     >
-      <Link
-        href={basePath}
+      <button
+        onClick={() => setOpen((v) => !v)}
         onFocus={() => setOpen(true)}
         onBlur={() => setOpen(false)}
         className={`inline-flex items-center gap-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
@@ -373,7 +373,7 @@ function NavDropdown({
         >
           <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
         </svg>
-      </Link>
+      </button>
       {open && (
         <div
           className="absolute left-0 top-full z-50 min-w-[240px] pt-2"
