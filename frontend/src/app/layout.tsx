@@ -95,6 +95,13 @@ export const metadata: Metadata = {
       "naver-site-verification": "baf127a946ae161a687576e193bd4a3e4e00e924",
     },
   },
+  icons: {
+    icon: [
+      { url: "/logo/favicon-32x32.png", sizes: "32x32", type: "image/png" },
+      { url: "/logo/favicon-16x16.png", sizes: "16x16", type: "image/png" },
+    ],
+    apple: "/logo/apple-touch-icon.png",
+  },
   robots: {
     index: true,
     follow: true,
@@ -119,7 +126,7 @@ export default function RootLayout({
     "@type": "Organization",
     name: SITE_NAME,
     url: SITE_URL,
-    logo: `${SITE_URL}/favicon.svg`,
+    logo: `${SITE_URL}/logo/logo.png`,
     sameAs: [] as string[],
   };
 

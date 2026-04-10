@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -83,7 +84,8 @@ export default function NavBar() {
   return (
     <header className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur">
       <nav className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3 sm:px-6">
-        <Link href="/" className="text-xl font-bold tracking-tight text-foreground">
+        <Link href="/" className="flex items-center gap-2 text-xl font-bold tracking-tight text-foreground">
+          <Image src="/logo/logo.png" alt="sqldpass" width={32} height={32} className="rounded-md" />
           sqld<span className="text-primary">pass</span>
         </Link>
 
