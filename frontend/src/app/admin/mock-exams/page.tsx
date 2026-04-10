@@ -404,7 +404,12 @@ export default function AdminMockExamsPage() {
                       </td>
                       <td className="px-4 py-3 font-medium">
                         <div className="flex flex-wrap items-center gap-2">
-                          <span>{exam.name}</span>
+                          <Link
+                            href={`/admin/mock-exams/${exam.id}`}
+                            className="hover:text-violet-300 transition-colors"
+                          >
+                            {exam.name}
+                          </Link>
                           {exam.templateLabel && (
                             <span className="inline-flex items-center rounded-md border border-emerald-500/40 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-medium text-emerald-300">
                               {exam.templateLabel}
