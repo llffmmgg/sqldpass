@@ -456,7 +456,7 @@ function WrongAnswersPageContent() {
 
   return (
     <main className="min-h-screen bg-background text-foreground">
-      <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6">
+      <div className="mx-auto max-w-4xl px-4 py-16 sm:px-6 lg:px-8">
         <div className="flex items-center gap-5">
           <Image
             src="/wrong-answer-mascot.png"
@@ -466,7 +466,7 @@ function WrongAnswersPageContent() {
             className="shrink-0"
           />
           <div>
-            <h1 className="text-2xl font-bold sm:text-3xl">오답 노트</h1>
+            <h1 className="text-3xl font-bold sm:text-4xl">오답 노트</h1>
             <p className="mt-2 text-base text-muted">
               틀린 문제를 다시 풀어 마스터하세요. 다시 맞히면 목록에서 자동으로 사라집니다.
             </p>
