@@ -732,7 +732,7 @@ export default function AdminQuestionsPage() {
               >
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-mono text-muted/60">#{question.id}</span>
+                    <Link href={`/admin/questions/${question.id}`} className="text-xs font-mono text-muted/60 hover:text-violet-300 transition-colors">#{question.id}</Link>
                     <span className="rounded bg-violet-500/10 px-2 py-0.5 text-xs font-medium text-violet-400">
                       {question.subjectName}
                     </span>
@@ -747,7 +747,7 @@ export default function AdminQuestionsPage() {
                     )}
                     <span className="text-xs text-muted">{formatDate(question.createdAt)}</span>
                   </div>
-                  <p className="mt-1 truncate text-sm">{question.content.split("\n")[0]}</p>
+                  <Link href={`/admin/questions/${question.id}`} className="mt-1 block truncate text-sm hover:text-violet-300 transition-colors">{question.content.split("\n")[0]}</Link>
                   {question.summary && <p className="mt-0.5 text-xs text-muted">{question.summary}</p>}
                 </div>
                 <div className="ml-4 flex shrink-0 gap-2">

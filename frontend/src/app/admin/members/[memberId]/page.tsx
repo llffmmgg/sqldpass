@@ -152,7 +152,13 @@ export default function AdminMemberDetailPage({
                     <li key={s.id} className="flex items-center justify-between py-2 text-sm">
                       <div>
                         <p className="font-medium">
-                          {s.mockExamId ? `모의고사 #${s.mockExamId}` : `과목 풀이 #${s.subjectId}`}
+                          {s.mockExamId ? (
+                            <Link href={`/admin/mock-exams/${s.mockExamId}`} className="hover:text-violet-300 transition-colors">
+                              모의고사 #{s.mockExamId}
+                            </Link>
+                          ) : (
+                            `과목 풀이 #${s.subjectId}`
+                          )}
                         </p>
                         <p className="text-xs text-muted">{formatDate(s.solvedAt)}</p>
                       </div>
