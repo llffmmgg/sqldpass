@@ -1,0 +1,498 @@
+package com.sqldpass.service.generation;
+
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
+/**
+ * 정보처리기사 필기 토픽별 Few-shot 예시 (기출 기반).
+ * 각 토픽당 기본(0)/심화(1)/고난도(2) 3개씩 — JSON 문자열 형식.
+ */
+public final class EngineerWrittenTopicExamples {
+
+    public static final Map<String, List<String>> EXAMPLES = new LinkedHashMap<>();
+
+    static {
+        EXAMPLES.put("UML 다이어그램 종류", List.of(
+            """
+            {"content":"UML(Unified Modeling Language)에서 시스템의 기능과 사용자의 상호작용을 표현하는 다이어그램은?\n\n① 클래스 다이어그램\n② 유스케이스 다이어그램\n③ 시퀀스 다이어그램\n④ 배치 다이어그램","correctOption":2,"explanation":"유스케이스 다이어그램은 시스템이 제공하는 기능(유스케이스)과 그 기능을 사용하는 외부 사용자(액터) 간의 관계를 표현하는 다이어그램이다.","summary":"유스케이스 다이어그램 = 기능 + 사용자 상호작용","difficulty":0}""",
+            """
+            {"content":"UML 다이어그램 중 구조적(정적) 다이어그램에 해당하지 않는 것은?\n\n① 클래스 다이어그램\n② 컴포넌트 다이어그램\n③ 활동 다이어그램\n④ 배치 다이어그램","correctOption":3,"explanation":"활동(Activity) 다이어그램은 행위(동적) 다이어그램에 해당한다. 구조적 다이어그램에는 클래스, 객체, 컴포넌트, 배치, 복합구조, 패키지 다이어그램이 있다.","summary":"활동 다이어그램은 행위 다이어그램(동적)","difficulty":1}""",
+            """
+            {"content":"다음 중 UML 다이어그램에 대한 설명으로 옳지 않은 것은?\n\n① 시퀀스 다이어그램은 객체 간 메시지 전달을 시간 순서에 따라 표현한다\n② 상태 다이어그램은 객체의 상태 변화와 전이를 표현한다\n③ 패키지 다이어그램은 행위 다이어그램으로 모듈 간 의존성을 표현한다\n④ 커뮤니케이션 다이어그램은 객체 간 메시지 흐름과 연관 관계를 표현한다","correctOption":3,"explanation":"패키지 다이어그램은 구조적(정적) 다이어그램이다. 패키지 간의 의존 관계를 표현하며, 모델 요소들을 그룹화하여 관리하는 데 사용된다.","summary":"패키지 다이어그램은 구조적(정적) 다이어그램","difficulty":2}"""
+        ));
+
+        EXAMPLES.put("UML 관계", List.of(
+            """
+            {"content":"UML에서 하나의 클래스가 다른 클래스를 포함하되, 포함된 클래스가 독립적으로 존재할 수 있는 관계는?\n\n① 연관(Association)\n② 집합(Aggregation)\n③ 합성(Composition)\n④ 의존(Dependency)","correctOption":2,"explanation":"집합(Aggregation) 관계는 전체-부분 관계에서 부분이 전체와 독립적으로 존재할 수 있는 관계이다. 빈 마름모(◇)로 표현하며, 합성과 달리 생명주기를 공유하지 않는다.","summary":"집합 = 전체-부분 관계, 부분이 독립 존재 가능","difficulty":0}""",
+            """
+            {"content":"UML에서 한 사물의 명세가 바뀌면 다른 사물에 영향을 주지만 그 역은 성립하지 않는 관계로, 점선 화살표로 표현하는 것은?\n\n① 일반화 관계\n② 실체화 관계\n③ 의존 관계\n④ 연관 관계","correctOption":3,"explanation":"의존(Dependency) 관계는 하나의 사물이 다른 사물을 일시적으로 사용하는 관계이다. 점선 화살표(---->)로 표현하며, 메서드의 매개변수로 사용되는 경우가 대표적이다.","summary":"의존 관계 = 점선 화살표, 일시적 사용","difficulty":1}""",
+            """
+            {"content":"다음 중 UML 관계에 대한 설명으로 옳은 것은?\n\n① 합성 관계에서 부분 객체는 전체 객체가 소멸해도 독립적으로 존재할 수 있다\n② 실체화 관계는 인터페이스를 구현하는 관계로, 점선과 빈 삼각형 화살표로 표현한다\n③ 일반화 관계는 점선 화살표로 표현하며, 인터페이스 구현을 나타낸다\n④ 연관 관계의 다중성에서 '*'는 정확히 1개를 의미한다","correctOption":2,"explanation":"실체화(Realization) 관계는 인터페이스를 구현 클래스가 실현하는 관계로, 점선과 빈 삼각형 화살표(---▷)로 표현한다. 합성에서는 부분이 전체와 생명주기를 함께하며, 일반화는 실선 빈 삼각형 화살표이다.","summary":"실체화 = 인터페이스 구현, 점선+빈 삼각형","difficulty":2}"""
+        ));
+
+        EXAMPLES.put("디자인 패턴", List.of(
+            """
+            {"content":"클래스의 인스턴스가 하나만 생성되도록 보장하고, 어디서든 그 인스턴스에 접근할 수 있도록 하는 디자인 패턴은?\n\n① 팩토리 메서드\n② 싱글톤\n③ 빌더\n④ 프로토타입","correctOption":2,"explanation":"싱글톤(Singleton) 패턴은 전역적으로 단 하나의 인스턴스만 생성하여 공유하는 생성 패턴이다. 생성자를 private으로 선언하고 getInstance() 등의 정적 메서드로 접근한다.","summary":"싱글톤 = 인스턴스 하나만 생성, 전역 접근","difficulty":0}""",
+            """
+            {"content":"기존 코드를 변경하지 않고 호환되지 않는 인터페이스를 가진 클래스를 함께 사용할 수 있도록 하는 디자인 패턴은?\n\n① 브리지(Bridge)\n② 데코레이터(Decorator)\n③ 어댑터(Adapter)\n④ 퍼사드(Facade)","correctOption":3,"explanation":"어댑터(Adapter) 패턴은 호환되지 않는 인터페이스를 가진 객체들이 함께 동작할 수 있도록 중간에서 변환 역할을 하는 구조 패턴이다. Wrapper라고도 한다.","summary":"어댑터 = 호환되지 않는 인터페이스 변환","difficulty":1}""",
+            """
+            {"content":"다음 설명에 해당하는 디자인 패턴은?\n\n\"객체의 상태가 변경될 때, 그 객체에 종속된 다른 객체들에게 자동으로 알림이 가고 갱신이 이루어지도록 일대다(1:N) 의존 관계를 정의한다.\"\n\n① 전략(Strategy) 패턴\n② 옵저버(Observer) 패턴\n③ 상태(State) 패턴\n④ 중재자(Mediator) 패턴","correctOption":2,"explanation":"옵저버(Observer) 패턴은 한 객체(Subject)의 상태 변화 시 종속 객체(Observer)들에게 자동으로 통보하여 갱신하는 행위 패턴이다. 발행-구독(Publish-Subscribe) 모델이라고도 한다.","summary":"옵저버 = 상태 변화 시 종속 객체에 자동 통보 (1:N)","difficulty":2}"""
+        ));
+
+        EXAMPLES.put("결합도와 응집도", List.of(
+            """
+            {"content":"모듈 간 결합도가 가장 낮은(좋은) 것은?\n\n① 내용 결합도(Content)\n② 공통 결합도(Common)\n③ 자료 결합도(Data)\n④ 제어 결합도(Control)","correctOption":3,"explanation":"결합도가 낮을수록 좋으며, 자료 결합도가 가장 낮다. 결합도 순서: 자료 < 스탬프 < 제어 < 외부 < 공통 < 내용 (낮은 것이 좋음)","summary":"자료 결합도가 가장 낮음(좋음)","difficulty":0}""",
+            """
+            {"content":"모듈의 응집도를 높은 것부터 낮은 순서로 올바르게 나열한 것은?\n\n① 기능 > 순차 > 통신 > 절차 > 시간 > 논리 > 우연\n② 기능 > 통신 > 순차 > 절차 > 논리 > 시간 > 우연\n③ 순차 > 기능 > 통신 > 절차 > 시간 > 논리 > 우연\n④ 기능 > 순차 > 절차 > 통신 > 시간 > 논리 > 우연","correctOption":1,"explanation":"응집도 순서(높→낮): 기능(Functional) > 순차(Sequential) > 통신(Communication) > 절차(Procedural) > 시간(Temporal) > 논리(Logical) > 우연(Coincidental). 응집도는 높을수록 좋다.","summary":"응집도: 기순통절시논우 (높→낮)","difficulty":1}""",
+            """
+            {"content":"다른 모듈의 내부 기능이나 내부 자료를 직접 참조하거나 수정하는 경우의 결합도는?\n\n① 외부 결합도\n② 공통 결합도\n③ 내용 결합도\n④ 스탬프 결합도","correctOption":3,"explanation":"내용 결합도(Content Coupling)는 한 모듈이 다른 모듈의 내부 로직이나 데이터를 직접 참조·수정하는 가장 높은(나쁜) 결합도이다. 다른 모듈의 지역 변수를 사용하거나, 다른 모듈의 내부로 분기하는 경우이다.","summary":"내용 결합도 = 다른 모듈 내부 직접 참조/수정 (가장 나쁨)","difficulty":2}"""
+        ));
+
+        EXAMPLES.put("요구사항 분석", List.of(
+            """
+            {"content":"요구사항 개발 프로세스의 순서로 올바른 것은?\n\n① 도출 → 분석 → 명세 → 확인\n② 분석 → 도출 → 명세 → 확인\n③ 도출 → 명세 → 분석 → 확인\n④ 명세 → 도출 → 분석 → 확인","correctOption":1,"explanation":"요구사항 개발 프로세스는 도출(Elicitation) → 분석(Analysis) → 명세(Specification) → 확인(Validation)의 순서로 진행된다.","summary":"요구사항: 도출→분석→명세→확인","difficulty":0}""",
+            """
+            {"content":"요구사항 분석 기법 중 시스템 사용자와 개발자가 함께 모여 요구사항을 도출하는 기법으로, 회의 참석자 모두가 동등한 입장에서 의견을 제시하는 것은?\n\n① 브레인스토밍\n② JAD(Joint Application Development)\n③ 프로토타이핑\n④ 델파이 기법","correctOption":2,"explanation":"JAD는 사용자와 개발자가 공동으로 워크숍에 참여하여 요구사항을 정의하는 기법이다. 브레인스토밍은 자유로운 아이디어 제시, 델파이는 전문가 의견 수렴 기법이다.","summary":"JAD = 사용자+개발자 공동 워크숍","difficulty":1}""",
+            """
+            {"content":"요구사항 확인(Validation) 단계에서 수행하는 활동으로 가장 거리가 먼 것은?\n\n① 요구사항 검토(Review)\n② 프로토타이핑\n③ 모델 검증\n④ 자료 흐름도(DFD) 작성","correctOption":4,"explanation":"자료 흐름도(DFD)는 요구사항 분석 단계에서 사용하는 도구이다. 확인(Validation) 단계에서는 요구사항 검토, 프로토타이핑, 모델 검증, 인수 테스트 등을 수행한다.","summary":"DFD는 분석 단계 도구, 확인 단계가 아님","difficulty":2}"""
+        ));
+
+        EXAMPLES.put("소프트웨어 생명주기", List.of(
+            """
+            {"content":"소프트웨어 생명주기 모델 중 각 단계가 끝난 후 다음 단계로 넘어가는 선형 순차적 모델은?\n\n① 나선형 모델\n② 폭포수 모델\n③ 프로토타입 모델\n④ RAD 모델","correctOption":2,"explanation":"폭포수(Waterfall) 모델은 요구분석→설계→구현→테스트→유지보수의 각 단계를 순차적으로 진행하는 고전적 모델이다. 이전 단계로 되돌아가기 어렵다는 단점이 있다.","summary":"폭포수 모델 = 선형 순차적, 되돌아가기 어려움","difficulty":0}""",
+            """
+            {"content":"나선형(Spiral) 모델의 4가지 주요 활동 순서로 올바른 것은?\n\n① 계획수립 → 위험분석 → 개발 → 고객평가\n② 위험분석 → 계획수립 → 개발 → 고객평가\n③ 계획수립 → 개발 → 위험분석 → 고객평가\n④ 개발 → 계획수립 → 위험분석 → 고객평가","correctOption":1,"explanation":"나선형 모델은 계획수립(Planning) → 위험분석(Risk Analysis) → 개발 및 검증(Engineering) → 고객평가(Customer Evaluation)를 반복적으로 수행한다. 위험 관리가 핵심이다.","summary":"나선형: 계획→위험분석→개발→고객평가 반복","difficulty":1}""",
+            """
+            {"content":"애자일(Agile) 방법론의 핵심 가치로 옳지 않은 것은?\n\n① 프로세스와 도구보다 개인과 상호작용을 중시한다\n② 포괄적인 문서보다 작동하는 소프트웨어를 중시한다\n③ 계약 협상보다 고객과의 협력을 중시한다\n④ 계획 준수보다 상세한 문서화를 중시한다","correctOption":4,"explanation":"애자일 선언의 4가지 핵심가치 중 하나는 '계획을 따르기보다 변화에 대응하기'이다. 상세한 문서화를 중시하는 것은 애자일의 가치가 아니며, 오히려 문서보다 작동하는 소프트웨어를 중시한다.","summary":"애자일은 문서화보다 변화 대응·작동 소프트웨어 중시","difficulty":2}"""
+        ));
+
+        EXAMPLES.put("애자일 (스크럼/XP)", List.of(
+            """
+            {"content":"스크럼(Scrum)에서 2~4주 단위의 반복 개발 주기를 무엇이라 하는가?\n\n① 백로그\n② 스프린트\n③ 데일리 미팅\n④ 번다운 차트","correctOption":2,"explanation":"스프린트(Sprint)는 스크럼에서 2~4주의 짧은 개발 주기를 의미한다. 각 스프린트마다 실행 가능한 산출물을 만들어낸다.","summary":"스프린트 = 2~4주 반복 개발 주기","difficulty":0}""",
+            """
+            {"content":"XP(eXtreme Programming)의 12가지 핵심 실천방법에 해당하지 않는 것은?\n\n① 짝 프로그래밍(Pair Programming)\n② 테스트 주도 개발(TDD)\n③ 지속적 통합(CI)\n④ 번다운 차트(Burndown Chart)","correctOption":4,"explanation":"번다운 차트는 스크럼에서 사용하는 도구이다. XP의 핵심 실천방법에는 짝 프로그래밍, TDD, CI, 리팩토링, 소규모 릴리즈, 코딩 표준, 공동 코드 소유, 단순 설계 등이 있다.","summary":"번다운 차트는 스크럼, XP가 아님","difficulty":1}""",
+            """
+            {"content":"스크럼에서 제품에 대한 요구사항을 우선순위에 따라 나열한 목록으로, 제품 책임자(Product Owner)가 관리하는 것은?\n\n① 스프린트 백로그\n② 제품 백로그\n③ 릴리즈 계획\n④ 임피던스","correctOption":2,"explanation":"제품 백로그(Product Backlog)는 프로젝트에 필요한 모든 요구사항을 우선순위에 따라 정리한 목록이다. 스프린트 백로그는 해당 스프린트에서 수행할 작업 목록이다.","summary":"제품 백로그 = 전체 요구사항 우선순위 목록, PO 관리","difficulty":2}"""
+        ));
+
+        EXAMPLES.put("UI 설계", List.of(
+            """
+            {"content":"사용자 인터페이스(UI) 유형 중 사람의 자연스러운 움직임(터치, 음성 등)으로 조작하는 인터페이스는?\n\n① CLI\n② GUI\n③ NUI\n④ OUI","correctOption":3,"explanation":"NUI(Natural User Interface)는 터치, 음성, 제스처 등 사람의 자연스러운 행동으로 조작하는 인터페이스이다. CLI는 명령어 기반, GUI는 그래픽 기반, OUI는 유기적 상호작용 인터페이스이다.","summary":"NUI = 터치/음성/제스처 등 자연스러운 조작","difficulty":0}""",
+            """
+            {"content":"UI 설계 원칙 중 '사용자가 쉽게 배우고 사용할 수 있어야 한다'는 원칙은?\n\n① 직관성\n② 유효성\n③ 학습성\n④ 유연성","correctOption":3,"explanation":"학습성(Learnability)은 초보 사용자도 쉽게 배울 수 있어야 한다는 원칙이다. 직관성은 누구나 이해, 유효성은 목적 달성, 유연성은 다양한 환경 적응을 의미한다.","summary":"학습성 = 쉽게 배우고 사용","difficulty":1}""",
+            """
+            {"content":"UI 개발 산출물의 제작 순서로 올바른 것은?\n\n① 와이어프레임 → 목업 → 스토리보드 → 프로토타입\n② 와이어프레임 → 스토리보드 → 프로토타입 → 목업\n③ 목업 → 와이어프레임 → 프로토타입 → 스토리보드\n④ 스토리보드 → 와이어프레임 → 목업 → 프로토타입","correctOption":1,"explanation":"와이어프레임(레이아웃 구조) → 목업(디자인 적용 정적 모형) → 스토리보드(와이어프레임+설명) → 프로토타입(상호작용 가능한 동적 모형) 순서로 발전한다.","summary":"와이어프레임→목업→스토리보드→프로토타입","difficulty":2}"""
+        ));
+
+        EXAMPLES.put("아키텍처 패턴", List.of(
+            """
+            {"content":"소프트웨어 아키텍처 패턴 중 Model, View, Controller로 분리하여 설계하는 패턴은?\n\n① 파이프-필터\n② 레이어드\n③ MVC\n④ 브로커","correctOption":3,"explanation":"MVC 패턴은 Model(데이터/비즈니스 로직), View(사용자 인터페이스), Controller(입력 처리/흐름 제어)로 분리하여 독립적으로 개발·수정할 수 있는 패턴이다.","summary":"MVC = Model(데이터) + View(화면) + Controller(제어)","difficulty":0}""",
+            """
+            {"content":"데이터 스트림을 단계적으로 처리하며, 각 처리 단계가 필터가 되고 데이터가 파이프를 통해 전달되는 아키텍처 패턴은?\n\n① 클라이언트-서버\n② 파이프-필터\n③ MVC\n④ 이벤트 버스","correctOption":2,"explanation":"파이프-필터(Pipe-Filter) 패턴은 데이터가 파이프를 통해 흐르며 각 필터에서 처리되는 구조이다. UNIX의 셸 파이프라인이 대표적 예이다.","summary":"파이프-필터 = 데이터 흐름을 단계별 필터로 처리","difficulty":1}""",
+            """
+            {"content":"분산 환경에서 서비스 요청자와 제공자 간의 통신을 중재하는 미들웨어 역할을 하는 아키텍처 패턴은?\n\n① 브로커(Broker)\n② 레이어드(Layered)\n③ 마스터-슬레이브(Master-Slave)\n④ 블랙보드(Blackboard)","correctOption":1,"explanation":"브로커(Broker) 패턴은 분산 시스템에서 서비스 요청자와 제공자 사이에 위치하여 통신을 조정·중재하는 역할을 한다. CORBA, 웹 서비스 등에서 활용된다.","summary":"브로커 = 분산 환경에서 서비스 요청-제공 중재","difficulty":2}"""
+        ));
+
+        EXAMPLES.put("품질 특성 (ISO 9126 / 25010)", List.of(
+            """
+            {"content":"ISO/IEC 9126의 소프트웨어 품질 특성에 해당하지 않는 것은?\n\n① 기능성(Functionality)\n② 신뢰성(Reliability)\n③ 보안성(Security)\n④ 유지보수성(Maintainability)","correctOption":3,"explanation":"ISO 9126의 6가지 품질 특성은 기능성, 신뢰성, 사용성, 효율성, 유지보수성, 이식성이다. 보안성은 ISO 25010에서 별도 특성으로 분리되었다.","summary":"ISO 9126: 기신사효유이 (보안성은 25010에서 별도)","difficulty":0}""",
+            """
+            {"content":"소프트웨어가 다른 환경으로 이전될 수 있는 능력을 나타내는 ISO/IEC 9126 품질 특성은?\n\n① 효율성\n② 사용성\n③ 이식성\n④ 유지보수성","correctOption":3,"explanation":"이식성(Portability)은 소프트웨어를 다른 하드웨어, 운영체제 또는 환경으로 이전할 수 있는 능력을 의미한다. 적응성, 설치성, 공존성, 대체성의 부특성을 포함한다.","summary":"이식성 = 다른 환경으로 이전 가능 능력","difficulty":1}""",
+            """
+            {"content":"ISO/IEC 25010에서 ISO 9126 대비 새로 추가된 품질 특성에 해당하는 것은?\n\n① 기능 적합성(Functional Suitability)\n② 호환성(Compatibility)\n③ 사용성(Usability)\n④ 신뢰성(Reliability)","correctOption":2,"explanation":"ISO 25010은 ISO 9126을 발전시킨 것으로, 8개 특성을 제시한다. 기존 6개에서 보안성(Security)과 호환성(Compatibility)이 독립적 특성으로 추가되었다.","summary":"ISO 25010: 보안성, 호환성 추가 (총 8개 특성)","difficulty":2}"""
+        ));
+
+        EXAMPLES.put("자료구조 - 스택/큐", List.of(
+            """
+            {"content":"후입선출(LIFO) 구조를 가지는 자료구조는?\n\n① 큐(Queue)\n② 스택(Stack)\n③ 데크(Deque)\n④ 연결 리스트(Linked List)","correctOption":2,"explanation":"스택(Stack)은 마지막에 삽입된 데이터가 가장 먼저 삭제되는 LIFO(Last In First Out) 구조이다. push(삽입), pop(삭제) 연산을 사용한다.","summary":"스택 = LIFO, push/pop","difficulty":0}""",
+            """
+            {"content":"스택을 활용하는 대표적인 사례로 가장 거리가 먼 것은?\n\n① 함수 호출 시 복귀 주소 저장\n② 수식의 괄호 검사\n③ 후위 표기법 연산\n④ 운영체제의 작업 스케줄링","correctOption":4,"explanation":"운영체제의 작업 스케줄링은 주로 큐(Queue)를 활용한다. 스택은 함수 호출 복귀주소, 괄호 검사, 후위표기 연산, 깊이우선탐색(DFS), Undo 기능 등에 활용된다.","summary":"작업 스케줄링은 큐, 스택이 아님","difficulty":1}""",
+            """
+            {"content":"중위 표기식 A*(B+C)-D 를 후위 표기식으로 변환한 결과는?\n\n① ABC+*D-\n② AB*C+D-\n③ ABC*+D-\n④ ABCD+*-","correctOption":1,"explanation":"스택을 이용한 중위→후위 변환: B+C → BC+, A*(BC+) → ABC+*, ABC+*-D → ABC+*D-. 연산자 우선순위에 따라 스택에 넣고 뺀다.","summary":"A*(B+C)-D → ABC+*D-","difficulty":2}"""
+        ));
+
+        EXAMPLES.put("자료구조 - 트리", List.of(
+            """
+            {"content":"이진 트리의 순회 방법 중 '왼쪽 서브트리 → 루트 → 오른쪽 서브트리' 순서로 방문하는 것은?\n\n① 전위 순회\n② 중위 순회\n③ 후위 순회\n④ 레벨 순회","correctOption":2,"explanation":"중위 순회(Inorder)는 Left → Root → Right 순서이다. 전위는 Root→Left→Right, 후위는 Left→Right→Root, 레벨은 위에서 아래로 왼쪽부터 순회한다.","summary":"중위 순회 = Left → Root → Right","difficulty":0}""",
+            """
+            {"content":"포화 이진 트리(Full Binary Tree)에서 높이가 3일 때 노드의 수는? (루트 높이=1)\n\n① 5\n② 7\n③ 8\n④ 15","correctOption":2,"explanation":"포화 이진 트리에서 높이가 h일 때 노드 수 = 2^h - 1이다. h=3이면 2^3 - 1 = 7개이다.","summary":"포화 이진 트리 노드 수 = 2^h - 1","difficulty":1}""",
+            """
+            {"content":"다음 이진 트리를 후위 순회한 결과는?\n\n        A\n       / \\\n      B   C\n     / \\   \\\n    D   E   F\n\n① D E B F C A\n② D B E A C F\n③ A B D E C F\n④ D E F B C A","correctOption":1,"explanation":"후위 순회(Postorder)는 Left → Right → Root 순서이다. B의 왼쪽 D, 오른쪽 E, 루트 B → C의 오른쪽 F, 루트 C → 최상위 루트 A. 결과: D E B F C A","summary":"후위 순회: Left→Right→Root → D E B F C A","difficulty":2}"""
+        ));
+
+        EXAMPLES.put("자료구조 - 그래프/해싱", List.of(
+            """
+            {"content":"그래프 탐색 방법 중 시작 정점에서 인접한 정점을 모두 방문한 후 다음 단계로 넘어가는 방식은?\n\n① 깊이 우선 탐색(DFS)\n② 너비 우선 탐색(BFS)\n③ 후위 순회\n④ 중위 순회","correctOption":2,"explanation":"BFS(Breadth First Search)는 시작 정점에서 인접한 정점을 모두 방문한 후 다음 레벨로 이동하는 탐색 방법이다. 큐를 사용하며, DFS는 스택(또는 재귀)을 사용한다.","summary":"BFS = 인접 정점 모두 방문 후 다음 레벨, 큐 사용","difficulty":0}""",
+            """
+            {"content":"해싱에서 서로 다른 키가 같은 해시 주소를 갖는 현상을 무엇이라 하는가?\n\n① 오버플로우\n② 충돌(Collision)\n③ 동의어(Synonym)\n④ 클러스터링","correctOption":2,"explanation":"충돌(Collision)은 서로 다른 키가 동일한 해시 주소로 매핑되는 현상이다. 충돌된 키들을 동의어(Synonym)라 한다. 해결법으로 체이닝, 개방 주소법 등이 있다.","summary":"충돌 = 서로 다른 키가 같은 해시 주소","difficulty":1}""",
+            """
+            {"content":"해싱의 충돌 해결 방법 중 개방 주소법(Open Addressing)에 해당하지 않는 것은?\n\n① 선형 탐사(Linear Probing)\n② 이차 탐사(Quadratic Probing)\n③ 이중 해싱(Double Hashing)\n④ 체이닝(Chaining)","correctOption":4,"explanation":"체이닝(Chaining)은 같은 해시 주소에 연결 리스트로 데이터를 연결하는 방식으로, 개방 주소법이 아닌 별도 체인법이다. 선형 탐사, 이차 탐사, 이중 해싱은 개방 주소법에 속한다.","summary":"체이닝은 개방 주소법이 아닌 별도 체인법","difficulty":2}"""
+        ));
+
+        EXAMPLES.put("정렬 알고리즘", List.of(
+            """
+            {"content":"평균 시간 복잡도가 O(n log n)인 정렬 알고리즘은?\n\n① 버블 정렬\n② 선택 정렬\n③ 퀵 정렬\n④ 삽입 정렬","correctOption":3,"explanation":"퀵 정렬의 평균 시간 복잡도는 O(n log n)이다. 버블, 선택, 삽입 정렬은 모두 평균 O(n²)이다. 단, 퀵 정렬의 최악은 O(n²)이다.","summary":"퀵 정렬: 평균 O(n log n), 최악 O(n²)","difficulty":0}""",
+            """
+            {"content":"다음 중 정렬 알고리즘과 최악 시간 복잡도가 올바르게 연결된 것은?\n\n① 합병 정렬 - O(n²)\n② 힙 정렬 - O(n log n)\n③ 퀵 정렬 - O(n log n)\n④ 삽입 정렬 - O(n log n)","correctOption":2,"explanation":"힙 정렬은 최선·평균·최악 모두 O(n log n)이다. 합병 정렬도 항상 O(n log n)이지만 ①은 O(n²)라 틀렸다. 퀵 정렬 최악은 O(n²), 삽입 정렬 최악도 O(n²)이다.","summary":"힙 정렬 = 항상 O(n log n)","difficulty":1}""",
+            """
+            {"content":"기수 정렬(Radix Sort)에 대한 설명으로 옳지 않은 것은?\n\n① 비교 기반 정렬이 아닌 분배 기반 정렬이다\n② 시간 복잡도는 O(d·n)으로 선형 시간에 가깝다\n③ 안정 정렬(Stable Sort)에 해당한다\n④ 데이터 간 직접 비교를 통해 정렬을 수행한다","correctOption":4,"explanation":"기수 정렬은 키의 각 자릿수를 기준으로 분배하는 정렬로, 데이터 간 직접 비교를 하지 않는다. 시간 복잡도는 O(d·n)이며, 안정 정렬이다.","summary":"기수 정렬 = 비교 없이 자릿수 기준 분배 정렬","difficulty":2}"""
+        ));
+
+        EXAMPLES.put("테스트 유형", List.of(
+            """
+            {"content":"소프트웨어 테스트 단계를 순서대로 나열한 것은?\n\n① 단위 → 통합 → 시스템 → 인수\n② 통합 → 단위 → 시스템 → 인수\n③ 단위 → 시스템 → 통합 → 인수\n④ 인수 → 시스템 → 통합 → 단위","correctOption":1,"explanation":"테스트는 단위(Unit) → 통합(Integration) → 시스템(System) → 인수(Acceptance) 순서로 진행된다. 범위가 점점 넓어진다.","summary":"테스트: 단위→통합→시스템→인수","difficulty":0}""",
+            """
+            {"content":"인수 테스트의 종류 중 개발 조직 내에서 테스트하는 것은?\n\n① 알파 테스트\n② 베타 테스트\n③ 회귀 테스트\n④ 감마 테스트","correctOption":1,"explanation":"알파 테스트는 개발자 환경에서 사용자가 참여하여 수행하는 인수 테스트이다. 베타 테스트는 실제 사용 환경에서 최종 사용자가 직접 수행한다.","summary":"알파=개발자 환경, 베타=사용자 환경","difficulty":1}""",
+            """
+            {"content":"V-모델에서 요구사항 분석 단계와 대응되는 테스트 단계는?\n\n① 단위 테스트\n② 통합 테스트\n③ 시스템 테스트\n④ 인수 테스트","correctOption":4,"explanation":"V-모델에서 요구사항 분석 ↔ 인수 테스트, 시스템 설계 ↔ 시스템 테스트, 아키텍처 설계 ↔ 통합 테스트, 모듈 설계 ↔ 단위 테스트가 대응된다.","summary":"V-모델: 요구사항분석 ↔ 인수 테스트","difficulty":2}"""
+        ));
+
+        EXAMPLES.put("화이트박스/블랙박스 테스트", List.of(
+            """
+            {"content":"프로그램의 내부 구조와 동작을 검사하는 테스트 기법은?\n\n① 블랙박스 테스트\n② 화이트박스 테스트\n③ 인수 테스트\n④ 회귀 테스트","correctOption":2,"explanation":"화이트박스 테스트는 프로그램의 내부 구조(소스 코드)를 기반으로 테스트 케이스를 설계하는 기법이다. 블랙박스 테스트는 외부 명세를 기반으로 한다.","summary":"화이트박스 = 내부 구조 기반 테스트","difficulty":0}""",
+            """
+            {"content":"블랙박스 테스트 기법 중 입력 데이터를 유효한 값과 무효한 값의 그룹으로 나누어 대표값으로 테스트하는 기법은?\n\n① 경계값 분석\n② 동치 분할\n③ 원인-결과 그래프\n④ 상태 전이","correctOption":2,"explanation":"동치 분할(Equivalence Partitioning)은 입력 데이터를 유사한 특성을 가진 그룹으로 분류하고, 각 그룹의 대표값으로 테스트하는 기법이다.","summary":"동치 분할 = 입력값을 그룹으로 나눠 대표값 테스트","difficulty":1}""",
+            """
+            {"content":"다음 중 화이트박스 테스트의 커버리지에 대한 설명으로 옳지 않은 것은?\n\n① 구문 커버리지는 모든 명령문을 최소 1회 실행한다\n② 결정 커버리지는 모든 조건식의 참/거짓을 각각 1회 이상 실행한다\n③ 조건 커버리지는 개별 조건이 참/거짓을 각각 1회 이상 만족한다\n④ MC/DC는 구문 커버리지의 하위 개념이다","correctOption":4,"explanation":"MC/DC(Modified Condition/Decision Coverage)는 가장 강력한 커버리지로, 각 개별 조건이 전체 결정에 독립적으로 영향을 미치는지 확인한다. 구문 커버리지의 하위가 아닌 상위 개념이다.","summary":"MC/DC는 가장 강력한 커버리지, 구문의 상위 개념","difficulty":2}"""
+        ));
+
+        EXAMPLES.put("통합 테스트", List.of(
+            """
+            {"content":"통합 테스트에서 하향식(Top-Down) 통합 시 하위 모듈의 역할을 대신하는 것은?\n\n① 드라이버(Driver)\n② 스텁(Stub)\n③ 테스트 하네스\n④ 오라클","correctOption":2,"explanation":"하향식 통합에서는 상위 모듈부터 테스트하므로 아직 개발되지 않은 하위 모듈을 스텁(Stub)으로 대체한다. 상향식에서는 드라이버(Driver)를 사용한다.","summary":"하향식=스텁(하위 대체), 상향식=드라이버(상위 대체)","difficulty":0}""",
+            """
+            {"content":"모든 모듈을 동시에 결합하여 한꺼번에 테스트하는 통합 테스트 방식은?\n\n① 상향식 테스트\n② 하향식 테스트\n③ 빅뱅 테스트\n④ 샌드위치 테스트","correctOption":3,"explanation":"빅뱅(Big-Bang) 테스트는 모든 모듈을 한꺼번에 통합하여 테스트한다. 오류 발견 시 원인 파악이 어렵다는 단점이 있다.","summary":"빅뱅 = 전체 모듈 동시 통합 테스트","difficulty":1}""",
+            """
+            {"content":"상향식과 하향식을 결합하여 중간 레벨 모듈을 기준으로 위아래 동시에 통합 테스트하는 방식은?\n\n① 빅뱅 테스트\n② 회귀 테스트\n③ 샌드위치(혼합식) 테스트\n④ 스모크 테스트","correctOption":3,"explanation":"샌드위치(혼합식) 테스트는 상위에서는 하향식, 하위에서는 상향식으로 동시에 진행하여 중간에서 만나는 통합 방식이다. 스텁과 드라이버를 모두 사용한다.","summary":"샌드위치 = 상향식+하향식 동시 진행","difficulty":2}"""
+        ));
+
+        EXAMPLES.put("형상관리/빌드 자동화", List.of(
+            """
+            {"content":"소프트웨어 형상 관리(SCM)에서 변경 사항을 관리하기 위해 특정 시점의 산출물을 확정하는 것은?\n\n① 베이스라인(Baseline)\n② 브랜치(Branch)\n③ 머지(Merge)\n④ 태그(Tag)","correctOption":1,"explanation":"베이스라인(Baseline)은 형상 관리에서 특정 시점의 형상 항목을 공식적으로 확정하는 것이다. 이후 변경은 형상통제위원회(CCB)의 승인이 필요하다.","summary":"베이스라인 = 특정 시점 형상 항목 공식 확정","difficulty":0}""",
+            """
+            {"content":"형상 관리 절차의 올바른 순서는?\n\n① 형상 식별 → 형상 통제 → 형상 감사 → 형상 기록\n② 형상 식별 → 형상 감사 → 형상 통제 → 형상 기록\n③ 형상 통제 → 형상 식별 → 형상 감사 → 형상 기록\n④ 형상 기록 → 형상 식별 → 형상 통제 → 형상 감사","correctOption":1,"explanation":"형상 관리 절차: 형상 식별(대상 정의) → 형상 통제(변경 관리, CCB) → 형상 감사(무결성 검증) → 형상 기록/보고(상태 보고)","summary":"식별→통제→감사→기록","difficulty":1}""",
+            """
+            {"content":"다음 빌드 자동화 도구 중 Groovy 기반 DSL로 스크립트를 작성하며, 의존성 관리와 빌드를 수행하는 것은?\n\n① Ant\n② Maven\n③ Gradle\n④ Jenkins","correctOption":3,"explanation":"Gradle은 Groovy 기반 DSL로 빌드 스크립트를 작성한다. Ant는 XML 기반(의존성 관리 없음), Maven은 XML 기반(pom.xml), Jenkins는 CI/CD 서버이다.","summary":"Gradle = Groovy DSL 기반 빌드 도구","difficulty":2}"""
+        ));
+
+        EXAMPLES.put("미들웨어", List.of(
+            """
+            {"content":"웹 애플리케이션을 실행하기 위한 서버 환경을 제공하는 미들웨어는?\n\n① WAS(Web Application Server)\n② MOM(Message Oriented Middleware)\n③ RPC(Remote Procedure Call)\n④ ORB(Object Request Broker)","correctOption":1,"explanation":"WAS는 동적 웹 애플리케이션을 실행하기 위한 미들웨어로, Tomcat, WebLogic, JBoss 등이 대표적이다.","summary":"WAS = 웹 애플리케이션 실행 서버 (Tomcat 등)","difficulty":0}""",
+            """
+            {"content":"메시지 기반의 비동기 통신을 지원하는 미들웨어로, 송수신 간 독립적으로 동작하는 것은?\n\n① RPC\n② MOM\n③ TP 모니터\n④ WAS","correctOption":2,"explanation":"MOM(Message Oriented Middleware)은 메시지 큐를 이용한 비동기 통신을 지원한다. 송신자와 수신자가 동시에 동작하지 않아도 메시지를 전달할 수 있다. RabbitMQ, Kafka 등이 대표적이다.","summary":"MOM = 메시지 큐 기반 비동기 통신","difficulty":1}""",
+            """
+            {"content":"다음 중 미들웨어에 대한 설명으로 옳지 않은 것은?\n\n① RPC는 원격 프로시저를 로컬처럼 호출할 수 있게 한다\n② ORB는 객체 간 메서드 호출을 중재하며 CORBA가 대표적이다\n③ TP 모니터는 트랜잭션을 관리하며 온라인 처리를 감시한다\n④ MOM은 동기식 통신만을 지원하며 실시간 처리에 적합하다","correctOption":4,"explanation":"MOM은 비동기식 통신을 지원하는 미들웨어이다. 메시지 큐를 통해 송수신자가 독립적으로 동작하므로, 동기식 통신만 지원한다는 설명은 틀렸다.","summary":"MOM은 비동기식 통신 지원 (동기식만 지원은 오류)","difficulty":2}"""
+        ));
+
+        EXAMPLES.put("인터페이스 구현", List.of(
+            """
+            {"content":"데이터를 속성-값 쌍으로 표현하며 경량 데이터 교환 형식으로 사용되는 것은?\n\n① XML\n② JSON\n③ YAML\n④ CSV","correctOption":2,"explanation":"JSON(JavaScript Object Notation)은 키-값 쌍으로 데이터를 표현하는 경량 데이터 교환 형식이다. XML보다 가볍고 파싱이 빠르다.","summary":"JSON = 키-값 쌍, 경량 데이터 교환 형식","difficulty":0}""",
+            """
+            {"content":"REST(Representational State Transfer) API에 대한 설명으로 옳지 않은 것은?\n\n① HTTP 프로토콜을 기반으로 동작한다\n② 자원(Resource)을 URI로 식별한다\n③ SOAP보다 무겁고 복잡한 구조를 가진다\n④ GET, POST, PUT, DELETE 등의 HTTP 메서드를 사용한다","correctOption":3,"explanation":"REST는 SOAP보다 가볍고 단순한 구조를 가진다. HTTP 표준 메서드를 활용하며, JSON 등 경량 형식으로 데이터를 교환하므로 오버헤드가 적다.","summary":"REST는 SOAP보다 가볍고 단순함","difficulty":1}""",
+            """
+            {"content":"웹 페이지 전체를 새로고침하지 않고 서버와 비동기적으로 데이터를 교환하여 일부분만 갱신하는 기술은?\n\n① AJAX\n② SOAP\n③ WSDL\n④ UDDI","correctOption":1,"explanation":"AJAX(Asynchronous JavaScript and XML)는 비동기 통신을 통해 페이지 전체가 아닌 필요한 부분만 갱신하는 기술이다. XMLHttpRequest 객체를 사용한다.","summary":"AJAX = 비동기 통신으로 페이지 일부만 갱신","difficulty":2}"""
+        ));
+
+        EXAMPLES.put("정규화", List.of(
+            """
+            {"content":"릴레이션의 모든 도메인이 원자값만으로 구성되어 있는 정규형은?\n\n① 제1정규형(1NF)\n② 제2정규형(2NF)\n③ 제3정규형(3NF)\n④ BCNF","correctOption":1,"explanation":"제1정규형(1NF)은 릴레이션의 모든 속성이 원자값(더 이상 분해할 수 없는 값)만을 가져야 한다. 반복 그룹이나 다중값 속성이 없어야 한다.","summary":"1NF = 모든 속성이 원자값","difficulty":0}""",
+            """
+            {"content":"제2정규형(2NF)에서 제3정규형(3NF)으로 진행하기 위해 제거해야 하는 것은?\n\n① 부분 함수 종속\n② 이행 함수 종속\n③ 결정자가 후보키가 아닌 종속\n④ 다치 종속","correctOption":2,"explanation":"2NF→3NF: 이행적 함수 종속(Transitive Dependency) 제거. A→B, B→C이면 A→C인 이행 종속을 제거한다. 부분 종속 제거는 1NF→2NF이다.","summary":"3NF = 이행적 함수 종속 제거","difficulty":1}""",
+            """
+            {"content":"다음 릴레이션에서 발생하는 이상 현상이 아닌 것은?\n\n학생(학번, 이름, 학과, 학과전화번호)\n\n① 삽입 이상: 학생 없이 학과 정보만 삽입할 수 없다\n② 삭제 이상: 유일한 학생 삭제 시 학과 정보도 함께 삭제된다\n③ 갱신 이상: 학과전화번호 변경 시 모든 해당 튜플을 수정해야 한다\n④ 참조 이상: 외래키가 참조하는 튜플이 존재하지 않는다","correctOption":4,"explanation":"이상 현상에는 삽입·삭제·갱신 이상이 있다. '참조 이상'이라는 개념은 존재하지 않으며, 외래키 관련 문제는 참조 무결성 제약 위반이다.","summary":"이상 현상: 삽입·삭제·갱신 (참조 이상은 없음)","difficulty":2}"""
+        ));
+
+        EXAMPLES.put("키 종류", List.of(
+            """
+            {"content":"릴레이션에서 튜플을 유일하게 식별할 수 있는 최소한의 속성 집합은?\n\n① 슈퍼키\n② 후보키\n③ 대체키\n④ 외래키","correctOption":2,"explanation":"후보키(Candidate Key)는 유일성과 최소성을 모두 만족하는 키이다. 슈퍼키는 유일성만 만족하며 최소성은 필요 없다.","summary":"후보키 = 유일성 + 최소성","difficulty":0}""",
+            """
+            {"content":"후보키가 2개 이상일 때, 기본키로 선정되지 않은 나머지 후보키를 무엇이라 하는가?\n\n① 슈퍼키\n② 외래키\n③ 대체키\n④ 복합키","correctOption":3,"explanation":"대체키(Alternate Key)는 후보키 중 기본키로 선정되지 않은 나머지 키이다. 기본키 대신 사용될 수 있다.","summary":"대체키 = 후보키 - 기본키","difficulty":1}""",
+            """
+            {"content":"다음 중 외래키(Foreign Key)에 대한 설명으로 옳지 않은 것은?\n\n① 다른 릴레이션의 기본키를 참조하는 속성이다\n② 참조 무결성 제약을 유지하는 데 사용된다\n③ 외래키의 값은 반드시 참조하는 릴레이션에 존재하거나 NULL이어야 한다\n④ 하나의 릴레이션에는 외래키가 최대 1개만 존재할 수 있다","correctOption":4,"explanation":"하나의 릴레이션에 외래키는 여러 개 존재할 수 있다. 예를 들어, 주문 테이블에서 고객ID와 상품ID 모두 외래키일 수 있다.","summary":"외래키는 하나의 릴레이션에 여러 개 가능","difficulty":2}"""
+        ));
+
+        EXAMPLES.put("무결성 제약", List.of(
+            """
+            {"content":"기본키는 NULL 값을 가질 수 없고, 중복될 수 없다는 제약은?\n\n① 참조 무결성\n② 개체 무결성\n③ 도메인 무결성\n④ 키 무결성","correctOption":2,"explanation":"개체 무결성(Entity Integrity)은 기본키가 NULL이 될 수 없고, 릴레이션 내에서 유일해야 한다는 제약이다.","summary":"개체 무결성 = 기본키 NOT NULL + UNIQUE","difficulty":0}""",
+            """
+            {"content":"외래키의 값은 참조하는 릴레이션의 기본키에 존재하거나 NULL이어야 한다는 제약은?\n\n① 개체 무결성\n② 참조 무결성\n③ 도메인 무결성\n④ 사용자 정의 무결성","correctOption":2,"explanation":"참조 무결성(Referential Integrity)은 외래키 값이 참조되는 릴레이션의 기본키 값과 일치하거나 NULL이어야 한다는 제약이다.","summary":"참조 무결성 = 외래키 값은 참조 테이블 기본키에 존재 or NULL","difficulty":1}""",
+            """
+            {"content":"참조 무결성 제약에서 참조되는 릴레이션의 튜플이 삭제될 때 취할 수 있는 옵션이 아닌 것은?\n\n① RESTRICT\n② CASCADE\n③ SET NULL\n④ COMMIT","correctOption":4,"explanation":"참조 무결성 옵션에는 RESTRICT(삭제 거부), CASCADE(연쇄 삭제), SET NULL(NULL로 설정), SET DEFAULT(기본값 설정)가 있다. COMMIT은 트랜잭션 제어 명령이다.","summary":"참조 무결성 옵션: RESTRICT/CASCADE/SET NULL/SET DEFAULT","difficulty":2}"""
+        ));
+
+        EXAMPLES.put("SQL DDL", List.of(
+            """
+            {"content":"테이블을 생성하는 SQL 명령어는?\n\n① ALTER\n② CREATE\n③ DROP\n④ TRUNCATE","correctOption":2,"explanation":"CREATE TABLE은 새로운 테이블을 생성하는 DDL 명령어이다. ALTER는 수정, DROP은 삭제, TRUNCATE는 데이터만 전체 삭제(구조 유지)이다.","summary":"CREATE = 테이블 생성","difficulty":0}""",
+            """
+            {"content":"테이블의 구조는 유지하면서 모든 데이터를 삭제하는 DDL 명령어는?\n\n① DELETE\n② DROP\n③ TRUNCATE\n④ ALTER","correctOption":3,"explanation":"TRUNCATE는 테이블 구조를 유지하면서 모든 행을 삭제한다. DELETE는 DML(롤백 가능), DROP은 테이블 자체를 삭제한다. TRUNCATE는 DDL이므로 롤백이 불가능하다.","summary":"TRUNCATE = 구조 유지, 전체 데이터 삭제 (DDL, 롤백 불가)","difficulty":1}""",
+            """
+            {"content":"다음 SQL문의 실행 결과로 옳은 것은?\n\nALTER TABLE 학생 ADD 주소 VARCHAR(100);\n\n① 학생 테이블에 '주소' 컬럼이 추가된다\n② 학생 테이블의 '주소' 컬럼이 삭제된다\n③ 학생 테이블의 '주소' 컬럼 타입이 변경된다\n④ 학생 테이블이 새로 생성된다","correctOption":1,"explanation":"ALTER TABLE ... ADD는 기존 테이블에 새로운 컬럼을 추가하는 명령이다. DROP COLUMN은 삭제, MODIFY는 변경이다.","summary":"ALTER TABLE ADD = 컬럼 추가","difficulty":2}"""
+        ));
+
+        EXAMPLES.put("SQL DML / JOIN", List.of(
+            """
+            {"content":"두 테이블에서 조건이 일치하는 행만 결합하여 조회하는 JOIN은?\n\n① INNER JOIN\n② LEFT OUTER JOIN\n③ FULL OUTER JOIN\n④ CROSS JOIN","correctOption":1,"explanation":"INNER JOIN은 두 테이블 모두에서 조건을 만족하는 행만 결과에 포함한다. 교집합과 유사하다.","summary":"INNER JOIN = 양쪽 조건 일치하는 행만 조회","difficulty":0}""",
+            """
+            {"content":"다음 SQL문의 결과로 옳은 것은?\n\nSELECT A.이름, B.과목\nFROM 학생 A LEFT OUTER JOIN 수강 B\nON A.학번 = B.학번;\n\n① 수강 테이블에 있는 학생만 조회된다\n② 학생 테이블의 모든 행이 조회되고, 수강이 없으면 NULL로 표시된다\n③ 두 테이블의 교집합만 조회된다\n④ 두 테이블의 모든 조합(카티션 곱)이 조회된다","correctOption":2,"explanation":"LEFT OUTER JOIN은 왼쪽 테이블(학생)의 모든 행을 포함하고, 오른쪽 테이블(수강)과 일치하지 않는 경우 NULL로 채운다.","summary":"LEFT JOIN = 왼쪽 테이블 전체 + 오른쪽 없으면 NULL","difficulty":1}""",
+            """
+            {"content":"다음 SQL문의 실행 결과에서 조회되는 행의 수는?\n\nSELECT * FROM A CROSS JOIN B;\n(A 테이블: 3행, B 테이블: 4행)\n\n① 3\n② 4\n③ 7\n④ 12","correctOption":4,"explanation":"CROSS JOIN은 카티션 곱(Cartesian Product)으로, 두 테이블의 모든 행 조합을 생성한다. 3 × 4 = 12행이 된다.","summary":"CROSS JOIN = 카티션 곱 (행 수의 곱)","difficulty":2}"""
+        ));
+
+        EXAMPLES.put("집계함수 / GROUP BY / HAVING", List.of(
+            """
+            {"content":"SQL에서 그룹별로 데이터를 묶어 집계하는 절은?\n\n① WHERE\n② GROUP BY\n③ ORDER BY\n④ HAVING","correctOption":2,"explanation":"GROUP BY는 특정 컬럼을 기준으로 행을 그룹화하여 집계함수(COUNT, SUM, AVG 등)와 함께 사용한다.","summary":"GROUP BY = 그룹별 데이터 묶기","difficulty":0}""",
+            """
+            {"content":"GROUP BY로 그룹화한 결과에 조건을 적용하는 절은?\n\n① WHERE\n② HAVING\n③ ORDER BY\n④ LIMIT","correctOption":2,"explanation":"HAVING은 GROUP BY로 그룹화된 결과에 조건을 적용한다. WHERE는 그룹화 전에 개별 행에 조건을 적용한다.","summary":"HAVING = 그룹화 후 조건, WHERE = 그룹화 전 조건","difficulty":1}""",
+            """
+            {"content":"다음 SQL문의 실행 결과는?\n\nSELECT 학과, COUNT(*) AS 학생수\nFROM 학생\nGROUP BY 학과\nHAVING COUNT(*) >= 3\nORDER BY 학생수 DESC;\n\n① 모든 학과의 학생 수를 조회한다\n② 학생 수가 3명 이상인 학과를 학생 수 내림차순으로 조회한다\n③ 학생 수가 3명 미만인 학과만 조회한다\n④ 학과별 상위 3명의 학생을 조회한다","correctOption":2,"explanation":"GROUP BY 학과로 그룹화 → HAVING COUNT(*) >= 3으로 3명 이상 필터 → ORDER BY 학생수 DESC로 내림차순 정렬한다.","summary":"GROUP BY + HAVING >= 3 + ORDER BY DESC","difficulty":2}"""
+        ));
+
+        EXAMPLES.put("서브쿼리", List.of(
+            """
+            {"content":"SELECT문의 WHERE절 안에 또 다른 SELECT문이 포함된 것을 무엇이라 하는가?\n\n① 뷰\n② 서브쿼리\n③ 프로시저\n④ 트리거","correctOption":2,"explanation":"서브쿼리(Subquery)는 SQL문 내부에 포함된 또 다른 SELECT문이다. WHERE, FROM, SELECT절에서 사용될 수 있다.","summary":"서브쿼리 = SQL 내부의 SELECT문","difficulty":0}""",
+            """
+            {"content":"FROM절에서 사용되는 서브쿼리를 무엇이라 하는가?\n\n① 스칼라 서브쿼리\n② 인라인 뷰\n③ 상관 서브쿼리\n④ 다중행 서브쿼리","correctOption":2,"explanation":"인라인 뷰(Inline View)는 FROM절에서 사용되는 서브쿼리로, 하나의 임시 테이블처럼 동작한다. SELECT절은 스칼라 서브쿼리, WHERE절은 일반 서브쿼리이다.","summary":"인라인 뷰 = FROM절 서브쿼리 (임시 테이블)","difficulty":1}""",
+            """
+            {"content":"다음 SQL문에서 사용된 서브쿼리의 종류는?\n\nSELECT * FROM 학생 A\nWHERE EXISTS (\n  SELECT 1 FROM 수강 B WHERE A.학번 = B.학번\n);\n\n① 스칼라 서브쿼리\n② 인라인 뷰\n③ 상관 서브쿼리\n④ 비상관 서브쿼리","correctOption":3,"explanation":"상관 서브쿼리(Correlated Subquery)는 외부 쿼리의 값(A.학번)을 내부 서브쿼리에서 참조한다. 외부 쿼리의 각 행마다 서브쿼리가 실행된다.","summary":"상관 서브쿼리 = 외부 쿼리 값을 내부에서 참조","difficulty":2}"""
+        ));
+
+        EXAMPLES.put("윈도우 함수", List.of(
+            """
+            {"content":"SQL 윈도우 함수 중 동일 순위 발생 시 다음 순위를 건너뛰는 것은?\n\n① RANK()\n② DENSE_RANK()\n③ ROW_NUMBER()\n④ NTILE()","correctOption":1,"explanation":"RANK()는 동일 순위가 있으면 다음 순위를 건너뛴다 (1, 2, 2, 4). DENSE_RANK()는 건너뛰지 않고 (1, 2, 2, 3), ROW_NUMBER()는 항상 고유한 순번을 부여한다.","summary":"RANK = 동일 순위 시 다음 순위 건너뜀","difficulty":0}""",
+            """
+            {"content":"윈도우 함수에서 동일한 값에 동일 순위를 부여하되, 다음 순위를 건너뛰지 않는 함수는?\n\n① RANK()\n② DENSE_RANK()\n③ ROW_NUMBER()\n④ CUME_DIST()","correctOption":2,"explanation":"DENSE_RANK()는 동일 순위가 있어도 다음 순위를 건너뛰지 않는다. 예: 1, 2, 2, 3. RANK()는 1, 2, 2, 4처럼 건너뛴다.","summary":"DENSE_RANK = 동일 순위 부여, 순위 건너뛰지 않음","difficulty":1}""",
+            """
+            {"content":"다음 SQL문의 결과에서 LAG 함수가 반환하는 값은?\n\nSELECT 이름, 점수,\n       LAG(점수, 1, 0) OVER (ORDER BY 점수 DESC) AS 이전점수\nFROM 성적;\n\n(성적 데이터: 철수 90, 영희 85, 민수 80)\n\n첫 번째 행(철수)의 '이전점수' 값은?\n\n① 90\n② 85\n③ 0\n④ NULL","correctOption":3,"explanation":"LAG(컬럼, offset, default)는 현재 행의 이전(offset번째) 행의 값을 반환한다. 첫 번째 행은 이전 행이 없으므로 기본값 0이 반환된다.","summary":"LAG = 이전 행 값, 없으면 기본값 반환","difficulty":2}"""
+        ));
+
+        EXAMPLES.put("관계대수", List.of(
+            """
+            {"content":"관계대수에서 릴레이션의 특정 속성(컬럼)만 추출하는 연산은?\n\n① 셀렉트(σ)\n② 프로젝트(π)\n③ 조인(⋈)\n④ 디비전(÷)","correctOption":2,"explanation":"프로젝트(π)는 릴레이션에서 원하는 속성(컬럼)만 추출하는 수직적 연산이다. 셀렉트(σ)는 조건에 맞는 튜플(행)을 추출하는 수평적 연산이다.","summary":"프로젝트(π) = 컬럼 추출, 셀렉트(σ) = 행 추출","difficulty":0}""",
+            """
+            {"content":"관계대수에서 조건을 만족하는 튜플(행)을 추출하는 연산으로, SQL의 WHERE절에 해당하는 것은?\n\n① 프로젝트(π)\n② 셀렉트(σ)\n③ 디비전(÷)\n④ 카티션 프로덕트(×)","correctOption":2,"explanation":"셀렉트(σ)는 주어진 조건을 만족하는 튜플을 추출하는 수평적 연산이다. SQL에서 WHERE절의 기능과 동일하다.","summary":"셀렉트(σ) = WHERE절, 조건 만족 행 추출","difficulty":1}""",
+            """
+            {"content":"관계대수의 디비전(÷) 연산에 대한 설명으로 옳은 것은?\n\n① 두 릴레이션의 모든 튜플 조합을 생성한다\n② 릴레이션 R에서 S의 모든 튜플과 관련 있는 R의 튜플을 추출한다\n③ 두 릴레이션의 교집합을 구한다\n④ 릴레이션의 특정 속성만 추출한다","correctOption":2,"explanation":"디비전(÷)은 R ÷ S에서 S의 모든 튜플과 관련된 R의 튜플을 구하는 연산이다. '모든'이라는 조건이 핵심이며, SQL의 NOT EXISTS + NOT EXISTS 패턴으로 구현된다.","summary":"디비전(÷) = S의 모든 값과 관련된 R의 튜플 추출","difficulty":2}"""
+        ));
+
+        EXAMPLES.put("트랜잭션 ACID / DCL / TCL", List.of(
+            """
+            {"content":"트랜잭션의 ACID 특성 중, 트랜잭션이 성공적으로 완료되면 결과가 영구적으로 반영되어야 한다는 특성은?\n\n① 원자성(Atomicity)\n② 일관성(Consistency)\n③ 격리성(Isolation)\n④ 영속성(Durability)","correctOption":4,"explanation":"영속성(Durability)은 트랜잭션이 성공적으로 완료(커밋)되면 그 결과가 데이터베이스에 영구적으로 저장되어야 한다는 특성이다.","summary":"영속성 = 커밋 후 결과 영구 보장","difficulty":0}""",
+            """
+            {"content":"데이터베이스 사용자에게 특정 권한을 부여하는 SQL 명령어는?\n\n① GRANT\n② REVOKE\n③ COMMIT\n④ ROLLBACK","correctOption":1,"explanation":"GRANT는 사용자에게 특정 객체에 대한 권한(SELECT, INSERT 등)을 부여하는 DCL 명령어이다. REVOKE는 권한을 회수한다.","summary":"GRANT = 권한 부여, REVOKE = 권한 회수","difficulty":1}""",
+            """
+            {"content":"다음 SQL문에 대한 설명으로 옳은 것은?\n\nGRANT SELECT, INSERT ON 학생 TO user1 WITH GRANT OPTION;\n\n① user1은 학생 테이블에 대해 조회만 할 수 있다\n② user1은 학생 테이블의 조회/삽입 권한을 다른 사용자에게 부여할 수 있다\n③ user1의 권한이 회수된다\n④ user1에게 모든 권한이 부여된다","correctOption":2,"explanation":"WITH GRANT OPTION은 부여받은 권한을 다른 사용자에게 재부여할 수 있는 옵션이다. user1은 SELECT, INSERT 권한을 받았고, 이를 다시 다른 사용자에게 줄 수 있다.","summary":"WITH GRANT OPTION = 권한 재부여 가능","difficulty":2}"""
+        ));
+
+        EXAMPLES.put("인덱스 / 반정규화", List.of(
+            """
+            {"content":"데이터베이스에서 검색 속도를 향상시키기 위해 사용하는 자료구조는?\n\n① 뷰(View)\n② 인덱스(Index)\n③ 트리거(Trigger)\n④ 프로시저(Procedure)","correctOption":2,"explanation":"인덱스(Index)는 테이블의 검색 속도를 높이기 위해 별도로 생성하는 자료구조이다. B-Tree, 비트맵 등의 구조로 구현된다.","summary":"인덱스 = 검색 속도 향상 자료구조","difficulty":0}""",
+            """
+            {"content":"정규화된 테이블에서 성능 향상을 위해 의도적으로 중복을 허용하는 기법은?\n\n① 정규화\n② 반정규화\n③ 파티셔닝\n④ 클러스터링","correctOption":2,"explanation":"반정규화(Denormalization)는 정규화된 데이터 모델에서 성능 향상을 위해 의도적으로 중복, 통합, 분리를 수행하는 기법이다. 조회 성능은 향상되나 갱신 이상이 발생할 수 있다.","summary":"반정규화 = 성능을 위해 의도적 중복 허용","difficulty":1}""",
+            """
+            {"content":"B-Tree 인덱스에 대한 설명으로 옳지 않은 것은?\n\n① 균형 트리 구조로 모든 리프 노드가 같은 깊이에 있다\n② 범위 검색에 효율적이다\n③ 삽입, 삭제 시 트리의 균형이 자동으로 유지된다\n④ 비트맵 인덱스보다 카디널리티가 낮은 컬럼에 적합하다","correctOption":4,"explanation":"카디널리티가 낮은(값의 종류가 적은) 컬럼에는 비트맵 인덱스가 적합하다. B-Tree는 카디널리티가 높은 컬럼에 적합하다.","summary":"B-Tree = 높은 카디널리티, 비트맵 = 낮은 카디널리티","difficulty":2}"""
+        ));
+
+        EXAMPLES.put("C언어 - 포인터/배열", List.of(
+            """
+            {"content":"다음 C 프로그램의 실행 결과는?\n\n#include <stdio.h>\nint main() {\n    int a = 10;\n    int *p = &a;\n    printf(\"%d\", *p);\n    return 0;\n}\n\n① 10\n② a의 주소값\n③ p의 주소값\n④ 오류 발생","correctOption":1,"explanation":"*p는 포인터 p가 가리키는 변수 a의 값을 역참조하므로 10이 출력된다. &a는 a의 주소를 p에 저장한다.","summary":"*p = 포인터가 가리키는 값 (역참조)","difficulty":0}""",
+            """
+            {"content":"다음 C 프로그램의 실행 결과는?\n\n#include <stdio.h>\nint main() {\n    int arr[] = {10, 20, 30, 40, 50};\n    int *p = arr;\n    printf(\"%d \", *(p + 2));\n    printf(\"%d\", *p + 2);\n    return 0;\n}\n\n① 30 12\n② 30 30\n③ 12 30\n④ 20 12","correctOption":1,"explanation":"*(p+2)는 배열의 3번째 원소인 30이다. *p+2는 *p(=10)에 2를 더한 12이다. 포인터 연산과 역참조 우선순위에 주의해야 한다.","summary":"*(p+2)=arr[2]=30, *p+2=10+2=12","difficulty":1}""",
+            """
+            {"content":"다음 C 프로그램의 실행 결과는?\n\n#include <stdio.h>\nvoid swap(int *a, int *b) {\n    int temp = *a;\n    *a = *b;\n    *b = temp;\n}\nint main() {\n    int x = 5, y = 10;\n    swap(&x, &y);\n    printf(\"%d %d\", x, y);\n    return 0;\n}\n\n① 5 10\n② 10 5\n③ 10 10\n④ 5 5","correctOption":2,"explanation":"포인터를 이용한 call by reference 방식으로 x와 y의 값이 실제로 교환된다. swap 함수에서 *a와 *b를 통해 원본 값을 변경한다.","summary":"포인터를 이용한 swap: 원본 값이 교환됨","difficulty":2}"""
+        ));
+
+        EXAMPLES.put("C언어 - 비트연산/재귀", List.of(
+            """
+            {"content":"다음 C 프로그램의 실행 결과는?\n\n#include <stdio.h>\nint main() {\n    int a = 5, b = 3;\n    printf(\"%d\", a & b);\n    return 0;\n}\n\n① 1\n② 3\n③ 5\n④ 7","correctOption":1,"explanation":"비트 AND 연산: 5=0101, 3=0011, 0101 & 0011 = 0001 = 1이다.","summary":"5 & 3 = 0101 & 0011 = 0001 = 1","difficulty":0}""",
+            """
+            {"content":"다음 C 프로그램의 실행 결과는?\n\n#include <stdio.h>\nint func(int n) {\n    if (n <= 1) return 1;\n    return n * func(n - 1);\n}\nint main() {\n    printf(\"%d\", func(5));\n    return 0;\n}\n\n① 15\n② 25\n③ 120\n④ 720","correctOption":3,"explanation":"재귀로 팩토리얼을 계산한다. func(5) = 5 × 4 × 3 × 2 × 1 = 120이다.","summary":"재귀 팩토리얼: 5! = 120","difficulty":1}""",
+            """
+            {"content":"다음 C 프로그램의 실행 결과는?\n\n#include <stdio.h>\nint main() {\n    int a = 12;\n    printf(\"%d \", a >> 2);\n    printf(\"%d\", a << 1);\n    return 0;\n}\n\n① 3 24\n② 6 24\n③ 3 48\n④ 6 6","correctOption":1,"explanation":"a >> 2: 12(=1100)를 오른쪽으로 2비트 이동 → 0011 = 3 (12/4). a << 1: 12(=1100)를 왼쪽으로 1비트 이동 → 11000 = 24 (12*2).","summary":"12>>2=3, 12<<1=24","difficulty":2}"""
+        ));
+
+        EXAMPLES.put("C언어 - 문자열/구조체", List.of(
+            """
+            {"content":"다음 C 프로그램의 실행 결과는?\n\n#include <stdio.h>\n#include <string.h>\nint main() {\n    char str[] = \"Hello\";\n    printf(\"%d\", (int)strlen(str));\n    return 0;\n}\n\n① 4\n② 5\n③ 6\n④ 오류 발생","correctOption":2,"explanation":"strlen()은 문자열의 길이를 반환한다. \"Hello\"는 5글자이므로 5가 출력된다. NULL 문자('\\0')는 포함하지 않는다.","summary":"strlen(\"Hello\") = 5 (NULL 미포함)","difficulty":0}""",
+            """
+            {"content":"다음 C 프로그램의 실행 결과는?\n\n#include <stdio.h>\n#include <string.h>\nint main() {\n    char a[] = \"ABC\";\n    char b[] = \"ABD\";\n    printf(\"%d\", strcmp(a, b));\n    return 0;\n}\n\n① 0\n② 양수\n③ 음수\n④ 오류 발생","correctOption":3,"explanation":"strcmp()는 문자열을 사전순으로 비교한다. 'C' < 'D'이므로 a가 b보다 작아 음수(-1)를 반환한다. 같으면 0, a>b이면 양수이다.","summary":"strcmp: ABC < ABD → 음수 반환","difficulty":1}""",
+            """
+            {"content":"다음 C 프로그램의 실행 결과는?\n\n#include <stdio.h>\nstruct Point {\n    int x;\n    int y;\n};\nint main() {\n    struct Point p = {3, 7};\n    struct Point *ptr = &p;\n    printf(\"%d %d\", ptr->x, (*ptr).y);\n    return 0;\n}\n\n① 3 7\n② 7 3\n③ 3 3\n④ 오류 발생","correctOption":1,"explanation":"ptr->x와 (*ptr).x는 동일하며, 구조체 포인터로 멤버에 접근하는 두 가지 방법이다. p.x=3, p.y=7이므로 3 7이 출력된다.","summary":"ptr->x == (*ptr).x, 구조체 포인터 멤버 접근","difficulty":2}"""
+        ));
+
+        EXAMPLES.put("Java - 클래스/상속", List.of(
+            """
+            {"content":"다음 Java 프로그램의 실행 결과는?\n\npublic class Main {\n    public static void main(String[] args) {\n        String s = \"Hello\";\n        System.out.println(s.length());\n    }\n}\n\n① 4\n② 5\n③ 6\n④ 오류 발생","correctOption":2,"explanation":"String의 length() 메서드는 문자열의 길이를 반환한다. \"Hello\"는 5글자이므로 5가 출력된다.","summary":"\"Hello\".length() = 5","difficulty":0}""",
+            """
+            {"content":"다음 Java 프로그램의 실행 결과는?\n\nclass Parent {\n    void show() { System.out.print(\"Parent \"); }\n}\nclass Child extends Parent {\n    void show() { System.out.print(\"Child \"); }\n}\npublic class Main {\n    public static void main(String[] args) {\n        Parent p = new Child();\n        p.show();\n    }\n}\n\n① Parent\n② Child\n③ Parent Child\n④ 컴파일 오류","correctOption":2,"explanation":"Parent 타입으로 선언했지만 실제 객체는 Child이므로, 런타임에 Child의 오버라이딩된 show()가 호출된다. 이것이 다형성(동적 디스패치)이다.","summary":"다형성: 실제 객체 타입(Child)의 메서드가 호출됨","difficulty":1}""",
+            """
+            {"content":"다음 Java 프로그램의 실행 결과는?\n\nabstract class Shape {\n    abstract double area();\n    void info() { System.out.print(\"Shape \"); }\n}\nclass Circle extends Shape {\n    double r = 5;\n    double area() { return 3.14 * r * r; }\n}\npublic class Main {\n    public static void main(String[] args) {\n        Shape s = new Circle();\n        s.info();\n        System.out.printf(\"%.1f\", s.area());\n    }\n}\n\n① Shape 78.5\n② Circle 78.5\n③ 컴파일 오류 (추상 클래스 인스턴스화 불가)\n④ Shape 0.0","correctOption":1,"explanation":"Shape은 추상 클래스이지만 new Circle()로 구현 클래스를 생성했다. info()는 상속받은 메서드로 \"Shape \"을 출력하고, area()는 Circle에서 구현한 3.14*25=78.5를 반환한다.","summary":"추상 클래스 참조로 구현 클래스 사용 가능","difficulty":2}"""
+        ));
+
+        EXAMPLES.put("Java - 컬렉션/예외처리", List.of(
+            """
+            {"content":"Java에서 키-값 쌍으로 데이터를 저장하는 컬렉션은?\n\n① ArrayList\n② HashSet\n③ HashMap\n④ LinkedList","correctOption":3,"explanation":"HashMap은 키(Key)-값(Value) 쌍으로 데이터를 저장한다. ArrayList와 LinkedList는 순서 있는 리스트, HashSet은 중복 없는 집합이다.","summary":"HashMap = 키-값 쌍 저장","difficulty":0}""",
+            """
+            {"content":"다음 Java 프로그램의 실행 결과는?\n\nimport java.util.ArrayList;\npublic class Main {\n    public static void main(String[] args) {\n        ArrayList<Integer> list = new ArrayList<>();\n        list.add(10);\n        list.add(20);\n        list.add(30);\n        list.remove(1);\n        System.out.println(list.size());\n    }\n}\n\n① 1\n② 2\n③ 3\n④ 오류 발생","correctOption":2,"explanation":"list.remove(1)은 인덱스 1의 요소(20)를 제거한다. 남은 요소는 [10, 30]으로 size()는 2이다.","summary":"remove(인덱스)로 요소 삭제 후 size = 2","difficulty":1}""",
+            """
+            {"content":"다음 Java 프로그램의 실행 결과는?\n\npublic class Main {\n    public static void main(String[] args) {\n        try {\n            int[] arr = {1, 2, 3};\n            System.out.print(arr[5]);\n        } catch (ArrayIndexOutOfBoundsException e) {\n            System.out.print(\"A \");\n        } catch (Exception e) {\n            System.out.print(\"B \");\n        } finally {\n            System.out.print(\"C\");\n        }\n    }\n}\n\n① A C\n② B C\n③ A B C\n④ C","correctOption":1,"explanation":"arr[5] 접근 시 ArrayIndexOutOfBoundsException이 발생하여 첫 번째 catch에서 \"A \"가 출력된다. finally는 항상 실행되어 \"C\"가 출력된다. 결과: A C","summary":"예외 → 첫 매칭 catch 실행 + finally 항상 실행","difficulty":2}"""
+        ));
+
+        EXAMPLES.put("Python - 리스트/딕셔너리", List.of(
+            """
+            {"content":"다음 Python 프로그램의 실행 결과는?\n\na = [1, 2, 3, 4, 5]\nprint(a[2])\n\n① 1\n② 2\n③ 3\n④ 4","correctOption":3,"explanation":"Python의 리스트 인덱스는 0부터 시작한다. a[0]=1, a[1]=2, a[2]=3이므로 3이 출력된다.","summary":"리스트 인덱스 0부터 시작: a[2] = 3","difficulty":0}""",
+            """
+            {"content":"다음 Python 프로그램의 실행 결과는?\n\na = [1, 2, 3, 4, 5]\nprint(a[1:4])\n\n① [1, 2, 3]\n② [2, 3, 4]\n③ [2, 3, 4, 5]\n④ [1, 2, 3, 4]","correctOption":2,"explanation":"슬라이싱 a[1:4]는 인덱스 1부터 3까지(4 미포함)의 요소를 추출한다. 결과: [2, 3, 4]","summary":"슬라이싱 a[1:4] = [2, 3, 4] (끝 인덱스 미포함)","difficulty":1}""",
+            """
+            {"content":"다음 Python 프로그램의 실행 결과는?\n\nd = {'a': 1, 'b': 2, 'c': 3}\nd['b'] = 20\nd['d'] = 4\nprint(len(d), sum(d.values()))\n\n① 3 6\n② 4 28\n③ 3 26\n④ 4 26","correctOption":2,"explanation":"d['b']=20으로 기존 값 수정, d['d']=4로 새 키 추가. d = {'a':1, 'b':20, 'c':3, 'd':4}. len=4, sum=1+20+3+4=28.","summary":"딕셔너리: 수정+추가 후 len=4, sum=28","difficulty":2}"""
+        ));
+
+        EXAMPLES.put("Python - 함수/컴프리헨션", List.of(
+            """
+            {"content":"다음 Python 프로그램의 실행 결과는?\n\ndef add(a, b):\n    return a + b\n\nprint(add(3, 5))\n\n① 3\n② 5\n③ 8\n④ 35","correctOption":3,"explanation":"add 함수는 두 인자를 더한 값을 반환한다. add(3, 5) = 3 + 5 = 8이다.","summary":"함수 호출: add(3, 5) = 8","difficulty":0}""",
+            """
+            {"content":"다음 Python 프로그램의 실행 결과는?\n\nresult = [x**2 for x in range(1, 6) if x % 2 == 0]\nprint(result)\n\n① [1, 4, 9, 16, 25]\n② [4, 16]\n③ [1, 9, 25]\n④ [2, 4]","correctOption":2,"explanation":"리스트 컴프리헨션: range(1,6)에서 짝수(x%2==0)인 2, 4의 제곱을 구한다. 2²=4, 4²=16. 결과: [4, 16]","summary":"컴프리헨션: 짝수의 제곱 → [4, 16]","difficulty":1}""",
+            """
+            {"content":"다음 Python 프로그램의 실행 결과는?\n\nf = lambda x, y: x * 2 + y\nprint(f(3, 4))\n\na = list(map(lambda x: x + 1, [1, 2, 3]))\nprint(a)\n\n① 10\n[2, 3, 4]\n② 7\n[2, 3, 4]\n③ 10\n[1, 2, 3]\n④ 7\n[1, 2, 3]","correctOption":1,"explanation":"f(3,4) = 3*2+4 = 10. map(lambda x: x+1, [1,2,3])은 각 요소에 1을 더해 [2, 3, 4]를 생성한다.","summary":"lambda: 3*2+4=10, map으로 각 요소+1","difficulty":2}"""
+        ));
+
+        EXAMPLES.put("OS - 프로세스/스케줄링", List.of(
+            """
+            {"content":"프로세스의 상태 전이에서 '실행(Running) → 대기(Waiting)' 상태로 전환되는 원인은?\n\n① 타임 슬라이스 만료\n② 입출력(I/O) 요청\n③ CPU 할당\n④ 프로세스 생성","correctOption":2,"explanation":"프로세스가 I/O 작업을 요청하면 실행 상태에서 대기(Blocked/Waiting) 상태로 전환된다. I/O 완료 시 준비(Ready) 상태로 돌아간다.","summary":"실행→대기: I/O 요청 시 발생","difficulty":0}""",
+            """
+            {"content":"비선점 스케줄링 알고리즘에 해당하지 않는 것은?\n\n① FCFS\n② SJF\n③ Round Robin\n④ HRN","correctOption":3,"explanation":"Round Robin은 타임 슬라이스(Time Quantum)마다 CPU를 강제로 빼앗아 다음 프로세스에 할당하는 선점형 스케줄링이다. FCFS, SJF(기본), HRN은 비선점형이다.","summary":"Round Robin = 선점형 (타임 슬라이스 기반)","difficulty":1}""",
+            """
+            {"content":"HRN(Highest Response Ratio Next) 스케줄링에서 우선순위 계산 공식은?\n\n① (대기시간 + 서비스시간) / 서비스시간\n② 서비스시간 / 대기시간\n③ 대기시간 / 서비스시간\n④ (서비스시간 + 대기시간) / 대기시간","correctOption":1,"explanation":"HRN 우선순위 = (대기시간 + 서비스시간) / 서비스시간. 대기시간이 길수록, 서비스시간이 짧을수록 우선순위가 높아진다. SJF의 기아 현상을 보완한다.","summary":"HRN = (대기+서비스) / 서비스","difficulty":2}"""
+        ));
+
+        EXAMPLES.put("OS - 교착상태/페이지 교체", List.of(
+            """
+            {"content":"교착상태(Deadlock)의 발생 조건이 아닌 것은?\n\n① 상호 배제(Mutual Exclusion)\n② 점유와 대기(Hold and Wait)\n③ 선점(Preemption)\n④ 환형 대기(Circular Wait)","correctOption":3,"explanation":"교착상태의 4가지 필요조건: 상호배제, 점유대기, 비선점(Non-preemption), 환형대기. '선점'이 아닌 '비선점'이 조건이다. 4가지 모두 만족해야 교착상태가 발생한다.","summary":"교착상태: 상호배제/점유대기/비선점/환형대기","difficulty":0}""",
+            """
+            {"content":"가장 오래 전에 페이지에 적재된 것을 교체하는 알고리즘은?\n\n① LRU\n② FIFO\n③ LFU\n④ OPT","correctOption":2,"explanation":"FIFO(First In First Out)는 가장 먼저 적재된 페이지를 교체한다. LRU는 가장 오래 사용되지 않은, LFU는 가장 적게 사용된, OPT는 앞으로 가장 오래 사용되지 않을 페이지를 교체한다.","summary":"FIFO = 가장 먼저 들어온 페이지 교체","difficulty":1}""",
+            """
+            {"content":"다음 페이지 참조열에서 FIFO 알고리즘으로 3개의 프레임을 사용할 때 페이지 부재(Page Fault) 횟수는?\n\n참조열: 1, 2, 3, 4, 1, 2, 5, 1, 2, 3\n\n① 6\n② 7\n③ 9\n④ 10","correctOption":3,"explanation":"FIFO 3프레임: 1(F) 2(F) 3(F) 4(F,1제거) 1(F,2제거) 2(F,3제거) 5(F,4제거) 1(적중) 2(적중) 3(F,1제거) → 적중 없이 대부분 부재, 총 9회. 이것이 Belady의 이상 현상(프레임 증가 시 오히려 부재 증가)의 예이다.","summary":"FIFO 3프레임 페이지 부재 = 9회 (Belady 이상)","difficulty":2}"""
+        ));
+
+        EXAMPLES.put("네트워크 - OSI/프로토콜", List.of(
+            """
+            {"content":"OSI 7계층에서 데이터 링크 계층의 전송 단위는?\n\n① 비트(Bit)\n② 프레임(Frame)\n③ 패킷(Packet)\n④ 세그먼트(Segment)","correctOption":2,"explanation":"각 계층의 전송 단위: 물리-비트, 데이터링크-프레임, 네트워크-패킷, 전송-세그먼트(TCP)/데이터그램(UDP)이다.","summary":"데이터링크=프레임, 네트워크=패킷, 전송=세그먼트","difficulty":0}""",
+            """
+            {"content":"TCP와 UDP의 비교 설명으로 옳지 않은 것은?\n\n① TCP는 연결 지향, UDP는 비연결 지향이다\n② TCP는 신뢰성 보장, UDP는 신뢰성 비보장이다\n③ TCP는 3-way handshake로 연결을 설정한다\n④ UDP는 TCP보다 전송 속도가 느리다","correctOption":4,"explanation":"UDP는 연결 설정 과정이 없고 오버헤드가 적어 TCP보다 전송 속도가 빠르다. 실시간 스트리밍, DNS 등에 사용된다.","summary":"UDP가 TCP보다 빠름 (오버헤드 적음)","difficulty":1}""",
+            """
+            {"content":"서브넷 마스크가 255.255.255.192일 때, 하나의 서브넷에 사용 가능한 호스트 수는?\n\n① 30\n② 62\n③ 64\n④ 126","correctOption":2,"explanation":"255.255.255.192 = /26 → 호스트 비트 6개 → 2^6 = 64개에서 네트워크 주소와 브로드캐스트 주소를 제외하면 64-2 = 62개이다.","summary":"/26 서브넷: 호스트 = 2^6 - 2 = 62개","difficulty":2}"""
+        ));
+
+        EXAMPLES.put("리눅스 명령어", List.of(
+            """
+            {"content":"리눅스에서 파일의 권한을 변경하는 명령어는?\n\n① chown\n② chmod\n③ chgrp\n④ ls","correctOption":2,"explanation":"chmod는 파일의 접근 권한(읽기/쓰기/실행)을 변경하는 명령어이다. chown은 소유자, chgrp는 그룹을 변경한다.","summary":"chmod = 권한 변경, chown = 소유자 변경","difficulty":0}""",
+            """
+            {"content":"리눅스에서 chmod 755 file.txt가 의미하는 권한은?\n\n① 소유자: 읽기+쓰기+실행, 그룹: 읽기+실행, 기타: 읽기+실행\n② 소유자: 읽기+쓰기, 그룹: 읽기+실행, 기타: 읽기+실행\n③ 모든 사용자에게 읽기+쓰기+실행\n④ 소유자: 읽기+쓰기+실행, 그룹: 읽기+쓰기, 기타: 읽기","correctOption":1,"explanation":"755 = 7(rwx/소유자) + 5(r-x/그룹) + 5(r-x/기타). 7=4+2+1(rwx), 5=4+0+1(r-x)이다.","summary":"755: 소유자 rwx, 그룹·기타 r-x","difficulty":1}""",
+            """
+            {"content":"다음 리눅스 명령어의 실행 결과로 옳은 것은?\n\ncat file.txt | grep \"error\" | wc -l\n\n① file.txt에서 error가 포함된 줄의 수를 출력한다\n② file.txt의 전체 줄 수를 출력한다\n③ file.txt에서 error를 삭제한다\n④ file.txt의 error를 다른 문자로 치환한다","correctOption":1,"explanation":"cat으로 파일 내용을 출력 → grep으로 \"error\" 포함 줄 필터링 → wc -l로 줄 수를 카운트한다. 파이프(|)로 명령을 연결한다.","summary":"cat | grep | wc -l = 특정 문자열 포함 줄 수 세기","difficulty":2}"""
+        ));
+
+        EXAMPLES.put("보안 3요소 (CIA)", List.of(
+            """
+            {"content":"정보 보안의 3대 요소에 해당하지 않는 것은?\n\n① 기밀성(Confidentiality)\n② 무결성(Integrity)\n③ 가용성(Availability)\n④ 효율성(Efficiency)","correctOption":4,"explanation":"정보 보안의 3대 요소(CIA Triad)는 기밀성, 무결성, 가용성이다. 효율성은 보안의 3대 요소에 해당하지 않는다.","summary":"CIA = 기밀성 + 무결성 + 가용성","difficulty":0}""",
+            """
+            {"content":"인가된 사용자만 정보에 접근할 수 있도록 보장하는 보안 요소는?\n\n① 가용성\n② 무결성\n③ 기밀성\n④ 인증","correctOption":3,"explanation":"기밀성(Confidentiality)은 인가된 사용자만 정보에 접근할 수 있도록 보장하는 것이다. 암호화가 대표적 방법이다.","summary":"기밀성 = 인가된 사용자만 접근 가능","difficulty":1}""",
+            """
+            {"content":"다음 보안 요소와 대응 기술의 연결이 옳지 않은 것은?\n\n① 기밀성 - 암호화\n② 무결성 - 해시 함수\n③ 가용성 - 이중화/백업\n④ 기밀성 - 접근 통제 목록(ACL)","correctOption":4,"explanation":"접근 통제 목록(ACL)은 기밀성보다는 인가(Authorization)와 직접 관련된다. 기밀성은 주로 암호화를 통해 보장한다. 다만 넓은 의미에서 ACL도 기밀성에 기여하지만, 가장 직접적인 연결은 암호화이다.","summary":"기밀성=암호화, 무결성=해시, 가용성=이중화","difficulty":2}"""
+        ));
+
+        EXAMPLES.put("암호화 알고리즘", List.of(
+            """
+            {"content":"암호화에서 동일한 키로 암호화와 복호화를 수행하는 방식은?\n\n① 대칭키 암호화\n② 비대칭키 암호화\n③ 해시 암호화\n④ 전자서명","correctOption":1,"explanation":"대칭키 암호화는 암호화와 복호화에 동일한 키를 사용한다. AES, DES, SEED 등이 대표적이다. 키 관리가 어렵다는 단점이 있다.","summary":"대칭키 = 같은 키로 암호화/복호화","difficulty":0}""",
+            """
+            {"content":"다음 중 대칭키 알고리즘에 해당하지 않는 것은?\n\n① AES\n② DES\n③ RSA\n④ ARIA","correctOption":3,"explanation":"RSA는 대표적인 비대칭키(공개키) 알고리즘이다. AES, DES, 3DES, SEED, ARIA, IDEA는 모두 대칭키 알고리즘이다.","summary":"RSA = 비대칭키, AES/DES/ARIA = 대칭키","difficulty":1}""",
+            """
+            {"content":"다음 중 해시 함수의 특성으로 옳지 않은 것은?\n\n① 임의 길이의 입력을 고정 길이의 출력으로 변환한다\n② 동일한 입력에 대해 항상 동일한 출력을 생성한다\n③ 출력값으로부터 입력값을 역산하기 어렵다(일방향성)\n④ 해시값을 이용하여 원본 데이터를 복호화할 수 있다","correctOption":4,"explanation":"해시 함수는 일방향(One-way) 함수로, 해시값으로부터 원본 데이터를 복호화(역산)할 수 없다. 이것이 암호화와의 근본적 차이이다.","summary":"해시 = 일방향, 복호화 불가","difficulty":2}"""
+        ));
+
+        EXAMPLES.put("접근 통제", List.of(
+            """
+            {"content":"사용자의 역할(Role)에 따라 접근 권한을 부여하는 접근 통제 방식은?\n\n① MAC\n② DAC\n③ RBAC\n④ ABAC","correctOption":3,"explanation":"RBAC(Role-Based Access Control)는 사용자의 역할에 따라 접근 권한을 부여한다. MAC은 보안 등급 기반, DAC는 소유자가 권한을 부여한다.","summary":"RBAC = 역할 기반 접근 통제","difficulty":0}""",
+            """
+            {"content":"접근 통제 방식 중 시스템이 보안 등급(레이블)에 따라 강제로 접근을 제어하는 것은?\n\n① DAC\n② MAC\n③ RBAC\n④ ABAC","correctOption":2,"explanation":"MAC(Mandatory Access Control)은 보안 등급에 따라 시스템이 강제적으로 접근을 통제한다. 군사, 정부 기관 등에서 사용된다.","summary":"MAC = 보안 등급 기반 강제 접근 통제","difficulty":1}""",
+            """
+            {"content":"다음 접근 통제 방식에 대한 설명으로 옳은 것은?\n\n① DAC에서는 시스템 관리자만 권한을 설정할 수 있다\n② MAC에서는 데이터 소유자가 자유롭게 권한을 설정할 수 있다\n③ RBAC는 사용자를 역할에 할당하고 역할에 권한을 부여하여 관리를 단순화한다\n④ MAC는 가장 유연한 접근 통제 방식이다","correctOption":3,"explanation":"RBAC는 역할에 권한을 할당하고 사용자를 역할에 매핑하여 관리를 단순화한다. DAC는 소유자가 권한 설정, MAC는 시스템이 강제하며 유연성이 낮다.","summary":"RBAC: 사용자→역할→권한 매핑으로 관리 단순화","difficulty":2}"""
+        ));
+
+        EXAMPLES.put("웹 보안 공격", List.of(
+            """
+            {"content":"웹 애플리케이션에서 사용자 입력값에 SQL 구문을 삽입하여 데이터베이스를 조작하는 공격은?\n\n① XSS\n② SQL Injection\n③ CSRF\n④ DDoS","correctOption":2,"explanation":"SQL Injection은 웹 폼이나 URL 파라미터에 악의적인 SQL 구문을 삽입하여 데이터베이스를 비정상적으로 조작하는 공격이다.","summary":"SQL Injection = SQL 구문 삽입하여 DB 조작","difficulty":0}""",
+            """
+            {"content":"웹 페이지에 악성 스크립트를 삽입하여 다른 사용자의 브라우저에서 실행되게 하는 공격은?\n\n① SQL Injection\n② XSS(Cross-Site Scripting)\n③ CSRF\n④ 브루트 포스","correctOption":2,"explanation":"XSS는 웹 페이지에 악성 JavaScript 등을 삽입하여 다른 사용자가 해당 페이지를 방문했을 때 스크립트가 실행되도록 하는 공격이다. 세션 탈취, 피싱 등에 악용된다.","summary":"XSS = 악성 스크립트 삽입, 다른 사용자 브라우저에서 실행","difficulty":1}""",
+            """
+            {"content":"다음 중 CSRF(Cross-Site Request Forgery) 공격에 대한 설명으로 옳은 것은?\n\n① 서버에 SQL 구문을 삽입하여 DB를 조작한다\n② 사용자가 자신의 의지와 무관하게 인증된 상태에서 특정 요청을 서버에 보내게 한다\n③ 웹 페이지에 악성 스크립트를 삽입하여 쿠키를 탈취한다\n④ 대량의 트래픽을 발생시켜 서버를 마비시킨다","correctOption":2,"explanation":"CSRF는 사용자가 인증된(로그인된) 상태에서 공격자가 의도한 요청(비밀번호 변경, 이체 등)을 자신의 의지와 무관하게 서버에 보내도록 유도하는 공격이다.","summary":"CSRF = 인증된 사용자가 자신도 모르게 요청 전송","difficulty":2}"""
+        ));
+
+        EXAMPLES.put("DoS/DDoS 공격", List.of(
+            """
+            {"content":"서비스 거부(DoS) 공격의 목적은?\n\n① 데이터 탈취\n② 시스템/서비스 가용성 저하\n③ 권한 상승\n④ 암호 해독","correctOption":2,"explanation":"DoS(Denial of Service) 공격은 대량의 트래픽이나 요청으로 시스템이나 네트워크의 가용성을 저하시켜 정상적인 서비스를 방해하는 공격이다.","summary":"DoS = 가용성 공격, 서비스 마비 목적","difficulty":0}""",
+            """
+            {"content":"TCP 3-way handshake를 악용하여 다수의 SYN 패킷을 보내 서버의 연결 큐를 가득 채우는 공격은?\n\n① Smurf 공격\n② SYN Flood 공격\n③ Land 공격\n④ Teardrop 공격","correctOption":2,"explanation":"SYN Flood는 대량의 SYN 패킷을 보내고 ACK를 반환하지 않아 서버의 반개방(Half-Open) 연결을 가득 채워 서비스를 마비시키는 공격이다.","summary":"SYN Flood = SYN만 보내고 ACK 미응답, 연결 큐 고갈","difficulty":1}""",
+            """
+            {"content":"다음 DoS 공격에 대한 설명으로 옳은 것은?\n\n① Land 공격은 출발지와 목적지 IP를 동일하게 설정하여 무한 루프를 유발한다\n② Smurf 공격은 TCP 3-way handshake를 악용한다\n③ Teardrop 공격은 ICMP Echo Request를 브로드캐스트한다\n④ Ping of Death는 IP 패킷의 fragment offset을 조작한다","correctOption":1,"explanation":"Land 공격은 출발지와 목적지 IP/포트를 동일하게 설정하여 자기 자신에게 응답을 보내는 무한 루프를 유발한다. Smurf는 ICMP+브로드캐스트, Teardrop은 fragment offset 조작이다.","summary":"Land = 출발지=목적지 IP, 무한 루프","difficulty":2}"""
+        ));
+
+        EXAMPLES.put("네트워크 보안 솔루션", List.of(
+            """
+            {"content":"내부 네트워크와 외부 네트워크 사이에서 접근을 제어하는 보안 시스템은?\n\n① IDS\n② IPS\n③ 방화벽(Firewall)\n④ VPN","correctOption":3,"explanation":"방화벽은 내부와 외부 네트워크 사이에서 패킷을 검사하여 허용/차단하는 접근 제어 시스템이다. 규칙 기반으로 트래픽을 필터링한다.","summary":"방화벽 = 내외부 네트워크 간 접근 제어","difficulty":0}""",
+            """
+            {"content":"네트워크 침입을 실시간으로 탐지하고 차단까지 수행하는 보안 시스템은?\n\n① IDS\n② IPS\n③ 방화벽\n④ WAF","correctOption":2,"explanation":"IPS(Intrusion Prevention System)는 침입을 탐지하고 자동으로 차단까지 수행한다. IDS(Intrusion Detection System)는 탐지만 하고 차단은 하지 않는다.","summary":"IPS = 탐지 + 차단, IDS = 탐지만","difficulty":1}""",
+            """
+            {"content":"다음 보안 솔루션에 대한 설명으로 옳지 않은 것은?\n\n① DMZ는 외부와 내부 네트워크 사이의 중간 영역이다\n② WAF는 웹 애플리케이션 공격을 전문적으로 방어한다\n③ VPN은 공중망을 통해 암호화된 사설 네트워크를 구축한다\n④ NAC는 네트워크 트래픽을 모니터링하여 침입을 탐지한다","correctOption":4,"explanation":"NAC(Network Access Control)는 네트워크에 접속하는 단말의 보안 상태를 검사하여 접근을 통제하는 솔루션이다. 트래픽 모니터링을 통한 침입 탐지는 IDS의 역할이다.","summary":"NAC = 단말 보안 상태 검사 후 접근 통제","difficulty":2}"""
+        ));
+
+        EXAMPLES.put("개발 방법론 / 비용산정", List.of(
+            """
+            {"content":"소프트웨어 비용 산정 기법 중 프로그램의 코드 라인 수를 기반으로 비용을 산정하는 것은?\n\n① COCOMO\n② FP(Function Point)\n③ LOC(Lines of Code)\n④ PUTNAM","correctOption":3,"explanation":"LOC(Lines of Code)는 프로그램의 원시 코드 라인 수를 기반으로 비용, 개발 기간, 인력을 산정하는 기법이다.","summary":"LOC = 코드 라인 수 기반 비용 산정","difficulty":0}""",
+            """
+            {"content":"COCOMO 모델의 유형 중 가장 복잡하고 대규모 프로젝트에 적합한 것은?\n\n① Organic(유기적)\n② Semi-Detached(반분리형)\n③ Embedded(내장형)\n④ Basic(기본형)","correctOption":3,"explanation":"COCOMO의 프로젝트 유형: Organic(소규모, 경험 풍부), Semi-Detached(중규모), Embedded(대규모, 제약 많음, 복잡). Embedded가 가장 복잡한 유형이다.","summary":"COCOMO Embedded = 대규모, 복잡, 제약 많음","difficulty":1}""",
+            """
+            {"content":"다음 중 프로젝트 관리에서 임계 경로(Critical Path)에 대한 설명으로 옳은 것은?\n\n① 프로젝트 완료까지 가장 짧은 경로이다\n② 경로상의 모든 작업이 여유 시간(Slack)이 0이다\n③ 임계 경로의 작업은 지연되어도 전체 일정에 영향이 없다\n④ 하나의 프로젝트에 임계 경로는 반드시 1개만 존재한다","correctOption":2,"explanation":"임계 경로(Critical Path)는 프로젝트에서 가장 긴 경로로, 경로상의 모든 작업의 여유 시간(Slack/Float)이 0이다. 이 경로의 작업이 지연되면 전체 일정이 지연된다.","summary":"임계 경로 = 가장 긴 경로, 여유 시간 0","difficulty":2}"""
+        ));
+
+        EXAMPLES.put("클라우드 / 스토리지", List.of(
+            """
+            {"content":"클라우드 서비스 모델 중 서버, 스토리지, 네트워크 등 인프라를 제공하는 것은?\n\n① IaaS\n② PaaS\n③ SaaS\n④ BaaS","correctOption":1,"explanation":"IaaS(Infrastructure as a Service)는 컴퓨팅 자원(서버, 스토리지, 네트워크)을 제공한다. PaaS는 개발 플랫폼, SaaS는 완성된 소프트웨어를 제공한다.","summary":"IaaS=인프라, PaaS=플랫폼, SaaS=소프트웨어","difficulty":0}""",
+            """
+            {"content":"네트워크를 통해 스토리지에 접근하며, 파일 시스템을 공유하는 스토리지 유형은?\n\n① DAS\n② NAS\n③ SAN\n④ RAID","correctOption":2,"explanation":"NAS(Network Attached Storage)는 네트워크를 통해 파일 수준의 스토리지를 공유한다. DAS는 서버에 직접 연결, SAN은 전용 네트워크를 통해 블록 수준으로 접근한다.","summary":"NAS=네트워크 파일 공유, DAS=직접 연결, SAN=전용 네트워크","difficulty":1}""",
+            """
+            {"content":"RAID 5에 대한 설명으로 옳은 것은?\n\n① 미러링 방식으로 동일한 데이터를 두 디스크에 저장한다\n② 스트라이핑만 사용하며 패리티가 없다\n③ 패리티 정보를 모든 디스크에 분산 저장한다\n④ 최소 2개의 디스크로 구성된다","correctOption":3,"explanation":"RAID 5는 패리티 정보를 모든 디스크에 분산 저장하여 하나의 디스크 장애에 대응한다. 최소 3개 디스크가 필요하다. RAID 1은 미러링, RAID 0은 스트라이핑만 사용한다.","summary":"RAID 5 = 분산 패리티, 최소 3디스크, 1개 장애 복구","difficulty":2}"""
+        ));
+
+        EXAMPLES.put("신기술 동향", List.of(
+            """
+            {"content":"대량의 데이터에서 유용한 정보와 패턴을 추출하는 기술은?\n\n① 블록체인\n② 빅데이터\n③ IoT\n④ 클라우드","correctOption":2,"explanation":"빅데이터(Big Data)는 대용량·다양한 형태의 데이터를 수집·저장·분석하여 가치 있는 정보를 추출하는 기술이다. 3V(Volume, Variety, Velocity)가 특징이다.","summary":"빅데이터 = 대량 데이터에서 패턴/정보 추출 (3V)","difficulty":0}""",
+            """
+            {"content":"분산 원장 기술을 기반으로 데이터를 체인 형태로 연결하여 위변조를 방지하는 기술은?\n\n① 디지털 트윈\n② 블록체인\n③ 엣지 컴퓨팅\n④ 포그 컴퓨팅","correctOption":2,"explanation":"블록체인(Blockchain)은 거래 데이터를 블록으로 만들어 체인으로 연결한 분산 원장 기술이다. 중앙 기관 없이 데이터의 무결성과 투명성을 보장한다.","summary":"블록체인 = 분산 원장, 체인 연결, 위변조 방지","difficulty":1}""",
+            """
+            {"content":"다음 설명에 해당하는 기술은?\n\n\"애플리케이션을 독립적인 작은 서비스 단위로 분리하여 개발·배포하며, 각 서비스는 자체 프로세스로 실행되고 API를 통해 통신한다.\"\n\n① 모놀리식 아키텍처\n② 마이크로서비스 아키텍처(MSA)\n③ 서비스 지향 아키텍처(SOA)\n④ 이벤트 기반 아키텍처","correctOption":2,"explanation":"MSA(Microservice Architecture)는 애플리케이션을 작은 독립적 서비스로 분리하여 각각 개발·배포·확장할 수 있는 아키텍처이다. Docker, Kubernetes와 함께 사용된다.","summary":"MSA = 독립적 작은 서비스 단위 개발·배포, API 통신","difficulty":2}"""
+        ));
+
+        EXAMPLES.put("네트워크 기술", List.of(
+            """
+            {"content":"사설 IP 주소를 공인 IP 주소로 변환하여 인터넷에 접속할 수 있게 하는 기술은?\n\n① VLAN\n② VPN\n③ NAT\n④ SDN","correctOption":3,"explanation":"NAT(Network Address Translation)는 사설 IP 주소를 공인 IP 주소로 변환하는 기술이다. IP 주소 부족 문제를 해결하고 내부 네트워크를 보호한다.","summary":"NAT = 사설 IP ↔ 공인 IP 변환","difficulty":0}""",
+            """
+            {"content":"네트워크를 소프트웨어로 제어하여 하드웨어와 제어 기능을 분리하는 기술은?\n\n① SDN\n② NFV\n③ VLAN\n④ NAT","correctOption":1,"explanation":"SDN(Software Defined Networking)은 네트워크의 제어 평면과 데이터 평면을 분리하여 소프트웨어로 네트워크를 중앙 제어하는 기술이다.","summary":"SDN = 제어/데이터 평면 분리, 소프트웨어로 네트워크 제어","difficulty":1}""",
+            """
+            {"content":"다음 중 네트워크 기술에 대한 설명으로 옳지 않은 것은?\n\n① VLAN은 물리적 위치에 관계없이 논리적으로 네트워크를 분리한다\n② NFV는 네트워크 기능을 가상화하여 범용 서버에서 실행한다\n③ VPN은 공중망을 통해 암호화된 터널을 생성하여 사설 네트워크처럼 사용한다\n④ SDN은 네트워크 장비의 하드웨어와 소프트웨어를 일체화하는 기술이다","correctOption":4,"explanation":"SDN은 하드웨어와 소프트웨어를 분리하는 기술이다. 네트워크 제어 기능을 소프트웨어로 분리하여 중앙에서 프로그래밍 가능하게 한다.","summary":"SDN = 하드웨어와 소프트웨어 분리 (일체화가 아님)","difficulty":2}"""
+        ));
+
+        EXAMPLES.put("Secure SDLC / 보안 개발 방법론", List.of(
+            """
+            {"content":"소프트웨어 개발 생명주기의 각 단계에 보안 활동을 포함시키는 개발 방법론은?\n\n① Agile\n② Secure SDLC\n③ DevOps\n④ Waterfall","correctOption":2,"explanation":"Secure SDLC는 SDLC의 각 단계(요구분석, 설계, 구현, 테스트, 배포)에 보안 활동을 추가하여 보안이 내재된 소프트웨어를 개발하는 방법론이다.","summary":"Secure SDLC = 개발 전 과정에 보안 활동 내재","difficulty":0}""",
+            """
+            {"content":"마이크로소프트에서 개발한 보안 개발 방법론으로, 위협 모델링과 퍼징 테스트를 포함하는 것은?\n\n① CLASP\n② MS-SDL\n③ Seven Touchpoints\n④ OWASP","correctOption":2,"explanation":"MS-SDL(Microsoft Security Development Lifecycle)은 마이크로소프트가 개발한 보안 개발 방법론으로, 교육, 요구사항, 설계, 구현, 검증, 릴리즈, 대응의 7단계를 포함한다.","summary":"MS-SDL = 마이크로소프트 보안 개발 방법론","difficulty":1}""",
+            """
+            {"content":"다음 보안 개발 방법론에 대한 설명으로 옳은 것은?\n\n① CLASP는 마이크로소프트에서 개발한 방법론이다\n② Seven Touchpoints는 실무적 보안 활동 7개를 정의한 Gary McGraw의 방법론이다\n③ MS-SDL은 OWASP에서 관리하는 오픈소스 방법론이다\n④ SAMM은 보안 취약점 데이터베이스이다","correctOption":2,"explanation":"Seven Touchpoints는 Gary McGraw가 제안한 소프트웨어 보안의 7가지 실무적 접점을 정의한 방법론이다. CLASP는 OWASP 기반, MS-SDL은 마이크로소프트, SAMM은 성숙도 모델이다.","summary":"Seven Touchpoints = Gary McGraw의 보안 실무 7접점","difficulty":2}"""
+        ));
+
+
+    }
+
+    private EngineerWrittenTopicExamples() {
+    }
+}
