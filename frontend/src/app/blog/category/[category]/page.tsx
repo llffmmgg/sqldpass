@@ -23,6 +23,9 @@ export async function generateMetadata({
   return {
     title: `${decoded} 시험 준비 글 모음`,
     description: `${decoded} 관련 시험 준비 팁과 학습 전략을 정리한 블로그 글 모음입니다.`,
+    alternates: {
+      canonical: `https://www.sqldpass.com/blog/category/${category}`,
+    },
   };
 }
 

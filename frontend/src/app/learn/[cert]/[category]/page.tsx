@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+
+export const revalidate = 3600;
 import {
   getPublicCategoriesByCert,
   getPublicQuestionsByCategory,

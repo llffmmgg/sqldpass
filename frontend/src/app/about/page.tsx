@@ -5,7 +5,7 @@ export const metadata: Metadata = {
   title: "sqldpass 소개",
   description:
     "sqldpass는 SQLD, 정보처리기사 실기, 컴퓨터활용능력 1급 필기를 무료로 풀어볼 수 있는 CBT 모의고사 사이트입니다.",
-  alternates: { canonical: "/about" },
+  alternates: { canonical: "https://www.sqldpass.com/about" },
 };
 
 export default function AboutPage() {

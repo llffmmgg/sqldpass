@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getPublicQuestionDetail } from "@/lib/publicApi";
+
+export const revalidate = 3600;
 import QuestionContent from "@/components/QuestionContent";
 import ReportQuestionButton from "@/components/ReportQuestionButton";
 
