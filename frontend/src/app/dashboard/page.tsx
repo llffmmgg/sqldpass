@@ -212,8 +212,8 @@ function DashboardPageContent() {
           <Image
             src="/dashboard-mascot.png"
             alt="대시보드 마스코트"
-            width={160}
-            height={160}
+            width={220}
+            height={220}
             className="shrink-0"
           />
           <div>

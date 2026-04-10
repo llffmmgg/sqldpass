@@ -461,8 +461,8 @@ function WrongAnswersPageContent() {
           <Image
             src="/wrong-answer-mascot.png"
             alt="오답노트 마스코트"
-            width={160}
-            height={160}
+            width={220}
+            height={220}
             className="shrink-0"
           />
           <div>
