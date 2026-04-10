@@ -57,10 +57,19 @@ const COMPUTER_LITERACY_TONE: CertTone = {
   hover: "hover:border-sky-500/40 hover:bg-sky-500/[0.04]",
 };
 
+const ENGINEER_WRITTEN_TONE: CertTone = {
+  certLabel: "정보처리기사 필기",
+  certBadge: "정처기 필기",
+  bar: "bg-rose-500/60 group-hover:bg-rose-400",
+  badge: "border-rose-500/40 bg-rose-500/10 text-rose-300",
+  hover: "hover:border-rose-500/40 hover:bg-rose-500/[0.04]",
+};
+
 function detectCertTone(rootName: string): CertTone {
   if (rootName === "정보처리기사 실기") return ENGINEER_TONE;
+  if (rootName === "정보처리기사 필기") return ENGINEER_WRITTEN_TONE;
   if (rootName === "컴퓨터활용능력 1급 필기") return COMPUTER_LITERACY_TONE;
-  return SQLD_TONE; // SQLD 는 "1과목/2과목" 두 root 모두 포함
+  return SQLD_TONE;
 }
 
 export default function SolvePage() {
@@ -364,6 +373,7 @@ function SolvePageContent() {
     const certKeyToLabel: Record<string, string> = {
       SQLD: "SQLD",
       ENGINEER_PRACTICAL: "정보처리기사 실기",
+      ENGINEER_WRITTEN: "정보처리기사 필기",
       COMPUTER_LITERACY_1: "컴퓨터활용능력 1급",
     };
     const filterLabel = certParam ? certKeyToLabel[certParam] : null;

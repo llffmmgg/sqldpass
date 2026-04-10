@@ -166,7 +166,7 @@ function MockExamsListContent() {
   const searchParams = useSearchParams();
   const certParam = searchParams?.get("cert");
   const initialFilter: Filter =
-    certParam === "ENGINEER_PRACTICAL" || certParam === "COMPUTER_LITERACY_1" || certParam === "SQLD"
+    certParam === "ENGINEER_PRACTICAL" || certParam === "COMPUTER_LITERACY_1" || certParam === "ENGINEER_WRITTEN" || certParam === "SQLD"
       ? certParam
       : "SQLD";
 
@@ -179,6 +179,7 @@ function MockExamsListContent() {
     if (
       certParam === "ENGINEER_PRACTICAL" ||
       certParam === "COMPUTER_LITERACY_1" ||
+      certParam === "ENGINEER_WRITTEN" ||
       certParam === "SQLD"
     ) {
       setFilter(certParam);
@@ -253,6 +254,13 @@ function MockExamsListContent() {
             accent="emerald"
           />
           <FilterTab
+            label="정처기 필기"
+            count={exams.filter((e) => e.examType === "ENGINEER_WRITTEN").length}
+            active={filter === "ENGINEER_WRITTEN"}
+            onClick={() => setFilter("ENGINEER_WRITTEN")}
+            accent="rose"
+          />
+          <FilterTab
             label="컴활 1급"
             count={exams.filter((e) => e.examType === "COMPUTER_LITERACY_1").length}
             active={filter === "COMPUTER_LITERACY_1"}
@@ -306,7 +314,7 @@ function FilterTab({
   count: number;
   active: boolean;
   onClick: () => void;
-  accent?: "amber" | "emerald" | "sky";
+  accent?: "amber" | "emerald" | "sky" | "rose";
 }) {
   const activeClass =
     accent === "emerald"
@@ -315,6 +323,8 @@ function FilterTab({
       ? "bg-amber-500/15 text-amber-300 ring-1 ring-amber-500/30"
       : accent === "sky"
       ? "bg-sky-500/15 text-sky-300 ring-1 ring-sky-500/30"
+      : accent === "rose"
+      ? "bg-rose-500/15 text-rose-300 ring-1 ring-rose-500/30"
       : "bg-border text-foreground";
   return (
     <button
