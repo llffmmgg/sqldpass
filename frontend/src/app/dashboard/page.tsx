@@ -114,10 +114,17 @@ function mergeSubjectStats(
   return merged;
 }
 
+function toLocalDateStr(date: Date): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
 function getRecentActivity(solves: SolveSummaryResponse[]): { date: string; count: number }[] {
   const map: Record<string, number> = {};
   for (const s of solves) {
-    const date = new Date(s.solvedAt).toISOString().slice(0, 10);
+    const date = toLocalDateStr(new Date(s.solvedAt));
     map[date] = (map[date] || 0) + s.totalCount;
   }
   const result: { date: string; count: number }[] = [];
@@ -125,7 +132,7 @@ function getRecentActivity(solves: SolveSummaryResponse[]): { date: string; coun
   for (let i = 13; i >= 0; i--) {
     const d = new Date(today);
     d.setDate(d.getDate() - i);
-    const key = d.toISOString().slice(0, 10);
+    const key = toLocalDateStr(d);
     result.push({ date: key, count: map[key] || 0 });
   }
   return result;
@@ -308,7 +315,7 @@ function DashboardPageContent() {
               <div className="mt-5 flex items-end gap-2 h-44">
                 {activity.map((day) => {
                   const height = day.count > 0 ? Math.max((day.count / maxActivity) * 100, 8) : 3;
-                  const todayStr = new Date().toISOString().slice(0, 10);
+                  const todayStr = toLocalDateStr(new Date());
                   const isToday = day.date === todayStr;
                   const d = new Date(day.date);
                   const dateLabel = `${d.getMonth() + 1}/${d.getDate()}`;
