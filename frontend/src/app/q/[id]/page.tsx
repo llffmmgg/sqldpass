@@ -31,7 +31,10 @@ export async function generateMetadata(
   const q = await fetchQuestion(id);
   if (!q) return { title: "문제를 찾을 수 없습니다" };
 
-  const certTag = q.certSlug === "engineer" ? "정처기 실기" : "SQLD";
+  const certTag =
+    q.certSlug === "engineer" ? "정보처리기사 실기"
+    : q.certSlug === "computer-literacy-1" ? "컴퓨터활용능력 1급"
+    : "SQLD";
   const topic = q.topic ? `${q.topic} ` : "";
   const title = `[${certTag}] ${topic}${q.categoryName} 기출 #${q.id}`;
   const preview = stripCode(q.content);
@@ -64,7 +67,10 @@ export default async function QuestionPage(
   const q = await fetchQuestion(id);
   if (!q) notFound();
 
-  const certTag = q.certSlug === "engineer" ? "정처기 실기" : "SQLD";
+  const certTag =
+    q.certSlug === "engineer" ? "정보처리기사 실기"
+    : q.certSlug === "computer-literacy-1" ? "컴퓨터활용능력 1급"
+    : "SQLD";
   const categorySlug = `cat-${q.categoryId}`;
 
   // JSON-LD QAPage 스키마 — Google Rich Result 대상

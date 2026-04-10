@@ -1,68 +1,107 @@
 # sqldpass
 
-> SQLD · 정보처리기사 실기 무료 CBT 모의고사 플랫폼
+> **자격증 시험, 매번 새로운 문제로 연습하자.**
+>
 > https://www.sqldpass.com
 
-매번 새로 추가되는 실전형 문제를 풀고, 회차별 점수와 오답을 자동으로 추적할 수 있는 웹 서비스입니다. 회원가입 없이 학습 허브에서 기출 문제를 둘러볼 수 있고, Google 로그인 후에는 모의고사 응시 / 카테고리 무한 풀이 / 오답 노트 / 회차별 통계 기능을 사용할 수 있습니다.
+SQLD, 정보처리기사 실기, 컴퓨터활용능력 1급 필기를 한 곳에서 풀 수 있는 무료 CBT 플랫폼입니다.
 
-## 주요 기능
+기존 CBT 사이트는 문제가 고정되어 있어서 몇 번 풀면 답이 외워집니다. sqldpass는 **AI가 검증된 시드 문제를 기반으로 변형 문제를 생성**하기 때문에, 매번 새로운 문제로 연습할 수 있습니다.
 
-- **즉석 랜덤 모의고사** — 누를 때마다 새 문제로 구성된 SQLD 50문항 / 정보처리기사 실기 20문항 세트
-- **카테고리 무한 풀이** — 과목별로 문제를 끝없이 풀이. 정처기 모의고사로 만들어진 문제도 자동으로 풀에 합류
-- **오답 자동 복습** — 자격증별로 틀린 문제만 모아 취약 영역을 분석
-- **회차별 실력 추적** — 점수 추이, 풀이 시간, 연속 학습일 등을 대시보드에서 확인
-- **공개 콘텐츠 허브 (`/learn`)** — 비로그인 유입 대응을 위한 SSG/ISR 페이지 + JSON-LD 구조화 데이터
-- **관리자 도구** — 모의고사 생성/삭제, 회원별 학습 대시보드, AI 문제 자동 생성 모니터링
+<!-- 사이트 스크린샷: 랜딩 페이지, 모의고사 풀이 화면, 채점 결과 등 추가 예정 -->
+
+---
+
+## 이런 걸 할 수 있습니다
+
+**모의고사** — SQLD 50문항, 정처기 실기 20문항, 컴활 60문항. 실제 시험과 동일한 구성으로 매번 새로운 세트가 생성됩니다.
+
+**카테고리 무한 풀이** — 과목별로 끝없이 문제를 풀 수 있습니다. 이미 푼 문제는 후순위로 밀려납니다.
+
+**오답 자동 복습** — 틀린 문제만 모아서 다시 풀기. 2번 연속 맞추면 자동으로 마스터 처리됩니다.
+
+**채점 결과** — 손글씨 빨간 색연필 느낌의 채점 UI. 회차별 점수 추이를 대시보드에서 추적합니다.
+
+**비로그인 미리보기** — Google 로그인 없이도 모의고사 목록과 문제 미리보기를 볼 수 있습니다.
+
+---
+
+## 기술적으로 재미있는 부분
+
+### AI 문제 생성 파이프라인
+
+사람이 검증한 시드 문제를 기반으로, AI가 변형 문제를 생성합니다. 단순 "문제 만들어줘"가 아니라:
+
+- **토픽 단위 생성** — 세부 주제별로 기본/심화/고난도 3문제를 동시 생성
+- **Few-shot 78개** — 출제 스타일을 학습시켜 품질 유지
+- **hash 기반 중복 차단** — 회차 간/내 본문 유사도를 체크해서 중복 방지
+- **chunk 분할 호출** — AI 응답이 잘리는 문제를 영구 해결
+
+### AI 검증 파이프라인
+
+AI가 만든 문제를 다시 AI가 검증합니다.
+
+- 정답 정확도, 해설 일치, 난이도 적절성, 오타를 자동 검사
+- 단순 오류는 자동 수정, 복잡한 건 관리자 리뷰 큐로 분류
+- 생성은 Anthropic Claude, 검증은 교차 검증으로 신뢰도 확보
+
+### 정처기 실기 — 단답형/서술형 채점
+
+정처기 실기는 4지선다가 아닙니다. 단답형과 서술형 채점 엔진을 별도로 구현했습니다.
+
+- 단답형: 정규화 비교 (대소문자, 공백, 특수문자 처리)
+- 서술형: 키워드 포함 여부 + 부분 점수
+
+### 무중단 배포
+
+포트 재바인딩 방식으로 다운타임 0에 가까운 배포를 구현했습니다. 새 컨테이너를 다른 포트에 띄우고, 헬스체크 통과 후 nginx upstream을 전환합니다.
+
+---
 
 ## 기술 스택
 
 | 영역 | 기술 |
 |---|---|
-| **백엔드** | Java 21 · Spring Boot 4 · Spring Data JPA · Spring AI · MySQL 8 · Flyway · Gradle 9 |
-| **프론트엔드** | Next.js 16 (App Router) · React 19 · TypeScript 5 · Tailwind CSS 4 · react-markdown · react-syntax-highlighter |
-| **AI** | Anthropic Claude (생성) / Google Gemini (검수) — Spring AI 어댑터로 분기 |
-| **인증** | Google OAuth 2.0 + 자체 JWT |
-| **인프라** | Docker Compose · Vercel(frontend) · 자체 호스팅(backend) · Loki + Promtail (관측) |
+| **백엔드** | Java 21 · Spring Boot 4 · Spring Data JPA · Spring AI · MySQL 8 · Flyway |
+| **프론트엔드** | Next.js 16 (App Router) · React 19 · TypeScript · Tailwind CSS 4 |
+| **AI** | Anthropic Claude (생성) · Google Gemini (검수) |
+| **인증** | Google OAuth 2.0 + JWT |
+| **인프라** | Docker Compose · Vercel · Loki + Grafana · GitHub Actions CI/CD |
 
-## 모노레포 구조
+---
+
+## 프로젝트 구조
 
 ```
 sqldpass/
-├── backend/         Spring Boot API 서버 (Java 21, Gradle)
-├── frontend/        Next.js App Router (TypeScript)
-├── docs/            설계/운영 문서
+├── backend/         Spring Boot API 서버
+├── frontend/        Next.js 프론트엔드
 ├── observability/   Loki + Promtail 설정
-├── proxy/           리버스 프록시 설정
+├── proxy/           nginx 리버스 프록시
 ├── scripts/         운영 스크립트
-└── docker-compose.yaml    로컬 개발용 MySQL
+└── docker-compose.yaml
 ```
 
-각 디렉토리에는 더 세부적인 가이드를 담은 `CLAUDE.md` 가 함께 있습니다.
+---
 
-## 빠른 시작
+## 로컬 실행
 
-### 사전 준비
-- Java 21
-- Node.js 20+
-- Docker (로컬 MySQL 용)
-
-### 1) MySQL 띄우기
 ```bash
+# 1. MySQL
 docker compose up -d
-# mysql://localhost:3307 (database: sqldpass)
+
+# 2. 백엔드 (localhost:8080)
+cd backend && ./gradlew bootRun
+
+# 3. 프론트엔드 (localhost:3000)
+cd frontend && npm install && npm run dev
 ```
 
-### 2) 백엔드 실행
-```bash
-cd backend
-./gradlew bootRun     # macOS / Linux / Git Bash
-gradlew.bat bootRun   # Windows CMD/PowerShell
-```
-- 기본 프로필: `local`
-- 포트: `8080`
-- Swagger: http://localhost:8080/swagger-ui/index.html
+AI 생성/OAuth는 환경변수 설정이 필요합니다. 없어도 기본 기능은 동작합니다.
 
-환경 변수 (없어도 동작하지만 AI/OAuth는 비활성):
+<details>
+<summary>환경변수 목록</summary>
+
 ```
 ANTHROPIC_API_KEY=...
 GOOGLE_GENAI_API_KEY=...
@@ -71,75 +110,9 @@ GOOGLE_OAUTH_CLIENT_SECRET=...
 JWT_SECRET=local-dev-secret-key-minimum-32-characters-long
 ```
 
-### 3) 프론트엔드 실행
-```bash
-cd frontend
-npm install
-npm run dev
-# http://localhost:3000
-```
+</details>
 
-`frontend/.env.local` 에 백엔드 URL 지정 (기본 `http://localhost:8080`):
-```
-NEXT_PUBLIC_API_URL=http://localhost:8080
-```
-
-## 백엔드 빌드 & 테스트
-
-```bash
-cd backend
-./gradlew build              # 컴파일 + 테스트 + jar
-./gradlew test               # 테스트만
-./gradlew bootRun            # 로컬 실행
-```
-
-## 프론트엔드 빌드 & 린트
-
-```bash
-cd frontend
-npm run dev          # 개발 서버
-npm run build        # 프로덕션 빌드
-npm run start        # 프로덕션 서버
-npm run lint         # ESLint
-```
-
-## 아키텍처 노트
-
-### 자격증별 모의고사 생성 흐름
-- **SQLD**: 자동 스케줄러/관리자가 카테고리별 풀에 문제를 채워 둠 → 모의고사 생성 시 풀에서 50문제 추출
-- **정처기 실기**: 풀 사전 적재 없음. 모의고사 생성 시점에 카테고리 분포 템플릿(4종 회전) + 시드 풀(카테고리당 5개) 기반으로 AI에 N개 변형을 즉석 요청 → 생성된 20문제는 자동으로 카테고리 무한 풀이 풀에도 합류
-
-### 다양성 보장 (정처기)
-- 카테고리당 5개 시드를 풀에서 무작위 추출 → 시드별 변형 1개 생성 (난이도 1/3/5 자연 분산)
-- 시드 코드의 식별자(함수/클래스/변수명) + 직전 30개 출제 식별자 = forbidden identifier 목록을 AI에 전달
-- 최근 30개 정답과 8자 이상 일치하는 결과 발견 시 강화된 회피 신호로 1회 재시도
-
-### Layer 규칙 (백엔드)
-```
-[조회] DB → Entity → Mapper → Domain → Service → Controller → Response DTO
-[저장] Request DTO → Service → Entity 직접 생성 → DB
-```
-- `domain/`은 JPA 의존성 없는 순수 POJO
-- `persistent/`의 Mapper만 Entity↔Domain 변환 담당
-- DTO는 `controller/`의 Java `record`
-
-자세한 규칙은 `backend/CLAUDE.md` 참조.
-
-### 프론트 핵심 라우트
-- `/` 랜딩
-- `/learn`, `/learn/[cert]`, `/learn/[cert]/[category]` 공개 콘텐츠 (SSG/ISR)
-- `/q/[id]` 개별 문제 공개 페이지 (SEO 핵심)
-- `/solve` 카테고리 무한 풀이
-- `/mock-exams`, `/mock-exams/[id]` 모의고사 (게스트 미리보기 + 로그인 후 응시)
-- `/dashboard` 학습 대시보드
-- `/admin/**` 관리자
-
-## 운영
-
-- **DB 마이그레이션**: Flyway. `backend/src/main/resources/db/migration/V*.sql`
-- **로그**: Spring Boot → Promtail → Loki. 1초 이상 걸린 쿼리는 WARN으로 자동 수집
-- **AI 호출 모니터링**: 생성/검수 결과를 Discord webhook으로 전송
-- **Search Console / 네이버 서치어드바이저**: `https://www.sqldpass.com` 로 등록 (sitemap `/sitemap.xml`)
+---
 
 ## 라이선스
 

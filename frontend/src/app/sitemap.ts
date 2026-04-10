@@ -4,6 +4,7 @@ import {
   getPublicCategoriesByCert,
   getPublicCerts,
 } from "@/lib/publicApi";
+import { getAllSlugs } from "@/lib/blog";
 
 const SITE_URL = "https://www.sqldpass.com";
 
@@ -18,6 +19,22 @@ const SITE_URL = "https://www.sqldpass.com";
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
 
+  const blogSlugs = getAllSlugs();
+  const blogEntries: MetadataRoute.Sitemap = [
+    {
+      url: `${SITE_URL}/blog`,
+      lastModified: now,
+      changeFrequency: "weekly",
+      priority: 0.8,
+    },
+    ...blogSlugs.map((slug) => ({
+      url: `${SITE_URL}/blog/${slug}`,
+      lastModified: now,
+      changeFrequency: "monthly" as const,
+      priority: 0.7,
+    })),
+  ];
+
   const staticEntries: MetadataRoute.Sitemap = [
     {
       url: `${SITE_URL}/`,
@@ -31,6 +48,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: "weekly",
       priority: 0.9,
     },
+    ...blogEntries,
   ];
 
   try {
