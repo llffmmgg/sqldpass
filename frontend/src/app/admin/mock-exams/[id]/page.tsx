@@ -3,10 +3,11 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { use } from "react";
-import { getMockExam, type MockExamDetail } from "@/lib/mockExamApi";
 import {
+  getAdminMockExamDetail,
   getQuestion,
   updateQuestion,
+  type AdminMockExamDetail,
   type AdminQuestion,
 } from "@/lib/adminApi";
 
@@ -27,7 +28,7 @@ export default function AdminMockExamDetailPage({
   const { id } = use(params);
   const examId = Number(id);
 
-  const [exam, setExam] = useState<MockExamDetail | null>(null);
+  const [exam, setExam] = useState<AdminMockExamDetail | null>(null);
   const [questions, setQuestions] = useState<AdminQuestion[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -35,7 +36,7 @@ export default function AdminMockExamDetailPage({
     let cancelled = false;
     (async () => {
       try {
-        const detail = await getMockExam(examId);
+        const detail = await getAdminMockExamDetail(examId);
         if (cancelled) return;
         setExam(detail);
         // 문제별 admin 상세 병렬 조회
@@ -316,7 +317,7 @@ function triggerDownload(content: string, filename: string, mime: string) {
   URL.revokeObjectURL(url);
 }
 
-function downloadJson(exam: MockExamDetail, questions: AdminQuestion[]) {
+function downloadJson(exam: AdminMockExamDetail, questions: AdminQuestion[]) {
   const data = {
     examName: exam.name,
     examType: exam.examType,
@@ -340,7 +341,7 @@ function downloadJson(exam: MockExamDetail, questions: AdminQuestion[]) {
   triggerDownload(JSON.stringify(data, null, 2), filename, "application/json");
 }
 
-function downloadMd(exam: MockExamDetail, questions: AdminQuestion[]) {
+function downloadMd(exam: AdminMockExamDetail, questions: AdminQuestion[]) {
   const lines: string[] = [];
   lines.push(`# ${exam.name}`);
   lines.push(`- 시험 유형: ${exam.examType}`);

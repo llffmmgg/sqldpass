@@ -475,6 +475,27 @@ export function getAdminMockExams() {
   return adminFetch<AdminMockExam[]>("/mock-exams");
 }
 
+export interface AdminMockExamDetail {
+  id: number;
+  name: string;
+  examType: string;
+  sequence: number;
+  totalQuestions: number;
+  createdAt: string;
+  questions: {
+    id: number;
+    displayOrder: number;
+    content: string;
+    questionType: string;
+    subjectId: number;
+    subjectName: string;
+  }[];
+}
+
+export function getAdminMockExamDetail(id: number) {
+  return adminFetch<AdminMockExamDetail>(`/mock-exams/${id}`);
+}
+
 export type CreateMockExamType = "SQLD" | "ENGINEER_PRACTICAL" | "COMPUTER_LITERACY_1" | "ENGINEER_WRITTEN";
 
 /** 생성 시 난이도는 SQLD, 정처기 실기, 컴활 1급 모두에 적용된다. */

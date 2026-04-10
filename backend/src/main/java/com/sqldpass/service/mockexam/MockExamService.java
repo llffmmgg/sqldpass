@@ -72,6 +72,13 @@ public class MockExamService {
      * 사용자용 상세 조회 — DRAFT는 NOT_FOUND, PREMIUM은 잠금(예외).
      * 결제 시스템 도입 후 권한 있는 사용자만 PREMIUM 통과시키도록 확장.
      */
+    /** 어드민용 — DRAFT/PREMIUM 제한 없이 조회 */
+    public MockExam getById(Long id) {
+        MockExamEntity entity = mockExamRepository.findByIdWithQuestions(id)
+                .orElseThrow(() -> new SqldpassException(ErrorCode.MOCK_EXAM_NOT_FOUND));
+        return MockExamMapper.toDomain(entity);
+    }
+
     public MockExam getForUser(Long id) {
         MockExamEntity entity = mockExamRepository.findByIdWithQuestions(id)
                 .orElseThrow(() -> new SqldpassException(ErrorCode.MOCK_EXAM_NOT_FOUND));

@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.sqldpass.controller.admin.dto.CreateMockExamRequest;
+import com.sqldpass.controller.mockexam.dto.MockExamDetailResponse;
 import com.sqldpass.controller.mockexam.dto.MockExamSummaryResponse;
 import com.sqldpass.persistent.mockexam.EngineerExamTemplate;
 import com.sqldpass.persistent.mockexam.ExamType;
@@ -39,6 +40,12 @@ public class AdminMockExamController {
         return mockExamService.getAll().stream()
                 .map(MockExamSummaryResponse::from)
                 .toList();
+    }
+
+    @GetMapping("/{id}")
+    @Operation(summary = "모의고사 상세 (관리자)")
+    public MockExamDetailResponse get(@PathVariable Long id) {
+        return MockExamDetailResponse.from(mockExamService.getById(id));
     }
 
     @PostMapping
