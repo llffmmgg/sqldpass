@@ -47,7 +47,7 @@ export async function generateMetadata({
 const CATEGORY_COLORS: Record<string, string> = {
   SQLD: "border-primary/30 bg-primary/10 text-primary",
   정보처리기사: "border-accent/30 bg-accent/10 text-accent",
-  컴활: "border-blue-600/30 bg-blue-600/10 text-blue-600",
+  컴퓨터활용능력: "border-blue-600/30 bg-blue-600/10 text-blue-600",
 };
 
 export default async function BlogPostPage({
