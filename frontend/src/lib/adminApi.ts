@@ -77,6 +77,8 @@ export interface AdminQuestion {
   explanation: string;
   summary: string | null;
   createdAt: string;
+  verifiedAt: string | null;
+  verificationCategory: string | null;
 }
 
 export interface AdminQuestionUpdatePayload {

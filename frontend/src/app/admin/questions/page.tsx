@@ -735,6 +735,15 @@ export default function AdminQuestionsPage() {
                     <span className="rounded bg-violet-500/10 px-2 py-0.5 text-xs font-medium text-violet-400">
                       {question.subjectName}
                     </span>
+                    {question.verifiedAt ? (
+                      <span className="rounded bg-green-500/10 px-2 py-0.5 text-[10px] font-medium text-green-400">
+                        검수 완료
+                      </span>
+                    ) : (
+                      <span className="rounded bg-amber-500/10 px-2 py-0.5 text-[10px] font-medium text-amber-400">
+                        미검수
+                      </span>
+                    )}
                     <span className="text-xs text-muted">{formatDate(question.createdAt)}</span>
                   </div>
                   <p className="mt-1 truncate text-sm">{question.content.split("\n")[0]}</p>
