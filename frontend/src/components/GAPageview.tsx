@@ -14,6 +14,7 @@ export default function GAPageview() {
 
   useEffect(() => {
     if (!pathname) return;
+    if (pathname.startsWith("/admin")) return;
     const query = searchParams?.toString();
     const path = query ? `${pathname}?${query}` : pathname;
     trackPageview(path);
