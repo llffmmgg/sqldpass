@@ -19,6 +19,7 @@ import { parseQuestion } from "@/lib/parseQuestion";
 import QuestionContent from "@/components/QuestionContent";
 import AuthGuard from "@/components/AuthGuard";
 import Spinner from "@/components/Spinner";
+import Image from "next/image";
 import Link from "next/link";
 import { trackEvent } from "@/lib/gtag";
 
@@ -456,7 +457,16 @@ function WrongAnswersPageContent() {
   return (
     <main className="min-h-screen bg-background text-foreground">
       <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6">
-        <h1 className="text-2xl font-bold sm:text-3xl">오답 노트</h1>
+        <h1 className="flex items-center gap-3 text-2xl font-bold sm:text-3xl">
+          오답 노트
+          <Image
+            src="/wrong-answer-mascot.png"
+            alt="오답노트 마스코트"
+            width={48}
+            height={48}
+            className="shrink-0"
+          />
+        </h1>
         <p className="mt-2 text-base text-muted">
           틀린 문제를 다시 풀어 마스터하세요. 다시 맞히면 목록에서 자동으로 사라집니다.
         </p>
