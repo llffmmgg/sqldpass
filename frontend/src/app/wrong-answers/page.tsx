@@ -457,19 +457,21 @@ function WrongAnswersPageContent() {
   return (
     <main className="min-h-screen bg-background text-foreground">
       <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6">
-        <h1 className="flex items-center gap-3 text-2xl font-bold sm:text-3xl">
-          오답 노트
+        <div className="flex items-center gap-5">
           <Image
             src="/wrong-answer-mascot.png"
             alt="오답노트 마스코트"
-            width={48}
-            height={48}
+            width={160}
+            height={160}
             className="shrink-0"
           />
-        </h1>
-        <p className="mt-2 text-base text-muted">
-          틀린 문제를 다시 풀어 마스터하세요. 다시 맞히면 목록에서 자동으로 사라집니다.
-        </p>
+          <div>
+            <h1 className="text-2xl font-bold sm:text-3xl">오답 노트</h1>
+            <p className="mt-2 text-base text-muted">
+              틀린 문제를 다시 풀어 마스터하세요. 다시 맞히면 목록에서 자동으로 사라집니다.
+            </p>
+          </div>
+        </div>
 
         {/* 요약 카드 */}
         {totalUnresolved > 0 && (() => {

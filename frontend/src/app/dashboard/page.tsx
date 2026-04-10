@@ -208,18 +208,20 @@ function DashboardPageContent() {
     <main className="min-h-screen bg-background text-foreground">
       <div className="mx-auto max-w-4xl px-4 py-12 sm:px-6">
         {/* 헤더 */}
-        <div>
-          <h1 className="flex items-center gap-3 text-2xl font-bold sm:text-3xl">
-            {nickname ? `${nickname}님의 학습 현황` : "학습 대시보드"}
-            <Image
-              src="/dashboard-mascot.png"
-              alt="대시보드 마스코트"
-              width={48}
-              height={48}
-              className="shrink-0"
-            />
-          </h1>
-          <p className="mt-1 text-sm text-muted">합격을 향한 여정을 한눈에 확인하세요.</p>
+        <div className="flex items-center gap-5">
+          <Image
+            src="/dashboard-mascot.png"
+            alt="대시보드 마스코트"
+            width={160}
+            height={160}
+            className="shrink-0"
+          />
+          <div>
+            <h1 className="text-2xl font-bold sm:text-3xl">
+              {nickname ? `${nickname}님의 학습 현황` : "학습 대시보드"}
+            </h1>
+            <p className="mt-1 text-sm text-muted">합격을 향한 여정을 한눈에 확인하세요.</p>
+          </div>
         </div>
 
         {/* 빈 상태 */}
