@@ -316,13 +316,24 @@ function MockExamDetailContent() {
               </span>
             </p>
           </div>
-          <button
-            onClick={handleSubmit}
-            disabled={submitting || answeredCount === 0}
-            className={`shrink-0 rounded-lg ${accent.bg} px-5 py-2.5 text-sm font-semibold text-zinc-900 shadow-sm transition disabled:opacity-40`}
-          >
-            {submitting ? "제출 중..." : `제출하기 (${answeredCount}/${total})`}
-          </button>
+          <div className="flex shrink-0 items-center gap-3">
+            <ExamTimer
+              seconds={timerSeconds}
+              limit={timerLimit}
+              running={timerRunning}
+              onStart={startTimer}
+              onPause={pauseTimer}
+              onReset={resetTimer}
+              accent={accent}
+            />
+            <button
+              onClick={handleSubmit}
+              disabled={submitting || answeredCount === 0}
+              className={`shrink-0 rounded-lg ${accent.bg} px-5 py-2.5 text-sm font-semibold text-zinc-900 shadow-sm transition disabled:opacity-40`}
+            >
+              {submitting ? "제출 중..." : `제출하기 (${answeredCount}/${total})`}
+            </button>
+          </div>
         </div>
         <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-border">
           <div
@@ -420,36 +431,25 @@ function MockExamDetailContent() {
           </div>
         </div>
 
-        {/* 하단: 타이머 + 제출 */}
-        <div className="mt-8 flex items-center gap-5">
-          <ExamTimer
-            seconds={timerSeconds}
-            limit={timerLimit}
-            running={timerRunning}
-            onStart={startTimer}
-            onPause={pauseTimer}
-            onReset={resetTimer}
-            accent={accent}
-          />
-          <div className="flex-1">
-            <button
-              onClick={handleSubmit}
-              disabled={submitting || answeredCount === 0}
-              className={`w-full rounded-xl ${accent.bg} py-4 text-base font-bold text-zinc-900 shadow-sm transition disabled:opacity-40`}
-            >
-              {submitting ? "제출 중..." : "제출하기"}
-            </button>
-            {answeredCount < total && answeredCount > 0 && (
-              <p className="mt-2 text-center text-xs text-muted">
-                미답 {total - answeredCount}문항은 오답으로 처리됩니다
-              </p>
-            )}
-            {answeredCount === 0 && (
-              <p className="mt-2 text-center text-xs text-muted">
-                최소 1문항 이상 답안을 작성해야 제출할 수 있습니다
-              </p>
-            )}
-          </div>
+        {/* 하단 제출 */}
+        <div className="mt-8">
+          <button
+            onClick={handleSubmit}
+            disabled={submitting || answeredCount === 0}
+            className={`w-full rounded-xl ${accent.bg} py-4 text-base font-bold text-zinc-900 shadow-sm transition disabled:opacity-40`}
+          >
+            {submitting ? "제출 중..." : "제출하기"}
+          </button>
+          {answeredCount < total && answeredCount > 0 && (
+            <p className="mt-2 text-center text-xs text-muted">
+              미답 {total - answeredCount}문항은 오답으로 처리됩니다
+            </p>
+          )}
+          {answeredCount === 0 && (
+            <p className="mt-2 text-center text-xs text-muted">
+              최소 1문항 이상 답안을 작성해야 제출할 수 있습니다
+            </p>
+          )}
         </div>
       </div>
     </main>
