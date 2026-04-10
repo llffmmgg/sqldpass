@@ -66,6 +66,23 @@ export function getPostBySlug(slug: string): BlogPost | null {
   };
 }
 
+export function getAllTags(): { tag: string; count: number }[] {
+  const posts = getAllPosts();
+  const map = new Map<string, number>();
+  for (const post of posts) {
+    for (const tag of post.tags) {
+      map.set(tag, (map.get(tag) ?? 0) + 1);
+    }
+  }
+  return Array.from(map.entries())
+    .map(([tag, count]) => ({ tag, count }))
+    .sort((a, b) => b.count - a.count);
+}
+
+export function getPostsByTag(tag: string): BlogPostMeta[] {
+  return getAllPosts().filter((post) => post.tags.includes(tag));
+}
+
 export function getAllSlugs(): string[] {
   if (!fs.existsSync(BLOG_DIR)) return [];
   return fs
