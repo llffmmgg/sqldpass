@@ -6,6 +6,7 @@
 const CERTS = [
   { id: "sqld", label: "SQLD" },
   { id: "engineer", label: "정보처리기사 실기" },
+  { id: "engineer-written", label: "정보처리기사 필기" },
   { id: "computer-literacy", label: "컴퓨터활용능력 1급" },
 ] as const;
 

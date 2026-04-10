@@ -78,6 +78,18 @@ const CERTS: CertConfig[] = [
       tabActive: "border-sky-400 text-sky-300",
     },
   },
+  {
+    id: "ENGINEER_WRITTEN",
+    label: "정보처리기사 필기",
+    shortLabel: "정처기 필기",
+    totalQuestions: 100,
+    accent: {
+      badge: "border-rose-500/30 bg-rose-500/10 text-rose-300",
+      button:
+        "border border-rose-500/40 bg-rose-500/10 text-rose-300 hover:bg-rose-500/20 disabled:opacity-50",
+      tabActive: "border-rose-400 text-rose-300",
+    },
+  },
   // + 새 자격증 추가 시 여기에 항목 추가
 ];
 

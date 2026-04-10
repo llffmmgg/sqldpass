@@ -22,6 +22,7 @@ const EXAM_TIME_MINUTES: Record<string, number> = {
   SQLD: 90,
   ENGINEER_PRACTICAL: 150,
   COMPUTER_LITERACY_1: 60,
+  ENGINEER_WRITTEN: 150,
 };
 
 interface AnswerState {

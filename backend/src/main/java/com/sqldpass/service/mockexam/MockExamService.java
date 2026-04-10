@@ -106,6 +106,7 @@ public class MockExamService {
             case SQLD -> mockExamCreator.create(difficulty);
             case ENGINEER_PRACTICAL -> engineerMockExamCreator.create(difficulty, engineerTemplate);
             case COMPUTER_LITERACY_1 -> computerLiteracyMockExamCreator.create(difficulty);
+            case ENGINEER_WRITTEN -> throw new SqldpassException(ErrorCode.INVALID_INPUT, "정보처리기사 필기 모의고사 생성은 아직 준비 중입니다.");
         };
 
         MockExamEntity loaded = mockExamRepository.findByIdWithQuestions(created.getId())

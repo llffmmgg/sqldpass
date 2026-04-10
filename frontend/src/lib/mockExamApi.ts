@@ -1,6 +1,6 @@
 import { fetchApi } from "@/lib/api";
 
-export type ExamType = "SQLD" | "ENGINEER_PRACTICAL" | "COMPUTER_LITERACY_1";
+export type ExamType = "SQLD" | "ENGINEER_PRACTICAL" | "COMPUTER_LITERACY_1" | "ENGINEER_WRITTEN";
 export type QuestionType = "MCQ" | "SHORT_ANSWER" | "DESCRIPTIVE";
 
 export type DifficultyLabel = "쉬움" | "보통" | "어려움" | "매우 어려움";

@@ -163,7 +163,7 @@ export interface QuestionVerifyResult {
   reason: string;
 }
 
-export type VerificationExamType = "SQLD" | "ENGINEER_PRACTICAL" | "COMPUTER_LITERACY_1";
+export type VerificationExamType = "SQLD" | "ENGINEER_PRACTICAL" | "COMPUTER_LITERACY_1" | "ENGINEER_WRITTEN";
 
 export interface QuestionVerifyHistory {
   runId: number;
@@ -473,7 +473,7 @@ export function getAdminMockExams() {
   return adminFetch<AdminMockExam[]>("/mock-exams");
 }
 
-export type CreateMockExamType = "SQLD" | "ENGINEER_PRACTICAL" | "COMPUTER_LITERACY_1";
+export type CreateMockExamType = "SQLD" | "ENGINEER_PRACTICAL" | "COMPUTER_LITERACY_1" | "ENGINEER_WRITTEN";
 
 /** 생성 시 난이도는 SQLD, 정처기 실기, 컴활 1급 모두에 적용된다. */
 export type MockExamCreationDifficulty = "EASY" | "NORMAL" | "HARD" | "VERY_HARD";
@@ -497,7 +497,7 @@ export function deleteMockExam(id: number) {
 // LLM 검증용 Markdown export
 // ----------------------------------------------------------
 
-export type ExportExamType = "SQLD" | "ENGINEER_PRACTICAL" | "COMPUTER_LITERACY_1";
+export type ExportExamType = "SQLD" | "ENGINEER_PRACTICAL" | "COMPUTER_LITERACY_1" | "ENGINEER_WRITTEN";
 
 /**
  * 문제를 .md 파일로 다운로드. 다운로드 즉시 백엔드에서 export 마크가 찍힘.

@@ -11,5 +11,8 @@ public enum ExamType {
     ENGINEER_PRACTICAL,
 
     /** 컴퓨터활용능력 1급 필기 (4지선다 60문항: 컴퓨터일반/스프레드시트/데이터베이스 각 20) */
-    COMPUTER_LITERACY_1
+    COMPUTER_LITERACY_1,
+
+    /** 정보처리기사 필기 (4지선다 100문항: 5과목 각 20문항) */
+    ENGINEER_WRITTEN
 }

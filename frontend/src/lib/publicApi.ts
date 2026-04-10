@@ -19,7 +19,7 @@ async function publicFetch<T>(path: string): Promise<T> {
   return res.json();
 }
 
-export type CertSlug = "sqld" | "engineer" | "computer-literacy-1";
+export type CertSlug = "sqld" | "engineer" | "computer-literacy-1" | "engineer-written";
 
 export interface PublicCert {
   slug: CertSlug;

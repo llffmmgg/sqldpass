@@ -480,6 +480,14 @@ export function ExamBadge({ examType }: { examType: ExamType }) {
       </span>
     );
   }
+  if (examType === "ENGINEER_WRITTEN") {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full border border-rose-500/40 bg-rose-500/10 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-rose-300">
+        <span className="h-1.5 w-1.5 rounded-full bg-rose-400" />
+        정처기 필기
+      </span>
+    );
+  }
   if (examType === "COMPUTER_LITERACY_1") {
     return (
       <span className="inline-flex items-center gap-1 rounded-full border border-sky-500/40 bg-sky-500/10 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-sky-300">

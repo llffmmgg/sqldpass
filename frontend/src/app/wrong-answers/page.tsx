@@ -35,16 +35,18 @@ function getLeafSubjects(subjects: Subject[]): { id: number; name: string }[] {
 }
 
 /** root subject 이름으로 자격증 키 판정 */
-type CertKey = "SQLD" | "ENGINEER_PRACTICAL" | "COMPUTER_LITERACY_1";
+type CertKey = "SQLD" | "ENGINEER_PRACTICAL" | "COMPUTER_LITERACY_1" | "ENGINEER_WRITTEN";
 
 const CERT_META: Record<CertKey, { label: string; dot: string; border: string; order: number }> = {
   SQLD: { label: "SQLD", dot: "bg-amber-400", border: "border-amber-500/30", order: 0 },
   ENGINEER_PRACTICAL: { label: "정보처리기사 실기", dot: "bg-emerald-400", border: "border-emerald-500/30", order: 1 },
-  COMPUTER_LITERACY_1: { label: "컴퓨터활용능력 1급 필기", dot: "bg-sky-400", border: "border-sky-500/30", order: 2 },
+  ENGINEER_WRITTEN: { label: "정보처리기사 필기", dot: "bg-rose-400", border: "border-rose-500/30", order: 2 },
+  COMPUTER_LITERACY_1: { label: "컴퓨터활용능력 1급 필기", dot: "bg-sky-400", border: "border-sky-500/30", order: 3 },
 };
 
 function detectCertFromRootName(rootName: string): CertKey {
   if (rootName === "정보처리기사 실기") return "ENGINEER_PRACTICAL";
+  if (rootName === "정보처리기사 필기") return "ENGINEER_WRITTEN";
   if (rootName === "컴퓨터활용능력 1급 필기") return "COMPUTER_LITERACY_1";
   return "SQLD";
 }

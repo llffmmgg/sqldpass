@@ -23,6 +23,11 @@ const CERT_META: Record<CertSlug, { title: string; description: string }> = {
     description:
       "컴퓨터활용능력 1급 필기 — 컴퓨터 일반, 스프레드시트 일반, 데이터베이스 일반 60문항 4지선다 기출 유형과 해설.",
   },
+  "engineer-written": {
+    title: "정보처리기사 필기 기출문제 · 과목별 해설",
+    description:
+      "정보처리기사 필기 — 소프트웨어 설계, 소프트웨어 개발, 데이터베이스 구축, 프로그래밍 언어 활용, 정보시스템 구축 관리 100문항 4지선다 기출 유형과 해설.",
+  },
 };
 
 export async function generateStaticParams() {
