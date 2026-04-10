@@ -127,6 +127,11 @@ export function getPublicRanking(): Promise<PublicRanking> {
   return publicFetch("/ranking");
 }
 
+/** 블로그 전체 조회수 조회 */
+export function getPublicBlogViews(): Promise<Record<string, number>> {
+  return publicFetch("/blog/views");
+}
+
 // 카테고리 slug(cat-{id}) → id 역변환
 export function parseCategorySlug(slug: string): number | null {
   const m = /^cat-(\d+)$/.exec(slug);

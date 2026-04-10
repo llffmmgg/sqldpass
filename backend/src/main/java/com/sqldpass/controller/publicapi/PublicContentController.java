@@ -1,9 +1,11 @@
 package com.sqldpass.controller.publicapi;
 
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -75,5 +77,17 @@ public class PublicContentController {
     @Operation(summary = "모든 공개 문제 ID 목록 (sitemap 용)")
     public List<Long> listAllIds() {
         return publicContentService.listAllPublicQuestionIds();
+    }
+
+    @PostMapping("/blog/views/{slug}")
+    @Operation(summary = "블로그 조회수 증가")
+    public void incrementBlogView(@PathVariable String slug) {
+        publicContentService.incrementBlogViewCount(slug);
+    }
+
+    @GetMapping("/blog/views")
+    @Operation(summary = "블로그 전체 조회수 조회")
+    public Map<String, Long> getBlogViews() {
+        return publicContentService.getAllBlogViewCounts();
     }
 }

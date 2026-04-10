@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { MDXRemote } from "next-mdx-remote/rsc";
 import remarkGfm from "remark-gfm";
 import { getAllPosts, getAllSlugs, getPostBySlug } from "@/lib/blog";
+import BlogViewCounter from "@/components/BlogViewCounter";
 
 type Params = { slug: string };
 
@@ -76,6 +77,7 @@ export default async function BlogPostPage({
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-12 sm:px-6 lg:px-8">
+      <BlogViewCounter slug={slug} />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(articleLd) }}

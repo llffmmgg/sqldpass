@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { getAllPosts } from "@/lib/blog";
+import { getPublicBlogViews } from "@/lib/publicApi";
 
 export const metadata: Metadata = {
   title: "자격증 시험 준비 블로그",
@@ -29,8 +30,14 @@ function getCategoryStyle(category: string) {
   );
 }
 
-export default function BlogPage() {
+export default async function BlogPage() {
   const posts = getAllPosts();
+  let viewCounts: Record<string, number> = {};
+  try {
+    viewCounts = await getPublicBlogViews();
+  } catch {
+    /* 백엔드 미연결 시 무시 */
+  }
 
   return (
     <main className="mx-auto max-w-4xl px-4 py-12 sm:px-6 lg:px-8">
@@ -74,6 +81,11 @@ export default function BlogPage() {
                   })}
                 </span>
                 <span className="text-muted/60">{post.readingTime}</span>
+                {(viewCounts[post.slug] ?? 0) > 0 && (
+                  <span className="text-muted/60">
+                    조회 {viewCounts[post.slug].toLocaleString()}
+                  </span>
+                )}
               </div>
 
               <h2 className="mt-3 text-xl font-bold group-hover:text-primary sm:text-2xl">

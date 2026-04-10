@@ -4,6 +4,8 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
@@ -12,6 +14,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.sqldpass.config.CacheConfig;
+import com.sqldpass.persistent.blog.BlogViewCountEntity;
+import com.sqldpass.persistent.blog.BlogViewCountRepository;
 import com.sqldpass.controller.publicapi.dto.PublicDtos.PublicCategoryResponse;
 import com.sqldpass.controller.publicapi.dto.PublicDtos.PublicCertResponse;
 import com.sqldpass.controller.publicapi.dto.PublicDtos.PublicQuestionDetailResponse;
@@ -71,6 +75,7 @@ public class PublicContentService {
     private final MemberRepository memberRepository;
     private final SolveAnswerRepository solveAnswerRepository;
     private final SolveRepository solveRepository;
+    private final BlogViewCountRepository blogViewCountRepository;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     // ----------------------------------------------------------
@@ -247,6 +252,16 @@ public class PublicContentService {
                 .replaceAll("\\s+", " ")
                 .trim();
         return stripped.length() > 120 ? stripped.substring(0, 120) + "..." : stripped;
+    }
+
+    @Transactional
+    public void incrementBlogViewCount(String slug) {
+        blogViewCountRepository.incrementViewCount(slug);
+    }
+
+    public Map<String, Long> getAllBlogViewCounts() {
+        return blogViewCountRepository.findAll().stream()
+                .collect(Collectors.toMap(BlogViewCountEntity::getSlug, BlogViewCountEntity::getViewCount));
     }
 
     private List<String> parseKeywords(String keywordsJson) {
