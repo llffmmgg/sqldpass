@@ -496,6 +496,10 @@ export function getAdminMockExamDetail(id: number) {
   return adminFetch<AdminMockExamDetail>(`/mock-exams/${id}`);
 }
 
+export function markMockExamVerified(id: number) {
+  return adminFetch<{ marked: number }>(`/mock-exams/${id}/mark-verified`, { method: "POST" });
+}
+
 export type CreateMockExamType = "SQLD" | "ENGINEER_PRACTICAL" | "COMPUTER_LITERACY_1" | "ENGINEER_WRITTEN";
 
 /** 생성 시 난이도는 SQLD, 정처기 실기, 컴활 1급 모두에 적용된다. */

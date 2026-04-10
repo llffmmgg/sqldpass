@@ -1,6 +1,8 @@
 package com.sqldpass.controller.admin;
 
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -16,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.sqldpass.controller.admin.dto.CreateMockExamRequest;
 import com.sqldpass.controller.mockexam.dto.MockExamDetailResponse;
 import com.sqldpass.controller.mockexam.dto.MockExamSummaryResponse;
+import com.sqldpass.persistent.question.QuestionRepository;
 import com.sqldpass.persistent.mockexam.EngineerExamTemplate;
 import com.sqldpass.persistent.mockexam.ExamType;
 import com.sqldpass.persistent.mockexam.MockExamDifficulty;
@@ -33,6 +36,7 @@ import lombok.RequiredArgsConstructor;
 public class AdminMockExamController {
 
     private final MockExamService mockExamService;
+    private final QuestionRepository questionRepository;
 
     @GetMapping
     @Operation(summary = "\uBAA8\uC758\uACE0\uC0AC \uBAA9\uB85D (\uAD00\uB9AC\uC790)")
@@ -71,6 +75,18 @@ public class AdminMockExamController {
     }
 
     public record ChangeVisibilityRequest(MockExamVisibility visibility) {}
+
+    @PostMapping("/{id}/mark-verified")
+    @Operation(summary = "모의고사 전체 문제 수동 검수 완료 처리")
+    @org.springframework.transaction.annotation.Transactional
+    public Map<String, Integer> markAllVerified(@PathVariable Long id) {
+        var exam = mockExamService.getById(id);
+        List<Long> questionIds = exam.getQuestions().stream()
+                .map(q -> q.getQuestionId())
+                .toList();
+        int updated = questionRepository.markVerifiedInBatch(questionIds, LocalDateTime.now());
+        return Map.of("marked", updated);
+    }
 
     @DeleteMapping("/{id}")
     @Operation(summary = "\uBAA8\uC758\uACE0\uC0AC \uC0AD\uC81C")

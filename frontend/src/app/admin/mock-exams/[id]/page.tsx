@@ -6,6 +6,7 @@ import { use } from "react";
 import {
   getAdminMockExamDetail,
   getQuestion,
+  markMockExamVerified,
   updateQuestion,
   verifyAllQuestions,
   type AdminMockExamDetail,
@@ -97,6 +98,30 @@ export default function AdminMockExamDetailPage({
     }
   }
 
+  async function handleMarkVerified() {
+    if (!exam || !questions) return;
+    const unverified = questions.filter((q) => !q.verifiedAt).length;
+    if (unverified === 0) {
+      setVerifyResult("모든 문제가 이미 검수 완료되었습니다.");
+      return;
+    }
+    if (!confirm(`${unverified}문항을 수동으로 검수 완료 처리합니다. 계속하시겠습니까?`)) return;
+
+    try {
+      const result = await markMockExamVerified(examId);
+      const fulls = await Promise.all(
+        exam.questions
+          .slice()
+          .sort((a, b) => a.displayOrder - b.displayOrder)
+          .map((q) => getQuestion(q.id)),
+      );
+      setQuestions(fulls);
+      setVerifyResult(`${result.marked}문항 수동 검수 완료 처리됨`);
+    } catch (e) {
+      setVerifyResult(`처리 실패: ${e instanceof Error ? e.message : "알 수 없는 오류"}`);
+    }
+  }
+
   function handleQuestionUpdated(updated: AdminQuestion) {
     setQuestions((prev) =>
       prev ? prev.map((q) => (q.id === updated.id ? updated : q)) : prev,
@@ -134,7 +159,13 @@ export default function AdminMockExamDetailPage({
               disabled={verifying}
               className="rounded border border-emerald-500/40 bg-emerald-500/10 px-3 py-1.5 text-xs font-medium text-emerald-300 transition hover:bg-emerald-500/20 disabled:opacity-50"
             >
-              {verifying ? "검증 중..." : `전체 검증 (미검수 ${questions?.filter((q) => !q.verifiedAt).length ?? 0})`}
+              {verifying ? "검증 중..." : `AI 검증 (미검수 ${questions?.filter((q) => !q.verifiedAt).length ?? 0})`}
+            </button>
+            <button
+              onClick={handleMarkVerified}
+              className="rounded border border-amber-500/40 bg-amber-500/10 px-3 py-1.5 text-xs font-medium text-amber-300 transition hover:bg-amber-500/20"
+            >
+              전체 검수 완료
             </button>
             <button
               onClick={() => downloadJson(exam, questions)}
