@@ -1,3 +1,4 @@
+import Link from "next/link";
 import ScrollReveal from "@/components/ScrollReveal";
 import HeroCta from "@/components/HeroCta";
 import HeroStats from "@/components/HeroStats";
@@ -6,8 +7,16 @@ import { SiteNoticeModal } from "@/components/SiteNoticeModal";
 import CertChips from "@/components/CertChips";
 import PreviewTabs from "@/components/PreviewTabs";
 import RankingSection from "@/components/RankingSection";
+import { getAllPosts } from "@/lib/blog";
+
+const CATEGORY_COLORS: Record<string, string> = {
+  SQLD: "bg-primary/10 text-primary border-primary/30",
+  정보처리기사: "bg-accent/10 text-accent border-accent/30",
+  컴퓨터활용능력: "bg-blue-600/10 text-blue-600 border-blue-600/30",
+};
 
 export default function Home() {
+  const recentPosts = getAllPosts().slice(0, 3);
   return (
     <main className="min-h-screen bg-background text-foreground">
       <SiteNoticeModal />
@@ -158,6 +167,65 @@ export default function Home() {
           </ScrollReveal>
         </div>
       </section>
+
+      {/* ── Blog ─────────────────────────────────────────── */}
+      {recentPosts.length > 0 && (
+        <section className="mx-auto max-w-5xl px-4 py-24 sm:px-6 lg:px-8">
+          <ScrollReveal>
+            <h2 className="text-center text-2xl font-bold sm:text-3xl">시험 준비 팁</h2>
+            <p className="mt-3 text-center text-muted">
+              과목별 핵심 개념 정리와 합격 전략을 확인하세요
+            </p>
+          </ScrollReveal>
+
+          <div className="mt-12 grid grid-cols-1 gap-6 md:grid-cols-3">
+            {recentPosts.map((post, i) => (
+              <ScrollReveal key={post.slug} delay={i + 1}>
+                <Link
+                  href={`/blog/${post.slug}`}
+                  className="group flex h-full flex-col rounded-xl border border-border bg-surface p-6 transition-all duration-300 hover:-translate-y-1.5 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5"
+                >
+                  <div className="flex items-center gap-2 text-xs">
+                    <span
+                      className={`inline-flex items-center rounded-md border px-2 py-0.5 font-medium ${
+                        CATEGORY_COLORS[post.category] ?? "bg-muted/10 text-muted border-muted/30"
+                      }`}
+                    >
+                      {post.category}
+                    </span>
+                    <span className="text-muted">
+                      {new Date(post.date).toLocaleDateString("ko-KR", {
+                        month: "long",
+                        day: "numeric",
+                      })}
+                    </span>
+                  </div>
+                  <h3 className="mt-3 text-lg font-semibold leading-snug group-hover:text-primary">
+                    {post.title}
+                  </h3>
+                  <p className="mt-2 flex-1 text-sm leading-relaxed text-muted line-clamp-2">
+                    {post.description}
+                  </p>
+                  <span className="mt-4 text-xs font-medium text-primary">
+                    읽어보기 →
+                  </span>
+                </Link>
+              </ScrollReveal>
+            ))}
+          </div>
+
+          <ScrollReveal delay={4}>
+            <div className="mt-10 text-center">
+              <Link
+                href="/blog"
+                className="inline-flex items-center rounded-lg border border-border px-5 py-2.5 text-sm font-semibold text-foreground transition-all hover:border-primary/40 hover:bg-primary/5"
+              >
+                전체 글 보기
+              </Link>
+            </div>
+          </ScrollReveal>
+        </section>
+      )}
 
       {/* ── CTA ────────────────────────────────────────────── */}
       <section className="relative mx-auto max-w-5xl px-4 py-24 text-center sm:px-6 lg:px-8">
