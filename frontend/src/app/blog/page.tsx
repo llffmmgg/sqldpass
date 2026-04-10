@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { getAllPosts } from "@/lib/blog";
 
@@ -33,11 +34,20 @@ export default function BlogPage() {
 
   return (
     <main className="mx-auto max-w-4xl px-4 py-12 sm:px-6 lg:px-8">
-      <header className="mb-10">
-        <h1 className="text-3xl font-bold sm:text-4xl">시험 준비 팁</h1>
-        <p className="mt-3 text-muted">
-          자격증 시험 준비에 도움이 되는 학습 전략과 팁을 공유합니다.
-        </p>
+      <header className="mb-10 flex items-center gap-5">
+        <Image
+          src="/blog-mascot.png"
+          alt="시험 준비 팁 마스코트"
+          width={80}
+          height={80}
+          className="shrink-0"
+        />
+        <div>
+          <h1 className="text-3xl font-bold sm:text-4xl">시험 준비 팁</h1>
+          <p className="mt-2 text-muted">
+            자격증 시험 준비에 도움이 되는 학습 전략과 팁을 공유합니다.
+          </p>
+        </div>
       </header>
 
       {posts.length === 0 ? (
