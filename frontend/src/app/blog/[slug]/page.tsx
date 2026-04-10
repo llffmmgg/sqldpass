@@ -45,9 +45,9 @@ export async function generateMetadata({
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
-  SQLD: "border-amber-500/30 bg-amber-500/10 text-amber-300",
-  정처기: "border-emerald-500/30 bg-emerald-500/10 text-emerald-300",
-  컴활: "border-blue-500/30 bg-blue-500/10 text-blue-300",
+  SQLD: "border-primary/30 bg-primary/10 text-primary",
+  정보처리기사: "border-accent/30 bg-accent/10 text-accent",
+  컴활: "border-blue-600/30 bg-blue-600/10 text-blue-600",
 };
 
 export default async function BlogPostPage({

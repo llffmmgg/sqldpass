@@ -27,9 +27,9 @@ export async function generateMetadata({
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
-  SQLD: "bg-amber-500/10 text-amber-300 border-amber-500/30",
-  정처기: "bg-emerald-500/10 text-emerald-300 border-emerald-500/30",
-  컴활: "bg-blue-500/10 text-blue-300 border-blue-500/30",
+  SQLD: "bg-primary/10 text-primary border-primary/30",
+  정보처리기사: "bg-accent/10 text-accent border-accent/30",
+  컴활: "bg-blue-600/10 text-blue-600 border-blue-600/30",
 };
 
 function getCategoryStyle(category: string) {
