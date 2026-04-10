@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import AuthGuard from "@/components/AuthGuard";
 import Spinner from "@/components/Spinner";
@@ -16,6 +16,13 @@ import { submitSolve, type SolveAnswerRequest, type SolveResponse } from "@/lib/
 import { ExamBadge } from "@/app/mock-exams/page";
 import { GradingDisclaimerModal } from "@/components/GradingDisclaimerModal";
 import { trackEvent } from "@/lib/gtag";
+
+/** 자격증별 실제 시험 시간 (분) */
+const EXAM_TIME_MINUTES: Record<string, number> = {
+  SQLD: 90,
+  ENGINEER_PRACTICAL: 150,
+  COMPUTER_LITERACY_1: 60,
+};
 
 interface AnswerState {
   option?: number;
@@ -48,6 +55,49 @@ function MockExamDetailContent() {
   const [answers, setAnswers] = useState<Map<number, AnswerState>>(new Map());
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<SolveResponse | null>(null);
+
+  // ── 타이머 ──
+  const [timerRunning, setTimerRunning] = useState(false);
+  const [timerSeconds, setTimerSeconds] = useState(0);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const timerLimit = useMemo(
+    () => (exam ? (EXAM_TIME_MINUTES[exam.examType] ?? 90) * 60 : 0),
+    [exam],
+  );
+
+  const startTimer = useCallback(() => {
+    if (timerRef.current) return;
+    setTimerRunning(true);
+    timerRef.current = setInterval(() => {
+      setTimerSeconds((prev) => prev + 1);
+    }, 1000);
+  }, []);
+
+  const pauseTimer = useCallback(() => {
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+    setTimerRunning(false);
+  }, []);
+
+  const resetTimer = useCallback(() => {
+    pauseTimer();
+    setTimerSeconds(0);
+  }, [pauseTimer]);
+
+  // 제출 시 타이머 정지
+  useEffect(() => {
+    if (result) pauseTimer();
+  }, [result, pauseTimer]);
+
+  // 컴포넌트 언마운트 시 정리
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, []);
 
   useEffect(() => {
     if (!id) return;
@@ -266,13 +316,24 @@ function MockExamDetailContent() {
               </span>
             </p>
           </div>
-          <button
-            onClick={handleSubmit}
-            disabled={submitting || answeredCount === 0}
-            className={`shrink-0 rounded-lg ${accent.bg} px-5 py-2.5 text-sm font-semibold text-zinc-900 shadow-sm transition disabled:opacity-40`}
-          >
-            {submitting ? "제출 중..." : `제출하기 (${answeredCount}/${total})`}
-          </button>
+          <div className="flex shrink-0 items-center gap-2">
+            <ExamTimer
+              seconds={timerSeconds}
+              limit={timerLimit}
+              running={timerRunning}
+              onStart={startTimer}
+              onPause={pauseTimer}
+              onReset={resetTimer}
+              accent={accent}
+            />
+            <button
+              onClick={handleSubmit}
+              disabled={submitting || answeredCount === 0}
+              className={`shrink-0 rounded-lg ${accent.bg} px-5 py-2.5 text-sm font-semibold text-zinc-900 shadow-sm transition disabled:opacity-40`}
+            >
+              {submitting ? "제출 중..." : `제출하기 (${answeredCount}/${total})`}
+            </button>
+          </div>
         </div>
         <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-border">
           <div
@@ -520,6 +581,92 @@ function DescriptiveInput({
       <p className="mt-2 text-xs text-muted/70">
         채점 방식: 핵심 키워드 포함률 70% 이상 + 충분한 분량 → 정답, 40% 이상 → 부분점수.
       </p>
+    </div>
+  );
+}
+
+function formatTime(totalSeconds: number): string {
+  const h = Math.floor(totalSeconds / 3600);
+  const m = Math.floor((totalSeconds % 3600) / 60);
+  const s = totalSeconds % 60;
+  if (h > 0) return `${h}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+  return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+}
+
+function ExamTimer({
+  seconds,
+  limit,
+  running,
+  onStart,
+  onPause,
+  onReset,
+  accent,
+}: {
+  seconds: number;
+  limit: number;
+  running: boolean;
+  onStart: () => void;
+  onPause: () => void;
+  onReset: () => void;
+  accent: Accent;
+}) {
+  const remaining = Math.max(limit - seconds, 0);
+  const isOvertime = seconds > limit;
+  const isUrgent = remaining <= 300 && remaining > 0; // 5분 이하
+
+  // 타이머 시작 전
+  if (seconds === 0 && !running) {
+    return (
+      <button
+        onClick={onStart}
+        className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-2 text-xs font-medium text-muted transition-colors hover:text-foreground hover:bg-surface"
+        title={`제한시간 ${Math.floor(limit / 60)}분`}
+      >
+        <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+        </svg>
+        타이머 ({Math.floor(limit / 60)}분)
+      </button>
+    );
+  }
+
+  return (
+    <div className="inline-flex items-center gap-1 rounded-lg border border-border px-3 py-2">
+      <span
+        className={`font-mono text-sm font-bold tabular-nums ${
+          isOvertime
+            ? "text-red-400"
+            : isUrgent
+            ? "text-amber-400 animate-pulse"
+            : accent.text
+        }`}
+      >
+        {isOvertime ? `+${formatTime(seconds - limit)}` : formatTime(remaining)}
+      </span>
+      <button
+        onClick={running ? onPause : onStart}
+        className="ml-1 rounded p-0.5 text-muted transition-colors hover:text-foreground"
+        title={running ? "일시정지" : "재개"}
+      >
+        {running ? (
+          <svg className="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" />
+          </svg>
+        ) : (
+          <svg className="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M8 5v14l11-7z" />
+          </svg>
+        )}
+      </button>
+      <button
+        onClick={onReset}
+        className="rounded p-0.5 text-muted transition-colors hover:text-foreground"
+        title="리셋"
+      >
+        <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182" />
+        </svg>
+      </button>
     </div>
   );
 }
