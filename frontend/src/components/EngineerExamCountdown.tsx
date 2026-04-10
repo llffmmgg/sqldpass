@@ -67,7 +67,7 @@ export default function EngineerExamCountdown() {
 
   return (
     <div className="mx-auto inline-flex max-w-full items-center gap-3 rounded-2xl border border-emerald-500/30 bg-emerald-500/[0.08] px-5 py-3 text-left shadow-[0_0_24px_rgba(16,185,129,0.12)]">
-      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-300">
+      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-300">
         <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path
             strokeLinecap="round"
@@ -77,13 +77,13 @@ export default function EngineerExamCountdown() {
         </svg>
       </div>
       <div className="min-w-0">
-        <p className="text-xs font-medium uppercase tracking-wide text-emerald-300/80">
+        <p className="text-xs font-medium uppercase tracking-wide text-emerald-600 dark:text-emerald-300/80">
           정보처리기사 실기 · {upcoming.label}
         </p>
         <p className="mt-0.5 flex flex-wrap items-baseline gap-x-2 text-sm text-muted">
           <span
             className={`text-xl font-bold tabular-nums ${
-              isToday ? "text-emerald-300" : isUrgent ? "text-amber-300" : "text-foreground"
+              isToday ? "text-emerald-600 dark:text-emerald-300" : isUrgent ? "text-amber-600 dark:text-amber-300" : "text-foreground"
             }`}
           >
             {isToday ? "D-DAY" : `D-${days}`}

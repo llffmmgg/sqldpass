@@ -38,7 +38,7 @@ export default function HeroCta() {
     <div className="flex flex-col items-center">
       {/* 로그인 재방문자 웰컴 배지 — mounted 이후에만 렌더해 깜빡임 방지 */}
       {authed && (
-        <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-amber-500/25 bg-amber-500/[0.06] px-3.5 py-1.5 text-xs text-amber-300/90 backdrop-blur-sm">
+        <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-amber-500/25 bg-amber-500/[0.06] px-3.5 py-1.5 text-xs text-amber-600 dark:text-amber-300/90 backdrop-blur-sm">
           <span className="relative flex h-1.5 w-1.5">
             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-400 opacity-60" />
             <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-amber-400" />
@@ -46,7 +46,7 @@ export default function HeroCta() {
           <span className="font-medium tracking-tight">
             {nickname ? (
               <>
-                다시 오셨군요, <span className="text-amber-200">{nickname}</span> 님
+                다시 오셨군요, <span className="text-amber-700 dark:text-amber-200">{nickname}</span> 님
               </>
             ) : (
               "다시 오셨군요"
