@@ -299,42 +299,54 @@ function DashboardPageContent() {
 
             {/* ── 최근 2주 학습량 ──────────────────────────────────── */}
             <div className="mt-6 rounded-xl border border-border bg-surface p-5">
-              <h2 className="text-sm font-semibold">최근 2주 학습량</h2>
-              <div className="mt-4 flex items-end gap-1.5 h-28">
+              <div className="flex items-baseline justify-between">
+                <h2 className="text-sm font-semibold">최근 2주 학습량</h2>
+                <p className="text-xs text-muted tabular-nums">
+                  총 {activity.reduce((s, d) => s + d.count, 0)}문제
+                </p>
+              </div>
+              <div className="mt-5 flex items-end gap-2 h-44">
                 {activity.map((day) => {
-                  const height = day.count > 0 ? Math.max((day.count / maxActivity) * 100, 10) : 4;
-                  const isToday = day.date === new Date().toISOString().slice(0, 10);
+                  const height = day.count > 0 ? Math.max((day.count / maxActivity) * 100, 8) : 3;
+                  const todayStr = new Date().toISOString().slice(0, 10);
+                  const isToday = day.date === todayStr;
+                  const d = new Date(day.date);
+                  const dateLabel = `${d.getMonth() + 1}/${d.getDate()}`;
                   return (
-                    <div key={day.date} className="flex flex-1 flex-col items-center justify-end gap-1 min-w-[10px]">
-                      {day.count > 0 && (
-                        <span className={`text-[10px] font-medium tabular-nums ${isToday ? "text-primary" : "text-muted/70"}`}>
-                          {day.count}
-                        </span>
-                      )}
+                    <div key={day.date} className="group flex flex-1 flex-col items-center justify-end gap-1.5 min-w-0">
+                      {/* 호버 시 숫자 표시 */}
+                      <span
+                        className={`text-xs font-semibold tabular-nums transition-opacity ${
+                          day.count > 0
+                            ? isToday
+                              ? "text-primary opacity-100"
+                              : "text-foreground opacity-0 group-hover:opacity-100"
+                            : "opacity-0"
+                        }`}
+                      >
+                        {day.count}
+                      </span>
+                      {/* 막대 */}
                       <div
-                        className={`w-full rounded-sm transition-all ${
-                          day.count > 0 ? (isToday ? "bg-primary" : "bg-primary/50") : "bg-border/50"
+                        className={`w-full max-w-[28px] rounded-md transition-all duration-300 ${
+                          day.count > 0
+                            ? isToday
+                              ? "bg-primary shadow-[0_0_8px_var(--glow)]"
+                              : "bg-primary/40 group-hover:bg-primary/70"
+                            : "bg-border/40"
                         }`}
                         style={{ height: `${height}%` }}
                         title={`${day.date}: ${day.count}문제`}
                       />
+                      {/* 날짜 라벨 */}
+                      <span
+                        className={`text-[10px] tabular-nums ${
+                          isToday ? "font-bold text-primary" : "text-muted/50"
+                        }`}
+                      >
+                        {dateLabel}
+                      </span>
                     </div>
-                  );
-                })}
-              </div>
-              <div className="mt-2 flex gap-1.5">
-                {activity.map((day) => {
-                  const dow = DOW[new Date(day.date).getDay()];
-                  const isToday = day.date === new Date().toISOString().slice(0, 10);
-                  return (
-                    <span
-                      key={day.date}
-                      className={`flex flex-1 justify-center text-[10px] tabular-nums min-w-[10px] ${
-                        isToday ? "font-semibold text-primary" : "text-muted/60"
-                      }`}
-                    >
-                      {dow}
-                    </span>
                   );
                 })}
               </div>
