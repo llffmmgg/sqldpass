@@ -86,6 +86,20 @@ export default function AdminMockExamDetailPage({
             {exam.examType} · {exam.totalQuestions}문항 · 회차 #{exam.sequence}
           </p>
         </div>
+        <div className="flex gap-2">
+          <button
+            onClick={() => downloadJson(exam, questions)}
+            className="rounded border border-border px-3 py-1.5 text-xs text-muted transition hover:text-foreground"
+          >
+            JSON 다운로드
+          </button>
+          <button
+            onClick={() => downloadMd(exam, questions)}
+            className="rounded border border-border px-3 py-1.5 text-xs text-muted transition hover:text-foreground"
+          >
+            MD 다운로드
+          </button>
+        </div>
       </div>
 
       <div className="mt-6 space-y-4">
@@ -290,6 +304,78 @@ function QuestionEditCard({
       )}
     </div>
   );
+}
+
+function triggerDownload(content: string, filename: string, mime: string) {
+  const blob = new Blob([content], { type: mime });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function downloadJson(exam: MockExamDetail, questions: AdminQuestion[]) {
+  const data = {
+    examName: exam.name,
+    examType: exam.examType,
+    sequence: exam.sequence,
+    totalQuestions: exam.totalQuestions,
+    questions: questions.map((q, i) => ({
+      order: i + 1,
+      id: q.id,
+      subjectName: q.subjectName,
+      questionType: q.questionType,
+      content: q.content,
+      correctOption: q.correctOption,
+      answer: q.answer,
+      keywords: q.keywords,
+      explanation: q.explanation,
+      summary: q.summary,
+      verified: !!q.verifiedAt,
+    })),
+  };
+  const filename = `${exam.name.replace(/\s+/g, "_")}_${exam.examType}.json`;
+  triggerDownload(JSON.stringify(data, null, 2), filename, "application/json");
+}
+
+function downloadMd(exam: MockExamDetail, questions: AdminQuestion[]) {
+  const lines: string[] = [];
+  lines.push(`# ${exam.name}`);
+  lines.push(`- 시험 유형: ${exam.examType}`);
+  lines.push(`- 총 문항: ${exam.totalQuestions}`);
+  lines.push(`- 회차: ${exam.sequence}`);
+  lines.push("");
+
+  questions.forEach((q, i) => {
+    lines.push(`---`);
+    lines.push(`## 문항 ${i + 1} (ID: ${q.id})`);
+    lines.push(`- 과목: ${q.subjectName}`);
+    lines.push(`- 유형: ${q.questionType}`);
+    if (q.summary) lines.push(`- 요약: ${q.summary}`);
+    lines.push(`- 검수: ${q.verifiedAt ? "완료" : "미검수"}`);
+    lines.push("");
+    lines.push("### 문제");
+    lines.push(q.content);
+    lines.push("");
+    if (q.questionType === "MCQ" && q.correctOption) {
+      lines.push(`### 정답: ${q.correctOption}번`);
+    } else if (q.answer) {
+      lines.push(`### 정답`);
+      lines.push(q.answer);
+    }
+    if (q.keywords && q.keywords.length > 0) {
+      lines.push(`### 키워드: ${q.keywords.join(", ")}`);
+    }
+    lines.push("");
+    lines.push("### 해설");
+    lines.push(q.explanation);
+    lines.push("");
+  });
+
+  const filename = `${exam.name.replace(/\s+/g, "_")}_${exam.examType}.md`;
+  triggerDownload(lines.join("\n"), filename, "text/markdown");
 }
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
