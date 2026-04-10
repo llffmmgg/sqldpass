@@ -118,6 +118,7 @@ export default async function BlogPostPage({
       </header>
 
       <article className="prose-custom mt-10">
+        <p className="text-muted">안녕하세요. 문어입니다.🐙</p>
         <MDXRemote source={post.content} options={{ mdxOptions: { remarkPlugins: [remarkGfm] } }} components={mdxComponents} />
       </article>
 
