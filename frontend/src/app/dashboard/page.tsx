@@ -2,6 +2,7 @@
 
 /* eslint-disable react-hooks/set-state-in-effect -- 마운트 시 localStorage 닉네임 + API 페치는 effect 내 setState 필요 */
 
+import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import {
@@ -207,11 +208,20 @@ function DashboardPageContent() {
     <main className="min-h-screen bg-background text-foreground">
       <div className="mx-auto max-w-4xl px-4 py-12 sm:px-6">
         {/* 헤더 */}
-        <div>
-          <h1 className="text-2xl font-bold sm:text-3xl">
-            {nickname ? `${nickname}님의 학습 현황` : "학습 대시보드"}
-          </h1>
-          <p className="mt-1 text-sm text-muted">합격을 향한 여정을 한눈에 확인하세요.</p>
+        <div className="flex items-center gap-5">
+          <div>
+            <h1 className="text-2xl font-bold sm:text-3xl">
+              {nickname ? `${nickname}님의 학습 현황` : "학습 대시보드"}
+            </h1>
+            <p className="mt-1 text-sm text-muted">합격을 향한 여정을 한눈에 확인하세요.</p>
+          </div>
+          <Image
+            src="/대시보드문어.png"
+            alt="대시보드 마스코트"
+            width={160}
+            height={160}
+            className="shrink-0"
+          />
         </div>
 
         {/* 빈 상태 */}

@@ -7,8 +7,10 @@ import {
   getAdminMockExamDetail,
   getQuestion,
   updateQuestion,
+  verifyAllQuestions,
   type AdminMockExamDetail,
   type AdminQuestion,
+  type VerificationExamType,
 } from "@/lib/adminApi";
 
 /**
@@ -31,6 +33,8 @@ export default function AdminMockExamDetailPage({
   const [exam, setExam] = useState<AdminMockExamDetail | null>(null);
   const [questions, setQuestions] = useState<AdminQuestion[] | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [verifying, setVerifying] = useState(false);
+  const [verifyResult, setVerifyResult] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -56,6 +60,42 @@ export default function AdminMockExamDetailPage({
       cancelled = true;
     };
   }, [examId]);
+
+  async function handleVerifyAll() {
+    if (!exam || !questions) return;
+    const unverified = questions.filter((q) => !q.verifiedAt).length;
+    if (unverified === 0) {
+      setVerifyResult("모든 문제가 이미 검수 완료되었습니다.");
+      return;
+    }
+    if (!confirm(`미검수 ${unverified}문항에 대해 LLM 검증을 실행합니다. 시간이 걸릴 수 있습니다. 계속하시겠습니까?`)) return;
+
+    setVerifying(true);
+    setVerifyResult(null);
+    try {
+      const result = await verifyAllQuestions({
+        examType: exam.examType as VerificationExamType,
+        limit: 200,
+        force: false,
+      });
+      // 문제 목록 새로고침
+      const fulls = await Promise.all(
+        exam.questions
+          .slice()
+          .sort((a, b) => a.displayOrder - b.displayOrder)
+          .map((q) => getQuestion(q.id)),
+      );
+      setQuestions(fulls);
+      const suspicious = result.suspiciousQuestions?.length ?? 0;
+      setVerifyResult(
+        `검증 완료: ${result.processedCount}개 처리, ${suspicious}개 의심 문항`
+      );
+    } catch (e) {
+      setVerifyResult(`검증 실패: ${e instanceof Error ? e.message : "알 수 없는 오류"}`);
+    } finally {
+      setVerifying(false);
+    }
+  }
 
   function handleQuestionUpdated(updated: AdminQuestion) {
     setQuestions((prev) =>
@@ -87,19 +127,31 @@ export default function AdminMockExamDetailPage({
             {exam.examType} · {exam.totalQuestions}문항 · 회차 #{exam.sequence}
           </p>
         </div>
-        <div className="flex gap-2">
-          <button
-            onClick={() => downloadJson(exam, questions)}
-            className="rounded border border-border px-3 py-1.5 text-xs text-muted transition hover:text-foreground"
-          >
-            JSON 다운로드
-          </button>
-          <button
-            onClick={() => downloadMd(exam, questions)}
-            className="rounded border border-border px-3 py-1.5 text-xs text-muted transition hover:text-foreground"
-          >
-            MD 다운로드
-          </button>
+        <div className="flex flex-col items-end gap-2">
+          <div className="flex gap-2">
+            <button
+              onClick={handleVerifyAll}
+              disabled={verifying}
+              className="rounded border border-emerald-500/40 bg-emerald-500/10 px-3 py-1.5 text-xs font-medium text-emerald-300 transition hover:bg-emerald-500/20 disabled:opacity-50"
+            >
+              {verifying ? "검증 중..." : `전체 검증 (미검수 ${questions?.filter((q) => !q.verifiedAt).length ?? 0})`}
+            </button>
+            <button
+              onClick={() => downloadJson(exam, questions)}
+              className="rounded border border-border px-3 py-1.5 text-xs text-muted transition hover:text-foreground"
+            >
+              JSON
+            </button>
+            <button
+              onClick={() => downloadMd(exam, questions)}
+              className="rounded border border-border px-3 py-1.5 text-xs text-muted transition hover:text-foreground"
+            >
+              MD
+            </button>
+          </div>
+          {verifyResult && (
+            <p className="text-xs text-muted">{verifyResult}</p>
+          )}
         </div>
       </div>
 
