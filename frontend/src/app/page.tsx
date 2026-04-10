@@ -1,40 +1,13 @@
 import ScrollReveal from "@/components/ScrollReveal";
 import HeroCta from "@/components/HeroCta";
+import HeroStats from "@/components/HeroStats";
 import EngineerExamCountdown from "@/components/EngineerExamCountdown";
 import { SiteNoticeModal } from "@/components/SiteNoticeModal";
 import CertChips from "@/components/CertChips";
 import PreviewTabs from "@/components/PreviewTabs";
 import RankingSection from "@/components/RankingSection";
-import {
-  getPublicStats,
-  getPublicRanking,
-  type PublicStats,
-  type PublicRanking,
-} from "@/lib/publicApi";
 
-// ISR: 1시간마다 백그라운드에서 페이지 재생성
-export const revalidate = 3600;
-
-async function fetchStatsSafe(): Promise<PublicStats> {
-  try {
-    return await getPublicStats();
-  } catch (e) {
-    console.warn("[stats] fallback to zero:", e);
-    return { totalMembers: 0, totalSolves: 0 };
-  }
-}
-
-async function fetchRankingSafe(): Promise<PublicRanking> {
-  try {
-    return await getPublicRanking();
-  } catch (e) {
-    console.warn("[ranking] fallback to empty:", e);
-    return { entries: [], generatedAt: new Date().toISOString() };
-  }
-}
-
-export default async function Home() {
-  const [stats, ranking] = await Promise.all([fetchStatsSafe(), fetchRankingSafe()]);
+export default function Home() {
   return (
     <main className="min-h-screen bg-background text-foreground">
       <SiteNoticeModal />
@@ -55,7 +28,7 @@ export default async function Home() {
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent opacity-60" />
                 <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-accent" />
               </span>
-              매번 새로 추가되는 기출 · 100% 무료
+              매번 새로 추가되는 기출 · 실전 타이머 제공
             </span>
           </ScrollReveal>
 
@@ -94,21 +67,7 @@ export default async function Home() {
           </ScrollReveal>
 
           <ScrollReveal delay={5}>
-            <div className="mt-10 flex items-center justify-center gap-5 text-base text-muted">
-              <div className="flex items-center gap-1.5">
-                <svg className="h-4 w-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z" />
-                </svg>
-                <span className="font-semibold text-foreground">{stats.totalMembers.toLocaleString("ko-KR")}</span>명 학습 중
-              </div>
-              <span className="h-3 w-px bg-border" />
-              <div className="flex items-center gap-1.5">
-                <svg className="h-4 w-4 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
-                </svg>
-                <span className="font-semibold text-foreground">{stats.totalSolves.toLocaleString("ko-KR")}</span>문제 풀이 완료
-              </div>
-            </div>
+            <HeroStats />
           </ScrollReveal>
         </div>
       </section>
@@ -179,7 +138,7 @@ export default async function Home() {
 
       {/* ── Ranking ────────────────────────────────────────── */}
       <ScrollReveal>
-        <RankingSection data={ranking} />
+        <RankingSection />
       </ScrollReveal>
 
       {/* ── Preview ────────────────────────────────────────── */}

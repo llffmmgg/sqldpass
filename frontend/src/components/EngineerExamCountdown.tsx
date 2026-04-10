@@ -66,8 +66,8 @@ export default function EngineerExamCountdown() {
   });
 
   return (
-    <div className="mx-auto inline-flex max-w-full items-center gap-3 rounded-2xl border border-emerald-500/30 bg-emerald-50 dark:bg-emerald-500/[0.08] px-5 py-3 text-left shadow-[0_0_24px_rgba(16,185,129,0.12)]">
-      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300">
+    <div className="mx-auto inline-flex max-w-full items-center gap-3 rounded-2xl border border-accent/30 bg-surface px-5 py-3 text-left shadow-[0_0_24px_var(--accent-glow)]">
+      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent/15 text-accent">
         <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path
             strokeLinecap="round"
@@ -77,18 +77,18 @@ export default function EngineerExamCountdown() {
         </svg>
       </div>
       <div className="min-w-0">
-        <p className="text-xs font-medium uppercase tracking-wide text-emerald-700 dark:text-emerald-300/80">
+        <p className="text-xs font-medium uppercase tracking-wide text-accent">
           정보처리기사 실기 · {upcoming.label}
         </p>
         <p className="mt-0.5 flex flex-wrap items-baseline gap-x-2 text-sm text-muted">
           <span
             className={`text-xl font-bold tabular-nums ${
-              isToday ? "text-emerald-700 dark:text-emerald-300" : isUrgent ? "text-red-600 dark:text-amber-300" : "text-foreground"
+              isToday ? "text-accent" : isUrgent ? "text-primary" : "text-foreground"
             }`}
           >
             {isToday ? "D-DAY" : `D-${days}`}
           </span>
-          <span className="text-xs text-zinc-600 dark:text-muted/80">{targetDateLabel} 시작</span>
+          <span className="text-xs text-muted">{targetDateLabel} 시작</span>
         </p>
       </div>
     </div>
