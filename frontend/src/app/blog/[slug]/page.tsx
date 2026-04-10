@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { MDXRemote } from "next-mdx-remote/rsc";
+import remarkGfm from "remark-gfm";
 import { getAllPosts, getAllSlugs, getPostBySlug } from "@/lib/blog";
 
 type Params = { slug: string };
@@ -111,7 +112,7 @@ export default async function BlogPostPage({
       </header>
 
       <article className="prose-custom mt-10">
-        <MDXRemote source={post.content} />
+        <MDXRemote source={post.content} options={{ mdxOptions: { remarkPlugins: [remarkGfm] } }} />
       </article>
 
       <section className="mt-12 rounded-xl border border-border bg-surface/50 p-6 text-center">
