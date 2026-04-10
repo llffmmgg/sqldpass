@@ -38,8 +38,8 @@ export default function BlogPage() {
         <Image
           src="/blog-mascot.png"
           alt="시험 준비 팁 마스코트"
-          width={80}
-          height={80}
+          width={160}
+          height={160}
           className="shrink-0"
         />
         <div>
