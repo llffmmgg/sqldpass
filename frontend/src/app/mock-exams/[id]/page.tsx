@@ -700,9 +700,12 @@ function ExamTimer({
             cx={size / 2} cy={size / 2} r={radius}
             fill="none" strokeWidth={strokeWidth}
             strokeLinecap="round"
-            className={`${ringColor} transition-[stroke-dashoffset] duration-1000 ease-linear`}
-            strokeDasharray={circumference}
-            strokeDashoffset={isOvertime ? 0 : strokeDashoffset}
+            className={ringColor}
+            style={{
+              strokeDasharray: circumference,
+              strokeDashoffset: isOvertime ? 0 : strokeDashoffset,
+              transition: "stroke-dashoffset 1s linear",
+            }}
           />
         </svg>
         {/* 시간 표시 */}
