@@ -11,7 +11,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.sqldpass.controller.admin.dto.AdminMemberDashboardResponse;
 import com.sqldpass.controller.admin.dto.AdminMemberResponse;
+import com.sqldpass.controller.admin.dto.AdminSolveDetailResponse;
 import com.sqldpass.service.admin.AdminMemberService;
+import com.sqldpass.service.solve.SolveService;
 
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -26,6 +28,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 public class AdminMemberController {
 
     private final AdminMemberService adminMemberService;
+    private final SolveService solveService;
 
     @GetMapping("/api/admin/members")
     @Operation(summary = "회원 목록 조회")
@@ -39,5 +42,11 @@ public class AdminMemberController {
     @Operation(summary = "특정 회원 학습 대시보드 (어드민용)")
     public AdminMemberDashboardResponse getMemberDashboard(@PathVariable Long memberId) {
         return adminMemberService.getDashboard(memberId);
+    }
+
+    @GetMapping("/api/admin/solves/{solveId}")
+    @Operation(summary = "풀이 상세 조회 (어드민용 — 문제 내용 + 사용자 답)")
+    public AdminSolveDetailResponse getSolveDetail(@PathVariable Long solveId) {
+        return AdminSolveDetailResponse.from(solveService.getSolveEntityForAdmin(solveId));
     }
 }

@@ -150,4 +150,10 @@ public class SolveService {
         }
         return SolveMapper.toDomain(entity);
     }
+
+    /** 어드민용 — 멤버 제한 없이 풀이 엔티티 조회 (문제 내용 포함) */
+    public SolveEntity getSolveEntityForAdmin(Long id) {
+        return solveRepository.findById(id)
+                .orElseThrow(() -> new SqldpassException(ErrorCode.SOLVE_NOT_FOUND));
+    }
 }

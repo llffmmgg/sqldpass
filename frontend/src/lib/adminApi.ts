@@ -500,6 +500,35 @@ export function markMockExamVerified(id: number) {
   return adminFetch<{ marked: number }>(`/mock-exams/${id}/mark-verified`, { method: "POST" });
 }
 
+export interface AdminSolveDetail {
+  solveId: number;
+  memberId: number;
+  memberNickname: string;
+  mockExamId: number | null;
+  totalCount: number;
+  correctCount: number;
+  score: number;
+  solvedAt: string;
+  answers: AdminSolveAnswerDetail[];
+}
+
+export interface AdminSolveAnswerDetail {
+  questionId: number;
+  questionContent: string;
+  subjectName: string;
+  questionType: string;
+  selectedOption: number | null;
+  correctOption: number | null;
+  userAnswerText: string | null;
+  correctAnswer: string | null;
+  correct: boolean;
+  explanation: string;
+}
+
+export function getAdminSolveDetail(solveId: number) {
+  return adminFetch<AdminSolveDetail>(`/solves/${solveId}`);
+}
+
 export type CreateMockExamType = "SQLD" | "ENGINEER_PRACTICAL" | "COMPUTER_LITERACY_1" | "ENGINEER_WRITTEN";
 
 /** 생성 시 난이도는 SQLD, 정처기 실기, 컴활 1급 모두에 적용된다. */
