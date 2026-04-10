@@ -36,30 +36,23 @@ export default function HeroCta() {
 
   return (
     <div className="flex flex-col items-center">
-      {/* 로그인 재방문자 웰컴 배지 — mounted 이후에만 렌더해 깜빡임 방지 */}
       {authed && (
-        <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-amber-500/25 bg-amber-500/[0.06] px-3.5 py-1.5 text-xs text-amber-300/90 backdrop-blur-sm">
-          <span className="relative flex h-1.5 w-1.5">
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-400 opacity-60" />
-            <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-amber-400" />
-          </span>
-          <span className="font-medium tracking-tight">
-            {nickname ? (
-              <>
-                다시 오셨군요, <span className="text-amber-200">{nickname}</span> 님
-              </>
-            ) : (
-              "다시 오셨군요"
-            )}
-          </span>
-        </div>
+        <p className="mb-4 text-sm text-muted">
+          {nickname ? (
+            <>
+              다시 오셨군요, <span className="font-medium text-foreground">{nickname}</span> 님
+            </>
+          ) : (
+            "다시 오셨군요"
+          )}
+        </p>
       )}
 
       <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
         <Link
           href={primary.href}
           onClick={() => trackEvent("click_cta", { cta: "primary", label: primary.label, authed })}
-          className="btn-glow inline-flex items-center rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-zinc-900 transition-all duration-300 hover:bg-primary-hover hover:scale-[1.03]"
+          className="inline-flex items-center rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-zinc-900 transition-colors hover:bg-primary-hover"
         >
           {primary.label}
           {authed && (
@@ -78,7 +71,7 @@ export default function HeroCta() {
         <Link
           href={secondary.href}
           onClick={() => trackEvent("click_cta", { cta: "secondary", label: secondary.label, authed })}
-          className="inline-flex items-center rounded-lg border border-border px-6 py-3 text-sm font-semibold text-foreground transition-all duration-300 hover:border-violet-500/50 hover:bg-violet-500/5"
+          className="inline-flex items-center rounded-lg border border-border px-6 py-3 text-sm font-semibold text-foreground transition-colors hover:bg-surface"
         >
           {secondary.label}
         </Link>
