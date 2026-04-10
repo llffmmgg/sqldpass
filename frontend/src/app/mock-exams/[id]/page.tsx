@@ -447,7 +447,7 @@ function MockExamDetailContent() {
 
       {/* 타이머 패널 — 데스크톱에서 오른쪽 sticky, 모바일에서 하단 fixed */}
       <div className="hidden lg:block">
-        <div className="sticky top-20 w-24">
+        <div className="sticky top-20 w-32">
           <div className="flex flex-col items-center gap-3 rounded-xl border border-border bg-surface/80 px-3 py-4 shadow-lg backdrop-blur">
             <ExamTimer
               seconds={timerSeconds}
@@ -643,8 +643,8 @@ function ExamTimer({
   const progress = Math.min(seconds / limit, 1);
 
   // SVG 원형 진행률
-  const size = 80;
-  const strokeWidth = 5;
+  const size = 110;
+  const strokeWidth = 6;
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference * (1 - progress);
@@ -672,12 +672,12 @@ function ExamTimer({
             />
           </svg>
           <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <svg className="h-5 w-5 text-muted" fill="currentColor" viewBox="0 0 24 24">
+            <svg className="h-7 w-7 text-muted" fill="currentColor" viewBox="0 0 24 24">
               <path d="M8 5v14l11-7z" />
             </svg>
           </div>
         </div>
-        <span className="text-[10px] font-medium text-muted">{Math.floor(limit / 60)}분</span>
+        <span className="text-xs font-medium text-muted">{Math.floor(limit / 60)}분</span>
       </button>
     );
   }
@@ -707,7 +707,7 @@ function ExamTimer({
         {/* 시간 표시 */}
         <div className="absolute inset-0 flex flex-col items-center justify-center">
           <span
-            className={`font-mono text-xs font-bold tabular-nums leading-none ${
+            className={`font-mono text-sm font-bold tabular-nums leading-none ${
               isOvertime
                 ? "text-red-400"
                 : isUrgent
@@ -720,28 +720,28 @@ function ExamTimer({
         </div>
       </div>
       {/* 컨트롤 버튼 */}
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-2">
         <button
           onClick={running ? onPause : onStart}
-          className="rounded p-1 text-muted transition-colors hover:text-foreground"
+          className="rounded-md p-1.5 text-muted transition-colors hover:text-foreground hover:bg-border/50"
           title={running ? "일시정지" : "재개"}
         >
           {running ? (
-            <svg className="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 24 24">
+            <svg className="h-4.5 w-4.5" fill="currentColor" viewBox="0 0 24 24">
               <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" />
             </svg>
           ) : (
-            <svg className="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 24 24">
+            <svg className="h-4.5 w-4.5" fill="currentColor" viewBox="0 0 24 24">
               <path d="M8 5v14l11-7z" />
             </svg>
           )}
         </button>
         <button
           onClick={onReset}
-          className="rounded p-1 text-muted transition-colors hover:text-foreground"
+          className="rounded-md p-1.5 text-muted transition-colors hover:text-foreground hover:bg-border/50"
           title="리셋"
         >
-          <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <svg className="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182" />
           </svg>
         </button>
