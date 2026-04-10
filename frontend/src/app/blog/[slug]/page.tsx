@@ -5,6 +5,10 @@ import { MDXRemote } from "next-mdx-remote/rsc";
 import remarkGfm from "remark-gfm";
 import { getAllPosts, getAllSlugs, getPostBySlug } from "@/lib/blog";
 import BlogViewCounter from "@/components/BlogViewCounter";
+import PassRateBar from "@/components/blog/PassRateBar";
+import Highlight from "@/components/blog/Highlight";
+
+const mdxComponents = { PassRateBar, Highlight };
 
 type Params = { slug: string };
 
@@ -114,7 +118,7 @@ export default async function BlogPostPage({
       </header>
 
       <article className="prose-custom mt-10">
-        <MDXRemote source={post.content} options={{ mdxOptions: { remarkPlugins: [remarkGfm] } }} />
+        <MDXRemote source={post.content} options={{ mdxOptions: { remarkPlugins: [remarkGfm] } }} components={mdxComponents} />
       </article>
 
       <section className="mt-12 rounded-xl border border-border bg-surface/50 p-6 text-center">

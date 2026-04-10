@@ -44,6 +44,7 @@ const EXAM_LABEL: Record<VerificationExamType, string> = {
   SQLD: "SQLD",
   ENGINEER_PRACTICAL: "정보처리기사 실기",
   COMPUTER_LITERACY_1: "컴활 1급 필기",
+  ENGINEER_WRITTEN: "정보처리기사 필기",
 };
 
 function resolveExamType(rootName: string): VerificationExamType {
