@@ -1,7 +1,5 @@
-"use client";
-
 /**
- * 합격률 수평 막대 그래프.
+ * 합격률 수평 막대 그래프 (서버 컴포넌트).
  * MDX에서 사용:
  * <PassRateBar label="제목" color="#f59e0b" items="2019:48.7:9663명 응시,2020:58.5:10933명 응시" />
  *
@@ -19,37 +17,101 @@ export default function PassRateBar({
   if (!items) return null;
 
   const data = items.split(",").map((entry) => {
-    const [name, valueStr, sub] = entry.trim().split(":");
-    return { name: name.trim(), value: parseFloat(valueStr), sub: sub?.trim() };
+    const parts = entry.trim().split(":");
+    return {
+      name: parts[0]?.trim() ?? "",
+      value: parseFloat(parts[1] ?? "0"),
+      sub: parts[2]?.trim(),
+    };
   });
 
   if (data.length === 0) return null;
   const max = Math.max(...data.map((d) => d.value), 1);
 
   return (
-    <div className="my-6 rounded-xl border border-border bg-surface p-5">
+    <div
+      style={{
+        margin: "1.5rem 0",
+        borderRadius: "12px",
+        border: "1px solid var(--border)",
+        backgroundColor: "var(--surface)",
+        padding: "1.25rem",
+      }}
+    >
       {label && (
-        <p className="mb-4 text-xs font-semibold uppercase tracking-wide text-muted">
+        <p
+          style={{
+            marginBottom: "1rem",
+            fontSize: "0.75rem",
+            fontWeight: 600,
+            textTransform: "uppercase",
+            letterSpacing: "0.05em",
+            color: "var(--muted)",
+          }}
+        >
           {label}
         </p>
       )}
-      <div className="space-y-3">
+      <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
         {data.map((d) => {
-          const width = Math.max((d.value / max) * 100, 2);
+          const widthPct = Math.max((d.value / max) * 100, 3);
           return (
-            <div key={d.name} className="flex items-center gap-3">
-              <span className="w-16 shrink-0 text-right text-sm font-medium text-foreground">
+            <div
+              key={d.name}
+              style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}
+            >
+              <span
+                style={{
+                  width: "4rem",
+                  flexShrink: 0,
+                  textAlign: "right",
+                  fontSize: "0.875rem",
+                  fontWeight: 500,
+                  color: "var(--foreground)",
+                }}
+              >
                 {d.name}
               </span>
-              <div className="relative flex-1 h-7 rounded-md bg-border/30 overflow-hidden">
+              <div
+                style={{
+                  position: "relative",
+                  flex: 1,
+                  height: "1.75rem",
+                  borderRadius: "6px",
+                  backgroundColor: "var(--border)",
+                  overflow: "hidden",
+                }}
+              >
                 <div
-                  className="h-full rounded-md transition-all duration-500"
-                  style={{ width: `${width}%`, backgroundColor: color }}
+                  style={{
+                    height: "100%",
+                    width: `${widthPct}%`,
+                    borderRadius: "6px",
+                    backgroundColor: color,
+                    transition: "width 0.5s",
+                  }}
                 />
-                <span className="absolute inset-0 flex items-center px-3 text-xs font-bold text-foreground">
+                <span
+                  style={{
+                    position: "absolute",
+                    inset: 0,
+                    display: "flex",
+                    alignItems: "center",
+                    paddingLeft: "0.75rem",
+                    fontSize: "0.75rem",
+                    fontWeight: 700,
+                    color: "var(--foreground)",
+                  }}
+                >
                   {d.value}%
                   {d.sub && (
-                    <span className="ml-1.5 font-normal text-muted">
+                    <span
+                      style={{
+                        marginLeft: "0.5rem",
+                        fontWeight: 400,
+                        color: "var(--muted)",
+                      }}
+                    >
                       {d.sub}
                     </span>
                   )}
