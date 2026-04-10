@@ -208,8 +208,8 @@ function DashboardPageContent() {
     <main className="min-h-screen bg-background text-foreground">
       <div className="mx-auto max-w-4xl px-4 py-12 sm:px-6">
         {/* 헤더 */}
-        <div className="flex items-center gap-5">
-          <div>
+        <div className="flex items-center gap-3">
+          <div className="flex-1">
             <h1 className="text-2xl font-bold sm:text-3xl">
               {nickname ? `${nickname}님의 학습 현황` : "학습 대시보드"}
             </h1>
@@ -218,9 +218,9 @@ function DashboardPageContent() {
           <Image
             src="/dashboard-mascot.png"
             alt="대시보드 마스코트"
-            width={160}
-            height={160}
-            className="shrink-0"
+            width={200}
+            height={200}
+            className="shrink-0 -mt-4 -mr-2"
           />
         </div>
 
