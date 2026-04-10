@@ -732,6 +732,7 @@ export default function AdminQuestionsPage() {
               >
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
+                    <span className="text-xs font-mono text-muted/60">#{question.id}</span>
                     <span className="rounded bg-violet-500/10 px-2 py-0.5 text-xs font-medium text-violet-400">
                       {question.subjectName}
                     </span>
