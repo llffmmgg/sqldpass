@@ -1,5 +1,6 @@
 package com.sqldpass.service.mockexam;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
@@ -72,6 +73,18 @@ public class MockExamService {
      * 사용자용 상세 조회 — DRAFT는 NOT_FOUND, PREMIUM은 잠금(예외).
      * 결제 시스템 도입 후 권한 있는 사용자만 PREMIUM 통과시키도록 확장.
      */
+    /** 모의고사의 모든 문제를 수동 검수 완료 처리 */
+    @Transactional
+    public int markAllQuestionsVerified(Long mockExamId) {
+        MockExamEntity entity = mockExamRepository.findByIdWithQuestions(mockExamId)
+                .orElseThrow(() -> new SqldpassException(ErrorCode.MOCK_EXAM_NOT_FOUND));
+        List<Long> questionIds = entity.getQuestions().stream()
+                .map(q -> q.getId())
+                .toList();
+        if (questionIds.isEmpty()) return 0;
+        return questionRepository.markVerifiedInBatch(questionIds, LocalDateTime.now());
+    }
+
     /** 어드민용 — DRAFT/PREMIUM 제한 없이 조회 */
     public MockExam getById(Long id) {
         MockExamEntity entity = mockExamRepository.findByIdWithQuestions(id)

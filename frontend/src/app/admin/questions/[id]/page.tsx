@@ -78,11 +78,20 @@ export default function AdminQuestionDetailPage({ params }: { params: Promise<{ 
       </button>
 
       <h1 className="mt-4 text-2xl font-bold">문제 수정</h1>
-      <p className="mt-1 text-sm text-muted">
-        {question.subjectName} &middot; ID: {question.id} &middot;{" "}
+      <p className="mt-1 flex flex-wrap items-center gap-2 text-sm text-muted">
+        <span>{question.subjectName} &middot; ID: {question.id}</span>
         <span className="rounded bg-violet-500/10 px-1.5 py-0.5 text-xs text-violet-300">
           {questionType}
         </span>
+        {question.verifiedAt ? (
+          <span className="rounded bg-green-500/10 px-1.5 py-0.5 text-xs font-medium text-green-400">
+            검수 완료
+          </span>
+        ) : (
+          <span className="rounded bg-amber-500/10 px-1.5 py-0.5 text-xs font-medium text-amber-400">
+            미검수
+          </span>
+        )}
       </p>
 
       <div className="mt-6 space-y-4">
