@@ -316,24 +316,13 @@ function MockExamDetailContent() {
               </span>
             </p>
           </div>
-          <div className="flex shrink-0 items-center gap-2">
-            <ExamTimer
-              seconds={timerSeconds}
-              limit={timerLimit}
-              running={timerRunning}
-              onStart={startTimer}
-              onPause={pauseTimer}
-              onReset={resetTimer}
-              accent={accent}
-            />
-            <button
-              onClick={handleSubmit}
-              disabled={submitting || answeredCount === 0}
-              className={`shrink-0 rounded-lg ${accent.bg} px-5 py-2.5 text-sm font-semibold text-zinc-900 shadow-sm transition disabled:opacity-40`}
-            >
-              {submitting ? "제출 중..." : `제출하기 (${answeredCount}/${total})`}
-            </button>
-          </div>
+          <button
+            onClick={handleSubmit}
+            disabled={submitting || answeredCount === 0}
+            className={`shrink-0 rounded-lg ${accent.bg} px-5 py-2.5 text-sm font-semibold text-zinc-900 shadow-sm transition disabled:opacity-40`}
+          >
+            {submitting ? "제출 중..." : `제출하기 (${answeredCount}/${total})`}
+          </button>
         </div>
         <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-border">
           <div
@@ -431,25 +420,36 @@ function MockExamDetailContent() {
           </div>
         </div>
 
-        {/* 하단 보조 제출 버튼 */}
-        <div className="mt-8">
-          <button
-            onClick={handleSubmit}
-            disabled={submitting || answeredCount === 0}
-            className={`w-full rounded-xl ${accent.bg} py-4 text-base font-bold text-zinc-900 shadow-sm transition disabled:opacity-40`}
-          >
-            {submitting ? "제출 중..." : "제출하기"}
-          </button>
-          {answeredCount < total && answeredCount > 0 && (
-            <p className="mt-2 text-center text-xs text-muted">
-              미답 {total - answeredCount}문항은 오답으로 처리됩니다
-            </p>
-          )}
-          {answeredCount === 0 && (
-            <p className="mt-2 text-center text-xs text-muted">
-              최소 1문항 이상 답안을 작성해야 제출할 수 있습니다
-            </p>
-          )}
+        {/* 하단: 타이머 + 제출 */}
+        <div className="mt-8 flex items-center gap-5">
+          <ExamTimer
+            seconds={timerSeconds}
+            limit={timerLimit}
+            running={timerRunning}
+            onStart={startTimer}
+            onPause={pauseTimer}
+            onReset={resetTimer}
+            accent={accent}
+          />
+          <div className="flex-1">
+            <button
+              onClick={handleSubmit}
+              disabled={submitting || answeredCount === 0}
+              className={`w-full rounded-xl ${accent.bg} py-4 text-base font-bold text-zinc-900 shadow-sm transition disabled:opacity-40`}
+            >
+              {submitting ? "제출 중..." : "제출하기"}
+            </button>
+            {answeredCount < total && answeredCount > 0 && (
+              <p className="mt-2 text-center text-xs text-muted">
+                미답 {total - answeredCount}문항은 오답으로 처리됩니다
+              </p>
+            )}
+            {answeredCount === 0 && (
+              <p className="mt-2 text-center text-xs text-muted">
+                최소 1문항 이상 답안을 작성해야 제출할 수 있습니다
+              </p>
+            )}
+          </div>
         </div>
       </div>
     </main>
@@ -612,61 +612,113 @@ function ExamTimer({
 }) {
   const remaining = Math.max(limit - seconds, 0);
   const isOvertime = seconds > limit;
-  const isUrgent = remaining <= 300 && remaining > 0; // 5분 이하
+  const isUrgent = remaining <= 300 && remaining > 0;
+  const progress = Math.min(seconds / limit, 1);
+
+  // SVG 원형 진행률
+  const size = 80;
+  const strokeWidth = 5;
+  const radius = (size - strokeWidth) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const strokeDashoffset = circumference * (1 - progress);
+
+  const ringColor = isOvertime
+    ? "stroke-red-400"
+    : isUrgent
+    ? "stroke-amber-400"
+    : accent.text.replace("text-", "stroke-");
 
   // 타이머 시작 전
   if (seconds === 0 && !running) {
     return (
       <button
         onClick={onStart}
-        className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-2 text-xs font-medium text-muted transition-colors hover:text-foreground hover:bg-surface"
+        className="flex shrink-0 flex-col items-center gap-1"
         title={`제한시간 ${Math.floor(limit / 60)}분`}
       >
-        <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
-        </svg>
-        타이머 ({Math.floor(limit / 60)}분)
+        <div className="relative flex items-center justify-center" style={{ width: size, height: size }}>
+          <svg width={size} height={size} className="opacity-30">
+            <circle
+              cx={size / 2} cy={size / 2} r={radius}
+              fill="none" strokeWidth={strokeWidth}
+              className="stroke-border"
+            />
+          </svg>
+          <div className="absolute inset-0 flex flex-col items-center justify-center">
+            <svg className="h-5 w-5 text-muted" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M8 5v14l11-7z" />
+            </svg>
+          </div>
+        </div>
+        <span className="text-[10px] font-medium text-muted">{Math.floor(limit / 60)}분</span>
       </button>
     );
   }
 
   return (
-    <div className="inline-flex items-center gap-1 rounded-lg border border-border px-3 py-2">
-      <span
-        className={`font-mono text-sm font-bold tabular-nums ${
-          isOvertime
-            ? "text-red-400"
-            : isUrgent
-            ? "text-amber-400 animate-pulse"
-            : accent.text
-        }`}
-      >
-        {isOvertime ? `+${formatTime(seconds - limit)}` : formatTime(remaining)}
-      </span>
-      <button
-        onClick={running ? onPause : onStart}
-        className="ml-1 rounded p-0.5 text-muted transition-colors hover:text-foreground"
-        title={running ? "일시정지" : "재개"}
-      >
-        {running ? (
-          <svg className="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" />
-          </svg>
-        ) : (
-          <svg className="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M8 5v14l11-7z" />
-          </svg>
-        )}
-      </button>
-      <button
-        onClick={onReset}
-        className="rounded p-0.5 text-muted transition-colors hover:text-foreground"
-        title="리셋"
-      >
-        <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182" />
+    <div className="flex shrink-0 flex-col items-center gap-1">
+      <div className="relative flex items-center justify-center" style={{ width: size, height: size }}>
+        {/* 배경 원 */}
+        <svg width={size} height={size} className="absolute">
+          <circle
+            cx={size / 2} cy={size / 2} r={radius}
+            fill="none" strokeWidth={strokeWidth}
+            className="stroke-border"
+          />
         </svg>
-      </button>
+        {/* 진행 원 */}
+        <svg width={size} height={size} className="absolute -rotate-90">
+          <circle
+            cx={size / 2} cy={size / 2} r={radius}
+            fill="none" strokeWidth={strokeWidth}
+            strokeLinecap="round"
+            className={`${ringColor} transition-[stroke-dashoffset] duration-1000 ease-linear`}
+            strokeDasharray={circumference}
+            strokeDashoffset={isOvertime ? 0 : strokeDashoffset}
+          />
+        </svg>
+        {/* 시간 표시 */}
+        <div className="absolute inset-0 flex flex-col items-center justify-center">
+          <span
+            className={`font-mono text-xs font-bold tabular-nums leading-none ${
+              isOvertime
+                ? "text-red-400"
+                : isUrgent
+                ? "text-amber-400 animate-pulse"
+                : accent.text
+            }`}
+          >
+            {isOvertime ? `+${formatTime(seconds - limit)}` : formatTime(remaining)}
+          </span>
+        </div>
+      </div>
+      {/* 컨트롤 버튼 */}
+      <div className="flex items-center gap-1">
+        <button
+          onClick={running ? onPause : onStart}
+          className="rounded p-1 text-muted transition-colors hover:text-foreground"
+          title={running ? "일시정지" : "재개"}
+        >
+          {running ? (
+            <svg className="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" />
+            </svg>
+          ) : (
+            <svg className="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M8 5v14l11-7z" />
+            </svg>
+          )}
+        </button>
+        <button
+          onClick={onReset}
+          className="rounded p-1 text-muted transition-colors hover:text-foreground"
+          title="리셋"
+        >
+          <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182" />
+          </svg>
+        </button>
+      </div>
     </div>
   );
 }
