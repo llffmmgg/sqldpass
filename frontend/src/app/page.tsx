@@ -16,7 +16,11 @@ const CATEGORY_COLORS: Record<string, string> = {
 };
 
 export default function Home() {
-  const recentPosts = getAllPosts().slice(0, 3);
+  // 과목별 최신 글 1개씩 선택
+  const allPosts = getAllPosts();
+  const recentPosts = ["SQLD", "정보처리기사", "컴퓨터활용능력"]
+    .map((cat) => allPosts.find((p) => p.category === cat))
+    .filter((p): p is NonNullable<typeof p> => p != null);
   return (
     <main className="min-h-screen bg-background text-foreground">
       <SiteNoticeModal />
