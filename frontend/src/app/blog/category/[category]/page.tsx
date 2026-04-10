@@ -9,7 +9,7 @@ type Params = { category: string };
 
 export function generateStaticParams() {
   return getAllCategories().map(({ category }) => ({
-    category: encodeURIComponent(category),
+    category,
   }));
 }
 
