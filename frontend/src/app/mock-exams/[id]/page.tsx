@@ -301,7 +301,10 @@ function MockExamDetailContent() {
   return (
     <main className="min-h-screen bg-background text-foreground">
       <GradingDisclaimerModal />
-      <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6">
+      <div className="mx-auto max-w-5xl px-4 py-12 sm:px-6">
+      <div className="flex gap-4 items-start">
+      {/* 메인 콘텐츠 */}
+      <div className="min-w-0 flex-1 max-w-3xl mx-auto">
         {/* 상단 상태 바 */}
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="min-w-0">
@@ -316,24 +319,13 @@ function MockExamDetailContent() {
               </span>
             </p>
           </div>
-          <div className="flex shrink-0 items-center gap-3">
-            <ExamTimer
-              seconds={timerSeconds}
-              limit={timerLimit}
-              running={timerRunning}
-              onStart={startTimer}
-              onPause={pauseTimer}
-              onReset={resetTimer}
-              accent={accent}
-            />
-            <button
-              onClick={handleSubmit}
-              disabled={submitting || answeredCount === 0}
-              className={`shrink-0 rounded-lg ${accent.bg} px-5 py-2.5 text-sm font-semibold text-zinc-900 shadow-sm transition disabled:opacity-40`}
-            >
-              {submitting ? "제출 중..." : `제출하기 (${answeredCount}/${total})`}
-            </button>
-          </div>
+          <button
+            onClick={handleSubmit}
+            disabled={submitting || answeredCount === 0}
+            className={`shrink-0 rounded-lg ${accent.bg} px-5 py-2.5 text-sm font-semibold text-zinc-900 shadow-sm transition disabled:opacity-40`}
+          >
+            {submitting ? "제출 중..." : `제출하기 (${answeredCount}/${total})`}
+          </button>
         </div>
         <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-border">
           <div
@@ -451,6 +443,41 @@ function MockExamDetailContent() {
             </p>
           )}
         </div>
+      </div>
+
+      {/* 타이머 패널 — 데스크톱에서 오른쪽 sticky, 모바일에서 하단 fixed */}
+      <div className="hidden lg:block">
+        <div className="sticky top-20 w-24">
+          <div className="flex flex-col items-center gap-3 rounded-xl border border-border bg-surface/80 px-3 py-4 shadow-lg backdrop-blur">
+            <ExamTimer
+              seconds={timerSeconds}
+              limit={timerLimit}
+              running={timerRunning}
+              onStart={startTimer}
+              onPause={pauseTimer}
+              onReset={resetTimer}
+              accent={accent}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* 모바일 타이머 — 우하단 고정 */}
+      <div className="fixed bottom-4 right-4 z-40 lg:hidden">
+        <div className="flex flex-col items-center gap-2 rounded-xl border border-border bg-surface/95 px-3 py-3 shadow-xl backdrop-blur">
+          <ExamTimer
+            seconds={timerSeconds}
+            limit={timerLimit}
+            running={timerRunning}
+            onStart={startTimer}
+            onPause={pauseTimer}
+            onReset={resetTimer}
+            accent={accent}
+          />
+        </div>
+      </div>
+
+      </div>
       </div>
     </main>
   );
