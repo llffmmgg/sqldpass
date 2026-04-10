@@ -217,6 +217,61 @@ public class AiProvider {
         }
     }
 
+    /**
+     * 정처기 필기 과목용 변형 문제 N개 생성 (시드 풀 + 사용자 지정 난이도).
+     * needed가 MAX_QUESTIONS_PER_CALL을 초과하면 자동 chunk 분할.
+     */
+    public AiGenerationResponse generateEngineerWrittenQuestions(AiGenerationRequest request,
+                                                                 List<EngineerWrittenTopicExamples.EWExample> examples,
+                                                                 List<Integer> targetDifficulties,
+                                                                 List<String> recentSummaries,
+                                                                 List<String> recentAnswers) {
+        if (examples.size() <= MAX_QUESTIONS_PER_CALL) {
+            return callEwOnce(request, examples, targetDifficulties, recentSummaries, recentAnswers);
+        }
+        List<GeneratedQuestion> all = new ArrayList<>(examples.size());
+        for (int start = 0; start < examples.size(); start += MAX_QUESTIONS_PER_CALL) {
+            int end = Math.min(start + MAX_QUESTIONS_PER_CALL, examples.size());
+            List<EngineerWrittenTopicExamples.EWExample> seedChunk = examples.subList(start, end);
+            List<Integer> diffChunk = targetDifficulties.subList(start, end);
+            log.info("정처기 필기 chunk 호출 [{}] {}~{}/{} (size={})",
+                    request.subjectName(), start, end, examples.size(), seedChunk.size());
+            AiGenerationResponse partial = callEwOnce(request, seedChunk, diffChunk, recentSummaries, recentAnswers);
+            if (partial.questions() == null || partial.questions().size() < seedChunk.size()) {
+                throw new SqldpassException(ErrorCode.AI_GENERATION_FAILED,
+                        "정처기 필기 chunk 실패 [" + request.subjectName() + "] " + start + "~" + end);
+            }
+            all.addAll(partial.questions().subList(0, seedChunk.size()));
+        }
+        return new AiGenerationResponse(all);
+    }
+
+    private AiGenerationResponse callEwOnce(AiGenerationRequest request,
+                                            List<EngineerWrittenTopicExamples.EWExample> examples,
+                                            List<Integer> targetDifficulties,
+                                            List<String> recentSummaries,
+                                            List<String> recentAnswers) {
+        String prompt = PromptBuilder.buildEngineerWrittenPrompt(request, examples, targetDifficulties, recentSummaries, recentAnswers);
+        String responseText = chatClient.prompt()
+                .system(PromptBuilder.ENGINEER_WRITTEN_GENERATION_SYSTEM_PROMPT)
+                .user(prompt)
+                .call()
+                .content();
+
+        try {
+            String json = extractJson(responseText);
+            JsonNode root = objectMapper.readTree(json);
+            JsonNode questionsNode = root.has("questions") ? root.get("questions") : root;
+            List<GeneratedQuestion> questions = objectMapper.readValue(
+                    questionsNode.toString(), new TypeReference<>() {});
+            return new AiGenerationResponse(questions);
+        } catch (Exception e) {
+            log.error("Failed to parse engineer written generation response: {}", responseText, e);
+            throw new SqldpassException(ErrorCode.AI_GENERATION_FAILED,
+                    "정처기 필기 AI 응답 파싱 실패 [" + request.subjectName() + "]: " + e.getMessage(), e);
+        }
+    }
+
     /** 단일 검증 — UNKNOWN(빈 응답/파싱 실패)일 땐 throw 대신 outcome으로 표현. */
     public AiVerificationResponse verifyQuestion(AiVerificationRequest request) {
         String prompt = PromptBuilder.buildVerificationPrompt(request);
