@@ -103,6 +103,8 @@ function WrongAnswersPageContent() {
     return Number.isFinite(n) && n > 0 ? n : null;
   })();
   const [selectedSubject, setSelectedSubject] = useState<number | null>(initialSubject);
+  const [selectedCert, setSelectedCert] = useState<CertKey | null>(null);
+  const [selectedTopic, setSelectedTopic] = useState<string | null>(null);
   const [sortMode, setSortMode] = useState<SortMode>("priority");
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState<number | null>(null);
@@ -488,31 +490,6 @@ function WrongAnswersPageContent() {
 
         {/* Wrong answer list */}
         <section className="mt-8">
-          {/* 정렬 토글 */}
-          <div className="flex items-center justify-end gap-1 text-xs mb-4">
-            <button
-              onClick={() => setSortMode("priority")}
-              className={`rounded px-2 py-1 transition-colors ${
-                sortMode === "priority"
-                  ? "text-foreground font-semibold"
-                  : "text-muted hover:text-foreground"
-              }`}
-            >
-              오답 많은 순
-            </button>
-            <span className="text-muted/40">·</span>
-            <button
-              onClick={() => setSortMode("recent")}
-              className={`rounded px-2 py-1 transition-colors ${
-                sortMode === "recent"
-                  ? "text-foreground font-semibold"
-                  : "text-muted hover:text-foreground"
-              }`}
-            >
-              최근순
-            </button>
-          </div>
-
           {loading && <Spinner />}
 
           {!loading && sortedAnswers.length === 0 && (
@@ -532,59 +509,101 @@ function WrongAnswersPageContent() {
             </div>
           )}
 
-          {!loading && sortedAnswers.length > 0 && (
-            <div className="space-y-10">
-              {groupedAnswers.map((group) => {
-                // 이 자격증에 속한 토픽 ID 목록
-                const certTopicIds = new Set<number>();
-                for (const topic of group.topics) {
-                  const sub = subjects.find((s) => s.name === topic.topicName);
-                  if (sub) certTopicIds.add(sub.id);
-                }
-                // 현재 선택된 필터가 이 자격증에 속하는지
-                const isThisCertFilter = selectedSubject !== null && certTopicIds.has(selectedSubject);
-                const filteredTopics = isThisCertFilter
-                  ? group.topics.filter((t) => {
-                      const sub = subjects.find((s) => s.name === t.topicName);
-                      return sub && sub.id === selectedSubject;
-                    })
-                  : group.topics;
+          {!loading && sortedAnswers.length > 0 && (() => {
+            // 자격증이 1개면 자동 선택
+            const activeCert = selectedCert ?? (groupedAnswers.length === 1 ? groupedAnswers[0].certKey : null);
+            const activeGroup = activeCert ? groupedAnswers.find((g) => g.certKey === activeCert) : null;
 
-                return (
-                <section key={group.certKey} className="rounded-xl border border-border overflow-hidden">
-                  {/* 자격증 헤더 */}
-                  <div className={`flex items-center gap-2 px-5 py-3 bg-surface border-b ${CERT_META[group.certKey].border}`}>
-                    <span className={`h-2.5 w-2.5 rounded-full ${CERT_META[group.certKey].dot}`} />
-                    <h2 className="text-base font-bold text-foreground">
-                      {CERT_META[group.certKey].label}
-                    </h2>
-                    <span className="text-xs tabular-nums text-muted">{group.total}건</span>
-                  </div>
+            // 활성 그룹의 토픽 필터링
+            const visibleTopics = activeGroup
+              ? (selectedTopic
+                  ? activeGroup.topics.filter((t) => t.topicName === selectedTopic)
+                  : activeGroup.topics)
+              : [];
 
-                  {/* 자격증 내부 토픽 필터 */}
-                  {group.topics.length > 1 && (
-                    <div className="flex flex-wrap items-center gap-1.5 px-5 py-2.5 bg-surface/50 border-b border-border">
+            return (
+            <div className="space-y-4">
+              {/* 1단계: 자격증 탭 */}
+              <div className="flex flex-wrap items-center gap-2">
+                {groupedAnswers.map((group) => {
+                  const isActive = activeCert === group.certKey;
+                  const meta = CERT_META[group.certKey];
+                  return (
+                    <button
+                      key={group.certKey}
+                      onClick={() => {
+                        setSelectedCert(group.certKey);
+                        setSelectedTopic(null);
+                        setExpandedId(null);
+                      }}
+                      className={`flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium transition-all ${
+                        isActive
+                          ? `bg-surface border ${meta.border} text-foreground shadow-sm`
+                          : "border border-transparent text-muted hover:text-foreground hover:bg-surface/50"
+                      }`}
+                    >
+                      <span className={`h-2 w-2 rounded-full ${meta.dot}`} />
+                      {meta.label}
+                      <span className="text-xs tabular-nums text-muted/70">{group.total}</span>
+                    </button>
+                  );
+                })}
+
+                {/* 정렬 */}
+                <div className="ml-auto flex items-center gap-1 text-xs">
+                  <button
+                    onClick={() => setSortMode("priority")}
+                    className={`rounded px-2 py-1 transition-colors ${
+                      sortMode === "priority" ? "text-foreground font-semibold" : "text-muted hover:text-foreground"
+                    }`}
+                  >
+                    오답 많은 순
+                  </button>
+                  <span className="text-muted/40">·</span>
+                  <button
+                    onClick={() => setSortMode("recent")}
+                    className={`rounded px-2 py-1 transition-colors ${
+                      sortMode === "recent" ? "text-foreground font-semibold" : "text-muted hover:text-foreground"
+                    }`}
+                  >
+                    최근순
+                  </button>
+                </div>
+              </div>
+
+              {/* 자격증 미선택 시 안내 */}
+              {!activeCert && (
+                <div className="py-12 text-center text-muted">
+                  위에서 자격증을 선택해주세요.
+                </div>
+              )}
+
+              {/* 2단계: 토픽 필터 + 문제 목록 */}
+              {activeGroup && (
+                <div className="rounded-xl border border-border overflow-hidden">
+                  {/* 토픽 필터 */}
+                  {activeGroup.topics.length > 1 && (
+                    <div className="flex flex-wrap items-center gap-1.5 px-5 py-3 bg-surface border-b border-border">
                       <button
-                        onClick={() => handleSubjectFilter(null)}
-                        className={`rounded-full px-2.5 py-0.5 text-xs font-medium transition-colors ${
-                          !isThisCertFilter
-                            ? "bg-primary/20 text-primary"
-                            : "text-muted hover:text-foreground"
+                        onClick={() => { setSelectedTopic(null); setExpandedId(null); }}
+                        className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+                          selectedTopic === null
+                            ? "bg-primary text-zinc-900"
+                            : "border border-border text-muted hover:border-primary/40"
                         }`}
                       >
-                        전체 {group.total}
+                        전체 {activeGroup.total}
                       </button>
-                      {group.topics.map((topic) => {
-                        const sub = subjects.find((s) => s.name === topic.topicName);
-                        const isActive = sub && selectedSubject === sub.id;
+                      {activeGroup.topics.map((topic) => {
+                        const isActive = selectedTopic === topic.topicName;
                         return (
                           <button
                             key={topic.topicName}
-                            onClick={() => sub && handleSubjectFilter(isActive ? null : sub.id)}
-                            className={`rounded-full px-2.5 py-0.5 text-xs font-medium transition-colors ${
+                            onClick={() => { setSelectedTopic(isActive ? null : topic.topicName); setExpandedId(null); }}
+                            className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
                               isActive
-                                ? "bg-primary/20 text-primary"
-                                : "text-muted/70 hover:text-foreground"
+                                ? "bg-primary text-zinc-900"
+                                : "border border-border text-muted hover:border-primary/40"
                             }`}
                           >
                             {topic.topicName} {topic.items.length}
@@ -594,9 +613,9 @@ function WrongAnswersPageContent() {
                     </div>
                   )}
 
-                  {/* 토픽별 문제 목록 */}
+                  {/* 문제 목록 */}
                   <div className="divide-y divide-border">
-                    {filteredTopics.map((topic) => {
+                    {visibleTopics.map((topic) => {
                       const tHigh = topic.items.filter((w) => w.wrongCount >= 3).length;
                       const tMid = topic.items.filter((w) => w.wrongCount === 2).length;
                       return (
@@ -616,11 +635,11 @@ function WrongAnswersPageContent() {
                       );
                     })}
                   </div>
-                </section>
-                );
-              })}
+                </div>
+              )}
             </div>
-          )}
+            );
+          })()}
         </section>
       </div>
     </main>
