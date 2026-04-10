@@ -102,6 +102,7 @@ export interface SolveSummaryResponse {
 export interface WrongAnswerResponse {
   questionId: number;
   questionContent: string;
+  subjectId: number;
   subjectName: string;
   wrongCount: number;
   lastWrongAt: string;

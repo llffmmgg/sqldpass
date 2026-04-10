@@ -51,14 +51,27 @@ function detectCertFromRootName(rootName: string): CertKey {
   return "SQLD";
 }
 
-/** leaf 과목명 → 소속 자격증 매핑 */
+/** leaf 과목 ID → 소속 자격증 매핑 (이름이 겹치는 과목이 있으므로 ID 기반) */
+function buildCertLookupById(rawSubjects: Subject[]): Map<number, CertKey> {
+  const map = new Map<number, CertKey>();
+  for (const root of rawSubjects) {
+    const cert = detectCertFromRootName(root.name);
+    map.set(root.id, cert);
+    for (const child of root.children) {
+      map.set(child.id, cert);
+    }
+  }
+  return map;
+}
+
+/** leaf 과목명 → 소속 자격증 매핑 (이름 겹침 시 먼저 등록된 것 유지) */
 function buildCertLookup(rawSubjects: Subject[]): Map<string, CertKey> {
   const map = new Map<string, CertKey>();
   for (const root of rawSubjects) {
     const cert = detectCertFromRootName(root.name);
-    map.set(root.name, cert);
+    if (!map.has(root.name)) map.set(root.name, cert);
     for (const child of root.children) {
-      map.set(child.name, cert);
+      if (!map.has(child.name)) map.set(child.name, cert);
     }
   }
   return map;
@@ -266,13 +279,13 @@ function WrongAnswersPageContent() {
   }, [wrongAnswers, sortMode]);
 
   // 자격증 → 토픽(leaf) → 문제 그룹화. 정렬은 sortedAnswers의 순서를 보존.
-  const certLookup = useMemo(() => buildCertLookup(rawSubjects), [rawSubjects]);
+  const certLookupById = useMemo(() => buildCertLookupById(rawSubjects), [rawSubjects]);
   const groupedAnswers = useMemo(() => {
     type Topic = { topicName: string; items: WrongAnswerResponse[] };
     type CertGroup = { certKey: CertKey; topics: Map<string, Topic> };
     const certs = new Map<CertKey, CertGroup>();
     for (const wa of sortedAnswers) {
-      const cert = certLookup.get(wa.subjectName) ?? "SQLD";
+      const cert = certLookupById.get(wa.subjectId) ?? "SQLD";
       if (!certs.has(cert)) certs.set(cert, { certKey: cert, topics: new Map() });
       const group = certs.get(cert)!;
       if (!group.topics.has(wa.subjectName)) {
@@ -288,7 +301,7 @@ function WrongAnswersPageContent() {
         topics: Array.from(g.topics.values()).sort((a, b) => b.items.length - a.items.length),
         total: Array.from(g.topics.values()).reduce((sum, t) => sum + t.items.length, 0),
       }));
-  }, [sortedAnswers, certLookup]);
+  }, [sortedAnswers, certLookupById]);
 
   // 상단 한 줄 요약용
   const totalUnresolved = wrongAnswers.length;
