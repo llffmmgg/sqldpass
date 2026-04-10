@@ -38,7 +38,7 @@ const NAV_LINKS: NavItem[] = [
   },
   { kind: "link", href: "/dashboard", label: "대시보드" },
   { kind: "link", href: "/wrong-answers", label: "오답 노트" },
-  { kind: "link", href: "/blog", label: "블로그" },
+  { kind: "link", href: "/blog", label: "시험 준비 팁" },
 ];
 
 export default function NavBar() {

@@ -82,7 +82,7 @@ export default async function BlogPostPage({
 
       <nav className="text-sm text-muted">
         <Link href="/blog" className="hover:text-foreground">
-          블로그
+          시험 준비 팁
         </Link>
         <span className="mx-2">/</span>
         <span>{post.category}</span>
