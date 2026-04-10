@@ -38,15 +38,15 @@ export default function HeroCta() {
     <div className="flex flex-col items-center">
       {/* 로그인 재방문자 웰컴 배지 — mounted 이후에만 렌더해 깜빡임 방지 */}
       {authed && (
-        <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-amber-500/25 bg-amber-500/[0.06] dark:bg-amber-500/[0.06] bg-amber-50 px-3.5 py-1.5 text-xs text-zinc-700 dark:text-amber-300/90 backdrop-blur-sm">
+        <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-primary/25 bg-primary/10 px-3.5 py-1.5 text-xs text-foreground backdrop-blur-sm">
           <span className="relative flex h-1.5 w-1.5">
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-500 dark:bg-amber-400 opacity-60" />
-            <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-amber-500 dark:bg-amber-400" />
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-60" />
+            <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-primary" />
           </span>
           <span className="font-medium tracking-tight">
             {nickname ? (
               <>
-                다시 오셨군요, <span className="font-bold text-zinc-900 dark:text-amber-200">{nickname}</span> 님
+                다시 오셨군요, <span className="font-bold text-primary">{nickname}</span> 님
               </>
             ) : (
               "다시 오셨군요"
@@ -78,7 +78,7 @@ export default function HeroCta() {
         <Link
           href={secondary.href}
           onClick={() => trackEvent("click_cta", { cta: "secondary", label: secondary.label, authed })}
-          className="inline-flex items-center rounded-lg border border-border px-6 py-3 text-sm font-semibold text-foreground transition-all duration-300 hover:border-violet-500/50 hover:bg-violet-500/5"
+          className="inline-flex items-center rounded-lg border border-border px-6 py-3 text-sm font-semibold text-foreground transition-all duration-300 hover:border-accent/50 hover:bg-accent/5"
         >
           {secondary.label}
         </Link>
