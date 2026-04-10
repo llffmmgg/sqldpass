@@ -216,7 +216,7 @@ function DashboardPageContent() {
             <p className="mt-1 text-sm text-muted">합격을 향한 여정을 한눈에 확인하세요.</p>
           </div>
           <Image
-            src="/대시보드문어.png"
+            src="/dashboard-mascot.png"
             alt="대시보드 마스코트"
             width={160}
             height={160}
