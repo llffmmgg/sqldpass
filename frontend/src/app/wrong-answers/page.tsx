@@ -295,8 +295,18 @@ function WrongAnswersPageContent() {
     [stats]
   );
 
+  function getFirstLine(text: string): string {
+    // 코드블록/마크다운 제거 후 첫 줄
+    const cleaned = text
+      .replace(/```[\s\S]*?```/g, "")
+      .replace(/\*\*/g, "")
+      .replace(/\n+/g, " ")
+      .trim();
+    return cleaned.length > 80 ? cleaned.slice(0, 80) + "…" : cleaned;
+  }
+
   // 카드 렌더러 — 그룹화된 컬렉션에서 재사용
-  function renderWrongAnswerCard(wa: WrongAnswerResponse) {
+  function renderWrongAnswerCard(wa: WrongAnswerResponse, num?: number) {
     const isExpanded = expandedId === wa.questionId;
     const isMastered = masteredIds.has(wa.questionId);
     const detail = details[wa.questionId];
@@ -320,43 +330,52 @@ function WrongAnswersPageContent() {
       return { dot: "⚪", color: "text-muted" };
     })();
 
+    const priorityBg = priority === "high" ? "bg-red-500" : priority === "mid" ? "bg-amber-500" : "bg-zinc-500";
+
     return (
       <div
         key={wa.questionId}
-        className={`rounded-lg bg-surface px-5 py-4 transition-all duration-500 ${borderClass}`}
+        className={`rounded-lg bg-surface transition-all duration-500 ${borderClass}`}
       >
-        <div className="cursor-pointer" onClick={() => handleExpand(wa.questionId)}>
-          <div className="flex items-start justify-between gap-3">
-            <p className="flex-1 text-base leading-relaxed line-clamp-3 whitespace-pre-line">
-              {wa.questionContent}
-            </p>
-            <svg
-              className={`h-4 w-4 shrink-0 text-muted transition-transform ${
-                isExpanded ? "rotate-180" : ""
-              }`}
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2}
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-            </svg>
-          </div>
-          <div className="mt-2 flex items-center gap-2">
-            <span className={`inline-flex items-center gap-1 text-xs ${wrongCountBadge.color}`}>
-              <span aria-hidden="true">{wrongCountBadge.dot}</span>
-              {wa.wrongCount}회 틀림
+        <div className="cursor-pointer flex items-center gap-3 px-4 py-3" onClick={() => handleExpand(wa.questionId)}>
+          {/* 순번 + 우선순위 뱃지 */}
+          <div className="flex flex-col items-center gap-1 shrink-0 w-8">
+            {num && <span className="text-[10px] text-muted/50 tabular-nums">#{num}</span>}
+            <span className={`flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-bold text-white ${priorityBg}`}>
+              {wa.wrongCount}
             </span>
-            <span className="text-xs text-muted">{formatRelativeDate(wa.lastWrongAt)}</span>
           </div>
+
+          {/* 문제 요약 */}
+          <div className="flex-1 min-w-0">
+            <p className="text-sm leading-snug text-foreground truncate">
+              {getFirstLine(wa.questionContent)}
+            </p>
+            <div className="mt-1 flex items-center gap-2 text-[11px] text-muted">
+              <span>{wa.wrongCount}회 틀림</span>
+              <span className="text-muted/30">·</span>
+              <span>{formatRelativeDate(wa.lastWrongAt)}</span>
+            </div>
+          </div>
+
+          {/* 화살표 */}
+          <svg
+            className={`h-4 w-4 shrink-0 text-muted/50 transition-transform ${isExpanded ? "rotate-180" : ""}`}
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+          </svg>
         </div>
 
         <div
           className={`grid transition-all duration-300 ease-in-out ${
-            isExpanded ? "grid-rows-[1fr] opacity-100 mt-3" : "grid-rows-[0fr] opacity-0"
+            isExpanded ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
           }`}
         >
-          <div className="overflow-hidden">
+          <div className="overflow-hidden px-4 pb-4">
             {!detail ? (
               <div className="py-4 text-center text-sm text-muted">로딩 중...</div>
             ) : (
@@ -427,20 +446,45 @@ function WrongAnswersPageContent() {
           틀린 문제를 다시 풀어 마스터하세요. 다시 맞히면 목록에서 자동으로 사라집니다.
         </p>
 
-        {/* 한 줄 요약 — 기존 「취약 영역 분석」 카드 대체 */}
-        {totalUnresolved > 0 && (
-          <p className="mt-3 text-xs text-muted/80">
-            총 <span className="font-semibold text-foreground">{totalUnresolved}개</span> 미해결
-            {topWeak && (
-              <>
-                {" "}· 가장 취약:{" "}
-                <span className="font-semibold text-red-300">
-                  {topWeak.subjectName} ({topWeak.wrongRate}%)
-                </span>
-              </>
-            )}
-          </p>
-        )}
+        {/* 요약 카드 */}
+        {totalUnresolved > 0 && (() => {
+          const highCount = wrongAnswers.filter((w) => w.wrongCount >= 3).length;
+          const midCount = wrongAnswers.filter((w) => w.wrongCount === 2).length;
+          const lowCount = wrongAnswers.filter((w) => w.wrongCount === 1).length;
+          return (
+            <div className="mt-4 flex flex-wrap items-center gap-3 rounded-xl border border-border bg-surface px-5 py-3">
+              <div className="flex items-center gap-2">
+                <span className="text-2xl font-bold text-foreground">{totalUnresolved}</span>
+                <span className="text-sm text-muted">문제 남음</span>
+              </div>
+              <div className="ml-auto flex items-center gap-4 text-xs">
+                {highCount > 0 && (
+                  <span className="flex items-center gap-1.5">
+                    <span className="h-2.5 w-2.5 rounded-full bg-red-500" />
+                    <span className="text-red-400 font-semibold">고위험 {highCount}</span>
+                  </span>
+                )}
+                {midCount > 0 && (
+                  <span className="flex items-center gap-1.5">
+                    <span className="h-2.5 w-2.5 rounded-full bg-amber-500" />
+                    <span className="text-amber-400 font-semibold">주의 {midCount}</span>
+                  </span>
+                )}
+                {lowCount > 0 && (
+                  <span className="flex items-center gap-1.5">
+                    <span className="h-2.5 w-2.5 rounded-full bg-zinc-500" />
+                    <span className="text-muted">1회 {lowCount}</span>
+                  </span>
+                )}
+              </div>
+              {topWeak && (
+                <div className="w-full border-t border-border pt-2 mt-1 text-xs text-muted">
+                  가장 취약: <span className="font-semibold text-red-300">{topWeak.subjectName}</span> (오답률 {topWeak.wrongRate}%)
+                </div>
+              )}
+            </div>
+          );
+        })()}
 
         {/* Wrong answer list */}
         <section className="mt-8">
@@ -536,19 +580,25 @@ function WrongAnswersPageContent() {
                     </div>
 
                     <div className="mt-4 space-y-6">
-                      {group.topics.map((topic) => (
+                      {group.topics.map((topic) => {
+                        const tHigh = topic.items.filter((w) => w.wrongCount >= 3).length;
+                        const tMid = topic.items.filter((w) => w.wrongCount === 2).length;
+                        return (
                         <div key={topic.topicName}>
-                          <h3 className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted">
+                          <h3 className="mb-3 flex items-center gap-2 text-xs font-semibold tracking-wide text-muted">
                             <span>{topic.topicName}</span>
                             <span className="rounded-full bg-border px-1.5 py-0.5 text-[10px] tabular-nums text-muted/80">
-                              {topic.items.length}
+                              {topic.items.length}문제
                             </span>
+                            {tHigh > 0 && <span className="flex items-center gap-1 text-[10px] text-red-400"><span className="h-1.5 w-1.5 rounded-full bg-red-500" />{tHigh}</span>}
+                            {tMid > 0 && <span className="flex items-center gap-1 text-[10px] text-amber-400"><span className="h-1.5 w-1.5 rounded-full bg-amber-500" />{tMid}</span>}
                           </h3>
-                          <div className="space-y-3">
-                            {topic.items.map((wa) => renderWrongAnswerCard(wa))}
+                          <div className="space-y-2">
+                            {topic.items.map((wa, idx) => renderWrongAnswerCard(wa, idx + 1))}
                           </div>
                         </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   </section>
                 ))}
