@@ -1,13 +1,16 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getAllTags, getPostsByTag } from "@/lib/blog";
+import { getAllCategories, getPostsByCategory } from "@/lib/blog";
 import { getPublicBlogViews } from "@/lib/publicApi";
 
-type Params = { tag: string };
+type Params = { category: string };
 
 export function generateStaticParams() {
-  return getAllTags().map(({ tag }) => ({ tag: encodeURIComponent(tag) }));
+  return getAllCategories().map(({ category }) => ({
+    category: encodeURIComponent(category),
+  }));
 }
 
 export async function generateMetadata({
@@ -15,11 +18,11 @@ export async function generateMetadata({
 }: {
   params: Promise<Params>;
 }): Promise<Metadata> {
-  const { tag } = await params;
-  const decoded = decodeURIComponent(tag);
+  const { category } = await params;
+  const decoded = decodeURIComponent(category);
   return {
-    title: `#${decoded} 관련 글`,
-    description: `${decoded} 태그가 포함된 블로그 글 모음`,
+    title: `${decoded} 시험 준비 글 모음`,
+    description: `${decoded} 관련 시험 준비 팁과 학습 전략을 정리한 블로그 글 모음입니다.`,
   };
 }
 
@@ -36,15 +39,15 @@ function getCategoryStyle(category: string) {
   );
 }
 
-export default async function BlogTagPage({
+export default async function BlogCategoryPage({
   params,
 }: {
   params: Promise<Params>;
 }) {
-  const { tag } = await params;
-  const decoded = decodeURIComponent(tag);
-  const posts = getPostsByTag(decoded);
-  const allTags = getAllTags();
+  const { category } = await params;
+  const decoded = decodeURIComponent(category);
+  const posts = getPostsByCategory(decoded);
+  const allCategories = getAllCategories();
 
   if (posts.length === 0) notFound();
 
@@ -55,22 +58,24 @@ export default async function BlogTagPage({
     /* 백엔드 미연결 시 무시 */
   }
 
+  const totalPosts = allCategories.reduce((sum, c) => sum + c.count, 0);
+
   return (
     <main className="mx-auto max-w-4xl px-4 py-12 sm:px-6 lg:px-8">
-      <header className="mb-8">
-        <nav className="text-sm text-muted">
-          <Link href="/blog" className="hover:text-foreground">
-            시험 준비 팁
-          </Link>
-          <span className="mx-2">/</span>
-          <span>#{decoded}</span>
-        </nav>
-        <h1 className="mt-4 text-3xl font-bold sm:text-4xl">
-          #{decoded}
-        </h1>
-        <p className="mt-2 text-muted">
-          {posts.length}개의 글
-        </p>
+      <header className="mb-10 flex items-center gap-5">
+        <Image
+          src="/blog-mascot.png"
+          alt="시험 준비 팁 마스코트"
+          width={160}
+          height={160}
+          className="shrink-0"
+        />
+        <div>
+          <h1 className="text-3xl font-bold sm:text-4xl">시험 준비 팁</h1>
+          <p className="mt-2 text-muted">
+            자격증 시험 준비에 도움이 되는 학습 전략과 팁을 공유합니다.
+          </p>
+        </div>
       </header>
 
       <div className="mb-8 flex flex-wrap gap-2">
@@ -79,18 +84,19 @@ export default async function BlogTagPage({
           className="rounded-full border border-border px-3 py-1 text-xs font-medium text-muted transition-colors hover:border-primary/40 hover:text-foreground"
         >
           전체
+          <span className="ml-1 text-[10px] opacity-60">{totalPosts}</span>
         </Link>
-        {allTags.map(({ tag: t, count }) => (
+        {allCategories.map(({ category: cat, count }) => (
           <Link
-            key={t}
-            href={`/blog/tag/${encodeURIComponent(t)}`}
+            key={cat}
+            href={`/blog/category/${encodeURIComponent(cat)}`}
             className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
-              t === decoded
+              cat === decoded
                 ? "border-primary/50 bg-primary/10 text-primary"
                 : "border-border text-muted hover:border-primary/40 hover:text-foreground"
             }`}
           >
-            #{t}
+            {cat}
             <span className="ml-1 text-[10px] opacity-60">{count}</span>
           </Link>
         ))}
@@ -131,21 +137,6 @@ export default async function BlogTagPage({
             <p className="mt-2 text-sm leading-relaxed text-muted">
               {post.description}
             </p>
-
-            <div className="mt-4 flex flex-wrap gap-1.5">
-              {post.tags.map((t) => (
-                <span
-                  key={t}
-                  className={`rounded px-2 py-0.5 text-[11px] ${
-                    t === decoded
-                      ? "bg-primary/10 text-primary"
-                      : "bg-surface text-muted"
-                  }`}
-                >
-                  #{t}
-                </span>
-              ))}
-            </div>
           </Link>
         ))}
       </div>

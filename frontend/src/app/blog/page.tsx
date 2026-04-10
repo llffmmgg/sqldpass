@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
-import { getAllPosts, getAllTags } from "@/lib/blog";
+import { getAllPosts, getAllCategories } from "@/lib/blog";
 import { getPublicBlogViews } from "@/lib/publicApi";
 
 export const metadata: Metadata = {
@@ -32,7 +32,7 @@ function getCategoryStyle(category: string) {
 
 export default async function BlogPage() {
   const posts = getAllPosts();
-  const allTags = getAllTags();
+  const allCategories = getAllCategories();
   let viewCounts: Record<string, number> = {};
   try {
     viewCounts = await getPublicBlogViews();
@@ -63,13 +63,13 @@ export default async function BlogPage() {
           전체
           <span className="ml-1 text-[10px] opacity-60">{posts.length}</span>
         </span>
-        {allTags.map(({ tag, count }) => (
+        {allCategories.map(({ category, count }) => (
           <Link
-            key={tag}
-            href={`/blog/tag/${encodeURIComponent(tag)}`}
+            key={category}
+            href={`/blog/category/${encodeURIComponent(category)}`}
             className="rounded-full border border-border px-3 py-1 text-xs font-medium text-muted transition-colors hover:border-primary/40 hover:text-foreground"
           >
-            #{tag}
+            {category}
             <span className="ml-1 text-[10px] opacity-60">{count}</span>
           </Link>
         ))}
@@ -113,18 +113,6 @@ export default async function BlogPage() {
               <p className="mt-2 text-sm leading-relaxed text-muted">
                 {post.description}
               </p>
-
-              <div className="mt-4 flex flex-wrap gap-1.5">
-                {post.tags.map((tag) => (
-                  <Link
-                    key={tag}
-                    href={`/blog/tag/${encodeURIComponent(tag)}`}
-                    className="relative z-10 rounded bg-surface px-2 py-0.5 text-[11px] text-muted transition-colors hover:bg-primary/10 hover:text-primary"
-                  >
-                    #{tag}
-                  </Link>
-                ))}
-              </div>
             </Link>
           ))}
         </div>

@@ -122,20 +122,6 @@ export default async function BlogPostPage({
         <MDXRemote source={post.content} options={{ mdxOptions: { remarkPlugins: [remarkGfm] } }} components={mdxComponents} />
       </article>
 
-      {post.tags.length > 0 && (
-        <div className="mt-8 flex flex-wrap gap-2">
-          {post.tags.map((tag) => (
-            <Link
-              key={tag}
-              href={`/blog/tag/${encodeURIComponent(tag)}`}
-              className="rounded-full border border-border px-3 py-1 text-xs font-medium text-muted transition-colors hover:border-primary/40 hover:text-primary"
-            >
-              #{tag}
-            </Link>
-          ))}
-        </div>
-      )}
-
       <section className="mt-12 rounded-xl border border-border bg-surface/50 p-6 text-center">
         <h2 className="text-lg font-semibold">
           직접 문제를 풀어보세요
