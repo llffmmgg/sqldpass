@@ -389,9 +389,6 @@ function MockExamCard({ exam }: { exam: MockExamSummary }) {
       <div className="mt-2 flex flex-wrap items-center gap-2 text-base text-muted">
         <span>총 {exam.totalQuestions}문항</span>
       </div>
-      <p className="mt-1 text-xs text-muted/70">
-        {new Date(exam.createdAt).toLocaleDateString("ko-KR")}
-      </p>
     </Link>
   );
 }
