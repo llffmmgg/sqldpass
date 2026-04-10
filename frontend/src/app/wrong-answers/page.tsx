@@ -488,124 +488,139 @@ function WrongAnswersPageContent() {
 
         {/* Wrong answer list */}
         <section className="mt-8">
-          {/* 필터 + 정렬 */}
-          <div className="flex flex-wrap items-center gap-2">
+          {/* 정렬 토글 */}
+          <div className="flex items-center justify-end gap-1 text-xs mb-4">
             <button
-              onClick={() => handleSubjectFilter(null)}
-              className={`rounded-full px-3 py-1 text-sm font-medium transition-colors ${
-                selectedSubject === null
-                  ? "bg-primary text-zinc-900"
-                  : "border border-border text-muted hover:border-amber-500/40"
+              onClick={() => setSortMode("priority")}
+              className={`rounded px-2 py-1 transition-colors ${
+                sortMode === "priority"
+                  ? "text-foreground font-semibold"
+                  : "text-muted hover:text-foreground"
               }`}
             >
-              전체 <span className="ml-1 text-[11px] tabular-nums opacity-70">{totalUnresolved}</span>
+              오답 많은 순
             </button>
-            {visibleSubjectFilters.map((s) => {
-              const count = wrongCountBySubject.get(s.id) ?? 0;
-              const isActive = selectedSubject === s.id;
-              return (
-                <button
-                  key={s.id}
-                  onClick={() => handleSubjectFilter(s.id)}
-                  className={`rounded-full px-3 py-1 text-sm font-medium transition-colors ${
-                    isActive
-                      ? "bg-primary text-zinc-900"
-                      : "border border-border text-muted hover:border-amber-500/40"
-                  }`}
-                >
-                  {s.name}{" "}
-                  <span className={`ml-1 text-[11px] tabular-nums ${isActive ? "opacity-80" : "opacity-70"}`}>
-                    {count}
-                  </span>
-                </button>
-              );
-            })}
-
-            {/* 정렬 토글 */}
-            <div className="ml-auto flex items-center gap-1 text-xs">
-              <button
-                onClick={() => setSortMode("priority")}
-                className={`rounded px-2 py-1 transition-colors ${
-                  sortMode === "priority"
-                    ? "text-foreground font-semibold"
-                    : "text-muted hover:text-foreground"
-                }`}
-              >
-                오답 많은 순
-              </button>
-              <span className="text-muted/40">·</span>
-              <button
-                onClick={() => setSortMode("recent")}
-                className={`rounded px-2 py-1 transition-colors ${
-                  sortMode === "recent"
-                    ? "text-foreground font-semibold"
-                    : "text-muted hover:text-foreground"
-                }`}
-              >
-                최근순
-              </button>
-            </div>
+            <span className="text-muted/40">·</span>
+            <button
+              onClick={() => setSortMode("recent")}
+              className={`rounded px-2 py-1 transition-colors ${
+                sortMode === "recent"
+                  ? "text-foreground font-semibold"
+                  : "text-muted hover:text-foreground"
+              }`}
+            >
+              최근순
+            </button>
           </div>
 
-          <div className="mt-4 space-y-3">
-            {loading && <Spinner />}
+          {loading && <Spinner />}
 
-            {!loading && sortedAnswers.length === 0 && (
-              <div className="py-16 text-center">
-                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-green-500/10 border border-green-500/20">
-                  <svg className="h-8 w-8 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
-                  </svg>
-                </div>
-                <p className="mt-4 text-muted">오답이 없습니다. 완벽해요!</p>
-                <Link
-                  href="/solve"
-                  className="mt-6 inline-block rounded-lg bg-primary px-5 py-2 text-sm font-semibold text-zinc-900 transition-colors hover:bg-primary-hover"
-                >
-                  문제 풀러 가기
-                </Link>
+          {!loading && sortedAnswers.length === 0 && (
+            <div className="py-16 text-center">
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-green-500/10 border border-green-500/20">
+                <svg className="h-8 w-8 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                </svg>
               </div>
-            )}
+              <p className="mt-4 text-muted">오답이 없습니다. 완벽해요!</p>
+              <Link
+                href="/solve"
+                className="mt-6 inline-block rounded-lg bg-primary px-5 py-2 text-sm font-semibold text-zinc-900 transition-colors hover:bg-primary-hover"
+              >
+                문제 풀러 가기
+              </Link>
+            </div>
+          )}
 
-            {!loading && sortedAnswers.length > 0 && (
-              <div className="space-y-8">
-                {groupedAnswers.map((group) => (
-                  <section key={group.certKey}>
-                    <div className={`flex items-center gap-2 border-b ${CERT_META[group.certKey].border} pb-2`}>
-                      <span className={`h-2 w-2 rounded-full ${CERT_META[group.certKey].dot}`} />
-                      <h2 className="text-base font-bold text-foreground">
-                        {CERT_META[group.certKey].label}
-                      </h2>
-                      <span className="text-xs tabular-nums text-muted">{group.total}건</span>
-                    </div>
+          {!loading && sortedAnswers.length > 0 && (
+            <div className="space-y-10">
+              {groupedAnswers.map((group) => {
+                // 이 자격증에 속한 토픽 ID 목록
+                const certTopicIds = new Set<number>();
+                for (const topic of group.topics) {
+                  const sub = subjects.find((s) => s.name === topic.topicName);
+                  if (sub) certTopicIds.add(sub.id);
+                }
+                // 현재 선택된 필터가 이 자격증에 속하는지
+                const isThisCertFilter = selectedSubject !== null && certTopicIds.has(selectedSubject);
+                const filteredTopics = isThisCertFilter
+                  ? group.topics.filter((t) => {
+                      const sub = subjects.find((s) => s.name === t.topicName);
+                      return sub && sub.id === selectedSubject;
+                    })
+                  : group.topics;
 
-                    <div className="mt-4 space-y-6">
+                return (
+                <section key={group.certKey} className="rounded-xl border border-border overflow-hidden">
+                  {/* 자격증 헤더 */}
+                  <div className={`flex items-center gap-2 px-5 py-3 bg-surface border-b ${CERT_META[group.certKey].border}`}>
+                    <span className={`h-2.5 w-2.5 rounded-full ${CERT_META[group.certKey].dot}`} />
+                    <h2 className="text-base font-bold text-foreground">
+                      {CERT_META[group.certKey].label}
+                    </h2>
+                    <span className="text-xs tabular-nums text-muted">{group.total}건</span>
+                  </div>
+
+                  {/* 자격증 내부 토픽 필터 */}
+                  {group.topics.length > 1 && (
+                    <div className="flex flex-wrap items-center gap-1.5 px-5 py-2.5 bg-surface/50 border-b border-border">
+                      <button
+                        onClick={() => handleSubjectFilter(null)}
+                        className={`rounded-full px-2.5 py-0.5 text-xs font-medium transition-colors ${
+                          !isThisCertFilter
+                            ? "bg-primary/20 text-primary"
+                            : "text-muted hover:text-foreground"
+                        }`}
+                      >
+                        전체 {group.total}
+                      </button>
                       {group.topics.map((topic) => {
-                        const tHigh = topic.items.filter((w) => w.wrongCount >= 3).length;
-                        const tMid = topic.items.filter((w) => w.wrongCount === 2).length;
+                        const sub = subjects.find((s) => s.name === topic.topicName);
+                        const isActive = sub && selectedSubject === sub.id;
                         return (
-                        <div key={topic.topicName}>
-                          <h3 className="mb-3 flex items-center gap-2 text-xs font-semibold tracking-wide text-muted">
-                            <span>{topic.topicName}</span>
-                            <span className="rounded-full bg-border px-1.5 py-0.5 text-[10px] tabular-nums text-muted/80">
-                              {topic.items.length}문제
-                            </span>
-                            {tHigh > 0 && <span className="flex items-center gap-1 text-[10px] text-red-400"><span className="h-1.5 w-1.5 rounded-full bg-red-500" />{tHigh}</span>}
-                            {tMid > 0 && <span className="flex items-center gap-1 text-[10px] text-amber-400"><span className="h-1.5 w-1.5 rounded-full bg-amber-500" />{tMid}</span>}
-                          </h3>
-                          <div className="space-y-2">
-                            {topic.items.map((wa, idx) => renderWrongAnswerCard(wa, idx + 1))}
-                          </div>
-                        </div>
+                          <button
+                            key={topic.topicName}
+                            onClick={() => sub && handleSubjectFilter(isActive ? null : sub.id)}
+                            className={`rounded-full px-2.5 py-0.5 text-xs font-medium transition-colors ${
+                              isActive
+                                ? "bg-primary/20 text-primary"
+                                : "text-muted/70 hover:text-foreground"
+                            }`}
+                          >
+                            {topic.topicName} {topic.items.length}
+                          </button>
                         );
                       })}
                     </div>
-                  </section>
-                ))}
-              </div>
-            )}
+                  )}
 
-          </div>
+                  {/* 토픽별 문제 목록 */}
+                  <div className="divide-y divide-border">
+                    {filteredTopics.map((topic) => {
+                      const tHigh = topic.items.filter((w) => w.wrongCount >= 3).length;
+                      const tMid = topic.items.filter((w) => w.wrongCount === 2).length;
+                      return (
+                      <div key={topic.topicName} className="px-5 py-4">
+                        <h3 className="mb-3 flex items-center gap-2 text-xs font-semibold tracking-wide text-muted">
+                          <span>{topic.topicName}</span>
+                          <span className="rounded-full bg-border px-1.5 py-0.5 text-[10px] tabular-nums text-muted/80">
+                            {topic.items.length}
+                          </span>
+                          {tHigh > 0 && <span className="flex items-center gap-1 text-[10px] text-red-400"><span className="h-1.5 w-1.5 rounded-full bg-red-500" />{tHigh}</span>}
+                          {tMid > 0 && <span className="flex items-center gap-1 text-[10px] text-amber-400"><span className="h-1.5 w-1.5 rounded-full bg-amber-500" />{tMid}</span>}
+                        </h3>
+                        <div className="space-y-2">
+                          {topic.items.map((wa, idx) => renderWrongAnswerCard(wa, idx + 1))}
+                        </div>
+                      </div>
+                      );
+                    })}
+                  </div>
+                </section>
+                );
+              })}
+            </div>
+          )}
         </section>
       </div>
     </main>
