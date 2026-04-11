@@ -361,8 +361,15 @@ function MockExamCard({ exam }: { exam: MockExamSummary }) {
   return (
     <Link
       href={`/mock-exams/${exam.id}`}
-      className={`relative block rounded-xl border ${isPremium ? "border-amber-500/40 bg-gradient-to-br from-amber-500/[0.05] to-surface" : "border-border bg-surface"} p-5 transition-all hover:-translate-y-0.5 ${hoverBorder} ${glow}`}
+      className={`relative block overflow-hidden rounded-xl border ${isPremium ? "border-amber-500/40 bg-gradient-to-br from-amber-500/[0.05] to-surface" : "border-border bg-surface"} p-5 transition-all hover:-translate-y-0.5 ${hoverBorder} ${glow}`}
     >
+      {/* 전문가 검증 리본 — 우측 상단 대각선 */}
+      {exam.expertVerified && (
+        <div className="pointer-events-none absolute -right-[38px] top-[18px] z-10 rotate-45 bg-emerald-600 px-10 py-0.5 text-center text-[9px] font-bold tracking-wide text-white shadow-sm dark:bg-emerald-500">
+          검증 완료
+        </div>
+      )}
+
       {/* 풀이 완료 마크 — 손글씨 빨간 색연필 채점 느낌 */}
       {exam.solved && exam.bestCorrectCount != null && exam.bestTotalCount != null && (
         <span
@@ -380,11 +387,6 @@ function MockExamCard({ exam }: { exam: MockExamSummary }) {
         <ExamBadge examType={exam.examType} />
         {exam.templateKey && exam.templateLabel && (
           <TemplateBadge templateKey={exam.templateKey} label={exam.templateLabel} />
-        )}
-        {exam.expertVerified && (
-          <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/50 bg-emerald-500/15 px-2 py-0.5 text-[10px] font-bold text-emerald-300">
-            전문가 검증
-          </span>
         )}
         {isPremium && (
           <span className="inline-flex items-center gap-1 rounded-full border border-amber-500/50 bg-amber-500/15 px-2 py-0.5 text-[10px] font-bold text-amber-300">
