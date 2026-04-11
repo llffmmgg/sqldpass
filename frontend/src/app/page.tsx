@@ -5,7 +5,6 @@ import HeroStats from "@/components/HeroStats";
 import EngineerExamCountdown from "@/components/EngineerExamCountdown";
 import { SiteNoticeModal } from "@/components/SiteNoticeModal";
 import CertChips from "@/components/CertChips";
-import PreviewTabs from "@/components/PreviewTabs";
 import RankingSection from "@/components/RankingSection";
 import { getAllPosts } from "@/lib/blog";
 
@@ -149,29 +148,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── Ranking ────────────────────────────────────────── */}
-      <ScrollReveal>
-        <RankingSection />
-      </ScrollReveal>
-
-      {/* ── Preview ────────────────────────────────────────── */}
-      <section id="preview" className="relative border-t border-border bg-surface/50 py-24">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,var(--accent-glow),transparent_60%)] pointer-events-none" />
-
-        <div className="relative mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
-          <ScrollReveal>
-            <h2 className="text-center text-2xl font-bold sm:text-3xl">자격증별 문제 미리보기</h2>
-            <p className="mt-3 text-center text-muted">
-              지원 자격증의 실제 출제 유형을 가볍게 풀어보세요
-            </p>
-          </ScrollReveal>
-
-          <ScrollReveal delay={1}>
-            <PreviewTabs />
-          </ScrollReveal>
-        </div>
-      </section>
-
       {/* ── Blog ─────────────────────────────────────────── */}
       {recentPosts.length > 0 && (
         <section className="mx-auto max-w-5xl px-4 py-24 sm:px-6 lg:px-8">
@@ -230,6 +206,11 @@ export default function Home() {
           </ScrollReveal>
         </section>
       )}
+
+      {/* ── Ranking ────────────────────────────────────────── */}
+      <ScrollReveal>
+        <RankingSection />
+      </ScrollReveal>
 
       {/* ── CTA ────────────────────────────────────────────── */}
       <section className="relative mx-auto max-w-5xl px-4 py-24 text-center sm:px-6 lg:px-8">
