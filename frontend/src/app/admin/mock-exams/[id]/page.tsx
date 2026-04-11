@@ -198,7 +198,7 @@ export default function AdminMockExamDetailPage({
           const isMcq = (item.questionType ?? existing.questionType) === "MCQ";
           await updateQuestion(item.id, {
             content: item.content,
-            questionType: item.questionType ?? existing.questionType,
+            questionType: (item.questionType ?? existing.questionType) as import("@/lib/adminApi").AdminQuestionType,
             correctOption: isMcq ? (item.correctOption ?? existing.correctOption) : null,
             answer: isMcq ? null : (item.answer ?? null),
             keywords: isMcq ? null : (item.keywords ?? null),
