@@ -202,6 +202,15 @@ public interface QuestionRepository extends JpaRepository<QuestionEntity, Long> 
                                             @Param("onlyUnverified") boolean onlyUnverified,
                                             @Param("lim") int limit);
 
+    @Query("""
+            SELECT q.id FROM QuestionEntity q
+            WHERE q.mockExam.id = :mockExamId
+              AND (:onlyUnverified = false OR q.verifiedAt IS NULL)
+            ORDER BY q.displayOrder ASC
+            """)
+    List<Long> findIdsByMockExamId(@Param("mockExamId") Long mockExamId,
+                                   @Param("onlyUnverified") boolean onlyUnverified);
+
     boolean existsByContentHash(String contentHash);
 
     long countByVerifiedAtIsNotNull();

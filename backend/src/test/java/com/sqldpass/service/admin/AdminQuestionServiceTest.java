@@ -86,7 +86,7 @@ class AdminQuestionServiceTest {
                 .thenReturn(List.of(AiVerificationResponse.ofApproved()));
 
         QuestionVerifyRunResponse response = adminQuestionService.verifyAll(
-                ExamType.ENGINEER_PRACTICAL, null, 100, false);
+                ExamType.ENGINEER_PRACTICAL, null, null, 100, false);
 
         assertThat(response.processedCount()).isEqualTo(1);
         assertThat(response.suspiciousCount()).isZero();
@@ -120,7 +120,7 @@ class AdminQuestionServiceTest {
                         "fixed content", 3, "fixed explanation", "summary", "topic", 2));
 
         QuestionVerifyRunResponse response = adminQuestionService.verifyAll(
-                ExamType.SQLD, 10L, 20, false);
+                ExamType.SQLD, 10L, null, 20, false);
 
         ArgumentCaptor<QuestionVerificationRunEntity> runCaptor =
                 ArgumentCaptor.forClass(QuestionVerificationRunEntity.class);
@@ -150,7 +150,7 @@ class AdminQuestionServiceTest {
         when(verifier.verifyQuestionsBatch(anyList()))
                 .thenReturn(List.of(AiVerificationResponse.ofUnknown("LLM 빈 응답")));
 
-        QuestionVerifyRunResponse response = adminQuestionService.verifyAll(null, null, 50, false);
+        QuestionVerifyRunResponse response = adminQuestionService.verifyAll(null, null, null, 50, false);
 
         assertThat(response.errorCount()).isEqualTo(1);
         assertThat(response.suspiciousCount()).isZero();

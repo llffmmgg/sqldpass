@@ -88,7 +88,7 @@ public class AdminQuestionService {
     private static final int BATCH_SIZE_MCQ = 10;
     private static final int BATCH_SIZE_SHORT = 5;
 
-    public QuestionVerifyRunResponse verifyAll(ExamType examType, Long subjectId, int limit, boolean forceRecheck) {
+    public QuestionVerifyRunResponse verifyAll(ExamType examType, Long subjectId, Long mockExamId, int limit, boolean forceRecheck) {
         int requestedLimit = limit > 0 ? limit : 100;
 
         // ── Phase 1: 짧은 read tx — 대상 스냅샷 추출 (트리아지 정렬) ────────────
@@ -98,7 +98,9 @@ public class AdminQuestionService {
                             .orElseThrow(() -> new SqldpassException(ErrorCode.SUBJECT_NOT_FOUND))
                     : null;
 
-            List<Long> ids = fetchTriageIdsForVerification(examType, subjectId, requestedLimit, !forceRecheck);
+            List<Long> ids = mockExamId != null
+                    ? questionRepository.findIdsByMockExamId(mockExamId, !forceRecheck)
+                    : fetchTriageIdsForVerification(examType, subjectId, requestedLimit, !forceRecheck);
             if (ids.isEmpty()) {
                 return new VerificationFetchResult(subject, List.of());
             }

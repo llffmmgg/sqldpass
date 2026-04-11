@@ -76,6 +76,7 @@ export default function AdminMockExamDetailPage({
     try {
       const result = await verifyAllQuestions({
         examType: exam.examType as VerificationExamType,
+        mockExamId: examId,
         limit: 200,
         force: false,
       });

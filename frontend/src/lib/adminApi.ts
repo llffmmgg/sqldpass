@@ -227,6 +227,7 @@ export interface VerifyAllQuestionsParams {
   limit: number;
   subjectId?: number;
   examType?: VerificationExamType;
+  mockExamId?: number;
   force?: boolean;
 }
 
@@ -234,6 +235,7 @@ export function verifyAllQuestions(params: VerifyAllQuestionsParams) {
   const query = new URLSearchParams({ limit: String(params.limit) });
   if (params.subjectId) query.set("subjectId", String(params.subjectId));
   if (params.examType) query.set("examType", params.examType);
+  if (params.mockExamId) query.set("mockExamId", String(params.mockExamId));
   if (params.force) query.set("force", "true");
   return adminFetch<QuestionVerifyRun>(`/questions/verify?${query}`, { method: "POST" });
 }

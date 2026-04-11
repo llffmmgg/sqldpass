@@ -103,9 +103,10 @@ public class AdminQuestionController {
     public QuestionVerifyRunResponse verifyAll(
             @RequestParam(required = false) ExamType examType,
             @RequestParam(required = false) Long subjectId,
+            @RequestParam(required = false) Long mockExamId,
             @RequestParam(defaultValue = "100") @Min(1) @Max(2000) int limit,
             @RequestParam(defaultValue = "false") boolean force) {
-        return adminQuestionService.verifyAll(examType, subjectId, limit, force);
+        return adminQuestionService.verifyAll(examType, subjectId, mockExamId, limit, force);
     }
 
     @GetMapping("/api/admin/questions/verify/issues")
