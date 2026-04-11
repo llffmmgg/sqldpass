@@ -59,7 +59,7 @@ export default function HeroCta() {
         <Link
           href={primary.href}
           onClick={() => trackEvent("click_cta", { cta: "primary", label: primary.label, authed })}
-          className="btn-glow inline-flex items-center rounded-xl bg-primary px-8 py-4 text-base font-bold text-zinc-900 transition-all duration-300 hover:bg-primary-hover hover:scale-[1.03] active:scale-[0.98]"
+          className="btn-glow inline-flex items-center rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-zinc-900 transition-all duration-300 hover:bg-primary-hover hover:scale-[1.03]"
         >
           {primary.label}
           {authed && (
@@ -78,7 +78,7 @@ export default function HeroCta() {
         <Link
           href={secondary.href}
           onClick={() => trackEvent("click_cta", { cta: "secondary", label: secondary.label, authed })}
-          className="inline-flex items-center rounded-xl border border-border px-8 py-4 text-base font-bold text-foreground transition-all duration-300 hover:border-accent/50 hover:bg-accent/5 active:scale-[0.98]"
+          className="inline-flex items-center rounded-lg border border-border px-6 py-3 text-sm font-semibold text-foreground transition-all duration-300 hover:border-accent/50 hover:bg-accent/5"
         >
           {secondary.label}
         </Link>
