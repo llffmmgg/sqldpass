@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-const STORAGE_KEY = "grading-disclaimer-dismissed-until";
+const STORAGE_KEY = "grading-disclaimer-v2";
 const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
 
 export function GradingDisclaimerModal() {
@@ -30,6 +30,13 @@ export function GradingDisclaimerModal() {
     setOpen(false);
   }
 
+  function dismissForever() {
+    try {
+      localStorage.setItem(STORAGE_KEY, String(Number.MAX_SAFE_INTEGER));
+    } catch {}
+    setOpen(false);
+  }
+
   return (
     <div
       role="dialog"
@@ -46,17 +53,24 @@ export function GradingDisclaimerModal() {
         <div className="mt-3 space-y-3 text-foreground/90">
           <p>안녕하세요 :) 풀이에 들어가기 전에 한 가지만 말씀드릴게요.</p>
           <p>
-            저희 문제는 <b>최대한 보수적으로</b> 채점하고 있어요. 그래서 사실은 맞은 답인데
-            오답으로 표시되는 경우가 가끔 있을 수 있어요. 이 점 조금만 감안해 주시면 감사하겠습니다 🙏
+            저희 문제는 <b>최대한 보수적으로</b> 채점하고 있어요. 특히 서술형 문항은 원래 사람이
+            직접 채점하지만, 저희는 키워드 기반으로 컴퓨터가 채점하고 있어서 정답과 비슷하게
+            작성하셔도 표현이 조금만 달라도 오답으로 처리될 수 있어요.
+            이 점 조금만 감안해 주시면 감사하겠습니다 🙏
           </p>
           <p>
-            만약 &quot;이건 정답이 너무 아닌 것 같은데?&quot; 싶은 문항이 있다면, ChatGPT처럼 평소에
-            쓰시는 AI로 한 번 더 검증해 보시는 걸 추천드려요. <b>저희가 적어둔 답이 틀릴 수도 있거든요.</b>
+            &quot;이건 맞은 것 같은데?&quot; 싶은 문항이 있다면 해설을 꼭 확인해 주세요.
           </p>
           <p className="text-muted">좋은 풀이 시간 되세요!</p>
         </div>
 
         <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row">
+          <button
+            onClick={dismissForever}
+            className="flex-1 rounded-lg border border-border bg-surface py-2.5 text-xs font-medium text-muted hover:text-foreground"
+          >
+            앞으로 보지 않기
+          </button>
           <button
             onClick={dismissForWeek}
             className="flex-1 rounded-lg border border-border bg-surface py-2.5 text-xs font-medium text-muted hover:text-foreground"
