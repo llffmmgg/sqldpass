@@ -484,6 +484,7 @@ export interface AdminMockExamDetail {
   sequence: number;
   totalQuestions: number;
   createdAt: string;
+  expertVerified: boolean;
   questions: {
     id: number;
     displayOrder: number;
@@ -500,6 +501,10 @@ export function getAdminMockExamDetail(id: number) {
 
 export function markMockExamVerified(id: number) {
   return adminFetch<{ marked: number }>(`/mock-exams/${id}/mark-verified`, { method: "POST" });
+}
+
+export function toggleExpertVerified(id: number) {
+  return adminFetch<{ expertVerified: boolean }>(`/mock-exams/${id}/toggle-expert-verified`, { method: "POST" });
 }
 
 export interface AdminSolveDetail {

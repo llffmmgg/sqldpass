@@ -85,6 +85,15 @@ public class MockExamService {
         return questionRepository.markVerifiedInBatch(questionIds, LocalDateTime.now());
     }
 
+    /** 전문가 검증 완료 토글 */
+    @Transactional
+    public boolean toggleExpertVerified(Long mockExamId) {
+        MockExamEntity entity = mockExamRepository.findById(mockExamId)
+                .orElseThrow(() -> new SqldpassException(ErrorCode.MOCK_EXAM_NOT_FOUND));
+        entity.toggleExpertVerified();
+        return entity.isExpertVerified();
+    }
+
     /** 어드민용 — DRAFT/PREMIUM 제한 없이 조회 */
     public MockExam getById(Long id) {
         MockExamEntity entity = mockExamRepository.findByIdWithQuestions(id)

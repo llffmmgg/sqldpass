@@ -80,6 +80,13 @@ public class AdminMockExamController {
         return Map.of("marked", updated);
     }
 
+    @PostMapping("/{id}/toggle-expert-verified")
+    @Operation(summary = "전문가 검증 완료 토글")
+    public Map<String, Boolean> toggleExpertVerified(@PathVariable Long id) {
+        boolean result = mockExamService.toggleExpertVerified(id);
+        return Map.of("expertVerified", result);
+    }
+
     @DeleteMapping("/{id}")
     @Operation(summary = "\uBAA8\uC758\uACE0\uC0AC \uC0AD\uC81C")
     @ResponseStatus(HttpStatus.NO_CONTENT)

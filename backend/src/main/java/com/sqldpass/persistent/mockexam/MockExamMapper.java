@@ -25,7 +25,8 @@ public class MockExamMapper {
                 entity.getCreatedAt(),
                 questions,
                 entity.getTemplate(),
-                entity.getVisibility());
+                entity.getVisibility(),
+                entity.isExpertVerified());
     }
 
     /** 문제 카운트 + 난이도 통계 (목록 조회용) */
@@ -42,7 +43,8 @@ public class MockExamMapper {
                 minDifficulty,
                 maxDifficulty,
                 entity.getTemplate(),
-                entity.getVisibility());
+                entity.getVisibility(),
+                entity.isExpertVerified());
     }
 
     public static MockExamQuestion toDomain(QuestionEntity q) {

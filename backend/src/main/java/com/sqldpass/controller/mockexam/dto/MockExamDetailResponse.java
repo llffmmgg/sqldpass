@@ -15,6 +15,7 @@ public record MockExamDetailResponse(
         int sequence,
         int totalQuestions,
         LocalDateTime createdAt,
+        boolean expertVerified,
         List<Question> questions
 ) {
     public record Question(
@@ -44,6 +45,7 @@ public record MockExamDetailResponse(
                 mockExam.getSequence(),
                 mockExam.getTotalQuestions(),
                 mockExam.getCreatedAt(),
+                mockExam.isExpertVerified(),
                 mockExam.getQuestions().stream().map(Question::from).toList());
     }
 }

@@ -381,6 +381,11 @@ function MockExamCard({ exam }: { exam: MockExamSummary }) {
         {exam.templateKey && exam.templateLabel && (
           <TemplateBadge templateKey={exam.templateKey} label={exam.templateLabel} />
         )}
+        {exam.expertVerified && (
+          <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/50 bg-emerald-500/15 px-2 py-0.5 text-[10px] font-bold text-emerald-300">
+            전문가 검증
+          </span>
+        )}
         {isPremium && (
           <span className="inline-flex items-center gap-1 rounded-full border border-amber-500/50 bg-amber-500/15 px-2 py-0.5 text-[10px] font-bold text-amber-300">
             🔒 프리미엄

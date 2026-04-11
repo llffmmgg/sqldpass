@@ -1,0 +1,1 @@
+ALTER TABLE mock_exam ADD COLUMN expert_verified TINYINT(1) NOT NULL DEFAULT 0;

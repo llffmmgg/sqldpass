@@ -52,6 +52,9 @@ public class MockExamEntity extends BaseTimeEntity {
     @Column(name = "visibility", nullable = false, length = 20)
     private MockExamVisibility visibility = MockExamVisibility.DRAFT;
 
+    @Column(name = "expert_verified", nullable = false)
+    private boolean expertVerified = false;
+
     @OneToMany(mappedBy = "mockExam")
     @OrderBy("displayOrder ASC")
     private List<QuestionEntity> questions = new ArrayList<>();
@@ -83,5 +86,9 @@ public class MockExamEntity extends BaseTimeEntity {
             throw new IllegalArgumentException("visibility는 null일 수 없습니다.");
         }
         this.visibility = visibility;
+    }
+
+    public void toggleExpertVerified() {
+        this.expertVerified = !this.expertVerified;
     }
 }

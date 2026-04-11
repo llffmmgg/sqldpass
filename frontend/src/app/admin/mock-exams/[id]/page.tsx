@@ -7,6 +7,7 @@ import {
   getAdminMockExamDetail,
   getQuestion,
   markMockExamVerified,
+  toggleExpertVerified,
   updateQuestion,
   verifyAllQuestions,
   type AdminMockExamDetail,
@@ -149,7 +150,14 @@ export default function AdminMockExamDetailPage({
           >
             ← 모의고사 목록
           </Link>
-          <h1 className="mt-1 text-2xl font-bold">{exam.name}</h1>
+          <h1 className="mt-1 text-2xl font-bold">
+            {exam.name}
+            {exam.expertVerified && (
+              <span className="ml-2 inline-flex items-center rounded-full border border-emerald-500/50 bg-emerald-500/15 px-2 py-0.5 align-middle text-[10px] font-bold text-emerald-300">
+                전문가 검증 완료
+              </span>
+            )}
+          </h1>
           <p className="mt-1 text-sm text-muted">
             {exam.examType} · {exam.totalQuestions}문항 · 회차 #{exam.sequence}
           </p>
@@ -175,6 +183,19 @@ export default function AdminMockExamDetailPage({
               className="rounded border border-amber-500/40 bg-amber-500/10 px-3 py-1.5 text-xs font-medium text-amber-300 transition hover:bg-amber-500/20"
             >
               전체 검수 완료
+            </button>
+            <button
+              onClick={async () => {
+                const result = await toggleExpertVerified(examId);
+                setExam({ ...exam, expertVerified: result.expertVerified });
+              }}
+              className={`rounded border px-3 py-1.5 text-xs font-medium transition ${
+                exam.expertVerified
+                  ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20"
+                  : "border-border text-muted hover:text-foreground"
+              }`}
+            >
+              {exam.expertVerified ? "전문가 검증 해제" : "전문가 검증 완료"}
             </button>
             <button
               onClick={() => downloadJson(exam, questions)}

@@ -31,20 +31,29 @@ public class MockExam {
     /** 공개 상태 (DRAFT/PUBLISHED/PREMIUM) */
     private final MockExamVisibility visibility;
 
+    /** 전문가 검증 완료 여부 */
+    private final boolean expertVerified;
+
     /** 상세 조회용 — 문제 목록 포함. 난이도 통계는 questions에서 직접 계산. */
     public MockExam(Long id, String name, ExamType examType, int sequence, LocalDateTime createdAt,
                     List<MockExamQuestion> questions) {
-        this(id, name, examType, sequence, createdAt, questions, null, MockExamVisibility.PUBLISHED);
+        this(id, name, examType, sequence, createdAt, questions, null, MockExamVisibility.PUBLISHED, false);
     }
 
     public MockExam(Long id, String name, ExamType examType, int sequence, LocalDateTime createdAt,
                     List<MockExamQuestion> questions, EngineerExamTemplate template) {
-        this(id, name, examType, sequence, createdAt, questions, template, MockExamVisibility.PUBLISHED);
+        this(id, name, examType, sequence, createdAt, questions, template, MockExamVisibility.PUBLISHED, false);
     }
 
     public MockExam(Long id, String name, ExamType examType, int sequence, LocalDateTime createdAt,
                     List<MockExamQuestion> questions, EngineerExamTemplate template,
                     MockExamVisibility visibility) {
+        this(id, name, examType, sequence, createdAt, questions, template, visibility, false);
+    }
+
+    public MockExam(Long id, String name, ExamType examType, int sequence, LocalDateTime createdAt,
+                    List<MockExamQuestion> questions, EngineerExamTemplate template,
+                    MockExamVisibility visibility, boolean expertVerified) {
         this.id = id;
         this.name = name;
         this.examType = examType != null ? examType : ExamType.SQLD;
@@ -57,23 +66,30 @@ public class MockExam {
         this.maxDifficulty = null;
         this.template = template;
         this.visibility = visibility != null ? visibility : MockExamVisibility.PUBLISHED;
+        this.expertVerified = expertVerified;
     }
 
     /** 목록 조회용 — 문제 카운트 + 난이도 통계 */
     public MockExam(Long id, String name, ExamType examType, int sequence, LocalDateTime createdAt,
                     int totalQuestions, Double avgDifficulty, Integer minDifficulty, Integer maxDifficulty) {
-        this(id, name, examType, sequence, createdAt, totalQuestions, avgDifficulty, minDifficulty, maxDifficulty, null, MockExamVisibility.PUBLISHED);
+        this(id, name, examType, sequence, createdAt, totalQuestions, avgDifficulty, minDifficulty, maxDifficulty, null, MockExamVisibility.PUBLISHED, false);
     }
 
     public MockExam(Long id, String name, ExamType examType, int sequence, LocalDateTime createdAt,
                     int totalQuestions, Double avgDifficulty, Integer minDifficulty, Integer maxDifficulty,
                     EngineerExamTemplate template) {
-        this(id, name, examType, sequence, createdAt, totalQuestions, avgDifficulty, minDifficulty, maxDifficulty, template, MockExamVisibility.PUBLISHED);
+        this(id, name, examType, sequence, createdAt, totalQuestions, avgDifficulty, minDifficulty, maxDifficulty, template, MockExamVisibility.PUBLISHED, false);
     }
 
     public MockExam(Long id, String name, ExamType examType, int sequence, LocalDateTime createdAt,
                     int totalQuestions, Double avgDifficulty, Integer minDifficulty, Integer maxDifficulty,
                     EngineerExamTemplate template, MockExamVisibility visibility) {
+        this(id, name, examType, sequence, createdAt, totalQuestions, avgDifficulty, minDifficulty, maxDifficulty, template, visibility, false);
+    }
+
+    public MockExam(Long id, String name, ExamType examType, int sequence, LocalDateTime createdAt,
+                    int totalQuestions, Double avgDifficulty, Integer minDifficulty, Integer maxDifficulty,
+                    EngineerExamTemplate template, MockExamVisibility visibility, boolean expertVerified) {
         this.id = id;
         this.name = name;
         this.examType = examType != null ? examType : ExamType.SQLD;
@@ -86,5 +102,6 @@ public class MockExam {
         this.maxDifficulty = maxDifficulty;
         this.template = template;
         this.visibility = visibility != null ? visibility : MockExamVisibility.PUBLISHED;
+        this.expertVerified = expertVerified;
     }
 }

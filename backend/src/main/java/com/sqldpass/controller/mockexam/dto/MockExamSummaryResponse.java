@@ -20,7 +20,8 @@ public record MockExamSummaryResponse(
         Integer bestTotalCount,
         String templateKey,
         String templateLabel,
-        MockExamVisibility visibility
+        MockExamVisibility visibility,
+        boolean expertVerified
 ) {
     public static MockExamSummaryResponse from(MockExam mockExam) {
         return from(mockExam, null, null);
@@ -47,7 +48,8 @@ public record MockExamSummaryResponse(
                 bestTotal,
                 templateKey,
                 templateLabel,
-                mockExam.getVisibility());
+                mockExam.getVisibility(),
+                mockExam.isExpertVerified());
     }
 
     /**
