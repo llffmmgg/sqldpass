@@ -1,14 +1,22 @@
+/** 백엔드 UTC 날짜를 KST Date로 변환 (타임존 접미사 없는 경우 UTC로 강제 해석) */
+function toKstDate(isoString: string): Date {
+  const s = isoString.endsWith("Z") || isoString.includes("+") ? isoString : isoString + "Z";
+  return new Date(s);
+}
+
 export function formatDate(isoString: string): string {
-  return new Date(isoString).toLocaleDateString("ko-KR", {
+  return toKstDate(isoString).toLocaleDateString("ko-KR", {
+    timeZone: "Asia/Seoul",
     year: "numeric",
     month: "long",
     day: "numeric",
   });
 }
 
-/** Admin용 — 날짜 + 시:분 표시 */
+/** Admin용 — 날짜 + 시:분 표시 (KST) */
 export function formatDateTime(isoString: string): string {
-  return new Date(isoString).toLocaleString("ko-KR", {
+  return toKstDate(isoString).toLocaleString("ko-KR", {
+    timeZone: "Asia/Seoul",
     year: "numeric",
     month: "long",
     day: "numeric",
@@ -19,7 +27,7 @@ export function formatDateTime(isoString: string): string {
 
 /** "오늘" / "N일 전" / "N주 전" / 오래되면 절대 날짜로 — 정보 밀도 ↑ */
 export function formatRelativeDate(isoString: string): string {
-  const target = new Date(isoString);
+  const target = toKstDate(isoString);
   const now = new Date();
   const startOfDay = (d: Date) => {
     const x = new Date(d);
