@@ -5,30 +5,42 @@ import { getActiveNotice, type ActiveNotice } from "@/lib/noticeApi";
 
 const STORAGE_KEY = "site-banner-dismissed-v";
 
+/** 하드코딩 폴백 — API 공지가 없을 때 표시. 불필요해지면 null로 변경. */
+const FALLBACK_NOTICE = {
+  body: "현재 전체 문항을 전문가가 꼼꼼히 검토하고 있어요! 모의고사는 '전문가 검수' 표시된 항목부터 풀어보시는 걸 추천드려요 🙌",
+  version: 100,
+};
+
 export function SiteNoticeBanner() {
   const [notice, setNotice] = useState<ActiveNotice | null>(null);
+  const [dismissed, setDismissed] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
     getActiveNotice("BANNER").then((n) => {
-      if (cancelled || !n) return;
+      if (cancelled) return;
+      const target = n ?? (FALLBACK_NOTICE as ActiveNotice | null);
+      if (!target) return;
       try {
-        if (localStorage.getItem(STORAGE_KEY + n.version) === "1") return;
+        if (localStorage.getItem(STORAGE_KEY + target.version) === "1") {
+          setDismissed(true);
+          return;
+        }
       } catch {}
-      setNotice(n);
+      setNotice(target);
     });
     return () => {
       cancelled = true;
     };
   }, []);
 
-  if (!notice) return null;
+  if (!notice || dismissed) return null;
 
   function dismiss() {
     try {
       if (notice) localStorage.setItem(STORAGE_KEY + notice.version, "1");
     } catch {}
-    setNotice(null);
+    setDismissed(true);
   }
 
   return (
