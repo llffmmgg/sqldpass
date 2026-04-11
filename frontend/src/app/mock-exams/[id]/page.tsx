@@ -711,8 +711,8 @@ function ExamTimer({
             }}
           />
         </svg>
-        {/* 시간 표시 */}
-        <div className="absolute inset-0 flex flex-col items-center justify-center">
+        {/* 시간 표시 + 프로그레스 바 */}
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5">
           <span
             className={`font-mono text-sm font-bold tabular-nums leading-none ${
               isOvertime
@@ -724,6 +724,19 @@ function ExamTimer({
           >
             {isOvertime ? `+${formatTime(seconds - limit)}` : formatTime(remaining)}
           </span>
+          {/* 선형 프로그레스 바 — 남은 시간 비율 */}
+          <div className="h-1.5 w-14 overflow-hidden rounded-full bg-border">
+            <div
+              className={`h-full rounded-full transition-all duration-1000 linear ${
+                isOvertime
+                  ? "bg-red-500"
+                  : isUrgent
+                  ? "bg-red-400"
+                  : accent.text.replace("text-", "bg-")
+              }`}
+              style={{ width: `${Math.max(remainingRatio * 100, 0)}%` }}
+            />
+          </div>
         </div>
       </div>
       {/* 컨트롤 버튼 */}
