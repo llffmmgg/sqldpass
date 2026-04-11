@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { CountdownCircleTimer } from "react-countdown-circle-timer";
 import AuthGuard from "@/components/AuthGuard";
 import Spinner from "@/components/Spinner";
 import QuestionContent from "@/components/QuestionContent";
@@ -641,23 +642,18 @@ function ExamTimer({
   const remaining = Math.max(limit - seconds, 0);
   const isOvertime = seconds > limit;
   const isUrgent = remaining <= 300 && remaining > 0;
-  const progress = Math.min(seconds / limit, 1);
-
-  // SVG 원형 진행률 — 줄어드는 방향 (남은시간 비율)
   const size = 110;
-  const strokeWidth = 8;
-  const radius = (size - strokeWidth) / 2;
-  const circumference = 2 * Math.PI * radius;
-  const remainingRatio = isOvertime ? 0 : 1 - progress;
-  const strokeDashoffset = circumference * (1 - remainingRatio);
 
-  const ringColor = isOvertime
-    ? "stroke-red-500"
-    : isUrgent
-    ? "stroke-red-400"
-    : accent.text.replace("text-", "stroke-");
+  const accentHex = accent.text === "text-amber-400" ? "#f59e0b"
+    : accent.text === "text-emerald-400" ? "#34d399"
+    : accent.text === "text-sky-400" ? "#38bdf8"
+    : accent.text === "text-rose-400" ? "#fb7185"
+    : "#f59e0b";
 
-  // 타이머 시작 전
+  const timerColor = isOvertime ? "#ef4444" : isUrgent ? "#f87171" : accentHex;
+  const trailColor = "rgba(128,128,128,0.15)";
+
+  // 시작 전
   if (seconds === 0 && !running) {
     return (
       <button
@@ -665,21 +661,22 @@ function ExamTimer({
         className="flex shrink-0 flex-col items-center gap-1"
         title={`제한시간 ${Math.floor(limit / 60)}분`}
       >
-        <div className="relative flex items-center justify-center" style={{ width: size, height: size }}>
-          {/* 배경 원 */}
-          <svg width={size} height={size} className="absolute">
-            <circle cx={size / 2} cy={size / 2} r={radius} fill="none" strokeWidth={strokeWidth} className="stroke-border" />
-          </svg>
-          {/* 가득 찬 원 — 시간 100% 남음 표시 */}
-          <svg width={size} height={size} className="absolute -rotate-90 opacity-40">
-            <circle cx={size / 2} cy={size / 2} r={radius} fill="none" strokeWidth={strokeWidth} strokeLinecap="round" className={accent.text.replace("text-", "stroke-")} />
-          </svg>
-          <div className="absolute inset-0 flex flex-col items-center justify-center">
+        <CountdownCircleTimer
+          isPlaying={false}
+          duration={limit}
+          initialRemainingTime={limit}
+          colors={accentHex as `#${string}`}
+          trailColor={trailColor}
+          size={size}
+          strokeWidth={7}
+          strokeLinecap="round"
+        >
+          {() => (
             <svg className="h-7 w-7 text-muted" fill="currentColor" viewBox="0 0 24 24">
               <path d="M8 5v14l11-7z" />
             </svg>
-          </div>
-        </div>
+          )}
+        </CountdownCircleTimer>
         <span className="text-xs font-medium text-muted">{Math.floor(limit / 60)}분</span>
       </button>
     );
@@ -687,32 +684,20 @@ function ExamTimer({
 
   return (
     <div className="flex shrink-0 flex-col items-center gap-1">
-      <div className="relative flex items-center justify-center" style={{ width: size, height: size }}>
-        {/* 배경 원 */}
-        <svg width={size} height={size} className="absolute">
-          <circle
-            cx={size / 2} cy={size / 2} r={radius}
-            fill="none" strokeWidth={strokeWidth}
-            className="stroke-border"
-          />
-        </svg>
-        {/* 진행 원 — 시간이 줄수록 ring이 줄어듦 */}
-        <svg width={size} height={size} className={`absolute -rotate-90 ${isUrgent && !isOvertime ? "animate-pulse" : ""}`}>
-          <circle
-            cx={size / 2} cy={size / 2} r={radius}
-            fill="none" strokeWidth={strokeWidth}
-            strokeLinecap="round"
-            className={ringColor}
-            style={{
-              strokeDasharray: circumference,
-              strokeDashoffset: isOvertime ? 0 : strokeDashoffset,
-              transition: "stroke-dashoffset 1s linear",
-              filter: isUrgent || isOvertime ? "drop-shadow(0 0 6px currentColor)" : "none",
-            }}
-          />
-        </svg>
-        {/* 시간 표시 + 프로그레스 바 */}
-        <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5">
+      <CountdownCircleTimer
+        key={`timer-${limit}`}
+        isPlaying={running}
+        duration={limit}
+        initialRemainingTime={remaining}
+        colors={[accentHex as `#${string}`, "#fbbf24", "#f87171", "#ef4444"]}
+        colorsTime={[limit, Math.floor(limit * 0.3), 300, 0]}
+        trailColor={trailColor}
+        size={size}
+        strokeWidth={7}
+        strokeLinecap="round"
+        onComplete={() => undefined}
+      >
+        {() => (
           <span
             className={`font-mono text-sm font-bold tabular-nums leading-none ${
               isOvertime
@@ -724,21 +709,8 @@ function ExamTimer({
           >
             {isOvertime ? `+${formatTime(seconds - limit)}` : formatTime(remaining)}
           </span>
-          {/* 선형 프로그레스 바 — 남은 시간 비율 */}
-          <div className="h-1.5 w-14 overflow-hidden rounded-full bg-border">
-            <div
-              className={`h-full rounded-full transition-all duration-1000 linear ${
-                isOvertime
-                  ? "bg-red-500"
-                  : isUrgent
-                  ? "bg-red-400"
-                  : accent.text.replace("text-", "bg-")
-              }`}
-              style={{ width: `${Math.max(remainingRatio * 100, 0)}%` }}
-            />
-          </div>
-        </div>
-      </div>
+        )}
+      </CountdownCircleTimer>
       {/* 컨트롤 버튼 */}
       <div className="flex items-center gap-2">
         <button
