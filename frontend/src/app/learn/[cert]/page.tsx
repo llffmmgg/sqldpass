@@ -146,7 +146,7 @@ export default async function CertPage(
             <Link
               key={cat.id}
               href={`/learn/${cert}/${cat.slug}`}
-              className="group rounded-lg border border-border bg-surface p-5 transition-all hover:-translate-y-0.5 hover:border-amber-500/30 hover:shadow-[0_0_18px_var(--glow)]"
+              className="group rounded-lg border border-border bg-surface p-5 transition-all hover:scale-[1.01] active:scale-[0.99] hover:border-amber-500/30 hover:shadow-[0_0_18px_var(--glow)]"
             >
               <div className="flex items-center justify-between">
                 <p className="text-xs text-muted">{cat.parentName}</p>

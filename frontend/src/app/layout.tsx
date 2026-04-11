@@ -1,19 +1,17 @@
 import type { Metadata } from "next";
 import { Noto_Sans_KR, JetBrains_Mono, Caveat } from "next/font/google";
-import Script from "next/script";
 import { Suspense } from "react";
 import NavBar from "@/components/NavBar";
 import Footer from "@/components/Footer";
 import { SiteNoticeBanner } from "@/components/SiteNoticeBanner";
-import GAPageview from "@/components/GAPageview";
+import AnalyticsScripts from "@/components/AnalyticsScripts";
 import "./globals.css";
 
-const GA_ID = "G-MPQ2F9201M";
 const ADSENSE_CLIENT = "ca-pub-6512792395955186";
 
 const notoSansKr = Noto_Sans_KR({
   variable: "--font-sans-kr",
-  subsets: ["latin"],
+  subsets: ["latin", "latin-ext"],
   weight: ["400", "500", "600", "700"],
 });
 
@@ -186,21 +184,8 @@ export default function RootLayout({
         <link rel="manifest" href="/manifest.json" />
       </head>
       <body className="min-h-full flex flex-col">
-        <Script
-          src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`}
-          strategy="afterInteractive"
-        />
-        <Script id="ga4-init" strategy="afterInteractive">
-          {`
-            window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
-            window.gtag = gtag;
-            gtag('js', new Date());
-            gtag('config', '${GA_ID}', { send_page_view: false });
-          `}
-        </Script>
         <Suspense fallback={null}>
-          <GAPageview />
+          <AnalyticsScripts />
         </Suspense>
         <SiteNoticeBanner />
         <NavBar />

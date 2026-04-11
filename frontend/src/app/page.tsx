@@ -94,7 +94,7 @@ export default function Home() {
 
         <div className="mt-12 grid grid-cols-1 gap-6 lg:grid-cols-3">
           <ScrollReveal delay={1}>
-            <div className="group relative h-full rounded-xl border border-border bg-surface p-6 transition-all duration-300 hover:-translate-y-1.5 hover:border-primary/30 hover:shadow-[0_0_24px_var(--glow)]">
+            <div className="group relative h-full rounded-xl border border-border bg-surface p-6 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] hover:border-primary/30 hover:shadow-[0_0_24px_var(--glow)]">
               <span className="pointer-events-none absolute right-4 top-4 select-none text-[64px] font-bold leading-none text-foreground/[0.03]">
                 01
               </span>
@@ -112,7 +112,7 @@ export default function Home() {
           </ScrollReveal>
 
           <ScrollReveal delay={2}>
-            <div className="group relative h-full rounded-xl border border-border bg-surface p-6 transition-all duration-300 hover:-translate-y-1.5 hover:border-accent/30 hover:shadow-[0_0_24px_var(--accent-glow)] lg:-translate-y-2">
+            <div className="group relative h-full rounded-xl border border-border bg-surface p-6 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] hover:border-accent/30 hover:shadow-[0_0_24px_var(--accent-glow)] lg:-translate-y-2">
               <span className="pointer-events-none absolute right-4 top-4 select-none text-[64px] font-bold leading-none text-foreground/[0.03]">
                 02
               </span>
@@ -130,7 +130,7 @@ export default function Home() {
           </ScrollReveal>
 
           <ScrollReveal delay={3}>
-            <div className="group relative h-full rounded-xl border border-border bg-surface p-6 transition-all duration-300 hover:-translate-y-1.5 hover:border-primary/30 hover:shadow-[0_0_24px_var(--glow)]">
+            <div className="group relative h-full rounded-xl border border-border bg-surface p-6 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] hover:border-primary/30 hover:shadow-[0_0_24px_var(--glow)]">
               <span className="pointer-events-none absolute right-4 top-4 select-none text-[64px] font-bold leading-none text-foreground/[0.03]">
                 03
               </span>
@@ -240,7 +240,7 @@ export default function Home() {
           <p className="mt-3 text-muted">회원가입 없이 바로 풀어볼 수 있습니다.</p>
           <a
             href="/solve"
-            className="btn-glow mt-8 inline-flex items-center rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-zinc-900 transition-all duration-300 hover:bg-primary-hover hover:scale-[1.03]"
+            className="btn-glow mt-8 inline-flex items-center rounded-xl bg-primary px-8 py-4 text-lg font-semibold text-zinc-900 transition-all duration-300 hover:bg-primary-hover hover:scale-[1.03] active:scale-[0.98]"
           >
             문제 풀러 가기
           </a>

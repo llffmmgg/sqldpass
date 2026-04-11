@@ -125,7 +125,7 @@ function GuestExamCard({
   return (
     <button
       onClick={onStart}
-      className={`text-left rounded-xl border border-border bg-surface p-5 transition-all hover:-translate-y-0.5 ${border} ${glow}`}
+      className={`text-left rounded-xl border border-border bg-surface p-5 transition-all hover:scale-[1.01] active:scale-[0.99] ${border} ${glow}`}
     >
       <span
         className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide ${badgeCls}`}
@@ -361,7 +361,7 @@ function MockExamCard({ exam }: { exam: MockExamSummary }) {
   return (
     <Link
       href={`/mock-exams/${exam.id}`}
-      className={`relative block overflow-hidden rounded-xl border ${isPremium ? "border-amber-500/40 bg-gradient-to-br from-amber-500/[0.05] to-surface" : "border-border bg-surface"} p-5 transition-all hover:-translate-y-0.5 ${hoverBorder} ${glow}`}
+      className={`relative block overflow-hidden rounded-xl border ${isPremium ? "border-amber-500/40 bg-gradient-to-br from-amber-500/[0.05] to-surface" : "border-border bg-surface"} p-5 transition-all hover:scale-[1.01] active:scale-[0.99] ${hoverBorder} ${glow}`}
     >
       {/* 전문가 검수 리본 — 좌측 상단 대각선 */}
       {exam.expertVerified && (

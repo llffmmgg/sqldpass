@@ -382,7 +382,7 @@ function NavDropdown({
           onMouseEnter={() => setOpen(true)}
           onMouseLeave={() => setOpen(false)}
         >
-          <div className="overflow-hidden rounded-lg border border-border bg-background/95 shadow-xl backdrop-blur">
+          <div className="animate-[fade-in_0.15s_ease-out] overflow-hidden rounded-lg border border-border bg-background/95 shadow-xl backdrop-blur">
             {CERT_OPTIONS.map((cert) => (
               <Link
                 key={cert.key}

@@ -75,7 +75,7 @@ export default function AboutPage() {
           운영팀이 정리한 토픽별 시드 문제를 기반으로, AI(Anthropic Claude / Google Gemini)가
           새 변형 문제를 자동 생성합니다. 생성된 문제는 다시 LLM 검증과 운영자 검토를 거쳐
           오류가 있으면 수정·삭제됩니다. 그래도 일부 오류는 남을 수 있으니, 발견하시면{" "}
-          <Link href="/profile" className="text-primary underline">피드백</Link>으로 알려주세요.
+          <Link href="/profile" className="text-primary underline underline-offset-2 transition-colors hover:text-primary-hover">피드백</Link>으로 알려주세요.
         </p>
       </Section>
 
@@ -89,14 +89,14 @@ export default function AboutPage() {
       <Section title="문의 / 피드백">
         <p>
           오류 신고, 기능 제안, 기타 문의는 사이트 내{" "}
-          <Link href="/profile" className="text-primary underline">피드백</Link> 기능으로 보내주세요.
+          <Link href="/profile" className="text-primary underline underline-offset-2 transition-colors hover:text-primary-hover">피드백</Link> 기능으로 보내주세요.
         </p>
       </Section>
 
       <div className="mt-10 flex flex-wrap gap-3">
         <Link
           href="/learn"
-          className="rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-zinc-900 hover:bg-primary-hover"
+          className="rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-zinc-900 transition-all hover:bg-primary-hover hover:scale-[1.02] active:scale-[0.98]"
         >
           학습 시작하기
         </Link>

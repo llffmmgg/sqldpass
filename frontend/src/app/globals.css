@@ -44,10 +44,53 @@
   --font-mono: var(--font-jetbrains-mono), ui-monospace, monospace;
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans);
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+h1, h2, h3 {
+  text-wrap: balance;
+}
+
+/* ── Tabular numbers for metrics ── */
+.tabular-nums, [class*="font-mono"] {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Button tactile feedback ── */
+button, a[role="button"], [type="submit"] {
+  transition: transform 0.15s ease;
+}
+
+button:active:not(:disabled), a[role="button"]:active, [type="submit"]:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+/* ── Focus-visible accessibility ── */
+button:focus-visible, a:focus-visible, select:focus-visible, input:focus-visible, textarea:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+/* ── Reduced motion accessibility ── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .hero-orb, .hero-beam, .hero-ambient, .sql-frag {
+    display: none !important;
+  }
 }
 
 /* ── Light-mode contrast fixes ──
