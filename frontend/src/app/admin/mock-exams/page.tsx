@@ -412,7 +412,7 @@ export default function AdminMockExamsPage() {
                           </Link>
                           {exam.expertVerified && (
                             <span className="inline-flex items-center rounded-md border border-emerald-500/40 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-bold text-emerald-300">
-                              검수 완료
+                              전문가 검수 완료
                             </span>
                           )}
                           {exam.templateLabel && (

@@ -366,7 +366,7 @@ function MockExamCard({ exam }: { exam: MockExamSummary }) {
       {/* 전문가 검수 리본 — 우측 상단 대각선 */}
       {exam.expertVerified && (
         <div className="pointer-events-none absolute -right-[38px] top-[18px] z-10 rotate-45 bg-emerald-600 px-10 py-0.5 text-center text-[9px] font-bold tracking-wide text-white shadow-sm dark:bg-emerald-500">
-          검수 완료
+          전문가 검수
         </div>
       )}
 
