@@ -62,14 +62,15 @@ export default function AdminMockExamDetailPage({
     };
   }, [examId]);
 
-  async function handleVerifyAll() {
+  async function handleVerify(force: boolean) {
     if (!exam || !questions) return;
-    const unverified = questions.filter((q) => !q.verifiedAt).length;
-    if (unverified === 0) {
+    const target = force ? questions.length : questions.filter((q) => !q.verifiedAt).length;
+    if (target === 0) {
       setVerifyResult("모든 문제가 이미 검수 완료되었습니다.");
       return;
     }
-    if (!confirm(`미검수 ${unverified}문항에 대해 LLM 검증을 실행합니다. 시간이 걸릴 수 있습니다. 계속하시겠습니까?`)) return;
+    const label = force ? `전체 ${target}문항` : `미검수 ${target}문항`;
+    if (!confirm(`${label}에 대해 LLM 검증을 실행합니다. 시간이 걸릴 수 있습니다. 계속하시겠습니까?`)) return;
 
     setVerifying(true);
     setVerifyResult(null);
@@ -78,7 +79,7 @@ export default function AdminMockExamDetailPage({
         examType: exam.examType as VerificationExamType,
         mockExamId: examId,
         limit: 200,
-        force: false,
+        force,
       });
       // 문제 목록 새로고침
       const fulls = await Promise.all(
@@ -156,11 +157,18 @@ export default function AdminMockExamDetailPage({
         <div className="flex flex-col items-end gap-2">
           <div className="flex gap-2">
             <button
-              onClick={handleVerifyAll}
+              onClick={() => handleVerify(false)}
               disabled={verifying}
               className="rounded border border-emerald-500/40 bg-emerald-500/10 px-3 py-1.5 text-xs font-medium text-emerald-300 transition hover:bg-emerald-500/20 disabled:opacity-50"
             >
               {verifying ? "검증 중..." : `AI 검증 (미검수 ${questions?.filter((q) => !q.verifiedAt).length ?? 0})`}
+            </button>
+            <button
+              onClick={() => handleVerify(true)}
+              disabled={verifying}
+              className="rounded border border-cyan-500/40 bg-cyan-500/10 px-3 py-1.5 text-xs font-medium text-cyan-300 transition hover:bg-cyan-500/20 disabled:opacity-50"
+            >
+              {verifying ? "검증 중..." : `AI 전체 검증 (${questions?.length ?? 0})`}
             </button>
             <button
               onClick={handleMarkVerified}
