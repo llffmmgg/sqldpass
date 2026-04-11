@@ -9,6 +9,18 @@ import org.springframework.data.repository.query.Param;
 
 public interface SolveRepository extends JpaRepository<SolveEntity, Long> {
 
+    /** 어드민 풀이 상세 — answers, question, subject 까지 한 번에 로딩 */
+    @Query("SELECT DISTINCT s FROM SolveEntity s "
+            + "LEFT JOIN FETCH s.answers a "
+            + "LEFT JOIN FETCH a.question q "
+            + "LEFT JOIN FETCH q.subject sub "
+            + "LEFT JOIN FETCH sub.parent "
+            + "LEFT JOIN FETCH s.subject "
+            + "LEFT JOIN FETCH s.mockExam "
+            + "LEFT JOIN FETCH s.member "
+            + "WHERE s.id = :id")
+    java.util.Optional<SolveEntity> findByIdWithDetails(@Param("id") Long id);
+
     @Query("SELECT DISTINCT s FROM SolveEntity s "
             + "LEFT JOIN FETCH s.subject subj "
             + "LEFT JOIN FETCH subj.parent "
