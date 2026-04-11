@@ -23,8 +23,41 @@ export default async function LearnPage() {
     /* API 실패 시 빈 목록 */
   }
 
+  const breadcrumbLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "홈", item: "https://www.sqldpass.com" },
+      { "@type": "ListItem", position: 2, name: "자격증 기출문제", item: "https://www.sqldpass.com/learn" },
+    ],
+  };
+
+  const collectionLd = {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    name: "IT 자격증 기출문제",
+    url: "https://www.sqldpass.com/learn",
+    mainEntity: {
+      "@type": "ItemList",
+      itemListElement: certs.map((cert, i) => ({
+        "@type": "ListItem",
+        position: i + 1,
+        name: cert.name,
+        url: `https://www.sqldpass.com/learn/${cert.slug}`,
+      })),
+    },
+  };
+
   return (
     <main className="mx-auto max-w-5xl px-4 py-16 sm:px-6 lg:px-8">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(collectionLd) }}
+      />
       <header className="mb-12">
         <p className="text-sm text-muted">Learn</p>
         <h1 className="mt-2 text-3xl font-bold sm:text-4xl">

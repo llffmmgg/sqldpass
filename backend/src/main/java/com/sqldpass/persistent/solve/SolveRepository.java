@@ -9,7 +9,13 @@ import org.springframework.data.repository.query.Param;
 
 public interface SolveRepository extends JpaRepository<SolveEntity, Long> {
 
-    List<SolveEntity> findByMemberIdOrderByCreatedAtDesc(Long memberId);
+    @Query("SELECT DISTINCT s FROM SolveEntity s "
+            + "LEFT JOIN FETCH s.subject subj "
+            + "LEFT JOIN FETCH subj.parent "
+            + "LEFT JOIN FETCH s.mockExam "
+            + "WHERE s.member.id = :memberId "
+            + "ORDER BY s.createdAt DESC")
+    List<SolveEntity> findByMemberIdOrderByCreatedAtDesc(@Param("memberId") Long memberId);
 
     /**
      * 회원 탈퇴 시 사용. orphanRemoval=true 가 적용된 SolveAnswerEntity 를 cascade 시키기 위해

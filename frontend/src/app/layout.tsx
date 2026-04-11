@@ -75,6 +75,7 @@ export const metadata: Metadata = {
   authors: [{ name: "sqldpass" }],
   alternates: {
     canonical: SITE_URL,
+    languages: { ko: SITE_URL, "x-default": SITE_URL },
   },
   openGraph: {
     type: "website",
@@ -141,6 +142,19 @@ export default function RootLayout({
     },
   };
 
+  const siteNavLd = {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    itemListElement: [
+      { "@type": "SiteNavigationElement", position: 1, name: "문제 풀기", url: `${SITE_URL}/solve` },
+      { "@type": "SiteNavigationElement", position: 2, name: "모의고사", url: `${SITE_URL}/mock-exams` },
+      { "@type": "SiteNavigationElement", position: 3, name: "기출문제", url: `${SITE_URL}/learn` },
+      { "@type": "SiteNavigationElement", position: 4, name: "대시보드", url: `${SITE_URL}/dashboard` },
+      { "@type": "SiteNavigationElement", position: 5, name: "오답 노트", url: `${SITE_URL}/wrong-answers` },
+      { "@type": "SiteNavigationElement", position: 6, name: "소개", url: `${SITE_URL}/about` },
+    ],
+  };
+
   return (
     <html
       lang="ko"
@@ -165,6 +179,11 @@ export default function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteLd) }}
         />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(siteNavLd) }}
+        />
+        <link rel="manifest" href="/manifest.json" />
       </head>
       <body className="min-h-full flex flex-col">
         <Script

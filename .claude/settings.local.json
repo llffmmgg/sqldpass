@@ -3,7 +3,21 @@
     "allow": [
       "Bash(npx create-next-app@latest . --typescript --tailwind --eslint --app --src-dir --import-alias \"@/*\" --use-npm)",
       "Bash(git add:*)",
-      "Bash(git commit -m ':*)"
+      "Bash(git commit -m ':*)",
+      "Bash(npm run:*)",
+      "Bash(./gradlew compileJava)",
+      "Bash(./gradlew test:*)",
+      "Bash(grep -n \"getMockExam\\\\|MOCK_EXAM_LOCKED\\\\|error\" C:/Users/admin/desktop/sqldpass/sqldpass/frontend/src/app/mock-exams/[id]/page.tsx)",
+      "Bash(grep -oE '\"text\":\"[^\"]{200,}\"' \"C:/Users/admin/AppData/Local/Temp/claude/C--Users-admin-desktop-sqldpass-sqldpass/51166413-71bc-4c99-96a2-ff796de9072d/tasks/ri9kuxvk9.output\")",
+      "Bash(mv:*)",
+      "Bash(xargs grep:*)",
+      "Bash(git pull:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(git stash:*)",
+      "Bash(git rebase:*)",
+      "Bash(GIT_EDITOR=true git rebase:*)",
+      "Bash(git:*)"
     ]
   }
 }

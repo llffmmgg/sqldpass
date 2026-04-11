@@ -1,0 +1,13 @@
+{
+  "name": "sqldpass — SQLD · 정처기 · 컴활 무료 CBT",
+  "short_name": "sqldpass",
+  "description": "SQLD · 정보처리기사 실기 · 컴활 1급 필기 무료 CBT 모의고사",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0a0a",
+  "theme_color": "#f59e0b",
+  "icons": [
+    { "src": "/favicon.svg", "type": "image/svg+xml", "sizes": "any" }
+  ],
+  "lang": "ko"
+}

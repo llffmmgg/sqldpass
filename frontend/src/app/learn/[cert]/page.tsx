@@ -71,7 +71,13 @@ export default async function CertPage(
   }
 
   const meta = CERT_META[cert as CertSlug];
-  const isEngineer = cert === "engineer";
+  const certDisplayName: Record<string, string> = {
+    sqld: "SQLD",
+    engineer: "정처기 실기",
+    "computer-literacy-1": "컴활 1급 필기",
+    "engineer-written": "정처기 필기",
+  };
+  const certName = certDisplayName[cert] ?? cert;
 
   // BreadcrumbList JSON-LD
   const breadcrumbLd = {
@@ -87,10 +93,23 @@ export default async function CertPage(
       {
         "@type": "ListItem",
         position: 2,
-        name: isEngineer ? "정처기 실기" : "SQLD",
+        name: certName,
         item: `https://www.sqldpass.com/learn/${cert}`,
       },
     ],
+  };
+
+  // ItemList JSON-LD
+  const itemListLd = {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    name: meta.title,
+    itemListElement: categories.map((cat, i) => ({
+      "@type": "ListItem",
+      position: i + 1,
+      name: cat.name,
+      url: `https://www.sqldpass.com/learn/${cert}/${cat.slug}`,
+    })),
   };
 
   return (
@@ -99,6 +118,10 @@ export default async function CertPage(
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbLd) }}
       />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListLd) }}
+      />
 
       <nav className="text-sm text-muted">
         <Link href="/learn" className="hover:text-foreground">
@@ -106,7 +129,7 @@ export default async function CertPage(
         </Link>
         <span className="mx-2">/</span>
         <span className="text-foreground">
-          {isEngineer ? "정처기 실기" : "SQLD"}
+          {certName}
         </span>
       </nav>
 
@@ -142,10 +165,10 @@ export default async function CertPage(
 
       <section className="mt-16 rounded-xl border border-border bg-surface/50 p-6">
         <h2 className="text-lg font-semibold">
-          {isEngineer ? "정처기 실기" : "SQLD"} 모의고사로 연습하세요
+          {certName} 모의고사로 연습하세요
         </h2>
         <p className="mt-2 text-sm text-muted">
-          매번 새로 추가되는 실전형 {isEngineer ? "20" : "50"}문항 세트.
+          매번 새로 추가되는 실전형 {cert === "engineer" ? "20" : cert === "sqld" ? "50" : "40"}문항 세트.
           로그인하고 바로 시작.
         </p>
         <Link

@@ -9,8 +9,51 @@ export const metadata: Metadata = {
 };
 
 export default function AboutPage() {
+  const faqLd = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: [
+      {
+        "@type": "Question",
+        name: "무엇을 제공하나요?",
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: "실제 시험과 비슷한 환경의 모의고사 자동 생성, 주제별 무한 풀이 모드, 오답노트 자동 누적, 풀이 통계 및 대시보드. 모든 기능 무료, 회원가입은 Google 로그인 한 번이면 끝.",
+        },
+      },
+      {
+        "@type": "Question",
+        name: "문제는 어떻게 만들어지나요?",
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: "운영팀이 정리한 토픽별 시드 문제를 기반으로, AI(Anthropic Claude / Google Gemini)가 새 변형 문제를 자동 생성합니다. 생성된 문제는 다시 LLM 검증과 운영자 검토를 거칩니다.",
+        },
+      },
+      {
+        "@type": "Question",
+        name: "누가 만드나요?",
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: "sqldpass는 자격증 학습자를 위해 1인 운영팀이 만들고 있습니다. 운영비(서버 + AI API)는 일부 광고로 충당합니다.",
+        },
+      },
+      {
+        "@type": "Question",
+        name: "문의 / 피드백은 어떻게 하나요?",
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: "오류 신고, 기능 제안, 기타 문의는 사이트 내 피드백 기능으로 보내주세요.",
+        },
+      },
+    ],
+  };
+
   return (
     <main className="mx-auto max-w-3xl px-4 py-12 text-foreground">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqLd) }}
+      />
       <h1 className="text-3xl font-bold">sqldpass란?</h1>
       <p className="mt-3 text-base text-muted">
         SQL 개발자(SQLD), 정보처리기사 실기, 컴퓨터활용능력 1급 필기를 무료로 풀어볼 수 있는
