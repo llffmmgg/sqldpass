@@ -1,15 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { use } from "react";
 import {
   getAdminMockExamDetail,
+  getAdminMockExams,
   getQuestion,
   markMockExamVerified,
   toggleExpertVerified,
   updateQuestion,
   verifyAllQuestions,
+  type AdminMockExam,
   type AdminMockExamDetail,
   type AdminQuestion,
   type VerificationExamType,
@@ -37,9 +39,33 @@ export default function AdminMockExamDetailPage({
   const [error, setError] = useState<string | null>(null);
   const [verifying, setVerifying] = useState(false);
   const [verifyResult, setVerifyResult] = useState<string | null>(null);
+  const [allExams, setAllExams] = useState<AdminMockExam[] | null>(null);
+  const [jsonMode, setJsonMode] = useState(false);
+  const [jsonText, setJsonText] = useState("");
+  const [jsonSaving, setJsonSaving] = useState(false);
+  const [jsonResult, setJsonResult] = useState<string | null>(null);
+
+  // 같은 시험유형 내 이전/다음 모의고사
+  const { prevExam, nextExam } = useMemo(() => {
+    if (!allExams || !exam) return { prevExam: null, nextExam: null };
+    const sameType = allExams
+      .filter((e) => e.examType === exam.examType)
+      .sort((a, b) => a.sequence - b.sequence);
+    const idx = sameType.findIndex((e) => e.id === examId);
+    return {
+      prevExam: idx > 0 ? sameType[idx - 1] : null,
+      nextExam: idx < sameType.length - 1 ? sameType[idx + 1] : null,
+    };
+  }, [allExams, exam, examId]);
+
+  useEffect(() => {
+    getAdminMockExams().then(setAllExams).catch(() => {});
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
+    setJsonMode(false);
+    setJsonResult(null);
     (async () => {
       try {
         const detail = await getAdminMockExamDetail(examId);
@@ -125,6 +151,85 @@ export default function AdminMockExamDetailPage({
     }
   }
 
+  function openJsonEditor() {
+    if (!questions) return;
+    const data = questions.map((q, i) => ({
+      order: i + 1,
+      id: q.id,
+      subjectName: q.subjectName,
+      questionType: q.questionType,
+      content: q.content,
+      correctOption: q.correctOption,
+      answer: q.answer,
+      keywords: q.keywords,
+      explanation: q.explanation,
+      summary: q.summary,
+      verified: !!q.verifiedAt,
+    }));
+    setJsonText(JSON.stringify(data, null, 2));
+    setJsonMode(true);
+    setJsonResult(null);
+  }
+
+  async function handleJsonSave() {
+    if (!questions) return;
+    let parsed: Array<{ id: number; content: string; questionType: string; correctOption?: number | null; answer?: string | null; keywords?: string[] | null; explanation: string; summary?: string | null }>;
+    try {
+      parsed = JSON.parse(jsonText);
+      if (!Array.isArray(parsed)) throw new Error("배열이 아닙니다");
+    } catch (e) {
+      setJsonResult(`JSON 파싱 실패: ${e instanceof Error ? e.message : "형식 오류"}`);
+      return;
+    }
+
+    setJsonSaving(true);
+    setJsonResult(null);
+    let successCount = 0;
+    const failures: string[] = [];
+
+    await Promise.all(
+      parsed.map(async (item) => {
+        const existing = questions.find((q) => q.id === item.id);
+        if (!existing) {
+          failures.push(`ID ${item.id}: 해당 문제를 찾을 수 없음`);
+          return;
+        }
+        try {
+          const isMcq = (item.questionType ?? existing.questionType) === "MCQ";
+          await updateQuestion(item.id, {
+            content: item.content,
+            questionType: item.questionType ?? existing.questionType,
+            correctOption: isMcq ? (item.correctOption ?? existing.correctOption) : null,
+            answer: isMcq ? null : (item.answer ?? null),
+            keywords: isMcq ? null : (item.keywords ?? null),
+            explanation: item.explanation,
+            summary: item.summary ?? null,
+          });
+          successCount++;
+        } catch (e) {
+          failures.push(`ID ${item.id}: ${e instanceof Error ? e.message : "저장 실패"}`);
+        }
+      }),
+    );
+
+    // 문제 목록 새로고침
+    if (exam) {
+      try {
+        const fulls = await Promise.all(
+          exam.questions
+            .slice()
+            .sort((a, b) => a.displayOrder - b.displayOrder)
+            .map((q) => getQuestion(q.id)),
+        );
+        setQuestions(fulls);
+      } catch { /* ignore */ }
+    }
+
+    const msg = `${successCount}개 저장 완료` + (failures.length > 0 ? `, ${failures.length}개 실패:\n${failures.join("\n")}` : "");
+    setJsonResult(msg);
+    setJsonSaving(false);
+  }
+
   function handleQuestionUpdated(updated: AdminQuestion) {
     setQuestions((prev) =>
       prev ? prev.map((q) => (q.id === updated.id ? updated : q)) : prev,
@@ -144,12 +249,30 @@ export default function AdminMockExamDetailPage({
     <div>
       <div className="flex items-center justify-between gap-3">
         <div>
-          <Link
-            href="/admin/mock-exams"
-            className="text-xs text-muted hover:text-foreground"
-          >
-            ← 모의고사 목록
-          </Link>
+          <div className="flex items-center gap-3">
+            <Link
+              href="/admin/mock-exams"
+              className="text-xs text-muted hover:text-foreground"
+            >
+              ← 목록
+            </Link>
+            {prevExam && (
+              <Link
+                href={`/admin/mock-exams/${prevExam.id}`}
+                className="text-xs text-muted hover:text-foreground"
+              >
+                ← #{prevExam.sequence}
+              </Link>
+            )}
+            {nextExam && (
+              <Link
+                href={`/admin/mock-exams/${nextExam.id}`}
+                className="text-xs text-muted hover:text-foreground"
+              >
+                #{nextExam.sequence} →
+              </Link>
+            )}
+          </div>
           <h1 className="mt-1 text-2xl font-bold">
             {exam.name}
             {exam.expertVerified && (
@@ -198,6 +321,12 @@ export default function AdminMockExamDetailPage({
               {exam.expertVerified ? "전문가 검증 해제" : "전문가 검증 완료"}
             </button>
             <button
+              onClick={openJsonEditor}
+              className="rounded border border-violet-500/40 bg-violet-500/10 px-3 py-1.5 text-xs font-medium text-violet-300 transition hover:bg-violet-500/20"
+            >
+              JSON 편집
+            </button>
+            <button
               onClick={() => downloadJson(exam, questions)}
               className="rounded border border-border px-3 py-1.5 text-xs text-muted transition hover:text-foreground"
             >
@@ -215,6 +344,39 @@ export default function AdminMockExamDetailPage({
           )}
         </div>
       </div>
+
+      {jsonMode && (
+        <div className="mt-6 rounded-xl border border-violet-500/30 bg-surface p-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-semibold text-violet-300">JSON 일괄 편집</h2>
+            <div className="flex gap-2">
+              <button
+                onClick={handleJsonSave}
+                disabled={jsonSaving}
+                className="rounded bg-violet-500 px-4 py-1.5 text-xs font-medium text-white hover:bg-violet-600 disabled:opacity-50"
+              >
+                {jsonSaving ? "저장 중..." : "JSON 저장"}
+              </button>
+              <button
+                onClick={() => { setJsonMode(false); setJsonResult(null); }}
+                className="rounded border border-border px-3 py-1.5 text-xs text-muted hover:text-foreground"
+              >
+                닫기
+              </button>
+            </div>
+          </div>
+          <textarea
+            value={jsonText}
+            onChange={(e) => setJsonText(e.target.value)}
+            rows={30}
+            className="mt-3 w-full rounded border border-border bg-background px-3 py-2 font-mono text-xs"
+            spellCheck={false}
+          />
+          {jsonResult && (
+            <pre className="mt-2 whitespace-pre-wrap text-xs text-muted">{jsonResult}</pre>
+          )}
+        </div>
+      )}
 
       <div className="mt-6 space-y-4">
         {questions.map((q, idx) => (
