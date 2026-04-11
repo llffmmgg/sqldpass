@@ -6,6 +6,17 @@ export function formatDate(isoString: string): string {
   });
 }
 
+/** Admin용 — 날짜 + 시:분 표시 */
+export function formatDateTime(isoString: string): string {
+  return new Date(isoString).toLocaleString("ko-KR", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
 /** "오늘" / "N일 전" / "N주 전" / 오래되면 절대 날짜로 — 정보 밀도 ↑ */
 export function formatRelativeDate(isoString: string): string {
   const target = new Date(isoString);

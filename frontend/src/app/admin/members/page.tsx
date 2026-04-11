@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { getMembers, type AdminMemberPage } from "@/lib/adminApi";
-import { formatDate } from "@/lib/format";
+import { formatDateTime } from "@/lib/format";
 
 export default function AdminMembersPage() {
   const [data, setData] = useState<AdminMemberPage | null>(null);
@@ -77,7 +77,7 @@ export default function AdminMembersPage() {
                         {m.provider}
                       </span>
                     </td>
-                    <td className="px-3 py-2 text-muted">{formatDate(m.createdAt)}</td>
+                    <td className="px-3 py-2 text-muted">{formatDateTime(m.createdAt)}</td>
                   </tr>
                 ))}
               </tbody>

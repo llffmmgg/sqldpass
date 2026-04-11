@@ -8,7 +8,7 @@ import {
   type AdminMemberDashboard,
   type AdminSolveDetail,
 } from "@/lib/adminApi";
-import { formatDate } from "@/lib/format";
+import { formatDateTime } from "@/lib/format";
 
 export default function AdminMemberDetailPage({
   params,
@@ -79,7 +79,7 @@ export default function AdminMemberDetailPage({
             {member.provider}
           </span>
           <span>·</span>
-          <span>가입일 {formatDate(member.createdAt)}</span>
+          <span>가입일 {formatDateTime(member.createdAt)}</span>
         </div>
       </div>
 
@@ -185,7 +185,7 @@ export default function AdminMemberDetailPage({
                           <p className="font-medium">
                             {s.mockExamId ? `모의고사 #${s.mockExamId}` : `과목 풀이 #${s.subjectId}`}
                           </p>
-                          <p className="text-xs text-muted">{formatDate(s.solvedAt)}</p>
+                          <p className="text-xs text-muted">{formatDateTime(s.solvedAt)}</p>
                         </div>
                         <div className="flex items-center gap-2">
                           <span className={`tabular-nums ${rateColor(rate)}`}>
