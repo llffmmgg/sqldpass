@@ -643,17 +643,18 @@ function ExamTimer({
   const isUrgent = remaining <= 300 && remaining > 0;
   const progress = Math.min(seconds / limit, 1);
 
-  // SVG 원형 진행률
+  // SVG 원형 진행률 — 줄어드는 방향 (남은시간 비율)
   const size = 110;
-  const strokeWidth = 6;
+  const strokeWidth = 8;
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
-  const strokeDashoffset = circumference * (1 - progress);
+  const remainingRatio = isOvertime ? 0 : 1 - progress;
+  const strokeDashoffset = circumference * (1 - remainingRatio);
 
   const ringColor = isOvertime
-    ? "stroke-red-400"
+    ? "stroke-red-500"
     : isUrgent
-    ? "stroke-amber-400"
+    ? "stroke-red-400"
     : accent.text.replace("text-", "stroke-");
 
   // 타이머 시작 전
@@ -665,12 +666,13 @@ function ExamTimer({
         title={`제한시간 ${Math.floor(limit / 60)}분`}
       >
         <div className="relative flex items-center justify-center" style={{ width: size, height: size }}>
-          <svg width={size} height={size} className="opacity-30">
-            <circle
-              cx={size / 2} cy={size / 2} r={radius}
-              fill="none" strokeWidth={strokeWidth}
-              className="stroke-border"
-            />
+          {/* 배경 원 */}
+          <svg width={size} height={size} className="absolute">
+            <circle cx={size / 2} cy={size / 2} r={radius} fill="none" strokeWidth={strokeWidth} className="stroke-border" />
+          </svg>
+          {/* 가득 찬 원 — 시간 100% 남음 표시 */}
+          <svg width={size} height={size} className="absolute -rotate-90 opacity-40">
+            <circle cx={size / 2} cy={size / 2} r={radius} fill="none" strokeWidth={strokeWidth} strokeLinecap="round" className={accent.text.replace("text-", "stroke-")} />
           </svg>
           <div className="absolute inset-0 flex flex-col items-center justify-center">
             <svg className="h-7 w-7 text-muted" fill="currentColor" viewBox="0 0 24 24">
@@ -694,8 +696,8 @@ function ExamTimer({
             className="stroke-border"
           />
         </svg>
-        {/* 진행 원 */}
-        <svg width={size} height={size} className="absolute -rotate-90">
+        {/* 진행 원 — 시간이 줄수록 ring이 줄어듦 */}
+        <svg width={size} height={size} className={`absolute -rotate-90 ${isUrgent && !isOvertime ? "animate-pulse" : ""}`}>
           <circle
             cx={size / 2} cy={size / 2} r={radius}
             fill="none" strokeWidth={strokeWidth}
@@ -705,6 +707,7 @@ function ExamTimer({
               strokeDasharray: circumference,
               strokeDashoffset: isOvertime ? 0 : strokeDashoffset,
               transition: "stroke-dashoffset 1s linear",
+              filter: isUrgent || isOvertime ? "drop-shadow(0 0 6px currentColor)" : "none",
             }}
           />
         </svg>
