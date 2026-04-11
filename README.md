@@ -4,8 +4,6 @@ https://www.sqldpass.com
 
 SQLD, 정보처리기사 실기, 컴퓨터활용능력 1급 필기 CBT 사이트입니다.
 
-AI로 매번 새로운 변형 문제를 생성하기 때문에, 답을 외우지 않고 연습할 수 있습니다.
-
 ## 기능
 
 - 모의고사 (SQLD 50문항 / 정처기 실기 20문항 / 컴활 60문항)
@@ -50,7 +48,3 @@ GOOGLE_OAUTH_CLIENT_ID=
 GOOGLE_OAUTH_CLIENT_SECRET=
 JWT_SECRET=
 ```
-
-## 라이선스
-
-[MIT](./LICENSE)
