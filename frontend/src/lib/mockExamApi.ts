@@ -28,7 +28,7 @@ export interface MockExamSummary {
   templateLabel: string | null;
   /** 공개 상태 — 백엔드 enum (사용자 목록은 PUBLISHED/PREMIUM만, 어드민은 DRAFT 포함) */
   visibility: MockExamVisibility;
-  /** 전문가 검증 완료 여부 */
+  /** 전문가 검수 완료 여부 */
   expertVerified: boolean;
 }
 

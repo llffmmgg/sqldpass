@@ -277,7 +277,7 @@ export default function AdminMockExamDetailPage({
             {exam.name}
             {exam.expertVerified && (
               <span className="ml-2 inline-flex items-center rounded-full border border-emerald-500/50 bg-emerald-500/15 px-2 py-0.5 align-middle text-[10px] font-bold text-emerald-300">
-                전문가 검증 완료
+                전문가 검수 완료
               </span>
             )}
           </h1>
@@ -318,7 +318,7 @@ export default function AdminMockExamDetailPage({
                   : "border-border text-muted hover:text-foreground"
               }`}
             >
-              {exam.expertVerified ? "전문가 검증 해제" : "전문가 검증 완료"}
+              {exam.expertVerified ? "전문가 검수 해제" : "전문가 검수 완료"}
             </button>
             <button
               onClick={openJsonEditor}

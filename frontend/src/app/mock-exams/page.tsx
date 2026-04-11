@@ -363,10 +363,10 @@ function MockExamCard({ exam }: { exam: MockExamSummary }) {
       href={`/mock-exams/${exam.id}`}
       className={`relative block overflow-hidden rounded-xl border ${isPremium ? "border-amber-500/40 bg-gradient-to-br from-amber-500/[0.05] to-surface" : "border-border bg-surface"} p-5 transition-all hover:-translate-y-0.5 ${hoverBorder} ${glow}`}
     >
-      {/* 전문가 검증 리본 — 우측 상단 대각선 */}
+      {/* 전문가 검수 리본 — 우측 상단 대각선 */}
       {exam.expertVerified && (
         <div className="pointer-events-none absolute -right-[38px] top-[18px] z-10 rotate-45 bg-emerald-600 px-10 py-0.5 text-center text-[9px] font-bold tracking-wide text-white shadow-sm dark:bg-emerald-500">
-          검증 완료
+          검수 완료
         </div>
       )}
 
