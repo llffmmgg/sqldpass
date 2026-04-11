@@ -464,6 +464,7 @@ export interface AdminMockExam {
   templateKey: EngineerTemplate | null;
   templateLabel: string | null;
   visibility: MockExamVisibility;
+  expertVerified: boolean;
 }
 
 export function changeMockExamVisibility(id: number, visibility: MockExamVisibility) {
