@@ -44,7 +44,7 @@ export function SiteNoticeBanner() {
   }
 
   return (
-    <div className="flex items-center justify-center gap-3 border-b border-amber-400/30 bg-amber-50 px-4 py-2.5 text-center text-sm text-amber-900 dark:bg-amber-500/10 dark:text-amber-200">
+    <div className="flex items-center justify-center gap-3 border-b border-amber-300 bg-amber-100 px-4 py-2.5 text-center text-sm font-medium text-amber-950 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">
       <span className="whitespace-pre-wrap break-words">
         <span className="mr-1">📢</span>
         {notice.body}
@@ -52,7 +52,7 @@ export function SiteNoticeBanner() {
       <button
         onClick={dismiss}
         aria-label="닫기"
-        className="shrink-0 rounded p-1 text-amber-700 hover:bg-amber-100 dark:text-amber-300 dark:hover:bg-amber-500/20"
+        className="shrink-0 rounded p-1 text-amber-800 hover:bg-amber-200 dark:text-amber-300 dark:hover:bg-amber-500/20"
       >
         <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
