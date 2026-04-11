@@ -19,6 +19,10 @@ SQLD, 정보처리기사 실기, 컴퓨터활용능력 1급 필기 CBT 사이트
 - AI: Anthropic Claude (생성), Google Gemini (검수)
 - 인프라: Docker Compose, Vercel, nginx, GitHub Actions
 
+## 아키텍처
+
+![sqldpass 아키텍처](docs/sqldpass_architecture.svg)
+
 ## 프로젝트 구조
 
 ```
