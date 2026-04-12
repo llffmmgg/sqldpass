@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import type { BlogPostMeta } from "@/lib/blog";
@@ -35,11 +36,21 @@ export default function BlogList({
   return (
     <main className="mx-auto max-w-5xl px-4 py-12 sm:px-6 lg:px-8">
       {/* 헤더 */}
-      <header className="mb-10">
-        <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">시험 준비 팁</h1>
-        <p className="mt-2 max-w-lg text-base text-muted">
-          자격증 시험 준비에 도움이 되는 학습 전략과 팁을 공유합니다.
-        </p>
+      <header className="mb-10 flex items-center gap-5">
+        <Image
+          src="/blog-mascot.webp"
+          alt="시험 준비 팁 마스코트"
+          width={120}
+          height={120}
+          className="shrink-0"
+          priority
+        />
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">시험 준비 팁</h1>
+          <p className="mt-2 max-w-lg text-base text-muted">
+            자격증 시험 준비에 도움이 되는 학습 전략과 팁을 공유합니다.
+          </p>
+        </div>
       </header>
 
       {/* 카테고리 탭 — 클라이언트 필터 */}
