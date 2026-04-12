@@ -2,67 +2,72 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useMemo, useState } from "react";
 import type { BlogPostMeta } from "@/lib/blog";
 
-const CATEGORY_ACCENT: Record<string, { badge: string; bar: string; hover: string }> = {
-  SQLD: {
-    badge: "bg-primary/10 text-primary border-primary/30",
-    bar: "bg-primary",
-    hover: "hover:border-primary/40",
+const CATEGORIES = [
+  {
+    name: "SQLD",
+    slug: "SQLD",
+    label: "SQLD",
+    description: "SQL 개발자 자격증 공부법, 핵심 개념, 합격률, 시험일정",
+    gradient: "from-amber-500/20 to-orange-500/10",
+    border: "border-amber-500/30 hover:border-amber-400/60",
+    iconBg: "bg-amber-500/15",
+    iconColor: "text-amber-500",
+    emoji: "🗃️",
   },
-  정보처리기사: {
-    badge: "bg-accent/10 text-accent border-accent/30",
-    bar: "bg-accent",
-    hover: "hover:border-accent/40",
+  {
+    name: "정보처리기사",
+    slug: "정보처리기사",
+    label: "정보처리기사",
+    description: "정처기 실기 출제 경향, 코드 문제 풀이, 암기 과목 정리",
+    gradient: "from-violet-500/20 to-purple-500/10",
+    border: "border-violet-500/30 hover:border-violet-400/60",
+    iconBg: "bg-violet-500/15",
+    iconColor: "text-violet-500",
+    emoji: "💻",
   },
-  컴퓨터활용능력: {
-    badge: "bg-blue-600/10 text-blue-600 border-blue-600/30",
-    bar: "bg-blue-600",
-    hover: "hover:border-blue-600/40",
+  {
+    name: "컴퓨터활용능력",
+    slug: "컴퓨터활용능력",
+    label: "컴퓨터활용능력",
+    description: "컴활 1급 필기 벼락치기, 실기 대비, 합격률 분석",
+    gradient: "from-sky-500/20 to-blue-500/10",
+    border: "border-sky-500/30 hover:border-sky-400/60",
+    iconBg: "bg-sky-500/15",
+    iconColor: "text-sky-500",
+    emoji: "📊",
   },
-};
-
-const DEFAULT_ACCENT = {
-  badge: "bg-muted/10 text-muted border-muted/30",
-  bar: "bg-muted",
-  hover: "hover:border-muted/40",
-};
-
-function getAccent(category: string) {
-  return CATEGORY_ACCENT[category] ?? DEFAULT_ACCENT;
-}
-
-function formatDate(dateStr: string, long = false) {
-  return new Date(dateStr).toLocaleDateString("ko-KR", {
-    year: long ? "numeric" : undefined,
-    month: "long",
-    day: "numeric",
-  });
-}
+  {
+    name: "일반",
+    slug: "일반",
+    label: "시험 팁",
+    description: "자격증 비교, 시험 당일 꿀팁, CBT 모의고사 활용법",
+    gradient: "from-emerald-500/20 to-teal-500/10",
+    border: "border-emerald-500/30 hover:border-emerald-400/60",
+    iconBg: "bg-emerald-500/15",
+    iconColor: "text-emerald-500",
+    emoji: "🎯",
+  },
+];
 
 export default function BlogList({
   posts,
   categories,
-  viewCounts,
 }: {
   posts: BlogPostMeta[];
   categories: { category: string; count: number }[];
   viewCounts: Record<string, number>;
 }) {
-  const [activeTab, setActiveTab] = useState("전체");
+  const countMap = Object.fromEntries(categories.map((c) => [c.category, c.count]));
 
-  const filtered = useMemo(() => {
-    if (activeTab === "전체") return posts;
-    return posts.filter((p) => p.category === activeTab);
-  }, [posts, activeTab]);
-
-  const [featured, ...rest] = filtered;
+  // 최신 글 3개
+  const latestPosts = posts.slice(0, 3);
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-12 sm:px-6 lg:px-8">
       {/* ── 헤더 ── */}
-      <header className="mb-10 flex items-center gap-5">
+      <header className="mb-12 flex items-center gap-5">
         <Image
           src="/blog-mascot.webp"
           alt="시험 준비 팁 마스코트"
@@ -74,167 +79,107 @@ export default function BlogList({
         <div>
           <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">시험 준비 팁</h1>
           <p className="mt-2 max-w-lg text-base text-muted">
-            자격증 시험 준비에 도움이 되는 학습 전략과 팁을 공유합니다.
+            자격증별 학습 전략과 합격 노하우를 정리했어요.
           </p>
         </div>
       </header>
 
-      {/* ── 카테고리 탭 ── */}
-      <div className="mb-8 flex flex-wrap gap-2">
-        <TabButton active={activeTab === "전체"} onClick={() => setActiveTab("전체")}>
-          전체 <span className="ml-1 opacity-50">{posts.length}</span>
-        </TabButton>
-        {categories.map(({ category, count }) => (
-          <TabButton key={category} active={activeTab === category} onClick={() => setActiveTab(category)}>
-            {category} <span className="ml-1 opacity-50">{count}</span>
-          </TabButton>
-        ))}
+      {/* ── 카테고리 카드 그리드 ── */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        {CATEGORIES.map((cat) => {
+          const count = countMap[cat.name] ?? 0;
+          return (
+            <Link
+              key={cat.name}
+              href={`/blog/category/${encodeURIComponent(cat.slug)}`}
+              className={`group relative overflow-hidden rounded-2xl border bg-gradient-to-br ${cat.gradient} ${cat.border} p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl`}
+            >
+              {/* 배경 장식 */}
+              <div className="pointer-events-none absolute -right-6 -top-6 h-28 w-28 rounded-full bg-white/5 blur-2xl" />
+
+              <div className="relative">
+                {/* 아이콘 + 글 수 */}
+                <div className="flex items-center justify-between">
+                  <div className={`flex h-12 w-12 items-center justify-center rounded-xl ${cat.iconBg}`}>
+                    <span className="text-2xl">{cat.emoji}</span>
+                  </div>
+                  <span className="rounded-full bg-foreground/5 px-2.5 py-1 text-xs font-medium text-muted">
+                    {count}개의 글
+                  </span>
+                </div>
+
+                {/* 제목 */}
+                <h2 className="mt-4 text-xl font-bold tracking-tight group-hover:text-foreground">
+                  {cat.label}
+                </h2>
+
+                {/* 설명 */}
+                <p className="mt-2 text-sm leading-relaxed text-muted">
+                  {cat.description}
+                </p>
+
+                {/* 화살표 */}
+                <div className="mt-4 flex items-center gap-1 text-sm font-medium text-muted transition-colors group-hover:text-foreground">
+                  글 보러가기
+                  <svg className="h-4 w-4 transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                  </svg>
+                </div>
+              </div>
+            </Link>
+          );
+        })}
       </div>
 
-      {filtered.length === 0 ? (
-        <p className="py-20 text-center text-muted">아직 작성된 글이 없습니다.</p>
-      ) : (
-        <div className="space-y-5">
-          {/* ── Featured ── */}
-          {featured && <FeaturedCard post={featured} views={viewCounts[featured.slug] ?? 0} />}
+      {/* ── 최신 글 ── */}
+      {latestPosts.length > 0 && (
+        <section className="mt-14">
+          <h2 className="text-xl font-bold">최신 글</h2>
+          <div className="mt-5 space-y-3">
+            {latestPosts.map((post) => (
+              <Link
+                key={post.slug}
+                href={`/blog/${post.slug}`}
+                className="group flex items-center gap-4 rounded-xl border border-border bg-surface p-4 transition-all hover:border-primary/30 hover:shadow-md"
+              >
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 text-xs">
+                    <span className={`inline-flex items-center rounded-full border px-2 py-0.5 font-semibold ${getCategoryBadge(post.category)}`}>
+                      {post.category}
+                    </span>
+                    <span className="text-muted">
+                      {new Date(post.date).toLocaleDateString("ko-KR", { month: "long", day: "numeric" })}
+                    </span>
+                    <span className="text-muted/60">{post.readingTime}</span>
+                  </div>
+                  <h3 className="mt-1.5 text-base font-bold leading-snug group-hover:text-primary">
+                    {post.title}
+                  </h3>
+                </div>
+                <svg className="h-5 w-5 shrink-0 text-muted/40 transition-transform group-hover:translate-x-0.5 group-hover:text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                </svg>
+              </Link>
+            ))}
+          </div>
 
-          {/* ── 그리드 ── */}
-          {rest.length > 0 && (
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {rest.map((post) => (
-                <PostCard key={post.slug} post={post} views={viewCounts[post.slug] ?? 0} />
-              ))}
-            </div>
-          )}
-        </div>
+          <Link
+            href={`/blog/category/${encodeURIComponent("SQLD")}`}
+            className="mt-5 inline-flex items-center text-sm font-medium text-muted transition-colors hover:text-foreground"
+          >
+            전체 글 보기 →
+          </Link>
+        </section>
       )}
     </main>
   );
 }
 
-/* ── 탭 버튼 ── */
-function TabButton({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
-  return (
-    <button
-      onClick={onClick}
-      className={`rounded-full border px-4 py-1.5 text-xs font-semibold transition-all ${
-        active
-          ? "border-primary bg-primary/10 text-primary"
-          : "border-border text-muted hover:border-foreground/20 hover:text-foreground"
-      }`}
-    >
-      {children}
-    </button>
-  );
-}
-
-/* ── Featured 카드 ── */
-function FeaturedCard({ post, views }: { post: BlogPostMeta; views: number }) {
-  const accent = getAccent(post.category);
-  return (
-    <Link
-      href={`/blog/${post.slug}`}
-      className={`group relative flex flex-col overflow-hidden rounded-2xl border border-border bg-surface transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-primary/5 ${accent.hover}`}
-    >
-      {/* 상단 accent bar */}
-      <div className={`h-1 w-full ${accent.bar}`} />
-      <div className="flex flex-1 flex-col p-7 sm:p-8">
-        <div className="flex flex-wrap items-center gap-2.5 text-xs">
-          <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 font-semibold ${accent.badge}`}>
-            {post.category}
-          </span>
-          <span className="text-muted">{formatDate(post.date, true)}</span>
-          <span className="flex items-center gap-1 text-muted/70">
-            <ClockIcon />
-            {post.readingTime}
-          </span>
-          {views > 0 && (
-            <span className="flex items-center gap-1 text-muted/70">
-              <EyeIcon />
-              {views.toLocaleString()}
-            </span>
-          )}
-        </div>
-        <h2 className="mt-4 text-2xl font-bold leading-tight tracking-tight group-hover:text-primary sm:text-3xl">
-          {post.title}
-        </h2>
-        <p className="mt-3 max-w-2xl text-base leading-relaxed text-muted">
-          {post.description}
-        </p>
-        {post.tags && post.tags.length > 0 && (
-          <div className="mt-4 flex flex-wrap gap-1.5">
-            {post.tags.slice(0, 4).map((tag) => (
-              <span key={tag} className="rounded-md bg-border/50 px-2 py-0.5 text-[11px] text-muted">
-                {tag}
-              </span>
-            ))}
-          </div>
-        )}
-        <span className="mt-5 inline-flex items-center gap-1 text-sm font-semibold text-primary">
-          읽어보기
-          <svg className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-          </svg>
-        </span>
-      </div>
-    </Link>
-  );
-}
-
-/* ── 일반 카드 ── */
-function PostCard({ post, views }: { post: BlogPostMeta; views: number }) {
-  const accent = getAccent(post.category);
-  return (
-    <Link
-      href={`/blog/${post.slug}`}
-      className={`group relative flex flex-col overflow-hidden rounded-xl border border-border bg-surface transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-primary/5 ${accent.hover}`}
-    >
-      {/* 상단 accent bar */}
-      <div className={`h-0.5 w-full ${accent.bar}`} />
-      <div className="flex flex-1 flex-col p-5">
-        <div className="flex items-center gap-2 text-[11px]">
-          <span className={`inline-flex items-center rounded-full border px-2 py-0.5 font-semibold ${accent.badge}`}>
-            {post.category}
-          </span>
-          <span className="flex items-center gap-1 text-muted/70">
-            <ClockIcon />
-            {post.readingTime}
-          </span>
-        </div>
-        <h2 className="mt-3 text-base font-bold leading-snug group-hover:text-primary">
-          {post.title}
-        </h2>
-        <p className="mt-2 flex-1 text-sm leading-relaxed text-muted line-clamp-2">
-          {post.description}
-        </p>
-        <div className="mt-3 flex items-center justify-between text-[11px] text-muted/60">
-          <span>{formatDate(post.date)}</span>
-          {views > 0 && (
-            <span className="flex items-center gap-1">
-              <EyeIcon />
-              {views.toLocaleString()}
-            </span>
-          )}
-        </div>
-      </div>
-    </Link>
-  );
-}
-
-/* ── 아이콘 ── */
-function ClockIcon() {
-  return (
-    <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
-    </svg>
-  );
-}
-
-function EyeIcon() {
-  return (
-    <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" />
-      <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
-    </svg>
-  );
+function getCategoryBadge(category: string) {
+  const map: Record<string, string> = {
+    SQLD: "bg-primary/10 text-primary border-primary/30",
+    정보처리기사: "bg-accent/10 text-accent border-accent/30",
+    컴퓨터활용능력: "bg-blue-600/10 text-blue-600 border-blue-600/30",
+  };
+  return map[category] ?? "bg-muted/10 text-muted border-muted/30";
 }
