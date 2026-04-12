@@ -7,7 +7,7 @@
   "background_color": "#0a0a0a",
   "theme_color": "#f59e0b",
   "icons": [
-    { "src": "/favicon.svg", "type": "image/svg+xml", "sizes": "any" }
+    { "src": "/logo/logo.png", "type": "image/png", "sizes": "512x512" }
   ],
   "lang": "ko"
 }
