@@ -11,6 +11,7 @@ import { getAllPosts } from "@/lib/blog";
 const CATEGORY_COLORS: Record<string, string> = {
   SQLD: "bg-primary/10 text-primary border-primary/30",
   정보처리기사: "bg-accent/10 text-accent border-accent/30",
+  "정보처리기사 필기": "bg-purple-500/10 text-purple-500 border-purple-500/30",
   컴퓨터활용능력: "bg-blue-600/10 text-blue-600 border-blue-600/30",
 };
 
