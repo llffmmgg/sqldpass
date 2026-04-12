@@ -1,9 +1,12 @@
 package com.sqldpass.service.admin;
 
+import java.util.List;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.sqldpass.controller.admin.dto.AdminStatsResponse;
+import com.sqldpass.controller.admin.dto.AdminStatsResponse.SubjectSolveStats;
 import com.sqldpass.persistent.member.MemberRepository;
 import com.sqldpass.persistent.solve.SolveRepository;
 
@@ -24,12 +27,22 @@ public class AdminStatsService {
     }
 
     public AdminStatsResponse getStats() {
+        List<SubjectSolveStats> subjectStats = solveRepository.findSubjectSolveStats().stream()
+                .map(row -> new SubjectSolveStats(
+                        ((Number) row[0]).longValue(),
+                        (String) row[1],
+                        ((Number) row[2]).longValue(),
+                        ((Number) row[3]).longValue(),
+                        ((Number) row[4]).longValue()))
+                .toList();
+
         return new AdminStatsResponse(
                 adminQuestionService.countAll(),
                 adminQuestionService.countVerified(),
                 adminQuestionService.countUnverified(),
                 memberRepository.count(),
                 solveRepository.count(),
-                adminQuestionService.countToday());
+                adminQuestionService.countToday(),
+                subjectStats);
     }
 }

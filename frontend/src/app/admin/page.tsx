@@ -33,11 +33,52 @@ export default function AdminDashboardPage() {
           >
             <p className="text-sm text-muted">{card.label}</p>
             <p className={`mt-2 text-3xl font-bold ${card.color}`}>
-              {card.value}
+              {card.value.toLocaleString()}
             </p>
           </div>
         ))}
       </div>
+
+      {/* 과목별 풀이 통계 */}
+      {stats.subjectStats && stats.subjectStats.length > 0 && (
+        <div className="mt-10">
+          <h2 className="text-lg font-bold">과목별 풀이 현황</h2>
+          <div className="mt-4 overflow-x-auto rounded-xl border border-border">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border bg-surface/50 text-left text-xs text-muted">
+                  <th className="px-4 py-3 font-medium">과목</th>
+                  <th className="px-4 py-3 font-medium text-right">사용자 수</th>
+                  <th className="px-4 py-3 font-medium text-right">풀이 횟수</th>
+                  <th className="px-4 py-3 font-medium text-right">총 문제 수</th>
+                  <th className="px-4 py-3 font-medium text-right">인당 평균</th>
+                </tr>
+              </thead>
+              <tbody>
+                {stats.subjectStats.map((s) => (
+                  <tr key={s.subjectId} className="border-b border-border last:border-none hover:bg-surface/50">
+                    <td className="px-4 py-3 font-medium">{s.subjectName}</td>
+                    <td className="px-4 py-3 text-right tabular-nums text-violet-400">
+                      {s.uniqueUsers.toLocaleString()}명
+                    </td>
+                    <td className="px-4 py-3 text-right tabular-nums">
+                      {s.solveCount.toLocaleString()}회
+                    </td>
+                    <td className="px-4 py-3 text-right tabular-nums text-muted">
+                      {s.totalQuestions.toLocaleString()}문제
+                    </td>
+                    <td className="px-4 py-3 text-right tabular-nums text-muted">
+                      {s.uniqueUsers > 0
+                        ? (s.solveCount / s.uniqueUsers).toFixed(1)
+                        : "0"}회
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

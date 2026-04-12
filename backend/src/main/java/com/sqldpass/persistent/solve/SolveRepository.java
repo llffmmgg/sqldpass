@@ -75,4 +75,24 @@ public interface SolveRepository extends JpaRepository<SolveEntity, Long> {
             GROUP BY s.mockExam.id
             """)
     List<Object[]> findBestScoresByMember(@Param("memberId") Long memberId);
+
+    /**
+     * 과목별(parent 기준) 풀이 사용자 수 + 풀이 수 + 총 문제 수 집계.
+     * 결과 row: [Long subjectId, String subjectName, Long uniqueUsers, Long solveCount, Long totalQuestions]
+     */
+    @Query(value = """
+            SELECT
+              COALESCE(p.id, s2.id) AS subject_id,
+              COALESCE(p.name, s2.name) AS subject_name,
+              COUNT(DISTINCT sv.member_id) AS unique_users,
+              COUNT(sv.id) AS solve_count,
+              SUM(sv.total_count) AS total_questions
+            FROM solve sv
+            JOIN subject s2 ON s2.id = sv.subject_id
+            LEFT JOIN subject p ON p.id = s2.parent_id
+            WHERE sv.subject_id IS NOT NULL
+            GROUP BY COALESCE(p.id, s2.id), COALESCE(p.name, s2.name)
+            ORDER BY unique_users DESC
+            """, nativeQuery = true)
+    List<Object[]> findSubjectSolveStats();
 }

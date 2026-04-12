@@ -54,6 +54,14 @@ export interface LoginResponse {
   token: string;
 }
 
+export interface SubjectSolveStats {
+  subjectId: number;
+  subjectName: string;
+  uniqueUsers: number;
+  solveCount: number;
+  totalQuestions: number;
+}
+
 export interface AdminStats {
   totalQuestions: number;
   verifiedQuestions: number;
@@ -61,6 +69,7 @@ export interface AdminStats {
   totalMembers: number;
   totalSolves: number;
   todayQuestions: number;
+  subjectStats: SubjectSolveStats[];
 }
 
 export type AdminQuestionType = "MCQ" | "SHORT_ANSWER" | "DESCRIPTIVE";
