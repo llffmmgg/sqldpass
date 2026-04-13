@@ -64,6 +64,37 @@ public class ComputerLiteracy2MockExamCreator {
         DISTRIBUTION = m;
     }
 
+    /** 컴퓨터 일반 — 토픽별 출제 문항 수 (합계 20) */
+    private static final Map<String, Integer> COMPUTER_TOPIC_QUOTA;
+    static {
+        LinkedHashMap<String, Integer> m = new LinkedHashMap<>();
+        m.put("컴퓨터 시스템 개요", 2);
+        m.put("하드웨어", 4);
+        m.put("소프트웨어", 2);
+        m.put("Windows 활용", 4);
+        m.put("네트워크와 인터넷", 4);
+        m.put("정보 보안", 2);
+        m.put("멀티미디어", 1);
+        m.put("ICT 신기술", 1);
+        COMPUTER_TOPIC_QUOTA = m;
+    }
+
+    /** 스프레드시트 일반 — 토픽별 출제 문항 수 (합계 20) */
+    private static final Map<String, Integer> SPREADSHEET_TOPIC_QUOTA;
+    static {
+        LinkedHashMap<String, Integer> m = new LinkedHashMap<>();
+        m.put("데이터 입력과 편집", 2);
+        m.put("셀 서식", 2);
+        m.put("수식과 함수", 5);
+        m.put("수식과 함수 - 찾기/참조", 3);
+        m.put("차트", 2);
+        m.put("데이터 관리", 3);
+        m.put("인쇄와 페이지 설정", 1);
+        m.put("매크로와 VBA", 1);
+        m.put("피벗 테이블", 1);
+        SPREADSHEET_TOPIC_QUOTA = m;
+    }
+
     private final MockExamRepository mockExamRepository;
     private final QuestionRepository questionRepository;
     private final SubjectRepository subjectRepository;
@@ -119,7 +150,8 @@ public class ComputerLiteracy2MockExamCreator {
             int needed = entry.getValue();
             SubjectEntity subject = categorySubjects.get(category);
 
-            List<CL2Example> seeds = ComputerLiteracy2TopicExamples.randomFor(category, needed, random);
+            Map<String, Integer> quota = category.equals(COMPUTER) ? COMPUTER_TOPIC_QUOTA : SPREADSHEET_TOPIC_QUOTA;
+            List<CL2Example> seeds = ComputerLiteracy2TopicExamples.weightedRandomFor(category, quota, needed, random);
             if (seeds.isEmpty() || seeds.size() < needed) {
                 throw new SqldpassException(ErrorCode.MOCK_EXAM_INSUFFICIENT_QUESTIONS,
                         "카테고리 '" + category + "' 시드 풀이 부족합니다 (필요 " + needed + ", 보유 " + seeds.size() + ")");

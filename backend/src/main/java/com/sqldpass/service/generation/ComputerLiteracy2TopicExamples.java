@@ -808,4 +808,47 @@ public final class ComputerLiteracy2TopicExamples {
         }
         return new ArrayList<>(shuffled.subList(0, needed));
     }
+
+    /**
+     * 토픽별 가중 추출 — 출제 빈도에 맞춰 토픽별 문항 수를 지정.
+     * topicQuota 예: { "수식과 함수": 5, "데이터 관리": 3, ... }
+     */
+    public static List<CL2Example> weightedRandomFor(String category,
+                                                      java.util.Map<String, Integer> topicQuota,
+                                                      int needed,
+                                                      Random random) {
+        List<CL2Example> pool = EXAMPLES_BY_CATEGORY.get(category);
+        if (pool == null || pool.isEmpty()) return List.of();
+
+        java.util.Map<String, List<CL2Example>> byTopic = new java.util.LinkedHashMap<>();
+        for (CL2Example ex : pool) {
+            byTopic.computeIfAbsent(ex.topic(), k -> new ArrayList<>()).add(ex);
+        }
+
+        List<CL2Example> result = new ArrayList<>();
+        for (java.util.Map.Entry<String, Integer> entry : topicQuota.entrySet()) {
+            String topic = entry.getKey();
+            int quota = entry.getValue();
+            List<CL2Example> topicPool = byTopic.getOrDefault(topic, List.of());
+            if (topicPool.isEmpty()) continue;
+            List<CL2Example> shuffled = new ArrayList<>(topicPool);
+            Collections.shuffle(shuffled, random);
+            for (int i = 0; i < quota; i++) {
+                result.add(shuffled.get(i % shuffled.size()));
+            }
+        }
+
+        // 부족하면 전체 풀에서 보충
+        if (result.size() < needed) {
+            List<CL2Example> remaining = new ArrayList<>(pool);
+            remaining.removeAll(result);
+            Collections.shuffle(remaining, random);
+            for (int i = 0; result.size() < needed && i < remaining.size(); i++) {
+                result.add(remaining.get(i));
+            }
+        }
+
+        Collections.shuffle(result, random);
+        return result.size() > needed ? new ArrayList<>(result.subList(0, needed)) : result;
+    }
 }
