@@ -36,7 +36,8 @@ export type EngineerTemplateKey =
   | "PROGRAMMING_HEAVY"
   | "THEORY_HEAVY"
   | "BALANCED"
-  | "DB_HEAVY";
+  | "DB_HEAVY"
+  | "LATEST";
 
 export interface MockExamQuestion {
   id: number;

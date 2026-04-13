@@ -154,7 +154,7 @@ public class MockExamCreator {
             }
         }
 
-        MockExamEntity saved = mockExamRepository.save(new MockExamEntity(name, nextSeq));
+        MockExamEntity saved = mockExamRepository.save(new MockExamEntity(name, com.sqldpass.persistent.mockexam.ExamType.SQLD, nextSeq, com.sqldpass.persistent.mockexam.EngineerExamTemplate.LATEST));
         for (int i = 0; i < picked.size(); i++) {
             saved.linkQuestion(picked.get(i), i + 1);
         }

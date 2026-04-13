@@ -451,13 +451,15 @@ export type EngineerTemplate =
   | "PROGRAMMING_HEAVY"
   | "THEORY_HEAVY"
   | "BALANCED"
-  | "DB_HEAVY";
+  | "DB_HEAVY"
+  | "LATEST";
 
 export const ENGINEER_TEMPLATE_LABEL: Record<EngineerTemplate, string> = {
   PROGRAMMING_HEAVY: "프로그래밍 편중형",
   THEORY_HEAVY: "이론 편중형",
   BALANCED: "균형형",
   DB_HEAVY: "DB 강조형",
+  LATEST: "최신 분포",
 };
 
 export type MockExamVisibility = "DRAFT" | "PUBLISHED" | "PREMIUM";

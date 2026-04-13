@@ -263,7 +263,7 @@ public class EngineerWrittenMockExamCreator {
         }
 
         MockExamEntity saved = mockExamRepository.save(
-                new MockExamEntity(name, ExamType.ENGINEER_WRITTEN, nextSeq));
+                new MockExamEntity(name, ExamType.ENGINEER_WRITTEN, nextSeq, com.sqldpass.persistent.mockexam.EngineerExamTemplate.LATEST));
         for (int i = 0; i < picked.size(); i++) {
             saved.linkQuestion(picked.get(i), i + 1);
         }

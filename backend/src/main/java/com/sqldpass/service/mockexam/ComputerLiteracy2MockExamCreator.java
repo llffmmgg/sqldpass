@@ -204,7 +204,7 @@ public class ComputerLiteracy2MockExamCreator {
         }
 
         MockExamEntity saved = mockExamRepository.save(
-                new MockExamEntity(name, ExamType.COMPUTER_LITERACY_2, nextSeq));
+                new MockExamEntity(name, ExamType.COMPUTER_LITERACY_2, nextSeq, com.sqldpass.persistent.mockexam.EngineerExamTemplate.LATEST));
         for (int i = 0; i < picked.size(); i++) {
             saved.linkQuestion(picked.get(i), i + 1);
         }

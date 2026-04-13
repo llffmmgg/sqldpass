@@ -430,6 +430,7 @@ const TEMPLATE_BADGE_CLASS: Record<EngineerTemplateKey, string> = {
   THEORY_HEAVY: "border-purple-500/40 bg-purple-500/10 text-purple-300",
   BALANCED: "border-slate-500/40 bg-slate-500/10 text-slate-300",
   DB_HEAVY: "border-orange-500/40 bg-orange-500/10 text-orange-300",
+  LATEST: "border-emerald-500/40 bg-emerald-500/10 text-emerald-300",
 };
 
 function TemplateBadge({

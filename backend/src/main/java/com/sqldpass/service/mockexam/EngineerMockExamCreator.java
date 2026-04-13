@@ -223,7 +223,7 @@ public class EngineerMockExamCreator {
         }
 
         MockExamEntity saved = mockExamRepository.save(
-                new MockExamEntity(name, ExamType.ENGINEER_PRACTICAL, nextSeq));
+                new MockExamEntity(name, ExamType.ENGINEER_PRACTICAL, nextSeq, EngineerExamTemplate.LATEST));
         for (int i = 0; i < picked.size(); i++) {
             saved.linkQuestion(picked.get(i), i + 1);
         }
