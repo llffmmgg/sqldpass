@@ -29,6 +29,7 @@ public class MockExamService {
     private final MockExamCreator mockExamCreator;
     private final EngineerMockExamCreator engineerMockExamCreator;
     private final ComputerLiteracyMockExamCreator computerLiteracyMockExamCreator;
+    private final ComputerLiteracy2MockExamCreator computerLiteracy2MockExamCreator;
     private final EngineerWrittenMockExamCreator engineerWrittenMockExamCreator;
 
     /** 어드민용 — DRAFT 포함 전체 회차 */
@@ -136,6 +137,7 @@ public class MockExamService {
             case SQLD -> mockExamCreator.create(difficulty);
             case ENGINEER_PRACTICAL -> engineerMockExamCreator.create(difficulty, engineerTemplate);
             case COMPUTER_LITERACY_1 -> computerLiteracyMockExamCreator.create(difficulty);
+            case COMPUTER_LITERACY_2 -> computerLiteracy2MockExamCreator.create(difficulty);
             case ENGINEER_WRITTEN -> engineerWrittenMockExamCreator.create(difficulty);
         };
 

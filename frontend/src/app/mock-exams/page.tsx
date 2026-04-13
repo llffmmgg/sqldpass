@@ -166,7 +166,7 @@ function MockExamsListContent() {
   const searchParams = useSearchParams();
   const certParam = searchParams?.get("cert");
   const initialFilter: Filter =
-    certParam === "ENGINEER_PRACTICAL" || certParam === "COMPUTER_LITERACY_1" || certParam === "ENGINEER_WRITTEN" || certParam === "SQLD"
+    certParam === "ENGINEER_PRACTICAL" || certParam === "COMPUTER_LITERACY_1" || certParam === "COMPUTER_LITERACY_2" || certParam === "ENGINEER_WRITTEN" || certParam === "SQLD"
       ? certParam
       : "SQLD";
 
@@ -179,6 +179,7 @@ function MockExamsListContent() {
     if (
       certParam === "ENGINEER_PRACTICAL" ||
       certParam === "COMPUTER_LITERACY_1" ||
+      certParam === "COMPUTER_LITERACY_2" ||
       certParam === "ENGINEER_WRITTEN" ||
       certParam === "SQLD"
     ) {
@@ -267,6 +268,13 @@ function MockExamsListContent() {
             onClick={() => setFilter("COMPUTER_LITERACY_1")}
             accent="sky"
           />
+          <FilterTab
+            label="컴활 2급"
+            count={exams.filter((e) => e.examType === "COMPUTER_LITERACY_2").length}
+            active={filter === "COMPUTER_LITERACY_2"}
+            onClick={() => setFilter("COMPUTER_LITERACY_2")}
+            accent="indigo"
+          />
         </div>
 
         {/* 부필터: 난이도 + (정처기일 때만) 분포 유형 */}
@@ -314,7 +322,7 @@ function FilterTab({
   count: number;
   active: boolean;
   onClick: () => void;
-  accent?: "amber" | "emerald" | "sky" | "rose";
+  accent?: "amber" | "emerald" | "sky" | "rose" | "indigo";
 }) {
   const activeClass =
     accent === "emerald"
@@ -325,6 +333,8 @@ function FilterTab({
       ? "bg-sky-500/15 text-sky-300 ring-1 ring-sky-500/30"
       : accent === "rose"
       ? "bg-rose-500/15 text-rose-300 ring-1 ring-rose-500/30"
+      : accent === "indigo"
+      ? "bg-indigo-500/15 text-indigo-300 ring-1 ring-indigo-500/30"
       : "bg-border text-foreground";
   return (
     <button
@@ -341,6 +351,7 @@ function FilterTab({
 function MockExamCard({ exam }: { exam: MockExamSummary }) {
   const isEngineer = exam.examType === "ENGINEER_PRACTICAL";
   const isCl1 = exam.examType === "COMPUTER_LITERACY_1";
+  const isCl2 = exam.examType === "COMPUTER_LITERACY_2";
   const isPremium = exam.visibility === "PREMIUM";
   const hoverBorder = isPremium
     ? "hover:border-amber-500/60"
@@ -348,14 +359,18 @@ function MockExamCard({ exam }: { exam: MockExamSummary }) {
       ? "hover:border-emerald-500/40"
       : isCl1
         ? "hover:border-sky-500/40"
-        : "hover:border-amber-500/40";
+        : isCl2
+          ? "hover:border-indigo-500/40"
+          : "hover:border-amber-500/40";
   const glow = isPremium
     ? "hover:shadow-[0_0_24px_rgba(245,158,11,0.25)]"
     : isEngineer
       ? "hover:shadow-[0_0_20px_rgba(16,185,129,0.2)]"
       : isCl1
         ? "hover:shadow-[0_0_20px_rgba(14,165,233,0.2)]"
-        : "hover:shadow-[0_0_16px_var(--glow)]";
+        : isCl2
+          ? "hover:shadow-[0_0_20px_rgba(99,102,241,0.2)]"
+          : "hover:shadow-[0_0_16px_var(--glow)]";
 
   // PREMIUM 카드는 클릭 시 detail 페이지로 (404/403 화면이 잠금 안내)
   return (
@@ -510,6 +525,14 @@ export function ExamBadge({ examType }: { examType: ExamType }) {
       <span className="inline-flex items-center gap-1 rounded-full border border-sky-500/40 bg-sky-500/10 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-sky-300">
         <span className="h-1.5 w-1.5 rounded-full bg-sky-400" />
         컴활 1급
+      </span>
+    );
+  }
+  if (examType === "COMPUTER_LITERACY_2") {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full border border-indigo-500/40 bg-indigo-500/10 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-indigo-300">
+        <span className="h-1.5 w-1.5 rounded-full bg-indigo-400" />
+        컴활 2급
       </span>
     );
   }

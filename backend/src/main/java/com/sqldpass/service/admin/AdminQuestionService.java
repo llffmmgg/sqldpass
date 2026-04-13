@@ -46,8 +46,9 @@ public class AdminQuestionService {
 
     private static final String ENGINEER_ROOT_NAME = "\uC815\uBCF4\uCC98\uB9AC\uAE30\uC0AC \uC2E4\uAE30";
     private static final String COMPUTER_LITERACY_ROOT_NAME = "\uCEF4\uD4E8\uD130\uD65C\uC6A9\uB2A5\uB825 1\uAE09 \uC2E4\uAE30";
+    private static final String COMPUTER_LITERACY_2_ROOT_NAME = "\uCEF4\uD4E8\uD130\uD65C\uC6A9\uB2A5\uB825 2\uAE09 \uD544\uAE30";
     private static final List<String> SQLD_EXCLUDED_ROOTS = List.of(
-            ENGINEER_ROOT_NAME, COMPUTER_LITERACY_ROOT_NAME);
+            ENGINEER_ROOT_NAME, COMPUTER_LITERACY_ROOT_NAME, COMPUTER_LITERACY_2_ROOT_NAME);
 
     private final QuestionRepository questionRepository;
     private final SubjectRepository subjectRepository;
@@ -329,6 +330,8 @@ public class AdminQuestionService {
                 case SQLD -> excludedRoots = SQLD_EXCLUDED_ROOTS;
                 case ENGINEER_PRACTICAL -> rootName = ENGINEER_ROOT_NAME;
                 case COMPUTER_LITERACY_1 -> rootName = COMPUTER_LITERACY_ROOT_NAME;
+                case COMPUTER_LITERACY_2 -> rootName = COMPUTER_LITERACY_2_ROOT_NAME;
+                default -> { }
             }
         }
         return questionRepository.findTriageIdsForVerification(
@@ -630,6 +633,9 @@ public class AdminQuestionService {
         }
         if (COMPUTER_LITERACY_ROOT_NAME.equals(rootName)) {
             return ExamType.COMPUTER_LITERACY_1;
+        }
+        if (COMPUTER_LITERACY_2_ROOT_NAME.equals(rootName)) {
+            return ExamType.COMPUTER_LITERACY_2;
         }
         return ExamType.SQLD;
     }

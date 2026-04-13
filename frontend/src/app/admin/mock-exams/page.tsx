@@ -79,6 +79,18 @@ const CERTS: CertConfig[] = [
     },
   },
   {
+    id: "COMPUTER_LITERACY_2",
+    label: "컴퓨터활용능력 2급 필기",
+    shortLabel: "컴활 2급",
+    totalQuestions: 40,
+    accent: {
+      badge: "border-indigo-500/30 bg-indigo-500/10 text-indigo-300",
+      button:
+        "border border-indigo-500/40 bg-indigo-500/10 text-indigo-300 hover:bg-indigo-500/20 disabled:opacity-50",
+      tabActive: "border-indigo-400 text-indigo-300",
+    },
+  },
+  {
     id: "ENGINEER_WRITTEN",
     label: "정보처리기사 필기",
     shortLabel: "정처기 필기",

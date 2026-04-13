@@ -23,6 +23,11 @@ const CERT_META: Record<CertSlug, { title: string; description: string }> = {
     description:
       "컴퓨터활용능력 1급 필기 — 컴퓨터 일반, 스프레드시트 일반, 데이터베이스 일반 60문항 4지선다 기출 유형과 해설.",
   },
+  "computer-literacy-2": {
+    title: "컴퓨터활용능력 2급 필기 기출문제 · 과목별 해설",
+    description:
+      "컴퓨터활용능력 2급 필기 — 컴퓨터 일반, 스프레드시트 일반 40문항 4지선다 기출 유형과 해설.",
+  },
   "engineer-written": {
     title: "정보처리기사 필기 기출문제 · 과목별 해설",
     description:
@@ -75,6 +80,7 @@ export default async function CertPage(
     sqld: "SQLD",
     engineer: "정처기 실기",
     "computer-literacy-1": "컴활 1급 필기",
+    "computer-literacy-2": "컴활 2급 필기",
     "engineer-written": "정처기 필기",
   };
   const certName = certDisplayName[cert] ?? cert;

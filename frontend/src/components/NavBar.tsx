@@ -10,13 +10,14 @@ import { type Theme, getInitialTheme, setStoredTheme, applyTheme } from "@/lib/t
 import FeedbackModal from "@/components/FeedbackModal";
 import NotificationBell from "@/components/NotificationBell";
 
-type CertKey = "SQLD" | "ENGINEER_PRACTICAL" | "COMPUTER_LITERACY_1" | "ENGINEER_WRITTEN";
+type CertKey = "SQLD" | "ENGINEER_PRACTICAL" | "COMPUTER_LITERACY_1" | "COMPUTER_LITERACY_2" | "ENGINEER_WRITTEN";
 
 const CERT_OPTIONS: { key: CertKey; label: string; sub: string; dot: string }[] = [
   { key: "SQLD", label: "SQLD", sub: "SQL 개발자 자격증", dot: "bg-amber-400" },
   { key: "ENGINEER_PRACTICAL", label: "정처기 실기", sub: "단답·약술 + 코드 풀이", dot: "bg-emerald-400" },
   { key: "ENGINEER_WRITTEN", label: "정처기 필기", sub: "100문항 4지선다", dot: "bg-rose-400" },
   { key: "COMPUTER_LITERACY_1", label: "컴활 1급 필기", sub: "60문항 4지선다", dot: "bg-sky-400" },
+  { key: "COMPUTER_LITERACY_2", label: "컴활 2급 필기", sub: "40문항 4지선다", dot: "bg-indigo-400" },
 ];
 
 type NavItem =

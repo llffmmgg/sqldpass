@@ -39,17 +39,20 @@ type SubjectOption = {
 
 const ENGINEER_ROOT_NAME = "정보처리기사 실기";
 const COMPUTER_LITERACY_ROOT_NAME = "컴퓨터활용능력 1급 필기";
+const COMPUTER_LITERACY_2_ROOT_NAME = "컴퓨터활용능력 2급 필기";
 
 const EXAM_LABEL: Record<VerificationExamType, string> = {
   SQLD: "SQLD",
   ENGINEER_PRACTICAL: "정보처리기사 실기",
   COMPUTER_LITERACY_1: "컴활 1급 필기",
+  COMPUTER_LITERACY_2: "컴활 2급 필기",
   ENGINEER_WRITTEN: "정보처리기사 필기",
 };
 
 function resolveExamType(rootName: string): VerificationExamType {
   if (rootName === ENGINEER_ROOT_NAME) return "ENGINEER_PRACTICAL";
   if (rootName === COMPUTER_LITERACY_ROOT_NAME) return "COMPUTER_LITERACY_1";
+  if (rootName === COMPUTER_LITERACY_2_ROOT_NAME) return "COMPUTER_LITERACY_2";
   return "SQLD";
 }
 
@@ -364,6 +367,7 @@ export default function AdminQuestionsPage() {
               <option value="SQLD">SQLD</option>
               <option value="ENGINEER_PRACTICAL">정보처리기사 실기</option>
               <option value="COMPUTER_LITERACY_1">컴활 1급 필기</option>
+              <option value="COMPUTER_LITERACY_2">컴활 2급 필기</option>
             </select>
           </label>
 
@@ -711,6 +715,13 @@ export default function AdminQuestionsPage() {
           <ExportGroup
             label="컴활 1급 필기"
             examType="COMPUTER_LITERACY_1"
+            exportingKey={exportingKey}
+            onExport={handleExport}
+            onReset={handleResetMark}
+          />
+          <ExportGroup
+            label="컴활 2급 필기"
+            examType="COMPUTER_LITERACY_2"
             exportingKey={exportingKey}
             onExport={handleExport}
             onReset={handleResetMark}

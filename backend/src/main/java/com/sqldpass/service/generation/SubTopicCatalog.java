@@ -25,6 +25,7 @@ public final class SubTopicCatalog {
     private static final Map<String, List<String>> SQLD = new LinkedHashMap<>();
     private static final Map<String, List<String>> ENGINEER = new LinkedHashMap<>();
     private static final Map<String, List<String>> COMPUTER_LITERACY = new LinkedHashMap<>();
+    private static final Map<String, List<String>> COMPUTER_LITERACY_2 = new LinkedHashMap<>();
     private static final Map<String, List<String>> ENGINEER_WRITTEN = new LinkedHashMap<>();
 
     static {
@@ -277,6 +278,27 @@ public final class SubTopicCatalog {
                 "Access 폼 / 보고서 / 쿼리",
                 "Access 매크로"));
 
+        // ── 컴퓨터활용능력 2급 필기 ──────────────────────────
+        COMPUTER_LITERACY_2.put("컴퓨터 일반", List.of(
+                "컴퓨터 시스템 개요 (세대/자료표현/진법)",
+                "하드웨어 (CPU/메모리/입출력장치)",
+                "소프트웨어 (운영체제/언어 번역기/프로세스)",
+                "Windows 활용 (제어판/파일관리/단축키/레지스트리)",
+                "네트워크와 인터넷 (프로토콜/IP/OSI/웹)",
+                "정보 보안 (바이러스/방화벽/암호화)",
+                "멀티미디어 (파일 형식/래스터·벡터/압축)",
+                "ICT 신기술 (IoT/클라우드/블록체인/AI)"));
+        COMPUTER_LITERACY_2.put("스프레드시트 일반", List.of(
+                "데이터 입력과 편집 (자동 채우기/유효성/메모·노트)",
+                "셀 서식 (표시 형식 코드/조건부 서식)",
+                "수식과 함수 (SUM/IF/IFS/COUNTIF/ROUND/문자열)",
+                "수식과 함수 - 찾기/참조 (VLOOKUP/셀참조/SWITCH)",
+                "차트 (종류/속성/보조 축/셀 연동)",
+                "데이터 관리 (정렬/고급 필터/부분합)",
+                "인쇄와 페이지 설정 (인쇄 제목/머리글·바닥글/배율)",
+                "매크로와 VBA (기본 개념/보안/프로시저)",
+                "피벗 테이블 (영역/값 표시 형식)"));
+
         // ── 정보처리기사 필기 (2023~2025 기출 기반, 시드 토픽명과 정확히 일치) ──
         ENGINEER_WRITTEN.put("소프트웨어 설계", List.of(
                 "UML 다이어그램 종류", "UML 관계", "디자인 패턴",
@@ -314,6 +336,7 @@ public final class SubTopicCatalog {
             case SQLD -> SQLD.getOrDefault(subjectName, List.of());
             case ENGINEER_PRACTICAL -> ENGINEER.getOrDefault(subjectName, List.of());
             case COMPUTER_LITERACY_1 -> COMPUTER_LITERACY.getOrDefault(subjectName, List.of());
+            case COMPUTER_LITERACY_2 -> COMPUTER_LITERACY_2.getOrDefault(subjectName, List.of());
             case ENGINEER_WRITTEN -> ENGINEER_WRITTEN.getOrDefault(subjectName, List.of());
         };
     }
