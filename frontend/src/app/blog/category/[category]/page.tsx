@@ -33,6 +33,7 @@ const CATEGORY_ACCENT: Record<string, { badge: string; bar: string }> = {
   정보처리기사: { badge: "bg-accent/10 text-accent border-accent/30", bar: "bg-accent" },
   "정보처리기사 필기": { badge: "bg-purple-500/10 text-purple-500 border-purple-500/30", bar: "bg-purple-500" },
   컴퓨터활용능력: { badge: "bg-blue-600/10 text-blue-600 border-blue-600/30", bar: "bg-blue-600" },
+  "컴퓨터활용능력 2급": { badge: "bg-indigo-500/10 text-indigo-500 border-indigo-500/30", bar: "bg-indigo-500" },
 };
 
 function getAccent(category: string) {
