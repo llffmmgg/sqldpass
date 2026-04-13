@@ -708,6 +708,37 @@ public final class EngineerTopicExamples {
         ));
 
         // ============================================================
+        // 자료구조/알고리즘 (3개)
+        // ============================================================
+        EXAMPLES_BY_CATEGORY.put("자료구조/알고리즘", List.of(
+                new EngineerExample(
+                        "스택과 큐",
+                        QuestionType.SHORT_ANSWER,
+                        "다음은 스택(Stack)에 1, 2, 3, 4, 5를 순서대로 push한 후, pop을 3번 수행했을 때 마지막으로 꺼낸 값을 쓰시오.",
+                        "3",
+                        List.of("3"),
+                        "스택은 LIFO(Last In First Out) 구조이다. push(1,2,3,4,5) 후 pop 3번 → 5, 4, 3 순으로 꺼내므로 마지막으로 꺼낸 값은 3이다.",
+                        "스택 LIFO 구조에서 pop 순서를 묻는 기본 문제",
+                        1),
+                new EngineerExample(
+                        "정렬 알고리즘",
+                        QuestionType.SHORT_ANSWER,
+                        "다음 중 평균 시간 복잡도가 O(n²)인 정렬 알고리즘을 모두 쓰시오.\n\n- 퀵 정렬\n- 버블 정렬\n- 선택 정렬\n- 병합 정렬",
+                        "버블 정렬, 선택 정렬",
+                        List.of("버블 정렬", "선택 정렬", "버블정렬", "선택정렬"),
+                        "버블 정렬과 선택 정렬의 평균 시간 복잡도는 O(n²)이다. 퀵 정렬은 평균 O(n log n), 병합 정렬은 항상 O(n log n)이다.",
+                        "정렬 알고리즘 시간 복잡도 비교",
+                        2),
+                new EngineerExample(
+                        "트리 순회",
+                        QuestionType.SHORT_ANSWER,
+                        "다음 이진 트리를 전위 순회(Preorder Traversal)한 결과를 쓰시오.\n\n        A\n       / \\\n      B   C\n     / \\\n    D   E",
+                        "A B D E C",
+                        List.of("A B D E C", "ABDEC"),
+                        "전위 순회는 루트→왼쪽→오른쪽 순서로 방문한다. A → B → D → E → C 순이다.",
+                        "이진 트리 전위 순회 결과를 추적하는 문제",
+                        2)));
+        // ============================================================
         // 신기술 동향 (5개)
         // ============================================================
         EXAMPLES_BY_CATEGORY.put("신기술 동향", List.of(

@@ -71,43 +71,20 @@ public class EngineerMockExamCreator {
     private static final String JAVA = "Java";
     private static final String PY = "Python";
     private static final String SQL = "SQL";
+    private static final String ALGO = "자료구조/알고리즘";
     private static final String DESIGN = "소프트웨어 설계";
     private static final String DB = "데이터베이스 이론";
     private static final String NETOS = "네트워크/OS";
     private static final String SEC = "보안";
     private static final String NEW = "신기술 동향";
 
-    /** 프로그래밍 편중형 — 2024 전 회차 + 2025 1·3회 패턴, 코딩 9문 중심 */
-    private static final Map<String, Integer> TEMPLATE_PROGRAMMING_HEAVY = ordered(
-            C, 3, JAVA, 3, PY, 3, SQL, 2,
-            DESIGN, 2, DB, 2, NETOS, 2, SEC, 2, NEW, 1);
-
-    /** 이론 편중형 — 2025 2회 패턴, SQL 0문 / 이론 위주 (난이도 조정 회차) */
-    private static final Map<String, Integer> TEMPLATE_THEORY_HEAVY = ordered(
-            C, 2, JAVA, 2, PY, 2, SQL, 0,
-            DESIGN, 4, DB, 3, NETOS, 3, SEC, 2, NEW, 2);
-
-    /** 균형형 — 2023 전 회차 패턴, 안정적 구성 */
-    private static final Map<String, Integer> TEMPLATE_BALANCED = ordered(
-            C, 3, JAVA, 2, PY, 2, SQL, 2,
-            DESIGN, 3, DB, 2, NETOS, 2, SEC, 2, NEW, 2);
-
-    /** DB 강조형 — 2025 3회 패턴, SQL/DB 비중 최대 */
-    private static final Map<String, Integer> TEMPLATE_DB_HEAVY = ordered(
-            C, 2, JAVA, 3, PY, 2, SQL, 4,
-            DESIGN, 2, DB, 4, NETOS, 1, SEC, 1, NEW, 1);
-
-    private static final Map<EngineerExamTemplate, Map<String, Integer>> TEMPLATES_BY_KEY = Map.of(
-            EngineerExamTemplate.PROGRAMMING_HEAVY, TEMPLATE_PROGRAMMING_HEAVY,
-            EngineerExamTemplate.THEORY_HEAVY, TEMPLATE_THEORY_HEAVY,
-            EngineerExamTemplate.BALANCED, TEMPLATE_BALANCED,
-            EngineerExamTemplate.DB_HEAVY, TEMPLATE_DB_HEAVY);
-
-    private static final List<EngineerExamTemplate> TEMPLATE_KEYS = List.of(
-            EngineerExamTemplate.PROGRAMMING_HEAVY,
-            EngineerExamTemplate.THEORY_HEAVY,
-            EngineerExamTemplate.BALANCED,
-            EngineerExamTemplate.DB_HEAVY);
+    /**
+     * 고정 출제 분포 — 최근 기출 분석 기반 (합계 19).
+     * 나머지 1문항은 Python/SQL 교대 배정 (홀수회차 Python+1, 짝수회차 SQL+1).
+     */
+    private static final Map<String, Integer> BASE_DISTRIBUTION = ordered(
+            C, 3, JAVA, 2, PY, 1, SQL, 1, ALGO, 1,
+            DESIGN, 3, DB, 2, NETOS, 3, SEC, 2, NEW, 1);
 
     private final MockExamRepository mockExamRepository;
     private final QuestionRepository questionRepository;
@@ -145,17 +122,19 @@ public class EngineerMockExamCreator {
         int nextSeq = mockExamRepository.findMaxSequenceByExamType(ExamType.ENGINEER_PRACTICAL).orElse(0) + 1;
         String name = "정보처리기사 실기 모의고사 " + nextSeq + "회";
 
-        EngineerExamTemplate selectedTemplate = templateKey != null
-                ? templateKey
-                : TEMPLATE_KEYS.get(random.nextInt(TEMPLATE_KEYS.size()));
-        Map<String, Integer> distribution = TEMPLATES_BY_KEY.get(selectedTemplate);
+        // 고정 분포 + Python/SQL 교대 1문항
+        Map<String, Integer> distribution = new LinkedHashMap<>(BASE_DISTRIBUTION);
+        if (nextSeq % 2 == 1) {
+            distribution.merge(PY, 1, Integer::sum);   // 홀수회차: Python +1
+        } else {
+            distribution.merge(SQL, 1, Integer::sum);  // 짝수회차: SQL +1
+        }
         int totalQuestions = distribution.values().stream().mapToInt(Integer::intValue).sum();
 
-        // 사용자 지정 평균 난이도에 따른 분포 슬롯 (셔플된 [1,1,2,2,2,3,3,...])
         List<Integer> difficultySlots = buildDifficultySlots(difficulty, totalQuestions);
 
-        log.info("정처기 모의고사 생성 시작 - sequence={}, 템플릿={}, 분포={}, 평균난이도={}, 슬롯={}",
-                nextSeq, selectedTemplate, distribution, difficulty, difficultySlots);
+        log.info("정처기 모의고사 생성 시작 - sequence={}, 분포={}, 평균난이도={}",
+                nextSeq, distribution, difficulty);
 
         SubjectEntity root = subjectRepository.findByNameAndParentIsNull(ROOT_SUBJECT_NAME)
                 .orElseThrow(() -> new SqldpassException(ErrorCode.SUBJECT_NOT_FOUND,
@@ -244,7 +223,7 @@ public class EngineerMockExamCreator {
         }
 
         MockExamEntity saved = mockExamRepository.save(
-                new MockExamEntity(name, ExamType.ENGINEER_PRACTICAL, nextSeq, selectedTemplate));
+                new MockExamEntity(name, ExamType.ENGINEER_PRACTICAL, nextSeq));
         for (int i = 0; i < picked.size(); i++) {
             saved.linkQuestion(picked.get(i), i + 1);
         }
