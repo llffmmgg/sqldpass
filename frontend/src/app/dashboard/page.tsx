@@ -16,6 +16,7 @@ import {
 import { getNickname } from "@/lib/auth";
 import AuthGuard from "@/components/AuthGuard";
 import Spinner from "@/components/Spinner";
+import StudyActivityChart from "@/components/StudyActivityChart";
 
 function buildSubjectMap(subjects: Subject[]): Record<number, string> {
   const map: Record<number, string> = {};
@@ -139,8 +140,6 @@ function getRecentActivity(solves: SolveSummaryResponse[]): { date: string; coun
   return result;
 }
 
-const DOW = ["일", "월", "화", "수", "목", "금", "토"];
-
 function rateColor(rate: number) {
   if (rate >= 80) return "text-green-400";
   if (rate >= 60) return "text-amber-400";
@@ -199,7 +198,6 @@ function DashboardPageContent() {
   const subjectStats = getSubjectStats(solves, subjectMap);
   const merged = mergeSubjectStats(subjectStats, weakStats);
   const activity = getRecentActivity(solves);
-  const maxActivity = Math.max(...activity.map((a) => a.count), 1);
 
   // 가장 약한 과목 — 오답이 있는 것 중 첫 번째
   const focus = merged.find((m) => m.wrongCount > 0) ?? null;
@@ -316,59 +314,7 @@ function DashboardPageContent() {
             </div>
 
             {/* ── 최근 2주 학습량 ──────────────────────────────────── */}
-            <div className="mt-6 rounded-xl border border-border bg-surface p-5">
-              <div className="flex items-baseline justify-between">
-                <h2 className="text-sm font-semibold">최근 2주 학습량</h2>
-                <p className="text-xs text-muted tabular-nums">
-                  총 {activity.reduce((s, d) => s + d.count, 0)}문제
-                </p>
-              </div>
-              <div className="mt-5 flex items-end gap-2 h-44">
-                {activity.map((day) => {
-                  const height = day.count > 0 ? Math.max((day.count / maxActivity) * 100, 8) : 3;
-                  const todayStr = toLocalDateStr(new Date());
-                  const isToday = day.date === todayStr;
-                  const d = new Date(day.date);
-                  const dateLabel = `${d.getMonth() + 1}/${d.getDate()}`;
-                  return (
-                    <div key={day.date} className="group flex flex-1 flex-col items-center justify-end gap-1.5 min-w-0">
-                      {/* 호버 시 숫자 표시 */}
-                      <span
-                        className={`text-xs font-semibold tabular-nums transition-opacity ${
-                          day.count > 0
-                            ? isToday
-                              ? "text-primary opacity-100"
-                              : "text-foreground opacity-0 group-hover:opacity-100"
-                            : "opacity-0"
-                        }`}
-                      >
-                        {day.count}
-                      </span>
-                      {/* 막대 */}
-                      <div
-                        className={`w-full max-w-[28px] rounded-md transition-all duration-300 ${
-                          day.count > 0
-                            ? isToday
-                              ? "bg-primary shadow-[0_0_8px_var(--glow)]"
-                              : "bg-primary/40 group-hover:bg-primary/70"
-                            : "bg-border/40"
-                        }`}
-                        style={{ height: `${height}%` }}
-                        title={`${day.date}: ${day.count}문제`}
-                      />
-                      {/* 날짜 라벨 */}
-                      <span
-                        className={`text-[10px] tabular-nums ${
-                          isToday ? "font-bold text-primary" : "text-muted/50"
-                        }`}
-                      >
-                        {dateLabel}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
+            <StudyActivityChart data={activity} />
 
             {/* ── 과목별 학습 현황 (정답률 + 오답수 통합) ─────────────── */}
             <div className="mt-6 rounded-xl border border-border bg-surface p-5">
