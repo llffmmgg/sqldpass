@@ -6,7 +6,7 @@ public enum EngineerExamTemplate {
     THEORY_HEAVY("이론 편중형"),
     BALANCED("균형형"),
     DB_HEAVY("DB 강조형"),
-    LATEST("최신 분포");
+    LATEST("최신 기출 분포 반영");
 
     private final String displayName;
 
