@@ -56,6 +56,16 @@ const CATEGORIES = [
     emoji: "📋",
   },
   {
+    name: "ADsP",
+    slug: "ADsP",
+    label: "데이터분석 준전문가(ADsP)",
+    description: "ADsP 공부법, 핵심 개념 요약, 합격률, 2024 개편 대응",
+    gradient: "from-teal-500/20 to-cyan-500/10",
+    border: "border-teal-500/30 hover:border-teal-400/60",
+    iconBg: "bg-teal-500/15",
+    emoji: "📈",
+  },
+  {
     name: "일반",
     slug: "일반",
     label: "시험 팁",
@@ -200,6 +210,7 @@ function getCategoryBadge(category: string) {
     "정보처리기사 필기": "bg-purple-500/10 text-purple-500 border-purple-500/30",
     컴퓨터활용능력: "bg-blue-600/10 text-blue-600 border-blue-600/30",
     "컴퓨터활용능력 2급": "bg-indigo-500/10 text-indigo-500 border-indigo-500/30",
+    ADsP: "bg-teal-500/10 text-teal-500 border-teal-500/30",
   };
   return map[category] ?? "bg-muted/10 text-muted border-muted/30";
 }
