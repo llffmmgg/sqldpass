@@ -73,11 +73,20 @@ const COMPUTER_LITERACY_2_TONE: CertTone = {
   hover: "hover:border-indigo-500/40 hover:bg-indigo-500/[0.04]",
 };
 
+const ADSP_TONE: CertTone = {
+  certLabel: "데이터분석 준전문가",
+  certBadge: "ADsP",
+  bar: "bg-teal-500/60 group-hover:bg-teal-400",
+  badge: "border-teal-500/40 bg-teal-500/10 text-teal-300",
+  hover: "hover:border-teal-500/40 hover:bg-teal-500/[0.04]",
+};
+
 function detectCertTone(rootName: string): CertTone {
   if (rootName === "정보처리기사 실기") return ENGINEER_TONE;
   if (rootName === "정보처리기사 필기") return ENGINEER_WRITTEN_TONE;
   if (rootName === "컴퓨터활용능력 1급 필기") return COMPUTER_LITERACY_TONE;
   if (rootName === "컴퓨터활용능력 2급 필기") return COMPUTER_LITERACY_2_TONE;
+  if (rootName === "데이터분석 준전문가(ADsP)") return ADSP_TONE;
   return SQLD_TONE;
 }
 
@@ -385,6 +394,7 @@ function SolvePageContent() {
       ENGINEER_WRITTEN: "정보처리기사 필기",
       COMPUTER_LITERACY_1: "컴퓨터활용능력 1급",
       COMPUTER_LITERACY_2: "컴퓨터활용능력 2급",
+      ADSP: "데이터분석 준전문가",
     };
     const filterLabel = certParam ? certKeyToLabel[certParam] : null;
     const visibleGroups = filterLabel

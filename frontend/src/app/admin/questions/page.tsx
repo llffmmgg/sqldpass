@@ -40,6 +40,8 @@ type SubjectOption = {
 const ENGINEER_ROOT_NAME = "정보처리기사 실기";
 const COMPUTER_LITERACY_ROOT_NAME = "컴퓨터활용능력 1급 필기";
 const COMPUTER_LITERACY_2_ROOT_NAME = "컴퓨터활용능력 2급 필기";
+const ENGINEER_WRITTEN_ROOT_NAME = "정보처리기사 필기";
+const ADSP_ROOT_NAME = "데이터분석 준전문가(ADsP)";
 
 const EXAM_LABEL: Record<VerificationExamType, string> = {
   SQLD: "SQLD",
@@ -47,12 +49,15 @@ const EXAM_LABEL: Record<VerificationExamType, string> = {
   COMPUTER_LITERACY_1: "컴활 1급 필기",
   COMPUTER_LITERACY_2: "컴활 2급 필기",
   ENGINEER_WRITTEN: "정보처리기사 필기",
+  ADSP: "ADsP",
 };
 
 function resolveExamType(rootName: string): VerificationExamType {
   if (rootName === ENGINEER_ROOT_NAME) return "ENGINEER_PRACTICAL";
   if (rootName === COMPUTER_LITERACY_ROOT_NAME) return "COMPUTER_LITERACY_1";
   if (rootName === COMPUTER_LITERACY_2_ROOT_NAME) return "COMPUTER_LITERACY_2";
+  if (rootName === ENGINEER_WRITTEN_ROOT_NAME) return "ENGINEER_WRITTEN";
+  if (rootName === ADSP_ROOT_NAME) return "ADSP";
   return "SQLD";
 }
 
@@ -366,8 +371,10 @@ export default function AdminQuestionsPage() {
               <option value="ALL">전체 시험</option>
               <option value="SQLD">SQLD</option>
               <option value="ENGINEER_PRACTICAL">정보처리기사 실기</option>
+              <option value="ENGINEER_WRITTEN">정보처리기사 필기</option>
               <option value="COMPUTER_LITERACY_1">컴활 1급 필기</option>
               <option value="COMPUTER_LITERACY_2">컴활 2급 필기</option>
+              <option value="ADSP">ADsP</option>
             </select>
           </label>
 
@@ -722,6 +729,13 @@ export default function AdminQuestionsPage() {
           <ExportGroup
             label="컴활 2급 필기"
             examType="COMPUTER_LITERACY_2"
+            exportingKey={exportingKey}
+            onExport={handleExport}
+            onReset={handleResetMark}
+          />
+          <ExportGroup
+            label="ADsP"
+            examType="ADSP"
             exportingKey={exportingKey}
             onExport={handleExport}
             onReset={handleResetMark}

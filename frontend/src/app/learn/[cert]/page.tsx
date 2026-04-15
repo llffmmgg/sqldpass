@@ -33,6 +33,11 @@ const CERT_META: Record<CertSlug, { title: string; description: string }> = {
     description:
       "정보처리기사 필기 — 소프트웨어 설계, 소프트웨어 개발, 데이터베이스 구축, 프로그래밍 언어 활용, 정보시스템 구축 관리 100문항 4지선다 기출 유형과 해설.",
   },
+  adsp: {
+    title: "데이터분석 준전문가(ADsP) 기출문제 · 과목별 해설",
+    description:
+      "데이터분석 준전문가(ADsP) — 데이터 이해, 데이터 분석 기획, 데이터 분석 50문항 4지선다(2024 개편 반영) 기출 유형과 해설.",
+  },
 };
 
 export async function generateStaticParams() {
@@ -82,6 +87,7 @@ export default async function CertPage(
     "computer-literacy-1": "컴활 1급 필기",
     "computer-literacy-2": "컴활 2급 필기",
     "engineer-written": "정처기 필기",
+    adsp: "ADsP",
   };
   const certName = certDisplayName[cert] ?? cert;
 

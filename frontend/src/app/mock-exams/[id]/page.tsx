@@ -25,6 +25,7 @@ const EXAM_TIME_MINUTES: Record<string, number> = {
   COMPUTER_LITERACY_1: 60,
   COMPUTER_LITERACY_2: 40,
   ENGINEER_WRITTEN: 150,
+  ADSP: 90,
 };
 
 interface AnswerState {

@@ -90,6 +90,18 @@ const CERTS: CertConfig[] = [
       tabActive: "border-rose-400 text-rose-300",
     },
   },
+  {
+    id: "ADSP",
+    label: "데이터분석 준전문가(ADsP)",
+    shortLabel: "ADsP",
+    totalQuestions: 50,
+    accent: {
+      badge: "border-teal-500/30 bg-teal-500/10 text-teal-300",
+      button:
+        "border border-teal-500/40 bg-teal-500/10 text-teal-300 hover:bg-teal-500/20 disabled:opacity-50",
+      tabActive: "border-teal-400 text-teal-300",
+    },
+  },
   // + 새 자격증 추가 시 여기에 항목 추가
 ];
 

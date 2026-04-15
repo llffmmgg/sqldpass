@@ -27,6 +27,7 @@ public final class SubTopicCatalog {
     private static final Map<String, List<String>> COMPUTER_LITERACY = new LinkedHashMap<>();
     private static final Map<String, List<String>> COMPUTER_LITERACY_2 = new LinkedHashMap<>();
     private static final Map<String, List<String>> ENGINEER_WRITTEN = new LinkedHashMap<>();
+    private static final Map<String, List<String>> ADSP = new LinkedHashMap<>();
 
     static {
         // ── SQLD ────────────────────────────────────────────
@@ -334,6 +335,56 @@ public final class SubTopicCatalog {
                 "웹 보안 공격", "DoS/DDoS 공격", "네트워크 보안 솔루션",
                 "개발 방법론 / 비용산정", "클라우드 / 스토리지", "신기술 동향",
                 "네트워크 기술", "Secure SDLC / 보안 개발 방법론"));
+
+        // ── 데이터분석 준전문가 ADsP (2024 개편 반영) ──────────
+        ADSP.put("데이터 이해", List.of(
+                "DIKW 피라미드 (데이터/정보/지식/지혜)",
+                "데이터베이스 정의·특성 (통합/저장/공유/운영)",
+                "데이터베이스 발전 단계",
+                "OLTP / OLAP 차이",
+                "CRM / SCM / ETL / 데이터 마이닝",
+                "빅데이터 3V~5V",
+                "빅데이터 출현 배경·기능",
+                "빅데이터 가치와 위기요인·통제방안",
+                "데이터 사이언스 학제적 성격",
+                "데이터 사이언티스트 Hard/Soft Skill",
+                "분석 주제 유형 (최적화/솔루션/통찰/발견)"));
+        ADSP.put("데이터 분석 기획", List.of(
+                "분석 방법론 - KDD / CRISP-DM / SEMMA 비교",
+                "분석과제 발굴 - 하향식(Top-Down)",
+                "분석과제 발굴 - 상향식(Bottom-Up)",
+                "분석 프로젝트 관리 (WBS/위험관리/품질)",
+                "위험 대응 전략 (회피/전가/완화/수용)",
+                "분석 마스터플랜과 우선순위",
+                "ISP와의 연계",
+                "분석 거버넌스 체계 (조직/프로세스/시스템/데이터)",
+                "분석 성숙도 모델 (도입/활용/확산/최적화)",
+                "MDM / 메타데이터 / 데이터 품질관리"));
+        ADSP.put("데이터 분석", List.of(
+                "R 데이터 타입과 기본 함수",
+                "R NA/결측 처리 (na.rm)",
+                "데이터마트와 EDA",
+                "결측값/이상값 처리",
+                "기술통계 vs 추론통계",
+                "가설검정 (1종/2종 오류)",
+                "신뢰구간",
+                "단순/다중 회귀분석",
+                "로지스틱 회귀",
+                "릿지(L2) / 라쏘(L1) 회귀",
+                "의사결정나무 불순도 (지니/엔트로피)",
+                "KNN / SVM / 나이브베이즈",
+                "배깅 / 부스팅 / 랜덤포레스트",
+                "인공신경망·딥러닝 과적합 방지",
+                "K-means 군집분석",
+                "계층적 군집 연결법",
+                "거리 측도 (유클리디안/맨해튼/체비셰프)",
+                "연관분석 - 지지도·신뢰도·향상도",
+                "시계열 정상성과 ARIMA",
+                "지수 평활법",
+                "PCA 차원축소와 주성분 선택",
+                "MDS 다차원척도법",
+                "혼동행렬 - 정밀도/재현율/정확도",
+                "ROC 곡선과 AUC"));
     }
 
     private SubTopicCatalog() {
@@ -347,6 +398,7 @@ public final class SubTopicCatalog {
             case COMPUTER_LITERACY_1 -> COMPUTER_LITERACY.getOrDefault(subjectName, List.of());
             case COMPUTER_LITERACY_2 -> COMPUTER_LITERACY_2.getOrDefault(subjectName, List.of());
             case ENGINEER_WRITTEN -> ENGINEER_WRITTEN.getOrDefault(subjectName, List.of());
+            case ADSP -> ADSP.getOrDefault(subjectName, List.of());
         };
     }
 

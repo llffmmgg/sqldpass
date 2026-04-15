@@ -312,6 +312,111 @@ public class PromptBuilder {
             ]}
             """;
 
+    static final String ADSP_GENERATION_SYSTEM_PROMPT = """
+            당신은 데이터분석 준전문가(ADsP) 필기 시험 출제위원입니다.
+            아래 시드 예시들은 "주제·패턴·함정 회피용 참고자료"입니다.
+            절대 그 보기/설명/식별자를 복제해서는 안 됩니다.
+            매번 새로운 개념·새로운 함정·새로운 보기로 출제하세요.
+
+            ADsP 시험은 2024년 제40회부터 단답형이 폐지되고 전 문항 4지선다 객관식(50문항)으로 개편되었습니다.
+            과목 구성: 데이터 이해(10) / 데이터 분석 기획(10) / 데이터 분석(30)
+
+            **난이도 규칙 (매우 중요):**
+            - 시드의 difficulty 값은 무시하세요.
+            - 각 문제마다 사용자 측에서 별도로 지정한 **목표 난이도(targetDifficulty)** 를 따르세요.
+            - 1 = 쉬움 (교과서 기본 정의·표준 개념·직관적 정답)
+            - 2 = 보통 (실무 수준·약간의 응용·여러 보기 비교 필요)
+            - 3 = 어려움 (미묘한 함정·예외 케이스·자주 헷갈리는 개념)
+            - 4 = 매우 어려움 (실무 전문가도 헷갈릴 정도·복합 개념·예외 결합)
+            - 같은 시드 주제라도 목표 난이도에 따라 보기의 난이도와 함정 깊이를 조정하세요.
+
+            출제 형식 규칙:
+            - 4지선다 객관식만 (questionType=MCQ)
+            - 단답형/약술형 절대 금지
+            - 보기는 ①②③④ 마커를 사용 (콘텐츠 본문 안에 4개 보기가 모두 포함되어야 함)
+            - 정답은 정확히 1개만 존재 (correctOption 필드: 1~4), 논란의 여지 없이 명확해야 함
+            - 두 개 이상 정답으로 해석될 수 있는 애매한 문항은 절대 출제 금지
+            - 지엽적이거나 지나치게 세부적인 문제(마이너한 예외 케이스, 실제 기출 범위를 벗어나는 트리비아)는 절대 출제 금지. 교재·기출 중심의 핵심 개념만 다룰 것
+            - "가장 옳은 것" / "가장 옳지 않은 것" / "가장 적절한 것" 등의 표현 사용
+            - 계산 문제(연관분석 지지도·신뢰도·향상도, 정확도·재현율 등)는 숫자 검증 필수
+            - R 코드 문제는 실제 실행 결과와 일치하도록 작성
+            - explanation: 정답인 이유 + 오답인 이유를 모두 설명
+            - summary: 200자 이내, 출제 관점 요약
+            - difficulty 필드: 사용자가 지정한 목표 난이도(1~4)를 그대로 반환
+
+            절대 금지:
+            - 시드의 보기 텍스트를 그대로 사용 (변형해도 인식 가능하면 안 됨)
+            - 시드와 동일한 함정 (다른 개념·다른 함정으로 작성)
+            - 회피 정답/요약 목록에 있는 항목과의 중복
+            - 목표 난이도가 1(쉬움)인데 어려운 함정을 넣거나, 그 반대
+            - 정답이 애매하거나 복수 정답이 가능한 문항 출제
+
+            출력 전 자체 검증:
+            1. 정답 번호가 실제로 맞는지 확인
+            2. 오답 보기가 명확히 틀린지 확인
+            3. 해설이 정답 + 오답 이유를 모두 설명하는지 확인
+            4. 각 문제의 난이도가 지정된 목표 난이도와 일치하는지 확인
+            5. 계산 문제는 실제 수치로 재검증
+            6. 정답이 애매하거나 두 개 이상 정답이 될 수 있는 문항이 없는지 확인 — 있으면 폐기하고 다시 작성
+
+            반드시 아래 JSON 형식으로만 응답하세요. questions 배열의 길이는 입력된 시드 개수와 정확히 일치해야 합니다:
+            {"questions": [
+              {"content": "다음 중 ...?\\n\\n① ...\\n② ...\\n③ ...\\n④ ...", "questionType": "MCQ", "correctOption": 2, "explanation": "...", "summary": "...", "difficulty": 2}
+            ]}
+            """;
+
+    static String buildAdspPrompt(AiGenerationRequest request,
+                                  List<AdspTopicExamples.AdspExample> examples,
+                                  List<Integer> targetDifficulties,
+                                  List<String> recentSummaries,
+                                  List<String> recentAnswers) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("과목: ").append(request.subjectName()).append("\n");
+        sb.append("필요 문항 수: ").append(examples.size()).append("개 (시드 1개당 변형 1개씩)\n\n");
+
+        for (int i = 0; i < examples.size(); i++) {
+            AdspTopicExamples.AdspExample ex = examples.get(i);
+            int target = targetDifficulties.get(i);
+            sb.append("[문제 #").append(i + 1)
+                    .append(" — **목표 난이도: ").append(targetLabel(target))
+                    .append(" (").append(target).append(")**]\n");
+            sb.append("(아래 시드는 주제·패턴·함정 회피용 참고. 시드 자체 난이도는 무시하고 위 목표 난이도로 작성)\n");
+            sb.append("토픽 힌트: ").append(ex.topic()).append("\n");
+            sb.append("시드 본문: ").append(ex.content()).append("\n");
+            sb.append("시드 정답: ").append(ex.correctOption()).append("번\n");
+            sb.append("시드 해설: ").append(ex.explanation()).append("\n\n");
+        }
+
+        if (recentAnswers != null && !recentAnswers.isEmpty()) {
+            sb.append("[회피해야 할 최근 출제 정답/요약 패턴] (이 항목들과 동일하거나 매우 유사하면 안 됨)\n");
+            sb.append(recentAnswers.stream()
+                    .filter(a -> a != null && !a.isBlank())
+                    .limit(15)
+                    .map(a -> "- " + (a.length() > 80 ? a.substring(0, 80) + "..." : a))
+                    .collect(java.util.stream.Collectors.joining("\n")));
+            sb.append("\n\n");
+        }
+
+        if (recentSummaries != null && !recentSummaries.isEmpty()) {
+            sb.append("[이미 출제된 관점 — 같은 각도로 출제 금지]\n");
+            sb.append(recentSummaries.stream()
+                    .filter(s -> s != null && !s.isBlank())
+                    .limit(20)
+                    .map(s -> "- " + (s.length() > 100 ? s.substring(0, 100) + "..." : s))
+                    .collect(java.util.stream.Collectors.joining("\n")));
+            sb.append("\n\n");
+        }
+
+        sb.append("지시 사항:\n");
+        sb.append("- 각 문제는 위에 명시된 목표 난이도를 반드시 따르세요. 시드 자체 난이도는 무시합니다.\n");
+        sb.append("- 본문 안에 ①②③④ 보기 4개를 모두 포함하세요.\n");
+        sb.append("- 시드의 보기 텍스트/식별자를 복제하지 마세요.\n");
+        sb.append("- 회피 정답/요약과 중복되면 안 됩니다.\n");
+        sb.append("- 계산 문제는 실제 수치 검증 후 출제하세요.\n");
+        sb.append("- JSON 외 어떤 텍스트도 포함하지 마세요.\n");
+        return sb.toString();
+    }
+
     static String buildEngineerWrittenPrompt(AiGenerationRequest request,
                                              List<EWExample> examples,
                                              List<Integer> targetDifficulties,
@@ -740,6 +845,20 @@ public class PromptBuilder {
 
                     검토 기준:
                     1. 정답 번호가 실제로 맞는지
+                    2. 오답 선택지가 명확하게 틀렸는지
+                    3. 해설이 정답과 오답의 이유를 모두 설명하는지
+                    4. 문제 표현이 명확하고 난이도가 요청된 수준과 어긋나지 않는지
+                    5. 정답이 애매하거나 두 개 이상 정답으로 해석될 수 있는지 — 해당 시 반드시 거절
+
+                    반드시 아래 JSON 형식으로만 응답하세요.
+                    {"approved": true, "reason": "확인/거절 사유"}
+                    """;
+            case ADSP -> """
+                    당신은 데이터분석 준전문가(ADsP) 객관식 문제 검수 전문가입니다.
+                    주어진 문제, 정답 번호, 해설이 서로 일관적인지 검토하세요.
+
+                    검토 기준:
+                    1. 정답 번호가 실제로 맞는지 (계산 문제는 수치 재검증)
                     2. 오답 선택지가 명확하게 틀렸는지
                     3. 해설이 정답과 오답의 이유를 모두 설명하는지
                     4. 문제 표현이 명확하고 난이도가 요청된 수준과 어긋나지 않는지

@@ -17,5 +17,8 @@ public enum ExamType {
     COMPUTER_LITERACY_2,
 
     /** 정보처리기사 필기 (4지선다 100문항: 5과목 각 20문항) */
-    ENGINEER_WRITTEN
+    ENGINEER_WRITTEN,
+
+    /** 데이터분석 준전문가 ADsP (4지선다 50문항: 데이터 이해 10 / 분석 기획 10 / 분석 30, 2024 개편 이후 MCQ만) */
+    ADSP
 }

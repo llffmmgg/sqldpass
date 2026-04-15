@@ -31,6 +31,7 @@ public class MockExamService {
     private final ComputerLiteracyMockExamCreator computerLiteracyMockExamCreator;
     private final ComputerLiteracy2MockExamCreator computerLiteracy2MockExamCreator;
     private final EngineerWrittenMockExamCreator engineerWrittenMockExamCreator;
+    private final AdspMockExamCreator adspMockExamCreator;
 
     /** 어드민용 — DRAFT 포함 전체 회차 */
     public List<MockExam> getAll() {
@@ -139,6 +140,7 @@ public class MockExamService {
             case COMPUTER_LITERACY_1 -> computerLiteracyMockExamCreator.create(difficulty);
             case COMPUTER_LITERACY_2 -> computerLiteracy2MockExamCreator.create(difficulty);
             case ENGINEER_WRITTEN -> engineerWrittenMockExamCreator.create(difficulty);
+            case ADSP -> adspMockExamCreator.create(difficulty);
         };
 
         MockExamEntity loaded = mockExamRepository.findByIdWithQuestions(created.getId())

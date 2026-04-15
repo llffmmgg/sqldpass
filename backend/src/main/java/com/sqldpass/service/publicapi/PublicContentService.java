@@ -60,15 +60,18 @@ public class PublicContentService {
     public static final String COMPUTER_LITERACY_SLUG = "computer-literacy-1";
     public static final String ENGINEER_WRITTEN_SLUG = "engineer-written";
     public static final String COMPUTER_LITERACY_2_SLUG = "computer-literacy-2";
+    public static final String ADSP_SLUG = "adsp";
     public static final String SQLD_NAME = "SQLD";
     public static final String ENGINEER_NAME = "정보처리기사 실기";
     public static final String COMPUTER_LITERACY_NAME = "컴퓨터활용능력 1급 필기";
     public static final String COMPUTER_LITERACY_2_NAME = "컴퓨터활용능력 2급 필기";
     public static final String ENGINEER_WRITTEN_NAME = "정보처리기사 필기";
+    public static final String ADSP_NAME = "데이터분석 준전문가(ADsP)";
     private static final String ENGINEER_ROOT_SUBJECT_NAME = "정보처리기사 실기";
     private static final String COMPUTER_LITERACY_ROOT_SUBJECT_NAME = "컴퓨터활용능력 1급 필기";
     private static final String COMPUTER_LITERACY_2_ROOT_SUBJECT_NAME = "컴퓨터활용능력 2급 필기";
     private static final String ENGINEER_WRITTEN_ROOT_SUBJECT_NAME = "정보처리기사 필기";
+    private static final String ADSP_ROOT_SUBJECT_NAME = "데이터분석 준전문가(ADsP)";
     private static final String SQLD_DESCRIPTION =
             "SQL 개발자(SQLD) 자격증 준비 — 1과목 데이터 모델링, 2과목 SQL 기본/활용 기출문제와 해설.";
     private static final String ENGINEER_DESCRIPTION =
@@ -79,6 +82,8 @@ public class PublicContentService {
             "컴퓨터활용능력 2급 필기 — 컴퓨터 일반, 스프레드시트 일반 40문항 4지선다 기출 유형과 해설.";
     private static final String ENGINEER_WRITTEN_DESCRIPTION =
             "정보처리기사 필기 준비 — 소프트웨어 설계, 소프트웨어 개발, 데이터베이스 구축, 프로그래밍 언어 활용, 정보시스템 구축 관리 100문항 4지선다 기출 유형과 해설.";
+    private static final String ADSP_DESCRIPTION =
+            "데이터분석 준전문가(ADsP) — 데이터 이해, 데이터 분석 기획, 데이터 분석 50문항 4지선다(2024 개편 반영) 기출 유형과 해설.";
 
     private final SubjectRepository subjectRepository;
     private final QuestionRepository questionRepository;
@@ -129,19 +134,22 @@ public class PublicContentService {
         List<PublicCategoryResponse> cl1Cats = listComputerLiteracyCategories();
         List<PublicCategoryResponse> cl2Cats = listComputerLiteracy2Categories();
         List<PublicCategoryResponse> ewCats = listEngineerWrittenCategories();
+        List<PublicCategoryResponse> adspCats = listAdspCategories();
 
         int sqldTotal = sqldCats.stream().mapToInt(PublicCategoryResponse::questionCount).sum();
         int engTotal = engCats.stream().mapToInt(PublicCategoryResponse::questionCount).sum();
         int cl1Total = cl1Cats.stream().mapToInt(PublicCategoryResponse::questionCount).sum();
         int cl2Total = cl2Cats.stream().mapToInt(PublicCategoryResponse::questionCount).sum();
         int ewTotal = ewCats.stream().mapToInt(PublicCategoryResponse::questionCount).sum();
+        int adspTotal = adspCats.stream().mapToInt(PublicCategoryResponse::questionCount).sum();
 
         return List.of(
                 new PublicCertResponse(SQLD_SLUG, SQLD_NAME, SQLD_DESCRIPTION, sqldTotal, sqldCats.size()),
                 new PublicCertResponse(ENGINEER_SLUG, ENGINEER_NAME, ENGINEER_DESCRIPTION, engTotal, engCats.size()),
                 new PublicCertResponse(COMPUTER_LITERACY_SLUG, COMPUTER_LITERACY_NAME, COMPUTER_LITERACY_DESCRIPTION, cl1Total, cl1Cats.size()),
                 new PublicCertResponse(COMPUTER_LITERACY_2_SLUG, COMPUTER_LITERACY_2_NAME, COMPUTER_LITERACY_2_DESCRIPTION, cl2Total, cl2Cats.size()),
-                new PublicCertResponse(ENGINEER_WRITTEN_SLUG, ENGINEER_WRITTEN_NAME, ENGINEER_WRITTEN_DESCRIPTION, ewTotal, ewCats.size()));
+                new PublicCertResponse(ENGINEER_WRITTEN_SLUG, ENGINEER_WRITTEN_NAME, ENGINEER_WRITTEN_DESCRIPTION, ewTotal, ewCats.size()),
+                new PublicCertResponse(ADSP_SLUG, ADSP_NAME, ADSP_DESCRIPTION, adspTotal, adspCats.size()));
     }
 
     // =================== 카테고리 목록 ===================
@@ -153,6 +161,7 @@ public class PublicContentService {
             case COMPUTER_LITERACY_SLUG -> listComputerLiteracyCategories();
             case COMPUTER_LITERACY_2_SLUG -> listComputerLiteracy2Categories();
             case ENGINEER_WRITTEN_SLUG -> listEngineerWrittenCategories();
+            case ADSP_SLUG -> listAdspCategories();
             default -> throw new SqldpassException(ErrorCode.SUBJECT_NOT_FOUND, "알 수 없는 자격증: " + certSlug);
         };
     }
@@ -165,6 +174,7 @@ public class PublicContentService {
             if (COMPUTER_LITERACY_ROOT_SUBJECT_NAME.equals(root.getName())) continue;
             if (COMPUTER_LITERACY_2_ROOT_SUBJECT_NAME.equals(root.getName())) continue;
             if (ENGINEER_WRITTEN_ROOT_SUBJECT_NAME.equals(root.getName())) continue;
+            if (ADSP_ROOT_SUBJECT_NAME.equals(root.getName())) continue;
             List<SubjectEntity> children = subjectRepository.findByParentIdOrderByDisplayOrder(root.getId());
             for (SubjectEntity child : children) {
                 int count = (int) questionRepository.countBySubjectId(child.getId());
@@ -188,6 +198,10 @@ public class PublicContentService {
 
     private List<PublicCategoryResponse> listEngineerWrittenCategories() {
         return listSingleRootCategories(ENGINEER_WRITTEN_ROOT_SUBJECT_NAME);
+    }
+
+    private List<PublicCategoryResponse> listAdspCategories() {
+        return listSingleRootCategories(ADSP_ROOT_SUBJECT_NAME);
     }
 
     private List<PublicCategoryResponse> listSingleRootCategories(String rootName) {
@@ -245,6 +259,12 @@ public class PublicContentService {
         } else if (parent != null && COMPUTER_LITERACY_2_ROOT_SUBJECT_NAME.equals(parent.getName())) {
             certSlug = COMPUTER_LITERACY_2_SLUG;
             certName = COMPUTER_LITERACY_2_NAME;
+        } else if (parent != null && ENGINEER_WRITTEN_ROOT_SUBJECT_NAME.equals(parent.getName())) {
+            certSlug = ENGINEER_WRITTEN_SLUG;
+            certName = ENGINEER_WRITTEN_NAME;
+        } else if (parent != null && ADSP_ROOT_SUBJECT_NAME.equals(parent.getName())) {
+            certSlug = ADSP_SLUG;
+            certName = ADSP_NAME;
         } else {
             certSlug = SQLD_SLUG;
             certName = SQLD_NAME;

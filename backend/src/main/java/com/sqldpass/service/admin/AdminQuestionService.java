@@ -47,8 +47,11 @@ public class AdminQuestionService {
     private static final String ENGINEER_ROOT_NAME = "\uC815\uBCF4\uCC98\uB9AC\uAE30\uC0AC \uC2E4\uAE30";
     private static final String COMPUTER_LITERACY_ROOT_NAME = "\uCEF4\uD4E8\uD130\uD65C\uC6A9\uB2A5\uB825 1\uAE09 \uC2E4\uAE30";
     private static final String COMPUTER_LITERACY_2_ROOT_NAME = "\uCEF4\uD4E8\uD130\uD65C\uC6A9\uB2A5\uB825 2\uAE09 \uD544\uAE30";
+    private static final String ENGINEER_WRITTEN_ROOT_NAME = "\uC815\uBCF4\uCC98\uB9AC\uAE30\uC0AC \uD544\uAE30";
+    private static final String ADSP_ROOT_NAME = "\uB370\uC774\uD130\uBD84\uC11D \uC900\uC804\uBB38\uAC00(ADsP)";
     private static final List<String> SQLD_EXCLUDED_ROOTS = List.of(
-            ENGINEER_ROOT_NAME, COMPUTER_LITERACY_ROOT_NAME, COMPUTER_LITERACY_2_ROOT_NAME);
+            ENGINEER_ROOT_NAME, COMPUTER_LITERACY_ROOT_NAME, COMPUTER_LITERACY_2_ROOT_NAME,
+            ENGINEER_WRITTEN_ROOT_NAME, ADSP_ROOT_NAME);
 
     private final QuestionRepository questionRepository;
     private final SubjectRepository subjectRepository;
@@ -331,6 +334,8 @@ public class AdminQuestionService {
                 case ENGINEER_PRACTICAL -> rootName = ENGINEER_ROOT_NAME;
                 case COMPUTER_LITERACY_1 -> rootName = COMPUTER_LITERACY_ROOT_NAME;
                 case COMPUTER_LITERACY_2 -> rootName = COMPUTER_LITERACY_2_ROOT_NAME;
+                case ENGINEER_WRITTEN -> rootName = ENGINEER_WRITTEN_ROOT_NAME;
+                case ADSP -> rootName = ADSP_ROOT_NAME;
                 default -> { }
             }
         }
@@ -636,6 +641,12 @@ public class AdminQuestionService {
         }
         if (COMPUTER_LITERACY_2_ROOT_NAME.equals(rootName)) {
             return ExamType.COMPUTER_LITERACY_2;
+        }
+        if (ENGINEER_WRITTEN_ROOT_NAME.equals(rootName)) {
+            return ExamType.ENGINEER_WRITTEN;
+        }
+        if (ADSP_ROOT_NAME.equals(rootName)) {
+            return ExamType.ADSP;
         }
         return ExamType.SQLD;
     }

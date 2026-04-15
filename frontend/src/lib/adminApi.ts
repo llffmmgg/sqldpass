@@ -174,7 +174,7 @@ export interface QuestionVerifyResult {
   reason: string;
 }
 
-export type VerificationExamType = "SQLD" | "ENGINEER_PRACTICAL" | "COMPUTER_LITERACY_1" | "COMPUTER_LITERACY_2" | "ENGINEER_WRITTEN";
+export type VerificationExamType = "SQLD" | "ENGINEER_PRACTICAL" | "COMPUTER_LITERACY_1" | "COMPUTER_LITERACY_2" | "ENGINEER_WRITTEN" | "ADSP";
 
 export interface QuestionVerifyHistory {
   runId: number;
@@ -467,7 +467,7 @@ export type MockExamVisibility = "DRAFT" | "PUBLISHED" | "PREMIUM";
 export interface AdminMockExam {
   id: number;
   name: string;
-  examType: "SQLD" | "ENGINEER_PRACTICAL" | "COMPUTER_LITERACY_1" | "COMPUTER_LITERACY_2";
+  examType: "SQLD" | "ENGINEER_PRACTICAL" | "COMPUTER_LITERACY_1" | "COMPUTER_LITERACY_2" | "ENGINEER_WRITTEN" | "ADSP";
   sequence: number;
   totalQuestions: number;
   createdAt: string;
@@ -548,7 +548,7 @@ export function getAdminSolveDetail(solveId: number) {
   return adminFetch<AdminSolveDetail>(`/solves/${solveId}`);
 }
 
-export type CreateMockExamType = "SQLD" | "ENGINEER_PRACTICAL" | "COMPUTER_LITERACY_1" | "COMPUTER_LITERACY_2" | "ENGINEER_WRITTEN";
+export type CreateMockExamType = "SQLD" | "ENGINEER_PRACTICAL" | "COMPUTER_LITERACY_1" | "COMPUTER_LITERACY_2" | "ENGINEER_WRITTEN" | "ADSP";
 
 /** 생성 시 난이도는 SQLD, 정처기 실기, 컴활 1급 모두에 적용된다. */
 export type MockExamCreationDifficulty = "EASY" | "NORMAL" | "HARD" | "VERY_HARD";
@@ -572,7 +572,7 @@ export function deleteMockExam(id: number) {
 // LLM 검증용 Markdown export
 // ----------------------------------------------------------
 
-export type ExportExamType = "SQLD" | "ENGINEER_PRACTICAL" | "COMPUTER_LITERACY_1" | "COMPUTER_LITERACY_2" | "ENGINEER_WRITTEN";
+export type ExportExamType = "SQLD" | "ENGINEER_PRACTICAL" | "COMPUTER_LITERACY_1" | "COMPUTER_LITERACY_2" | "ENGINEER_WRITTEN" | "ADSP";
 
 /**
  * 문제를 .md 파일로 다운로드. 다운로드 즉시 백엔드에서 export 마크가 찍힘.
