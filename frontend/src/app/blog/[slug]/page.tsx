@@ -6,9 +6,11 @@ import remarkGfm from "remark-gfm";
 import { getAllPosts, getAllSlugs, getPostBySlug } from "@/lib/blog";
 import BlogViewCounter from "@/components/BlogViewCounter";
 import PassRateBar from "@/components/blog/PassRateBar";
+import StatBar from "@/components/blog/StatBar";
+import DistributionBar from "@/components/blog/DistributionBar";
 import Highlight from "@/components/blog/Highlight";
 
-const mdxComponents = { PassRateBar, Highlight };
+const mdxComponents = { PassRateBar, StatBar, DistributionBar, Highlight };
 
 type Params = { slug: string };
 
