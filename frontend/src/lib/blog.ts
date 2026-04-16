@@ -14,6 +14,8 @@ export interface BlogPostMeta {
   tags: string[];
   thumbnail?: string;
   readingTime: string;
+  /** 카테고리 내 섹션 그룹 키 (예: "과목별 개념"). 없으면 단일 그룹 폴백. */
+  group?: string;
 }
 
 export interface BlogPost extends BlogPostMeta {
@@ -41,6 +43,7 @@ export function getAllPosts(): BlogPostMeta[] {
         tags: data.tags ?? [],
         thumbnail: data.thumbnail,
         readingTime: readingTime(content).text,
+        group: data.group,
       };
     })
     .sort((a, b) => (a.date > b.date ? -1 : 1));
