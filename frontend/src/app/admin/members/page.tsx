@@ -1,8 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { getMembers, type AdminMember, type AdminMemberPage } from "@/lib/adminApi";
+import {
+  getMembers,
+  type AdminMemberOrder,
+  type AdminMemberPage,
+  type AdminMemberSort,
+} from "@/lib/adminApi";
 import { formatDateTime } from "@/lib/format";
 import PageHeader from "@/components/admin/PageHeader";
 import DataTable, { TableSkeleton } from "@/components/admin/DataTable";
@@ -22,56 +27,33 @@ function providerLabel(p: string) {
   return p?.toLowerCase() ?? "unknown";
 }
 
-type SortKey = "default" | "totalSolved" | "totalCorrect" | "activeDays";
-type SortOrder = "asc" | "desc";
-
-function compareBySortKey(
-  a: AdminMember,
-  b: AdminMember,
-  key: SortKey,
-  order: SortOrder,
-): number {
-  if (key === "default") return 0;
-  const av = a[key] as number;
-  const bv = b[key] as number;
-  const diff = av - bv;
-  return order === "asc" ? diff : -diff;
-}
-
 export default function AdminMembersPage() {
   const [data, setData] = useState<AdminMemberPage | null>(null);
   const [page, setPage] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [sortKey, setSortKey] = useState<SortKey>("default");
-  const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
+  const [sortKey, setSortKey] = useState<AdminMemberSort>("default");
+  const [sortOrder, setSortOrder] = useState<AdminMemberOrder>("desc");
 
   useEffect(() => {
     setLoading(true);
-    getMembers(page, PAGE_SIZE)
+    getMembers(page, PAGE_SIZE, sortKey, sortOrder)
       .then(setData)
       .finally(() => setLoading(false));
-  }, [page]);
-
-  const sortedContent = useMemo(() => {
-    if (!data) return [];
-    if (sortKey === "default") return data.content;
-    return [...data.content].sort((a, b) =>
-      compareBySortKey(a, b, sortKey, sortOrder),
-    );
-  }, [data, sortKey, sortOrder]);
+  }, [page, sortKey, sortOrder]);
 
   const totalPages = data?.totalPages ?? 1;
 
-  const toggleSort = (key: Exclude<SortKey, "default">) => {
+  const toggleSort = (key: Exclude<AdminMemberSort, "default">) => {
     if (sortKey === key) {
       setSortOrder((prev) => (prev === "desc" ? "asc" : "desc"));
     } else {
       setSortKey(key);
       setSortOrder("desc");
     }
+    setPage(0); // 정렬 변경 시 1페이지로
   };
 
-  const sortableFor = (key: Exclude<SortKey, "default">) => ({
+  const sortableFor = (key: Exclude<AdminMemberSort, "default">) => ({
     active: sortKey === key,
     direction: sortOrder,
     onToggle: () => toggleSort(key),
@@ -134,7 +116,7 @@ export default function AdminMembersPage() {
               <DataTable.HeadCell align="right">가입일</DataTable.HeadCell>
             </DataTable.Head>
             <tbody>
-              {sortedContent.map((m) => {
+              {data.content.map((m) => {
                 const provider = providerLabel(m.provider);
                 const tone = PROVIDER_TONE[provider] ?? "neutral";
                 const initial = (m.nickname || "?").trim().charAt(0).toUpperCase();
@@ -225,11 +207,6 @@ export default function AdminMembersPage() {
                   </span>
                   <span className="mx-1">/</span>
                   {data.totalElements.toLocaleString()}
-                  {sortKey !== "default" && (
-                    <span className="ml-2 text-muted/60">
-                      · 현재 페이지 정렬 중
-                    </span>
-                  )}
                 </>
               )}
             </p>

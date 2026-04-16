@@ -282,8 +282,27 @@ export function getVerifyIssueCounts() {
   return adminFetch<Record<VerificationCategory, number>>("/questions/verify/issues/counts");
 }
 
-export function getMembers(page = 0, size = 20) {
-  return adminFetch<AdminMemberPage>(`/members?page=${page}&size=${size}`);
+export type AdminMemberSort =
+  | "default"
+  | "totalSolved"
+  | "totalCorrect"
+  | "activeDays"
+  | "streakDays";
+export type AdminMemberOrder = "asc" | "desc";
+
+export function getMembers(
+  page = 0,
+  size = 20,
+  sort: AdminMemberSort = "default",
+  order: AdminMemberOrder = "desc",
+) {
+  const params = new URLSearchParams({
+    page: String(page),
+    size: String(size),
+    sort,
+    order,
+  });
+  return adminFetch<AdminMemberPage>(`/members?${params.toString()}`);
 }
 
 // 어드민 - 유저 대시보드

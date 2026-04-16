@@ -11,6 +11,7 @@ import {
 import { formatDateTime } from "@/lib/format";
 import PageHeader from "@/components/admin/PageHeader";
 import StatusBadge from "@/components/admin/StatusBadge";
+import StudyActivityChart from "@/components/StudyActivityChart";
 
 export default function AdminMemberDetailPage({
   params,
@@ -76,7 +77,6 @@ export default function AdminMemberDetailPage({
   if (!data) return null;
 
   const { member, stats, recentActivity, subjectStats, weakSubjects, recentSolves } = data;
-  const maxActivity = Math.max(...recentActivity.map((a) => a.count), 1);
 
   return (
     <div>
@@ -115,28 +115,8 @@ export default function AdminMemberDetailPage({
 
       {stats.totalSolved > 0 && (
         <>
-          {/* 최근 14일 활동 */}
-          <section className="mt-8 rounded-xl border border-border bg-surface p-5">
-            <h2 className="text-sm font-semibold text-muted">최근 14일 활동</h2>
-            <div className="mt-4 flex h-32 items-end gap-1.5">
-              {recentActivity.map((a, i) => {
-                const heightPct = (a.count / maxActivity) * 100;
-                return (
-                  <div key={i} className="flex flex-1 flex-col items-center gap-1">
-                    <div
-                      className="w-full rounded-t bg-amber-500/40 transition-all hover:bg-amber-500/60"
-                      style={{ height: `${heightPct}%`, minHeight: a.count > 0 ? "4px" : "0" }}
-                      title={`${a.date}: ${a.count}문제`}
-                    />
-                  </div>
-                );
-              })}
-            </div>
-            <div className="mt-2 flex justify-between text-[10px] text-muted/60">
-              <span>{recentActivity[0]?.date.slice(5)}</span>
-              <span>{recentActivity[recentActivity.length - 1]?.date.slice(5)}</span>
-            </div>
-          </section>
+          {/* 최근 14일 활동 — 사용자 대시보드와 동일한 차트 */}
+          <StudyActivityChart data={recentActivity} />
 
           {/* 과목별 정답률 */}
           {subjectStats.length > 0 && (

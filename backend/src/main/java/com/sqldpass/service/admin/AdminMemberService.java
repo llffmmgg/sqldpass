@@ -50,20 +50,47 @@ public class AdminMemberService {
         this.wrongAnswerService = wrongAnswerService;
     }
 
-    public Page<AdminMemberResponse> getMembers(int page, int size) {
-        // 랭킹용 더미 시드(provider='SEED', V20 마이그레이션)는 어드민 목록에서 숨김
-        Page<MemberEntity> memberPage = memberRepository.findByProviderNot(
+    public Page<AdminMemberResponse> getMembers(int page, int size, String sort, String order) {
+        // 랭킹용 더미 시드(provider='SEED', V20 마이그레이션)는 어드민 목록에서 숨김.
+        // 집계 기반 컬럼(풀이·정답·푼날)은 DB Sort로 표현 불가라 "전체 조회 → 메모리 정렬 → 페이징" 전략을 쓴다.
+        // 어드민 전용이고 회원 수 규모가 크지 않으므로 N+1 제거(batch)로 충분하다.
+        Page<MemberEntity> firstPass = memberRepository.findByProviderNot(
                 "SEED",
-                PageRequest.of(page, size, Sort.by("createdAt").descending()));
+                PageRequest.of(0, Integer.MAX_VALUE, Sort.by("createdAt").descending()));
+        List<MemberEntity> all = firstPass.getContent();
 
-        // 페이지 내 멤버들에 대한 인라인 통계를 batch로 계산 (N+1 방지)
-        List<Long> memberIds = memberPage.getContent().stream().map(MemberEntity::getId).toList();
-        Map<Long, MemberInlineStats> statsByMember = computeInlineStats(memberIds);
+        List<Long> ids = all.stream().map(MemberEntity::getId).toList();
+        Map<Long, MemberInlineStats> statsByMember = computeInlineStats(ids);
 
-        return memberPage.map(m -> {
-            MemberInlineStats s = statsByMember.getOrDefault(m.getId(), MemberInlineStats.EMPTY);
-            return AdminMemberResponse.from(m, s.totalSolved, s.totalCorrect, s.activeDays, s.streakDays);
-        });
+        List<AdminMemberResponse> responses = all.stream()
+                .map(m -> {
+                    MemberInlineStats s = statsByMember.getOrDefault(m.getId(), MemberInlineStats.EMPTY);
+                    return AdminMemberResponse.from(m, s.totalSolved, s.totalCorrect, s.activeDays, s.streakDays);
+                })
+                .collect(java.util.stream.Collectors.toCollection(java.util.ArrayList::new));
+
+        // 정렬 적용 (tie-breaker: id desc → 안정적)
+        Comparator<AdminMemberResponse> comparator = switch (sort == null ? "" : sort) {
+            case "totalSolved" -> Comparator.comparingInt(AdminMemberResponse::totalSolved);
+            case "totalCorrect" -> Comparator.comparingInt(AdminMemberResponse::totalCorrect);
+            case "activeDays" -> Comparator.comparingInt(AdminMemberResponse::activeDays);
+            case "streakDays" -> Comparator.comparingInt(AdminMemberResponse::streakDays);
+            default -> Comparator.comparing(AdminMemberResponse::createdAt);
+        };
+        boolean asc = "asc".equalsIgnoreCase(order);
+        if (!asc) comparator = comparator.reversed();
+        comparator = comparator.thenComparing(Comparator.comparing(AdminMemberResponse::id).reversed());
+        responses.sort(comparator);
+
+        // 페이징
+        int total = responses.size();
+        int fromIndex = Math.min(page * size, total);
+        int toIndex = Math.min(fromIndex + size, total);
+        List<AdminMemberResponse> pageContent = responses.subList(fromIndex, toIndex);
+        return new org.springframework.data.domain.PageImpl<>(
+                pageContent,
+                PageRequest.of(page, size),
+                total);
     }
 
     /** 멤버 인라인 통계 (목록용 — 누적 풀이/정답 수, 풀이 일수, 연속 접속일). */
