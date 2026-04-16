@@ -47,17 +47,24 @@ export default function ExamCountdownStrip() {
         }
 
         const { cert, upcoming, days } = item;
+        const isOngoing = days! < 0; // 이미 시작했지만 기간 내라 upcoming으로 유지된 경우
         const isToday = days === 0;
         const isUrgent = days! > 0 && days! <= 7;
 
-        const target = new Date(upcoming!.date + "T00:00:00+09:00");
-        const dateLabel = `${target.getMonth() + 1}.${target.getDate()}`;
+        const start = new Date(upcoming!.date + "T00:00:00+09:00");
+        const startLabel = `${start.getMonth() + 1}.${start.getDate()}`;
+        const end = upcoming!.endDate
+          ? new Date(upcoming!.endDate + "T00:00:00+09:00")
+          : null;
+        const dateLabel = end
+          ? `${startLabel}~${end.getMonth() + 1}.${end.getDate()}`
+          : startLabel;
 
         return (
           <div
             key={cert.id}
             className={`flex flex-col items-center rounded-xl border ${cert.borderClass} bg-surface px-3 py-2.5 text-center ${
-              isToday || isUrgent ? "shadow-[0_0_16px_var(--accent-glow)]" : ""
+              isOngoing || isToday || isUrgent ? "shadow-[0_0_16px_var(--accent-glow)]" : ""
             }`}
           >
             <span className={`text-[10px] font-semibold uppercase tracking-wide ${cert.colorClass}`}>
@@ -65,10 +72,16 @@ export default function ExamCountdownStrip() {
             </span>
             <span
               className={`mt-1 text-lg font-bold tabular-nums leading-tight ${
-                isToday ? "text-accent" : isUrgent ? "text-primary" : "text-foreground"
+                isOngoing
+                  ? "text-accent"
+                  : isToday
+                    ? "text-accent"
+                    : isUrgent
+                      ? "text-primary"
+                      : "text-foreground"
               }`}
             >
-              {isToday ? "D-DAY" : `D-${days}`}
+              {isOngoing ? "진행중" : isToday ? "D-DAY" : `D-${days}`}
             </span>
             <span className="text-[10px] text-muted">{dateLabel} · {upcoming!.label}</span>
           </div>

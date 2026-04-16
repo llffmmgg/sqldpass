@@ -1,6 +1,9 @@
 export type ExamSchedule = {
   label: string;
-  date: string; // 'YYYY-MM-DD'
+  /** 시험 시작일 (기간 시험인 경우) 또는 시험일 (단일일) — 'YYYY-MM-DD' */
+  date: string;
+  /** 기간 시험(정처기 CBT 등)인 경우 종료일 — 'YYYY-MM-DD'. 없으면 단일일. */
+  endDate?: string;
 };
 
 export type ExamCert = {
@@ -35,10 +38,11 @@ export const EXAM_CERTS: ExamCert[] = [
     colorClass: "text-accent",
     borderClass: "border-accent/30",
     bgClass: "bg-accent/15",
+    // 큐넷 CBT 기간 — 시작~종료일 사이 자유 응시
     schedules: [
-      { label: "2026년 1회", date: "2026-04-18" },
-      { label: "2026년 2회", date: "2026-07-18" },
-      { label: "2026년 3회", date: "2026-10-24" },
+      { label: "2026년 1회", date: "2026-04-18", endDate: "2026-05-06" },
+      { label: "2026년 2회", date: "2026-07-18", endDate: "2026-08-05" },
+      { label: "2026년 3회", date: "2026-10-24", endDate: "2026-11-13" },
     ],
   },
   {
@@ -47,10 +51,11 @@ export const EXAM_CERTS: ExamCert[] = [
     colorClass: "text-purple-500",
     borderClass: "border-purple-500/30",
     bgClass: "bg-purple-500/15",
+    // 큐넷 CBT 기간 — 시작~종료일 사이 자유 응시
     schedules: [
-      { label: "2026년 1회", date: "2026-01-30" },
-      { label: "2026년 2회", date: "2026-05-09" },
-      { label: "2026년 3회", date: "2026-08-07" },
+      { label: "2026년 1회", date: "2026-01-30", endDate: "2026-03-03" },
+      { label: "2026년 2회", date: "2026-05-09", endDate: "2026-05-29" },
+      { label: "2026년 3회", date: "2026-08-07", endDate: "2026-09-01" },
     ],
   },
   {
@@ -86,6 +91,10 @@ export const EXAM_CERTS: ExamCert[] = [
   },
 ];
 
+/**
+ * 현재 날짜 기준 "진행 중 또는 다가올" 시험을 고른다.
+ * 기간 시험(endDate 있음)의 경우 endDate가 지나기 전까지 해당 회차를 유지.
+ */
 export function pickUpcoming(
   schedules: ExamSchedule[],
   now: Date,
@@ -93,8 +102,9 @@ export function pickUpcoming(
   const today = new Date(now);
   today.setHours(0, 0, 0, 0);
   for (const s of schedules) {
-    const d = new Date(s.date + "T00:00:00+09:00");
-    if (d.getTime() >= today.getTime()) return s;
+    const endStr = s.endDate ?? s.date;
+    const end = new Date(endStr + "T23:59:59+09:00");
+    if (end.getTime() >= today.getTime()) return s;
   }
   return null;
 }
