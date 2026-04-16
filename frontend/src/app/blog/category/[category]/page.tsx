@@ -5,7 +5,6 @@ import { getAllCategories, getPostsByCategory } from "@/lib/blog";
 import { getPublicBlogViews } from "@/lib/publicApi";
 import { getCategoryMeta, groupPostsByMeta } from "@/lib/blogGroups";
 import CategoryHero from "@/components/blog/CategoryHero";
-import CategoryNavChips from "@/components/blog/CategoryNavChips";
 import CategoryPostGroup from "@/components/blog/CategoryPostGroup";
 
 type Params = { category: string };
@@ -51,10 +50,6 @@ export default async function BlogCategoryPage({
   }
 
   const meta = getCategoryMeta(decoded);
-  const allCategories = getAllCategories();
-  const counts = Object.fromEntries(
-    allCategories.map((c) => [c.category, c.count]),
-  );
   const sections = groupPostsByMeta(decoded, posts);
   const isSingleSection = sections.length === 1 && sections[0].key === "all";
 
@@ -80,8 +75,6 @@ export default async function BlogCategoryPage({
       </nav>
 
       <CategoryHero meta={meta} posts={posts} totalViews={totalViews} />
-
-      <CategoryNavChips current={decoded} counts={counts} />
 
       <div className="mt-8 space-y-10">
         {sections.map((section) => (
