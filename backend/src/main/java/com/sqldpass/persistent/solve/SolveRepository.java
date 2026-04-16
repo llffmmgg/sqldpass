@@ -1,5 +1,6 @@
 package com.sqldpass.persistent.solve;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.data.domain.Pageable;
@@ -95,4 +96,14 @@ public interface SolveRepository extends JpaRepository<SolveEntity, Long> {
             ORDER BY unique_users DESC
             """, nativeQuery = true)
     List<Object[]> findSubjectSolveStats();
+
+    /**
+     * 지정 시점 이후 풀이한 사용자별 총 풀이 수 집계.
+     * 대시보드 차트의 "전체 평균" 비교선 계산용 — 각 멤버의 14일간 합계를 구한 뒤
+     * JVM에서 평균/일수를 나눠 per-user 일평균을 산출한다.
+     *
+     * 결과 row: [Long memberId, Long totalCount]
+     */
+    @Query("SELECT s.member.id, SUM(s.totalCount) FROM SolveEntity s WHERE s.createdAt >= :since GROUP BY s.member.id")
+    List<Object[]> findMemberTotalsSince(@Param("since") LocalDateTime since);
 }

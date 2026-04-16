@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.sqldpass.controller.solve.dto.OverallStatsResponse;
 import com.sqldpass.controller.solve.dto.SolveRequest;
 import com.sqldpass.controller.solve.dto.SolveResponse;
 import com.sqldpass.controller.solve.dto.SolveSummaryResponse;
@@ -53,5 +54,11 @@ public class SolveController {
     public SolveResponse getSolve(HttpServletRequest request, @PathVariable Long id) {
         Long memberId = (Long) request.getAttribute("memberId");
         return SolveResponse.from(solveService.getSolve(id, memberId));
+    }
+
+    @GetMapping("/api/solves/stats/overall-avg")
+    @Operation(summary = "전체 사용자의 14일 일평균 풀이 수 (대시보드 비교선용)")
+    public OverallStatsResponse getOverallStats() {
+        return solveService.getOverallStats();
     }
 }

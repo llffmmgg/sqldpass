@@ -1,5 +1,6 @@
 package com.sqldpass.service.solve;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -8,6 +9,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.sqldpass.controller.solve.dto.OverallStatsResponse;
 import com.sqldpass.controller.solve.dto.SolveAnswerRequest;
 import com.sqldpass.controller.solve.dto.SolveRequest;
 import com.sqldpass.domain.solve.Solve;
@@ -155,5 +157,28 @@ public class SolveService {
     public SolveEntity getSolveEntityForAdmin(Long id) {
         return solveRepository.findByIdWithDetails(id)
                 .orElseThrow(() -> new SqldpassException(ErrorCode.SOLVE_NOT_FOUND));
+    }
+
+    /**
+     * 최근 14일간 전체 사용자의 per-user 일평균 풀이 수.
+     * = (14일간 푼 사용자들의 총합) / (14일간 푼 사용자 수) / 14
+     * 풀이 데이터가 없으면 0을 반환.
+     */
+    public OverallStatsResponse getOverallStats() {
+        LocalDateTime since = LocalDateTime.now().minusDays(14);
+        List<Object[]> rows = solveRepository.findMemberTotalsSince(since);
+        if (rows.isEmpty()) {
+            return new OverallStatsResponse(0.0);
+        }
+        long totalSum = 0L;
+        for (Object[] row : rows) {
+            Number total = (Number) row[1];
+            if (total != null) {
+                totalSum += total.longValue();
+            }
+        }
+        int userCount = rows.size();
+        double avgDaily = (double) totalSum / userCount / 14.0;
+        return new OverallStatsResponse(avgDaily);
     }
 }

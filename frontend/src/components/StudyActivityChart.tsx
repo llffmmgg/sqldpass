@@ -6,6 +6,8 @@ type DayData = { date: string; count: number };
 
 type StudyActivityChartProps = {
   data: DayData[];
+  /** 전체 사용자 14일 일평균. 제공 시 비교용 점선을 추가 표시. */
+  overallAvg?: number;
 };
 
 const DOW_SHORT = ["일", "월", "화", "수", "목", "금", "토"];
@@ -44,7 +46,7 @@ function buildAreaPath(points: { x: number; y: number }[]): string {
   return d;
 }
 
-export default function StudyActivityChart({ data }: StudyActivityChartProps) {
+export default function StudyActivityChart({ data, overallAvg }: StudyActivityChartProps) {
   const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
   const [mounted, setMounted] = useState(false);
 
@@ -56,14 +58,18 @@ export default function StudyActivityChart({ data }: StudyActivityChartProps) {
   const todayStr = toLocalDateStr(new Date());
   const total = data.reduce((s, d) => s + d.count, 0);
   const avg = total / data.length;
-  const max = Math.max(...data.map((d) => d.count), 1);
+  const hasOverall = typeof overallAvg === "number" && overallAvg > 0;
+  // 전체 평균선이 차트 바깥으로 튀지 않도록 max에 포함
+  const max = Math.max(...data.map((d) => d.count), hasOverall ? overallAvg! : 0, 1);
 
   let maxIdx = 0;
   data.forEach((d, i) => {
     if (d.count > data[maxIdx].count) maxIdx = i;
   });
   const hasMax = data[maxIdx].count > 0;
-  const avgDisplay = avg >= 10 ? Math.round(avg).toString() : avg.toFixed(1);
+  const fmtAvg = (v: number) => (v >= 10 ? Math.round(v).toString() : v.toFixed(1));
+  const avgDisplay = fmtAvg(avg);
+  const overallDisplay = hasOverall ? fmtAvg(overallAvg!) : null;
 
   const enriched = data.map((day, i) => {
     const d = new Date(day.date);
@@ -89,6 +95,10 @@ export default function StudyActivityChart({ data }: StudyActivityChartProps) {
   const areaPath = buildAreaPath(enriched.map((d) => ({ x: d.centerX, y: d.y })));
   const avgY = yFor(avg, max);
   const avgTopPct = (avgY / VB_H) * 100;
+  const overallY = hasOverall ? yFor(overallAvg!, max) : 0;
+  const overallTopPct = hasOverall ? (overallY / VB_H) * 100 : 0;
+  // 두 라벨이 너무 가까우면 충돌하니 세로 위치 살짝 어긋나게
+  const labelsOverlap = hasOverall && Math.abs(avgTopPct - overallTopPct) < 12;
 
   const hovered = hoveredIdx !== null ? enriched[hoveredIdx] : null;
 
@@ -105,9 +115,19 @@ export default function StudyActivityChart({ data }: StudyActivityChartProps) {
             총 <span className="font-semibold text-foreground">{total}</span>
           </span>
           <span className="h-3 w-px bg-border" aria-hidden />
-          <span>
-            일평균 <span className="font-semibold text-foreground">{avgDisplay}</span>
+          <span className="inline-flex items-center gap-1">
+            <span className="inline-block h-0.5 w-3 border-t border-dashed border-muted" aria-hidden />
+            내 평균 <span className="font-semibold text-foreground">{avgDisplay}</span>
           </span>
+          {hasOverall && (
+            <>
+              <span className="h-3 w-px bg-border" aria-hidden />
+              <span className="inline-flex items-center gap-1">
+                <span className="inline-block h-0.5 w-3 border-t border-dashed border-accent" aria-hidden />
+                전체 평균 <span className="font-semibold text-accent">{overallDisplay}</span>
+              </span>
+            </>
+          )}
           {hasMax && (
             <>
               <span className="h-3 w-px bg-border" aria-hidden />
@@ -155,14 +175,42 @@ export default function StudyActivityChart({ data }: StudyActivityChartProps) {
               vectorEffect="non-scaling-stroke"
             />
           )}
+          {hasOverall && (
+            <line
+              x1={0}
+              y1={overallY}
+              x2={VB_W}
+              y2={overallY}
+              stroke="var(--accent)"
+              strokeWidth={1}
+              strokeDasharray="4 4"
+              opacity={0.6}
+              vectorEffect="non-scaling-stroke"
+            />
+          )}
         </svg>
 
         {total > 0 && (
           <span
-            className="pointer-events-none absolute right-0 -translate-y-1/2 rounded-sm bg-surface px-1 text-[10px] font-medium text-muted tabular-nums"
-            style={{ top: `${avgTopPct}%` }}
+            className="pointer-events-none absolute -translate-y-1/2 rounded-sm bg-surface px-1 text-[10px] font-medium text-muted tabular-nums"
+            style={{
+              top: `${avgTopPct}%`,
+              right: labelsOverlap && avgY > overallY ? "3rem" : "0",
+            }}
           >
-            평균 {avgDisplay}
+            내 {avgDisplay}
+          </span>
+        )}
+
+        {hasOverall && (
+          <span
+            className="pointer-events-none absolute -translate-y-1/2 rounded-sm bg-surface px-1 text-[10px] font-medium text-accent tabular-nums"
+            style={{
+              top: `${overallTopPct}%`,
+              right: labelsOverlap && overallY >= avgY ? "3rem" : "0",
+            }}
+          >
+            전체 {overallDisplay}
           </span>
         )}
 

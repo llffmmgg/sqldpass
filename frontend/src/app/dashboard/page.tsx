@@ -6,6 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import {
+  getOverallStats,
   getSolves,
   getSubjects,
   getWrongAnswerStats,
@@ -170,16 +171,18 @@ function DashboardPageContent() {
   const [solves, setSolves] = useState<SolveSummaryResponse[]>([]);
   const [subjectMap, setSubjectMap] = useState<Record<number, string>>({});
   const [weakStats, setWeakStats] = useState<WrongAnswerStatsResponse[]>([]);
+  const [overallAvg, setOverallAvg] = useState<number | undefined>(undefined);
   const [loading, setLoading] = useState(true);
   const [nickname, setNickname] = useState<string | null>(null);
 
   useEffect(() => {
     setNickname(getNickname());
-    Promise.all([getSolves(), getSubjects(), getWrongAnswerStats()])
-      .then(([solvesData, subjects, stats]) => {
+    Promise.all([getSolves(), getSubjects(), getWrongAnswerStats(), getOverallStats()])
+      .then(([solvesData, subjects, stats, overall]) => {
         setSolves(solvesData);
         setSubjectMap(buildSubjectMap(subjects));
         setWeakStats(stats);
+        setOverallAvg(overall.avgDailyCount);
       })
       .finally(() => setLoading(false));
   }, []);
@@ -314,7 +317,7 @@ function DashboardPageContent() {
             </div>
 
             {/* ── 최근 2주 학습량 ──────────────────────────────────── */}
-            <StudyActivityChart data={activity} />
+            <StudyActivityChart data={activity} overallAvg={overallAvg} />
 
             {/* ── 과목별 학습 현황 (정답률 + 오답수 통합) ─────────────── */}
             <div className="mt-6 rounded-xl border border-border bg-surface p-5">

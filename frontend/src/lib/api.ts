@@ -99,6 +99,10 @@ export interface SolveSummaryResponse {
   solvedAt: string;
 }
 
+export interface OverallStatsResponse {
+  avgDailyCount: number;
+}
+
 export interface WrongAnswerResponse {
   questionId: number;
   questionContent: string;
@@ -143,6 +147,10 @@ export function getSolves() {
 
 export function getSolve(id: number) {
   return fetchApi<SolveResponse>(`/solves/${id}`);
+}
+
+export function getOverallStats() {
+  return fetchApi<OverallStatsResponse>("/solves/stats/overall-avg");
 }
 
 export function getWrongAnswers(subjectId?: number) {
