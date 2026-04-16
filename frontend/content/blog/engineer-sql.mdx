@@ -1,0 +1,277 @@
+---
+title: "정처기 실기 SQL 정리 (JOIN·서브쿼리·윈도우 함수)"
+description: "정처기 실기 SQL 파트에서 결과값 예측에 필요한 JOIN, GROUP BY, HAVING, 서브쿼리, 윈도우 함수(RANK·ROW_NUMBER·LAG)를 예제 중심으로 정리합니다."
+date: "2026-04-16"
+category: "정보처리기사"
+tags: ["정보처리기사", "정처기 실기", "SQL", "JOIN", "서브쿼리", "윈도우 함수"]
+---
+
+## SQL은 "결과 행 개수 맞추기"가 절반
+
+실기 SQL 문제는 대부분 **쿼리를 주고 결과 테이블을 쓰라**는 식입니다. 그래서 JOIN 시 행이 몇 개 나오는지, `GROUP BY` 후 어떤 컬럼이 집계되는지를 정확히 추적하는 게 핵심이에요.
+
+문법을 외우는 게 아니라 **실행 결과를 손으로 그려낼 수 있어야** 풀 수 있는 과목입니다.
+
+---
+
+## JOIN — 네 가지 종류와 결과
+
+예시 테이블을 기준으로 설명할게요.
+
+**EMP 테이블**
+
+| emp_id | name | dept_id |
+|--------|------|---------|
+| 1 | 김 | 10 |
+| 2 | 박 | 20 |
+| 3 | 이 | NULL |
+
+**DEPT 테이블**
+
+| dept_id | dept_name |
+|---------|-----------|
+| 10 | 개발 |
+| 20 | 영업 |
+| 30 | 인사 |
+
+### INNER JOIN
+
+```sql
+SELECT e.name, d.dept_name
+FROM   EMP e
+JOIN   DEPT d ON e.dept_id = d.dept_id;
+```
+
+| name | dept_name |
+|------|-----------|
+| 김 | 개발 |
+| 박 | 영업 |
+
+양쪽 모두 매칭되는 행만 나옵니다. `dept_id`가 `NULL`인 이씨와, 직원이 없는 인사부서는 빠집니다.
+
+### LEFT OUTER JOIN
+
+```sql
+SELECT e.name, d.dept_name
+FROM   EMP e
+LEFT JOIN DEPT d ON e.dept_id = d.dept_id;
+```
+
+| name | dept_name |
+|------|-----------|
+| 김 | 개발 |
+| 박 | 영업 |
+| 이 | **NULL** |
+
+왼쪽(EMP)은 전부 나오고, 매칭 안 되는 오른쪽은 `NULL`로 채워집니다.
+
+### RIGHT OUTER JOIN
+
+반대로 오른쪽(DEPT)을 기준으로 전부 나옵니다.
+
+| name | dept_name |
+|------|-----------|
+| 김 | 개발 |
+| 박 | 영업 |
+| NULL | 인사 |
+
+### FULL OUTER JOIN
+
+양쪽을 모두 포함. 매칭 안 되는 쪽은 `NULL`.
+
+| name | dept_name |
+|------|-----------|
+| 김 | 개발 |
+| 박 | 영업 |
+| 이 | NULL |
+| NULL | 인사 |
+
+<Highlight color="red">JOIN 결과 행 개수를 묻는 문제에서 가장 많이 틀리는 지점은 `NULL` 처리와 양쪽 미매칭 행의 유무입니다. 표를 직접 그려 매칭되는지 확인하세요.</Highlight>
+
+---
+
+## GROUP BY와 HAVING
+
+```sql
+SELECT dept_id, COUNT(*) AS cnt
+FROM   EMP
+GROUP BY dept_id
+HAVING COUNT(*) >= 2;
+```
+
+- `GROUP BY`로 묶고, 묶은 그룹에 대한 조건은 **`HAVING`**
+- 일반 조건은 `WHERE`, 집계 결과에 대한 조건은 `HAVING`
+
+### WHERE vs HAVING
+
+| 구분 | 적용 시점 | 집계 함수 사용 |
+|------|-----------|--------------|
+| `WHERE` | GROUP BY 전 | 불가 |
+| `HAVING` | GROUP BY 후 | 가능 |
+
+```sql
+-- 급여가 100 이상인 직원만 대상으로, 부서별 인원 3명 이상
+SELECT dept_id, COUNT(*)
+FROM   EMP
+WHERE  salary >= 100          -- 행 필터링
+GROUP BY dept_id
+HAVING COUNT(*) >= 3;         -- 그룹 필터링
+```
+
+---
+
+## 서브쿼리 — 단일행 / 다중행 / 상관
+
+### 단일행 서브쿼리
+
+```sql
+SELECT *
+FROM   EMP
+WHERE  salary = (SELECT MAX(salary) FROM EMP);
+```
+
+서브쿼리 결과가 한 행일 때 `=`, `>`, `<` 사용.
+
+### 다중행 서브쿼리
+
+```sql
+SELECT *
+FROM   EMP
+WHERE  dept_id IN (SELECT dept_id FROM DEPT WHERE location = 'Seoul');
+```
+
+여러 행일 때는 `IN`, `ANY`, `ALL`.
+
+| 연산자 | 의미 |
+|--------|------|
+| `IN` | 리스트 중 하나와 같으면 참 |
+| `ANY` | 조건을 만족하는 값이 **하나라도** 있으면 참 |
+| `ALL` | **모든** 값을 만족해야 참 |
+
+### 상관 서브쿼리
+
+외부 쿼리의 컬럼을 서브쿼리가 참조하는 구조.
+
+```sql
+-- 각 부서 평균 급여 이상을 받는 직원
+SELECT e.name, e.salary
+FROM   EMP e
+WHERE  e.salary >= (SELECT AVG(salary)
+                    FROM EMP
+                    WHERE dept_id = e.dept_id);
+```
+
+외부 쿼리의 `e.dept_id`를 내부에서 참조하므로, 서브쿼리가 각 외부 행마다 실행됩니다.
+
+---
+
+## 윈도우 함수 — RANK / DENSE_RANK / ROW_NUMBER
+
+집계 함수와 달리 **행을 줄이지 않고** 순위·누계 등을 계산합니다.
+
+```sql
+SELECT name, salary,
+       RANK()       OVER (ORDER BY salary DESC) AS r,
+       DENSE_RANK() OVER (ORDER BY salary DESC) AS dr,
+       ROW_NUMBER() OVER (ORDER BY salary DESC) AS rn
+FROM   EMP;
+```
+
+| name | salary | r | dr | rn |
+|------|--------|---|----|----|
+| A | 500 | 1 | 1 | 1 |
+| B | 400 | 2 | 2 | 2 |
+| C | 400 | 2 | 2 | 3 |
+| D | 300 | 4 | 3 | 4 |
+
+차이를 정리하면 이렇습니다.
+
+| 함수 | 동점 처리 | 다음 순위 |
+|------|-----------|-----------|
+| `RANK` | 같은 순위 부여 | 건너뜀(`1, 2, 2, 4`) |
+| `DENSE_RANK` | 같은 순위 부여 | 건너뛰지 않음(`1, 2, 2, 3`) |
+| `ROW_NUMBER` | 행마다 유일한 번호 | 순차(`1, 2, 3, 4`) |
+
+<Highlight color="amber">단답으로 "RANK와 DENSE_RANK 차이"를 물을 때가 있습니다. 핵심은 '건너뛰는가 아닌가'입니다.</Highlight>
+
+### LAG / LEAD
+
+```sql
+SELECT name, salary,
+       LAG(salary, 1)  OVER (ORDER BY hire_date) AS prev_sal,
+       LEAD(salary, 1) OVER (ORDER BY hire_date) AS next_sal
+FROM   EMP;
+```
+
+- `LAG(col, n)` : n행 **이전** 값
+- `LEAD(col, n)` : n행 **다음** 값
+
+### PARTITION BY
+
+```sql
+SELECT name, dept_id, salary,
+       RANK() OVER (PARTITION BY dept_id ORDER BY salary DESC) AS dept_rank
+FROM   EMP;
+```
+
+부서별로 순위를 별도 계산. `GROUP BY`처럼 묶되 **행 수는 유지**합니다.
+
+---
+
+## 집합 연산
+
+```sql
+SELECT name FROM EMP_A
+UNION          -- 중복 제거 합집합
+SELECT name FROM EMP_B;
+
+SELECT name FROM EMP_A
+UNION ALL      -- 중복 포함 합집합
+SELECT name FROM EMP_B;
+
+SELECT name FROM EMP_A
+INTERSECT      -- 교집합
+SELECT name FROM EMP_B;
+
+SELECT name FROM EMP_A
+MINUS          -- 차집합 (Oracle 문법, 표준은 EXCEPT)
+SELECT name FROM EMP_B;
+```
+
+`UNION`과 `UNION ALL`의 차이는 **중복 제거 여부**. 데이터 양이 많을 때는 `UNION ALL`이 훨씬 빠릅니다.
+
+---
+
+## NULL 연산 주의
+
+```sql
+SELECT NULL = NULL;      -- NULL (true가 아님)
+SELECT NULL IS NULL;     -- true
+SELECT 10 + NULL;        -- NULL (모든 산술 연산이 NULL이 됨)
+SELECT COUNT(*)          -- 전체 행 수
+FROM emp;
+SELECT COUNT(salary)     -- salary가 NULL이 아닌 행 수
+FROM emp;
+```
+
+NULL 비교에는 `IS NULL` / `IS NOT NULL`만 사용해야 합니다. `= NULL`은 항상 거짓도 참도 아닌 NULL을 반환해서 행이 걸러져 나오지 않아요.
+
+---
+
+## 시험에서 자주 틀리는 포인트
+
+| 함정 | 핵심 |
+|------|------|
+| JOIN 결과 행 개수 | NULL 처리 + 매칭 안 되는 행 포함 여부 |
+| WHERE vs HAVING | WHERE는 행 단위, HAVING은 그룹 단위 |
+| RANK vs DENSE_RANK | 건너뛰는가(RANK) vs 연속(DENSE_RANK) |
+| COUNT(*) vs COUNT(col) | 전자는 행 전체, 후자는 NULL 제외 |
+| UNION vs UNION ALL | 중복 제거 여부 |
+
+<Highlight color="green">쿼리를 보면 실행 순서를 먼저 떠올려 보세요. FROM → WHERE → GROUP BY → HAVING → SELECT → ORDER BY. 이 순서만 기억해도 헷갈림이 크게 줄어요.</Highlight>
+
+---
+
+## 정리
+
+SQL은 **결과 테이블을 연필로 직접 만들어 볼 수 있는가**가 합격의 조건입니다. 특히 JOIN과 윈도우 함수는 문제를 보자마자 결과 형태를 머릿속에 그릴 수 있을 때까지 몇 가지 패턴을 반복 연습하는 게 가장 빠른 길이에요.

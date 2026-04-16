@@ -1,0 +1,204 @@
+---
+title: "정처기 실기 Java 정리 (상속·다형성·컬렉션)"
+description: "정처기 실기 Java 파트에서 출력 결과 예측에 꼭 필요한 상속·오버라이딩·인터페이스·컬렉션·Stream·예외 처리를 예제 중심으로 정리합니다."
+date: "2026-04-16"
+category: "정보처리기사"
+tags: ["정보처리기사", "정처기 실기", "Java", "상속", "다형성", "코드 문제"]
+---
+
+## Java는 "OOP 출력 결과"가 핵심
+
+Java 문제는 보통 **2문제 내외** 출제되고, 대부분 **상속·오버라이딩 상황에서 어떤 메서드가 실제로 호출되는지**를 묻습니다.
+
+컬렉션(ArrayList, HashMap)이나 Stream이 섞여 나오는 해도 있지만, 뼈대는 늘 다형성입니다. OOP 개념이 흔들리면 바로 오답으로 이어지는 과목이에요.
+
+---
+
+## 클래스와 객체 기본
+
+```java
+class Car {
+    String name;
+    Car(String name) { this.name = name; }
+    void run() { System.out.println(name + " 달린다"); }
+}
+
+Car c = new Car("소나타");
+c.run();  // 소나타 달린다
+```
+
+- `new`가 실행될 때 생성자가 호출됨
+- `this`는 현재 인스턴스를 가리킴
+
+---
+
+## 오버로딩 vs 오버라이딩
+
+두 개념은 이름만 비슷하고 전혀 다른 메커니즘입니다. 단답으로 구분을 묻는 문제가 거의 매회 어딘가에서 나와요.
+
+| 구분 | 오버로딩 (Overloading) | 오버라이딩 (Overriding) |
+|------|------------------------|-------------------------|
+| 의미 | 같은 이름, 다른 매개변수 | 부모 메서드를 재정의 |
+| 조건 | 매개변수 타입/개수 달라야 함 | 시그니처 동일 + 반환 타입 동일(또는 공변) |
+| 위치 | 같은 클래스 내부 | 상속 관계에서 자식 클래스 |
+| 결정 시점 | **컴파일 타임**(정적 바인딩) | **런타임**(동적 바인딩) |
+
+<Highlight color="red">실기에서는 "메서드가 호출되는 시점에 어느 버전이 실행되는가"로 물어보기 때문에 동적/정적 바인딩 차이를 알고 있어야 합니다.</Highlight>
+
+### 오버라이딩 출력 예제
+
+```java
+class Animal {
+    void sound() { System.out.println("소리"); }
+}
+class Dog extends Animal {
+    void sound() { System.out.println("멍멍"); }
+}
+
+Animal a = new Dog();
+a.sound();  // 멍멍
+```
+
+참조 타입은 `Animal`이지만 실제 객체는 `Dog`이므로, 동적 바인딩에 따라 **자식 클래스의 메서드**가 호출됩니다.
+
+### 필드는 다르다
+
+```java
+class P { int x = 10; }
+class C extends P { int x = 20; }
+
+P p = new C();
+System.out.println(p.x);  // 10
+```
+
+필드는 오버라이딩 대상이 아니라서 **참조 타입(P)의 필드**가 선택됩니다. 메서드만 동적 바인딩되고 필드는 정적 바인딩이라는 점이 단답 포인트.
+
+---
+
+## 추상 클래스 vs 인터페이스
+
+| 구분 | 추상 클래스 | 인터페이스 |
+|------|-------------|-----------|
+| 선언 | `abstract class` | `interface` |
+| 다중 상속 | 단일 상속만 | 다중 구현 가능 |
+| 구현 메서드 | 가능 | Java 8부터 `default` 메서드로 가능 |
+| 필드 | 인스턴스 필드 가능 | 상수(`public static final`)만 |
+| 생성자 | 있음(상속 시 호출) | 없음 |
+
+Java 8 이후로 인터페이스에도 `default` 메서드가 들어왔기 때문에, "구현 메서드가 있는가"만으로는 둘을 구분할 수 없게 됐습니다. **상태(필드)를 가질 수 있는가**와 **단일/다중 상속**이 더 정확한 구분 기준이에요.
+
+---
+
+## 컬렉션 — ArrayList / HashMap / HashSet
+
+| 컬렉션 | 특징 | 순서 | 중복 |
+|--------|------|------|------|
+| `ArrayList` | 인덱스 기반 리스트 | 삽입 순서 유지 | 허용 |
+| `HashMap` | 키-값 쌍 | 보장 없음 | 키 중복 불가, 값 중복 허용 |
+| `HashSet` | 집합 | 보장 없음 | 불가 |
+| `LinkedHashMap` | HashMap + 순서 유지 | 삽입 순서 | 키 중복 불가 |
+| `TreeMap` | 정렬된 맵 | 키의 정렬 순서 | 키 중복 불가 |
+
+```java
+Map<String, Integer> m = new HashMap<>();
+m.put("A", 1);
+m.put("B", 2);
+m.put("A", 3);
+System.out.println(m.get("A"));  // 3 (덮어씀)
+System.out.println(m.size());    // 2
+```
+
+같은 키로 `put`하면 값이 교체됩니다. `size()`는 키 개수 기준.
+
+---
+
+## String vs StringBuilder
+
+```java
+String s = "Hello";
+s += " World";        // 새 문자열 객체 생성
+System.out.println(s);  // Hello World
+
+StringBuilder sb = new StringBuilder("Hello");
+sb.append(" World");  // 같은 객체 수정
+System.out.println(sb);  // Hello World
+```
+
+- `String`은 **불변(immutable)**. 연결할 때마다 객체가 새로 생김
+- `StringBuilder`는 **가변**. 같은 객체에 덧붙임 → 반복문에서 훨씬 빠름
+
+단답으로 "불변 클래스의 예"를 묻는 문제가 있는데, 답은 `String`입니다.
+
+### `==` vs `equals`
+
+```java
+String a = "hi";
+String b = "hi";
+String c = new String("hi");
+
+System.out.println(a == b);        // true  (리터럴 풀에서 같은 객체 공유)
+System.out.println(a == c);        // false (new로 만든 다른 객체)
+System.out.println(a.equals(c));   // true  (내용 비교)
+```
+
+`==`은 **참조 비교**, `equals`는 **값 비교**입니다. 문자열을 비교할 때는 반드시 `equals`를 써야 해요.
+
+---
+
+## 예외 처리
+
+```java
+try {
+    int[] arr = new int[3];
+    arr[10] = 1;  // ArrayIndexOutOfBoundsException
+} catch (ArrayIndexOutOfBoundsException e) {
+    System.out.println("범위 초과");
+} finally {
+    System.out.println("항상 실행");
+}
+// 출력: 범위 초과 / 항상 실행
+```
+
+- `try`에서 예외가 발생하면 해당 `catch`로 점프
+- `finally`는 예외 발생 여부와 무관하게 항상 실행
+- **Checked**(컴파일 시 잡아야 함): `IOException`, `SQLException`
+- **Unchecked**(RuntimeException 계열): `NullPointerException`, `ArrayIndexOutOfBoundsException`
+
+---
+
+## Stream API 기본 (Java 8+)
+
+```java
+List<Integer> nums = List.of(1, 2, 3, 4, 5);
+int sum = nums.stream()
+              .filter(n -> n % 2 == 0)
+              .mapToInt(Integer::intValue)
+              .sum();
+System.out.println(sum);  // 6  (2 + 4)
+```
+
+- `filter` : 조건에 맞는 원소만 통과
+- `map` / `mapToInt` : 변환
+- `collect`, `sum`, `count` : 최종 연산
+
+Stream은 **지연 평가**라서 `filter`나 `map`이 적혀 있어도 최종 연산(`collect`, `sum` 등)이 호출되기 전까지는 실행되지 않습니다.
+
+---
+
+## 자주 틀리는 포인트
+
+| 함정 | 핵심 |
+|------|------|
+| 메서드 오버라이딩에서 반환 타입 | 공변 반환(자식 타입) 가능 |
+| 필드는 오버라이딩 안 됨 | 참조 타입 기준으로 접근 |
+| String `==` 비교 | 리터럴 풀 때문에 `true`로 착각 |
+| `final` 키워드 | 클래스=상속 금지, 메서드=오버라이딩 금지, 변수=재할당 금지 |
+| 정적 메서드는 오버라이딩 불가 | 숨김(hiding)은 가능하지만 다형성 대상 아님 |
+
+<Highlight color="green">시험에서 출력 결과를 묻는 Java 문제는 "참조 타입 vs 실제 객체 타입"을 먼저 확인하는 습관을 들이면 실수가 크게 줄어요.</Highlight>
+
+---
+
+## 정리
+
+Java는 **다형성의 동작 원리**만 잡으면 출제되는 형태가 거의 패턴화돼 있습니다. 오버라이딩·오버로딩·필드 접근 규칙을 한 페이지로 정리해 두고, 코드 몇 문제만 실제로 손으로 따라가 보면 시험장에서 당황할 일이 크게 줄어요.

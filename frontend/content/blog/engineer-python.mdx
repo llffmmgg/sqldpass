@@ -1,0 +1,233 @@
+---
+title: "정처기 실기 Python 정리 (슬라이싱·함수·컴프리헨션)"
+description: "정처기 실기 Python 파트에서 자주 출제되는 슬라이싱, 리스트·딕셔너리, 가변 기본 인자 함정, 리스트 컴프리헨션, 클로저를 정확한 출력값 예제로 정리합니다."
+date: "2026-04-16"
+category: "정보처리기사"
+tags: ["정보처리기사", "정처기 실기", "Python", "슬라이싱", "코드 문제"]
+---
+
+## Python은 "쉬워 보이지만 함정이 많은" 과목
+
+Python은 문법이 단순해서 방심하기 쉬운데, 실기에서는 **슬라이싱, 컴프리헨션, 가변 기본 인자** 같은 Python만의 특성을 정확히 아는지를 집중적으로 묻습니다.
+
+출제 문항 수는 1–2문제 정도지만, 채점 방식이 "출력값 정확히 맞추기"라 한 문제를 부분 점수 없이 통째로 잃기 쉬운 과목이에요.
+
+---
+
+## 슬라이싱 — `[start:stop:step]`
+
+```python
+a = [1, 2, 3, 4, 5]
+print(a[1:4])    # [2, 3, 4]
+print(a[:3])     # [1, 2, 3]
+print(a[::2])    # [1, 3, 5]
+print(a[::-1])   # [5, 4, 3, 2, 1]
+print(a[-2:])    # [4, 5]
+```
+
+규칙 세 가지만 외우면 거의 다 풀립니다.
+
+- `stop`은 **미포함**
+- 음수 인덱스는 뒤에서부터(`-1`이 마지막)
+- `step`이 음수면 **거꾸로** 훑음
+
+<Highlight color="red">`a[::-1]`은 문자열/리스트 뒤집기의 관용구입니다. 거의 매 해 한 번은 등장한다고 봐도 됩니다.</Highlight>
+
+### 문자열 슬라이싱
+
+```python
+s = "HELLO"
+print(s[1:4])    # ELL
+print(s[::-1])   # OLLEH
+print(s[-3:])    # LLO
+```
+
+문자열도 리스트와 동일한 규칙이 적용됩니다.
+
+---
+
+## 리스트 vs 튜플
+
+| 구분 | 리스트 `[]` | 튜플 `()` |
+|------|-------------|-----------|
+| 가변성 | 변경 가능 | **변경 불가** |
+| 메서드 | `append`, `pop`, `remove` 등 | 조회 관련만 |
+| 용도 | 원소가 바뀔 수 있는 데이터 | 고정된 레코드, 딕셔너리 키 |
+| 생성 | `[1, 2, 3]` | `(1, 2, 3)` |
+
+```python
+t = (1, 2, 3)
+t[0] = 99  # TypeError: 'tuple' object does not support item assignment
+```
+
+---
+
+## 딕셔너리와 셋
+
+```python
+d = {"a": 1, "b": 2}
+d["c"] = 3
+print(d.get("a"))       # 1
+print(d.get("z", 0))    # 0 (기본값)
+print("a" in d)         # True
+print(list(d.keys()))   # ['a', 'b', 'c']
+```
+
+- `d["키"]`는 없는 키면 `KeyError`. `d.get("키")`는 `None` 반환
+- `in` 연산자로 키 존재 여부 확인
+
+```python
+s = {1, 2, 3}
+s.add(2)
+print(s)  # {1, 2, 3}  (중복 무시)
+```
+
+셋은 중복을 자동으로 제거합니다.
+
+---
+
+## 함수의 기본값과 가변 기본 인자 함정
+
+Python은 **함수 정의 시점**에 기본값 객체를 **한 번만** 만듭니다. 그래서 가변 객체(리스트 등)를 기본값으로 쓰면 호출할 때마다 같은 객체를 공유해요.
+
+```python
+def add(item, box=[]):
+    box.append(item)
+    return box
+
+print(add(1))   # [1]
+print(add(2))   # [1, 2]  ← 새 리스트가 아님!
+print(add(3))   # [1, 2, 3]
+```
+
+<Highlight color="amber">기본값으로 `[]`나 `{}`을 쓰면 함수를 호출할 때마다 누적됩니다. 단답형으로 "이 코드의 출력은?" 하는 문제로 자주 나와요.</Highlight>
+
+올바른 패턴은 이렇습니다.
+
+```python
+def add(item, box=None):
+    if box is None:
+        box = []
+    box.append(item)
+    return box
+```
+
+---
+
+## `*args`와 `**kwargs`
+
+```python
+def demo(*args, **kwargs):
+    print(args)
+    print(kwargs)
+
+demo(1, 2, 3, name="Kim", age=25)
+# args   → (1, 2, 3)
+# kwargs → {'name': 'Kim', 'age': 25}
+```
+
+- `*args` : 위치 인자를 **튜플**로 받음
+- `**kwargs` : 키워드 인자를 **딕셔너리**로 받음
+
+호출 측에서도 같은 연산자로 풀어서 전달할 수 있어요.
+
+```python
+nums = [1, 2, 3]
+print(sum(nums))     # 6
+print(sum(*[nums]))  # 6 (단일 리스트 언패킹)
+```
+
+---
+
+## 리스트 컴프리헨션
+
+```python
+nums = [1, 2, 3, 4, 5]
+squares = [n * n for n in nums if n % 2 == 1]
+print(squares)  # [1, 9, 25]
+```
+
+`[표현식 for 요소 in 반복가능 if 조건]` 순서.
+
+### 2중 컴프리헨션
+
+```python
+pairs = [(i, j) for i in range(2) for j in range(3)]
+print(pairs)
+# [(0, 0), (0, 1), (0, 2), (1, 0), (1, 1), (1, 2)]
+```
+
+바깥쪽 `for`가 외부 루프, 안쪽 `for`가 내부 루프입니다. 중첩 반복문과 동일한 순서로 실행돼요.
+
+---
+
+## 클로저와 데코레이터
+
+```python
+def counter():
+    cnt = 0
+    def inner():
+        nonlocal cnt
+        cnt += 1
+        return cnt
+    return inner
+
+c = counter()
+print(c())  # 1
+print(c())  # 2
+```
+
+`inner` 함수가 바깥 함수의 지역 변수 `cnt`를 기억해서 호출마다 유지하는 것이 **클로저**입니다. `nonlocal`을 빼면 `UnboundLocalError`가 나요.
+
+### 데코레이터 기본형
+
+```python
+def log(fn):
+    def wrapper(*args, **kwargs):
+        print(f"호출: {fn.__name__}")
+        return fn(*args, **kwargs)
+    return wrapper
+
+@log
+def hello():
+    print("안녕")
+
+hello()
+# 호출: hello
+# 안녕
+```
+
+`@log`는 `hello = log(hello)`와 같은 뜻입니다.
+
+---
+
+## 정수 나눗셈과 실수
+
+```python
+print(10 / 3)   # 3.3333333333333335 (float)
+print(10 // 3)  # 3                 (int, 내림)
+print(10 % 3)   # 1
+print(2 ** 10)  # 1024              (거듭제곱)
+```
+
+Python 3에서 `/`는 항상 실수, `//`는 내림한 정수입니다.
+
+---
+
+## 시험에서 자주 틀리는 포인트
+
+| 헷갈리는 지점 | 정답 |
+|--------------|------|
+| `list.append(x)` 반환값 | `None` (x를 넣은 리스트가 아님) |
+| `list.sort()` vs `sorted(list)` | 전자는 제자리 정렬(반환 None), 후자는 새 리스트 반환 |
+| 문자열은 불변 | `s[0] = 'X'` 불가 → `TypeError` |
+| 얕은 복사 | `a = b` 는 같은 객체를 참조. `a = b[:]` 또는 `a = list(b)` |
+| `range(n)` | 0 이상 n **미만** |
+
+<Highlight color="green">시험지 여백에 직접 리스트와 인덱스를 그려놓고 슬라이싱을 따라가는 게 가장 확실합니다. 눈으로만 보면 경계값에서 틀리기 쉬워요.</Highlight>
+
+---
+
+## 정리
+
+Python은 문법이 짧아서 자칫 훑고 넘어가기 쉬운데, 실기는 그 **짧은 문법에 숨은 특수 규칙**을 묻습니다. 슬라이싱의 stop 미포함, 가변 기본 인자, `//`와 `/`의 차이 — 이 세 가지만 확실히 잡아도 Python 문제는 놓치지 않아요.
