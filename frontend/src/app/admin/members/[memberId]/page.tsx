@@ -9,6 +9,8 @@ import {
   type AdminSolveDetail,
 } from "@/lib/adminApi";
 import { formatDateTime } from "@/lib/format";
+import PageHeader from "@/components/admin/PageHeader";
+import StatusBadge from "@/components/admin/StatusBadge";
 
 export default function AdminMemberDetailPage({
   params,
@@ -49,14 +51,26 @@ export default function AdminMemberDetailPage({
     }
   }
 
-  if (loading) return <p className="mt-6 text-muted">로딩 중...</p>;
+  if (loading) {
+    return (
+      <div>
+        <PageHeader title="회원 상세" backHref="/admin/members" crumbs={[{ label: "회원 관리", href: "/admin/members" }, { label: "상세" }]} />
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="h-[88px] animate-pulse rounded-xl border border-border bg-surface" />
+          ))}
+        </div>
+        <div className="mt-6 h-48 animate-pulse rounded-xl border border-border bg-surface" />
+      </div>
+    );
+  }
   if (error)
     return (
       <div>
-        <p className="text-red-400">{error}</p>
-        <Link href="/admin/members" className="mt-4 inline-block text-sm text-muted hover:text-foreground">
-          ← 멤버 목록으로
-        </Link>
+        <PageHeader title="회원 상세" backHref="/admin/members" />
+        <div className="rounded-xl border border-red-500/30 bg-red-500/5 p-5 text-sm text-red-400">
+          {error}
+        </div>
       </div>
     );
   if (!data) return null;
@@ -66,25 +80,26 @@ export default function AdminMemberDetailPage({
 
   return (
     <div>
-      {/* 헤더 */}
-      <div>
-        <Link href="/admin/members" className="text-sm text-muted hover:text-foreground">
-          ← 멤버 목록으로
-        </Link>
-        <h1 className="mt-2 text-2xl font-bold">{member.nickname}</h1>
-        <div className="mt-1 flex items-center gap-3 text-sm text-muted">
-          <span>ID #{member.id}</span>
-          <span>·</span>
-          <span className="rounded bg-violet-500/10 px-2 py-0.5 text-xs text-violet-400">
-            {member.provider}
-          </span>
-          <span>·</span>
-          <span>가입일 {formatDateTime(member.createdAt)}</span>
-        </div>
-      </div>
+      <PageHeader
+        title={member.nickname}
+        backHref="/admin/members"
+        crumbs={[{ label: "회원 관리", href: "/admin/members" }, { label: member.nickname }]}
+        actions={
+          <>
+            <span className="inline-flex items-center gap-1.5 text-xs text-muted">
+              <span className="text-muted/60">ID</span>
+              <span className="font-mono text-foreground">#{member.id}</span>
+            </span>
+            <StatusBadge tone="violet">{(member.provider || "").toLowerCase()}</StatusBadge>
+            <span className="text-xs text-muted">
+              가입 <span className="text-foreground">{formatDateTime(member.createdAt)}</span>
+            </span>
+          </>
+        }
+      />
 
       {/* 핵심 지표 — 풀이 수 + 연속 접속일을 가장 강조 */}
-      <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <BigMetric label="누적 풀이" value={stats.totalSolved} unit="문제" highlight />
         <BigMetric label="연속 접속" value={stats.streakDays} unit="일" highlight />
         <BigMetric label="정답률" value={stats.overallRate} unit="%" colorByRate={stats.overallRate} />
