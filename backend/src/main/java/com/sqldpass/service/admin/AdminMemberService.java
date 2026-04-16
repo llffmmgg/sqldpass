@@ -62,23 +62,23 @@ public class AdminMemberService {
 
         return memberPage.map(m -> {
             MemberInlineStats s = statsByMember.getOrDefault(m.getId(), MemberInlineStats.EMPTY);
-            return AdminMemberResponse.from(m, s.totalSolved, s.streakDays);
+            return AdminMemberResponse.from(m, s.totalSolved, s.totalCorrect, s.activeDays, s.streakDays);
         });
     }
 
-    /** 멤버 인라인 통계 (목록용 — 누적 풀이 수 + 연속 접속일). */
-    private record MemberInlineStats(int totalSolved, int streakDays) {
-        static final MemberInlineStats EMPTY = new MemberInlineStats(0, 0);
+    /** 멤버 인라인 통계 (목록용 — 누적 풀이/정답 수, 풀이 일수, 연속 접속일). */
+    private record MemberInlineStats(int totalSolved, int totalCorrect, int activeDays, int streakDays) {
+        static final MemberInlineStats EMPTY = new MemberInlineStats(0, 0, 0, 0);
     }
 
     private Map<Long, MemberInlineStats> computeInlineStats(List<Long> memberIds) {
         if (memberIds.isEmpty()) return Map.of();
 
-        // [member_id, totalCount, createdAt] 단일 배치 쿼리
+        // [member_id, totalCount, correctCount, createdAt] 단일 배치 쿼리
         List<Object[]> rows = solveRepository.findStatsByMemberIds(memberIds);
 
-        // memberId → 풀이 합계
         Map<Long, Integer> totalsByMember = new HashMap<>();
+        Map<Long, Integer> correctsByMember = new HashMap<>();
         // memberId → 풀이가 있었던 LocalDate 집합
         Map<Long, java.util.Set<LocalDate>> datesByMember = new HashMap<>();
 
@@ -86,9 +86,11 @@ public class AdminMemberService {
         for (Object[] row : rows) {
             Long memberId = ((Number) row[0]).longValue();
             int totalCount = ((Number) row[1]).intValue();
-            LocalDateTime createdAt = (LocalDateTime) row[2];
+            int correctCount = ((Number) row[2]).intValue();
+            LocalDateTime createdAt = (LocalDateTime) row[3];
 
             totalsByMember.merge(memberId, totalCount, Integer::sum);
+            correctsByMember.merge(memberId, correctCount, Integer::sum);
             datesByMember
                     .computeIfAbsent(memberId, k -> new java.util.HashSet<>())
                     .add(createdAt.atZone(zone).toLocalDate());
@@ -97,9 +99,11 @@ public class AdminMemberService {
         Map<Long, MemberInlineStats> result = new HashMap<>();
         for (Long memberId : memberIds) {
             int total = totalsByMember.getOrDefault(memberId, 0);
+            int correct = correctsByMember.getOrDefault(memberId, 0);
             java.util.Set<LocalDate> dates = datesByMember.getOrDefault(memberId, java.util.Set.of());
+            int activeDays = dates.size();
             int streak = computeStreakFromDates(dates);
-            result.put(memberId, new MemberInlineStats(total, streak));
+            result.put(memberId, new MemberInlineStats(total, correct, activeDays, streak));
         }
         return result;
     }

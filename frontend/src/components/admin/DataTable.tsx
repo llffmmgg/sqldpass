@@ -51,18 +51,65 @@ function Head({ children }: { children: ReactNode }) {
 
 type HeadCellProps = ThHTMLAttributes<HTMLTableCellElement> & {
   align?: "left" | "right" | "center";
+  /** 정렬 가능 컬럼일 때 지정. active면 방향 표시. */
+  sortable?: {
+    active: boolean;
+    direction: "asc" | "desc";
+    onToggle: () => void;
+  };
 };
 
-function HeadCell({ className = "", align = "left", children, ...rest }: HeadCellProps) {
+function HeadCell({
+  className = "",
+  align = "left",
+  sortable,
+  children,
+  ...rest
+}: HeadCellProps) {
   const alignClass =
     align === "right" ? "text-right" : align === "center" ? "text-center" : "text-left";
+  const base = `px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-muted ${alignClass} ${className}`;
+  if (!sortable) {
+    return (
+      <th {...rest} className={base}>
+        {children}
+      </th>
+    );
+  }
+  const { active, direction, onToggle } = sortable;
   return (
-    <th
-      {...rest}
-      className={`px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-muted ${alignClass} ${className}`}
-    >
-      {children}
+    <th {...rest} className={base}>
+      <button
+        type="button"
+        onClick={onToggle}
+        aria-sort={active ? (direction === "asc" ? "ascending" : "descending") : "none"}
+        className={`inline-flex items-center gap-1 transition-colors ${
+          active ? "text-foreground" : "hover:text-foreground"
+        } ${align === "right" ? "ml-auto" : ""}`}
+      >
+        <span>{children}</span>
+        <SortIcon active={active} direction={direction} />
+      </button>
     </th>
+  );
+}
+
+function SortIcon({ active, direction }: { active: boolean; direction: "asc" | "desc" }) {
+  if (!active) {
+    return (
+      <svg className="h-3 w-3 text-muted/40" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M8 9l4-4 4 4m-8 6l4 4 4-4" />
+      </svg>
+    );
+  }
+  return direction === "asc" ? (
+    <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" />
+    </svg>
+  ) : (
+    <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+    </svg>
   );
 }
 

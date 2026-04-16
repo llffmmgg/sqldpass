@@ -115,6 +115,8 @@ export interface AdminMember {
   email: string | null;
   createdAt: string;
   totalSolved: number;
+  totalCorrect: number;
+  activeDays: number;
   streakDays: number;
 }
 

@@ -1,13 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { getMembers, type AdminMemberPage } from "@/lib/adminApi";
+import { getMembers, type AdminMember, type AdminMemberPage } from "@/lib/adminApi";
 import { formatDateTime } from "@/lib/format";
 import PageHeader from "@/components/admin/PageHeader";
 import DataTable, { TableSkeleton } from "@/components/admin/DataTable";
 import EmptyState from "@/components/admin/EmptyState";
 import StatusBadge from "@/components/admin/StatusBadge";
+
+const PAGE_SIZE = 50;
 
 const PROVIDER_TONE: Record<string, "violet" | "blue" | "amber" | "neutral"> = {
   google: "blue",
@@ -20,26 +22,69 @@ function providerLabel(p: string) {
   return p?.toLowerCase() ?? "unknown";
 }
 
+type SortKey = "default" | "totalSolved" | "totalCorrect" | "activeDays";
+type SortOrder = "asc" | "desc";
+
+function compareBySortKey(
+  a: AdminMember,
+  b: AdminMember,
+  key: SortKey,
+  order: SortOrder,
+): number {
+  if (key === "default") return 0;
+  const av = a[key] as number;
+  const bv = b[key] as number;
+  const diff = av - bv;
+  return order === "asc" ? diff : -diff;
+}
+
 export default function AdminMembersPage() {
   const [data, setData] = useState<AdminMemberPage | null>(null);
   const [page, setPage] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [sortKey, setSortKey] = useState<SortKey>("default");
+  const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
 
   useEffect(() => {
     setLoading(true);
-    getMembers(page, 20)
+    getMembers(page, PAGE_SIZE)
       .then(setData)
       .finally(() => setLoading(false));
   }, [page]);
 
+  const sortedContent = useMemo(() => {
+    if (!data) return [];
+    if (sortKey === "default") return data.content;
+    return [...data.content].sort((a, b) =>
+      compareBySortKey(a, b, sortKey, sortOrder),
+    );
+  }, [data, sortKey, sortOrder]);
+
   const totalPages = data?.totalPages ?? 1;
+
+  const toggleSort = (key: Exclude<SortKey, "default">) => {
+    if (sortKey === key) {
+      setSortOrder((prev) => (prev === "desc" ? "asc" : "desc"));
+    } else {
+      setSortKey(key);
+      setSortOrder("desc");
+    }
+  };
+
+  const sortableFor = (key: Exclude<SortKey, "default">) => ({
+    active: sortKey === key,
+    direction: sortOrder,
+    onToggle: () => toggleSort(key),
+  });
 
   return (
     <div>
       <PageHeader
         title="회원 관리"
         description={
-          data ? `총 ${data.totalElements.toLocaleString()}명의 회원이 등록되어 있습니다.` : "회원 목록을 불러오는 중..."
+          data
+            ? `총 ${data.totalElements.toLocaleString()}명의 회원이 등록되어 있습니다.`
+            : "회원 목록을 불러오는 중..."
         }
       />
 
@@ -49,12 +94,14 @@ export default function AdminMembersPage() {
             <DataTable.HeadCell>ID</DataTable.HeadCell>
             <DataTable.HeadCell>닉네임</DataTable.HeadCell>
             <DataTable.HeadCell align="right">풀이 수</DataTable.HeadCell>
+            <DataTable.HeadCell align="right">정답 수</DataTable.HeadCell>
+            <DataTable.HeadCell align="right">푼 날</DataTable.HeadCell>
             <DataTable.HeadCell align="right">연속 접속</DataTable.HeadCell>
             <DataTable.HeadCell>이메일</DataTable.HeadCell>
             <DataTable.HeadCell>가입 방식</DataTable.HeadCell>
             <DataTable.HeadCell align="right">가입일</DataTable.HeadCell>
           </DataTable.Head>
-          <TableSkeleton cols={7} rows={8} />
+          <TableSkeleton cols={9} rows={10} />
         </DataTable>
       ) : !data || data.content.length === 0 ? (
         <EmptyState
@@ -68,28 +115,42 @@ export default function AdminMembersPage() {
         />
       ) : (
         <>
-          <DataTable maxHeight="70vh">
+          <DataTable>
             <DataTable.Head>
               <DataTable.HeadCell>ID</DataTable.HeadCell>
               <DataTable.HeadCell>닉네임</DataTable.HeadCell>
-              <DataTable.HeadCell align="right">풀이 수</DataTable.HeadCell>
+              <DataTable.HeadCell align="right" sortable={sortableFor("totalSolved")}>
+                풀이 수
+              </DataTable.HeadCell>
+              <DataTable.HeadCell align="right" sortable={sortableFor("totalCorrect")}>
+                정답 수
+              </DataTable.HeadCell>
+              <DataTable.HeadCell align="right" sortable={sortableFor("activeDays")}>
+                푼 날
+              </DataTable.HeadCell>
               <DataTable.HeadCell align="right">연속 접속</DataTable.HeadCell>
               <DataTable.HeadCell>이메일</DataTable.HeadCell>
               <DataTable.HeadCell>가입 방식</DataTable.HeadCell>
               <DataTable.HeadCell align="right">가입일</DataTable.HeadCell>
             </DataTable.Head>
             <tbody>
-              {data.content.map((m) => {
+              {sortedContent.map((m) => {
                 const provider = providerLabel(m.provider);
                 const tone = PROVIDER_TONE[provider] ?? "neutral";
                 const initial = (m.nickname || "?").trim().charAt(0).toUpperCase();
+                const rate =
+                  m.totalSolved > 0
+                    ? Math.round((m.totalCorrect / m.totalSolved) * 100)
+                    : 0;
                 return (
                   <DataTable.Row key={m.id}>
-                    <DataTable.Cell mono className="text-muted">#{m.id}</DataTable.Cell>
+                    <DataTable.Cell mono className="text-muted">
+                      #{m.id}
+                    </DataTable.Cell>
                     <DataTable.Cell>
                       <Link
                         href={`/admin/members/${m.id}`}
-                        className="inline-flex items-center gap-2.5 font-medium text-foreground hover:text-primary transition-colors"
+                        className="inline-flex items-center gap-2.5 font-medium text-foreground transition-colors hover:text-primary"
                       >
                         <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
                           {initial}
@@ -105,6 +166,30 @@ export default function AdminMembersPage() {
                       )}
                     </DataTable.Cell>
                     <DataTable.Cell align="right" mono>
+                      {m.totalCorrect > 0 ? (
+                        <span>
+                          <span className="font-semibold text-green-400">
+                            {m.totalCorrect.toLocaleString()}
+                          </span>
+                          {m.totalSolved > 0 && (
+                            <span className="ml-1 text-[11px] text-muted/60">({rate}%)</span>
+                          )}
+                        </span>
+                      ) : (
+                        <span className="text-muted/50">0</span>
+                      )}
+                    </DataTable.Cell>
+                    <DataTable.Cell align="right" mono>
+                      {m.activeDays > 0 ? (
+                        <span className="font-semibold">
+                          {m.activeDays}
+                          <span className="ml-0.5 text-[11px] text-muted/60">일</span>
+                        </span>
+                      ) : (
+                        <span className="text-muted/50">—</span>
+                      )}
+                    </DataTable.Cell>
+                    <DataTable.Cell align="right" mono>
                       {m.streakDays > 0 ? (
                         <span className="inline-flex items-center gap-1 font-semibold text-amber-400">
                           <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 24 24">
@@ -116,13 +201,13 @@ export default function AdminMembersPage() {
                         <span className="text-muted/50">—</span>
                       )}
                     </DataTable.Cell>
-                    <DataTable.Cell className="text-muted max-w-[240px]">
+                    <DataTable.Cell className="max-w-[220px] text-muted">
                       <span className="block truncate">{m.email || "—"}</span>
                     </DataTable.Cell>
                     <DataTable.Cell>
                       <StatusBadge tone={tone}>{provider}</StatusBadge>
                     </DataTable.Cell>
-                    <DataTable.Cell align="right" mono className="text-muted text-xs">
+                    <DataTable.Cell align="right" mono className="text-xs text-muted">
                       {formatDateTime(m.createdAt)}
                     </DataTable.Cell>
                   </DataTable.Row>
@@ -132,14 +217,19 @@ export default function AdminMembersPage() {
           </DataTable>
 
           <div className="mt-6 flex items-center justify-between">
-            <p className="text-xs text-muted tabular-nums">
+            <p className="text-xs tabular-nums text-muted">
               {data.content.length > 0 && (
                 <>
                   <span className="text-foreground">
-                    {page * 20 + 1}–{page * 20 + data.content.length}
+                    {page * PAGE_SIZE + 1}–{page * PAGE_SIZE + data.content.length}
                   </span>
                   <span className="mx-1">/</span>
                   {data.totalElements.toLocaleString()}
+                  {sortKey !== "default" && (
+                    <span className="ml-2 text-muted/60">
+                      · 현재 페이지 정렬 중
+                    </span>
+                  )}
                 </>
               )}
             </p>
