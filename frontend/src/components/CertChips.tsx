@@ -7,7 +7,9 @@ const CERTS = [
   { id: "sqld", label: "SQLD" },
   { id: "engineer", label: "정보처리기사 실기" },
   { id: "engineer-written", label: "정보처리기사 필기" },
-  { id: "computer-literacy", label: "컴퓨터활용능력 1급" },
+  { id: "computer-literacy-1", label: "컴퓨터활용능력 1급" },
+  { id: "computer-literacy-2", label: "컴퓨터활용능력 2급" },
+  { id: "adsp", label: "ADsP" },
 ] as const;
 
 export default function CertChips() {
@@ -21,9 +23,6 @@ export default function CertChips() {
           {c.label}
         </span>
       ))}
-      <span className="inline-flex items-center rounded-full border border-dashed border-border/50 px-3 py-1 text-xs text-muted/60">
-        + 추가 예정
-      </span>
     </div>
   );
 }

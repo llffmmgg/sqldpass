@@ -2,7 +2,7 @@ import Link from "next/link";
 import ScrollReveal from "@/components/ScrollReveal";
 import HeroCta from "@/components/HeroCta";
 import HeroStats from "@/components/HeroStats";
-import EngineerExamCountdown from "@/components/EngineerExamCountdown";
+import ExamCountdownStrip from "@/components/ExamCountdownStrip";
 import { SiteNoticeModal } from "@/components/SiteNoticeModal";
 import CertChips from "@/components/CertChips";
 import RankingSection from "@/components/RankingSection";
@@ -75,7 +75,7 @@ export default function Home() {
 
           <ScrollReveal delay={4}>
             <div className="mt-6">
-              <EngineerExamCountdown />
+              <ExamCountdownStrip />
             </div>
           </ScrollReveal>
 
