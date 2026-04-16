@@ -2,7 +2,12 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { CountdownCircleTimer } from "react-countdown-circle-timer";
+import dynamic from "next/dynamic";
+
+const CountdownCircleTimer = dynamic(
+  () => import("react-countdown-circle-timer").then((m) => m.CountdownCircleTimer),
+  { ssr: false },
+);
 import AuthGuard from "@/components/AuthGuard";
 import Spinner from "@/components/Spinner";
 import QuestionContent from "@/components/QuestionContent";

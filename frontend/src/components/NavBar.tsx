@@ -89,7 +89,7 @@ export default function NavBar() {
     <header className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur">
       <nav className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-6">
         <Link href="/" className="flex items-center gap-2 text-xl font-bold tracking-tight text-foreground font-mono">
-          <Image src="/logo/logo.png" alt="sqldpass" width={80} height={80} className="rounded-md" />
+          <Image src="/logo/logo.webp" alt="sqldpass" width={80} height={80} className="rounded-md" priority />
           sqld<span className="text-primary">pass</span>
         </Link>
 
