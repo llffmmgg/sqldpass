@@ -70,10 +70,12 @@ export function Button({
   disabled,
   className,
   children,
+  type = "button",
   ...props
 }: ButtonProps) {
   return (
     <button
+      type={type}
       {...props}
       disabled={disabled || loading}
       className={base(variant, size, glow, className)}
@@ -125,13 +127,14 @@ export function ButtonLink({
         target="_blank"
         rel="noopener noreferrer"
         {...props}
+        role="button"
       >
         {content}
       </a>
     );
   }
   return (
-    <Link href={href} className={classes} {...props}>
+    <Link href={href} className={classes} {...props} role="button">
       {content}
     </Link>
   );

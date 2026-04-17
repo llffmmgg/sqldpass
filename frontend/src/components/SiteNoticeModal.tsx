@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { getActiveNotice, type ActiveNotice } from "@/lib/noticeApi";
+import { Button } from "@/components/ui";
 
 const STORAGE_KEY = "site-notice-dismissed-v";
 const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
@@ -46,30 +47,24 @@ export function SiteNoticeModal() {
       onClick={closeOnce}
     >
       <div
-        className="w-full max-w-md rounded-2xl border border-amber-500/30 bg-surface p-6 text-sm leading-relaxed text-foreground shadow-2xl"
+        className="w-full max-w-md rounded-2xl border border-primary/30 bg-surface p-6 text-sm leading-relaxed text-text shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         {notice.title && (
-          <p className="text-base font-bold text-amber-300">{notice.title}</p>
+          <p className="text-base font-bold text-primary">{notice.title}</p>
         )}
 
-        <div className="mt-3 space-y-3 whitespace-pre-wrap break-words text-foreground/90">
+        <div className="mt-3 space-y-3 whitespace-pre-wrap break-words text-text">
           {notice.body}
         </div>
 
         <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row">
-          <button
-            onClick={dismissForWeek}
-            className="flex-1 rounded-lg border border-border bg-surface py-2.5 text-xs font-medium text-muted hover:text-foreground"
-          >
+          <Button variant="secondary" size="md" onClick={dismissForWeek} className="flex-1">
             7일간 보지 않기
-          </button>
-          <button
-            onClick={closeOnce}
-            className="flex-1 rounded-lg bg-primary py-2.5 text-sm font-semibold text-zinc-900 hover:bg-primary-hover"
-          >
+          </Button>
+          <Button variant="primary" size="md" onClick={closeOnce} className="flex-1">
             확인했어요
-          </button>
+          </Button>
         </div>
       </div>
     </div>
