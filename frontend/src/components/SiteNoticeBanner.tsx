@@ -5,11 +5,8 @@ import { getActiveNotice, type ActiveNotice } from "@/lib/noticeApi";
 
 const STORAGE_KEY = "site-banner-dismissed-v";
 
-/** 하드코딩 폴백 — API 공지가 없을 때 표시. 불필요해지면 null로 변경. */
-const FALLBACK_NOTICE = {
-  body: "현재 전체 문항을 전문가가 꼼꼼히 검토하고 있어요! 모의고사는 '전문가 검수' 표시된 항목부터 풀어보시는 걸 추천드려요 🙌",
-  version: 100,
-};
+/** 하드코딩 폴백 — API 공지가 없을 때 표시. 현재 비활성. */
+const FALLBACK_NOTICE: { body: string; version: number } | null = null;
 
 export function SiteNoticeBanner() {
   const [notice, setNotice] = useState<ActiveNotice | null>(null);
