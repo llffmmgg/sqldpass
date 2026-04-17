@@ -5,7 +5,13 @@
  * 인증 불필요 — 백엔드 /api/public/** 는 인터셉터 없음.
  */
 
-const BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
+// SSR/ISR 전용. 서버 네트워크에서 백엔드 직통을 위해 INTERNAL_API_URL 우선.
+// OCI compose 내부: http://app:8080 (nginx 우회)
+// Vercel/로컬: NEXT_PUBLIC_API_URL 기존대로 사용
+const BASE =
+  process.env.INTERNAL_API_URL ??
+  process.env.NEXT_PUBLIC_API_URL ??
+  "http://localhost:8080";
 const REVALIDATE_SEC = 60 * 30; // 30분 ISR
 
 async function publicFetch<T>(path: string): Promise<T> {
