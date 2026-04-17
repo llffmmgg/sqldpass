@@ -9,17 +9,7 @@ import { getGoogleLoginUrl } from "@/lib/oauth";
 import { type Theme, getInitialTheme, setStoredTheme, applyTheme } from "@/lib/theme";
 import FeedbackModal from "@/components/FeedbackModal";
 import NotificationBell from "@/components/NotificationBell";
-
-type CertKey = "SQLD" | "ENGINEER_PRACTICAL" | "COMPUTER_LITERACY_1" | "COMPUTER_LITERACY_2" | "ENGINEER_WRITTEN" | "ADSP";
-
-const CERT_OPTIONS: { key: CertKey; label: string; sub: string; dot: string }[] = [
-  { key: "SQLD", label: "SQLD", sub: "SQL 개발자 자격증", dot: "bg-amber-400" },
-  { key: "ENGINEER_PRACTICAL", label: "정처기 실기", sub: "단답·약술 + 코드 풀이", dot: "bg-emerald-400" },
-  { key: "ENGINEER_WRITTEN", label: "정처기 필기", sub: "100문항 4지선다", dot: "bg-rose-400" },
-  { key: "COMPUTER_LITERACY_1", label: "컴활 1급 필기", sub: "60문항 4지선다", dot: "bg-sky-400" },
-  { key: "COMPUTER_LITERACY_2", label: "컴활 2급 필기", sub: "40문항 4지선다", dot: "bg-indigo-400" },
-  { key: "ADSP", label: "ADsP", sub: "데이터분석 준전문가 50문항", dot: "bg-teal-400" },
-];
+import { CERT_LIST, type CertKey } from "@/lib/cert-tokens";
 
 type NavItem =
   | { kind: "link"; href: string; label: string }
@@ -27,18 +17,8 @@ type NavItem =
 
 const NAV_LINKS: NavItem[] = [
   { kind: "link", href: "/", label: "홈" },
-  {
-    kind: "dropdown",
-    label: "문제 풀기",
-    basePath: "/solve",
-    build: (cert) => `/solve?cert=${cert}`,
-  },
-  {
-    kind: "dropdown",
-    label: "모의고사",
-    basePath: "/mock-exams",
-    build: (cert) => `/mock-exams?cert=${cert}`,
-  },
+  { kind: "dropdown", label: "문제 풀기", basePath: "/solve", build: (cert) => `/solve?cert=${cert}` },
+  { kind: "dropdown", label: "모의고사", basePath: "/mock-exams", build: (cert) => `/mock-exams?cert=${cert}` },
   { kind: "link", href: "/dashboard", label: "대시보드" },
   { kind: "link", href: "/wrong-answers", label: "오답 노트" },
   { kind: "link", href: "/blog", label: "시험 준비 팁" },
@@ -82,30 +62,39 @@ export default function NavBar() {
     router.push("/");
   }
 
-  // 어드민 영역은 자체 헤더/사이드바를 가지므로 사용자용 NavBar를 숨김
   if (pathname.startsWith("/admin")) return null;
 
   return (
-    <header className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur">
-      <nav className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-6">
-        <Link href="/" className="flex items-center gap-2 text-xl font-bold tracking-tight text-foreground font-mono">
-          <Image src="/logo/logo.webp" alt="sqldpass" width={80} height={80} className="rounded-md" priority />
+    <header className="sticky top-0 z-50 border-b border-border bg-bg/80 backdrop-blur-md">
+      <nav className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4 sm:px-6 lg:px-8">
+        <Link
+          href="/"
+          className="flex items-center gap-2 text-lg font-bold tracking-tight text-text font-mono"
+        >
+          <Image
+            src="/logo/logo.webp"
+            alt="sqldpass"
+            width={80}
+            height={80}
+            className="h-8 w-8 rounded-md"
+            priority
+          />
           sqld<span className="text-primary">pass</span>
         </Link>
 
         {/* Desktop */}
         <div className="hidden items-center gap-1 sm:flex">
-          <ul className="flex items-center gap-1">
+          <ul className="flex items-center gap-0.5">
             {NAV_LINKS.map((item) => {
               if (item.kind === "link") {
                 return (
                   <li key={item.href}>
                     <Link
                       href={item.href}
-                      className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+                      className={`flex h-9 items-center rounded-md px-3 text-sm font-medium transition-colors ${
                         isActive(item.href)
                           ? "bg-primary/10 text-primary"
-                          : "text-muted hover:text-foreground"
+                          : "text-text-muted hover:text-text hover:bg-surface-hover"
                       }`}
                     >
                       {item.label}
@@ -118,17 +107,16 @@ export default function NavBar() {
                   key={item.basePath}
                   label={item.label}
                   active={isActive(item.basePath)}
-                  basePath={item.basePath}
                   buildHref={item.build}
                 />
               );
             })}
           </ul>
 
-          <div className="ml-4 flex items-center gap-2">
+          <div className="ml-4 flex items-center gap-1.5">
             <button
               onClick={() => setFeedbackOpen(true)}
-              className="flex h-8 items-center gap-1.5 rounded-md px-2.5 text-xs font-medium text-muted transition-colors hover:bg-amber-500/10 hover:text-amber-300"
+              className="flex h-9 items-center gap-1.5 rounded-md px-3 text-xs font-medium text-text-muted transition-colors hover:bg-primary/10 hover:text-primary"
               aria-label="피드백 보내기"
               title="건의/오류 제보"
             >
@@ -140,7 +128,7 @@ export default function NavBar() {
             {loggedIn && <NotificationBell />}
             <button
               onClick={toggleTheme}
-              className="flex h-8 w-8 items-center justify-center rounded-md text-muted transition-colors hover:text-foreground"
+              className="flex h-9 w-9 items-center justify-center rounded-md text-text-muted transition-colors hover:bg-surface-hover hover:text-text"
               aria-label="테마 전환"
             >
               {theme === "dark" ? (
@@ -157,7 +145,7 @@ export default function NavBar() {
               <>
                 <Link
                   href="/profile"
-                  className="group inline-flex items-center gap-1.5 rounded-md border border-border/60 bg-surface/60 px-2.5 py-1 text-sm text-muted transition-all hover:border-primary/40 hover:bg-surface hover:text-foreground"
+                  className="group inline-flex h-9 items-center gap-1.5 rounded-md border border-border bg-surface px-3 text-sm text-text-muted transition-colors hover:border-border-strong hover:bg-surface-hover hover:text-text"
                   title="닉네임 변경 / 프로필"
                 >
                   <span>{nickname}</span>
@@ -174,7 +162,7 @@ export default function NavBar() {
                 </Link>
                 <button
                   onClick={handleLogout}
-                  className="rounded-md px-3 py-1.5 text-sm font-medium text-muted transition-colors hover:text-foreground"
+                  className="flex h-9 items-center rounded-md px-3 text-sm font-medium text-text-muted transition-colors hover:bg-surface-hover hover:text-text"
                 >
                   로그아웃
                 </button>
@@ -182,7 +170,7 @@ export default function NavBar() {
             ) : (
               <button
                 onClick={handleLogin}
-                className="inline-flex items-center gap-2 rounded-lg border border-border bg-surface px-4 py-1.5 text-sm font-medium text-foreground transition-all hover:border-primary/40 hover:shadow-[0_0_12px_var(--glow)]"
+                className="inline-flex h-9 items-center gap-2 rounded-lg border border-border bg-surface px-3.5 text-sm font-medium text-text transition-all hover:border-primary/40 hover:bg-surface-hover"
               >
                 <svg className="h-4 w-4" viewBox="0 0 24 24">
                   <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4" />
@@ -200,7 +188,7 @@ export default function NavBar() {
         <div className="flex items-center gap-1 sm:hidden">
           <button
             onClick={toggleTheme}
-            className="flex h-8 w-8 items-center justify-center rounded-md text-muted transition-colors hover:text-foreground"
+            className="flex h-9 w-9 items-center justify-center rounded-md text-text-muted transition-colors hover:bg-surface-hover hover:text-text"
             aria-label="테마 전환"
           >
             {theme === "dark" ? (
@@ -214,9 +202,10 @@ export default function NavBar() {
             )}
           </button>
           <button
-            className="flex h-8 w-8 items-center justify-center rounded-md text-muted hover:text-foreground"
+            className="flex h-9 w-9 items-center justify-center rounded-md text-text-muted hover:bg-surface-hover hover:text-text"
             onClick={() => setMenuOpen(!menuOpen)}
             aria-label="메뉴"
+            aria-expanded={menuOpen}
           >
             <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               {menuOpen ? (
@@ -229,15 +218,16 @@ export default function NavBar() {
         </div>
       </nav>
 
-      <FeedbackModal
-        open={feedbackOpen}
-        onClose={() => setFeedbackOpen(false)}
-      />
+      <FeedbackModal open={feedbackOpen} onClose={() => setFeedbackOpen(false)} />
 
       {/* Mobile menu */}
-      {menuOpen && (
-        <div className="border-t border-border px-4 pb-3 sm:hidden">
-          <ul>
+      <div
+        className={`overflow-hidden border-t border-border transition-all duration-300 ease-out sm:hidden ${
+          menuOpen ? "max-h-[80vh] opacity-100" : "max-h-0 opacity-0"
+        }`}
+      >
+        <div className="px-4 pb-4 pt-2">
+          <ul className="space-y-0.5">
             {NAV_LINKS.map((item) => {
               if (item.kind === "link") {
                 return (
@@ -245,10 +235,10 @@ export default function NavBar() {
                     <Link
                       href={item.href}
                       onClick={() => setMenuOpen(false)}
-                      className={`block rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+                      className={`block rounded-md px-3 py-2.5 text-sm font-medium transition-colors ${
                         isActive(item.href)
                           ? "bg-primary/10 text-primary"
-                          : "text-muted hover:text-foreground"
+                          : "text-text-muted hover:bg-surface-hover hover:text-text"
                       }`}
                     >
                       {item.label}
@@ -258,17 +248,17 @@ export default function NavBar() {
               }
               return (
                 <li key={item.basePath}>
-                  <div className="mt-1 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-muted/60">
+                  <div className="mt-2 px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-text-subtle">
                     {item.label}
                   </div>
-                  {CERT_OPTIONS.map((cert) => (
+                  {CERT_LIST.map((cert) => (
                     <Link
                       key={cert.key}
                       href={item.build(cert.key)}
                       onClick={() => setMenuOpen(false)}
-                      className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-muted hover:bg-surface hover:text-foreground"
+                      className="flex items-center gap-2.5 rounded-md px-3 py-2.5 text-sm text-text-muted hover:bg-surface-hover hover:text-text"
                     >
-                      <span className={`h-1.5 w-1.5 rounded-full ${cert.dot}`} />
+                      <span className={`h-1.5 w-1.5 rounded-full ${cert.tailwind.dot}`} />
                       {cert.label}
                     </Link>
                   ))}
@@ -276,10 +266,10 @@ export default function NavBar() {
               );
             })}
           </ul>
-          <div className="mt-2 border-t border-border pt-2">
+          <div className="mt-3 border-t border-border pt-3">
             <button
               onClick={() => { setFeedbackOpen(true); setMenuOpen(false); }}
-              className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-muted hover:bg-amber-500/10 hover:text-amber-300"
+              className="flex w-full items-center gap-2 rounded-md px-3 py-2.5 text-sm font-medium text-text-muted hover:bg-primary/10 hover:text-primary"
             >
               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
@@ -287,11 +277,11 @@ export default function NavBar() {
               피드백 보내기
             </button>
             {loggedIn ? (
-              <div className="flex items-center justify-between px-3 py-2">
+              <div className="mt-1 flex items-center justify-between px-3 py-2">
                 <Link
                   href="/profile"
                   onClick={() => setMenuOpen(false)}
-                  className="inline-flex items-center gap-1.5 rounded-md border border-border/60 bg-surface/60 px-2.5 py-1 text-sm text-muted transition-colors hover:border-primary/40 hover:text-foreground"
+                  className="inline-flex items-center gap-1.5 rounded-md border border-border bg-surface px-2.5 py-1 text-sm text-text-muted transition-colors hover:border-primary/40 hover:text-text"
                   title="닉네임 변경 / 프로필"
                 >
                   <span>{nickname}</span>
@@ -308,7 +298,7 @@ export default function NavBar() {
                 </Link>
                 <button
                   onClick={() => { handleLogout(); setMenuOpen(false); }}
-                  className="text-sm text-muted hover:text-foreground"
+                  className="text-sm text-text-muted hover:text-text"
                 >
                   로그아웃
                 </button>
@@ -316,7 +306,7 @@ export default function NavBar() {
             ) : (
               <button
                 onClick={() => { handleLogin(); setMenuOpen(false); }}
-                className="flex w-full items-center justify-center gap-2 rounded-lg border border-border bg-surface px-4 py-2.5 text-sm font-medium text-foreground transition-all hover:border-primary/40"
+                className="mt-1 flex w-full items-center justify-center gap-2 rounded-lg border border-border bg-surface px-4 py-2.5 text-sm font-medium text-text transition-all hover:border-primary/40"
               >
                 <svg className="h-4 w-4" viewBox="0 0 24 24">
                   <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4" />
@@ -329,28 +319,21 @@ export default function NavBar() {
             )}
           </div>
         </div>
-      )}
+      </div>
     </header>
   );
 }
 
-/**
- * 자격증 드롭다운 — hover/focus 시 자격증 3개 노출.
- * 클릭 시 ?cert= 파라미터와 함께 해당 페이지로 이동.
- */
 function NavDropdown({
   label,
   active,
-  basePath,
   buildHref,
 }: {
   label: string;
   active: boolean;
-  basePath: string;
   buildHref: (cert: CertKey) => string;
 }) {
   const [open, setOpen] = useState(false);
-
   return (
     <li
       className="relative"
@@ -361,11 +344,12 @@ function NavDropdown({
         onClick={() => setOpen((v) => !v)}
         onFocus={() => setOpen(true)}
         onBlur={() => setOpen(false)}
-        className={`inline-flex items-center gap-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+        className={`inline-flex h-9 items-center gap-1 rounded-md px-3 text-sm font-medium transition-colors ${
           active
             ? "bg-primary/10 text-primary"
-            : "text-muted hover:text-foreground"
+            : "text-text-muted hover:text-text hover:bg-surface-hover"
         }`}
+        aria-expanded={open}
       >
         {label}
         <svg
@@ -380,22 +364,24 @@ function NavDropdown({
       </button>
       {open && (
         <div
-          className="absolute left-0 top-full z-50 min-w-[240px] pt-2"
+          className="absolute left-0 top-full z-50 min-w-[260px] pt-2"
           onMouseEnter={() => setOpen(true)}
           onMouseLeave={() => setOpen(false)}
         >
-          <div className="animate-[fade-in_0.15s_ease-out] overflow-hidden rounded-lg border border-border bg-background/95 shadow-xl backdrop-blur">
-            {CERT_OPTIONS.map((cert) => (
+          <div className="animate-[dropdown-enter_0.15s_ease-out] overflow-hidden rounded-xl border border-border bg-bg-elevated shadow-[var(--shadow-lg)]">
+            {CERT_LIST.map((cert, idx) => (
               <Link
                 key={cert.key}
                 href={buildHref(cert.key)}
                 onClick={() => setOpen(false)}
-                className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-surface"
+                className={`flex items-center gap-3 px-4 py-2.5 transition-colors hover:bg-surface-hover ${
+                  idx !== 0 ? "border-t border-border/50" : ""
+                }`}
               >
-                <span className={`h-2 w-2 shrink-0 rounded-full ${cert.dot}`} />
+                <span className={`h-2 w-2 shrink-0 rounded-full ${cert.tailwind.dot}`} />
                 <div className="min-w-0">
-                  <p className="text-sm font-semibold text-foreground">{cert.label}</p>
-                  <p className="mt-0.5 text-xs text-muted">{cert.sub}</p>
+                  <p className="text-sm font-semibold text-text">{cert.label}</p>
+                  <p className="mt-0.5 text-xs text-text-muted">{cert.labelLong}</p>
                 </div>
               </Link>
             ))}

@@ -1,7 +1,7 @@
 "use client";
 
 import { Suspense, useEffect, useMemo, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import {
   getWrongAnswers,
   getWrongAnswerStats,
@@ -20,63 +20,17 @@ import QuestionContent from "@/components/QuestionContent";
 import AuthGuard from "@/components/AuthGuard";
 import Spinner from "@/components/Spinner";
 import Image from "next/image";
-import Link from "next/link";
 import { trackEvent } from "@/lib/gtag";
+import { Button, ButtonLink, Container } from "@/components/ui";
+import { CERT_TOKENS, certFromRootName, type CertKey } from "@/lib/cert-tokens";
 
-function getLeafSubjects(subjects: Subject[]): { id: number; name: string }[] {
-  const leaves: { id: number; name: string }[] = [];
-  for (const s of subjects) {
-    if (s.children.length > 0) {
-      for (const child of s.children) {
-        leaves.push({ id: child.id, name: child.name });
-      }
-    }
-  }
-  return leaves;
-}
-
-/** root subject 이름으로 자격증 키 판정 */
-type CertKey = "SQLD" | "ENGINEER_PRACTICAL" | "COMPUTER_LITERACY_1" | "COMPUTER_LITERACY_2" | "ENGINEER_WRITTEN" | "ADSP";
-
-const CERT_META: Record<CertKey, { label: string; dot: string; border: string; order: number }> = {
-  SQLD: { label: "SQLD", dot: "bg-amber-400", border: "border-amber-500/30", order: 0 },
-  ENGINEER_PRACTICAL: { label: "정보처리기사 실기", dot: "bg-emerald-400", border: "border-emerald-500/30", order: 1 },
-  ENGINEER_WRITTEN: { label: "정보처리기사 필기", dot: "bg-rose-400", border: "border-rose-500/30", order: 2 },
-  COMPUTER_LITERACY_1: { label: "컴퓨터활용능력 1급 필기", dot: "bg-sky-400", border: "border-sky-500/30", order: 3 },
-  COMPUTER_LITERACY_2: { label: "컴퓨터활용능력 2급 필기", dot: "bg-indigo-400", border: "border-indigo-500/30", order: 4 },
-  ADSP: { label: "데이터분석 준전문가(ADsP)", dot: "bg-teal-400", border: "border-teal-500/30", order: 5 },
-};
-
-function detectCertFromRootName(rootName: string): CertKey {
-  if (rootName === "정보처리기사 실기") return "ENGINEER_PRACTICAL";
-  if (rootName === "정보처리기사 필기") return "ENGINEER_WRITTEN";
-  if (rootName === "컴퓨터활용능력 1급 필기") return "COMPUTER_LITERACY_1";
-  if (rootName === "컴퓨터활용능력 2급 필기") return "COMPUTER_LITERACY_2";
-  if (rootName === "데이터분석 준전문가(ADsP)") return "ADSP";
-  return "SQLD";
-}
-
-/** leaf 과목 ID → 소속 자격증 매핑 (이름이 겹치는 과목이 있으므로 ID 기반) */
 function buildCertLookupById(rawSubjects: Subject[]): Map<number, CertKey> {
   const map = new Map<number, CertKey>();
   for (const root of rawSubjects) {
-    const cert = detectCertFromRootName(root.name);
+    const cert = certFromRootName(root.name);
     map.set(root.id, cert);
     for (const child of root.children) {
       map.set(child.id, cert);
-    }
-  }
-  return map;
-}
-
-/** leaf 과목명 → 소속 자격증 매핑 (이름 겹침 시 먼저 등록된 것 유지) */
-function buildCertLookup(rawSubjects: Subject[]): Map<string, CertKey> {
-  const map = new Map<string, CertKey>();
-  for (const root of rawSubjects) {
-    const cert = detectCertFromRootName(root.name);
-    if (!map.has(root.name)) map.set(root.name, cert);
-    for (const child of root.children) {
-      if (!map.has(child.name)) map.set(child.name, cert);
     }
   }
   return map;
@@ -103,24 +57,20 @@ export default function WrongAnswersPage() {
 }
 
 function WrongAnswersPageContent() {
-  const router = useRouter();
   const searchParams = useSearchParams();
 
-  // GA4 — 오답노트 페이지 진입
   useEffect(() => {
     trackEvent("review_wrong");
   }, []);
 
   const [stats, setStats] = useState<WrongAnswerStatsResponse[]>([]);
   const [wrongAnswers, setWrongAnswers] = useState<WrongAnswerResponse[]>([]);
-  const [subjects, setSubjects] = useState<{ id: number; name: string }[]>([]);
   const [rawSubjects, setRawSubjects] = useState<Subject[]>([]);
   const initialSubject = (() => {
     const v = searchParams?.get("subjectId");
     const n = v ? Number(v) : NaN;
     return Number.isFinite(n) && n > 0 ? n : null;
   })();
-  const [selectedSubject, setSelectedSubject] = useState<number | null>(initialSubject);
   const [selectedCert, setSelectedCert] = useState<CertKey | null>(null);
   const [selectedTopic, setSelectedTopic] = useState<string | null>(null);
   const [sortMode, setSortMode] = useState<SortMode>("priority");
@@ -132,7 +82,7 @@ function WrongAnswersPageContent() {
 
   function reloadList() {
     return Promise.all([
-      getWrongAnswers(selectedSubject ?? undefined),
+      getWrongAnswers(initialSubject ?? undefined),
       getWrongAnswerStats(),
     ]).then(([wrongData, statsData]) => {
       setWrongAnswers(wrongData);
@@ -149,24 +99,11 @@ function WrongAnswersPageContent() {
       .then(([statsData, wrongData, subjectsData]) => {
         setStats(statsData);
         setWrongAnswers(wrongData);
-        setSubjects(getLeafSubjects(subjectsData));
         setRawSubjects(subjectsData);
       })
       .finally(() => setLoading(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  function handleSubjectFilter(subjectId: number | null) {
-    setSelectedSubject(subjectId);
-    setLoading(true);
-    setExpandedId(null);
-    // URL 동기화 (딥링크)
-    const next = subjectId ? `/wrong-answers?subjectId=${subjectId}` : "/wrong-answers";
-    router.replace(next);
-    getWrongAnswers(subjectId ?? undefined)
-      .then(setWrongAnswers)
-      .finally(() => setLoading(false));
-  }
 
   function handleExpand(questionId: number) {
     if (expandedId === questionId) {
@@ -253,20 +190,6 @@ function WrongAnswersPageContent() {
     }));
   }
 
-  // 오답이 있는 leaf 과목만 필터에 노출, 카운트 뱃지 계산
-  const wrongCountBySubject = useMemo(() => {
-    const map = new Map<number, number>();
-    for (const s of stats) {
-      if (s.wrongCount > 0) map.set(s.subjectId, s.wrongCount);
-    }
-    return map;
-  }, [stats]);
-
-  const visibleSubjectFilters = useMemo(
-    () => subjects.filter((s) => wrongCountBySubject.has(s.id)),
-    [subjects, wrongCountBySubject]
-  );
-
   // 정렬 적용
   const sortedAnswers = useMemo(() => {
     const arr = [...wrongAnswers];
@@ -298,9 +221,8 @@ function WrongAnswersPageContent() {
       }
       group.topics.get(wa.subjectName)!.items.push(wa);
     }
-    // CERT_META.order 기준으로 정렬, 토픽은 items 수 내림차순
     return Array.from(certs.values())
-      .sort((a, b) => CERT_META[a.certKey].order - CERT_META[b.certKey].order)
+      .sort((a, b) => CERT_TOKENS[a.certKey].order - CERT_TOKENS[b.certKey].order)
       .map((g) => ({
         certKey: g.certKey,
         topics: Array.from(g.topics.values()).sort((a, b) => b.items.length - a.items.length),
@@ -343,12 +265,6 @@ function WrongAnswersPageContent() {
       : priority === "mid"
       ? "border border-border border-l-4 border-l-amber-500/70"
       : "border border-border";
-
-    const wrongCountBadge = (() => {
-      if (priority === "high") return { dot: "🔴", color: "text-red-400" };
-      if (priority === "mid") return { dot: "🟡", color: "text-amber-400" };
-      return { dot: "⚪", color: "text-muted" };
-    })();
 
     const priorityBg = priority === "high" ? "bg-red-500" : priority === "mid" ? "bg-amber-500" : "bg-zinc-500";
 
@@ -442,12 +358,14 @@ function WrongAnswersPageContent() {
                         <QuestionContent content={state.result.explanation ?? ""} />
                       </div>
                     </div>
-                    <button
+                    <Button
+                      variant="outline"
+                      size="md"
                       onClick={() => handleRetryAgain(wa.questionId)}
-                      className="w-full rounded-lg border border-amber-500/40 bg-amber-500/10 py-2 text-sm font-semibold text-amber-300 transition hover:bg-amber-500/20"
+                      className="w-full"
                     >
                       🔁 다시 풀어보기
-                    </button>
+                    </Button>
                   </div>
                 )}
               </div>
@@ -459,8 +377,8 @@ function WrongAnswersPageContent() {
   }
 
   return (
-    <main className="min-h-screen bg-background text-foreground">
-      <div className="mx-auto max-w-4xl px-4 py-16 sm:px-6 lg:px-8">
+    <main className="min-h-screen bg-bg text-text">
+      <Container size="default" className="py-16">
         <div className="flex items-center gap-5">
           <Image
             src="/wrong-answer-mascot.webp"
@@ -530,12 +448,9 @@ function WrongAnswersPageContent() {
                 </svg>
               </div>
               <p className="mt-4 text-muted">오답이 없습니다. 완벽해요!</p>
-              <Link
-                href="/solve"
-                className="mt-6 inline-block rounded-lg bg-primary px-5 py-2 text-sm font-semibold text-zinc-900 transition-colors hover:bg-primary-hover"
-              >
+              <ButtonLink href="/solve" variant="primary" size="md" className="mt-6">
                 문제 풀러 가기
-              </Link>
+              </ButtonLink>
             </div>
           )}
 
@@ -553,11 +468,11 @@ function WrongAnswersPageContent() {
 
             return (
             <div className="space-y-4">
-              {/* 1단계: 자격증 탭 */}
-              <div className="flex flex-wrap items-center gap-2">
+              {/* 1단계: 자격증 탭 — underline style */}
+              <div className="flex flex-wrap items-center gap-2 border-b border-border">
                 {groupedAnswers.map((group) => {
                   const isActive = activeCert === group.certKey;
-                  const meta = CERT_META[group.certKey];
+                  const meta = CERT_TOKENS[group.certKey];
                   return (
                     <button
                       key={group.certKey}
@@ -566,15 +481,15 @@ function WrongAnswersPageContent() {
                         setSelectedTopic(null);
                         setExpandedId(null);
                       }}
-                      className={`flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium transition-all ${
+                      className={`-mb-px flex items-center gap-2 border-b-2 px-4 py-2.5 text-sm font-medium transition-all ${
                         isActive
-                          ? `bg-surface border ${meta.border} text-foreground shadow-sm`
-                          : "border border-transparent text-muted hover:text-foreground hover:bg-surface/50"
+                          ? "border-primary text-primary"
+                          : "border-transparent text-text-muted hover:text-text"
                       }`}
                     >
-                      <span className={`h-2 w-2 rounded-full ${meta.dot}`} />
+                      <span className={`h-1.5 w-1.5 rounded-full ${meta.tailwind.dot}`} />
                       {meta.label}
-                      <span className="text-xs tabular-nums text-muted/70">{group.total}</span>
+                      <span className="text-xs tabular-nums opacity-70">{group.total}</span>
                     </button>
                   );
                 })}
@@ -618,8 +533,8 @@ function WrongAnswersPageContent() {
                         onClick={() => { setSelectedTopic(null); setExpandedId(null); }}
                         className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
                           selectedTopic === null
-                            ? "bg-primary text-zinc-900"
-                            : "border border-border text-muted hover:border-primary/40"
+                            ? "bg-primary text-[var(--primary-fg)]"
+                            : "border border-border text-text-muted hover:border-primary/40 hover:text-text"
                         }`}
                       >
                         전체 {activeGroup.total}
@@ -632,8 +547,8 @@ function WrongAnswersPageContent() {
                             onClick={() => { setSelectedTopic(isActive ? null : topic.topicName); setExpandedId(null); }}
                             className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
                               isActive
-                                ? "bg-primary text-zinc-900"
-                                : "border border-border text-muted hover:border-primary/40"
+                                ? "bg-primary text-[var(--primary-fg)]"
+                                : "border border-border text-text-muted hover:border-primary/40 hover:text-text"
                             }`}
                           >
                             {topic.topicName} {topic.items.length}
@@ -671,7 +586,7 @@ function WrongAnswersPageContent() {
             );
           })()}
         </section>
-      </div>
+      </Container>
     </main>
   );
 }
@@ -709,13 +624,13 @@ function RetrySolverInline({
                 disabled={state.submitting}
                 className={`flex w-full items-start gap-3 rounded-lg border px-4 py-3 text-left text-sm transition ${
                   isSelected
-                    ? "border-amber-500/60 bg-amber-500/10 text-amber-200 ring-1 ring-amber-400/40"
-                    : "border-border bg-background text-foreground hover:border-amber-500/30"
+                    ? "border-primary/60 bg-primary/10 text-text ring-1 ring-primary/40"
+                    : "border-border bg-bg text-text hover:border-primary/30"
                 } disabled:cursor-not-allowed disabled:opacity-50`}
               >
                 <span
                   className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
-                    isSelected ? "bg-amber-500/30 text-amber-100" : "bg-border text-muted"
+                    isSelected ? "bg-primary/30 text-primary" : "bg-border text-text-muted"
                   }`}
                 >
                   {optionNumber}
@@ -732,19 +647,21 @@ function RetrySolverInline({
           disabled={state.submitting}
           rows={3}
           placeholder="답을 입력하세요"
-          className="block w-full resize-none rounded-lg border border-border bg-background px-4 py-3 text-sm leading-relaxed text-foreground placeholder:text-muted/50 focus:outline-none focus:ring-2 focus:ring-amber-500/60 disabled:opacity-50"
+          className="block w-full resize-none rounded-lg border border-border bg-bg px-4 py-3 text-sm leading-relaxed text-text placeholder:text-text-subtle focus:border-primary/40 focus:outline-none focus:ring-2 focus:ring-primary/60 disabled:opacity-50"
         />
       )}
 
-      {state.error && <p className="text-xs text-red-400">{state.error}</p>}
+      {state.error && <p className="text-xs text-danger">{state.error}</p>}
 
-      <button
+      <Button
+        variant="primary"
+        size="md"
         onClick={onSubmit}
-        disabled={state.submitting}
-        className="w-full rounded-lg bg-primary py-2.5 text-sm font-semibold text-zinc-900 transition hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-50"
+        loading={state.submitting}
+        className="w-full"
       >
         {state.submitting ? "채점 중..." : "정답 제출"}
-      </button>
+      </Button>
     </div>
   );
 }
