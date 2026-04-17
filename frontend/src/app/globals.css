@@ -228,91 +228,180 @@ html:not(.dark) .text-zinc-400 { color: #71717a; }
 html:not(.dark) .hero-orb { opacity: 0.45; }
 html:not(.dark) .hero-ambient { opacity: 0.55; }
 
-/* ── Blog prose ── */
+/* ── Blog prose ──
+ * Long-form Korean reading. Tuned for comfortable scanning:
+ * - Body 17px mobile / 18px md (Korean hanja width benefits from bigger)
+ * - line-height 1.78 (looser than Latin-only)
+ * - Paragraphs breathe (1.6rem gap)
+ * - Headings use whitespace — not borders — for hierarchy
+ */
 .prose-custom {
-  line-height: 1.8;
-  font-size: 1.05rem;
+  font-size: 1.0625rem;
+  line-height: 1.78;
+  color: var(--text);
+  max-width: 44rem;
+  margin-left: auto;
+  margin-right: auto;
 }
+@media (min-width: 768px) {
+  .prose-custom {
+    font-size: 1.125rem;
+    line-height: 1.8;
+  }
+}
+
+.prose-custom > * + * { margin-top: 1.5rem; }
+
 .prose-custom h2 {
   font-size: 1.5rem;
   font-weight: 700;
-  margin-top: 3rem;
+  letter-spacing: -0.01em;
+  margin-top: 3.5rem;
   margin-bottom: 1rem;
-  padding-bottom: 0.5rem;
-  border-bottom: 1px solid var(--border);
+  scroll-margin-top: 4rem;
 }
+@media (min-width: 768px) {
+  .prose-custom h2 {
+    font-size: 1.75rem;
+    margin-top: 4rem;
+  }
+}
+
 .prose-custom h3 {
-  font-size: 1.25rem;
+  font-size: 1.2rem;
   font-weight: 600;
-  margin-top: 2rem;
+  letter-spacing: -0.005em;
+  margin-top: 2.5rem;
   margin-bottom: 0.75rem;
+  scroll-margin-top: 4rem;
 }
-.prose-custom p { margin-bottom: 1.25rem; }
-.prose-custom ul, .prose-custom ol {
-  margin-bottom: 1.25rem;
+@media (min-width: 768px) {
+  .prose-custom h3 { font-size: 1.3125rem; }
+}
+
+.prose-custom h2 + p,
+.prose-custom h2 + ul,
+.prose-custom h2 + ol,
+.prose-custom h3 + p,
+.prose-custom h3 + ul,
+.prose-custom h3 + ol {
+  margin-top: 0.75rem;
+}
+
+.prose-custom p { margin-bottom: 0; }
+
+.prose-custom ul,
+.prose-custom ol {
   padding-left: 1.5rem;
 }
 .prose-custom ul { list-style-type: disc; }
 .prose-custom ol { list-style-type: decimal; }
-.prose-custom li { margin-bottom: 0.5rem; }
+.prose-custom ul ul,
+.prose-custom ol ol,
+.prose-custom ul ol,
+.prose-custom ol ul {
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+.prose-custom li {
+  margin-bottom: 0.5rem;
+  padding-left: 0.25rem;
+}
+.prose-custom li::marker { color: var(--text-subtle); }
+.prose-custom li > p { display: inline; }
+
 .prose-custom a {
   color: var(--primary);
   text-decoration: underline;
-  text-underline-offset: 2px;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  text-decoration-color: color-mix(in srgb, var(--primary) 40%, transparent);
+  transition: text-decoration-color 0.15s ease, color 0.15s ease;
 }
-.prose-custom a:hover { color: var(--primary-hover); }
+.prose-custom a:hover {
+  color: var(--primary-hover);
+  text-decoration-color: var(--primary);
+}
+
 .prose-custom blockquote {
   border-left: 3px solid var(--primary);
-  padding: 0.75rem 1rem;
-  margin: 1.5rem 0;
-  background: var(--surface);
-  border-radius: 0 8px 8px 0;
+  padding: 0.25rem 0 0.25rem 1.25rem;
+  margin: 2rem 0;
   color: var(--text-muted);
-  font-style: italic;
 }
+.prose-custom blockquote p { margin: 0; }
+.prose-custom blockquote p + p { margin-top: 0.5rem; }
+
 .prose-custom code {
-  background: var(--primary-soft);
-  color: var(--primary);
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
   border-radius: 4px;
-  padding: 0.1rem 0.35rem;
-  font-size: 0.9em;
+  padding: 0.08rem 0.38rem;
+  font-size: 0.88em;
   font-family: var(--font-mono);
+  word-break: break-word;
 }
 .prose-custom pre {
   background: var(--code-bg);
   border: 1px solid var(--border);
   border-radius: 12px;
-  padding: 1rem 1.25rem;
+  padding: 1.1rem 1.25rem;
   overflow-x: auto;
-  margin: 1.5rem 0;
+  margin: 2rem 0;
+  font-size: 0.9375rem;
+  line-height: 1.7;
 }
 .prose-custom pre code {
   background: none;
   color: inherit;
   border: none;
   padding: 0;
-  font-size: 0.875rem;
+  font-size: inherit;
 }
-.prose-custom strong { font-weight: 700; }
+
+.prose-custom strong {
+  font-weight: 700;
+  color: var(--text);
+}
+
 .prose-custom hr {
   border: none;
   border-top: 1px solid var(--border);
-  margin: 2rem 0;
+  margin: 3rem 0;
 }
+
+.prose-custom img {
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  margin: 2rem auto;
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
 .prose-custom table {
   width: 100%;
   border-collapse: collapse;
-  margin: 1.5rem 0;
+  margin: 2rem 0;
   font-size: 0.95rem;
+  display: block;
+  overflow-x: auto;
 }
-.prose-custom th, .prose-custom td {
+.prose-custom th,
+.prose-custom td {
   border: 1px solid var(--border);
-  padding: 0.5rem 0.75rem;
+  padding: 0.625rem 0.875rem;
   text-align: left;
+  vertical-align: top;
 }
 .prose-custom th {
   background: var(--surface);
   font-weight: 600;
+  color: var(--text);
+}
+.prose-custom tbody tr:nth-child(even) {
+  background: color-mix(in srgb, var(--surface) 40%, transparent);
 }
 
 /* ── Keyframes ── */

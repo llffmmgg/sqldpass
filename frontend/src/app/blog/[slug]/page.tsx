@@ -91,7 +91,7 @@ export default async function BlogPostPage({
         <span>{post.category}</span>
       </nav>
 
-      <header className="mt-6">
+      <header className="mx-auto mt-6 max-w-[44rem]">
         <div className="flex flex-wrap items-center gap-2 text-xs">
           {cert ? (
             <Badge cert={cert} variant="soft" size="sm">
@@ -109,13 +109,18 @@ export default async function BlogPostPage({
               day: "numeric",
             })}
           </span>
-          <span className="text-text-subtle">{post.readingTime}</span>
+          <span className="text-text-subtle">· {post.readingTime}</span>
         </div>
-        <h1 className="mt-4 text-3xl font-bold leading-tight tracking-tight sm:text-4xl">
+        <h1 className="mt-5 text-[1.875rem] font-bold leading-[1.25] tracking-tight sm:text-[2.25rem] md:text-[2.5rem]">
           {post.title}
         </h1>
-        <p className="mt-3 text-lg text-text-muted">안녕하세요. 문어입니다.🐙</p>
-        <p className="mt-2 text-lg text-text-muted">{post.description}</p>
+        <p className="mt-5 text-base leading-relaxed text-text-muted sm:text-lg">
+          {post.description}
+        </p>
+        <p className="mt-3 text-sm text-text-subtle">
+          안녕하세요. 문어입니다 🐙
+        </p>
+        <hr className="mt-8 border-border" />
       </header>
 
       <article className="prose-custom mt-10">
