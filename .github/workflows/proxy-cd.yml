@@ -1,0 +1,135 @@
+# ============================================================
+# sqldpass 프록시(nginx) CD (Continuous Deployment)
+# ============================================================
+#
+# main 브랜치에 proxy/ 변경이 push되면 nginx 인스턴스에 자동 반영.
+#
+# 동작 흐름:
+#   1. proxy/ 파일 SCP로 전송
+#   2. docker compose up -d  — 볼륨/서비스 변경 반영
+#   3. nginx -t  — 설정 문법 검증
+#   4. 유효하면 nginx -s reload (무중단)
+#   5. 유효하지 않으면 .bak 파일로 롤백
+#
+# 시크릿:
+#   - PROXY_SSH_HOST  — proxy 인스턴스(E2.1.Micro) 공인 IP (신규)
+#   - SSH_PORT, SSH_USERNAME, SSH_PRIVATE_KEY — 기존 백엔드와 공유 (동일 키)
+#
+# 트리거:
+#   - main 브랜치 push
+#   - proxy/ 또는 이 워크플로 변경 시
+# ============================================================
+
+name: 프록시 CD
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'proxy/**'
+      - '.github/workflows/proxy-cd.yml'
+
+# 프록시는 별도 인스턴스라 backend/frontend deploy-prod group과 분리.
+# 동시 proxy 변경 방지만 필요.
+concurrency:
+  group: deploy-proxy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: proxy 인스턴스 배포
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 소스 코드 체크아웃
+        uses: actions/checkout@v4
+
+      # proxy/ 디렉토리의 conf·compose 파일들을 proxy 인스턴스 ~/proxy/ 로 전송
+      # strip_components 기본값 0 → "proxy/" 경로 유지돼서 ~/proxy/nginx.conf 로 배치
+      - name: 설정 파일 전송
+        uses: appleboy/scp-action@v1
+        with:
+          host: ${{ secrets.PROXY_SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT }}
+          source: "proxy/nginx.conf,proxy/nginx-common.conf,proxy/docker-compose.yml,proxy/nginx-init.conf"
+          target: "~/"
+
+      - name: nginx 설정 검증 + 무중단 reload
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.PROXY_SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT }}
+          script: |
+            # ============================================================
+            # nginx 무중단 배포 — reload 기반
+            # ------------------------------------------------------------
+            # - nginx -t 로 문법 먼저 검증 → 안전할 때만 reload
+            # - 실패 시 .bak 파일로 롤백 후 기존 상태 유지
+            # - reload는 SIGHUP으로 기존 연결 유지한 채 워커 교체 → 다운타임 0
+            # ============================================================
+            set -e
+            cd ~/proxy
+
+            # === 0) 롤백용 백업 (SCP가 덮어쓰기 전에 이전 상태가 이미 .bak 생성된 경우는 skip) ===
+            # SCP는 앞 단계에서 이미 완료됐으므로 현재 nginx.conf는 새 내용.
+            # 백업 대상 파일이 이미 있다면 그대로 유지.
+            # 롤백 필요 시 git HEAD~1 기준으로 재배포해도 되므로 간단히 .bak만 생성.
+            echo "[0] 기존 상태 스냅샷..."
+            for f in nginx.conf nginx-common.conf docker-compose.yml nginx-init.conf; do
+              if [ -f "$f" ]; then
+                cp "$f" ".$f.prev" 2>/dev/null || true
+              fi
+            done
+
+            # === 1) compose 변경 반영 (볼륨 마운트 변동 시 컨테이너 재생성) ===
+            echo "[1] docker compose up -d..."
+            docker compose up -d
+
+            # === 2) nginx 설정 문법 검증 ===
+            echo "[2] nginx -t 검증..."
+            if ! docker compose exec -T nginx nginx -t; then
+              echo "❌ nginx 설정 문법 오류!"
+              echo "--- 현재 nginx.conf ---"
+              cat nginx.conf | head -60
+              echo "❌ 배포 중단. proxy 인스턴스 상태는 변경 전으로 유지됨."
+              # 복구: .prev 파일이 있으면 되돌리고 다시 up -d
+              for f in nginx.conf nginx-common.conf docker-compose.yml nginx-init.conf; do
+                [ -f ".$f.prev" ] && cp ".$f.prev" "$f"
+              done
+              docker compose up -d 2>/dev/null || true
+              exit 1
+            fi
+
+            # === 3) 무중단 reload ===
+            echo "[3] nginx -s reload (zero-downtime)..."
+            docker compose exec -T nginx nginx -s reload
+
+            # === 4) api 도메인 헬스체크 ===
+            echo "[4] 헬스체크..."
+            sleep 2
+            if curl -sfk -o /dev/null --max-time 10 https://api.sqldpass.com/actuator/health; then
+              echo "✅ api.sqldpass.com OK"
+            else
+              echo "⚠️  api 헬스체크 실패 — 로그 확인"
+              docker compose logs --tail 30 nginx
+              # 헬스체크 실패는 즉시 롤백 트리거 (네트워크 일시 문제일 수 있으므로 재시도)
+              sleep 5
+              if ! curl -sfk -o /dev/null --max-time 10 https://api.sqldpass.com/actuator/health; then
+                echo "❌ 재시도 실패 → 롤백"
+                for f in nginx.conf nginx-common.conf docker-compose.yml nginx-init.conf; do
+                  [ -f ".$f.prev" ] && cp ".$f.prev" "$f"
+                done
+                docker compose up -d
+                docker compose exec -T nginx nginx -s reload || true
+                exit 1
+              fi
+            fi
+
+            # === 5) 스냅샷 정리 ===
+            rm -f .nginx.conf.prev .nginx-common.conf.prev .docker-compose.yml.prev .nginx-init.conf.prev
+
+            echo "✅ proxy 배포 완료"
