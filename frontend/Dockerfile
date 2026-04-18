@@ -23,6 +23,15 @@ FROM --platform=$BUILDPLATFORM node:20-alpine AS builder
 
 WORKDIR /app
 
+# NEXT_PUBLIC_* 빌드 타임 주입
+# ---
+# Next.js는 NEXT_PUBLIC_* 환경변수를 빌드 시 클라이언트 JS 번들에 inline함.
+# 런타임 주입(compose environment)으로는 브라우저 코드에 도달 못하므로,
+# 반드시 여기서 ARG → ENV로 받아 npm run build 전에 세팅해야 함.
+# 값은 GitHub Actions가 --build-arg로 전달 (workflow의 secrets 참조).
+ARG NEXT_PUBLIC_GOOGLE_CLIENT_ID
+ENV NEXT_PUBLIC_GOOGLE_CLIENT_ID=$NEXT_PUBLIC_GOOGLE_CLIENT_ID
+
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
