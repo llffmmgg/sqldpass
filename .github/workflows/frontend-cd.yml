@@ -1,0 +1,204 @@
+# ============================================================
+# sqldpass 프론트엔드 CD (Continuous Deployment)
+# ============================================================
+#
+# main 브랜치에 push되면 자동으로 배포합니다.
+#
+# 동작 흐름:
+#   1. build-push — Docker 이미지 빌드 → ghcr.io에 푸시
+#   2. deploy    — 서버에 최신 이미지 pull & 롤링 스왑
+#                  → 3001 포트에 임시 기동 → 헬스체크 → 3000 스왑
+#                  → 실패 시 기존 3000은 그대로 유지
+#
+# 시크릿:
+#   - SSH_HOST, SSH_PORT, SSH_USERNAME, SSH_PRIVATE_KEY (백엔드와 공유)
+#   - web 컨테이너 환경변수는 compose에 하드코딩 (INTERNAL_API_URL 등)
+#   - 별도 시크릿 추가 불필요
+#
+# 트리거:
+#   - main 브랜치 push
+#   - frontend/ 또는 docker-compose.prod.yaml 또는 이 워크플로 변경 시
+# ============================================================
+
+name: 프론트엔드 CD
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'frontend/**'
+      - 'docker-compose.prod.yaml'
+      - '.github/workflows/frontend-cd.yml'
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: llffmmgg/sqldpass-web
+
+jobs:
+  # ----------------------------------------------------------
+  # Job 1: Docker 이미지 빌드 및 ghcr.io 푸시
+  # - Dockerfile이 3-stage (deps, builder, runner)로 내부에서 npm ci + next build 수행
+  # - BUILDPLATFORM에서 cross-compile → ARM 에뮬레이션 회피 (deps/builder 단계)
+  # - 최종 runner stage만 linux/arm64로 빌드
+  # ----------------------------------------------------------
+  build-push:
+    name: 이미지 빌드 및 푸시
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: 소스 코드 체크아웃
+        uses: actions/checkout@v4
+
+      # QEMU: ARM64 최종 런타임 스테이지용 (파일 복사 수준이라 오버헤드 작음)
+      - name: QEMU 설정
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: arm64
+
+      - name: Docker Buildx 설정
+        uses: docker/setup-buildx-action@v3
+
+      - name: GitHub Container Registry 로그인
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Docker 이미지 빌드 + ghcr.io 푸시
+      # platforms: OCI Ampere ARM 인스턴스용 arm64
+      - name: Docker 이미지 빌드 및 푸시
+        uses: docker/build-push-action@v6
+        with:
+          context: ./frontend
+          push: true
+          platforms: linux/arm64
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:prod
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+          # GitHub Actions 캐시 활용 → 의존성 변경 없으면 레이어 재사용
+          cache-from: type=gha,scope=frontend
+          cache-to: type=gha,mode=max,scope=frontend
+
+  # ----------------------------------------------------------
+  # Job 2: OCI 서버 배포 (롤링 스왑)
+  # - 3001에 임시 컨테이너 기동 → 헬스체크 통과 시 3000 스왑
+  # - 실패 시 기존 3000은 그대로 유지 (사용자 영향 0)
+  # - compose 파일은 backend CD가 이미 동기화하지만,
+  #   frontend 단독 push 시에도 최신 파일이 서버에 있도록 여기서도 SCP 전송
+  # ----------------------------------------------------------
+  deploy:
+    name: 운영 서버 배포
+    needs: build-push
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 소스 코드 체크아웃
+        uses: actions/checkout@v4
+
+      - name: Compose 파일 서버 전송
+        uses: appleboy/scp-action@v1
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT }}
+          source: "docker-compose.prod.yaml"
+          target: "~/sqldpass/"
+
+      - name: SSH 배포 실행
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT }}
+          script: |
+            # ============================================================
+            # 프론트엔드 무중단(에 가까운) 배포 — 포트 재바인딩 방식
+            # ------------------------------------------------------------
+            # 1) 3001에 임시 컨테이너 기동 (backend-net에 붙여 app:8080 접근)
+            # 2) localhost:3001/ 헬스체크 통과 시에만 3000 스왑
+            # 3) 헬스체크 실패 시 기존 3000은 그대로 유지 → 사용자 영향 0
+            # 4) 다운타임은 3000 stop → up 사이 1~3초
+            # ============================================================
+            set -e
+            cd ~/sqldpass
+
+            NEW_IMAGE="ghcr.io/llffmmgg/sqldpass-web:prod"
+            NEW_NAME="sqldpass-web-new"
+            NEW_PORT=3001
+            NETWORK="sqldpass_backend-net"
+
+            # === 0) 최신 이미지 pull ===
+            echo "최신 이미지를 가져옵니다..."
+            docker compose -f docker-compose.prod.yaml pull web
+
+            # === 1) 이전 배포 잔여 임시 컨테이너 정리 ===
+            docker rm -f "$NEW_NAME" 2>/dev/null || true
+
+            # === 2) 임시 컨테이너 기동 ===
+            # compose의 backend-net에 붙여 app/db 접근 가능
+            echo "신규 컨테이너를 ${NEW_PORT} 포트에 기동합니다..."
+            docker run -d \
+              --name "$NEW_NAME" \
+              --network "$NETWORK" \
+              -p ${NEW_PORT}:3000 \
+              --memory=700m \
+              --stop-timeout 10 \
+              -e NODE_ENV=production \
+              -e INTERNAL_API_URL=http://app:8080 \
+              -e NEXT_PUBLIC_API_URL="" \
+              "$NEW_IMAGE"
+
+            # === 3) 헬스체크 (최대 60초) ===
+            # Next.js는 /actuator/health 같은 엔드포인트 없으므로 루트 / 가 200인지 확인
+            echo "신규 컨테이너 헬스체크 대기..."
+            HEALTHY=0
+            for i in $(seq 1 12); do
+              if curl -sf -o /dev/null http://localhost:${NEW_PORT}/ ; then
+                HEALTHY=1
+                echo "신규 컨테이너 헬스체크 통과 ($i회차)"
+                break
+              fi
+              echo "  대기 중... ($i/12)"
+              sleep 5
+            done
+
+            if [ "$HEALTHY" != "1" ]; then
+              echo "❌ 신규 컨테이너 헬스체크 실패. 기존 3000은 그대로 유지됩니다."
+              echo "--- 신규 컨테이너 로그 (마지막 100줄) ---"
+              docker logs --tail 100 "$NEW_NAME" || true
+              docker rm -f "$NEW_NAME" || true
+              exit 1
+            fi
+
+            # === 4) 3000 스왑 (다운타임 최소화 1~3초) ===
+            echo "기존 3000 컨테이너 중지..."
+            docker compose -f docker-compose.prod.yaml stop web 2>/dev/null || true
+            docker compose -f docker-compose.prod.yaml rm -f web 2>/dev/null || true
+
+            echo "임시 컨테이너 제거..."
+            docker rm -f "$NEW_NAME"
+
+            echo "정식 컨테이너를 3000으로 기동..."
+            docker compose -f docker-compose.prod.yaml up -d web
+
+            # === 5) 최종 헬스체크 ===
+            echo "최종 3000 헬스체크 대기..."
+            for i in $(seq 1 12); do
+              if curl -sf -o /dev/null http://localhost:3000/ ; then
+                echo "✅ 프론트엔드 배포 완료!"
+                docker image prune -f
+                exit 0
+              fi
+              echo "  대기 중... ($i/12)"
+              sleep 5
+            done
+
+            echo "❌ 최종 헬스체크 실패. 로그 확인: docker compose -f docker-compose.prod.yaml logs web"
+            docker compose -f docker-compose.prod.yaml logs --tail 100 web
+            exit 1
