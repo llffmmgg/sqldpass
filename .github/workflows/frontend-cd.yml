@@ -30,6 +30,11 @@ on:
       - 'docker-compose.prod.yaml'
       - '.github/workflows/frontend-cd.yml'
 
+# 백엔드 CD와 같은 group으로 묶어 순차 배포 (race 방지)
+concurrency:
+  group: deploy-prod
+  cancel-in-progress: false
+
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: llffmmgg/sqldpass-web
