@@ -22,8 +22,11 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      # nginx 설정 파일
+      # 메인 설정 — 도메인별 server 블록
       - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      # 공통 server-level include (보안 헤더, 봇 차단 등 DRY)
+      # /etc/nginx/conf.d/ 밖에 두어야 top-level 자동 include에 잡히지 않음
+      - ./nginx-common.conf:/etc/nginx/includes/nginx-common.conf:ro
       # Let's Encrypt 인증서 (certbot이 작성, nginx가 읽기)
       - ./certbot/conf:/etc/letsencrypt:ro
       # ACME 챌린지 webroot (certbot이 작성, nginx가 읽기)
