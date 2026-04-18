@@ -12,6 +12,7 @@
 # 구성:
 #   app — Spring Boot 백엔드 (ghcr.io에서 pull)
 #   db  — MySQL 8.0 (내부 네트워크만, 외부 접근 불가)
+#   web — Next.js 프론트엔드 (ghcr.io에서 pull)
 # ============================================================
 
 services:
@@ -62,7 +63,7 @@ services:
     deploy:
       resources:
         limits:
-          memory: 1G   # Spring AI 부팅에 필요한 메모리 (ARM 2GB 인스턴스에서 OS/DB 합쳐 1.5GB 사용)
+          memory: 1G   # Spring AI 부팅에 필요한 메모리 (12GB 인스턴스: app 1GB + db 512MB + web 700MB = 약 2.2GB 사용)
 
   # ----------------------------------------------------------
   # MySQL 데이터베이스
@@ -96,8 +97,39 @@ services:
         limits:
           memory: 512M
 
+  # ----------------------------------------------------------
+  # Next.js 프론트엔드
+  # - nginx 인스턴스(별도)에서 3000 포트로 프록시
+  # - SSR/ISR은 compose 내부 네트워크로 'app:8080' 직통 (nginx 우회)
+  # - 외부 노출은 nginx 쪽에서만 — OCI VCN security list에서 3000은 내부만 허용
+  # ----------------------------------------------------------
+  web:
+    image: ghcr.io/llffmmgg/sqldpass-web:prod
+    container_name: sqldpass-web
+    restart: unless-stopped
+    stop_grace_period: 10s   # Next.js는 graceful shutdown 짧음
+    ports:
+      - "${WEB_PORT:-3000}:3000"
+    environment:
+      NODE_ENV: production
+      # --- API 라우팅 ---
+      # SSR/ISR 호출용 — Docker 내부 DNS로 백엔드 컨테이너에 직접 접근
+      INTERNAL_API_URL: http://app:8080
+      # 브라우저에서는 relative path(/api/*)를 쓰도록 빈 문자열
+      # → nginx가 /api/*를 백엔드로 라우팅
+      NEXT_PUBLIC_API_URL: ""
+    depends_on:
+      app:
+        condition: service_started   # backend가 뜬 뒤 web 시작 (SSR 시 첫 호출 실패 방지)
+    networks:
+      - backend-net
+    deploy:
+      resources:
+        limits:
+          memory: 700M   # Next.js 16 standalone 런타임 (idle ~200MB, peak ~500MB)
+
 # ----------------------------------------------------------
-# 네트워크: app ↔ db 간 격리된 내부 통신
+# 네트워크: app ↔ db ↔ web 간 격리된 내부 통신
 # ----------------------------------------------------------
 networks:
   backend-net:
