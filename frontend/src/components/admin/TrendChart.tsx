@@ -30,15 +30,15 @@ export default function TrendChart() {
   }, [days]);
 
   return (
-    <div className="rounded-xl border border-border bg-surface p-5">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="text-base font-semibold">회원/풀이 추이</h2>
-        <div className="flex items-center gap-1 rounded-lg border border-border bg-background p-0.5">
+    <div className="rounded-xl border border-border bg-surface p-4">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h2 className="text-sm font-semibold">회원/풀이 추이</h2>
+        <div className="flex items-center gap-1 rounded-md border border-border bg-background p-0.5">
           {PERIOD_OPTIONS.map((opt) => (
             <button
               key={opt.days}
               onClick={() => setDays(opt.days)}
-              className={`rounded-md px-3 py-1 text-xs font-medium transition ${
+              className={`rounded px-2 py-0.5 text-[11px] font-medium transition ${
                 days === opt.days
                   ? "bg-primary text-zinc-900"
                   : "text-muted hover:text-foreground"
@@ -51,15 +51,15 @@ export default function TrendChart() {
       </div>
 
       {error && (
-        <p className="mt-4 rounded-md border border-rose-500/30 bg-rose-500/10 px-3 py-2 text-xs text-rose-300">
+        <p className="mt-3 rounded-md border border-rose-500/30 bg-rose-500/10 px-2.5 py-1.5 text-[11px] text-rose-300">
           데이터를 불러올 수 없습니다: {error}
         </p>
       )}
 
       {loading && !points ? (
-        <div className="mt-6 h-72 animate-pulse rounded-lg bg-background" />
+        <div className="mt-4 h-40 animate-pulse rounded-lg bg-background" />
       ) : points && points.length > 0 ? (
-        <div className="mt-8 space-y-10">
+        <div className="mt-4 space-y-5">
           <LineSeries
             title="신규 가입"
             points={points}
@@ -74,18 +74,18 @@ export default function TrendChart() {
           />
         </div>
       ) : (
-        <p className="mt-6 text-sm text-muted">데이터가 없습니다.</p>
+        <p className="mt-4 text-xs text-muted">데이터가 없습니다.</p>
       )}
     </div>
   );
 }
 
 const W = 800;
-const H = 260;
-const PAD_L = 48;
-const PAD_R = 20;
-const PAD_T = 28;
-const PAD_B = 36;
+const H = 150;
+const PAD_L = 40;
+const PAD_R = 12;
+const PAD_T = 16;
+const PAD_B = 24;
 
 function LineSeries({
   title,
@@ -131,14 +131,14 @@ function LineSeries({
 
   return (
     <div>
-      <div className="mb-3 flex items-baseline justify-between">
-        <div className="flex items-center gap-2">
-          <span className="h-2.5 w-2.5 rounded-full" style={{ background: color }} />
-          <span className="text-sm font-semibold text-foreground">{title}</span>
+      <div className="mb-1.5 flex items-baseline justify-between">
+        <div className="flex items-center gap-1.5">
+          <span className="h-2 w-2 rounded-full" style={{ background: color }} />
+          <span className="text-xs font-semibold text-foreground">{title}</span>
         </div>
-        <span className="text-xs text-muted">
-          기간 합계 <span className="font-medium text-foreground">{total.toLocaleString()}</span>
-          <span className="mx-1.5 text-border">·</span>
+        <span className="text-[11px] text-muted">
+          합계 <span className="font-medium text-foreground">{total.toLocaleString()}</span>
+          <span className="mx-1 text-border">·</span>
           일평균 <span className="font-medium text-foreground">{avg.toFixed(1)}</span>
         </span>
       </div>
@@ -174,10 +174,10 @@ function LineSeries({
                 opacity={i === 0 ? 1 : 0.6}
               />
               <text
-                x={PAD_L - 8}
-                y={y + 4}
+                x={PAD_L - 6}
+                y={y + 3}
                 textAnchor="end"
-                fontSize={11}
+                fontSize={10}
                 className="fill-current text-muted"
               >
                 {formatTick(tv)}
@@ -194,7 +194,7 @@ function LineSeries({
           d={linePath}
           fill="none"
           stroke={color}
-          strokeWidth={2.5}
+          strokeWidth={2}
           strokeLinecap="round"
           strokeLinejoin="round"
         />
@@ -205,10 +205,10 @@ function LineSeries({
             <circle
               cx={c.x}
               cy={c.y}
-              r={4}
+              r={3}
               fill="var(--color-surface, #18181b)"
               stroke={color}
-              strokeWidth={2}
+              strokeWidth={1.75}
             >
               <title>
                 {c.date}: {c.v.toLocaleString()}
@@ -226,9 +226,9 @@ function LineSeries({
             <text
               key={p.date}
               x={cx}
-              y={H - 12}
+              y={H - 8}
               textAnchor="middle"
-              fontSize={11}
+              fontSize={10}
               className="fill-current text-muted"
             >
               {formatDate(p.date)}
