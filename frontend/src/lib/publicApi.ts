@@ -103,6 +103,23 @@ export function getPublicQuestionDetail(
   return publicFetch(`/questions/${id}`);
 }
 
+/**
+ * 자격증별 오늘의 문제 (날짜 시드 기반, 모든 사용자 동일).
+ * 클라이언트 컴포넌트용 — 상대경로로 Vercel rewrites/OCI nginx 경유.
+ */
+export async function getDailyQuestion(
+  cert: CertSlug | string,
+): Promise<PublicQuestionDetail> {
+  const res = await fetch(
+    `/api/public/daily-question?cert=${encodeURIComponent(cert)}`,
+    { cache: "no-store" },
+  );
+  if (!res.ok) {
+    throw new Error(`daily-question failed: ${res.status}`);
+  }
+  return res.json();
+}
+
 export function getPublicAllQuestionIds(): Promise<number[]> {
   return publicFetch("/questions/ids");
 }

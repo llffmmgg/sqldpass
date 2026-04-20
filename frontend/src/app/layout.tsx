@@ -5,6 +5,7 @@ import NavBar from "@/components/NavBar";
 import Footer from "@/components/Footer";
 import { SiteNoticeBanner } from "@/components/SiteNoticeBanner";
 import AnalyticsScripts from "@/components/AnalyticsScripts";
+import { ToastProvider } from "@/components/Toast";
 import "./globals.css";
 
 const ADSENSE_CLIENT = "ca-pub-6512792395955186";
@@ -194,10 +195,12 @@ export default function RootLayout({
         <Suspense fallback={null}>
           <AnalyticsScripts />
         </Suspense>
-        <SiteNoticeBanner />
-        <NavBar />
-        <div className="flex-1">{children}</div>
-        <Footer />
+        <ToastProvider>
+          <SiteNoticeBanner />
+          <NavBar />
+          <div className="flex-1">{children}</div>
+          <Footer />
+        </ToastProvider>
       </body>
     </html>
   );

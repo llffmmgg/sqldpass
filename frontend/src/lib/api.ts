@@ -87,6 +87,10 @@ export interface SolveResponse {
   score: number;
   solvedAt: string;
   answers: SolveAnswerResponse[];
+  /** 풀이 제출 직후 현재 연속 학습 일수. */
+  currentStreak?: number | null;
+  /** 이번 풀이로 도달한 마일스톤(7·30·100·365). 없으면 null. */
+  milestoneReached?: number | null;
 }
 
 export interface SolveSummaryResponse {

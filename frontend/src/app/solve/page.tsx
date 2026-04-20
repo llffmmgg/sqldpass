@@ -19,6 +19,7 @@ import Spinner from "@/components/Spinner";
 import ReportQuestionButton from "@/components/ReportQuestionButton";
 import BookmarkButton from "@/components/BookmarkButton";
 import { GradingDisclaimerModal } from "@/components/GradingDisclaimerModal";
+import { useToast } from "@/components/Toast";
 import { Badge, Button, Card, Container } from "@/components/ui";
 import {
   CERT_TOKENS,
@@ -52,6 +53,7 @@ type PastEntry = {
 function SolvePageContent() {
   const searchParams = useSearchParams();
   const certParam = searchParams?.get("cert");
+  const toast = useToast();
 
   const [phase, setPhase] = useState<Phase>("select");
   const [subjects, setSubjects] = useState<Subject[]>([]);
@@ -218,12 +220,18 @@ function SolvePageContent() {
             answerText: current.questionType !== "MCQ" ? answerText : undefined,
           },
         ],
-      }).catch((e) => {
-        console.error("풀이 제출 실패:", e);
-        setSubmitError(
-          e instanceof Error ? e.message : "풀이 기록 저장에 실패했습니다. 다음 문제로 넘기기 전에 재시도하세요."
-        );
-      });
+      })
+        .then((res) => {
+          if (res.milestoneReached) {
+            toast.show(`🎉 ${res.milestoneReached}일 연속 학습! 잘하고 있어요`, "success");
+          }
+        })
+        .catch((e) => {
+          console.error("풀이 제출 실패:", e);
+          setSubmitError(
+            e instanceof Error ? e.message : "풀이 기록 저장에 실패했습니다. 다음 문제로 넘기기 전에 재시도하세요."
+          );
+        });
     }
   }
 

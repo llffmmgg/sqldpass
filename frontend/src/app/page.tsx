@@ -3,6 +3,7 @@ import ScrollReveal from "@/components/ScrollReveal";
 import HeroCta from "@/components/HeroCta";
 import HeroStats from "@/components/HeroStats";
 import ExamCountdownStrip from "@/components/ExamCountdownStrip";
+import DailyQuestionWidget from "@/components/DailyQuestionWidget";
 import { SiteNoticeModal } from "@/components/SiteNoticeModal";
 import CertChips from "@/components/CertChips";
 import RankingSection from "@/components/RankingSection";
@@ -78,6 +79,13 @@ export default function Home() {
           </ScrollReveal>
         </Container>
       </section>
+
+      {/* ── Daily Question ─────────────────────────────────── */}
+      <Section>
+        <Container size="default">
+          <DailyQuestionWidget />
+        </Container>
+      </Section>
 
       {/* ── Features ───────────────────────────────────────── */}
       <Section>

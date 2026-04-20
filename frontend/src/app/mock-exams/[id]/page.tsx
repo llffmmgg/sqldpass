@@ -22,6 +22,7 @@ import {
 import { submitSolve, type SolveAnswerRequest, type SolveResponse } from "@/lib/api";
 import { ExamBadge } from "@/app/mock-exams/page";
 import { GradingDisclaimerModal } from "@/components/GradingDisclaimerModal";
+import { useToast } from "@/components/Toast";
 import { trackEvent } from "@/lib/gtag";
 
 /** 자격증별 실제 시험 시간 (분) */
@@ -57,6 +58,7 @@ export default function MockExamDetailPage() {
 function MockExamDetailContent() {
   const params = useParams();
   const router = useRouter();
+  const toast = useToast();
   const id = Number(params?.id);
 
   const [exam, setExam] = useState<MockExamDetail | null>(null);
@@ -290,6 +292,9 @@ function MockExamDetailContent() {
       };
       const res = await submitSolve(payload);
       setResult(res);
+      if (res.milestoneReached) {
+        toast.show(`🎉 ${res.milestoneReached}일 연속 학습! 잘하고 있어요`, "success");
+      }
       // GA4 — 모의고사 완료
       trackEvent("complete_exam", {
         exam_id: exam.id,

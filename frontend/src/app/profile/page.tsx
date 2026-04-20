@@ -6,6 +6,7 @@ import { isLoggedIn, setNickname as saveNickname, clearAuth } from "@/lib/auth";
 import { getMe, updateNickname, withdrawMember, type MemberMe } from "@/lib/memberApi";
 import { generateNickname } from "@/lib/nickname";
 import LoginRequired from "@/components/LoginRequired";
+import StreakBox from "@/components/StreakBox";
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -95,6 +96,10 @@ export default function ProfilePage() {
     <main className="min-h-screen bg-background text-foreground">
       <div className="mx-auto max-w-xl px-4 py-12">
         <h1 className="text-2xl font-bold">프로필</h1>
+
+        <div className="mt-6">
+          <StreakBox />
+        </div>
 
         {me && (
           <div className="mt-8 rounded-xl border border-border bg-surface p-6">
