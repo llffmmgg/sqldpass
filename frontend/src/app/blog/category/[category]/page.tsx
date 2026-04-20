@@ -149,25 +149,24 @@ export default async function BlogCategoryPage({
                 )}
               </div>
             )}
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {section.posts.map((post) => {
                 const views = viewCounts[post.slug] ?? 0;
                 return (
                   <Link key={post.slug} href={`/blog/${post.slug}`} className="group block h-full">
                     <Card variant="interactive" padding="none" className="flex h-full flex-col overflow-hidden">
                       <div className={`h-0.5 w-full ${barClass}`} />
-                      <div className="flex flex-1 flex-col p-5">
-                        <div className="text-[11px] text-text-subtle">{post.readingTime}</div>
-                        <h3 className="mt-2 text-base font-semibold leading-snug group-hover:text-primary">
+                      <div className="flex flex-1 flex-col gap-2 p-4">
+                        <h3 className="text-[15px] font-semibold leading-snug group-hover:text-primary line-clamp-2">
                           {post.title}
                         </h3>
-                        <p className="mt-2 flex-1 text-sm leading-relaxed text-text-muted line-clamp-2">
-                          {post.description}
-                        </p>
-                        <div className="mt-3 flex items-center justify-between text-[11px] text-text-subtle">
+                        <div className="mt-auto flex items-center gap-2 text-[11px] text-text-subtle">
                           <span>
                             {new Date(post.date).toLocaleDateString("ko-KR", { month: "long", day: "numeric" })}
                           </span>
+                          <span>·</span>
+                          <span>{post.readingTime}</span>
+                          <span>·</span>
                           <span>조회 {views.toLocaleString()}</span>
                         </div>
                       </div>
