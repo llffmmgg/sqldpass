@@ -295,6 +295,29 @@ public class PublicContentService {
         return questionRepository.findAllPublicIds();
     }
 
+    // =================== 오늘의 문제 (자격증별) ===================
+
+    /**
+     * 자격증별 오늘의 문제 1개 반환.
+     * - 같은 날, 같은 자격증 → 모든 사용자에게 동일 문제 (공유성)
+     * - 다른 자격증 → 서로 다른 문제 (seed에 cert 포함)
+     */
+    public PublicQuestionDetailResponse getDailyQuestion(String certSlug) {
+        List<PublicCategoryResponse> categories = listCategoriesByCert(certSlug);
+        if (categories.isEmpty()) {
+            throw new SqldpassException(ErrorCode.QUESTION_NOT_FOUND, "자격증에 문제가 없습니다: " + certSlug);
+        }
+        List<Long> subjectIds = categories.stream().map(PublicCategoryResponse::id).toList();
+        List<Long> questionIds = questionRepository.findIdsBySubjectIdIn(subjectIds);
+        if (questionIds.isEmpty()) {
+            throw new SqldpassException(ErrorCode.QUESTION_NOT_FOUND, "자격증에 문제가 없습니다: " + certSlug);
+        }
+        String seed = java.time.LocalDate.now() + ":" + certSlug;
+        int idx = Math.floorMod(seed.hashCode(), questionIds.size());
+        Long pickedId = questionIds.get(idx);
+        return getQuestionDetail(pickedId);
+    }
+
     // =================== 헬퍼 ===================
 
     private String previewOf(String content) {

@@ -79,6 +79,12 @@ public class PublicContentController {
         return publicContentService.listAllPublicQuestionIds();
     }
 
+    @GetMapping("/daily-question")
+    @Operation(summary = "자격증별 오늘의 문제 (날짜 시드, 모든 사용자 동일)")
+    public PublicQuestionDetailResponse getDailyQuestion(@RequestParam String cert) {
+        return publicContentService.getDailyQuestion(cert);
+    }
+
     @PostMapping("/blog/views/{slug}")
     @Operation(summary = "블로그 조회수 증가")
     public void incrementBlogView(@PathVariable String slug) {

@@ -64,7 +64,7 @@ public class WrongAnswerService {
 
         SolveAnswerRequest answerReq = new SolveAnswerRequest(questionId, selectedOption, answerText);
         SolveRequest solveReq = new SolveRequest(question.getSubject().getId(), null, List.of(answerReq));
-        Solve solve = solveService.solve(memberId, solveReq);
+        Solve solve = solveService.solve(memberId, solveReq).solve();
 
         boolean correct = solve.getCorrectCount() > 0;
         return new WrongAnswerRetryResponse(

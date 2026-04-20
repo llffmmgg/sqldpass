@@ -30,6 +30,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
                         "/api/mock-exams/**",
                         "/api/questions/**",
                         "/api/feedback/**",
-                        "/api/notifications/**");
+                        "/api/notifications/**",
+                        "/api/streak/**");
     }
 }

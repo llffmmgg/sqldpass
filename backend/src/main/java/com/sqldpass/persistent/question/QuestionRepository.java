@@ -229,6 +229,9 @@ public interface QuestionRepository extends JpaRepository<QuestionEntity, Long> 
     @Query("SELECT q.id FROM QuestionEntity q ORDER BY q.id ASC")
     List<Long> findAllPublicIds();
 
+    @Query("SELECT q.id FROM QuestionEntity q WHERE q.subject.id IN :subjectIds ORDER BY q.id ASC")
+    List<Long> findIdsBySubjectIdIn(@Param("subjectIds") List<Long> subjectIds);
+
     @Query("SELECT q.summary FROM QuestionEntity q WHERE q.subject.id = :subjectId AND q.topic = :topic AND q.summary IS NOT NULL")
     List<String> findSummariesBySubjectIdAndTopic(@Param("subjectId") Long subjectId, @Param("topic") String topic);
 

@@ -52,7 +52,8 @@ class SolveControllerTest {
         mockAuth();
         SolveAnswer answer = new SolveAnswer(1L, 42L, 1, 1, true);
         Solve solve = new Solve(1L, 1L, 5L, null, 1, 1, 100, LocalDateTime.now(), List.of(answer));
-        given(solveService.solve(eq(1L), any(SolveRequest.class))).willReturn(solve);
+        given(solveService.solve(eq(1L), any(SolveRequest.class)))
+                .willReturn(new com.sqldpass.service.solve.SolveService.SolveWithStreak(solve, null));
 
         mockMvc.perform(post("/api/solves")
                         .header("Authorization", "Bearer test-token")

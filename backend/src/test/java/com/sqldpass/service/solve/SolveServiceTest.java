@@ -88,7 +88,7 @@ class SolveServiceTest {
                 new SolveAnswerRequest(q3.getId(), 3, null)   // 정답
         ));
 
-        Solve result = solveService.solve(member.getId(), request);
+        Solve result = solveService.solve(member.getId(), request).solve();
 
         assertThat(result.getTotalCount()).isEqualTo(3);
         assertThat(result.getCorrectCount()).isEqualTo(2);

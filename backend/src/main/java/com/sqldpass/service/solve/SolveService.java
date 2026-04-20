@@ -25,8 +25,10 @@ import com.sqldpass.persistent.solve.SolveMapper;
 import com.sqldpass.persistent.solve.SolveRepository;
 import com.sqldpass.persistent.subject.SubjectEntity;
 import com.sqldpass.persistent.subject.SubjectRepository;
+import com.sqldpass.persistent.member.MemberEntity.StreakUpdateResult;
 import com.sqldpass.service.common.ErrorCode;
 import com.sqldpass.service.common.SqldpassException;
+import com.sqldpass.service.streak.StreakService;
 
 @Service
 @Transactional(readOnly = true)
@@ -38,22 +40,25 @@ public class SolveService {
     private final SubjectRepository subjectRepository;
     private final MockExamRepository mockExamRepository;
     private final GradingService gradingService;
+    private final StreakService streakService;
 
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     public SolveService(SolveRepository solveRepository, QuestionRepository questionRepository,
                         MemberRepository memberRepository, SubjectRepository subjectRepository,
-                        MockExamRepository mockExamRepository, GradingService gradingService) {
+                        MockExamRepository mockExamRepository, GradingService gradingService,
+                        StreakService streakService) {
         this.solveRepository = solveRepository;
         this.questionRepository = questionRepository;
         this.memberRepository = memberRepository;
         this.subjectRepository = subjectRepository;
         this.mockExamRepository = mockExamRepository;
         this.gradingService = gradingService;
+        this.streakService = streakService;
     }
 
     @Transactional
-    public Solve solve(Long memberId, SolveRequest request) {
+    public SolveWithStreak solve(Long memberId, SolveRequest request) {
         // subjectId 또는 mockExamId 중 정확히 하나는 있어야 함
         if ((request.subjectId() == null) == (request.mockExamId() == null)) {
             throw new SqldpassException(ErrorCode.INVALID_INPUT,
@@ -135,13 +140,67 @@ public class SolveService {
         }
 
         solveRepository.save(solveEntity);
-        return SolveMapper.toDomain(solveEntity);
+
+        StreakUpdateResult streakUpdate = streakService.updateOnSolve(memberId);
+        return new SolveWithStreak(SolveMapper.toDomain(solveEntity), streakUpdate);
+    }
+
+    /** 풀이 결과 + streak 갱신 결과를 함께 반환. */
+    public record SolveWithStreak(com.sqldpass.domain.solve.Solve solve, StreakUpdateResult streakUpdate) {
     }
 
     public List<Solve> getMySolves(Long memberId) {
         return solveRepository.findByMemberIdOrderByCreatedAtDesc(memberId).stream()
                 .map(SolveMapper::toDomain)
                 .toList();
+    }
+
+    /**
+     * 회원의 마지막 풀이 자격증 slug. Daily Question 기본 탭 계산용.
+     * 풀이 기록이 없으면 null.
+     */
+    public String findLastSolvedCertSlug(Long memberId) {
+        List<com.sqldpass.persistent.solve.SolveEntity> recent =
+                solveRepository.findRecentByMemberId(memberId, org.springframework.data.domain.PageRequest.of(0, 1));
+        if (recent.isEmpty()) return null;
+        return extractCertSlug(recent.get(0));
+    }
+
+    private static String extractCertSlug(com.sqldpass.persistent.solve.SolveEntity entity) {
+        if (entity.getSubject() != null) {
+            return certSlugFromSubject(entity.getSubject());
+        }
+        if (entity.getMockExam() != null) {
+            return certSlugFromExamType(entity.getMockExam().getExamType());
+        }
+        return null;
+    }
+
+    private static String certSlugFromExamType(com.sqldpass.persistent.mockexam.ExamType type) {
+        if (type == null) return null;
+        return switch (type) {
+            case SQLD -> "sqld";
+            case ENGINEER_PRACTICAL -> "engineer";
+            case ENGINEER_WRITTEN -> "engineer-written";
+            case COMPUTER_LITERACY_1 -> "computer-literacy-1";
+            case COMPUTER_LITERACY_2 -> "computer-literacy-2";
+            case ADSP -> "adsp";
+        };
+    }
+
+    private static String certSlugFromSubject(com.sqldpass.persistent.subject.SubjectEntity subject) {
+        com.sqldpass.persistent.subject.SubjectEntity cursor = subject;
+        while (cursor.getParent() != null) {
+            cursor = cursor.getParent();
+        }
+        String rootName = cursor.getName();
+        if (rootName == null) return null;
+        if ("정보처리기사 실기".equals(rootName)) return "engineer";
+        if ("정보처리기사 필기".equals(rootName)) return "engineer-written";
+        if ("컴퓨터활용능력 1급 필기".equals(rootName)) return "computer-literacy-1";
+        if ("컴퓨터활용능력 2급 필기".equals(rootName)) return "computer-literacy-2";
+        if ("데이터분석 준전문가(ADsP)".equals(rootName)) return "adsp";
+        return "sqld";
     }
 
     public Solve getSolve(Long id, Long memberId) {

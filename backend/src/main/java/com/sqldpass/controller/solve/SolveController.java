@@ -37,7 +37,10 @@ public class SolveController {
             HttpServletRequest request,
             @Valid @RequestBody SolveRequest body) {
         Long memberId = (Long) request.getAttribute("memberId");
-        return SolveResponse.from(solveService.solve(memberId, body));
+        SolveService.SolveWithStreak result = solveService.solve(memberId, body);
+        Integer current = result.streakUpdate() != null ? result.streakUpdate().currentStreak() : null;
+        Integer milestone = result.streakUpdate() != null ? result.streakUpdate().milestoneReached() : null;
+        return SolveResponse.from(result.solve(), current, milestone);
     }
 
     @GetMapping("/api/solves")
@@ -60,5 +63,13 @@ public class SolveController {
     @Operation(summary = "전체 사용자의 14일 일평균 풀이 수 (대시보드 비교선용)")
     public OverallStatsResponse getOverallStats() {
         return solveService.getOverallStats();
+    }
+
+    @GetMapping("/api/solves/me/last-cert")
+    @Operation(summary = "내 마지막 풀이 자격증 slug (Daily Question 기본 탭 계산용)")
+    public java.util.Map<String, String> getLastSolvedCert(HttpServletRequest request) {
+        Long memberId = (Long) request.getAttribute("memberId");
+        String slug = solveService.findLastSolvedCertSlug(memberId);
+        return java.util.Collections.singletonMap("cert", slug);
     }
 }

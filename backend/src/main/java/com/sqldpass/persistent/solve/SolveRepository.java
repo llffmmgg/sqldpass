@@ -42,6 +42,15 @@ public interface SolveRepository extends JpaRepository<SolveEntity, Long> {
             + "ORDER BY s.createdAt DESC")
     List<SolveEntity> findByMemberIdOrderByCreatedAtDesc(@Param("memberId") Long memberId);
 
+    /** 회원의 가장 최근 풀이 1건 (Daily Question 탭 기본값 계산용). Pageable로 Top 1 제한. */
+    @Query("SELECT s FROM SolveEntity s "
+            + "LEFT JOIN FETCH s.subject subj "
+            + "LEFT JOIN FETCH subj.parent "
+            + "LEFT JOIN FETCH s.mockExam "
+            + "WHERE s.member.id = :memberId "
+            + "ORDER BY s.createdAt DESC")
+    List<SolveEntity> findRecentByMemberId(@Param("memberId") Long memberId, Pageable pageable);
+
     /**
      * 회원 탈퇴 시 사용. orphanRemoval=true 가 적용된 SolveAnswerEntity 를 cascade 시키기 위해
      * 엔티티를 fetch 한 뒤 deleteAll 로 호출하는 방식이 안전하므로,
