@@ -94,11 +94,15 @@ jobs:
           cache-to: type=gha,mode=max,scope=frontend
 
   # ----------------------------------------------------------
-  # Job 2: OCI 서버 배포 (롤링 스왑)
-  # - 3001에 임시 컨테이너 기동 → 헬스체크 통과 시 3000 스왑
+  # Job 2: OCI 서버 배포 (롤링 스왑 — docker run 방식)
+  # - compose 전체 재평가를 피하고 web 컨테이너만 격리 배포
+  # - app/db 서비스는 절대 건드리지 않음 (compose 호출 X)
+  # - 3001에 임시 컨테이너 기동 → 헬스체크 → 3000 스왑
   # - 실패 시 기존 3000은 그대로 유지 (사용자 영향 0)
-  # - compose 파일은 backend CD가 이미 동기화하지만,
-  #   frontend 단독 push 시에도 최신 파일이 서버에 있도록 여기서도 SCP 전송
+  #
+  # 역사: 초기엔 `docker compose up -d web` 썼으나, compose가 app 서비스의
+  # ${MYSQL_PASSWORD} 등 env 참조를 빈 값으로 재평가해 app 컨테이너를 비밀번호
+  # 없이 재생성시키는 사고 발생 (2026-04-18). docker run으로 전환해 완전 격리.
   # ----------------------------------------------------------
   deploy:
     name: 운영 서버 배포
@@ -106,19 +110,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: 소스 코드 체크아웃
-        uses: actions/checkout@v4
-
-      - name: Compose 파일 서버 전송
-        uses: appleboy/scp-action@v1
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USERNAME }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          port: ${{ secrets.SSH_PORT }}
-          source: "docker-compose.prod.yaml"
-          target: "~/sqldpass/"
-
       - name: SSH 배포 실행
         uses: appleboy/ssh-action@v1
         with:
@@ -128,30 +119,29 @@ jobs:
           port: ${{ secrets.SSH_PORT }}
           script: |
             # ============================================================
-            # 프론트엔드 무중단(에 가까운) 배포 — 포트 재바인딩 방식
+            # 프론트엔드 배포 — docker run 기반 롤링 스왑
             # ------------------------------------------------------------
-            # 1) 3001에 임시 컨테이너 기동 (backend-net에 붙여 app:8080 접근)
-            # 2) localhost:3001/ 헬스체크 통과 시에만 3000 스왑
-            # 3) 헬스체크 실패 시 기존 3000은 그대로 유지 → 사용자 영향 0
-            # 4) 다운타임은 3000 stop → up 사이 1~3초
+            # docker compose를 일절 호출하지 않음 → app/db env 재평가 트리거 없음.
+            # compose 네트워크(sqldpass_backend-net)에만 붙여서 내부 DNS(app, db) 사용.
+            # web 컨테이너는 compose의 web 서비스 정의와 동일한 파라미터로 기동.
             # ============================================================
             set -e
-            cd ~/sqldpass
 
             NEW_IMAGE="ghcr.io/llffmmgg/sqldpass-web:prod"
             NEW_NAME="sqldpass-web-new"
+            CUR_NAME="sqldpass-web"
             NEW_PORT=3001
+            CUR_PORT=3000
             NETWORK="sqldpass_backend-net"
 
-            # === 0) 최신 이미지 pull ===
+            # === 0) 최신 이미지 pull (compose 거치지 않음) ===
             echo "최신 이미지를 가져옵니다..."
-            docker compose -f docker-compose.prod.yaml pull web
+            docker pull "$NEW_IMAGE"
 
             # === 1) 이전 배포 잔여 임시 컨테이너 정리 ===
             docker rm -f "$NEW_NAME" 2>/dev/null || true
 
-            # === 2) 임시 컨테이너 기동 ===
-            # compose의 backend-net에 붙여 app/db 접근 가능
+            # === 2) 임시 컨테이너 3001 기동 ===
             echo "신규 컨테이너를 ${NEW_PORT} 포트에 기동합니다..."
             docker run -d \
               --name "$NEW_NAME" \
@@ -165,7 +155,6 @@ jobs:
               "$NEW_IMAGE"
 
             # === 3) 헬스체크 (최대 60초) ===
-            # Next.js는 /actuator/health 같은 엔드포인트 없으므로 루트 / 가 200인지 확인
             echo "신규 컨테이너 헬스체크 대기..."
             HEALTHY=0
             for i in $(seq 1 12); do
@@ -186,21 +175,30 @@ jobs:
               exit 1
             fi
 
-            # === 4) 3000 스왑 (다운타임 최소화 1~3초) ===
-            echo "기존 3000 컨테이너 중지..."
-            docker compose -f docker-compose.prod.yaml stop web 2>/dev/null || true
-            docker compose -f docker-compose.prod.yaml rm -f web 2>/dev/null || true
+            # === 4) 3000 스왑 (다운타임 1~3초) ===
+            echo "기존 3000 컨테이너 제거..."
+            docker rm -f "$CUR_NAME" 2>/dev/null || true
 
             echo "임시 컨테이너 제거..."
             docker rm -f "$NEW_NAME"
 
-            echo "정식 컨테이너를 3000으로 기동..."
-            docker compose -f docker-compose.prod.yaml up -d web
+            echo "정식 컨테이너를 ${CUR_PORT} 포트로 기동..."
+            docker run -d \
+              --name "$CUR_NAME" \
+              --network "$NETWORK" \
+              -p ${CUR_PORT}:3000 \
+              --memory=700m \
+              --stop-timeout 10 \
+              --restart unless-stopped \
+              -e NODE_ENV=production \
+              -e INTERNAL_API_URL=http://app:8080 \
+              -e NEXT_PUBLIC_API_URL="" \
+              "$NEW_IMAGE"
 
             # === 5) 최종 헬스체크 ===
-            echo "최종 3000 헬스체크 대기..."
+            echo "최종 ${CUR_PORT} 헬스체크 대기..."
             for i in $(seq 1 12); do
-              if curl -sf -o /dev/null http://localhost:3000/ ; then
+              if curl -sf -o /dev/null http://localhost:${CUR_PORT}/ ; then
                 echo "✅ 프론트엔드 배포 완료!"
                 docker image prune -f
                 exit 0
@@ -209,6 +207,6 @@ jobs:
               sleep 5
             done
 
-            echo "❌ 최종 헬스체크 실패. 로그 확인: docker compose -f docker-compose.prod.yaml logs web"
-            docker compose -f docker-compose.prod.yaml logs --tail 100 web
+            echo "❌ 최종 헬스체크 실패."
+            docker logs --tail 100 "$CUR_NAME" || true
             exit 1
