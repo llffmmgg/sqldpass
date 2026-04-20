@@ -6,12 +6,12 @@ import BlogList from "./BlogList";
 export const metadata: Metadata = {
   title: "자격증 시험 준비 블로그",
   description:
-    "SQLD, 정보처리기사 실기, 컴퓨터활용능력 1급 시험 준비에 필요한 학습 전략, 출제 경향, CBT 활용법을 정리한 블로그입니다.",
+    "SQLD, 정처기 필기·실기, 컴활 1·2급, ADsP 시험 준비에 필요한 학습 전략, 출제 경향, CBT 활용법을 정리한 블로그입니다.",
   alternates: { canonical: "https://www.sqldpass.com/blog" },
   openGraph: {
     title: "자격증 시험 준비 블로그 | SQLD Pass",
     description:
-      "SQLD, 정처기, 컴퓨터활용능력 시험 준비 꿀팁과 학습 전략을 공유합니다.",
+      "SQLD, 정처기, 컴활, ADsP 시험 준비 꿀팁과 학습 전략을 공유합니다.",
     url: "https://www.sqldpass.com/blog",
   },
 };

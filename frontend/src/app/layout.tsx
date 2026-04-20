@@ -28,13 +28,14 @@ const caveat = Caveat({
 
 const SITE_URL = "https://www.sqldpass.com";
 const SITE_NAME = "sqldpass";
+const SITE_TITLE = "SQLD · 정처기 · 컴활 · ADsP 무료 CBT 모의고사";
 const SITE_DESCRIPTION =
-  "SQLD · 정보처리기사 실기 · 컴퓨터활용능력 1급 필기 무료 CBT 모의고사. 매번 새로 추가되는 기출 변형 문제, 오답 자동 복습, 회차별 실력 추적까지 한 곳에서.";
+  "SQLD, 정보처리기사 필기·실기, 컴퓨터활용능력 1·2급, ADsP 무료 CBT 모의고사. 기출 변형 문제, 오답 자동 복습, 회차별 실력 추적까지 한 곳에서.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: "SQLD · 정처기 실기 · 컴활 1급 필기 무료 CBT 모의고사 | sqldpass",
+    default: `${SITE_TITLE} | sqldpass`,
     template: "%s | sqldpass",
   },
   description: SITE_DESCRIPTION,
@@ -45,23 +46,29 @@ export const metadata: Metadata = {
     "SQLD 모의고사",
     "SQLD 기출",
     "SQL 개발자",
-    "SQL 개발자 자격증",
-    // 정보처리기사 실기
+    // 정보처리기사 (필기/실기)
+    "정보처리기사",
+    "정보처리기사 필기",
     "정보처리기사 실기",
-    "정보처리기사 CBT",
-    "정보처리기사 실기 CBT",
-    "정보처리기사 실기 모의고사",
     "정처기",
+    "정처기 필기",
     "정처기 실기",
-    "정처기 실기 CBT",
-    "정처기 실기 모의고사",
-    // 컴퓨터활용능력 1급
+    "정처기 CBT",
+    "정처기 모의고사",
+    // 컴퓨터활용능력 1·2급
+    "컴활",
     "컴활 1급",
-    "컴활 1급 필기",
-    "컴활 필기 CBT",
-    "컴활 모의고사",
+    "컴활 2급",
+    "컴활 필기",
+    "컴활 실기",
+    "컴퓨터활용능력",
     "컴퓨터활용능력 1급",
-    "컴퓨터활용능력 1급 필기",
+    "컴퓨터활용능력 2급",
+    // ADsP
+    "ADsP",
+    "ADsP CBT",
+    "ADsP 모의고사",
+    "데이터분석 준전문가",
     // 공통
     "자격증 CBT",
     "무료 CBT",
@@ -79,13 +86,13 @@ export const metadata: Metadata = {
     type: "website",
     url: SITE_URL,
     siteName: SITE_NAME,
-    title: "SQLD · 정처기 실기 · 컴활 1급 필기 무료 CBT 모의고사",
+    title: SITE_TITLE,
     description: SITE_DESCRIPTION,
     locale: "ko_KR",
   },
   twitter: {
     card: "summary_large_image",
-    title: "SQLD · 정처기 실기 · 컴활 1급 필기 무료 CBT 모의고사",
+    title: SITE_TITLE,
     description: SITE_DESCRIPTION,
   },
   verification: {
