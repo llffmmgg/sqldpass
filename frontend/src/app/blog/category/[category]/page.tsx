@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getAllCategories, getPostsByCategory } from "@/lib/blog";
 import { getPublicBlogViews } from "@/lib/publicApi";
+import { groupPostsByMeta } from "@/lib/blogGroups";
 import { Badge, Card, Container } from "@/components/ui";
 import { certFromBlogCategory, CERT_TOKENS } from "@/lib/cert-tokens";
 
@@ -49,6 +50,9 @@ export default async function BlogCategoryPage({
   const cert = certFromBlogCategory(decoded);
   const barClass = cert ? CERT_TOKENS[cert].tailwind.bg : "bg-primary";
   const [featured, ...rest] = posts;
+  const groupedSections = groupPostsByMeta(decoded, rest);
+  const showGroupHeaders =
+    groupedSections.length > 1 || (groupedSections[0]?.label ?? "") !== "";
 
   return (
     <Container size="default" className="py-12">
@@ -123,35 +127,57 @@ export default async function BlogCategoryPage({
           </Link>
         )}
 
-        {rest.length > 0 && (
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {rest.map((post) => {
-              const views = viewCounts[post.slug] ?? 0;
-              return (
-                <Link key={post.slug} href={`/blog/${post.slug}`} className="group block h-full">
-                  <Card variant="interactive" padding="none" className="flex h-full flex-col overflow-hidden">
-                    <div className={`h-0.5 w-full ${barClass}`} />
-                    <div className="flex flex-1 flex-col p-5">
-                      <div className="text-[11px] text-text-subtle">{post.readingTime}</div>
-                      <h2 className="mt-2 text-base font-semibold leading-snug group-hover:text-primary">
-                        {post.title}
-                      </h2>
-                      <p className="mt-2 flex-1 text-sm leading-relaxed text-text-muted line-clamp-2">
-                        {post.description}
-                      </p>
-                      <div className="mt-3 flex items-center justify-between text-[11px] text-text-subtle">
-                        <span>
-                          {new Date(post.date).toLocaleDateString("ko-KR", { month: "long", day: "numeric" })}
-                        </span>
-                        <span>조회 {views.toLocaleString()}</span>
+        {groupedSections.map((section) => (
+          <section key={section.key} className="mt-8 first:mt-6">
+            {showGroupHeaders && section.label && (
+              <div className="mb-4 flex items-baseline justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-lg" aria-hidden>
+                    {section.icon}
+                  </span>
+                  <h2 className="text-lg font-semibold tracking-tight sm:text-xl">
+                    {section.label}
+                  </h2>
+                  <span className="text-xs text-text-muted">
+                    {section.posts.length}편
+                  </span>
+                </div>
+                {section.description && (
+                  <p className="hidden text-xs text-text-muted sm:block">
+                    {section.description}
+                  </p>
+                )}
+              </div>
+            )}
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {section.posts.map((post) => {
+                const views = viewCounts[post.slug] ?? 0;
+                return (
+                  <Link key={post.slug} href={`/blog/${post.slug}`} className="group block h-full">
+                    <Card variant="interactive" padding="none" className="flex h-full flex-col overflow-hidden">
+                      <div className={`h-0.5 w-full ${barClass}`} />
+                      <div className="flex flex-1 flex-col p-5">
+                        <div className="text-[11px] text-text-subtle">{post.readingTime}</div>
+                        <h3 className="mt-2 text-base font-semibold leading-snug group-hover:text-primary">
+                          {post.title}
+                        </h3>
+                        <p className="mt-2 flex-1 text-sm leading-relaxed text-text-muted line-clamp-2">
+                          {post.description}
+                        </p>
+                        <div className="mt-3 flex items-center justify-between text-[11px] text-text-subtle">
+                          <span>
+                            {new Date(post.date).toLocaleDateString("ko-KR", { month: "long", day: "numeric" })}
+                          </span>
+                          <span>조회 {views.toLocaleString()}</span>
+                        </div>
                       </div>
-                    </div>
-                  </Card>
-                </Link>
-              );
-            })}
-          </div>
-        )}
+                    </Card>
+                  </Link>
+                );
+              })}
+            </div>
+          </section>
+        ))}
       </div>
     </Container>
   );

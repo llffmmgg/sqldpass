@@ -152,32 +152,69 @@ export type GroupDef = {
 };
 
 /**
+ * 모든 카테고리에 공통으로 적용되는 3그룹 체계.
+ * frontmatter `group` 우선 → 없으면 slug 패턴으로 자동 추론.
+ */
+const COMMON_GROUPS: GroupDef[] = [
+  {
+    key: "과목별 개념",
+    label: "과목별 개념",
+    icon: "📚",
+    description: "시험 과목·핵심 개념을 깊이 있게 정리",
+  },
+  {
+    key: "학습 전략",
+    label: "학습 전략",
+    icon: "🎯",
+    description: "공부법, 단기 합격, 취업 활용법",
+  },
+  {
+    key: "시험 정보",
+    label: "시험 정보",
+    icon: "🗓️",
+    description: "시험일정, 합격률, 접수·환불 규정",
+  },
+];
+
+/**
  * 카테고리별 섹션 그룹 순서.
- * 각 글 frontmatter의 `group` 필드가 이 key와 매칭되면 해당 섹션에 배치.
- * 정의되지 않은 카테고리는 단일 그룹(폴백).
+ * 모든 카테고리가 동일한 3그룹 체계 공유.
+ * 카테고리 정의 없으면 단일 그룹(폴백).
  */
 export const CATEGORY_GROUPS: Record<string, GroupDef[]> = {
-  정보처리기사: [
-    {
-      key: "과목별 개념",
-      label: "과목별 개념",
-      icon: "📚",
-      description: "실기에 나오는 과목별 핵심 개념을 깊이 있게 정리",
-    },
-    {
-      key: "학습 전략",
-      label: "학습 전략",
-      icon: "🎯",
-      description: "출제 경향, 코드 풀이 접근법, 암기 가이드",
-    },
-    {
-      key: "시험 정보",
-      label: "시험 정보",
-      icon: "🗓️",
-      description: "시험일정, 합격률 추이",
-    },
-  ],
+  SQLD: COMMON_GROUPS,
+  ADsP: COMMON_GROUPS,
+  정보처리기사: COMMON_GROUPS,
+  "정보처리기사 필기": COMMON_GROUPS,
+  컴퓨터활용능력: COMMON_GROUPS,
+  "컴퓨터활용능력 2급": COMMON_GROUPS,
+  일반: COMMON_GROUPS,
 };
+
+/**
+ * frontmatter `group`이 없는 글의 그룹을 slug 패턴으로 추론.
+ * 위에서부터 매칭되는 패턴 우선 (순서 중요).
+ */
+export function inferGroupFromSlug(slug: string): string {
+  // 시험 정보: 일정·합격률·유효기간·응시료·CBT vs PBT·당일 팁·개편
+  if (
+    /(2026-schedule|-schedule$|pass-rate|expiry-renewal|fees-refund|cbt-vs-pbt|exam-day-tips|2024-reform|written-vs-practical)/.test(
+      slug,
+    )
+  ) {
+    return "시험 정보";
+  }
+  // 학습 전략: 공부법·벼락치기·비전공·과락·연결·입문·취업 활용·비교
+  if (
+    /(cram|study-guide|non-major|avoid-fail|balance|self-study|cbt-practice|cbt-strategy|to-practical|to-adp|to-1-upgrade|beginner|how-to-use-mock-exam|resume|combo-recommendation|sqld-vs-engineer|adsp-vs-sqld|memorization|code-solving|practical-tips|practical-guide)/.test(
+      slug,
+    )
+  ) {
+    return "학습 전략";
+  }
+  // 나머지는 과목별 개념 (sql·java·python·함수·정규화·보안·용어 정리 등)
+  return "과목별 개념";
+}
 
 /** 섹션별 분류 결과 */
 export type GroupedPosts = {
@@ -207,8 +244,10 @@ export function groupPostsByMeta(
 
   const leftovers: BlogPostMeta[] = [];
   for (const post of posts) {
-    if (post.group && buckets.has(post.group)) {
-      buckets.get(post.group)!.push(post);
+    // frontmatter group 우선 → 없으면 slug 패턴으로 추론
+    const effectiveGroup = post.group || inferGroupFromSlug(post.slug);
+    if (buckets.has(effectiveGroup)) {
+      buckets.get(effectiveGroup)!.push(post);
     } else {
       leftovers.push(post);
     }
