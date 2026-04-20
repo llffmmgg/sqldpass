@@ -30,15 +30,15 @@ export default function TrendChart() {
   }, [days]);
 
   return (
-    <div className="rounded-xl border border-border bg-surface p-4">
+    <div className="rounded-xl border border-border bg-surface p-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className="text-sm font-semibold">회원/풀이 추이</h2>
-        <div className="flex items-center gap-1 rounded-md border border-border bg-background p-0.5">
+        <h2 className="text-xs font-semibold">회원/풀이 추이</h2>
+        <div className="flex items-center gap-0.5 rounded border border-border bg-background p-0.5">
           {PERIOD_OPTIONS.map((opt) => (
             <button
               key={opt.days}
               onClick={() => setDays(opt.days)}
-              className={`rounded px-2 py-0.5 text-[11px] font-medium transition ${
+              className={`rounded px-1.5 py-0.5 text-[10px] font-medium transition ${
                 days === opt.days
                   ? "bg-primary text-zinc-900"
                   : "text-muted hover:text-foreground"
@@ -131,15 +131,15 @@ function LineSeries({
 
   return (
     <div>
-      <div className="mb-1.5 flex items-baseline justify-between">
+      <div className="mb-1 flex items-baseline justify-between">
         <div className="flex items-center gap-1.5">
-          <span className="h-2 w-2 rounded-full" style={{ background: color }} />
-          <span className="text-xs font-semibold text-foreground">{title}</span>
+          <span className="h-1.5 w-1.5 rounded-full" style={{ background: color }} />
+          <span className="text-[11px] font-semibold text-foreground">{title}</span>
         </div>
-        <span className="text-[11px] text-muted">
+        <span className="text-[10px] text-muted">
           합계 <span className="font-medium text-foreground">{total.toLocaleString()}</span>
-          <span className="mx-1 text-border">·</span>
-          일평균 <span className="font-medium text-foreground">{avg.toFixed(1)}</span>
+          <span className="mx-0.5 text-border">·</span>
+          평균 <span className="font-medium text-foreground">{avg.toFixed(1)}</span>
         </span>
       </div>
 
@@ -177,7 +177,7 @@ function LineSeries({
                 x={PAD_L - 6}
                 y={y + 3}
                 textAnchor="end"
-                fontSize={10}
+                fontSize={9}
                 className="fill-current text-muted"
               >
                 {formatTick(tv)}
