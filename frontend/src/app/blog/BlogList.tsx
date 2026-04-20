@@ -78,14 +78,15 @@ export default function BlogList({
   posts,
   categories,
   viewCounts,
+  recommendedPosts,
 }: {
   posts: BlogPostMeta[];
   categories: { category: string; count: number }[];
   viewCounts: Record<string, number>;
+  recommendedPosts: BlogPostMeta[];
 }) {
   const countMap = Object.fromEntries(categories.map((c) => [c.category, c.count]));
   const totalViews = Object.values(viewCounts).reduce((s, v) => s + v, 0);
-  const latestPosts = posts.slice(0, 3);
 
   return (
     <Container size="default" className="py-16">
@@ -158,11 +159,11 @@ export default function BlogList({
         })}
       </div>
 
-      {latestPosts.length > 0 && (
+      {recommendedPosts.length > 0 && (
         <section className="mt-16">
-          <h2 className="text-xl font-semibold tracking-tight">최신 글</h2>
+          <h2 className="text-xl font-semibold tracking-tight">추천 글</h2>
           <div className="mt-5 space-y-3">
-            {latestPosts.map((post) => {
+            {recommendedPosts.map((post) => {
               const views = viewCounts[post.slug] ?? 0;
               const cert = certFromBlogCategory(post.category);
               return (

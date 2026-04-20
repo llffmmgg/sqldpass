@@ -26,5 +26,14 @@ export default async function BlogPage() {
     /* 백엔드 미연결 시 무시 */
   }
 
-  return <BlogList posts={posts} categories={categories} viewCounts={viewCounts} />;
+  const recommendedPosts = [...posts].sort(() => Math.random() - 0.5).slice(0, 3);
+
+  return (
+    <BlogList
+      posts={posts}
+      categories={categories}
+      viewCounts={viewCounts}
+      recommendedPosts={recommendedPosts}
+    />
+  );
 }
