@@ -4,7 +4,9 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { getDailyQuestion, type PublicQuestionDetail, type CertSlug } from "@/lib/publicApi";
 import { getMyStreak, getLastSolvedCert, type Streak } from "@/lib/streakApi";
+import { submitSolve, type SolveResponse } from "@/lib/api";
 import { isLoggedIn } from "@/lib/auth";
+import { useToast } from "@/components/Toast";
 
 type Tab = { slug: CertSlug; label: string };
 
@@ -18,13 +20,19 @@ const TABS: Tab[] = [
 ];
 
 export default function DailyQuestionWidget() {
+  const toast = useToast();
   const [activeCert, setActiveCert] = useState<CertSlug>("sqld");
   const [question, setQuestion] = useState<PublicQuestionDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [streak, setStreak] = useState<Streak | null>(null);
   const [logged, setLogged] = useState(false);
 
-  // 로그인 상태 + 마지막 풀이 자격증 → 기본 탭 결정
+  // 풀이 상태
+  const [selectedOption, setSelectedOption] = useState<number | null>(null);
+  const [answerText, setAnswerText] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [result, setResult] = useState<SolveResponse | null>(null);
+
   useEffect(() => {
     const loggedIn = isLoggedIn();
     setLogged(loggedIn);
@@ -40,11 +48,13 @@ export default function DailyQuestionWidget() {
     }
   }, []);
 
-  // 탭 변경 시 해당 cert 의 오늘의 문제 로드
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
     setQuestion(null);
+    setSelectedOption(null);
+    setAnswerText("");
+    setResult(null);
     getDailyQuestion(activeCert)
       .then((q) => {
         if (!cancelled) setQuestion(q);
@@ -57,6 +67,43 @@ export default function DailyQuestionWidget() {
       cancelled = true;
     };
   }, [activeCert]);
+
+  const isMcq = question?.questionType === "MCQ";
+  const canSubmit =
+    !!question &&
+    !submitting &&
+    !result &&
+    (isMcq ? selectedOption !== null : answerText.trim().length > 0);
+
+  async function handleSubmit() {
+    if (!question || !logged) return;
+    setSubmitting(true);
+    try {
+      const res = await submitSolve({
+        subjectId: question.categoryId,
+        answers: [
+          {
+            questionId: question.id,
+            selectedOption: isMcq ? (selectedOption ?? undefined) : undefined,
+            answerText: !isMcq ? answerText : undefined,
+          },
+        ],
+      });
+      setResult(res);
+      if (res.milestoneReached) {
+        toast.show(`🎉 ${res.milestoneReached}일 연속 학습! 잘하고 있어요`, "success");
+      } else if (res.currentStreak != null && res.currentStreak > 0) {
+        toast.show(`🔥 ${res.currentStreak}일 연속!`, "success");
+      }
+      getMyStreak().then(setStreak).catch(() => {});
+    } catch (e) {
+      toast.show(e instanceof Error ? e.message : "제출 실패", "error");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  const correct = result?.answers?.[0]?.correct ?? false;
 
   return (
     <section className="rounded-2xl border border-border bg-surface/60 p-5 sm:p-6">
@@ -98,29 +145,121 @@ export default function DailyQuestionWidget() {
           <p className="text-sm text-muted">문제를 불러오지 못했어요.</p>
         ) : (
           <>
-            <p className="whitespace-pre-wrap break-words text-sm leading-relaxed sm:text-base line-clamp-6">
+            <p className="whitespace-pre-wrap break-words text-sm leading-relaxed sm:text-base">
               {question.content}
             </p>
-            <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-              <div className="text-xs text-muted">
-                {question.certName} · {question.categoryName}
-              </div>
-              <Link
-                href={`/q/${question.id}`}
-                className="inline-flex items-center gap-1 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-zinc-900 hover:bg-primary-hover"
-              >
-                풀어보기 →
-              </Link>
+
+            <div className="mt-2 text-xs text-muted">
+              {question.certName} · {question.categoryName}
             </div>
+
+            {/* 비로그인: 링크로 이동 유도 */}
+            {!logged && (
+              <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+                <p className="text-xs text-muted">
+                  로그인하면 <span className="text-foreground font-medium">여기서 바로 풀고 연속 학습 기록</span>이 쌓여요.
+                </p>
+                <Link
+                  href={`/q/${question.id}`}
+                  className="inline-flex items-center gap-1 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-zinc-900 hover:bg-primary-hover"
+                >
+                  문제 풀러 가기 →
+                </Link>
+              </div>
+            )}
+
+            {/* 로그인 & 미제출: 풀이 UI */}
+            {logged && !result && (
+              <div className="mt-5">
+                {isMcq ? (
+                  <div className="flex flex-wrap gap-2">
+                    {[1, 2, 3, 4].map((n) => (
+                      <button
+                        key={n}
+                        type="button"
+                        onClick={() => setSelectedOption(n)}
+                        className={`h-10 w-10 rounded-lg border text-sm font-semibold transition ${
+                          selectedOption === n
+                            ? "border-primary bg-primary/15 text-primary"
+                            : "border-border text-muted hover:border-foreground/40 hover:text-foreground"
+                        }`}
+                      >
+                        {n}
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <textarea
+                    value={answerText}
+                    onChange={(e) => setAnswerText(e.target.value)}
+                    rows={3}
+                    placeholder="답안을 입력하세요"
+                    className="w-full resize-y rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
+                  />
+                )}
+                <div className="mt-4 flex items-center justify-between">
+                  <p className="text-xs text-muted">
+                    {isMcq ? "정답 번호를 고르세요" : "핵심 키워드를 포함해 간단히"}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={handleSubmit}
+                    disabled={!canSubmit}
+                    className="inline-flex items-center gap-1 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-zinc-900 hover:bg-primary-hover disabled:opacity-40"
+                  >
+                    {submitting ? "제출 중…" : "제출하기"}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* 제출 후 결과 공개 */}
+            {logged && result && (
+              <div className="mt-5 space-y-3">
+                <div
+                  className={`rounded-lg border px-4 py-3 text-sm font-semibold ${
+                    correct
+                      ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-300"
+                      : "border-rose-500/40 bg-rose-500/10 text-rose-300"
+                  }`}
+                >
+                  {correct ? "✅ 정답입니다!" : "❌ 오답이에요"}
+                  {result.currentStreak != null && (
+                    <span className="ml-2 text-xs text-primary">🔥 {result.currentStreak}일 연속</span>
+                  )}
+                </div>
+
+                <div className="rounded-lg border border-border bg-muted/5 p-4 text-sm">
+                  {isMcq && question.correctOption != null && (
+                    <p className="mb-2">
+                      <span className="text-muted">정답:</span>{" "}
+                      <span className="font-semibold">{question.correctOption}번</span>
+                    </p>
+                  )}
+                  {!isMcq && question.answer && (
+                    <p className="mb-2 whitespace-pre-wrap break-words">
+                      <span className="text-muted">정답:</span>{" "}
+                      <span className="font-semibold">{question.answer}</span>
+                    </p>
+                  )}
+                  {question.explanation && (
+                    <p className="whitespace-pre-wrap break-words text-text-muted">
+                      {question.explanation}
+                    </p>
+                  )}
+                </div>
+
+                <div className="flex items-center justify-between text-xs">
+                  <Link href={`/q/${question.id}`} className="text-primary hover:underline">
+                    문제 상세로 이동 →
+                  </Link>
+                  <span className="text-muted">내일 같은 자리에 새 문제가 올라와요</span>
+                </div>
+              </div>
+            )}
           </>
         )}
       </div>
-
-      {!logged && (
-        <p className="mt-3 text-xs text-muted">
-          로그인하면 하루 1문제씩 풀고 <span className="text-foreground font-medium">연속 학습 기록</span>이 쌓여요.
-        </p>
-      )}
     </section>
   );
 }
