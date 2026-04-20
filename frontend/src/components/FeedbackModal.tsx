@@ -180,7 +180,7 @@ export default function FeedbackModal({
                 rows={5}
                 maxLength={2000}
                 placeholder="자세한 내용을 적어주세요. 어떤 상황에서, 어떤 문제가 있었는지 알려주시면 큰 도움이 됩니다."
-                className="block w-full resize-y rounded-lg border border-border bg-background px-4 py-3 text-sm leading-relaxed text-foreground placeholder:text-muted/50 focus:outline-none focus:ring-2 focus:ring-amber-500/60"
+                className="block w-full resize-y rounded-lg border border-border bg-background px-4 py-3 text-sm leading-relaxed text-foreground placeholder:text-muted/70 focus:outline-none focus:ring-2 focus:ring-amber-500/60"
               />
               <div className="mt-1 flex items-center justify-between">
                 <p className="text-[11px] text-muted/70">함께 만들어가는 SQLD Pass 💛</p>

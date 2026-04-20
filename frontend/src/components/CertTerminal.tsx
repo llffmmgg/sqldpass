@@ -104,7 +104,7 @@ export default function CertTerminal() {
             </button>
           );
         })}
-        <span className="inline-flex items-center rounded-md border border-dashed border-border/60 px-3 py-1.5 text-muted/40">
+        <span className="inline-flex items-center rounded-md border border-dashed border-border/60 px-3 py-1.5 text-muted/60">
           + Soon
         </span>
       </div>

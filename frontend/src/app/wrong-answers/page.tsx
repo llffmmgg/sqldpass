@@ -338,7 +338,7 @@ function WrongAnswersPageContent() {
         <div className="cursor-pointer flex items-center gap-3 px-4 py-3" onClick={() => handleExpand(wa.questionId)}>
           {/* 순번 + 우선순위/즐겨찾기 뱃지 */}
           <div className="flex flex-col items-center gap-1 shrink-0 w-8">
-            {num && <span className="text-[10px] text-muted/50 tabular-nums">#{num}</span>}
+            {num && <span className="text-[10px] text-muted/70 tabular-nums">#{num}</span>}
             {isBookmark ? (
               <span className="flex h-6 w-6 items-center justify-center rounded-full bg-amber-400/20 text-amber-400" title="즐겨찾기">
                 <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -363,7 +363,7 @@ function WrongAnswersPageContent() {
               ) : (
                 <>
                   <span>{wa.wrongCount}회 틀림</span>
-                  <span className="text-muted/30">·</span>
+                  <span className="text-muted/50">·</span>
                   <span>{formatRelativeDate(wa.lastWrongAt)}</span>
                 </>
               )}
@@ -387,7 +387,7 @@ function WrongAnswersPageContent() {
 
           {/* 화살표 */}
           <svg
-            className={`h-4 w-4 shrink-0 text-muted/50 transition-transform ${isExpanded ? "rotate-180" : ""}`}
+            className={`h-4 w-4 shrink-0 text-muted/70 transition-transform ${isExpanded ? "rotate-180" : ""}`}
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -647,7 +647,7 @@ function WrongAnswersPageContent() {
                   >
                     오답 많은 순
                   </button>
-                  <span className="text-muted/40">·</span>
+                  <span className="text-muted/60">·</span>
                   <button
                     onClick={() => setSortMode("recent")}
                     className={`rounded px-2 py-1 transition-colors ${

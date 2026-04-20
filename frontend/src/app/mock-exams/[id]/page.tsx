@@ -586,7 +586,7 @@ function ShortAnswerInput({
           }
         }}
         placeholder="정답을 입력하세요 (엔터: 다음 문제)"
-        className={`w-full rounded-lg border border-border bg-background px-4 py-3 font-mono text-base text-foreground placeholder:text-muted/50 transition focus:outline-none focus:ring-2 ${accent.ring}`}
+        className={`w-full rounded-lg border border-border bg-background px-4 py-3 font-mono text-base text-foreground placeholder:text-muted/70 transition focus:outline-none focus:ring-2 ${accent.ring}`}
         autoComplete="off"
         spellCheck={false}
       />
@@ -615,7 +615,7 @@ function DescriptiveInput({
           onChange={(e) => onChange(e.target.value)}
           rows={8}
           placeholder="개념을 설명하는 답안을 작성하세요. 핵심 키워드를 포함할수록 점수가 올라갑니다."
-          className={`w-full resize-y rounded-lg border border-border bg-background px-4 py-3 text-base leading-relaxed text-foreground placeholder:text-muted/50 transition focus:outline-none focus:ring-2 ${accent.ring}`}
+          className={`w-full resize-y rounded-lg border border-border bg-background px-4 py-3 text-base leading-relaxed text-foreground placeholder:text-muted/70 transition focus:outline-none focus:ring-2 ${accent.ring}`}
         />
         <span className="pointer-events-none absolute bottom-2 right-3 text-xs tabular-nums text-muted/60">
           {value.length} 자
