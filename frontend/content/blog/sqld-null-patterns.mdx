@@ -1,0 +1,192 @@
+---
+title: "SQLD NULL 함정 문제 완전 정복 (비교·집계·JOIN)"
+description: "SQLD 2과목에서 가장 많이 틀리는 NULL 관련 함정 문제 패턴을 모아 정리했습니다. 매회 2–3문제 나오는 단골 주제입니다."
+date: "2026-04-20"
+category: "SQLD"
+tags: ["SQLD", "NULL", "IS NULL", "NVL", "COALESCE", "SQL"]
+---
+
+## 결론 먼저
+
+SQLD에서 **가장 많이 틀리는 영역이 NULL** 문제입니다. 규칙 5개만 정확히 외우면 매회 2–3문제를 놓치지 않아요.
+
+1. `NULL = NULL` → **FALSE** (NULL 반환이라 비교 결과 걸러짐)
+2. `NULL IS NULL` → **TRUE** (비교 연산은 IS NULL만)
+3. `NULL + 1` → **NULL** (산술 연산은 모두 NULL 전파)
+4. `COUNT(*)`는 NULL 포함, `COUNT(col)`은 NULL 제외
+5. `NVL(NULL, 0)` → 0, `COALESCE(NULL, ..., '값')` → 첫 NULL 아닌 값
+
+---
+
+## 왜 NULL이 함정인가
+
+SQLD에서 NULL 관련 문제는 매회 2–3문제 꾸준히 나와요. 그런데 **체감 오답률이 가장 높습니다**. 이유는 직관과 반대로 동작하기 때문이에요.
+
+- 엑셀 쓰던 사람 → 빈 셀을 0으로 취급하는 데 익숙함 (SQL은 그렇지 않음)
+- 프로그래밍 경험자 → `null == null`이 true인 언어(Java)에 익숙함 (SQL은 false)
+
+한 번 틀리면 연달아 틀리는 경향이 있어서, **NULL만 따로 뽑아서 집중 학습**하는 게 점수 향상에 가장 효율적입니다.
+
+---
+
+## NULL 규칙 — 자주 나오는 5가지
+
+### 1. 비교 연산
+
+```sql
+SELECT NULL = NULL;      -- NULL (TRUE 아님!)
+SELECT NULL <> NULL;     -- NULL
+SELECT NULL IS NULL;     -- TRUE
+SELECT NULL IS NOT NULL; -- FALSE
+```
+
+<Highlight color="red">`WHERE col = NULL` 로 쓰면 **항상 NULL이 반환되어 행이 걸러져 안 나와요**. `WHERE col IS NULL`로 써야 합니다.</Highlight>
+
+### 2. 산술 연산 — NULL 전파
+
+```sql
+SELECT 10 + NULL;  -- NULL
+SELECT 10 * NULL;  -- NULL
+SELECT NULL - 5;   -- NULL
+```
+
+어떤 산술 연산이든 NULL이 포함되면 결과는 NULL.
+
+### 3. 집계 함수 — NULL 무시 vs 포함
+
+```sql
+-- EMP 테이블: salary 컬럼에 [1000, 2000, NULL, 3000]
+SELECT COUNT(*)      FROM EMP;  -- 4 (전체 행)
+SELECT COUNT(salary) FROM EMP;  -- 3 (NULL 제외)
+SELECT SUM(salary)   FROM EMP;  -- 6000 (NULL 무시)
+SELECT AVG(salary)   FROM EMP;  -- 2000 (= 6000 / 3, NULL 무시)
+```
+
+<Highlight color="amber">`AVG`는 **NULL을 제외한 행 수로 나눕니다**. `AVG = SUM / COUNT(col)`이지 `SUM / COUNT(*)`가 아니에요. 이 차이를 묻는 문제가 자주 나옵니다.</Highlight>
+
+### 4. NVL / COALESCE / NULLIF
+
+```sql
+SELECT NVL(NULL, 0);                    -- 0 (Oracle)
+SELECT COALESCE(NULL, NULL, 'a', 'b');  -- 'a' (첫 NULL 아닌 값)
+SELECT NULLIF(5, 5);                    -- NULL (같으면 NULL 반환)
+SELECT NULLIF(5, 3);                    -- 5 (다르면 첫 번째 반환)
+```
+
+| 함수 | 동작 | 언제 씀 |
+|------|------|--------|
+| `NVL(a, b)` | a가 NULL이면 b, 아니면 a | NULL을 기본값으로 치환 |
+| `COALESCE(a, b, c, …)` | 처음 NULL 아닌 값 | 여러 후보 중 선택 |
+| `NULLIF(a, b)` | a=b이면 NULL, 아니면 a | 특정 값을 NULL로 만들기 |
+
+### 5. 정렬에서의 NULL
+
+```sql
+SELECT * FROM EMP ORDER BY salary;          -- NULL이 뒤에 (Oracle 기본)
+SELECT * FROM EMP ORDER BY salary NULLS FIRST; -- NULL을 앞에
+```
+
+Oracle: 오름차순이면 NULL이 마지막, 내림차순이면 NULL이 처음.
+MySQL/PostgreSQL: 기본 동작이 다를 수 있어요.
+
+---
+
+## 자주 나오는 함정 문제 유형
+
+### 유형 1: COUNT(*) vs COUNT(col)
+
+```sql
+-- EMP 테이블 5행, salary 컬럼 중 2행이 NULL
+SELECT COUNT(*)      FROM EMP;  -- 5
+SELECT COUNT(salary) FROM EMP;  -- 3
+```
+
+**함정**: 보기에서 "5"와 "3"을 모두 만들어놓고 고르게 함.
+
+### 유형 2: WHERE절의 NULL 비교
+
+```sql
+-- dept_id가 NULL인 직원만 찾고 싶을 때
+SELECT * FROM EMP WHERE dept_id = NULL;     -- 결과 없음 (잘못된 쿼리)
+SELECT * FROM EMP WHERE dept_id IS NULL;    -- 정상 (맞는 쿼리)
+```
+
+**함정**: 보기에 `= NULL`을 섞어놓고 "맞는 쿼리는?" 질문.
+
+### 유형 3: AVG 분모 함정
+
+```sql
+-- bonus: [100, 200, NULL, NULL, 300]
+SELECT AVG(bonus) FROM EMP;
+-- = (100 + 200 + 300) / 3 = 200
+-- ≠ (100 + 200 + 0 + 0 + 300) / 5 = 120
+```
+
+**함정**: "NULL을 0으로 치지 않음"을 확인하는 문제.
+
+### 유형 4: JOIN에서 NULL 컬럼
+
+```sql
+-- EMP.dept_id에 NULL 행 포함
+SELECT * FROM EMP INNER JOIN DEPT ON EMP.dept_id = DEPT.dept_id;
+-- NULL 행은 결과에 안 나옴 (NULL = NULL 은 FALSE)
+
+SELECT * FROM EMP LEFT JOIN DEPT ON EMP.dept_id = DEPT.dept_id;
+-- NULL 행은 살아있고 DEPT 컬럼은 NULL로 채움
+```
+
+### 유형 5: 산술 연산 결과
+
+```sql
+-- salary: 1000, bonus: NULL
+SELECT salary + bonus AS total FROM EMP;  -- NULL (NULL 전파)
+SELECT salary + NVL(bonus, 0) FROM EMP;   -- 1000 (NVL로 보정)
+```
+
+**함정**: "total이 NULL 나오는 이유는?" 또는 "결과를 1000으로 만들려면?" 질문.
+
+---
+
+## 자주 하는 실수
+
+**1. NULL을 "빈 문자열"이나 "0"과 동일시**
+`NULL ≠ ''`이고 `NULL ≠ 0`. DB에서 완전 별개의 상태예요.
+
+**2. `NOT IN (..., NULL, ...)` 결과**
+```sql
+SELECT * FROM A WHERE id NOT IN (1, 2, NULL);  -- 결과 없음!
+```
+`id != NULL`이 NULL이 되어 결과가 다 사라져요. `NOT EXISTS`나 `IS NOT NULL`로 대체.
+
+**3. CASE WHEN의 NULL 비교**
+```sql
+CASE WHEN col = NULL THEN 'A' ELSE 'B' END  -- 항상 'B' (잘못)
+CASE WHEN col IS NULL THEN 'A' ELSE 'B' END -- 정상
+```
+
+**4. UNIQUE 제약조건에서 NULL**
+UNIQUE 컬럼도 NULL은 **여러 개 허용**돼요 (DB마다 구현 차이 있지만 Oracle 기준). "NULL != NULL"이라는 SQL의 원칙 때문.
+
+---
+
+## 시험장에서의 접근법
+
+1. **쿼리에 NULL이 보이면 바로 경계** — 거의 함정이에요
+2. **= NULL → IS NULL로 머릿속 교정**
+3. **COUNT·AVG 집계 함수는 컬럼명 있는지 먼저 확인**
+4. **산술 연산에서 NULL 나오면 NVL/COALESCE로 보정해야 함을 상기**
+5. **시간이 남으면 NULL 관련 문제만 다시 검산**
+
+<Highlight color="green">NULL 문제는 급하게 풀면 함정에 걸려요. 다른 문제보다 **10초씩 더 쓰더라도 천천히** 검토하는 게 정답률에 도움이 됩니다.</Highlight>
+
+---
+
+## 정리
+
+- NULL은 "값 없음"이지 0이나 빈 문자열이 아님
+- 비교는 `IS NULL` / `IS NOT NULL`만 사용
+- 산술 연산은 NULL 전파 → NVL/COALESCE로 보정
+- `COUNT(*)`는 전체, `COUNT(col)`은 NULL 제외
+- AVG 분모는 NULL 제외 행 수
+
+[SQLD 모의고사로 NULL 함정 문제 풀어보기 →](/mock-exams?cert=sqld)

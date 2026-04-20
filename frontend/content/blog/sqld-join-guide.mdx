@@ -1,0 +1,169 @@
+---
+title: "SQLD JOIN 완전 정복 (INNER·OUTER·CROSS·SELF)"
+description: "SQLD 2과목에서 매회 3–5문제 나오는 JOIN 유형을 결과 행 예측 중심으로 정리했습니다. 함정 포인트와 시험장 접근법까지."
+date: "2026-04-20"
+category: "SQLD"
+tags: ["SQLD", "JOIN", "INNER JOIN", "OUTER JOIN", "SELF JOIN", "SQL 개발자"]
+---
+
+## 결론 먼저
+
+SQLD JOIN 문제는 **"몇 행이 나오는지" + "NULL이 어디에 찍히는지"** 두 가지로 대부분 결정돼요. INNER / LEFT / RIGHT / FULL OUTER / CROSS / SELF 6가지 중 시험에서 주로 나오는 건 앞의 4가지입니다. 이 글에서는 유형별 결과 테이블을 손으로 그리는 법을 정리해요.
+
+---
+
+## 왜 JOIN이 합격을 가르는가
+
+SQLD 2과목(SQL 기본 및 활용) 40문항 중 **JOIN 관련이 매회 3–5문제**로 가장 비중이 큰 주제입니다. 한 문제당 2점씩만 잡아도 6–10점 차이가 나요. 합격 커트라인이 60점이라 JOIN 한 영역에서 점수가 갈리는 경우가 실제로 많습니다.
+
+또 JOIN은 서브쿼리·윈도우 함수 문제에도 기본으로 깔려있어요. JOIN 결과 테이블을 못 그리면 연계 문제까지 줄줄이 놓칩니다.
+
+---
+
+## 6가지 JOIN 유형
+
+예시 테이블로 쭉 보겠습니다.
+
+**EMP**
+
+| emp_id | name | dept_id |
+|--------|------|---------|
+| 1 | 김 | 10 |
+| 2 | 박 | 20 |
+| 3 | 이 | NULL |
+
+**DEPT**
+
+| dept_id | dept_name |
+|---------|-----------|
+| 10 | 개발 |
+| 20 | 영업 |
+| 30 | 인사 |
+
+### INNER JOIN — 양쪽 매칭만
+
+```sql
+SELECT e.name, d.dept_name
+FROM EMP e INNER JOIN DEPT d ON e.dept_id = d.dept_id;
+```
+
+| name | dept_name |
+|------|-----------|
+| 김 | 개발 |
+| 박 | 영업 |
+
+`이`(dept_id가 NULL)와 `인사부서`(매칭 직원 없음)는 빠집니다.
+
+### LEFT OUTER JOIN — 왼쪽 전부
+
+```sql
+SELECT e.name, d.dept_name
+FROM EMP e LEFT OUTER JOIN DEPT d ON e.dept_id = d.dept_id;
+```
+
+| name | dept_name |
+|------|-----------|
+| 김 | 개발 |
+| 박 | 영업 |
+| 이 | **NULL** |
+
+왼쪽(EMP) 3행 모두 나오고, 매칭 안 되는 오른쪽은 NULL.
+
+### RIGHT OUTER JOIN — 오른쪽 전부
+
+| name | dept_name |
+|------|-----------|
+| 김 | 개발 |
+| 박 | 영업 |
+| NULL | 인사 |
+
+### FULL OUTER JOIN — 양쪽 전부
+
+| name | dept_name |
+|------|-----------|
+| 김 | 개발 |
+| 박 | 영업 |
+| 이 | NULL |
+| NULL | 인사 |
+
+### CROSS JOIN — 카티션 곱
+
+```sql
+SELECT e.name, d.dept_name FROM EMP e CROSS JOIN DEPT d;
+```
+
+결과 행 수 = 3 × 3 = **9행**. 모든 조합이 생성되며 ON 절이 없습니다.
+
+### SELF JOIN — 같은 테이블을 두 번 참조
+
+```sql
+-- 같은 부서에 있는 다른 직원 찾기
+SELECT a.name AS me, b.name AS coworker
+FROM EMP a JOIN EMP b ON a.dept_id = b.dept_id AND a.emp_id <> b.emp_id;
+```
+
+직원 계층 구조(상사-부하)처럼 **같은 테이블을 두 역할로** 쓰는 경우. 별칭(alias)이 필수예요.
+
+---
+
+## 결과 행 개수 계산법
+
+JOIN 문제의 핵심은 **몇 행이 나오는지** 예측하는 거예요. 간단한 규칙:
+
+| JOIN | 결과 행 수 |
+|------|----------|
+| INNER JOIN | ON 조건에 맞는 행 수 |
+| LEFT OUTER | 왼쪽 행 수 (매칭 X는 NULL로 채움) |
+| RIGHT OUTER | 오른쪽 행 수 |
+| FULL OUTER | 양쪽 합집합 (중복 제외) |
+| CROSS JOIN | 왼쪽 × 오른쪽 |
+
+**주의**: ON 조건에 **한 쪽에 여러 개 매칭되는 행**이 있으면 결과가 증가해요. 1:N 관계에서는 N배로 불어납니다.
+
+---
+
+## 자주 하는 실수
+
+**1. LEFT와 RIGHT 기준 헷갈림**
+`A LEFT JOIN B`는 **A가 왼쪽, A의 모든 행이 기준**. A를 중심으로 B 정보를 덧붙이는 구조라고 기억하세요.
+
+**2. NULL이 걸려있는 컬럼의 JOIN 결과**
+`JOIN ON a.col = b.col`에서 `NULL = NULL`은 FALSE예요. NULL 행은 INNER JOIN에서 제외되고, OUTER JOIN에서만 남습니다.
+
+**3. WHERE vs ON 위치 차이**
+OUTER JOIN에서 조건을 WHERE에 쓰면 OUTER가 INNER처럼 동작해요.
+
+```sql
+-- 왼쪽 전부 나옴 (OUTER 유지)
+SELECT * FROM A LEFT JOIN B ON A.id = B.id AND B.flag = 'Y';
+
+-- 왼쪽도 필터링됨 (INNER와 동일 효과)
+SELECT * FROM A LEFT JOIN B ON A.id = B.id WHERE B.flag = 'Y';
+```
+
+<Highlight color="red">OUTER JOIN의 오른쪽 테이블 조건은 **반드시 ON 절에** 두세요. WHERE에 두면 NULL 행까지 걸러지면서 OUTER 의미가 사라집니다.</Highlight>
+
+**4. 1:N 관계 JOIN 결과 중복**
+EMP(1) : SAL_HISTORY(N) 관계에서 JOIN하면 한 직원이 여러 번 나와요. "직원 1명당 1행이 나올 것"이라고 가정하면 틀립니다.
+
+---
+
+## 시험장에서의 접근법
+
+1. **양쪽 테이블을 손으로 옮겨 적기** — 머릿속으로만 매칭하지 말고 종이에 써놓고 선으로 연결
+2. **매칭되는 행끼리 선 그어보기** — INNER면 선으로 연결된 행만, OUTER면 못 연결된 쪽도 NULL로
+3. **ON 조건 → WHERE 조건 순서로 필터링**
+4. **결과 행 수 먼저 세고 답 찾기** — 보기에서 행 수가 다른 걸 먼저 소거하면 정답률 급상승
+
+<Highlight color="green">JOIN 문제는 대부분 "결과 테이블을 쓰시오" 또는 "다음 중 맞는 것은?" 형태라 **정확한 결과표 하나만 그리면** 바로 답이 나와요.</Highlight>
+
+---
+
+## 정리
+
+- JOIN 유형 4개(INNER / LEFT·RIGHT·FULL OUTER / CROSS)가 핵심
+- 결과 행 수 = 매칭 수 + (OUTER의 경우 매칭 안 된 쪽 추가)
+- NULL 컬럼은 INNER에서 탈락, OUTER에서만 유지
+- OUTER의 오른쪽 조건은 ON에 둘 것
+
+[SQLD 모의고사로 JOIN 유형 풀어보기 →](/mock-exams?cert=sqld)

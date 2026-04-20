@@ -1,0 +1,207 @@
+---
+title: "SQLD 윈도우 함수 정리 (RANK·ROW_NUMBER·LAG·PARTITION BY)"
+description: "SQLD 2과목에서 매회 2–3문제 출제되는 윈도우 함수를 순위·누적·이동 함수별로 결과값 중심 정리했습니다."
+date: "2026-04-20"
+category: "SQLD"
+tags: ["SQLD", "윈도우 함수", "RANK", "ROW_NUMBER", "LAG", "LEAD", "PARTITION BY"]
+---
+
+## 결론 먼저
+
+SQLD 윈도우 함수는 **"순위 3종 차이 + PARTITION BY 동작"** 이 핵심이에요.
+
+- **RANK**: 동점 같은 순위, 다음 순위 **건너뜀** (1, 2, 2, 4)
+- **DENSE_RANK**: 동점 같은 순위, 다음 순위 **연속** (1, 2, 2, 3)
+- **ROW_NUMBER**: 행마다 **유일한 번호** (1, 2, 3, 4)
+- **PARTITION BY**: 그룹별로 분리해서 순위 재계산
+
+이것만 잡으면 매회 2–3문제 중 대부분을 맞출 수 있어요.
+
+---
+
+## 왜 윈도우 함수가 중요한가
+
+SQLD 2과목 40문항 중 **매회 2–3문제가 윈도우 함수** 관련으로 나옵니다. 난이도는 상급이지만 패턴이 정해져 있어서, 한 번 이해하면 안정적으로 점수가 나와요.
+
+벼락치기로 준비하는 경우엔 버리는 영역으로 생각하는 사람이 많은데, 다른 주제(서브쿼리·계층형 질의)에 비해 **이해 비용 대비 점수 효율이 좋은 편**입니다. 3일 정도만 투자해도 RANK 계열은 모두 잡을 수 있어요.
+
+---
+
+## 윈도우 함수란?
+
+집계 함수(`SUM`, `COUNT`)는 여러 행을 **하나로 합치는데**, 윈도우 함수는 **행 수를 줄이지 않고** 각 행에 계산 결과를 붙입니다.
+
+```sql
+-- 집계: 그룹별 평균 (행 수 줄어듦)
+SELECT dept_id, AVG(salary) FROM EMP GROUP BY dept_id;
+
+-- 윈도우: 각 행에 부서 평균을 붙임 (행 수 유지)
+SELECT name, dept_id, salary,
+       AVG(salary) OVER (PARTITION BY dept_id) AS dept_avg
+FROM EMP;
+```
+
+**기본 구조**: `함수() OVER (PARTITION BY 그룹 ORDER BY 정렬)`
+
+---
+
+## 순위 함수 3종 — 가장 중요
+
+예시 테이블:
+
+| name | salary |
+|------|--------|
+| A | 500 |
+| B | 400 |
+| C | 400 |
+| D | 300 |
+
+```sql
+SELECT name, salary,
+  RANK()       OVER (ORDER BY salary DESC) AS r,
+  DENSE_RANK() OVER (ORDER BY salary DESC) AS dr,
+  ROW_NUMBER() OVER (ORDER BY salary DESC) AS rn
+FROM EMP;
+```
+
+| name | salary | r (RANK) | dr (DENSE) | rn (ROW) |
+|------|--------|----------|-----------|----------|
+| A | 500 | 1 | 1 | 1 |
+| B | 400 | **2** | 2 | 2 |
+| C | 400 | **2** | 2 | 3 |
+| D | 300 | **4** | **3** | 4 |
+
+<Highlight color="red">RANK와 DENSE_RANK 차이: **동점 다음 번호를 건너뛰는가 아닌가**. 시험에 무조건 나오는 포인트입니다.</Highlight>
+
+**ROW_NUMBER**는 동점도 다르게 처리해서 행마다 유일한 번호를 매겨요.
+
+---
+
+## PARTITION BY — 그룹별 분리 계산
+
+`GROUP BY`와 비슷한데, **행 수를 줄이지 않고** 그룹별로만 계산한다는 차이.
+
+```sql
+-- 부서별로 급여 순위
+SELECT name, dept_id, salary,
+  RANK() OVER (PARTITION BY dept_id ORDER BY salary DESC) AS dept_rank
+FROM EMP;
+```
+
+| name | dept_id | salary | dept_rank |
+|------|---------|--------|-----------|
+| A | 10 | 500 | 1 |
+| B | 10 | 400 | 2 |
+| C | 20 | 400 | 1 |
+| D | 20 | 300 | 2 |
+
+부서 10, 20 각각 안에서 순위가 다시 매겨집니다.
+
+### PARTITION BY 없으면?
+
+전체를 하나의 그룹으로 보고 순위 매김.
+
+```sql
+RANK() OVER (ORDER BY salary DESC)  -- 전체 순위
+RANK() OVER (PARTITION BY dept_id ORDER BY salary DESC)  -- 부서별 순위
+```
+
+---
+
+## LAG / LEAD — 이전·다음 행 값
+
+같은 윈도우 안에서 **n행 이전/이후 값**을 가져와요.
+
+```sql
+-- 직원 입사순으로 정렬하고 이전/다음 직원 급여 비교
+SELECT name, salary,
+  LAG(salary, 1)  OVER (ORDER BY hire_date) AS prev_sal,
+  LEAD(salary, 1) OVER (ORDER BY hire_date) AS next_sal
+FROM EMP;
+```
+
+| name | salary | prev_sal | next_sal |
+|------|--------|----------|----------|
+| A | 300 | NULL | 400 |
+| B | 400 | 300 | 500 |
+| C | 500 | 400 | NULL |
+
+- `LAG(col, n)`: n행 **이전** 값 (첫 행은 NULL)
+- `LEAD(col, n)`: n행 **다음** 값 (마지막 행은 NULL)
+
+**활용**: 전월 대비 증감, 이전 수치와 비교 같은 문제.
+
+---
+
+## 집계 윈도우 함수
+
+`SUM`, `AVG`, `COUNT`, `MAX`, `MIN`도 `OVER`와 함께 쓰면 윈도우 함수처럼 동작.
+
+```sql
+-- 각 직원 옆에 부서 총 급여를 붙임
+SELECT name, dept_id, salary,
+  SUM(salary) OVER (PARTITION BY dept_id) AS dept_total
+FROM EMP;
+```
+
+### 누적 합계 (Running Total)
+
+```sql
+SELECT name, hire_date, salary,
+  SUM(salary) OVER (ORDER BY hire_date) AS running_sum
+FROM EMP;
+```
+
+| name | hire_date | salary | running_sum |
+|------|-----------|--------|-------------|
+| A | 2020 | 300 | 300 |
+| B | 2021 | 400 | 700 |
+| C | 2022 | 500 | 1200 |
+
+`ORDER BY`가 있으면 기본 윈도우 범위가 **"첫 행 ~ 현재 행"** 이라 누적 합계가 됨.
+
+---
+
+## 자주 하는 실수
+
+**1. RANK와 DENSE_RANK 구분 실패**
+가장 흔한 오답. 동점 다음 번호 "건너뛰기 vs 연속"을 혼동해요.
+
+**2. ROW_NUMBER에 동점 기대**
+ROW_NUMBER는 값이 같아도 **다른 번호**를 매겨요. 동점을 같게 표시하고 싶으면 RANK나 DENSE_RANK.
+
+**3. PARTITION BY 생략**
+"부서별 순위"를 묻는데 PARTITION BY를 빼면 전체 순위가 나와요. 요구사항 놓치지 마세요.
+
+**4. LAG/LEAD 첫·마지막 행 NULL**
+첫 행의 LAG, 마지막 행의 LEAD는 **NULL**이에요. 결과 행 계산할 때 주의.
+
+**5. OVER 절 없이 쓰기**
+```sql
+SELECT RANK() FROM EMP;  -- 오류
+SELECT RANK() OVER (ORDER BY salary) FROM EMP;  -- 정상
+```
+
+---
+
+## 시험장에서의 접근법
+
+1. **OVER 절에 PARTITION BY가 있는지 먼저 확인** — 있으면 그룹별, 없으면 전체
+2. **ORDER BY 기준 컬럼과 방향(ASC/DESC) 체크** — 순위 방향 좌우
+3. **RANK/DENSE_RANK/ROW_NUMBER 구분 질문이면 동점 처리 규칙 상기**
+4. **LAG/LEAD는 n 값과 첫/마지막 행 NULL 처리 주의**
+5. **결과 테이블 손으로 그려보기** — 머릿속 추정은 틀리기 쉬움
+
+<Highlight color="green">윈도우 함수는 **결과 테이블을 한 줄씩 채워가는 방식**으로 풀어야 안 틀려요. 보기에서 바로 고르려 하지 말고 표로 재구성하세요.</Highlight>
+
+---
+
+## 정리
+
+- 순위 3종: RANK(건너뜀), DENSE_RANK(연속), ROW_NUMBER(유일)
+- PARTITION BY = 그룹별 재계산, 없으면 전체
+- LAG/LEAD = n행 전/후 값, 경계는 NULL
+- 집계 함수도 OVER와 함께 쓰면 윈도우 함수
+- ORDER BY가 있으면 누적 계산 기본 범위 적용
+
+[SQLD 모의고사로 윈도우 함수 문제 풀어보기 →](/mock-exams?cert=sqld)
