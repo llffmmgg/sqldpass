@@ -57,9 +57,9 @@ export default function TrendChart() {
       )}
 
       {loading && !points ? (
-        <div className="mt-4 h-40 animate-pulse rounded-lg bg-background" />
+        <div className="mt-3 h-24 animate-pulse rounded-lg bg-background" />
       ) : points && points.length > 0 ? (
-        <div className="mt-4 space-y-5">
+        <div className="mt-3 grid gap-3 md:grid-cols-2">
           <LineSeries
             title="신규 가입"
             points={points}
@@ -74,18 +74,18 @@ export default function TrendChart() {
           />
         </div>
       ) : (
-        <p className="mt-4 text-xs text-muted">데이터가 없습니다.</p>
+        <p className="mt-3 text-xs text-muted">데이터가 없습니다.</p>
       )}
     </div>
   );
 }
 
-const W = 800;
-const H = 150;
-const PAD_L = 40;
-const PAD_R = 12;
-const PAD_T = 16;
-const PAD_B = 24;
+const W = 400;
+const H = 120;
+const PAD_L = 34;
+const PAD_R = 8;
+const PAD_T = 12;
+const PAD_B = 20;
 
 function LineSeries({
   title,
