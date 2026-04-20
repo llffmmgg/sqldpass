@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { getTrend, type AdminTrendPoint } from "@/lib/adminApi";
 
 const PERIOD_OPTIONS = [
@@ -57,20 +57,20 @@ export default function TrendChart() {
       )}
 
       {loading && !points ? (
-        <div className="mt-6 h-56 animate-pulse rounded-lg bg-background" />
+        <div className="mt-6 h-72 animate-pulse rounded-lg bg-background" />
       ) : points && points.length > 0 ? (
-        <div className="mt-6 space-y-6">
-          <SvgBarChart
+        <div className="mt-8 space-y-10">
+          <LineSeries
             title="신규 가입"
             points={points}
             field="newMembers"
-            barFill="#a78bfa"
+            color="#a78bfa"
           />
-          <SvgBarChart
+          <LineSeries
             title="풀이"
             points={points}
             field="newSolves"
-            barFill="#4ade80"
+            color="#4ade80"
           />
         </div>
       ) : (
@@ -80,24 +80,25 @@ export default function TrendChart() {
   );
 }
 
-const W = 720;
-const H = 180;
-const PAD_L = 40;
-const PAD_R = 12;
-const PAD_T = 12;
-const PAD_B = 28;
+const W = 800;
+const H = 260;
+const PAD_L = 48;
+const PAD_R = 20;
+const PAD_T = 28;
+const PAD_B = 36;
 
-function SvgBarChart({
+function LineSeries({
   title,
   points,
   field,
-  barFill,
+  color,
 }: {
   title: string;
   points: AdminTrendPoint[];
   field: Field;
-  barFill: string;
+  color: string;
 }) {
+  const gradId = useId();
   const values = points.map((p) => p[field]);
   const rawMax = Math.max(0, ...values);
   const max = niceMax(rawMax);
@@ -107,21 +108,38 @@ function SvgBarChart({
   const plotW = W - PAD_L - PAD_R;
   const plotH = H - PAD_T - PAD_B;
   const n = points.length;
-  const slot = plotW / n;
-  const barW = Math.max(2, slot * 0.7);
-  const yTicks = [0, max * 0.25, max * 0.5, max * 0.75, max];
+  const xStep = n > 1 ? plotW / (n - 1) : 0;
 
+  const coords = points.map((p, i) => {
+    const v = p[field];
+    return {
+      x: PAD_L + (n > 1 ? i * xStep : plotW / 2),
+      y: PAD_T + plotH - (max === 0 ? 0 : (v / max) * plotH),
+      v,
+      date: p.date,
+    };
+  });
+
+  const linePath = buildSmoothPath(coords);
+  const areaPath =
+    linePath +
+    ` L ${coords[coords.length - 1].x} ${PAD_T + plotH}` +
+    ` L ${coords[0].x} ${PAD_T + plotH} Z`;
+
+  const yTicks = [0, max * 0.25, max * 0.5, max * 0.75, max];
   const labelEvery = n <= 7 ? 1 : n <= 14 ? 2 : 5;
 
   return (
     <div>
-      <div className="mb-2 flex items-baseline justify-between">
+      <div className="mb-3 flex items-baseline justify-between">
         <div className="flex items-center gap-2">
-          <span className="h-2 w-2 rounded-full" style={{ background: barFill }} />
-          <span className="text-xs font-medium text-foreground">{title}</span>
+          <span className="h-2.5 w-2.5 rounded-full" style={{ background: color }} />
+          <span className="text-sm font-semibold text-foreground">{title}</span>
         </div>
-        <span className="text-[11px] text-muted">
-          기간 합계 {total.toLocaleString()} · 일평균 {avg.toFixed(1)}
+        <span className="text-xs text-muted">
+          기간 합계 <span className="font-medium text-foreground">{total.toLocaleString()}</span>
+          <span className="mx-1.5 text-border">·</span>
+          일평균 <span className="font-medium text-foreground">{avg.toFixed(1)}</span>
         </span>
       </div>
 
@@ -132,6 +150,13 @@ function SvgBarChart({
         role="img"
         aria-label={`${title} 일별 추이`}
       >
+        <defs>
+          <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={color} stopOpacity={0.32} />
+            <stop offset="100%" stopColor={color} stopOpacity={0} />
+          </linearGradient>
+        </defs>
+
         {/* y축 그리드 + 틱 라벨 */}
         {yTicks.map((tv, i) => {
           const y = PAD_T + plotH - (tv / max) * plotH;
@@ -145,13 +170,14 @@ function SvgBarChart({
                 stroke="currentColor"
                 className="text-border"
                 strokeWidth={1}
-                strokeDasharray={i === 0 ? "" : "2 3"}
+                strokeDasharray={i === 0 ? "" : "2 4"}
+                opacity={i === 0 ? 1 : 0.6}
               />
               <text
-                x={PAD_L - 6}
-                y={y + 3}
+                x={PAD_L - 8}
+                y={y + 4}
                 textAnchor="end"
-                fontSize={10}
+                fontSize={11}
                 className="fill-current text-muted"
               >
                 {formatTick(tv)}
@@ -160,43 +186,49 @@ function SvgBarChart({
           );
         })}
 
-        {/* 막대 */}
-        {points.map((p, i) => {
-          const v = p[field];
-          const h = max === 0 ? 0 : (v / max) * plotH;
-          const x = PAD_L + i * slot + (slot - barW) / 2;
-          const y = PAD_T + plotH - h;
-          return (
-            <g key={p.date}>
-              <rect
-                x={x}
-                y={y}
-                width={barW}
-                height={Math.max(h, v > 0 ? 2 : 0)}
-                rx={2}
-                fill={barFill}
-                opacity={v === 0 ? 0 : 1}
-              >
-                <title>
-                  {p.date}: {v.toLocaleString()}
-                </title>
-              </rect>
-            </g>
-          );
-        })}
+        {/* 영역 fill */}
+        <path d={areaPath} fill={`url(#${gradId})`} />
 
-        {/* x축 라벨 */}
+        {/* 라인 */}
+        <path
+          d={linePath}
+          fill="none"
+          stroke={color}
+          strokeWidth={2.5}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+
+        {/* 데이터 포인트 */}
+        {coords.map((c) => (
+          <g key={c.date}>
+            <circle
+              cx={c.x}
+              cy={c.y}
+              r={4}
+              fill="var(--color-surface, #18181b)"
+              stroke={color}
+              strokeWidth={2}
+            >
+              <title>
+                {c.date}: {c.v.toLocaleString()}
+              </title>
+            </circle>
+          </g>
+        ))}
+
+        {/* x축 날짜 라벨 */}
         {points.map((p, i) => {
           const show = i % labelEvery === 0 || i === n - 1;
           if (!show) return null;
-          const cx = PAD_L + i * slot + slot / 2;
+          const cx = coords[i].x;
           return (
             <text
               key={p.date}
               x={cx}
-              y={H - 10}
+              y={H - 12}
               textAnchor="middle"
-              fontSize={10}
+              fontSize={11}
               className="fill-current text-muted"
             >
               {formatDate(p.date)}
@@ -209,7 +241,7 @@ function SvgBarChart({
             x={W / 2}
             y={H / 2}
             textAnchor="middle"
-            fontSize={11}
+            fontSize={12}
             className="fill-current text-muted"
           >
             해당 기간 활동이 없습니다
@@ -218,6 +250,29 @@ function SvgBarChart({
       </svg>
     </div>
   );
+}
+
+/** Catmull-Rom → Cubic Bezier 변환으로 자연스러운 스무딩 곡선 생성. */
+function buildSmoothPath(coords: { x: number; y: number }[]): string {
+  if (coords.length === 0) return "";
+  if (coords.length === 1) {
+    const { x, y } = coords[0];
+    return `M ${x} ${y}`;
+  }
+  const tension = 0.2;
+  let d = `M ${coords[0].x} ${coords[0].y}`;
+  for (let i = 0; i < coords.length - 1; i++) {
+    const p0 = coords[i - 1] ?? coords[i];
+    const p1 = coords[i];
+    const p2 = coords[i + 1];
+    const p3 = coords[i + 2] ?? p2;
+    const cp1x = p1.x + (p2.x - p0.x) * tension;
+    const cp1y = p1.y + (p2.y - p0.y) * tension;
+    const cp2x = p2.x - (p3.x - p1.x) * tension;
+    const cp2y = p2.y - (p3.y - p1.y) * tension;
+    d += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${p2.x} ${p2.y}`;
+  }
+  return d;
 }
 
 function niceMax(v: number): number {
