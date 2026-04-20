@@ -5,20 +5,6 @@ import { getActiveNotice, type ActiveNotice } from "@/lib/noticeApi";
 
 const STORAGE_KEY = "site-banner-dismissed-v";
 
-/**
- * 하드코딩 폴백 — API 공지가 없을 때 표시.
- * `expiresAt` 이후에는 자동 비활성 (시험일 다음 날 00:00 권장).
- */
-const FALLBACK_NOTICE: {
-  body: string;
-  version: number;
-  expiresAt?: string; // ISO date — 이 시각 이후 배너 숨김
-} | null = {
-  body: "내일은 정보처리기사 실기 시험일! 마지막까지 화이팅입니다 🙌",
-  version: 101,
-  expiresAt: "2026-04-19T00:00:00+09:00",
-};
-
 export function SiteNoticeBanner() {
   const [notice, setNotice] = useState<ActiveNotice | null>(null);
   const [dismissed, setDismissed] = useState(false);
@@ -26,25 +12,14 @@ export function SiteNoticeBanner() {
   useEffect(() => {
     let cancelled = false;
     getActiveNotice("BANNER").then((n) => {
-      if (cancelled) return;
-      let target: ActiveNotice | null = n;
-      if (!target && FALLBACK_NOTICE) {
-        if (FALLBACK_NOTICE.expiresAt && Date.now() >= new Date(FALLBACK_NOTICE.expiresAt).getTime()) {
-          return;
-        }
-        target = {
-          body: FALLBACK_NOTICE.body,
-          version: FALLBACK_NOTICE.version,
-        } as ActiveNotice;
-      }
-      if (!target) return;
+      if (cancelled || !n) return;
       try {
-        if (localStorage.getItem(STORAGE_KEY + target.version) === "1") {
+        if (localStorage.getItem(STORAGE_KEY + n.version) === "1") {
           setDismissed(true);
           return;
         }
       } catch {}
-      setNotice(target);
+      setNotice(n);
     });
     return () => {
       cancelled = true;

@@ -2,7 +2,7 @@
  * 공지사항 공개 조회 — 클라이언트 컴포넌트(SiteNoticeBanner / SiteNoticeModal)에서 사용.
  */
 
-const BASE = process.env.NEXT_PUBLIC_API_URL ?? "";
+const BASE = "";
 
 export type NoticeDisplayType = "BANNER" | "MODAL";
 
