@@ -63,14 +63,14 @@ export default function AdminDashboardPage() {
             <StatCard
               label="총 회원 수"
               value={stats.totalMembers}
-              sub={`오늘 +${stats.todayMembers.toLocaleString()}`}
+              sub={`오늘 +${(stats.todayMembers ?? 0).toLocaleString()}`}
               tone="violet"
               icon={ICONS.members}
             />
             <StatCard
               label="총 풀이 수"
               value={stats.totalSolves}
-              sub={`오늘 +${stats.todaySolves.toLocaleString()}`}
+              sub={`오늘 +${(stats.todaySolves ?? 0).toLocaleString()}`}
               tone="green"
               icon={ICONS.solves}
             />

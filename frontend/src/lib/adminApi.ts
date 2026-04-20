@@ -69,8 +69,8 @@ export interface AdminStats {
   totalMembers: number;
   totalSolves: number;
   todayQuestions: number;
-  todayMembers: number;
-  todaySolves: number;
+  todayMembers?: number;
+  todaySolves?: number;
   subjectStats: SubjectSolveStats[];
 }
 
