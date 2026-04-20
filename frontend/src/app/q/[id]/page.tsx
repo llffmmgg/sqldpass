@@ -6,6 +6,7 @@ import { getPublicQuestionDetail } from "@/lib/publicApi";
 export const revalidate = 3600;
 import QuestionContent from "@/components/QuestionContent";
 import ReportQuestionButton from "@/components/ReportQuestionButton";
+import BookmarkButton from "@/components/BookmarkButton";
 
 type Params = { id: string };
 
@@ -189,7 +190,10 @@ export default async function QuestionPage(
         <section className="rounded-xl border border-border bg-surface p-6">
           <div className="flex items-center justify-between gap-2">
             <h2 className="text-sm font-semibold text-muted">문제</h2>
-            <ReportQuestionButton questionId={q.id} />
+            <div className="flex items-center gap-3">
+              <BookmarkButton questionId={q.id} />
+              <ReportQuestionButton questionId={q.id} />
+            </div>
           </div>
           <QuestionContent content={q.content} className="mt-3 text-foreground" />
         </section>

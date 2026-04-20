@@ -12,6 +12,7 @@ import AuthGuard from "@/components/AuthGuard";
 import Spinner from "@/components/Spinner";
 import QuestionContent from "@/components/QuestionContent";
 import ReportQuestionButton from "@/components/ReportQuestionButton";
+import BookmarkButton from "@/components/BookmarkButton";
 import { parseQuestion } from "@/lib/parseQuestion";
 import {
   getMockExam,
@@ -350,6 +351,7 @@ function MockExamDetailContent() {
           <div className="flex items-center justify-between gap-2">
             <p className="text-xs font-medium text-muted">{current.subjectName}</p>
             <div className="flex items-center gap-3">
+              <BookmarkButton questionId={current.id} />
               <ReportQuestionButton questionId={current.id} />
               <QuestionTypeBadge type={current.questionType} />
             </div>

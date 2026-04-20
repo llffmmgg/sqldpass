@@ -8,11 +8,14 @@ import {
   getSubjects,
   getQuestionDetail,
   retryWrongAnswer,
+  getBookmarks,
+  removeBookmark,
   type WrongAnswerResponse,
   type WrongAnswerStatsResponse,
   type Subject,
   type QuestionDetail,
   type WrongAnswerRetryResponse,
+  type BookmarkResponse,
 } from "@/lib/api";
 import { formatRelativeDate } from "@/lib/format";
 import { parseQuestion } from "@/lib/parseQuestion";
@@ -45,6 +48,7 @@ interface RetryState {
 }
 
 type SortMode = "priority" | "recent";
+type TopTab = "wrong" | "bookmark";
 
 export default function WrongAnswersPage() {
   return (
@@ -65,12 +69,15 @@ function WrongAnswersPageContent() {
 
   const [stats, setStats] = useState<WrongAnswerStatsResponse[]>([]);
   const [wrongAnswers, setWrongAnswers] = useState<WrongAnswerResponse[]>([]);
+  const [bookmarks, setBookmarks] = useState<BookmarkResponse[]>([]);
+  const [bookmarksLoaded, setBookmarksLoaded] = useState(false);
   const [rawSubjects, setRawSubjects] = useState<Subject[]>([]);
   const initialSubject = (() => {
     const v = searchParams?.get("subjectId");
     const n = v ? Number(v) : NaN;
     return Number.isFinite(n) && n > 0 ? n : null;
   })();
+  const [topTab, setTopTab] = useState<TopTab>("wrong");
   const [selectedCert, setSelectedCert] = useState<CertKey | null>(null);
   const [selectedTopic, setSelectedTopic] = useState<string | null>(null);
   const [sortMode, setSortMode] = useState<SortMode>("priority");
@@ -79,6 +86,27 @@ function WrongAnswersPageContent() {
   const [details, setDetails] = useState<Record<number, QuestionDetail>>({});
   const [retryState, setRetryState] = useState<Record<number, RetryState>>({});
   const [masteredIds, setMasteredIds] = useState<Set<number>>(new Set());
+
+  // 탭 전환 시 상태 리셋 — 확장·재풀이는 이전 탭과 격리
+  function switchTab(next: TopTab) {
+    if (next === topTab) return;
+    setTopTab(next);
+    setSelectedCert(null);
+    setSelectedTopic(null);
+    setExpandedId(null);
+    setRetryState({});
+    setMasteredIds(new Set());
+    if (next === "bookmark") setSortMode("recent");
+    else setSortMode("priority");
+  }
+
+  // 즐겨찾기 탭 첫 진입 시 지연 로드
+  useEffect(() => {
+    if (topTab !== "bookmark" || bookmarksLoaded) return;
+    getBookmarks()
+      .then(setBookmarks)
+      .finally(() => setBookmarksLoaded(true));
+  }, [topTab, bookmarksLoaded]);
 
   function reloadList() {
     return Promise.all([
@@ -157,7 +185,9 @@ function WrongAnswersPageContent() {
       });
       setRetryField(questionId, { result: res, submitting: false });
 
-      if (res.correct) {
+      // 오답 탭에서만 '마스터' — 정답 시 목록에서 제거.
+      // 즐겨찾기 탭에선 정답 맞춰도 유지 (사용자가 수동 해제).
+      if (res.correct && topTab === "wrong") {
         setMasteredIds((prev) => new Set(prev).add(questionId));
         setTimeout(() => {
           reloadList().then(() => {
@@ -183,6 +213,17 @@ function WrongAnswersPageContent() {
     }
   }
 
+  /** 즐겨찾기 탭에서만 호출. 서버 해제 + 로컬 리스트에서 즉시 제거. */
+  async function handleRemoveBookmark(questionId: number) {
+    try {
+      await removeBookmark(questionId);
+      setBookmarks((prev) => prev.filter((b) => b.questionId !== questionId));
+      setExpandedId(null);
+    } catch (e) {
+      console.error("remove bookmark failed", e);
+    }
+  }
+
   function handleRetryAgain(questionId: number) {
     setRetryState((prev) => ({
       ...prev,
@@ -190,9 +231,27 @@ function WrongAnswersPageContent() {
     }));
   }
 
-  // 정렬 적용
+  /**
+   * 탭별 데이터 소스를 WrongAnswerResponse 형태로 통일해서 하위 로직(그룹핑·렌더) 재사용.
+   * bookmark는 wrongCount=0, lastWrongAt=createdAt 로 매핑.
+   */
+  const activeItems = useMemo<WrongAnswerResponse[]>(() => {
+    if (topTab === "bookmark") {
+      return bookmarks.map((b) => ({
+        questionId: b.questionId,
+        questionContent: b.questionContent,
+        subjectId: b.subjectId,
+        subjectName: b.subjectName,
+        wrongCount: 0,
+        lastWrongAt: b.createdAt,
+      }));
+    }
+    return wrongAnswers;
+  }, [topTab, wrongAnswers, bookmarks]);
+
+  // 정렬 적용 — 즐겨찾기 탭은 wrongCount가 모두 0이라 priority 정렬이 사실상 날짜 기반이 됨.
   const sortedAnswers = useMemo(() => {
-    const arr = [...wrongAnswers];
+    const arr = [...activeItems];
     if (sortMode === "priority") {
       arr.sort((a, b) => {
         if (b.wrongCount !== a.wrongCount) return b.wrongCount - a.wrongCount;
@@ -204,7 +263,7 @@ function WrongAnswersPageContent() {
       );
     }
     return arr;
-  }, [wrongAnswers, sortMode]);
+  }, [activeItems, sortMode]);
 
   // 자격증 → 토픽(leaf) → 문제 그룹화. 정렬은 sortedAnswers의 순서를 보존.
   const certLookupById = useMemo(() => buildCertLookupById(rawSubjects), [rawSubjects]);
@@ -247,8 +306,9 @@ function WrongAnswersPageContent() {
     return cleaned.length > 80 ? cleaned.slice(0, 80) + "…" : cleaned;
   }
 
-  // 카드 렌더러 — 그룹화된 컬렉션에서 재사용
+  // 카드 렌더러 — 그룹화된 컬렉션에서 재사용. 오답 탭과 즐겨찾기 탭 공용.
   function renderWrongAnswerCard(wa: WrongAnswerResponse, num?: number) {
+    const isBookmark = topTab === "bookmark";
     const isExpanded = expandedId === wa.questionId;
     const isMastered = masteredIds.has(wa.questionId);
     const detail = details[wa.questionId];
@@ -260,6 +320,8 @@ function WrongAnswersPageContent() {
 
     const borderClass = isMastered
       ? "border-green-500/60 bg-green-500/10 opacity-60 scale-95 border"
+      : isBookmark
+      ? "border border-border"
       : priority === "high"
       ? "border border-border border-l-4 border-l-red-500/70"
       : priority === "mid"
@@ -274,12 +336,20 @@ function WrongAnswersPageContent() {
         className={`rounded-lg bg-surface transition-all duration-500 ${borderClass}`}
       >
         <div className="cursor-pointer flex items-center gap-3 px-4 py-3" onClick={() => handleExpand(wa.questionId)}>
-          {/* 순번 + 우선순위 뱃지 */}
+          {/* 순번 + 우선순위/즐겨찾기 뱃지 */}
           <div className="flex flex-col items-center gap-1 shrink-0 w-8">
             {num && <span className="text-[10px] text-muted/50 tabular-nums">#{num}</span>}
-            <span className={`flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-bold text-white ${priorityBg}`}>
-              {wa.wrongCount}
-            </span>
+            {isBookmark ? (
+              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-amber-400/20 text-amber-400" title="즐겨찾기">
+                <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <path d="M12 2.5l2.9 5.88 6.48.94-4.69 4.57 1.11 6.46L12 17.3l-5.8 3.05 1.11-6.46L2.62 9.32l6.48-.94L12 2.5z" />
+                </svg>
+              </span>
+            ) : (
+              <span className={`flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-bold text-white ${priorityBg}`}>
+                {wa.wrongCount}
+              </span>
+            )}
           </div>
 
           {/* 문제 요약 */}
@@ -288,11 +358,32 @@ function WrongAnswersPageContent() {
               {getFirstLine(wa.questionContent)}
             </p>
             <div className="mt-1 flex items-center gap-2 text-[11px] text-muted">
-              <span>{wa.wrongCount}회 틀림</span>
-              <span className="text-muted/30">·</span>
-              <span>{formatRelativeDate(wa.lastWrongAt)}</span>
+              {isBookmark ? (
+                <span>즐겨찾기 · {formatRelativeDate(wa.lastWrongAt)}</span>
+              ) : (
+                <>
+                  <span>{wa.wrongCount}회 틀림</span>
+                  <span className="text-muted/30">·</span>
+                  <span>{formatRelativeDate(wa.lastWrongAt)}</span>
+                </>
+              )}
             </div>
           </div>
+
+          {/* 즐겨찾기 해제 (즐겨찾기 탭만) */}
+          {isBookmark && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleRemoveBookmark(wa.questionId);
+              }}
+              className="shrink-0 rounded-md border border-border px-2 py-1 text-[10px] text-muted transition-colors hover:border-red-500/40 hover:text-red-400"
+              title="즐겨찾기 해제"
+            >
+              해제
+            </button>
+          )}
 
           {/* 화살표 */}
           <svg
@@ -391,13 +482,50 @@ function WrongAnswersPageContent() {
           <div>
             <h1 className="text-3xl font-bold sm:text-4xl">오답 노트</h1>
             <p className="mt-2 text-base text-muted">
-              틀린 문제를 다시 풀어 마스터하세요. 다시 맞히면 목록에서 자동으로 사라집니다.
+              {topTab === "wrong"
+                ? "틀린 문제를 다시 풀어 마스터하세요. 다시 맞히면 목록에서 자동으로 사라집니다."
+                : "즐겨찾기한 문제를 모아 언제든 다시 풀 수 있어요."}
             </p>
           </div>
         </div>
 
-        {/* 요약 카드 */}
-        {totalUnresolved > 0 && (() => {
+        {/* 상위 탭 */}
+        <div className="mt-6 flex gap-1 border-b border-border">
+          <button
+            type="button"
+            onClick={() => switchTab("wrong")}
+            className={`-mb-px border-b-2 px-4 py-2.5 text-sm font-medium transition-colors ${
+              topTab === "wrong"
+                ? "border-primary text-primary"
+                : "border-transparent text-text-muted hover:text-text"
+            }`}
+          >
+            오답
+            {wrongAnswers.length > 0 && (
+              <span className="ml-1.5 text-xs tabular-nums opacity-70">{wrongAnswers.length}</span>
+            )}
+          </button>
+          <button
+            type="button"
+            onClick={() => switchTab("bookmark")}
+            className={`-mb-px flex items-center gap-1.5 border-b-2 px-4 py-2.5 text-sm font-medium transition-colors ${
+              topTab === "bookmark"
+                ? "border-primary text-primary"
+                : "border-transparent text-text-muted hover:text-text"
+            }`}
+          >
+            <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M12 2.5l2.9 5.88 6.48.94-4.69 4.57 1.11 6.46L12 17.3l-5.8 3.05 1.11-6.46L2.62 9.32l6.48-.94L12 2.5z" />
+            </svg>
+            즐겨찾기
+            {bookmarksLoaded && bookmarks.length > 0 && (
+              <span className="ml-0.5 text-xs tabular-nums opacity-70">{bookmarks.length}</span>
+            )}
+          </button>
+        </div>
+
+        {/* 요약 카드 (오답 탭 전용) */}
+        {topTab === "wrong" && totalUnresolved > 0 && (() => {
           const highCount = wrongAnswers.filter((w) => w.wrongCount >= 3).length;
           const midCount = wrongAnswers.filter((w) => w.wrongCount === 2).length;
           const lowCount = wrongAnswers.filter((w) => w.wrongCount === 1).length;
@@ -436,11 +564,11 @@ function WrongAnswersPageContent() {
           );
         })()}
 
-        {/* Wrong answer list */}
+        {/* 리스트 */}
         <section className="mt-8">
-          {loading && <Spinner />}
+          {(loading || (topTab === "bookmark" && !bookmarksLoaded)) && <Spinner />}
 
-          {!loading && sortedAnswers.length === 0 && (
+          {!loading && topTab === "wrong" && sortedAnswers.length === 0 && (
             <div className="py-16 text-center">
               <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-green-500/10 border border-green-500/20">
                 <svg className="h-8 w-8 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -448,6 +576,21 @@ function WrongAnswersPageContent() {
                 </svg>
               </div>
               <p className="mt-4 text-muted">오답이 없습니다. 완벽해요!</p>
+              <ButtonLink href="/solve" variant="primary" size="md" className="mt-6">
+                문제 풀러 가기
+              </ButtonLink>
+            </div>
+          )}
+
+          {topTab === "bookmark" && bookmarksLoaded && sortedAnswers.length === 0 && (
+            <div className="py-16 text-center">
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-amber-400/10 border border-amber-400/20">
+                <svg className="h-8 w-8 text-amber-400" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 2.5l2.9 5.88 6.48.94-4.69 4.57 1.11 6.46L12 17.3l-5.8 3.05 1.11-6.46L2.62 9.32l6.48-.94L12 2.5z" />
+                </svg>
+              </div>
+              <p className="mt-4 text-muted">아직 즐겨찾기한 문제가 없어요.</p>
+              <p className="mt-1 text-xs text-muted/70">문제 풀이 중 별표 버튼을 눌러 저장하세요.</p>
               <ButtonLink href="/solve" variant="primary" size="md" className="mt-6">
                 문제 풀러 가기
               </ButtonLink>

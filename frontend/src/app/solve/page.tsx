@@ -17,6 +17,7 @@ import QuestionContent from "@/components/QuestionContent";
 import AuthGuard from "@/components/AuthGuard";
 import Spinner from "@/components/Spinner";
 import ReportQuestionButton from "@/components/ReportQuestionButton";
+import BookmarkButton from "@/components/BookmarkButton";
 import { GradingDisclaimerModal } from "@/components/GradingDisclaimerModal";
 import { Badge, Button, Card, Container } from "@/components/ui";
 import {
@@ -526,6 +527,7 @@ function SolvePageContent() {
           <div className="flex items-center justify-between gap-2">
             <p className="text-xs font-medium text-text-muted">{selectedSubject?.name}</p>
             <div className="flex items-center gap-3">
+              <BookmarkButton questionId={current.id} />
               <ReportQuestionButton questionId={current.id} />
               <QuestionTypeBadge type={current.questionType} />
             </div>

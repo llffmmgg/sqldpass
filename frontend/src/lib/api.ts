@@ -181,3 +181,57 @@ export function retryWrongAnswer(questionId: number, body: WrongAnswerRetryReque
     body: JSON.stringify(body),
   });
 }
+
+// ============================================================
+// 즐겨찾기 (Bookmark)
+// ============================================================
+
+export interface BookmarkResponse {
+  questionId: number;
+  questionContent: string;
+  subjectId: number;
+  subjectName: string;
+  createdAt: string;
+}
+
+/** 204/200 No-body API 호출 (JSON 파싱하지 않음) */
+async function fetchApiVoid(path: string, options?: RequestInit): Promise<void> {
+  const token = getToken();
+  const res = await fetch(`${BASE}${path}`, {
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...options?.headers,
+    },
+  });
+  if (res.status === 401) {
+    clearAuth();
+    window.location.replace("/");
+    throw new Error("로그인이 필요합니다.");
+  }
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({ message: "요청에 실패했습니다." }));
+    throw new Error(error.message);
+  }
+}
+
+/** 즐겨찾기 추가 (멱등성 — 이미 있으면 no-op) */
+export function addBookmark(questionId: number): Promise<void> {
+  return fetchApiVoid(`/bookmarks/${questionId}`, { method: "POST" });
+}
+
+/** 즐겨찾기 제거 (없어도 성공) */
+export function removeBookmark(questionId: number): Promise<void> {
+  return fetchApiVoid(`/bookmarks/${questionId}`, { method: "DELETE" });
+}
+
+/** 내 즐겨찾기 목록 (최신순) */
+export function getBookmarks(): Promise<BookmarkResponse[]> {
+  return fetchApi<BookmarkResponse[]>(`/bookmarks`);
+}
+
+/** 특정 문제 즐겨찾기 여부 (버튼 상태 동기화) */
+export function checkBookmark(questionId: number): Promise<{ bookmarked: boolean }> {
+  return fetchApi<{ bookmarked: boolean }>(`/bookmarks/exists/${questionId}`);
+}
