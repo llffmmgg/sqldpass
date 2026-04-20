@@ -1,0 +1,230 @@
+---
+title: "컴활 1급 실기 매크로·VBA 기초 (포기하면 아쉬운 배점)"
+description: "컴활 1급 실기 VBA 기초 문법과 자주 나오는 매크로 패턴을 정리했습니다. 코딩 경험 없어도 4가지 패턴만 잡으면 기본 점수 확보."
+date: "2026-04-20"
+category: "컴퓨터활용능력"
+tags: ["컴활 1급", "VBA", "매크로", "엑셀", "실기"]
+---
+
+## 결론 먼저
+
+컴활 1급 실기의 **매크로·VBA 영역은 배점이 꽤 있는데 포기하는 사람이 많아** 역설적으로 점수 확보 기회예요. `Range`/`Cells`/`For`/`If` 4가지 기본 패턴만 익히면 기출에 나오는 대부분의 VBA 문제를 풀 수 있습니다. 코딩 경험 전혀 없어도 가능해요.
+
+---
+
+## 왜 VBA를 포기하면 안 되나
+
+기타작업 배점은 약 20점. 그중 **매크로·VBA가 차트와 함께 큰 비중**을 차지해요. 문제는 많은 수험생이 "VBA = 프로그래밍 = 어렵다"는 선입견으로 **공부 자체를 안 하는 것**.
+
+하지만 시험에 나오는 VBA는 **정해진 패턴을 약간 변형**한 수준이에요. 실제 프로그래머 수준의 코드를 작성하는 게 아니라, 미리 배운 틀을 적용하는 형태라서 **암기 + 패턴 매칭**으로 해결됩니다.
+
+2024 개편 이후 VBA 비중이 소폭 올랐어요. 아예 안 보고 가면 합격선(70점) 넘기기 어렵습니다.
+
+---
+
+## VBA 기본 문법 — 딱 4가지
+
+### 1. 셀 값 읽고 쓰기
+
+```vba
+Range("A1").Value = 10                ' A1에 10 입력
+Cells(1, 1).Value = 10                ' 같은 의미 (행, 열)
+x = Range("B2").Value                 ' B2 값을 x에 저장
+```
+
+**핵심**: `Range("A1")` = 문자·숫자로 위치 지정 / `Cells(행, 열)` = 숫자로만 지정.
+
+<Highlight color="amber">`Cells(1, 1)` = A1, `Cells(2, 3)` = C2. 행·열 순서 헷갈리지 않게 주의.</Highlight>
+
+### 2. 변수 선언
+
+```vba
+Dim i As Integer
+Dim name As String
+Dim total As Double
+```
+
+`Dim 변수명 As 타입` 구조. 타입: `Integer`(정수), `String`(문자), `Double`(실수), `Boolean`(참/거짓).
+
+### 3. For 반복문
+
+```vba
+Dim i As Integer
+For i = 1 To 10
+    Cells(i, 1).Value = i
+Next i
+```
+
+**해석**: i를 1부터 10까지 1씩 증가시키며 A1–A10에 i 값 입력.
+
+```vba
+' 2씩 증가
+For i = 1 To 10 Step 2
+    ...
+Next i
+
+' 역순
+For i = 10 To 1 Step -1
+    ...
+Next i
+```
+
+### 4. If 조건문
+
+```vba
+If Cells(1, 1).Value >= 60 Then
+    Cells(1, 2).Value = "합격"
+Else
+    Cells(1, 2).Value = "불합격"
+End If
+```
+
+**If / ElseIf / Else / End If** 구조.
+
+---
+
+## 자주 나오는 매크로 패턴
+
+### 패턴 1: 조건부 서식 매크로
+
+"60점 이상에 노란색 채우기"
+
+```vba
+Sub ColorFill()
+    Dim i As Integer
+    For i = 2 To 11
+        If Cells(i, 3).Value >= 60 Then
+            Cells(i, 3).Interior.Color = vbYellow
+        End If
+    Next i
+End Sub
+```
+
+핵심 객체: `.Interior.Color` (배경색), `.Font.Color` (글자색).
+
+### 패턴 2: 합계 계산
+
+"A2:A10의 합계를 B1에 입력"
+
+```vba
+Sub SumRange()
+    Dim sum As Double
+    sum = 0
+    Dim i As Integer
+    For i = 2 To 10
+        sum = sum + Cells(i, 1).Value
+    Next i
+    Range("B1").Value = sum
+End Sub
+```
+
+### 패턴 3: 정렬 매크로
+
+매크로 기록 방식으로 만들어진 코드.
+
+```vba
+Range("A1:C10").Sort Key1:=Range("B1"), Order1:=xlAscending, Header:=xlYes
+```
+
+보통 시험에선 이 코드를 주고 "Key1은 어느 열인가?" 같이 **읽기** 문제로 나옵니다.
+
+### 패턴 4: 셀 포맷팅
+
+```vba
+' 굵게 처리
+Range("A1:A10").Font.Bold = True
+
+' 글자 색
+Range("A1").Font.Color = vbRed
+
+' 배경색
+Range("A1").Interior.Color = RGB(255, 200, 200)
+```
+
+---
+
+## 프로시저 — Sub vs Function
+
+### Sub 프로시저
+
+- 작업 수행 (값 반환 안 함)
+- `Sub 이름()  ~  End Sub` 구조
+- 매크로 = Sub
+
+### Function 프로시저
+
+- 값을 **반환**
+- `Function 이름() As 반환타입  ~  End Function`
+- 사용자 정의 함수
+
+```vba
+Function MyAdd(a As Integer, b As Integer) As Integer
+    MyAdd = a + b
+End Function
+```
+
+엑셀 워크시트에서 `=MyAdd(3, 5)` 처럼 사용 가능.
+
+---
+
+## 매크로 보안 설정
+
+- **모든 매크로 사용**: 위험, 권장 안 함
+- **알림 후 매크로 사용 안 함**: 엑셀 기본값
+- **서명된 매크로만 사용**: 중간 보안
+- **모든 매크로 사용 안 함**: 가장 안전
+
+시험에선 설정 이름과 의미를 매칭하는 단답 문제 출제.
+
+---
+
+## 매크로 실행 방법
+
+1. **바로 가기 키** (Ctrl + 지정 키)
+2. **개발 도구 탭 → 매크로 → 실행**
+3. **버튼(양식 컨트롤)에 매크로 연결**
+
+`.xlsm` 확장자로 저장해야 매크로가 보존돼요. `.xlsx`로 저장하면 매크로가 삭제됩니다.
+
+---
+
+## 자주 하는 실수
+
+**1. `Cells` 인수 순서 혼동**
+`Cells(행, 열)`. 헷갈리면 `Range("A1")` 사용이 더 안전.
+
+**2. `Range("A1")`의 따옴표 빠뜨림**
+문자열이므로 반드시 `""`로 감싸기.
+
+**3. For 문 Next 뒤 변수 누락**
+`Next` 뒤에 변수명 생략해도 되지만, 중첩 반복문에선 명시하는 게 안전.
+
+**4. 변수 선언 없이 바로 사용**
+액세스의 Option Explicit 상태라면 오류. 습관적으로 `Dim` 선언.
+
+**5. `.xlsx`로 저장 후 매크로 사라짐**
+시험장에서 꼭 `.xlsm`로 저장하세요.
+
+---
+
+## 시험장에서의 접근법
+
+1. **VBA 문제는 "읽기"가 많아요** — 주어진 코드 해석 → 선택지 고르기
+2. **빈칸 채우기는 기본 문법만 생각** — 복잡한 로직 절대 아님
+3. **모르는 객체 메서드 나오면 일단 넘기기** — 기본 패턴으로 먼저 해결
+4. **매크로 이름·버튼 위치 조건 준수** — 조건 안 맞추면 감점
+5. **저장 확장자 `.xlsm` 확인**
+
+<Highlight color="green">VBA는 완벽히 이해할 필요 없어요. **기출 코드 10개 정도만 반복해서 읽고 쓰기 연습**하면 기본 점수는 챙깁니다.</Highlight>
+
+---
+
+## 정리
+
+- 4가지 패턴: Range/Cells, 변수 선언, For, If
+- Sub(값 반환 X) vs Function(값 반환 O)
+- `.xlsm` 확장자로 저장
+- 기출 코드 10개 반복이 가장 빠른 길
+- 완벽 이해 불필요, 패턴 매칭으로 충분
+
+[컴활 1급 필기 모의고사로 관련 개념 복습하기 →](/mock-exams?cert=computer-literacy-1)
