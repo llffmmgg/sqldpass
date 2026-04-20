@@ -175,7 +175,7 @@ export default async function CategoryPage(
         </p>
         <Link
           href="/mock-exams"
-          className="btn-glow mt-4 inline-flex items-center rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-zinc-900 transition-all hover:bg-primary-hover"
+          className="btn-glow mt-4 inline-flex items-center rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-primary-fg transition-all hover:bg-primary-hover"
         >
           모의고사 풀러 가기
         </Link>

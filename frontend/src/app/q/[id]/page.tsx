@@ -240,7 +240,7 @@ export default async function QuestionPage(
         <div className="mt-5 flex flex-wrap items-center justify-center gap-3">
           <Link
             href="/mock-exams"
-            className="btn-glow inline-flex items-center rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-zinc-900 transition-all hover:bg-primary-hover hover:scale-[1.02] active:scale-[0.98]"
+            className="btn-glow inline-flex items-center rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-primary-fg transition-all hover:bg-primary-hover hover:scale-[1.02] active:scale-[0.98]"
           >
             {certTag} 모의고사 풀기
           </Link>

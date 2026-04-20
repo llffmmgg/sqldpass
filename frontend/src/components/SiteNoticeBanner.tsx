@@ -36,7 +36,7 @@ export function SiteNoticeBanner() {
   }
 
   return (
-    <div className="flex items-center justify-center gap-3 border-b border-primary/30 bg-primary/10 px-4 py-2.5 text-center text-sm font-medium text-primary">
+    <div className="flex items-center justify-center gap-3 border-b border-primary/30 bg-primary/10 px-4 py-2.5 text-center text-sm font-medium text-foreground">
       <span className="whitespace-pre-wrap break-words">
         <span className="mr-1">📢</span>
         {notice.body}
@@ -45,7 +45,7 @@ export function SiteNoticeBanner() {
         type="button"
         onClick={dismiss}
         aria-label="닫기"
-        className="shrink-0 rounded p-1 text-primary hover:bg-primary/15"
+        className="shrink-0 rounded p-1 text-foreground/70 hover:bg-primary/15 hover:text-foreground"
       >
         <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />

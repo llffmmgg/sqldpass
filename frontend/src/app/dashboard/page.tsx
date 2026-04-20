@@ -238,7 +238,7 @@ function DashboardPageContent() {
             <p className="mt-1 text-sm text-muted/60">문제를 풀면 여기에 통계가 쌓여요.</p>
             <Link
               href="/solve"
-              className="mt-6 inline-block rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-zinc-900 transition-colors hover:bg-primary-hover"
+              className="mt-6 inline-block rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-primary-fg transition-colors hover:bg-primary-hover"
             >
               오늘의 학습 시작
             </Link>
@@ -274,7 +274,7 @@ function DashboardPageContent() {
                 </div>
                 <Link
                   href={focus ? `/wrong-answers?subjectId=${focus.id}` : "/solve"}
-                  className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-zinc-900 transition-all hover:bg-primary-hover hover:scale-[1.02]"
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-primary-fg transition-all hover:bg-primary-hover hover:scale-[1.02]"
                 >
                   {focus ? "복습 시작" : "문제 풀기"}
                   <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>

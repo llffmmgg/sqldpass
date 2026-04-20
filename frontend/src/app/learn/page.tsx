@@ -128,7 +128,7 @@ export default async function LearnPage() {
         </p>
         <Link
           href="/solve"
-          className="btn-glow mt-4 inline-flex items-center rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-zinc-900 transition-all hover:bg-primary-hover"
+          className="btn-glow mt-4 inline-flex items-center rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-primary-fg transition-all hover:bg-primary-hover"
         >
           무료로 시작하기
         </Link>

@@ -116,7 +116,7 @@ export default function DailyQuestionWidget() {
           <div className="flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs text-primary">
             <span>🔥</span>
             <span className="font-semibold">{streak.currentStreak}일 연속</span>
-            {streak.solvedToday && <span className="text-[10px] text-primary/70">오늘 완료</span>}
+            {streak.solvedToday && <span className="text-[11px] font-medium text-primary">· 오늘 완료</span>}
           </div>
         )}
       </div>
@@ -161,7 +161,7 @@ export default function DailyQuestionWidget() {
                 </p>
                 <Link
                   href={`/q/${question.id}`}
-                  className="inline-flex items-center gap-1 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-zinc-900 hover:bg-primary-hover"
+                  className="inline-flex items-center gap-1 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-fg hover:bg-primary-hover"
                 >
                   문제 풀러 가기 →
                 </Link>
@@ -205,7 +205,7 @@ export default function DailyQuestionWidget() {
                     type="button"
                     onClick={handleSubmit}
                     disabled={!canSubmit}
-                    className="inline-flex items-center gap-1 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-zinc-900 hover:bg-primary-hover disabled:opacity-40"
+                    className="inline-flex items-center gap-1 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-fg hover:bg-primary-hover disabled:opacity-40"
                   >
                     {submitting ? "제출 중…" : "제출하기"}
                   </button>
@@ -219,13 +219,13 @@ export default function DailyQuestionWidget() {
                 <div
                   className={`rounded-lg border px-4 py-3 text-sm font-semibold ${
                     correct
-                      ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-300"
-                      : "border-rose-500/40 bg-rose-500/10 text-rose-300"
+                      ? "border-success/40 bg-success/10 text-success"
+                      : "border-danger/40 bg-danger/10 text-danger"
                   }`}
                 >
                   {correct ? "✅ 정답입니다!" : "❌ 오답이에요"}
                   {result.currentStreak != null && (
-                    <span className="ml-2 text-xs text-primary">🔥 {result.currentStreak}일 연속</span>
+                    <span className="ml-2 text-xs font-medium text-foreground/80">🔥 {result.currentStreak}일 연속</span>
                   )}
                 </div>
 

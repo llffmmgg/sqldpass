@@ -96,7 +96,7 @@ export default function AboutPage() {
       <div className="mt-10 flex flex-wrap gap-3">
         <Link
           href="/learn"
-          className="rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-zinc-900 transition-all hover:bg-primary-hover hover:scale-[1.02] active:scale-[0.98]"
+          className="rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-primary-fg transition-all hover:bg-primary-hover hover:scale-[1.02] active:scale-[0.98]"
         >
           학습 시작하기
         </Link>

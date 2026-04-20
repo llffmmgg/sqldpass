@@ -201,7 +201,7 @@ function MockExamDetailContent() {
         ring: "focus:ring-amber-500/30 focus:border-amber-500",
         progress: "bg-primary",
         progressPartial: "bg-amber-500/70",
-        chipActive: "bg-primary text-zinc-900",
+        chipActive: "bg-primary text-primary-fg",
         chipAnswered: "bg-primary/20 text-foreground",
         hoverBorder: "hover:border-amber-500/40",
       };

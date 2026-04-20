@@ -44,7 +44,7 @@ export default function StreakBox() {
           <div className="ml-auto text-[11px] text-muted">
             마지막 풀이 <span className="tabular-nums">{streak.lastSolveDate}</span>
             {streak.solvedToday && (
-              <span className="ml-2 rounded-full border border-emerald-500/40 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold text-emerald-300">
+              <span className="ml-2 rounded-full border border-success/40 bg-success/10 px-2 py-0.5 text-[11px] font-semibold text-success">
                 오늘 완료
               </span>
             )}

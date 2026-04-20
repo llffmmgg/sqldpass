@@ -62,10 +62,10 @@ function ToastBubble({ message, kind }: { message: string; kind: ToastKind }) {
 
   const color =
     kind === "success"
-      ? "border-emerald-500/40 bg-emerald-500/15 text-emerald-200"
+      ? "border-success/40 bg-success/10 text-success"
       : kind === "error"
-      ? "border-rose-500/40 bg-rose-500/15 text-rose-200"
-      : "border-primary/40 bg-primary/15 text-primary";
+      ? "border-danger/40 bg-danger/10 text-danger"
+      : "border-primary/40 bg-primary/10 text-primary";
 
   return (
     <div

@@ -144,7 +144,7 @@ export default function ProfilePage() {
               <button
                 type="submit"
                 disabled={loading || !input.trim() || input.trim() === me.nickname}
-                className="w-full rounded-lg bg-primary py-2 text-sm font-semibold text-zinc-900 transition hover:bg-primary-hover disabled:opacity-50"
+                className="w-full rounded-lg bg-primary py-2 text-sm font-semibold text-primary-fg transition hover:bg-primary-hover disabled:opacity-50"
               >
                 {loading ? "저장 중..." : "변경 저장"}
               </button>

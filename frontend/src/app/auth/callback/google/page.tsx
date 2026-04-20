@@ -87,7 +87,7 @@ function GoogleCallback() {
         <p className="text-red-400">{error}</p>
         <button
           onClick={() => router.replace("/")}
-          className="mt-4 rounded-lg bg-primary px-5 py-2 text-sm font-semibold text-zinc-900 transition-colors hover:bg-primary-hover"
+          className="mt-4 rounded-lg bg-primary px-5 py-2 text-sm font-semibold text-primary-fg transition-colors hover:bg-primary-hover"
         >
           홈으로 돌아가기
         </button>
