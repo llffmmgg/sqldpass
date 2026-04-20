@@ -10,6 +10,8 @@ import org.springframework.data.repository.query.Param;
 
 public interface SolveRepository extends JpaRepository<SolveEntity, Long> {
 
+    long countByCreatedAtAfter(LocalDateTime dateTime);
+
     /** 어드민 풀이 상세 — answers, question, subject 까지 한 번에 로딩 */
     @Query("SELECT DISTINCT s FROM SolveEntity s "
             + "LEFT JOIN FETCH s.answers a "

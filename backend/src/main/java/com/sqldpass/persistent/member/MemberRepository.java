@@ -1,5 +1,6 @@
 package com.sqldpass.persistent.member;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 import org.springframework.data.domain.Page;
@@ -14,4 +15,6 @@ public interface MemberRepository extends JpaRepository<MemberEntity, Long> {
 
     /** 어드민 목록에서 더미(provider='SEED') 사용자를 제외 */
     Page<MemberEntity> findByProviderNot(String provider, Pageable pageable);
+
+    long countByCreatedAtAfter(LocalDateTime dateTime);
 }

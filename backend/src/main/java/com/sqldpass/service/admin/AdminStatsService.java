@@ -1,5 +1,7 @@
 package com.sqldpass.service.admin;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
@@ -36,6 +38,8 @@ public class AdminStatsService {
                         ((Number) row[4]).longValue()))
                 .toList();
 
+        LocalDateTime startOfToday = LocalDate.now().atStartOfDay();
+
         return new AdminStatsResponse(
                 adminQuestionService.countAll(),
                 adminQuestionService.countVerified(),
@@ -43,6 +47,8 @@ public class AdminStatsService {
                 memberRepository.count(),
                 solveRepository.count(),
                 adminQuestionService.countToday(),
+                memberRepository.countByCreatedAtAfter(startOfToday),
+                solveRepository.countByCreatedAtAfter(startOfToday),
                 subjectStats);
     }
 }

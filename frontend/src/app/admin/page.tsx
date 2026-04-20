@@ -60,8 +60,20 @@ export default function AdminDashboardPage() {
         ) : (
           <>
             <StatCard label="총 문제 수" value={stats.totalQuestions} tone="amber" icon={ICONS.questions} />
-            <StatCard label="총 회원 수" value={stats.totalMembers} tone="violet" icon={ICONS.members} />
-            <StatCard label="총 풀이 수" value={stats.totalSolves} tone="green" icon={ICONS.solves} />
+            <StatCard
+              label="총 회원 수"
+              value={stats.totalMembers}
+              sub={`오늘 +${stats.todayMembers.toLocaleString()}`}
+              tone="violet"
+              icon={ICONS.members}
+            />
+            <StatCard
+              label="총 풀이 수"
+              value={stats.totalSolves}
+              sub={`오늘 +${stats.todaySolves.toLocaleString()}`}
+              tone="green"
+              icon={ICONS.solves}
+            />
             <StatCard label="오늘 생성된 문제" value={stats.todayQuestions} tone="blue" icon={ICONS.today} />
           </>
         )}

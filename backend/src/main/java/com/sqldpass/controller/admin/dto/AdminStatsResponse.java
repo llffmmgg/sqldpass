@@ -9,6 +9,8 @@ public record AdminStatsResponse(
         long totalMembers,
         long totalSolves,
         long todayQuestions,
+        long todayMembers,
+        long todaySolves,
         List<SubjectSolveStats> subjectStats) {
 
     public record SubjectSolveStats(
