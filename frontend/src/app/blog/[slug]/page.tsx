@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { MDXRemote } from "next-mdx-remote/rsc";
 import remarkGfm from "remark-gfm";
 import { getAllPosts, getAllSlugs, getPostBySlug } from "@/lib/blog";
+import { getPublicBlogViews } from "@/lib/publicApi";
 import BlogViewCounter from "@/components/BlogViewCounter";
 import PassRateBar from "@/components/blog/PassRateBar";
 import StatBar from "@/components/blog/StatBar";
@@ -62,6 +63,14 @@ export default async function BlogPostPage({
   const prevPost = currentIdx < allPosts.length - 1 ? allPosts[currentIdx + 1] : null;
   const nextPost = currentIdx > 0 ? allPosts[currentIdx - 1] : null;
 
+  let viewCount = 0;
+  try {
+    const views = await getPublicBlogViews();
+    viewCount = views[slug] ?? 0;
+  } catch {
+    /* 백엔드 미연결 시 무시 */
+  }
+
   const articleLd = {
     "@context": "https://schema.org",
     "@type": "Article",
@@ -110,6 +119,9 @@ export default async function BlogPostPage({
             })}
           </span>
           <span className="text-text-subtle">· {post.readingTime}</span>
+          {viewCount > 0 && (
+            <span className="text-text-subtle">· 조회 {viewCount.toLocaleString()}</span>
+          )}
         </div>
         <h1 className="mt-5 text-[1.875rem] font-bold leading-[1.25] tracking-tight sm:text-[2.25rem] md:text-[2.5rem]">
           {post.title}
