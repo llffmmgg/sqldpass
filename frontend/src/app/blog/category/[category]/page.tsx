@@ -84,11 +84,9 @@ export default async function BlogCategoryPage({
                     })}
                   </span>
                   <span className="text-text-subtle">{featured.readingTime}</span>
-                  {(viewCounts[featured.slug] ?? 0) > 0 && (
-                    <span className="text-text-subtle">
-                      조회 {viewCounts[featured.slug].toLocaleString()}
-                    </span>
-                  )}
+                  <span className="text-text-subtle">
+                    조회 {(viewCounts[featured.slug] ?? 0).toLocaleString()}
+                  </span>
                 </div>
                 <h2 className="mt-4 text-2xl font-bold leading-tight tracking-tight group-hover:text-primary sm:text-3xl">
                   {featured.title}
@@ -145,7 +143,7 @@ export default async function BlogCategoryPage({
                         <span>
                           {new Date(post.date).toLocaleDateString("ko-KR", { month: "long", day: "numeric" })}
                         </span>
-                        {views > 0 && <span>조회 {views.toLocaleString()}</span>}
+                        <span>조회 {views.toLocaleString()}</span>
                       </div>
                     </div>
                   </Card>

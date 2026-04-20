@@ -186,9 +186,7 @@ export default function BlogList({
                           })}
                         </span>
                         <span className="text-text-subtle">{post.readingTime}</span>
-                        {views > 0 && (
-                          <span className="text-text-subtle">조회 {views.toLocaleString()}</span>
-                        )}
+                        <span className="text-text-subtle">조회 {views.toLocaleString()}</span>
                       </div>
                       <h3 className="mt-2 text-base font-semibold leading-snug group-hover:text-primary">
                         {post.title}

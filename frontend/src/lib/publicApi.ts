@@ -133,9 +133,16 @@ export function getPublicRanking(): Promise<PublicRanking> {
   return publicFetch("/ranking");
 }
 
-/** 블로그 전체 조회수 조회 */
-export function getPublicBlogViews(): Promise<Record<string, number>> {
-  return publicFetch("/blog/views");
+/** 블로그 전체 조회수 조회 — 증가 반영이 즉시 보이도록 짧은 revalidate. */
+export async function getPublicBlogViews(): Promise<Record<string, number>> {
+  const res = await fetch(`${BASE}/api/public/blog/views`, {
+    next: { revalidate: 30 },
+    headers: { "Content-Type": "application/json" },
+  });
+  if (!res.ok) {
+    throw new Error(`public API /blog/views failed: ${res.status}`);
+  }
+  return res.json();
 }
 
 // 카테고리 slug(cat-{id}) → id 역변환

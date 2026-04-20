@@ -119,9 +119,7 @@ export default async function BlogPostPage({
             })}
           </span>
           <span className="text-text-subtle">· {post.readingTime}</span>
-          {viewCount > 0 && (
-            <span className="text-text-subtle">· 조회 {viewCount.toLocaleString()}</span>
-          )}
+          <span className="text-text-subtle">· 조회 {viewCount.toLocaleString()}</span>
         </div>
         <h1 className="mt-5 text-[1.875rem] font-bold leading-[1.25] tracking-tight sm:text-[2.25rem] md:text-[2.5rem]">
           {post.title}
