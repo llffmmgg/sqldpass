@@ -6,6 +6,7 @@ import PageHeader from "@/components/admin/PageHeader";
 import StatCard from "@/components/admin/StatCard";
 import DataTable, { TableSkeleton } from "@/components/admin/DataTable";
 import EmptyState from "@/components/admin/EmptyState";
+import TrendChart from "@/components/admin/TrendChart";
 
 const ICON_SIZE = "h-4 w-4";
 
@@ -78,6 +79,10 @@ export default function AdminDashboardPage() {
           </>
         )}
       </div>
+
+      <section className="mt-8">
+        <TrendChart />
+      </section>
 
       <section className="mt-10">
         <div className="mb-4 flex items-baseline justify-between">

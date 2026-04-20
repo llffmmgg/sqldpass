@@ -150,6 +150,21 @@ export function getStats() {
   return adminFetch<AdminStats>("/stats");
 }
 
+export interface AdminTrendPoint {
+  date: string;
+  newMembers: number;
+  newSolves: number;
+}
+
+export interface AdminTrend {
+  days: number;
+  points: AdminTrendPoint[];
+}
+
+export function getTrend(days: number) {
+  return adminFetch<AdminTrend>(`/stats/trend?days=${days}`);
+}
+
 export function getQuestions(page = 0, size = 20, subjectId?: number) {
   const params = new URLSearchParams({ page: String(page), size: String(size) });
   if (subjectId) params.set("subjectId", String(subjectId));

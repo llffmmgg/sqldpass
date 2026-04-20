@@ -12,6 +12,16 @@ public interface SolveRepository extends JpaRepository<SolveEntity, Long> {
 
     long countByCreatedAtAfter(LocalDateTime dateTime);
 
+    /**
+     * 일자별 신규 풀이 수 — 대시보드 추이 그래프용.
+     * 결과 row: [java.sql.Date date, Long count]
+     */
+    @Query(value = "SELECT DATE(created_at) AS d, COUNT(*) AS cnt "
+                 + "FROM solve WHERE created_at >= :since "
+                 + "GROUP BY DATE(created_at) ORDER BY d",
+            nativeQuery = true)
+    List<Object[]> countByDaySince(@Param("since") LocalDateTime since);
+
     /** 어드민 풀이 상세 — answers, question, subject 까지 한 번에 로딩 */
     @Query("SELECT DISTINCT s FROM SolveEntity s "
             + "LEFT JOIN FETCH s.answers a "

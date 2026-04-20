@@ -2,13 +2,17 @@ package com.sqldpass.service.admin;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.sqldpass.controller.admin.dto.AdminStatsResponse;
 import com.sqldpass.controller.admin.dto.AdminStatsResponse.SubjectSolveStats;
+import com.sqldpass.controller.admin.dto.AdminTrendResponse;
+import com.sqldpass.controller.admin.dto.AdminTrendResponse.DailyPoint;
 import com.sqldpass.persistent.member.MemberRepository;
 import com.sqldpass.persistent.solve.SolveRepository;
 
@@ -50,5 +54,47 @@ public class AdminStatsService {
                 memberRepository.countByCreatedAtAfter(startOfToday),
                 solveRepository.countByCreatedAtAfter(startOfToday),
                 subjectStats);
+    }
+
+    public AdminTrendResponse getTrend(int days) {
+        int safe = Math.max(1, Math.min(days, 90));
+        LocalDate today = LocalDate.now();
+        LocalDate start = today.minusDays(safe - 1L);
+        LocalDateTime since = start.atStartOfDay();
+
+        Map<LocalDate, long[]> bucket = new HashMap<>();
+        for (int i = 0; i < safe; i++) {
+            bucket.put(start.plusDays(i), new long[] { 0L, 0L });
+        }
+
+        for (Object[] row : memberRepository.countByDaySince(since)) {
+            LocalDate d = toLocalDate(row[0]);
+            if (bucket.containsKey(d)) {
+                bucket.get(d)[0] = ((Number) row[1]).longValue();
+            }
+        }
+        for (Object[] row : solveRepository.countByDaySince(since)) {
+            LocalDate d = toLocalDate(row[0]);
+            if (bucket.containsKey(d)) {
+                bucket.get(d)[1] = ((Number) row[1]).longValue();
+            }
+        }
+
+        List<DailyPoint> points = bucket.entrySet().stream()
+                .sorted(Map.Entry.comparingByKey())
+                .map(e -> new DailyPoint(e.getKey(), e.getValue()[0], e.getValue()[1]))
+                .toList();
+
+        return new AdminTrendResponse(safe, points);
+    }
+
+    private static LocalDate toLocalDate(Object raw) {
+        if (raw instanceof java.sql.Date sql) {
+            return sql.toLocalDate();
+        }
+        if (raw instanceof LocalDate ld) {
+            return ld;
+        }
+        return LocalDate.parse(raw.toString());
     }
 }
