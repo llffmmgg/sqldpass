@@ -15,12 +15,17 @@ export default function TrendChart() {
   const [days, setDays] = useState(7);
   const [points, setPoints] = useState<AdminTrendPoint[] | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     setLoading(true);
+    setError(null);
     getTrend(days)
       .then((r) => setPoints(r.points))
-      .catch(() => setPoints([]))
+      .catch((e) => {
+        setPoints([]);
+        setError(e instanceof Error ? e.message : "불러오기 실패");
+      })
       .finally(() => setLoading(false));
   }, [days]);
 
@@ -44,6 +49,12 @@ export default function TrendChart() {
           ))}
         </div>
       </div>
+
+      {error && (
+        <p className="mt-4 rounded-md border border-rose-500/30 bg-rose-500/10 px-3 py-2 text-xs text-rose-300">
+          데이터를 불러올 수 없습니다: {error}
+        </p>
+      )}
 
       {loading && !points ? (
         <div className="mt-6 h-48 animate-pulse rounded-lg bg-background" />
@@ -89,6 +100,7 @@ function BarSeries({
   const total = values.reduce((s, v) => s + v, 0);
   const avg = total / points.length;
   const labelEvery = points.length <= 7 ? 1 : points.length <= 14 ? 2 : 5;
+  const allZero = total === 0;
 
   return (
     <div>
@@ -102,26 +114,40 @@ function BarSeries({
         </span>
       </div>
 
-      <div className="flex h-28 items-end gap-1">
-        {points.map((p) => {
-          const v = p[field];
-          const pct = (v / max) * 100;
-          return (
-            <div
-              key={p.date}
-              className="group relative flex flex-1 flex-col items-center justify-end"
-            >
-              <span className="mb-1 text-[9px] tabular-nums text-muted opacity-0 transition-opacity group-hover:opacity-100">
-                {v.toLocaleString()}
-              </span>
+      <div className="relative">
+        {/* 기준선 (0 baseline) */}
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-border" />
+        <div className="pointer-events-none absolute inset-x-0 bottom-1/2 h-px bg-border/40" />
+
+        <div className="flex h-28 items-end gap-1">
+          {points.map((p) => {
+            const v = p[field];
+            const pct = (v / max) * 100;
+            return (
               <div
-                className={`w-full rounded-sm ${barColor} transition-opacity group-hover:opacity-80`}
-                style={{ height: `${Math.max(pct, v > 0 ? 2 : 0)}%` }}
+                key={p.date}
+                className="group relative flex flex-1 flex-col items-center justify-end"
                 title={`${p.date}: ${v.toLocaleString()}`}
-              />
-            </div>
-          );
-        })}
+              >
+                <span className="mb-1 text-[9px] tabular-nums text-muted opacity-0 transition-opacity group-hover:opacity-100">
+                  {v.toLocaleString()}
+                </span>
+                <div
+                  className={`w-full min-h-[2px] rounded-sm ${barColor} transition-opacity ${
+                    v === 0 ? "opacity-20" : "group-hover:opacity-80"
+                  }`}
+                  style={{ height: `${Math.max(pct, v > 0 ? 4 : 2)}%` }}
+                />
+              </div>
+            );
+          })}
+        </div>
+
+        {allZero && (
+          <p className="absolute inset-0 flex items-center justify-center text-[11px] text-muted">
+            해당 기간 활동이 없습니다
+          </p>
+        )}
       </div>
 
       <div className="mt-1.5 flex gap-1">
