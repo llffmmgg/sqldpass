@@ -8,6 +8,7 @@ import { submitSolve, type SolveResponse } from "@/lib/api";
 import { isLoggedIn } from "@/lib/auth";
 import { useToast } from "@/components/Toast";
 import QuestionContent from "@/components/QuestionContent";
+import { parseQuestion } from "@/lib/parseQuestion";
 
 type Tab = { slug: CertSlug; label: string };
 
@@ -70,6 +71,7 @@ export default function DailyQuestionWidget() {
   }, [activeCert]);
 
   const isMcq = question?.questionType === "MCQ";
+  const parsed = question ? parseQuestion(question.content) : null;
   const canSubmit =
     !!question &&
     !submitting &&
@@ -147,10 +149,53 @@ export default function DailyQuestionWidget() {
         ) : (
           <>
             <div className="text-sm leading-relaxed sm:text-base">
-              <QuestionContent content={question.content} />
+              <QuestionContent content={parsed?.body ?? question.content} />
             </div>
 
-            <div className="mt-2 text-xs text-muted">
+            {isMcq && parsed && parsed.options.length > 0 && (
+              <ul className="mt-4 space-y-2">
+                {parsed.options.map((optionText, idx) => {
+                  const num = idx + 1;
+                  const isSelected = selectedOption === num;
+                  const isCorrectOption = question.correctOption === num;
+                  const revealed = !!result;
+
+                  let style =
+                    "border-border hover:border-primary/40 hover:bg-primary/5";
+                  if (revealed) {
+                    if (isCorrectOption) {
+                      style = "border-success/60 bg-success/10 text-success";
+                    } else if (isSelected && !isCorrectOption) {
+                      style = "border-danger/60 bg-danger/10 text-danger";
+                    } else {
+                      style = "border-border opacity-50";
+                    }
+                  } else if (isSelected) {
+                    style = "border-primary bg-primary/10 text-primary";
+                  }
+
+                  return (
+                    <li key={num}>
+                      <button
+                        type="button"
+                        disabled={!logged || revealed}
+                        onClick={() => setSelectedOption(num)}
+                        className={`flex w-full items-start gap-3 rounded-lg border px-3 py-2.5 text-left text-sm transition ${style} disabled:cursor-default`}
+                      >
+                        <span className="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-current text-xs font-semibold">
+                          {num}
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <QuestionContent content={optionText} />
+                        </div>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+
+            <div className="mt-3 text-xs text-muted">
               {question.certName} · {question.categoryName}
             </div>
 
@@ -172,24 +217,7 @@ export default function DailyQuestionWidget() {
             {/* 로그인 & 미제출: 풀이 UI */}
             {logged && !result && (
               <div className="mt-5">
-                {isMcq ? (
-                  <div className="flex flex-wrap gap-2">
-                    {[1, 2, 3, 4].map((n) => (
-                      <button
-                        key={n}
-                        type="button"
-                        onClick={() => setSelectedOption(n)}
-                        className={`h-10 w-10 rounded-lg border text-sm font-semibold transition ${
-                          selectedOption === n
-                            ? "border-primary bg-primary/15 text-primary"
-                            : "border-border text-muted hover:border-foreground/40 hover:text-foreground"
-                        }`}
-                      >
-                        {n}
-                      </button>
-                    ))}
-                  </div>
-                ) : (
+                {!isMcq && (
                   <textarea
                     value={answerText}
                     onChange={(e) => setAnswerText(e.target.value)}
@@ -238,15 +266,13 @@ export default function DailyQuestionWidget() {
                     </p>
                   )}
                   {!isMcq && question.answer && (
-                    <p className="mb-2 whitespace-pre-wrap break-words">
-                      <span className="text-muted">정답:</span>{" "}
-                      <span className="font-semibold">{question.answer}</span>
-                    </p>
+                    <div className="mb-2">
+                      <span className="text-muted">정답:</span>
+                      <QuestionContent content={question.answer} />
+                    </div>
                   )}
                   {question.explanation && (
-                    <p className="whitespace-pre-wrap break-words text-text-muted">
-                      {question.explanation}
-                    </p>
+                    <QuestionContent content={question.explanation} />
                   )}
                 </div>
 
