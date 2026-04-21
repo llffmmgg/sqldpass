@@ -22,6 +22,7 @@ import {
 import { submitSolve, type SolveAnswerRequest, type SolveResponse } from "@/lib/api";
 import { ExamBadge } from "@/app/mock-exams/page";
 import { GradingDisclaimerModal } from "@/components/GradingDisclaimerModal";
+import AdInfeed from "@/components/AdInfeed";
 import { useToast } from "@/components/Toast";
 import { trackEvent } from "@/lib/gtag";
 
@@ -219,6 +220,12 @@ function MockExamDetailContent() {
             <p className="mt-4 text-sm text-muted">
               {result.correctCount} / {result.totalCount} 정답
             </p>
+          </div>
+          <div className="mt-6 md:hidden">
+            <AdInfeed
+              adSlot="5227022543"
+              adLayoutKey="-h4-h+1c-4h+8p"
+            />
           </div>
           <div className="mt-6 flex gap-3">
             <button
