@@ -100,9 +100,10 @@ function ensureSqlFences(content: string): string {
   const out: string[] = [];
   let i = 0;
 
-  const SQL_START = /^\s*(SELECT|INSERT|UPDATE|DELETE|CREATE|ALTER|DROP|WITH|MERGE|TRUNCATE)\b/i;
+  // DCL(GRANT/REVOKE)·TCL(COMMIT/ROLLBACK/SAVEPOINT)도 SQL 시작으로 취급.
+  const SQL_START = /^\s*(SELECT|INSERT|UPDATE|DELETE|CREATE|ALTER|DROP|WITH|MERGE|TRUNCATE|GRANT|REVOKE|COMMIT|ROLLBACK|SAVEPOINT)\b/i;
   const SQL_CONT =
-    /^\s*(FROM|WHERE|AND|OR|GROUP\s+BY|ORDER\s+BY|HAVING|JOIN|INNER\s+JOIN|LEFT\s+JOIN|RIGHT\s+JOIN|FULL\s+JOIN|CROSS\s+JOIN|ON|UNION|UNION\s+ALL|INTERSECT|MINUS|EXCEPT|LIMIT|OFFSET|FETCH|VALUES|SET|RETURNING|WHEN|THEN|ELSE|END|CASE|INTO|USING|PARTITION\s+BY|WINDOW|RANGE|ROWS)\b/i;
+    /^\s*(FROM|WHERE|AND|OR|GROUP\s+BY|ORDER\s+BY|HAVING|JOIN|INNER\s+JOIN|LEFT\s+JOIN|RIGHT\s+JOIN|FULL\s+JOIN|CROSS\s+JOIN|ON|UNION|UNION\s+ALL|INTERSECT|MINUS|EXCEPT|LIMIT|OFFSET|FETCH|VALUES|SET|RETURNING|WHEN|THEN|ELSE|END|CASE|INTO|USING|PARTITION\s+BY|WINDOW|RANGE|ROWS|TO|PUBLIC)\b/i;
   // 한글이 섞인 문장은 SQL 블록으로 보지 않는다.
   // "SELECT 문의 실행 결과는?" 같은 한글 질문이 SQL로 잘못 펜싱되는 false positive 방지.
   const HAS_KOREAN = /[가-힣]/;
@@ -137,7 +138,8 @@ function ensureSqlFences(content: string): string {
           SQL_CONT.test(next) ||
           /^\s{2,}/.test(next) ||
           /^\s*[(),]/.test(next) ||
-          /^\s*(SELECT|INSERT|UPDATE|DELETE)\b/i.test(next);
+          /^\s*(SELECT|INSERT|UPDATE|DELETE|GRANT|REVOKE|COMMIT|ROLLBACK|SAVEPOINT)\b/i.test(next) ||
+          /^\s*--/.test(next);
         if (!isContinuation) break;
         sqlLines.push(next);
         i++;
