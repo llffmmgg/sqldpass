@@ -223,13 +223,32 @@ public interface QuestionRepository extends JpaRepository<QuestionEntity, Long> 
 
     long countBySubjectId(Long subjectId);
 
-    @Query("SELECT q FROM QuestionEntity q JOIN FETCH q.subject s LEFT JOIN FETCH s.parent WHERE q.subject.id = :subjectId ORDER BY q.id ASC")
+    @Query("""
+            SELECT q FROM QuestionEntity q
+            JOIN FETCH q.subject s
+            LEFT JOIN FETCH s.parent
+            LEFT JOIN q.mockExam m
+            WHERE q.subject.id = :subjectId
+              AND (m IS NULL OR m.visibility = com.sqldpass.persistent.mockexam.MockExamVisibility.PUBLISHED)
+            ORDER BY q.id ASC
+            """)
     Page<QuestionEntity> findPublicBySubjectId(@Param("subjectId") Long subjectId, Pageable pageable);
 
-    @Query("SELECT q.id FROM QuestionEntity q ORDER BY q.id ASC")
+    @Query("""
+            SELECT q.id FROM QuestionEntity q
+            LEFT JOIN q.mockExam m
+            WHERE (m IS NULL OR m.visibility = com.sqldpass.persistent.mockexam.MockExamVisibility.PUBLISHED)
+            ORDER BY q.id ASC
+            """)
     List<Long> findAllPublicIds();
 
-    @Query("SELECT q.id FROM QuestionEntity q WHERE q.subject.id IN :subjectIds ORDER BY q.id ASC")
+    @Query("""
+            SELECT q.id FROM QuestionEntity q
+            LEFT JOIN q.mockExam m
+            WHERE q.subject.id IN :subjectIds
+              AND (m IS NULL OR m.visibility = com.sqldpass.persistent.mockexam.MockExamVisibility.PUBLISHED)
+            ORDER BY q.id ASC
+            """)
     List<Long> findIdsBySubjectIdIn(@Param("subjectIds") List<Long> subjectIds);
 
     @Query("SELECT q.summary FROM QuestionEntity q WHERE q.subject.id = :subjectId AND q.topic = :topic AND q.summary IS NOT NULL")
