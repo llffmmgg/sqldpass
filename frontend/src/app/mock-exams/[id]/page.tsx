@@ -296,7 +296,10 @@ function MockExamDetailContent() {
         answers: exam.questions.map<SolveAnswerRequest>((q) => {
           const a = answers.get(q.id);
           if (q.questionType === "MCQ") {
-            return { questionId: q.id, selectedOption: a?.option ?? 0 };
+            // 미답 MCQ 는 selectedOption 을 보내지 않는다 (백엔드는 NULL 저장).
+            return a?.option != null
+              ? { questionId: q.id, selectedOption: a.option }
+              : { questionId: q.id };
           }
           return { questionId: q.id, answerText: a?.text ?? "" };
         }),

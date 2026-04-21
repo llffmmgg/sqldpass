@@ -62,8 +62,8 @@ public class SolveAnswerEntity extends BaseTimeEntity {
     @Column(nullable = false)
     private boolean isCorrect;
 
-    /** MCQ 전용 생성자 (기존 SQLD 경로 유지) */
-    public SolveAnswerEntity(SolveEntity solve, QuestionEntity question, int selectedOption, int correctOption, boolean isCorrect) {
+    /** MCQ 전용 생성자. 미답 시 selectedOption 은 null 로 들어오므로 Integer 로 받음. */
+    public SolveAnswerEntity(SolveEntity solve, QuestionEntity question, Integer selectedOption, Integer correctOption, boolean isCorrect) {
         this.solve = solve;
         this.question = question;
         this.selectedOption = selectedOption;

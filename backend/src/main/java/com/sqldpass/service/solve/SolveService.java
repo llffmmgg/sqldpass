@@ -117,10 +117,12 @@ public class SolveService {
 
             SolveAnswerEntity answerEntity;
             if (question.getQuestionType() == null || question.getQuestionType().name().equals("MCQ")) {
+                // 미답 MCQ 는 selectedOption 을 NULL 로 저장한다.
+                // chk_selected_option (BETWEEN 1 AND 4) 제약은 NULL 을 통과시키므로 안전.
                 answerEntity = new SolveAnswerEntity(
                         solveEntity, question,
-                        req.selectedOption() != null ? req.selectedOption() : 0,
-                        question.getCorrectOption() != null ? question.getCorrectOption() : 0,
+                        req.selectedOption(),
+                        question.getCorrectOption(),
                         result.correct());
             } else {
                 String matchedJson;
