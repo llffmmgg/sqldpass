@@ -7,6 +7,7 @@ import { getMyStreak, getLastSolvedCert, type Streak } from "@/lib/streakApi";
 import { submitSolve, type SolveResponse } from "@/lib/api";
 import { isLoggedIn } from "@/lib/auth";
 import { useToast } from "@/components/Toast";
+import QuestionContent from "@/components/QuestionContent";
 
 type Tab = { slug: CertSlug; label: string };
 
@@ -145,9 +146,9 @@ export default function DailyQuestionWidget() {
           <p className="text-sm text-muted">문제를 불러오지 못했어요.</p>
         ) : (
           <>
-            <p className="whitespace-pre-wrap break-words text-sm leading-relaxed sm:text-base">
-              {question.content}
-            </p>
+            <div className="text-sm leading-relaxed sm:text-base">
+              <QuestionContent content={question.content} />
+            </div>
 
             <div className="mt-2 text-xs text-muted">
               {question.certName} · {question.categoryName}
