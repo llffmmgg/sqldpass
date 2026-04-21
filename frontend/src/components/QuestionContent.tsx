@@ -103,6 +103,9 @@ function ensureSqlFences(content: string): string {
   const SQL_START = /^\s*(SELECT|INSERT|UPDATE|DELETE|CREATE|ALTER|DROP|WITH|MERGE|TRUNCATE)\b/i;
   const SQL_CONT =
     /^\s*(FROM|WHERE|AND|OR|GROUP\s+BY|ORDER\s+BY|HAVING|JOIN|INNER\s+JOIN|LEFT\s+JOIN|RIGHT\s+JOIN|FULL\s+JOIN|CROSS\s+JOIN|ON|UNION|UNION\s+ALL|INTERSECT|MINUS|EXCEPT|LIMIT|OFFSET|FETCH|VALUES|SET|RETURNING|WHEN|THEN|ELSE|END|CASE|INTO|USING|PARTITION\s+BY|WINDOW|RANGE|ROWS)\b/i;
+  // 한글이 섞인 문장은 SQL 블록으로 보지 않는다.
+  // "SELECT 문의 실행 결과는?" 같은 한글 질문이 SQL로 잘못 펜싱되는 false positive 방지.
+  const HAS_KOREAN = /[가-힣]/;
 
   while (i < lines.length) {
     const line = lines[i];
@@ -123,7 +126,8 @@ function ensureSqlFences(content: string): string {
     }
 
     // 2) SQL 시작 키워드 감지 → 같은 블록으로 묶어서 fence
-    if (SQL_START.test(line)) {
+    //    단, 한글이 섞인 라인은 일반 질문 문장으로 간주하고 건너뛴다.
+    if (SQL_START.test(line) && !HAS_KOREAN.test(line)) {
       const sqlLines: string[] = [line];
       i++;
       while (i < lines.length) {
