@@ -20,6 +20,7 @@ import ReportQuestionButton from "@/components/ReportQuestionButton";
 import BookmarkButton from "@/components/BookmarkButton";
 import { GradingDisclaimerModal } from "@/components/GradingDisclaimerModal";
 import AdInfeed from "@/components/AdInfeed";
+import AdDisplay from "@/components/AdDisplay";
 import { useToast } from "@/components/Toast";
 import { Badge, Button, Card, Container } from "@/components/ui";
 import {
@@ -479,12 +480,17 @@ function SolvePageContent() {
             </div>
 
             {sessionCompleteCount % 2 === 1 && (
-              <div className="mt-6 md:hidden">
-                <AdInfeed
-                  adSlot="5227022543"
-                  adLayoutKey="-h4-h+1c-4h+8p"
-                />
-              </div>
+              <>
+                <div className="mt-6 md:hidden">
+                  <AdInfeed
+                    adSlot="5227022543"
+                    adLayoutKey="-h4-h+1c-4h+8p"
+                  />
+                </div>
+                <div className="mt-6 hidden md:block">
+                  <AdDisplay adSlot="3622084801" />
+                </div>
+              </>
             )}
 
             <div className="mt-5 flex flex-wrap items-center gap-5 text-sm text-text-muted">

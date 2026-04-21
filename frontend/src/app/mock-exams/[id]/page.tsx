@@ -23,6 +23,7 @@ import { submitSolve, type SolveAnswerRequest, type SolveResponse } from "@/lib/
 import { ExamBadge } from "@/app/mock-exams/page";
 import { GradingDisclaimerModal } from "@/components/GradingDisclaimerModal";
 import AdInfeed from "@/components/AdInfeed";
+import AdDisplay from "@/components/AdDisplay";
 import { useToast } from "@/components/Toast";
 import { trackEvent } from "@/lib/gtag";
 
@@ -226,6 +227,9 @@ function MockExamDetailContent() {
               adSlot="5227022543"
               adLayoutKey="-h4-h+1c-4h+8p"
             />
+          </div>
+          <div className="mt-6 hidden md:block">
+            <AdDisplay adSlot="3622084801" />
           </div>
           <div className="mt-6 flex gap-3">
             <button
