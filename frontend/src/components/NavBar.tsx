@@ -39,6 +39,15 @@ export default function NavBar() {
     setTheme(getInitialTheme());
   }, [pathname]);
 
+  useEffect(() => {
+    if (!menuOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [menuOpen]);
+
   function toggleTheme() {
     const next = theme === "dark" ? "light" : "dark";
     setTheme(next);
@@ -222,8 +231,10 @@ export default function NavBar() {
 
       {/* Mobile menu */}
       <div
-        className={`overflow-hidden border-t border-border transition-all duration-300 ease-out sm:hidden ${
-          menuOpen ? "max-h-[80vh] opacity-100" : "max-h-0 opacity-0"
+        className={`border-t border-border transition-all duration-300 ease-out sm:hidden ${
+          menuOpen
+            ? "max-h-[80vh] overflow-y-auto overscroll-contain opacity-100"
+            : "max-h-0 overflow-hidden opacity-0"
         }`}
       >
         <div className="px-4 pb-4 pt-2">
