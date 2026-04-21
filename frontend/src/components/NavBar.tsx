@@ -79,7 +79,7 @@ export default function NavBar() {
             className="h-8 w-8 rounded-md"
             priority
           />
-          sqld<span className="text-primary">pass</span>
+          <span>sqld<span className="text-primary">pass</span></span>
         </Link>
 
         {/* Desktop */}
