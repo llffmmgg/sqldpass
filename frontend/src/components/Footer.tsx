@@ -50,10 +50,11 @@ export default function Footer() {
             <p className="font-mono text-base font-bold tracking-tight text-text">
               sqld<span className="text-primary">pass</span>
             </p>
-            <p className="mt-2 text-xs leading-relaxed text-text-muted">
-              SQLD · 정보처리기사 · 컴퓨터활용능력 · ADsP
-              <br />
-              무료 CBT 모의고사
+            <p className="mt-1 text-xs font-medium text-text-muted">
+              CBT 자격증 모의고사 플랫폼
+            </p>
+            <p className="mt-2 text-xs leading-relaxed text-text-subtle">
+              SQLD · 정보처리기사 · 컴퓨터활용능력 · ADsP 6종 자격증
             </p>
           </div>
           <Column title="제품" links={PRODUCT_LINKS} />

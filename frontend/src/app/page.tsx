@@ -36,7 +36,7 @@ export default function Home() {
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-60" />
                 <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-primary" />
               </span>
-              매번 새로 추가되는 기출 · 실전 타이머 제공
+              CBT 자격증 모의고사 플랫폼 · 6종 자격증 무료
             </span>
           </ScrollReveal>
 

@@ -32,6 +32,14 @@ export default function AboutPage() {
       },
       {
         "@type": "Question",
+        name: "왜 이름은 sqldpass인가요?",
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: "처음엔 SQLD만 했거든요. 나중에 정처기·컴활·ADsP까지 확장했는데, 이름 바꾸자니 아까워서 그대로 갑니다. 이제는 CBT로 붙는 자격증이라면 한 곳에서 다 풀 수 있어요.",
+        },
+      },
+      {
+        "@type": "Question",
         name: "누가 만드나요?",
         acceptedAnswer: {
           "@type": "Answer",
@@ -58,8 +66,9 @@ export default function AboutPage() {
       />
       <h1 className="text-3xl font-bold">sqldpass란?</h1>
       <p className="mt-3 text-base text-muted">
-        SQL 개발자(SQLD), 정보처리기사 실기, 컴퓨터활용능력 1급 필기를 무료로 풀어볼 수 있는
-        CBT(Computer Based Test) 모의고사·학습 사이트입니다.
+        sqldpass는 <strong className="text-foreground">CBT 자격증 모의고사 플랫폼</strong>입니다.
+        SQLD · 정처기 필기/실기 · 컴활 1/2급 · ADsP 6종 자격증을 무료로 풀어볼 수 있어요.
+        모든 기능 무료, 회원가입은 Google 로그인 한 번이면 끝.
       </p>
 
       <Section title="무엇을 제공하나요?">
@@ -78,6 +87,14 @@ export default function AboutPage() {
           새 변형 문제를 자동 생성합니다. 생성된 문제는 다시 LLM 검증과 운영자 검토를 거쳐
           오류가 있으면 수정·삭제됩니다. 그래도 일부 오류는 남을 수 있으니, 발견하시면{" "}
           <Link href="/profile" className="text-primary underline underline-offset-2 transition-colors hover:text-primary-hover">피드백</Link>으로 알려주세요.
+        </p>
+      </Section>
+
+      <Section title="왜 이름은 sqldpass인가요?">
+        <p>
+          처음엔 SQLD만 했거든요. 🐙 나중에 정처기 · 컴활 · ADsP까지 확장했는데,
+          이름 바꾸자니 아까워서 그대로 갑니다. 이제는 CBT로 붙는 자격증이라면 한 곳에서
+          다 풀 수 있어요.
         </p>
       </Section>
 

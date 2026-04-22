@@ -34,7 +34,7 @@ const SITE_URL = "https://www.sqldpass.com";
 const SITE_NAME = "sqldpass";
 const SITE_TITLE = "SQLD · 정처기 · 컴활 · ADsP 무료 CBT 모의고사";
 const SITE_DESCRIPTION =
-  "SQLD, 정보처리기사 필기·실기, 컴퓨터활용능력 1·2급, ADsP 무료 CBT 모의고사. 기출 변형 문제, 오답 자동 복습, 회차별 실력 추적까지 한 곳에서.";
+  "CBT 자격증 모의고사 플랫폼 sqldpass. SQLD·정처기 필기/실기·컴활 1/2급·ADsP를 무료로 풀어보고, 기출 변형·오답 자동 복습·회차별 실력 추적까지 한 곳에서.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
