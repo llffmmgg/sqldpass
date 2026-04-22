@@ -78,7 +78,7 @@ export default function NavBar() {
       <nav className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <Link
           href="/"
-          className="flex items-center gap-2 text-lg font-bold tracking-tight text-text font-mono"
+          className="flex items-center gap-2 text-lg font-bold tracking-tight text-text"
         >
           <Image
             src="/logo/logo.webp"
@@ -88,7 +88,10 @@ export default function NavBar() {
             className="h-11 w-20 rounded-md object-contain"
             priority
           />
-          <span><span className="font-black">문어</span><span className="text-primary">CBT</span></span>
+          <span>
+            <span className="font-black">문어</span>
+            <span className="font-mono text-primary">CBT</span>
+          </span>
         </Link>
 
         {/* Desktop */}
