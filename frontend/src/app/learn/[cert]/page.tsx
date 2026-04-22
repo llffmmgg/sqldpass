@@ -7,6 +7,8 @@ import {
   type CertSlug,
 } from "@/lib/publicApi";
 import { Container } from "@/components/ui";
+import { getPostsByCategory } from "@/lib/blog";
+import { CERT_TOKENS, certFromSlug } from "@/lib/cert-tokens";
 
 const CERT_META: Record<CertSlug, { title: string; description: string }> = {
   sqld: {
@@ -80,6 +82,10 @@ export default async function CertPage(
   } catch {
     /* 실패 시 빈 */
   }
+
+  const certKey = certFromSlug(cert);
+  const blogCategory = certKey ? CERT_TOKENS[certKey].blogCategory : null;
+  const relatedPosts = blogCategory ? getPostsByCategory(blogCategory).slice(0, 6) : [];
 
   const meta = CERT_META[cert as CertSlug];
   const certDisplayName: Record<string, string> = {
@@ -175,6 +181,38 @@ export default async function CertPage(
             </Link>
           ))}
         </div>
+      )}
+
+      {relatedPosts.length > 0 && (
+        <section className="mt-16">
+          <h2 className="text-xl font-semibold">{certName} 시험 준비 가이드</h2>
+          <p className="mt-2 text-sm text-muted">
+            합격률 추이, 출제 경향, 학습 전략을 정리한 글입니다.
+          </p>
+          <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2">
+            {relatedPosts.map((post) => (
+              <Link
+                key={post.slug}
+                href={`/blog/${post.slug}`}
+                className="group rounded-lg border border-border bg-surface p-5 transition-all hover:border-amber-500/30 hover:bg-surface/80"
+              >
+                <div className="flex items-center justify-between text-xs text-muted">
+                  <span>{post.category}</span>
+                  <span className="font-mono">{post.readingTime}</span>
+                </div>
+                <h3 className="mt-2 text-base font-semibold line-clamp-2">
+                  {post.title}
+                </h3>
+                <p className="mt-2 text-sm text-muted line-clamp-2">
+                  {post.description}
+                </p>
+                <p className="mt-3 text-xs text-amber-300 group-hover:text-amber-200">
+                  자세히 읽기 →
+                </p>
+              </Link>
+            ))}
+          </div>
+        </section>
       )}
 
       <section className="mt-16 rounded-xl border border-border bg-surface/50 p-6">

@@ -8,6 +8,8 @@ import QuestionContent from "@/components/QuestionContent";
 import ReportQuestionButton from "@/components/ReportQuestionButton";
 import BookmarkButton from "@/components/BookmarkButton";
 import { Container } from "@/components/ui";
+import { getPostsByCategory } from "@/lib/blog";
+import { CERT_TOKENS, certFromSlug } from "@/lib/cert-tokens";
 
 type Params = { id: string };
 
@@ -128,6 +130,12 @@ export default async function QuestionPage(
 
   const isMcq = q.questionType === "MCQ";
 
+  const certKey = certFromSlug(q.certSlug);
+  const blogCategory = certKey ? CERT_TOKENS[certKey].blogCategory : null;
+  const relatedPosts = blogCategory
+    ? getPostsByCategory(blogCategory).slice(0, 3)
+    : [];
+
   return (
     <main className="py-12">
       <Container size="narrow">
@@ -230,6 +238,29 @@ export default async function QuestionPage(
           </section>
         )}
       </article>
+
+      {relatedPosts.length > 0 && (
+        <section className="mt-10">
+          <h2 className="text-lg font-semibold">{certTag} 시험 준비 가이드</h2>
+          <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-3">
+            {relatedPosts.map((post) => (
+              <Link
+                key={post.slug}
+                href={`/blog/${post.slug}`}
+                className="group rounded-lg border border-border bg-surface p-4 transition-all hover:border-amber-500/30 hover:bg-surface/80"
+              >
+                <p className="text-xs text-muted">{post.readingTime}</p>
+                <h3 className="mt-1 text-sm font-semibold line-clamp-2">
+                  {post.title}
+                </h3>
+                <p className="mt-2 text-xs text-muted line-clamp-2">
+                  {post.description}
+                </p>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
 
       <section className="mt-10 rounded-xl border border-border bg-surface/50 p-6 text-center">
         <h2 className="text-lg font-semibold">

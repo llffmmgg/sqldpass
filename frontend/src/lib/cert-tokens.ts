@@ -222,3 +222,17 @@ export function certFromBlogCategory(category: string): CertKey | null {
   }
   return null;
 }
+
+const SLUG_TO_CERT: Record<string, CertKey> = {
+  sqld: "SQLD",
+  engineer: "ENGINEER_PRACTICAL",
+  "engineer-written": "ENGINEER_WRITTEN",
+  "computer-literacy-1": "COMPUTER_LITERACY_1",
+  "computer-literacy-2": "COMPUTER_LITERACY_2",
+  adsp: "ADSP",
+};
+
+/** /learn/[cert] 경로의 slug → CertKey 매핑 */
+export function certFromSlug(slug: string): CertKey | null {
+  return SLUG_TO_CERT[slug] ?? null;
+}
