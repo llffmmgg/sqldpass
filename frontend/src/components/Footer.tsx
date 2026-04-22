@@ -62,7 +62,16 @@ export default function Footer() {
         </div>
 
         <div className="mt-10 border-t border-border pt-6">
-          <p className="text-xs text-text-subtle">
+          <p className="text-xs text-text-muted">
+            배너 광고 문의 및 비즈니스 제안 ·{" "}
+            <a
+              href="mailto:ssomker.dev@gmail.com"
+              className="text-text transition-colors hover:text-primary"
+            >
+              ssomker.dev@gmail.com
+            </a>
+          </p>
+          <p className="mt-2 text-xs text-text-subtle">
             © {new Date().getFullYear()} sqldpass
           </p>
         </div>
