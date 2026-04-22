@@ -11,6 +11,10 @@ import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.sqldpass.domain.question.Question;
+import com.sqldpass.persistent.mockexam.ExamType;
+import com.sqldpass.persistent.mockexam.MockExamEntity;
+import com.sqldpass.persistent.mockexam.MockExamRepository;
+import com.sqldpass.persistent.mockexam.MockExamVisibility;
 import com.sqldpass.persistent.question.QuestionEntity;
 import com.sqldpass.persistent.question.QuestionRepository;
 import com.sqldpass.persistent.subject.SubjectEntity;
@@ -36,6 +40,9 @@ class QuestionServiceTest {
     private SubjectRepository subjectRepository;
 
     @Autowired
+    private MockExamRepository mockExamRepository;
+
+    @Autowired
     private EntityManager entityManager;
 
     private SubjectEntity subject;
@@ -43,6 +50,7 @@ class QuestionServiceTest {
     @BeforeEach
     void setUp() {
         questionRepository.deleteAll();
+        mockExamRepository.deleteAll();
         subjectRepository.deleteAll();
         entityManager.flush();
         entityManager.clear();
@@ -50,9 +58,21 @@ class QuestionServiceTest {
         subject = new SubjectEntity(null, "SQL 기본", 1);
         subjectRepository.save(subject);
 
-        questionRepository.save(new QuestionEntity(subject, "문제1 내용", 1, "해설1"));
-        questionRepository.save(new QuestionEntity(subject, "문제2 내용", 2, "해설2"));
-        questionRepository.save(new QuestionEntity(subject, "문제3 내용", 3, "해설3"));
+        // 문제 풀 필터 요건: PUBLISHED + expertVerified 모의고사에 속해야 노출됨
+        MockExamEntity mockExam = new MockExamEntity("테스트 회차", ExamType.SQLD, 1);
+        mockExam.changeVisibility(MockExamVisibility.PUBLISHED);
+        mockExam.toggleExpertVerified(); // false → true
+        mockExamRepository.save(mockExam);
+
+        QuestionEntity q1 = new QuestionEntity(subject, "문제1 내용", 1, "해설1");
+        QuestionEntity q2 = new QuestionEntity(subject, "문제2 내용", 2, "해설2");
+        QuestionEntity q3 = new QuestionEntity(subject, "문제3 내용", 3, "해설3");
+        mockExam.linkQuestion(q1, 0);
+        mockExam.linkQuestion(q2, 1);
+        mockExam.linkQuestion(q3, 2);
+        questionRepository.save(q1);
+        questionRepository.save(q2);
+        questionRepository.save(q3);
 
         entityManager.flush();
         entityManager.clear();

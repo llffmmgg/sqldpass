@@ -109,6 +109,10 @@ public class MockExamService {
         if (entity.getVisibility() == MockExamVisibility.DRAFT) {
             throw new SqldpassException(ErrorCode.MOCK_EXAM_NOT_FOUND);
         }
+        if (!entity.isExpertVerified()) {
+            // 전문가 검수 미완료 모의고사는 사용자에게 노출하지 않음
+            throw new SqldpassException(ErrorCode.MOCK_EXAM_NOT_FOUND);
+        }
         if (entity.getVisibility() == MockExamVisibility.PREMIUM) {
             throw new SqldpassException(ErrorCode.MOCK_EXAM_LOCKED);
         }
