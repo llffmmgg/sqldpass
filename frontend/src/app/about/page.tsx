@@ -32,10 +32,10 @@ export default function AboutPage() {
       },
       {
         "@type": "Question",
-        name: "왜 이름은 sqldpass인가요?",
+        name: "왜 도메인은 sqldpass.com인가요?",
         acceptedAnswer: {
           "@type": "Answer",
-          text: "처음엔 SQLD만 했거든요. 나중에 정처기·컴활·ADsP까지 확장했는데, 이름 바꾸자니 아까워서 그대로 갑니다. 이제는 CBT로 붙는 자격증이라면 한 곳에서 다 풀 수 있어요.",
+          text: "저희 사이트는 문어CBT입니다. 처음에 SQLD만 다룰 때 만든 도메인이 sqldpass.com이라, 이름은 바뀌어도 주소는 그대로 갑니다. 이제는 CBT로 붙는 자격증이라면 한 곳에서 다 풀 수 있어요.",
         },
       },
       {
@@ -64,9 +64,9 @@ export default function AboutPage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqLd) }}
       />
-      <h1 className="text-3xl font-bold">sqldpass란?</h1>
+      <h1 className="text-3xl font-bold">문어CBT란?</h1>
       <p className="mt-3 text-base text-muted">
-        sqldpass는 <strong className="text-foreground">CBT 자격증 모의고사 플랫폼</strong>입니다.
+        문어CBT는 <strong className="text-foreground">CBT 자격증 모의고사 플랫폼</strong>입니다.
         SQLD · 정처기 필기/실기 · 컴활 1/2급 · ADsP 6종 자격증을 무료로 풀어볼 수 있어요.
         모든 기능 무료, 회원가입은 Google 로그인 한 번이면 끝.
       </p>
@@ -90,11 +90,11 @@ export default function AboutPage() {
         </p>
       </Section>
 
-      <Section title="왜 이름은 sqldpass인가요?">
+      <Section title="왜 도메인은 sqldpass.com인가요?">
         <p>
-          처음엔 SQLD만 했거든요. 🐙 나중에 정처기 · 컴활 · ADsP까지 확장했는데,
-          이름 바꾸자니 아까워서 그대로 갑니다. 이제는 CBT로 붙는 자격증이라면 한 곳에서
-          다 풀 수 있어요.
+          저희 사이트는 문어CBT예요. 🐙 근데 처음에 SQLD만 다룰 때 만든 도메인이
+          sqldpass.com이라, 이름은 바뀌어도 주소는 그대로 갑니다. 이제는 CBT로
+          붙는 자격증이라면 한 곳에서 다 풀 수 있어요.
         </p>
       </Section>
 

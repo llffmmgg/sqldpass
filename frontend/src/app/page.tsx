@@ -42,17 +42,17 @@ export default function Home() {
 
           <ScrollReveal delay={1}>
             <h1 className="mt-6 text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl lg:text-7xl">
-              매일 한 세트,
+              CBT 자격증 모의고사,
               <br />
               <span className="bg-gradient-to-r from-primary to-[#5ee0a5] bg-clip-text text-transparent">
-                합격까지
+                매일 한 세트 합격까지
               </span>
             </h1>
           </ScrollReveal>
 
           <ScrollReveal delay={2}>
             <p className="mx-auto mt-6 max-w-xl text-base leading-relaxed text-text-muted sm:text-lg">
-              실전 모의고사를 풀고, 무한 문제 디펜스로 합격을 만들어 가세요.
+              자격증 6종 CBT 모의고사를 무료로 풀고, 무한 문제 디펜스로 합격을 만들어 가세요.
             </p>
           </ScrollReveal>
 

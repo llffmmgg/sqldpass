@@ -82,13 +82,13 @@ export default function NavBar() {
         >
           <Image
             src="/logo/logo.webp"
-            alt="sqldpass"
+            alt="문어CBT"
             width={80}
             height={80}
             className="h-8 w-8 rounded-md"
             priority
           />
-          <span>sqld<span className="text-primary">pass</span></span>
+          <span>🐙 문어<span className="text-primary">CBT</span></span>
         </Link>
 
         {/* Desktop */}
