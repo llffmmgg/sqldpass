@@ -83,12 +83,12 @@ export default function NavBar() {
           <Image
             src="/logo/logo.webp"
             alt="문어CBT"
-            width={80}
-            height={80}
-            className="h-8 w-8 rounded-md"
+            width={160}
+            height={90}
+            className="h-11 w-20 rounded-md object-contain"
             priority
           />
-          <span>문어<span className="text-primary">CBT</span></span>
+          <span><span className="font-black">문어</span><span className="text-primary">CBT</span></span>
         </Link>
 
         {/* Desktop */}
