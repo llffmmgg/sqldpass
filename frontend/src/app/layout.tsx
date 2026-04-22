@@ -140,7 +140,8 @@ export default function RootLayout({
   const websiteLd = {
     "@context": "https://schema.org",
     "@type": "WebSite",
-    name: SITE_NAME,
+    name: "문어CBT 다양한 자격증 기출문제 전자문제집 CBT",
+    alternateName: SITE_NAME,
     url: SITE_URL,
     description: SITE_DESCRIPTION,
     inLanguage: "ko-KR",
