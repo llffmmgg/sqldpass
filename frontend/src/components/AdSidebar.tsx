@@ -41,12 +41,10 @@ export default function AdSidebar({ adSlot }: AdSidebarProps) {
       className="fixed right-4 top-24 z-30 hidden w-[300px] min-[1400px]:block"
     >
       <ins
-        className="adsbygoogle block"
-        style={{ display: "block", width: 300, height: 600 }}
+        className="adsbygoogle"
+        style={{ display: "inline-block", width: 300, height: 600 }}
         data-ad-client={ADSENSE_CLIENT}
         data-ad-slot={adSlot}
-        data-ad-format="rectangle"
-        data-full-width-responsive="false"
       />
     </aside>
   );

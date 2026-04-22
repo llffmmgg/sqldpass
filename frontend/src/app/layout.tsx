@@ -9,7 +9,7 @@ import AdSidebar from "@/components/AdSidebar";
 import { ToastProvider } from "@/components/Toast";
 import "./globals.css";
 
-const ADSENSE_SIDEBAR_SLOT = process.env.NEXT_PUBLIC_ADSENSE_SIDEBAR_SLOT ?? "";
+const ADSENSE_SIDEBAR_SLOT = process.env.NEXT_PUBLIC_ADSENSE_SIDEBAR_SLOT ?? "1606583562";
 
 const ADSENSE_CLIENT = "ca-pub-6512792395955186";
 
