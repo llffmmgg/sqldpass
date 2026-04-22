@@ -48,7 +48,7 @@ export default function Footer() {
         <div className="grid grid-cols-2 gap-8 sm:grid-cols-4">
           <div className="col-span-2 sm:col-span-1">
             <p className="font-mono text-base font-bold tracking-tight text-text">
-              🐙 문어<span className="text-primary">CBT</span>
+              문어<span className="text-primary">CBT</span>
             </p>
             <p className="mt-1 text-xs font-medium text-text-muted">
               CBT 자격증 모의고사 플랫폼

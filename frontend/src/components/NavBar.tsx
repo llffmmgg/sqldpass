@@ -88,7 +88,7 @@ export default function NavBar() {
             className="h-8 w-8 rounded-md"
             priority
           />
-          <span>🐙 문어<span className="text-primary">CBT</span></span>
+          <span>문어<span className="text-primary">CBT</span></span>
         </Link>
 
         {/* Desktop */}
