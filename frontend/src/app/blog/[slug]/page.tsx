@@ -7,13 +7,15 @@ import { getAllPosts, getAllSlugs, getPostBySlug } from "@/lib/blog";
 import { getPublicBlogViews } from "@/lib/publicApi";
 import BlogViewCounter from "@/components/BlogViewCounter";
 import PassRateBar from "@/components/blog/PassRateBar";
+import PassRateTrend from "@/components/blog/PassRateTrend";
+import PassRateDial from "@/components/blog/PassRateDial";
 import StatBar from "@/components/blog/StatBar";
 import DistributionBar from "@/components/blog/DistributionBar";
 import Highlight from "@/components/blog/Highlight";
 import { Badge, ButtonLink, Card, Container } from "@/components/ui";
 import { certFromBlogCategory } from "@/lib/cert-tokens";
 
-const mdxComponents = { PassRateBar, StatBar, DistributionBar, Highlight };
+const mdxComponents = { PassRateBar, PassRateTrend, PassRateDial, StatBar, DistributionBar, Highlight };
 
 type Params = { slug: string };
 
