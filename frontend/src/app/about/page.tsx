@@ -66,8 +66,8 @@ export default function AboutPage() {
       />
       <h1 className="text-3xl font-bold">문어CBT란?</h1>
       <p className="mt-3 text-base text-muted">
-        문어CBT는 <strong className="text-foreground">CBT 자격증 모의고사 플랫폼</strong>입니다.
-        SQLD · 정처기 필기/실기 · 컴활 1/2급 · ADsP 6종 자격증을 무료로 풀어볼 수 있어요.
+        문어CBT는 <strong className="text-foreground">CBT 모의고사 플랫폼</strong>입니다.
+        SQLD · 정처기 필기/실기 · 컴활 1/2급 · ADsP를 무료로 풀어볼 수 있어요.
         모든 기능 무료, 회원가입은 Google 로그인 한 번이면 끝.
       </p>
 

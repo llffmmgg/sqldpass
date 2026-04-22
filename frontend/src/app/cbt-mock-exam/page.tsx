@@ -6,12 +6,12 @@ import { CERT_LIST } from "@/lib/cert-tokens";
 const SITE_URL = "https://www.sqldpass.com";
 
 export const metadata: Metadata = {
-  title: "무료 CBT 모의고사 | 6종 자격증 | 문어CBT",
+  title: "무료 CBT 모의고사 | SQLD·정처기·컴활·ADsP | 문어CBT",
   description:
     "SQLD·정처기 필기/실기·컴활 1/2급·ADsP CBT 모의고사를 무료로 풀어보세요. 실제 시험과 동일한 CBT 환경, 매번 새로 구성되는 기출 변형 문제, 오답 자동 복습까지.",
   alternates: { canonical: `${SITE_URL}/cbt-mock-exam` },
   openGraph: {
-    title: "무료 CBT 모의고사 — 자격증 6종 한 곳에서 | 문어CBT",
+    title: "무료 CBT 모의고사 — 자격증 한 곳에서 | 문어CBT",
     description:
       "SQLD·정처기·컴활·ADsP CBT 모의고사 무료. 실전 타이머·오답 복습·회차별 실력 추적.",
     url: `${SITE_URL}/cbt-mock-exam`,
@@ -19,7 +19,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "무료 CBT 모의고사 — 자격증 6종 | 문어CBT",
+    title: "무료 CBT 모의고사 — 자격증 | 문어CBT",
     description:
       "SQLD·정처기·컴활·ADsP CBT 모의고사 무료. 실전 타이머 제공.",
   },
@@ -52,7 +52,7 @@ export default function CbtMockExamPage() {
   const webPageLd = {
     "@context": "https://schema.org",
     "@type": "WebPage",
-    name: "무료 CBT 모의고사 — 자격증 6종",
+    name: "무료 CBT 모의고사 — 자격증 한 곳에서",
     url: `${SITE_URL}/cbt-mock-exam`,
     description:
       "SQLD·정처기·컴활·ADsP CBT 모의고사를 무료로 풀어볼 수 있는 플랫폼 페이지.",
@@ -84,13 +84,13 @@ export default function CbtMockExamPage() {
       <section className="relative overflow-hidden border-b border-border">
         <Container size="default" className="py-20 text-center sm:py-28">
           <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/25 bg-primary/10 px-3.5 py-1.5 text-xs font-medium text-primary">
-            🐙 문어CBT · 6종 자격증 무료
+            🐙 문어CBT · CBT 모의고사 무료
           </span>
           <h1 className="mt-6 text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl">
             무료 CBT 모의고사
             <br />
             <span className="bg-gradient-to-r from-primary to-[#5ee0a5] bg-clip-text text-transparent">
-              자격증 6종 한 곳에서
+              자격증 한 곳에서
             </span>
           </h1>
           <p className="mx-auto mt-6 max-w-2xl text-base leading-relaxed text-text-muted sm:text-lg">
