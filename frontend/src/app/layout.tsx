@@ -106,8 +106,8 @@ export const metadata: Metadata = {
     },
   },
   icons: {
-    icon: "/logo/logo.png",
-    apple: "/logo/logo.png",
+    icon: "/logo/favicon.png",
+    apple: "/logo/favicon.png",
   },
   robots: {
     index: true,
