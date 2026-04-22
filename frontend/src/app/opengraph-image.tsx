@@ -1,7 +1,7 @@
 import { ImageResponse } from "next/og";
 
 export const runtime = "nodejs";
-export const alt = "SQLD Pass — IT 자격증 실전 모의고사";
+export const alt = "문어CBT — IT 자격증 실전 모의고사";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -115,7 +115,7 @@ export default async function OgImage() {
                 fontWeight: 800,
               }}
             >
-              S
+              문
             </div>
             <div
               style={{
@@ -126,8 +126,8 @@ export default async function OgImage() {
                 fontWeight: 700,
               }}
             >
-              <span>SQLD</span>
-              <span style={{ color: "#fbbf24" }}>Pass</span>
+              <span>문어</span>
+              <span style={{ color: "#fbbf24" }}>CBT</span>
             </div>
           </div>
           <div style={{ fontFamily: "monospace", fontSize: 22 }}>

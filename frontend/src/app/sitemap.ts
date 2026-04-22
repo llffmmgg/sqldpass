@@ -1,4 +1,7 @@
 import type { MetadataRoute } from "next";
+import fs from "fs";
+import path from "path";
+import matter from "gray-matter";
 import {
   getPublicAllQuestionIds,
   getPublicCategoriesByCert,
@@ -7,29 +10,57 @@ import {
 import { getAllSlugs } from "@/lib/blog";
 
 const SITE_URL = "https://www.sqldpass.com";
+const BLOG_DIR = path.join(process.cwd(), "content", "blog");
+
+// 정적 페이지 마지막 수정일 (내용 변경 시 수동 업데이트)
+const STATIC_LAST_MOD: Record<string, string> = {
+  "/": "2026-04-22",
+  "/learn": "2026-04-22",
+  "/blog": "2026-04-22",
+  "/solve": "2026-04-16",
+  "/mock-exams": "2026-04-16",
+  "/cbt-mock-exam": "2026-04-22",
+  "/about": "2026-04-22",
+  "/changelog": "2026-04-22",
+  "/privacy": "2026-04-09",
+  "/terms": "2026-04-09",
+};
+
+// 동적 DB 페이지는 배포일 공통값
+const DYNAMIC_LAST_MOD = "2026-04-22";
+
+function blogPostDate(slug: string): string {
+  try {
+    const filePath = path.join(BLOG_DIR, `${slug}.mdx`);
+    const raw = fs.readFileSync(filePath, "utf-8");
+    const { data } = matter(raw);
+    return typeof data.date === "string" ? data.date : DYNAMIC_LAST_MOD;
+  } catch {
+    return DYNAMIC_LAST_MOD;
+  }
+}
 
 /**
  * 동적 사이트맵:
- * - 정적 랜딩 페이지
- * - /learn, /learn/[cert], /learn/[cert]/[category]
- * - /q/[id] (모든 공개 문제)
+ * - 정적 랜딩 페이지 (날짜 고정)
+ * - 블로그 글 (frontmatter date)
+ * - /learn, /learn/[cert], /learn/[cert]/[category] (동적 날짜)
+ * - /q/[id] (모든 공개 문제, 동적 날짜)
  *
  * 공개 API 실패 시 최소 정적 페이지만 반환 (try-catch 방어).
  */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const now = new Date();
-
   const blogSlugs = getAllSlugs();
   const blogEntries: MetadataRoute.Sitemap = [
     {
       url: `${SITE_URL}/blog`,
-      lastModified: now,
+      lastModified: STATIC_LAST_MOD["/blog"],
       changeFrequency: "weekly",
       priority: 0.8,
     },
     ...blogSlugs.map((slug) => ({
       url: `${SITE_URL}/blog/${slug}`,
-      lastModified: now,
+      lastModified: blogPostDate(slug),
       changeFrequency: "monthly" as const,
       priority: 0.7,
     })),
@@ -38,50 +69,56 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticEntries: MetadataRoute.Sitemap = [
     {
       url: `${SITE_URL}/`,
-      lastModified: now,
+      lastModified: STATIC_LAST_MOD["/"],
       changeFrequency: "weekly",
       priority: 1.0,
     },
     {
       url: `${SITE_URL}/learn`,
-      lastModified: now,
+      lastModified: STATIC_LAST_MOD["/learn"],
       changeFrequency: "weekly",
       priority: 0.9,
     },
     ...blogEntries,
     {
       url: `${SITE_URL}/solve`,
-      lastModified: now,
+      lastModified: STATIC_LAST_MOD["/solve"],
       changeFrequency: "weekly",
       priority: 0.8,
     },
     {
       url: `${SITE_URL}/mock-exams`,
-      lastModified: now,
+      lastModified: STATIC_LAST_MOD["/mock-exams"],
       changeFrequency: "weekly",
       priority: 0.8,
     },
     {
+      url: `${SITE_URL}/cbt-mock-exam`,
+      lastModified: STATIC_LAST_MOD["/cbt-mock-exam"],
+      changeFrequency: "monthly",
+      priority: 0.8,
+    },
+    {
       url: `${SITE_URL}/about`,
-      lastModified: now,
+      lastModified: STATIC_LAST_MOD["/about"],
       changeFrequency: "monthly",
       priority: 0.5,
     },
     {
       url: `${SITE_URL}/changelog`,
-      lastModified: now,
+      lastModified: STATIC_LAST_MOD["/changelog"],
       changeFrequency: "weekly",
       priority: 0.4,
     },
     {
       url: `${SITE_URL}/privacy`,
-      lastModified: now,
+      lastModified: STATIC_LAST_MOD["/privacy"],
       changeFrequency: "yearly",
       priority: 0.3,
     },
     {
       url: `${SITE_URL}/terms`,
-      lastModified: now,
+      lastModified: STATIC_LAST_MOD["/terms"],
       changeFrequency: "yearly",
       priority: 0.3,
     },
@@ -91,7 +128,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const certs = await getPublicCerts();
     const certEntries: MetadataRoute.Sitemap = certs.map((c) => ({
       url: `${SITE_URL}/learn/${c.slug}`,
-      lastModified: now,
+      lastModified: DYNAMIC_LAST_MOD,
       changeFrequency: "weekly",
       priority: 0.8,
     }));
@@ -103,7 +140,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         for (const cat of categories) {
           categoryEntries.push({
             url: `${SITE_URL}/learn/${cert.slug}/${cat.slug}`,
-            lastModified: now,
+            lastModified: DYNAMIC_LAST_MOD,
             changeFrequency: "weekly",
             priority: 0.7,
           });
@@ -118,7 +155,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       const ids = await getPublicAllQuestionIds();
       questionEntries = ids.map((id) => ({
         url: `${SITE_URL}/q/${id}`,
-        lastModified: now,
+        lastModified: DYNAMIC_LAST_MOD,
         changeFrequency: "monthly",
         priority: 0.6,
       }));

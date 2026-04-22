@@ -38,7 +38,7 @@ export async function generateMetadata({
     alternates: { canonical: `https://www.sqldpass.com/blog/${slug}` },
     openGraph: {
       type: "article",
-      title: `${post.title} | SQLD Pass`,
+      title: `${post.title} | 문어CBT`,
       description: post.description,
       url: `https://www.sqldpass.com/blog/${slug}`,
       publishedTime: post.date,
@@ -79,8 +79,8 @@ export default async function BlogPostPage({
     headline: post.title,
     description: post.description,
     datePublished: post.date,
-    author: { "@type": "Organization", name: "SQLD Pass" },
-    publisher: { "@type": "Organization", name: "SQLD Pass" },
+    author: { "@type": "Organization", name: "문어CBT" },
+    publisher: { "@type": "Organization", name: "문어CBT" },
     mainEntityOfPage: `https://www.sqldpass.com/blog/${slug}`,
   };
 

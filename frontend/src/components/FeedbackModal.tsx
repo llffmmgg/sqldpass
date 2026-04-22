@@ -183,7 +183,7 @@ export default function FeedbackModal({
                 className="block w-full resize-y rounded-lg border border-border bg-background px-4 py-3 text-sm leading-relaxed text-foreground placeholder:text-muted/70 focus:outline-none focus:ring-2 focus:ring-amber-500/60"
               />
               <div className="mt-1 flex items-center justify-between">
-                <p className="text-[11px] text-muted/70">함께 만들어가는 SQLD Pass 💛</p>
+                <p className="text-[11px] text-muted/70">함께 만들어가는 문어CBT 💛</p>
                 <p className="text-[11px] tabular-nums text-muted/60">{content.length} / 2000</p>
               </div>
             </div>

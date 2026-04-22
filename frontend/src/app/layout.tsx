@@ -145,11 +145,6 @@ export default function RootLayout({
     url: SITE_URL,
     description: SITE_DESCRIPTION,
     inLanguage: "ko-KR",
-    potentialAction: {
-      "@type": "SearchAction",
-      target: `${SITE_URL}/learn?q={search_term_string}`,
-      "query-input": "required name=search_term_string",
-    },
   };
 
   const siteNavLd = {

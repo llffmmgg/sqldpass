@@ -63,7 +63,7 @@ export async function generateMetadata(
     description: meta.description,
     alternates: { canonical: `https://www.sqldpass.com/learn/${cert}` },
     openGraph: {
-      title: `${meta.title} | SQLD Pass`,
+      title: `${meta.title} | 문어CBT`,
       description: meta.description,
       url: `https://www.sqldpass.com/learn/${cert}`,
     },

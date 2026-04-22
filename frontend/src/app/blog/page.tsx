@@ -9,7 +9,7 @@ export const metadata: Metadata = {
     "SQLD, 정처기 필기·실기, 컴활 1·2급, ADsP 시험 준비에 필요한 학습 전략, 출제 경향, CBT 활용법을 정리한 블로그입니다.",
   alternates: { canonical: "https://www.sqldpass.com/blog" },
   openGraph: {
-    title: "자격증 시험 준비 블로그 | SQLD Pass",
+    title: "자격증 시험 준비 블로그 | 문어CBT",
     description:
       "SQLD, 정처기, 컴활, ADsP 시험 준비 꿀팁과 학습 전략을 공유합니다.",
     url: "https://www.sqldpass.com/blog",
