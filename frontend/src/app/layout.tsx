@@ -5,8 +5,11 @@ import NavBar from "@/components/NavBar";
 import Footer from "@/components/Footer";
 import { SiteNoticeBanner } from "@/components/SiteNoticeBanner";
 import AnalyticsScripts from "@/components/AnalyticsScripts";
+import AdSidebar from "@/components/AdSidebar";
 import { ToastProvider } from "@/components/Toast";
 import "./globals.css";
+
+const ADSENSE_SIDEBAR_SLOT = process.env.NEXT_PUBLIC_ADSENSE_SIDEBAR_SLOT ?? "";
 
 const ADSENSE_CLIENT = "ca-pub-6512792395955186";
 
@@ -200,6 +203,7 @@ export default function RootLayout({
           <NavBar />
           <div className="flex-1">{children}</div>
           <Footer />
+          <AdSidebar adSlot={ADSENSE_SIDEBAR_SLOT} />
         </ToastProvider>
       </body>
     </html>
