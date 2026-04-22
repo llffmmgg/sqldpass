@@ -333,6 +333,23 @@ function MockExamDetailContent() {
       <GradingDisclaimerModal />
       <Container size="default" className="py-12">
       <div className="flex gap-4 items-stretch">
+      {/* 타이머 패널 — 데스크톱에서 왼쪽 sticky, 모바일에서 하단 fixed */}
+      <div className="hidden lg:block">
+        <div className="sticky top-20 w-32">
+          <div className="flex flex-col items-center gap-3 rounded-xl border border-border bg-surface/80 px-3 py-4 shadow-lg backdrop-blur">
+            <ExamTimer
+              seconds={timerSeconds}
+              limit={timerLimit}
+              running={timerRunning}
+              onStart={startTimer}
+              onPause={pauseTimer}
+              onReset={resetTimer}
+              accent={accent}
+            />
+          </div>
+        </div>
+      </div>
+
       {/* 메인 콘텐츠 */}
       <div className="min-w-0 flex-1 max-w-3xl mx-auto">
         {/* 상단 상태 바 */}
@@ -473,23 +490,6 @@ function MockExamDetailContent() {
               최소 1문항 이상 답안을 작성해야 제출할 수 있습니다
             </p>
           )}
-        </div>
-      </div>
-
-      {/* 타이머 패널 — 데스크톱에서 오른쪽 sticky, 모바일에서 하단 fixed */}
-      <div className="hidden lg:block">
-        <div className="sticky top-20 w-32">
-          <div className="flex flex-col items-center gap-3 rounded-xl border border-border bg-surface/80 px-3 py-4 shadow-lg backdrop-blur">
-            <ExamTimer
-              seconds={timerSeconds}
-              limit={timerLimit}
-              running={timerRunning}
-              onStart={startTimer}
-              onPause={pauseTimer}
-              onReset={resetTimer}
-              accent={accent}
-            />
-          </div>
         </div>
       </div>
 
