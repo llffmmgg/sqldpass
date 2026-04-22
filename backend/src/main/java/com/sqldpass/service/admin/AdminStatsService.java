@@ -14,6 +14,7 @@ import com.sqldpass.controller.admin.dto.AdminStatsResponse.SubjectSolveStats;
 import com.sqldpass.controller.admin.dto.AdminTrendResponse;
 import com.sqldpass.controller.admin.dto.AdminTrendResponse.DailyPoint;
 import com.sqldpass.persistent.member.MemberRepository;
+import com.sqldpass.persistent.solve.AnonymousSolveCountRepository;
 import com.sqldpass.persistent.solve.SolveRepository;
 
 @Service
@@ -23,13 +24,16 @@ public class AdminStatsService {
     private final AdminQuestionService adminQuestionService;
     private final MemberRepository memberRepository;
     private final SolveRepository solveRepository;
+    private final AnonymousSolveCountRepository anonymousSolveCountRepository;
 
     public AdminStatsService(AdminQuestionService adminQuestionService,
                              MemberRepository memberRepository,
-                             SolveRepository solveRepository) {
+                             SolveRepository solveRepository,
+                             AnonymousSolveCountRepository anonymousSolveCountRepository) {
         this.adminQuestionService = adminQuestionService;
         this.memberRepository = memberRepository;
         this.solveRepository = solveRepository;
+        this.anonymousSolveCountRepository = anonymousSolveCountRepository;
     }
 
     public AdminStatsResponse getStats() {
@@ -44,15 +48,21 @@ public class AdminStatsService {
 
         LocalDateTime startOfToday = LocalDate.now().atStartOfDay();
 
+        long totalAnonymousSolves = anonymousSolveCountRepository.sumAll();
+        Long todayAnonymousRaw = anonymousSolveCountRepository.countByDate(LocalDate.now());
+        long todayAnonymousSolves = todayAnonymousRaw != null ? todayAnonymousRaw : 0L;
+
         return new AdminStatsResponse(
                 adminQuestionService.countAll(),
                 adminQuestionService.countVerified(),
                 adminQuestionService.countUnverified(),
                 memberRepository.count(),
                 solveRepository.count(),
+                totalAnonymousSolves,
                 adminQuestionService.countToday(),
                 memberRepository.countByCreatedAtAfter(startOfToday),
                 solveRepository.countByCreatedAtAfter(startOfToday),
+                todayAnonymousSolves,
                 subjectStats);
     }
 

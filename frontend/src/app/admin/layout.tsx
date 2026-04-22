@@ -57,7 +57,7 @@ const SIDEBAR_SECTIONS: NavSection[] = [
     items: [
       { href: "/admin/questions", label: "문제 관리", icon: ICON.questions },
       { href: "/admin/mock-exams", label: "모의고사", icon: ICON.exams },
-      { href: "/admin/generate", label: "문제 생성", icon: ICON.generate },
+      // /admin/generate 는 모의고사 생성으로 대체. 메뉴 숨김(페이지 코드는 유지).
     ],
   },
   {

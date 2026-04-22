@@ -8,9 +8,11 @@ public record AdminStatsResponse(
         long unverifiedQuestions,
         long totalMembers,
         long totalSolves,
+        long totalAnonymousSolves,
         long todayQuestions,
         long todayMembers,
         long todaySolves,
+        long todayAnonymousSolves,
         List<SubjectSolveStats> subjectStats) {
 
     public record SubjectSolveStats(

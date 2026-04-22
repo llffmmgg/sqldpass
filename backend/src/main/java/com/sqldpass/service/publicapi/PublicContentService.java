@@ -32,6 +32,7 @@ import com.sqldpass.service.subject.SubjectService;
 import com.sqldpass.persistent.member.MemberRepository;
 import com.sqldpass.persistent.question.QuestionEntity;
 import com.sqldpass.persistent.question.QuestionRepository;
+import com.sqldpass.persistent.solve.AnonymousSolveCountRepository;
 import com.sqldpass.persistent.solve.SolveAnswerRepository;
 import com.sqldpass.persistent.solve.SolveRepository;
 import com.sqldpass.persistent.subject.SubjectEntity;
@@ -97,6 +98,7 @@ public class PublicContentService {
     private final SolveAnswerRepository solveAnswerRepository;
     private final SolveRepository solveRepository;
     private final BlogViewCountRepository blogViewCountRepository;
+    private final AnonymousSolveCountRepository anonymousSolveCountRepository;
     private final SubjectService subjectService;
     private final QuestionService questionService;
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -385,5 +387,14 @@ public class PublicContentService {
                         q.getQuestionType().name()
                 ))
                 .toList();
+    }
+
+    /**
+     * 비회원 풀이 카운터 오늘자 +delta. DB 에 풀이 내용은 저장하지 않고 집계만 유지.
+     */
+    @Transactional
+    public void incrementAnonymousSolve(long delta) {
+        if (delta <= 0) return;
+        anonymousSolveCountRepository.increment(java.time.LocalDate.now(), delta);
     }
 }

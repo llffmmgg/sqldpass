@@ -273,6 +273,13 @@ function SolvePageContent() {
       setCorrectCount((c) => c + 1);
     }
 
+    if (selectedSubject && !loggedIn) {
+      // 비회원 풀이 카운터 증가 (집계만, DB 저장 없음)
+      fetch("/api/public/anonymous-solve?delta=1", { method: "POST" }).catch(() => {
+        // 집계 실패는 UX 에 영향 없으니 무시
+      });
+    }
+
     if (selectedSubject && loggedIn) {
       setSubmitError(null);
       submitSolve({

@@ -110,27 +110,27 @@ export default function StudyActivityChart({ data, overallAvg }: StudyActivityCh
     >
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="text-sm font-semibold">최근 2주 학습량</h2>
-        <div className="flex items-center gap-3 text-xs text-muted tabular-nums">
+        <div className="flex items-center gap-2.5 text-[10px] text-muted tabular-nums">
           <span>
             총 <span className="font-semibold text-foreground">{total}</span>
           </span>
-          <span className="h-3 w-px bg-border" aria-hidden />
+          <span className="h-2.5 w-px bg-border" aria-hidden />
           <span className="inline-flex items-center gap-1">
-            <span className="inline-block h-0.5 w-3 border-t border-dashed border-muted" aria-hidden />
+            <span className="inline-block h-0.5 w-2.5 border-t border-dashed border-muted" aria-hidden />
             내 평균 <span className="font-semibold text-foreground">{avgDisplay}</span>
           </span>
           {hasOverall && (
             <>
-              <span className="h-3 w-px bg-border" aria-hidden />
+              <span className="h-2.5 w-px bg-border" aria-hidden />
               <span className="inline-flex items-center gap-1">
-                <span className="inline-block h-0.5 w-3 border-t border-dashed border-accent" aria-hidden />
+                <span className="inline-block h-0.5 w-2.5 border-t border-dashed border-accent" aria-hidden />
                 전체 평균 <span className="font-semibold text-accent">{overallDisplay}</span>
               </span>
             </>
           )}
           {hasMax && (
             <>
-              <span className="h-3 w-px bg-border" aria-hidden />
+              <span className="h-2.5 w-px bg-border" aria-hidden />
               <span>
                 최다 <span className="font-semibold text-foreground">{data[maxIdx].count}</span>
               </span>
@@ -192,10 +192,10 @@ export default function StudyActivityChart({ data, overallAvg }: StudyActivityCh
 
         {total > 0 && (
           <span
-            className="pointer-events-none absolute -translate-y-1/2 rounded-sm bg-surface px-1 text-[10px] font-medium text-muted tabular-nums"
+            className="pointer-events-none absolute -translate-y-1/2 rounded-sm bg-surface px-1 text-[9px] font-medium text-muted tabular-nums"
             style={{
               top: `${avgTopPct}%`,
-              right: labelsOverlap && avgY > overallY ? "3rem" : "0",
+              right: labelsOverlap && avgY > overallY ? "2.5rem" : "0",
             }}
           >
             내 {avgDisplay}
@@ -204,10 +204,10 @@ export default function StudyActivityChart({ data, overallAvg }: StudyActivityCh
 
         {hasOverall && (
           <span
-            className="pointer-events-none absolute -translate-y-1/2 rounded-sm bg-surface px-1 text-[10px] font-medium text-accent tabular-nums"
+            className="pointer-events-none absolute -translate-y-1/2 rounded-sm bg-surface px-1 text-[9px] font-medium text-accent tabular-nums"
             style={{
               top: `${overallTopPct}%`,
-              right: labelsOverlap && overallY >= avgY ? "3rem" : "0",
+              right: labelsOverlap && overallY >= avgY ? "2.5rem" : "0",
             }}
           >
             전체 {overallDisplay}
@@ -227,27 +227,31 @@ export default function StudyActivityChart({ data, overallAvg }: StudyActivityCh
                 onMouseLeave={() => setHoveredIdx(null)}
                 onFocus={() => setHoveredIdx(i)}
                 onBlur={() => setHoveredIdx(null)}
-                className="group relative flex h-full flex-1 cursor-pointer flex-col items-center justify-end rounded-md outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                className={`group relative flex h-full flex-1 cursor-pointer flex-col items-center justify-end rounded-md outline-none transition-colors duration-100 focus-visible:ring-2 focus-visible:ring-primary ${
+                  isActive ? "bg-primary/[0.06]" : "hover:bg-primary/[0.04]"
+                }`}
                 aria-label={`${day.month}월 ${day.dayNum}일 ${DOW_LONG[day.dow]}, ${day.count}문제`}
               >
                 {day.count > 0 ? (
                   <div
-                    className={`w-full max-w-[22px] origin-bottom rounded-t-md ${
+                    className={`w-full max-w-[24px] origin-bottom rounded-t-md ${
                       day.isToday
                         ? "bg-primary shadow-[0_0_12px_var(--glow)]"
                         : isActive
-                          ? "bg-primary/80"
+                          ? "bg-primary shadow-[0_0_10px_var(--glow)] scale-y-105"
                           : dim
                             ? "bg-primary/25"
                             : "bg-primary/55"
                     }`}
                     style={{
                       height: `${barHeight}%`,
-                      transition: `height 600ms cubic-bezier(0.22, 1, 0.36, 1) ${i * 30}ms, background-color 200ms ease`,
+                      transition: `height 450ms cubic-bezier(0.22, 1, 0.36, 1) ${i * 20}ms, background-color 100ms ease, transform 120ms ease`,
                     }}
                   />
                 ) : (
-                  <div className="mb-1 h-1 w-1 rounded-full bg-border" />
+                  <div className={`mb-1 h-1.5 w-1.5 rounded-full transition-colors duration-100 ${
+                    isActive ? "bg-primary" : "bg-border"
+                  }`} />
                 )}
               </button>
             );
@@ -278,7 +282,7 @@ export default function StudyActivityChart({ data, overallAvg }: StudyActivityCh
             className="flex flex-1 flex-col items-center gap-0.5"
           >
             <span
-              className={`text-[10px] tabular-nums ${
+              className={`text-[9px] tabular-nums ${
                 day.isToday
                   ? "font-bold text-primary"
                   : day.isWeekend
@@ -289,7 +293,7 @@ export default function StudyActivityChart({ data, overallAvg }: StudyActivityCh
               {day.month}/{day.dayNum}
             </span>
             <span
-              className={`text-[9px] ${
+              className={`text-[8px] ${
                 day.isToday
                   ? "font-semibold text-primary"
                   : day.isWeekend

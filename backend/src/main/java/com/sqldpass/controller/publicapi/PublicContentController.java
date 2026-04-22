@@ -112,4 +112,10 @@ public class PublicContentController {
             @RequestParam(defaultValue = "10") int size) {
         return publicContentService.getRandomSolveQuestions(id, size);
     }
+
+    @PostMapping("/anonymous-solve")
+    @Operation(summary = "비회원 풀이 카운터 증가 (집계만)")
+    public void incrementAnonymousSolve(@RequestParam(defaultValue = "1") long delta) {
+        publicContentService.incrementAnonymousSolve(delta);
+    }
 }

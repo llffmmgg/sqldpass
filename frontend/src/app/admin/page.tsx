@@ -69,13 +69,19 @@ export default function AdminDashboardPage() {
               icon={ICONS.members}
             />
             <StatCard
-              label="총 풀이 수"
-              value={stats.totalSolves}
-              sub={`오늘 +${(stats.todaySolves ?? 0).toLocaleString()}`}
+              label="전체 풀이 (회원+비회원)"
+              value={stats.totalSolves + (stats.totalAnonymousSolves ?? 0)}
+              sub={`회원 ${stats.totalSolves.toLocaleString()} · 비회원 ${(stats.totalAnonymousSolves ?? 0).toLocaleString()}`}
               tone="green"
               icon={ICONS.solves}
             />
-            <StatCard label="오늘 생성된 문제" value={stats.todayQuestions} tone="blue" icon={ICONS.today} />
+            <StatCard
+              label="오늘 풀이"
+              value={(stats.todaySolves ?? 0) + (stats.todayAnonymousSolves ?? 0)}
+              sub={`회원 ${(stats.todaySolves ?? 0).toLocaleString()} · 비회원 ${(stats.todayAnonymousSolves ?? 0).toLocaleString()}`}
+              tone="blue"
+              icon={ICONS.today}
+            />
           </>
         )}
       </div>
