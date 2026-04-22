@@ -56,4 +56,18 @@ public final class PublicDtos {
             String explanation,
             String topic,
             Integer difficulty) {}
+
+    /** Subject 트리 노드 (비로그인 /solve 용) */
+    public record PublicSubjectResponse(
+            long id,
+            String name,
+            int displayOrder,
+            List<PublicSubjectResponse> children) {}
+
+    /** 무한풀이용 단건 문제 (정답 포함 안 함 — 채점은 PublicQuestionDetailResponse 로) */
+    public record PublicSolveQuestionResponse(
+            long id,
+            long subjectId,
+            String content,
+            String questionType) {}
 }

@@ -14,6 +14,8 @@ import com.sqldpass.controller.publicapi.dto.PublicDtos.PublicCategoryResponse;
 import com.sqldpass.controller.publicapi.dto.PublicDtos.PublicCertResponse;
 import com.sqldpass.controller.publicapi.dto.PublicDtos.PublicQuestionDetailResponse;
 import com.sqldpass.controller.publicapi.dto.PublicDtos.PublicQuestionPageResponse;
+import com.sqldpass.controller.publicapi.dto.PublicDtos.PublicSolveQuestionResponse;
+import com.sqldpass.controller.publicapi.dto.PublicDtos.PublicSubjectResponse;
 import com.sqldpass.controller.publicapi.dto.PublicRankingResponse;
 import com.sqldpass.controller.publicapi.dto.PublicStatsResponse;
 import com.sqldpass.service.publicapi.PublicContentService;
@@ -95,5 +97,19 @@ public class PublicContentController {
     @Operation(summary = "블로그 전체 조회수 조회")
     public Map<String, Long> getBlogViews() {
         return publicContentService.getAllBlogViewCounts();
+    }
+
+    @GetMapping("/subjects")
+    @Operation(summary = "Subject 트리 (비로그인 /solve 용)")
+    public List<PublicSubjectResponse> listSubjects() {
+        return publicContentService.getSubjectTree();
+    }
+
+    @GetMapping("/subjects/{id}/random-questions")
+    @Operation(summary = "Subject 기반 랜덤 문제 (비로그인 무한 풀이용)")
+    public List<PublicSolveQuestionResponse> getRandomQuestions(
+            @PathVariable long id,
+            @RequestParam(defaultValue = "10") int size) {
+        return publicContentService.getRandomSolveQuestions(id, size);
     }
 }

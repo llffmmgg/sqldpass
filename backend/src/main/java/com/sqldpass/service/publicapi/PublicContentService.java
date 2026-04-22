@@ -21,8 +21,14 @@ import com.sqldpass.controller.publicapi.dto.PublicDtos.PublicCertResponse;
 import com.sqldpass.controller.publicapi.dto.PublicDtos.PublicQuestionDetailResponse;
 import com.sqldpass.controller.publicapi.dto.PublicDtos.PublicQuestionPageResponse;
 import com.sqldpass.controller.publicapi.dto.PublicDtos.PublicQuestionSummary;
+import com.sqldpass.controller.publicapi.dto.PublicDtos.PublicSolveQuestionResponse;
+import com.sqldpass.controller.publicapi.dto.PublicDtos.PublicSubjectResponse;
 import com.sqldpass.controller.publicapi.dto.PublicRankingResponse;
 import com.sqldpass.controller.publicapi.dto.PublicStatsResponse;
+import com.sqldpass.domain.question.Question;
+import com.sqldpass.domain.subject.Subject;
+import com.sqldpass.service.question.QuestionService;
+import com.sqldpass.service.subject.SubjectService;
 import com.sqldpass.persistent.member.MemberRepository;
 import com.sqldpass.persistent.question.QuestionEntity;
 import com.sqldpass.persistent.question.QuestionRepository;
@@ -91,6 +97,8 @@ public class PublicContentService {
     private final SolveAnswerRepository solveAnswerRepository;
     private final SolveRepository solveRepository;
     private final BlogViewCountRepository blogViewCountRepository;
+    private final SubjectService subjectService;
+    private final QuestionService questionService;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     // ----------------------------------------------------------
@@ -345,5 +353,37 @@ public class PublicContentService {
         } catch (Exception e) {
             return Collections.emptyList();
         }
+    }
+
+    /**
+     * 비로그인 /solve 화면용 Subject 트리 조회.
+     */
+    public List<PublicSubjectResponse> getSubjectTree() {
+        return subjectService.getSubjectTree().stream()
+                .map(this::toSubjectResponse)
+                .toList();
+    }
+
+    private PublicSubjectResponse toSubjectResponse(Subject s) {
+        return new PublicSubjectResponse(
+                s.getId(),
+                s.getName(),
+                s.getDisplayOrder(),
+                s.getChildren().stream().map(this::toSubjectResponse).toList()
+        );
+    }
+
+    /**
+     * 비로그인 /solve 화면용 랜덤 N개 문제. QuestionService 가 memberId=null 을 이미 지원.
+     */
+    public List<PublicSolveQuestionResponse> getRandomSolveQuestions(Long subjectId, int size) {
+        return questionService.getRandomQuestions(subjectId, null, size).stream()
+                .map(q -> new PublicSolveQuestionResponse(
+                        q.getId(),
+                        q.getSubjectId(),
+                        q.getContent(),
+                        q.getQuestionType().name()
+                ))
+                .toList();
     }
 }
