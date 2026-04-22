@@ -332,7 +332,7 @@ function MockExamDetailContent() {
     <main className="min-h-screen bg-background text-foreground">
       <GradingDisclaimerModal />
       <Container size="default" className="py-12">
-      <div className="flex gap-4 items-start">
+      <div className="flex gap-4 items-stretch">
       {/* 메인 콘텐츠 */}
       <div className="min-w-0 flex-1 max-w-3xl mx-auto">
         {/* 상단 상태 바 */}
