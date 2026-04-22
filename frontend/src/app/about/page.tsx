@@ -27,7 +27,7 @@ export default function AboutPage() {
         name: "문제는 어떻게 만들어지나요?",
         acceptedAnswer: {
           "@type": "Answer",
-          text: "운영팀이 정리한 토픽별 시드 문제를 기반으로, AI(Anthropic Claude / Google Gemini)가 새 변형 문제를 자동 생성합니다. 생성된 문제는 다시 LLM 검증과 운영자 검토를 거칩니다.",
+          text: "운영팀이 정리한 토픽별 시드 문제를 기반으로, 변형 문제를 생성합니다. 생성된 문제는 다시 LLM 검증과 운영자 검토를 거칩니다.",
         },
       },
       {
@@ -83,9 +83,9 @@ export default function AboutPage() {
 
       <Section title="문제는 어떻게 만들어지나요?">
         <p>
-          운영팀이 정리한 토픽별 시드 문제를 기반으로, AI(Anthropic Claude / Google Gemini)가
-          새 변형 문제를 자동 생성합니다. 생성된 문제는 다시 LLM 검증과 운영자 검토를 거쳐
-          오류가 있으면 수정·삭제됩니다. 그래도 일부 오류는 남을 수 있으니, 발견하시면{" "}
+          운영팀이 정리한 토픽별 시드 문제를 기반으로, 변형 문제를 생성합니다.
+          생성된 문제는 다시 LLM 검증과 운영자 검토를 거쳐 오류가 있으면 수정·삭제됩니다.
+          그래도 일부 오류는 남을 수 있으니, 발견하시면{" "}
           <Link href="/profile" className="text-primary underline underline-offset-2 transition-colors hover:text-primary-hover">피드백</Link>으로 알려주세요.
         </p>
       </Section>
