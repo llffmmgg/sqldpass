@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Container } from "@/components/ui";
 
 export const metadata: Metadata = {
   title: "sqldpass 소개",
@@ -49,7 +50,8 @@ export default function AboutPage() {
   };
 
   return (
-    <main className="mx-auto max-w-3xl px-4 py-12 text-foreground">
+    <main className="py-12 text-foreground">
+      <Container size="narrow">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqLd) }}
@@ -107,6 +109,7 @@ export default function AboutPage() {
           모의고사 보러가기
         </Link>
       </div>
+      </Container>
     </main>
   );
 }

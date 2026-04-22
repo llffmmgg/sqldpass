@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { getPublicCerts } from "@/lib/publicApi";
+import { Container } from "@/components/ui";
 
 export const metadata: Metadata = {
   title: "자격증 기출문제 한눈에 보기",
@@ -49,7 +50,8 @@ export default async function LearnPage() {
   };
 
   return (
-    <main className="mx-auto max-w-5xl px-4 py-16 sm:px-6 lg:px-8">
+    <main className="py-16">
+      <Container size="default">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbLd) }}
@@ -133,6 +135,7 @@ export default async function LearnPage() {
           무료로 시작하기
         </Link>
       </section>
+      </Container>
     </main>
   );
 }

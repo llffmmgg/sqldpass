@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Container } from "@/components/ui";
 
 export const metadata: Metadata = {
   title: "개인정보처리방침",
@@ -9,7 +10,8 @@ export const metadata: Metadata = {
 
 export default function PrivacyPage() {
   return (
-    <main className="mx-auto max-w-3xl px-4 py-12 text-foreground">
+    <main className="py-12 text-foreground">
+      <Container size="narrow">
       <h1 className="text-3xl font-bold">개인정보처리방침</h1>
       <p className="mt-2 text-sm text-muted">최종 개정일: 2026년 4월 9일</p>
 
@@ -110,6 +112,7 @@ export default function PrivacyPage() {
           <li>2026-04-09 — 최초 작성</li>
         </ul>
       </Section>
+      </Container>
     </main>
   );
 }

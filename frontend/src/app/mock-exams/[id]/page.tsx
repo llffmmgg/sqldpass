@@ -11,6 +11,7 @@ const CountdownCircleTimer = dynamic(
 import AuthGuard from "@/components/AuthGuard";
 import Spinner from "@/components/Spinner";
 import QuestionContent from "@/components/QuestionContent";
+import { Container } from "@/components/ui";
 import ReportQuestionButton from "@/components/ReportQuestionButton";
 import BookmarkButton from "@/components/BookmarkButton";
 import { parseQuestion } from "@/lib/parseQuestion";
@@ -212,7 +213,7 @@ function MockExamDetailContent() {
   if (result) {
     return (
       <main className="min-h-screen bg-background text-foreground">
-        <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6">
+        <Container size="narrow" className="py-16">
           <ExamBadge examType={exam.examType} />
           <h1 className="mt-3 text-2xl font-bold">{exam.name} 결과</h1>
           <div className="mt-8 rounded-xl border border-border bg-surface p-8 text-center">
@@ -245,7 +246,7 @@ function MockExamDetailContent() {
               상세 보기
             </button>
           </div>
-        </div>
+        </Container>
       </main>
     );
   }
@@ -330,7 +331,7 @@ function MockExamDetailContent() {
   return (
     <main className="min-h-screen bg-background text-foreground">
       <GradingDisclaimerModal />
-      <div className="mx-auto max-w-5xl px-4 py-12 sm:px-6">
+      <Container size="default" className="py-12">
       <div className="flex gap-4 items-start">
       {/* 메인 콘텐츠 */}
       <div className="min-w-0 flex-1 max-w-3xl mx-auto">
@@ -508,7 +509,7 @@ function MockExamDetailContent() {
       </div>
 
       </div>
-      </div>
+      </Container>
     </main>
   );
 }

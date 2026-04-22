@@ -7,6 +7,7 @@ export const revalidate = 3600;
 import QuestionContent from "@/components/QuestionContent";
 import ReportQuestionButton from "@/components/ReportQuestionButton";
 import BookmarkButton from "@/components/BookmarkButton";
+import { Container } from "@/components/ui";
 
 type Params = { id: string };
 
@@ -128,7 +129,8 @@ export default async function QuestionPage(
   const isMcq = q.questionType === "MCQ";
 
   return (
-    <main className="mx-auto max-w-3xl px-4 py-12 sm:px-6 lg:px-8">
+    <main className="py-12">
+      <Container size="narrow">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(qaPageLd) }}
@@ -252,6 +254,7 @@ export default async function QuestionPage(
           </Link>
         </div>
       </section>
+      </Container>
     </main>
   );
 }

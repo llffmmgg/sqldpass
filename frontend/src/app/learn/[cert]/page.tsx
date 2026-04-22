@@ -6,6 +6,7 @@ import {
   getPublicCerts,
   type CertSlug,
 } from "@/lib/publicApi";
+import { Container } from "@/components/ui";
 
 const CERT_META: Record<CertSlug, { title: string; description: string }> = {
   sqld: {
@@ -125,7 +126,8 @@ export default async function CertPage(
   };
 
   return (
-    <main className="mx-auto max-w-5xl px-4 py-16 sm:px-6 lg:px-8">
+    <main className="py-16">
+      <Container size="default">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbLd) }}
@@ -190,6 +192,7 @@ export default async function CertPage(
           모의고사 풀러 가기
         </Link>
       </section>
+      </Container>
     </main>
   );
 }

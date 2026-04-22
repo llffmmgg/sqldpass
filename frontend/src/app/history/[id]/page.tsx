@@ -8,6 +8,7 @@ import { parseQuestion, OPTION_MARKERS } from "@/lib/parseQuestion";
 import QuestionContent from "@/components/QuestionContent";
 import AuthGuard from "@/components/AuthGuard";
 import Spinner from "@/components/Spinner";
+import { Container } from "@/components/ui";
 import { trackEvent } from "@/lib/gtag";
 
 function buildSubjectMap(subjects: Subject[]): Record<number, string> {
@@ -71,12 +72,12 @@ function HistoryDetailContent({ params }: { params: Promise<{ id: string }> }) {
   if (error) {
     return (
       <main className="min-h-screen bg-background text-foreground">
-        <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6 text-center">
+        <Container size="narrow" className="py-16 text-center">
           <p className="text-red-400">{error}</p>
           <Link href="/dashboard" className="mt-4 inline-block text-sm text-muted hover:text-foreground">
             ← 대시보드로
           </Link>
-        </div>
+        </Container>
       </main>
     );
   }
@@ -84,16 +85,16 @@ function HistoryDetailContent({ params }: { params: Promise<{ id: string }> }) {
   if (loading || !solve) {
     return (
       <main className="min-h-screen bg-background text-foreground">
-        <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6">
+        <Container size="narrow" className="py-16">
           <Spinner />
-        </div>
+        </Container>
       </main>
     );
   }
 
   return (
     <main className="min-h-screen bg-background text-foreground">
-      <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6">
+      <Container size="narrow" className="py-16">
         {/* Header */}
         <Link href="/dashboard" className="text-sm text-muted hover:text-foreground transition-colors">
           &larr; 대시보드로
@@ -192,7 +193,7 @@ function HistoryDetailContent({ params }: { params: Promise<{ id: string }> }) {
             );
           })}
         </div>
-      </div>
+      </Container>
     </main>
   );
 }

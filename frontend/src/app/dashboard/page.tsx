@@ -18,6 +18,7 @@ import { getNickname } from "@/lib/auth";
 import AuthGuard from "@/components/AuthGuard";
 import Spinner from "@/components/Spinner";
 import StudyActivityChart from "@/components/StudyActivityChart";
+import { Container } from "@/components/ui";
 
 function buildSubjectMap(subjects: Subject[]): Record<number, string> {
   const map: Record<number, string> = {};
@@ -207,7 +208,7 @@ function DashboardPageContent() {
 
   return (
     <main className="min-h-screen bg-background text-foreground">
-      <div className="mx-auto max-w-4xl px-4 py-12 sm:px-6">
+      <Container size="default" className="py-12">
         {/* 헤더 */}
         <div className="flex items-center gap-5">
           <Image
@@ -428,7 +429,7 @@ function DashboardPageContent() {
             </div>
           </>
         )}
-      </div>
+      </Container>
     </main>
   );
 }

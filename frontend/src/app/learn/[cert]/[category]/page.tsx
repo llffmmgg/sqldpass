@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Container } from "@/components/ui";
 
 export const revalidate = 3600;
 import {
@@ -98,7 +99,8 @@ export default async function CategoryPage(
   };
 
   return (
-    <main className="mx-auto max-w-4xl px-4 py-16 sm:px-6 lg:px-8">
+    <main className="py-16">
+      <Container size="default">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbLd) }}
@@ -180,6 +182,7 @@ export default async function CategoryPage(
           모의고사 풀러 가기
         </Link>
       </section>
+      </Container>
     </main>
   );
 }
