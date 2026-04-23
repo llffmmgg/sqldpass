@@ -504,6 +504,8 @@ export const ENGINEER_TEMPLATE_LABEL: Record<EngineerTemplate, string> = {
 
 export type MockExamVisibility = "DRAFT" | "PUBLISHED" | "PREMIUM";
 
+export type MockExamKind = "AI" | "PAST_EXAM";
+
 export interface AdminMockExam {
   id: number;
   name: string;
@@ -516,6 +518,10 @@ export interface AdminMockExam {
   templateLabel: string | null;
   visibility: MockExamVisibility;
   expertVerified: boolean;
+  kind: MockExamKind;
+  examYear: number | null;
+  examRound: number | null;
+  examDate: string | null;
 }
 
 export function changeMockExamVisibility(id: number, visibility: MockExamVisibility) {
@@ -537,6 +543,10 @@ export interface AdminMockExamDetail {
   totalQuestions: number;
   createdAt: string;
   expertVerified: boolean;
+  kind: MockExamKind;
+  examYear: number | null;
+  examRound: number | null;
+  examDate: string | null;
   questions: {
     id: number;
     displayOrder: number;
@@ -557,6 +567,20 @@ export function markMockExamVerified(id: number) {
 
 export function toggleExpertVerified(id: number) {
   return adminFetch<{ expertVerified: boolean }>(`/mock-exams/${id}/toggle-expert-verified`, { method: "POST" });
+}
+
+export interface SetPastExamMetaPayload {
+  promote: boolean;
+  examYear?: number | null;
+  examRound?: number | null;
+  examDate?: string | null;
+}
+
+export function setPastExamMeta(id: number, payload: SetPastExamMetaPayload) {
+  return adminFetch<AdminMockExam>(`/mock-exams/${id}/past-exam-meta`, {
+    method: "PATCH",
+    body: JSON.stringify(payload),
+  });
 }
 
 export interface AdminSolveDetail {

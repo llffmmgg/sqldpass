@@ -384,6 +384,12 @@ export default function AdminMockExamsPage() {
                           >
                             {exam.name}
                           </Link>
+                          {exam.kind === "PAST_EXAM" && (
+                            <span className="inline-flex items-center rounded-md border border-amber-500/50 bg-amber-500/15 px-2 py-0.5 text-[10px] font-bold text-amber-300">
+                              기출{exam.examYear ? ` · ${exam.examYear}` : ""}
+                              {exam.examRound ? `년 ${exam.examRound}회` : ""}
+                            </span>
+                          )}
                           {exam.expertVerified && (
                             <span className="inline-flex items-center rounded-md border border-emerald-500/40 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-bold text-emerald-300">
                               전문가 검수 완료

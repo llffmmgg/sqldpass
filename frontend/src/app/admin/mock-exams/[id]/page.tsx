@@ -8,6 +8,7 @@ import {
   getAdminMockExams,
   getQuestion,
   markMockExamVerified,
+  setPastExamMeta,
   toggleExpertVerified,
   updateQuestion,
   verifyAllQuestions,
@@ -345,6 +346,12 @@ export default function AdminMockExamDetailPage({
         </div>
       </div>
 
+      <PastExamMetaPanel
+        examId={examId}
+        exam={exam}
+        onUpdated={(next) => setExam({ ...exam, ...next })}
+      />
+
       {jsonMode && (
         <div className="mt-6 rounded-xl border border-violet-500/30 bg-surface p-4">
           <div className="flex items-center justify-between">
@@ -662,5 +669,123 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
       </span>
       {children}
     </label>
+  );
+}
+
+// ===========================================================
+// 기출 복원 메타 — kind/연도/회차/시험일 설정 패널
+// ===========================================================
+
+function PastExamMetaPanel({
+  examId,
+  exam,
+  onUpdated,
+}: {
+  examId: number;
+  exam: AdminMockExamDetail;
+  onUpdated: (next: Partial<AdminMockExamDetail>) => void;
+}) {
+  const [year, setYear] = useState<string>(exam.examYear ? String(exam.examYear) : "");
+  const [round, setRound] = useState<string>(exam.examRound ? String(exam.examRound) : "");
+  const [date, setDate] = useState<string>(exam.examDate ?? "");
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+
+  const isPast = exam.kind === "PAST_EXAM";
+
+  async function save(promote: boolean) {
+    setSaving(true);
+    setMessage(null);
+    try {
+      const yearNum = year.trim() ? Number(year) : null;
+      const roundNum = round.trim() ? Number(round) : null;
+      const updated = await setPastExamMeta(examId, {
+        promote,
+        examYear: yearNum,
+        examRound: roundNum,
+        examDate: date.trim() ? date : null,
+      });
+      onUpdated({
+        kind: updated.kind,
+        examYear: updated.examYear,
+        examRound: updated.examRound,
+        examDate: updated.examDate,
+      });
+      setMessage(promote ? "기출 복원으로 설정됨" : "AI 모의고사로 되돌림");
+    } catch (e) {
+      setMessage(e instanceof Error ? e.message : "저장 실패");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="mt-6 rounded-xl border border-border bg-surface p-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <h2 className="text-sm font-semibold">기출 복원 메타</h2>
+          <span
+            className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
+              isPast
+                ? "border border-amber-500/50 bg-amber-500/15 text-amber-300"
+                : "border border-border text-muted"
+            }`}
+          >
+            {isPast ? "PAST_EXAM" : "AI"}
+          </span>
+        </div>
+        {message && <span className="text-xs text-muted">{message}</span>}
+      </div>
+
+      <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-4">
+        <Field label="연도">
+          <input
+            type="number"
+            value={year}
+            onChange={(e) => setYear(e.target.value)}
+            placeholder="2025"
+            className="w-full rounded border border-border bg-background px-3 py-1.5 text-sm"
+          />
+        </Field>
+        <Field label="회차">
+          <input
+            type="number"
+            value={round}
+            onChange={(e) => setRound(e.target.value)}
+            placeholder="59"
+            className="w-full rounded border border-border bg-background px-3 py-1.5 text-sm"
+          />
+        </Field>
+        <Field label="시험일 (선택)">
+          <input
+            type="date"
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
+            className="w-full rounded border border-border bg-background px-3 py-1.5 text-sm"
+          />
+        </Field>
+        <div className="flex items-end gap-2">
+          <button
+            onClick={() => save(true)}
+            disabled={saving}
+            className="flex-1 rounded border border-amber-500/40 bg-amber-500/10 px-3 py-1.5 text-xs font-semibold text-amber-300 transition hover:bg-amber-500/20 disabled:opacity-50"
+          >
+            기출로 저장
+          </button>
+          {isPast && (
+            <button
+              onClick={() => save(false)}
+              disabled={saving}
+              className="flex-1 rounded border border-border px-3 py-1.5 text-xs text-muted transition hover:text-foreground disabled:opacity-50"
+            >
+              AI 로 되돌리기
+            </button>
+          )}
+        </div>
+      </div>
+      <p className="mt-2 text-[11px] text-muted">
+        PUBLISHED + 전문가 검수 완료 상태여야 <code className="text-amber-300">/past-exams</code> 에 노출됩니다.
+      </p>
+    </div>
   );
 }

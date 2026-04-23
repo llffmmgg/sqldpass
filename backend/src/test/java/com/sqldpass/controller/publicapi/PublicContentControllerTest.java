@@ -18,6 +18,7 @@ import com.sqldpass.controller.publicapi.dto.PublicRankingResponse;
 import com.sqldpass.controller.publicapi.dto.PublicStatsResponse;
 import com.sqldpass.service.admin.JwtProvider;
 import com.sqldpass.service.notification.DiscordNotifier;
+import com.sqldpass.service.publicapi.PastExamPublicService;
 import com.sqldpass.service.publicapi.PublicContentService;
 
 import static org.mockito.BDDMockito.given;
@@ -33,6 +34,9 @@ class PublicContentControllerTest {
 
     @MockitoBean
     private PublicContentService publicContentService;
+
+    @MockitoBean
+    private PastExamPublicService pastExamPublicService;
 
     @MockitoBean
     private JwtProvider jwtProvider;

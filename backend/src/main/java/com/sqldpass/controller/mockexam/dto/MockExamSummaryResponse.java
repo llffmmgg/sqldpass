@@ -1,10 +1,12 @@
 package com.sqldpass.controller.mockexam.dto;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import com.sqldpass.domain.mockexam.MockExam;
 import com.sqldpass.persistent.mockexam.EngineerExamTemplate;
 import com.sqldpass.persistent.mockexam.ExamType;
+import com.sqldpass.persistent.mockexam.MockExamKind;
 import com.sqldpass.persistent.mockexam.MockExamVisibility;
 
 public record MockExamSummaryResponse(
@@ -21,7 +23,11 @@ public record MockExamSummaryResponse(
         String templateKey,
         String templateLabel,
         MockExamVisibility visibility,
-        boolean expertVerified
+        boolean expertVerified,
+        MockExamKind kind,
+        Integer examYear,
+        Integer examRound,
+        LocalDate examDate
 ) {
     public static MockExamSummaryResponse from(MockExam mockExam) {
         return from(mockExam, null, null);
@@ -49,7 +55,11 @@ public record MockExamSummaryResponse(
                 templateKey,
                 templateLabel,
                 mockExam.getVisibility(),
-                mockExam.isExpertVerified());
+                mockExam.isExpertVerified(),
+                mockExam.getKind(),
+                mockExam.getExamYear(),
+                mockExam.getExamRound(),
+                mockExam.getExamDate());
     }
 
     /**

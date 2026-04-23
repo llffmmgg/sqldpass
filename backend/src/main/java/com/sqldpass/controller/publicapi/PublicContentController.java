@@ -10,6 +10,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.sqldpass.controller.publicapi.dto.PastExamPublicDtos.PastExamDetail;
+import com.sqldpass.controller.publicapi.dto.PastExamPublicDtos.PastExamGradeRequest;
+import com.sqldpass.controller.publicapi.dto.PastExamPublicDtos.PastExamGradeResponse;
+import com.sqldpass.controller.publicapi.dto.PastExamPublicDtos.PastExamSummary;
 import com.sqldpass.controller.publicapi.dto.PublicDtos.PublicCategoryResponse;
 import com.sqldpass.controller.publicapi.dto.PublicDtos.PublicCertResponse;
 import com.sqldpass.controller.publicapi.dto.PublicDtos.PublicQuestionDetailResponse;
@@ -18,6 +22,7 @@ import com.sqldpass.controller.publicapi.dto.PublicDtos.PublicSolveQuestionRespo
 import com.sqldpass.controller.publicapi.dto.PublicDtos.PublicSubjectResponse;
 import com.sqldpass.controller.publicapi.dto.PublicRankingResponse;
 import com.sqldpass.controller.publicapi.dto.PublicStatsResponse;
+import com.sqldpass.service.publicapi.PastExamPublicService;
 import com.sqldpass.service.publicapi.PublicContentService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -35,6 +40,7 @@ import lombok.RequiredArgsConstructor;
 public class PublicContentController {
 
     private final PublicContentService publicContentService;
+    private final PastExamPublicService pastExamPublicService;
 
     @GetMapping("/stats")
     @Operation(summary = "랜딩 페이지 노출용 공개 통계 (회원 수 + 누적 풀이 수)")
@@ -117,5 +123,26 @@ public class PublicContentController {
     @Operation(summary = "비회원 풀이 카운터 증가 (집계만)")
     public void incrementAnonymousSolve(@RequestParam(defaultValue = "1") long delta) {
         publicContentService.incrementAnonymousSolve(delta);
+    }
+
+    // ================= 기출 복원 (past-exams) — 비로그인 공개 =================
+
+    @GetMapping("/past-exams")
+    @Operation(summary = "기출 복원 회차 목록 (자격증별)")
+    public List<PastExamSummary> listPastExams(@RequestParam String cert) {
+        return pastExamPublicService.listByCert(cert);
+    }
+
+    @GetMapping("/past-exams/{id}")
+    @Operation(summary = "기출 복원 회차 상세 (정답/해설 미포함)")
+    public PastExamDetail getPastExam(@PathVariable Long id) {
+        return pastExamPublicService.get(id);
+    }
+
+    @PostMapping("/past-exams/{id}/grade")
+    @Operation(summary = "기출 복원 회차 비로그인 채점 (저장하지 않고 결과만 반환)")
+    public PastExamGradeResponse gradePastExam(@PathVariable Long id,
+                                               @org.springframework.web.bind.annotation.RequestBody PastExamGradeRequest body) {
+        return pastExamPublicService.grade(id, body);
     }
 }

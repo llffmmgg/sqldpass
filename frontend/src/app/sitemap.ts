@@ -14,11 +14,12 @@ const BLOG_DIR = path.join(process.cwd(), "content", "blog");
 
 // 정적 페이지 마지막 수정일 (내용 변경 시 수동 업데이트)
 const STATIC_LAST_MOD: Record<string, string> = {
-  "/": "2026-04-22",
+  "/": "2026-04-23",
   "/learn": "2026-04-22",
   "/blog": "2026-04-22",
   "/solve": "2026-04-16",
   "/mock-exams": "2026-04-16",
+  "/past-exams": "2026-04-23",
   "/cbt-mock-exam": "2026-04-22",
   "/about": "2026-04-22",
   "/changelog": "2026-04-22",
@@ -89,6 +90,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     {
       url: `${SITE_URL}/mock-exams`,
       lastModified: STATIC_LAST_MOD["/mock-exams"],
+      changeFrequency: "weekly",
+      priority: 0.8,
+    },
+    {
+      url: `${SITE_URL}/past-exams`,
+      lastModified: STATIC_LAST_MOD["/past-exams"],
       changeFrequency: "weekly",
       priority: 0.8,
     },

@@ -87,6 +87,22 @@ public class AdminMockExamController {
         return Map.of("expertVerified", result);
     }
 
+    @PatchMapping("/{id}/past-exam-meta")
+    @Operation(summary = "기출 복원 메타 설정 (kind, 연도, 회차, 시험일)")
+    public MockExamSummaryResponse setPastExamMeta(
+            @PathVariable Long id,
+            @RequestBody PastExamMetaRequest body) {
+        return MockExamSummaryResponse.from(
+                mockExamService.setPastExamMeta(id, body.promote(), body.examYear(), body.examRound(), body.examDate()));
+    }
+
+    public record PastExamMetaRequest(
+            boolean promote,
+            Integer examYear,
+            Integer examRound,
+            java.time.LocalDate examDate) {
+    }
+
     @DeleteMapping("/{id}")
     @Operation(summary = "\uBAA8\uC758\uACE0\uC0AC \uC0AD\uC81C")
     @ResponseStatus(HttpStatus.NO_CONTENT)

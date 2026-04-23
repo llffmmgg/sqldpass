@@ -26,7 +26,11 @@ public class MockExamMapper {
                 questions,
                 entity.getTemplate(),
                 entity.getVisibility(),
-                entity.isExpertVerified());
+                entity.isExpertVerified(),
+                entity.getKind(),
+                entity.getExamYear(),
+                entity.getExamRound(),
+                entity.getExamDate());
     }
 
     /** 문제 카운트 + 난이도 통계 (목록 조회용) */
@@ -44,7 +48,11 @@ public class MockExamMapper {
                 maxDifficulty,
                 entity.getTemplate(),
                 entity.getVisibility(),
-                entity.isExpertVerified());
+                entity.isExpertVerified(),
+                entity.getKind(),
+                entity.getExamYear(),
+                entity.getExamRound(),
+                entity.getExamDate());
     }
 
     public static MockExamQuestion toDomain(QuestionEntity q) {

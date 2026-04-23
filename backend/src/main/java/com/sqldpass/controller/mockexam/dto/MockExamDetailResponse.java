@@ -1,11 +1,13 @@
 package com.sqldpass.controller.mockexam.dto;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
 import com.sqldpass.domain.mockexam.MockExam;
 import com.sqldpass.domain.mockexam.MockExamQuestion;
 import com.sqldpass.persistent.mockexam.ExamType;
+import com.sqldpass.persistent.mockexam.MockExamKind;
 import com.sqldpass.persistent.question.QuestionType;
 
 public record MockExamDetailResponse(
@@ -16,6 +18,10 @@ public record MockExamDetailResponse(
         int totalQuestions,
         LocalDateTime createdAt,
         boolean expertVerified,
+        MockExamKind kind,
+        Integer examYear,
+        Integer examRound,
+        LocalDate examDate,
         List<Question> questions
 ) {
     public record Question(
@@ -46,6 +52,10 @@ public record MockExamDetailResponse(
                 mockExam.getTotalQuestions(),
                 mockExam.getCreatedAt(),
                 mockExam.isExpertVerified(),
+                mockExam.getKind(),
+                mockExam.getExamYear(),
+                mockExam.getExamRound(),
+                mockExam.getExamDate(),
                 mockExam.getQuestions().stream().map(Question::from).toList());
     }
 }

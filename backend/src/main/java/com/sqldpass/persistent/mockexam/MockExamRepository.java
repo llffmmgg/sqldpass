@@ -29,4 +29,19 @@ public interface MockExamRepository extends JpaRepository<MockExamEntity, Long> 
             "  AND m.expertVerified = true " +
             "GROUP BY m ORDER BY m.sequence DESC")
     List<Object[]> findUserVisibleWithQuestionCounts();
+
+    /**
+     * 기출 복원 목록 — 비로그인 공개.
+     * kind=PAST_EXAM 이면서 PUBLISHED(=일반 공개) + 전문가 검수 완료만 노출.
+     * 회차(exam_round) 내림차순 → 없으면 sequence 내림차순으로 최신 회차가 상단.
+     */
+    @Query("SELECT m, COUNT(q), AVG(q.difficulty), MIN(q.difficulty), MAX(q.difficulty) " +
+            "FROM MockExamEntity m LEFT JOIN m.questions q " +
+            "WHERE m.examType = :examType " +
+            "  AND m.kind = com.sqldpass.persistent.mockexam.MockExamKind.PAST_EXAM " +
+            "  AND m.visibility = com.sqldpass.persistent.mockexam.MockExamVisibility.PUBLISHED " +
+            "  AND m.expertVerified = true " +
+            "GROUP BY m " +
+            "ORDER BY COALESCE(m.examYear, 0) DESC, COALESCE(m.examRound, 0) DESC, m.sequence DESC")
+    List<Object[]> findPublicPastExams(@Param("examType") ExamType examType);
 }

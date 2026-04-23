@@ -3,6 +3,8 @@ package com.sqldpass.service.mockexam;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import java.time.LocalDate;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -94,6 +96,23 @@ public class MockExamService {
                 .orElseThrow(() -> new SqldpassException(ErrorCode.MOCK_EXAM_NOT_FOUND));
         entity.toggleExpertVerified();
         return entity.isExpertVerified();
+    }
+
+    /**
+     * 어드민 — 모의고사를 기출 복원(PAST_EXAM) 으로 승격하거나 AI 로 되돌림.
+     * promote=true 면 kind=PAST_EXAM + 연도/회차/시험일 세팅, false 면 AI 로 초기화.
+     */
+    @Transactional
+    public MockExam setPastExamMeta(Long id, boolean promote,
+                                    Integer examYear, Integer examRound, LocalDate examDate) {
+        MockExamEntity entity = mockExamRepository.findById(id)
+                .orElseThrow(() -> new SqldpassException(ErrorCode.MOCK_EXAM_NOT_FOUND));
+        if (promote) {
+            entity.promoteToPastExam(examYear, examRound, examDate);
+        } else {
+            entity.demoteToAi();
+        }
+        return MockExamMapper.toSummary(entity, entity.getQuestions().size(), null, null, null);
     }
 
     /** 어드민용 — DRAFT/PREMIUM 제한 없이 조회 */

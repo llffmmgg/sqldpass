@@ -1,0 +1,94 @@
+package com.sqldpass.controller.publicapi.dto;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.List;
+
+import com.sqldpass.persistent.mockexam.ExamType;
+import com.sqldpass.persistent.question.QuestionType;
+
+/**
+ * 기출 복원 (past-exams) 공개 API DTO 모음.
+ * - 목록/상세는 정답 비포함
+ * - 채점(grade) 응답에만 정답/해설 포함
+ */
+public final class PastExamPublicDtos {
+
+    private PastExamPublicDtos() {
+    }
+
+    /** 목록 카드 */
+    public record PastExamSummary(
+            Long id,
+            String name,
+            ExamType examType,
+            String certSlug,
+            int totalQuestions,
+            Integer examYear,
+            Integer examRound,
+            LocalDate examDate,
+            boolean expertVerified,
+            LocalDateTime createdAt
+    ) {
+    }
+
+    /** 상세 — 정답/해설 미포함 */
+    public record PastExamDetail(
+            Long id,
+            String name,
+            ExamType examType,
+            String certSlug,
+            int totalQuestions,
+            Integer examYear,
+            Integer examRound,
+            LocalDate examDate,
+            boolean expertVerified,
+            List<PastExamQuestion> questions
+    ) {
+    }
+
+    public record PastExamQuestion(
+            Long id,
+            int displayOrder,
+            String content,
+            QuestionType questionType,
+            Long subjectId,
+            String subjectName
+    ) {
+    }
+
+    /** 채점 요청 */
+    public record PastExamGradeRequest(
+            List<PastExamAnswer> answers
+    ) {
+    }
+
+    public record PastExamAnswer(
+            Long questionId,
+            Integer selectedOption,
+            String answerText
+    ) {
+    }
+
+    /** 채점 응답 — 문제별 정답/해설 포함 */
+    public record PastExamGradeResponse(
+            int totalCount,
+            int correctCount,
+            int score,
+            List<GradedItem> items
+    ) {
+    }
+
+    public record GradedItem(
+            Long questionId,
+            boolean correct,
+            double partialScore,
+            Integer selectedOption,
+            String submittedAnswerText,
+            Integer correctOption,
+            String answer,
+            List<String> keywords,
+            String explanation
+    ) {
+    }
+}

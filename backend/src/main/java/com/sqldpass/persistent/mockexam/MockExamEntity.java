@@ -1,5 +1,6 @@
 package com.sqldpass.persistent.mockexam;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -55,6 +56,19 @@ public class MockExamEntity extends BaseTimeEntity {
     @Column(name = "expert_verified", nullable = false)
     private boolean expertVerified = false;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "kind", nullable = false, length = 20)
+    private MockExamKind kind = MockExamKind.AI;
+
+    @Column(name = "exam_year")
+    private Integer examYear;
+
+    @Column(name = "exam_round")
+    private Integer examRound;
+
+    @Column(name = "exam_date")
+    private LocalDate examDate;
+
     @OneToMany(mappedBy = "mockExam")
     @OrderBy("displayOrder ASC")
     private List<QuestionEntity> questions = new ArrayList<>();
@@ -73,6 +87,7 @@ public class MockExamEntity extends BaseTimeEntity {
         this.sequence = sequence;
         this.template = template;
         this.visibility = MockExamVisibility.DRAFT;
+        this.kind = MockExamKind.AI;
     }
 
     /** 양방향 동기화 — 문제에 모의고사 배정 + 컬렉션에도 추가 */
@@ -90,5 +105,23 @@ public class MockExamEntity extends BaseTimeEntity {
 
     public void toggleExpertVerified() {
         this.expertVerified = !this.expertVerified;
+    }
+
+    /**
+     * 기출 복원 메타로 승격 — kind=PAST_EXAM 으로 고정하고 연도/회차/시험일 세팅.
+     * kind 를 AI 로 되돌리고 싶으면 {@link #demoteToAi()} 호출.
+     */
+    public void promoteToPastExam(Integer examYear, Integer examRound, LocalDate examDate) {
+        this.kind = MockExamKind.PAST_EXAM;
+        this.examYear = examYear;
+        this.examRound = examRound;
+        this.examDate = examDate;
+    }
+
+    public void demoteToAi() {
+        this.kind = MockExamKind.AI;
+        this.examYear = null;
+        this.examRound = null;
+        this.examDate = null;
     }
 }
