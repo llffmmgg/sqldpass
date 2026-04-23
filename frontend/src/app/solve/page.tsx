@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Suspense, useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import {
   getSubjects,
   getQuestions,
@@ -90,9 +90,6 @@ function SolvePageContent() {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [pastEntries, setPastEntries] = useState<PastEntry[]>([]);
   const [sessionQuestions, setSessionQuestions] = useState<Question[]>([]);
-  // 세션 완료 횟수 — 광고 노출 주기 판정용 (1·3·5·7·9번째에만 노출)
-  const [sessionCompleteCount, setSessionCompleteCount] = useState(0);
-  const sessionCountedRef = useRef(false);
   const [loggedIn, setLoggedIn] = useState(false);
   const [authChecked, setAuthChecked] = useState(false);
 
@@ -105,16 +102,6 @@ function SolvePageContent() {
       : fetchPublic<Subject[]>("/subjects");
     subjectPromise.then(setSubjects).catch(() => setSubjects([]));
   }, []);
-
-  useEffect(() => {
-    if (phase !== "session-complete") {
-      sessionCountedRef.current = false;
-      return;
-    }
-    if (sessionCountedRef.current) return;
-    sessionCountedRef.current = true;
-    setSessionCompleteCount((n) => n + 1);
-  }, [phase]);
 
   useEffect(() => {
     function onPopState() {
@@ -560,19 +547,15 @@ function SolvePageContent() {
               </div>
             )}
 
-            {sessionCompleteCount % 2 === 1 && (
-              <>
-                <div className="mt-6 md:hidden">
-                  <AdInfeed
-                    adSlot="5227022543"
-                    adLayoutKey="-h4-h+1c-4h+8p"
-                  />
-                </div>
-                <div className="mt-6 hidden md:block">
-                  <AdDisplay adSlot="3622084801" />
-                </div>
-              </>
-            )}
+            <div className="mt-6 md:hidden">
+              <AdInfeed
+                adSlot="5227022543"
+                adLayoutKey="-h4-h+1c-4h+8p"
+              />
+            </div>
+            <div className="mt-6 hidden md:block">
+              <AdDisplay adSlot="3622084801" />
+            </div>
 
             <div className="mt-5 flex flex-wrap items-center gap-5 text-sm text-text-muted">
               {loggedIn && (
