@@ -22,10 +22,16 @@ import com.sqldpass.persistent.mockexam.MockExamVisibility;
 import com.sqldpass.persistent.question.QuestionEntity;
 import com.sqldpass.persistent.question.QuestionMapper;
 import com.sqldpass.persistent.question.QuestionRepository;
+import com.sqldpass.persistent.solve.SolveRepository;
 import com.sqldpass.persistent.subject.SubjectEntity;
+import com.sqldpass.controller.solve.dto.SolveAnswerRequest;
+import com.sqldpass.controller.solve.dto.SolveRequest;
 import com.sqldpass.service.common.ErrorCode;
 import com.sqldpass.service.common.SqldpassException;
 import com.sqldpass.service.solve.GradingService;
+import com.sqldpass.service.solve.SolveService;
+
+import java.util.HashMap;
 
 import lombok.RequiredArgsConstructor;
 
@@ -45,13 +51,31 @@ public class PastExamPublicService {
     private final MockExamRepository mockExamRepository;
     private final QuestionRepository questionRepository;
     private final GradingService gradingService;
+    private final SolveRepository solveRepository;
+    private final SolveService solveService;
 
-    public List<PastExamSummary> listByCert(String certSlug) {
+    public List<PastExamSummary> listByCert(String certSlug, Long memberId) {
         ExamType examType = examTypeFromSlug(certSlug);
+
+        // 로그인 사용자의 경우 모의고사 best score 맵을 1쿼리로 미리 조회 (N+1 방지)
+        Map<Long, int[]> bestScoreMap = new HashMap<>();
+        if (memberId != null) {
+            for (Object[] row : solveRepository.findBestScoresByMember(memberId)) {
+                Long mockExamId = (Long) row[0];
+                int bestCorrect = ((Number) row[1]).intValue();
+                int bestTotal = ((Number) row[2]).intValue();
+                bestScoreMap.put(mockExamId, new int[]{bestCorrect, bestTotal});
+            }
+        }
+
         return mockExamRepository.findPublicPastExams(examType).stream()
                 .map(row -> {
                     MockExamEntity entity = (MockExamEntity) row[0];
                     int count = ((Long) row[1]).intValue();
+                    int[] best = bestScoreMap.get(entity.getId());
+                    boolean solved = best != null;
+                    Integer bestCorrect = best != null ? best[0] : null;
+                    Integer bestTotal = best != null ? best[1] : null;
                     return new PastExamSummary(
                             entity.getId(),
                             entity.getName(),
@@ -62,7 +86,10 @@ public class PastExamPublicService {
                             entity.getExamRound(),
                             entity.getExamDate(),
                             entity.isExpertVerified(),
-                            entity.getCreatedAt());
+                            entity.getCreatedAt(),
+                            solved,
+                            bestCorrect,
+                            bestTotal);
                 })
                 .toList();
     }
@@ -96,10 +123,11 @@ public class PastExamPublicService {
     }
 
     /**
-     * 비로그인 채점 — DB에 저장하지 않고 즉시 계산만 수행.
-     * 정답/해설을 응답에 포함해 프론트가 결과 화면에서 바로 보여줄 수 있게 한다.
+     * 채점 — 비로그인은 계산만 수행, 로그인 사용자는 solve 테이블에도 적재하여
+     * 기출 복원 카드에 최고 점수 스탬프가 표시되도록 한다.
+     * 정답/해설은 응답에 포함해 프론트가 결과 화면에서 바로 보여줄 수 있다.
      */
-    public PastExamGradeResponse grade(Long id, PastExamGradeRequest request) {
+    public PastExamGradeResponse grade(Long id, PastExamGradeRequest request, Long memberId) {
         MockExamEntity entity = loadPublishedPastExam(id);
 
         Map<Long, QuestionEntity> ownedQuestions = entity.getQuestions().stream()
@@ -140,6 +168,22 @@ public class PastExamPublicService {
         int correctCount = (int) items.stream().filter(GradedItem::correct).count();
         double sum = items.stream().mapToDouble(GradedItem::partialScore).sum();
         int score = totalCount > 0 ? (int) Math.round(sum / totalCount * 100) : 0;
+
+        // 로그인 사용자면 solve 테이블에도 기록 — 기출 카드 최고 점수 스탬프용
+        if (memberId != null && !items.isEmpty()) {
+            try {
+                List<SolveAnswerRequest> solveAnswers = items.stream()
+                        .map(it -> new SolveAnswerRequest(
+                                it.questionId(),
+                                it.selectedOption(),
+                                it.submittedAnswerText()))
+                        .toList();
+                solveService.solve(memberId, new SolveRequest(null, entity.getId(), solveAnswers));
+            } catch (Exception ignored) {
+                // solve 저장 실패해도 채점 결과는 반환 (공개 API 의 견고성 우선)
+            }
+        }
+
         return new PastExamGradeResponse(totalCount, correctCount, score, items);
     }
 

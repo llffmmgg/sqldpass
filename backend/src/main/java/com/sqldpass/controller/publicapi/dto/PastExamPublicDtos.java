@@ -28,7 +28,13 @@ public final class PastExamPublicDtos {
             Integer examRound,
             LocalDate examDate,
             boolean expertVerified,
-            LocalDateTime createdAt
+            LocalDateTime createdAt,
+            /** 로그인 사용자가 한 번이라도 풀었는지 (비로그인 false) */
+            boolean solved,
+            /** 사용자의 최고 정답 수 (미풀이/비로그인 시 null) */
+            Integer bestCorrectCount,
+            /** 사용자의 최고 풀이 시 총 문항 수 (미풀이/비로그인 시 null) */
+            Integer bestTotalCount
     ) {
     }
 

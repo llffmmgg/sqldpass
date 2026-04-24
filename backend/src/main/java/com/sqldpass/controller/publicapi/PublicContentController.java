@@ -129,8 +129,10 @@ public class PublicContentController {
 
     @GetMapping("/past-exams")
     @Operation(summary = "기출 복원 회차 목록 (자격증별)")
-    public List<PastExamSummary> listPastExams(@RequestParam String cert) {
-        return pastExamPublicService.listByCert(cert);
+    public List<PastExamSummary> listPastExams(@RequestParam String cert,
+                                               jakarta.servlet.http.HttpServletRequest request) {
+        Long memberId = (Long) request.getAttribute("memberId");
+        return pastExamPublicService.listByCert(cert, memberId);
     }
 
     @GetMapping("/past-exams/{id}")
@@ -140,9 +142,11 @@ public class PublicContentController {
     }
 
     @PostMapping("/past-exams/{id}/grade")
-    @Operation(summary = "기출 복원 회차 비로그인 채점 (저장하지 않고 결과만 반환)")
+    @Operation(summary = "기출 복원 회차 채점 (로그인 사용자는 solve 기록 병행)")
     public PastExamGradeResponse gradePastExam(@PathVariable Long id,
-                                               @org.springframework.web.bind.annotation.RequestBody PastExamGradeRequest body) {
-        return pastExamPublicService.grade(id, body);
+                                               @org.springframework.web.bind.annotation.RequestBody PastExamGradeRequest body,
+                                               jakarta.servlet.http.HttpServletRequest request) {
+        Long memberId = (Long) request.getAttribute("memberId");
+        return pastExamPublicService.grade(id, body, memberId);
     }
 }

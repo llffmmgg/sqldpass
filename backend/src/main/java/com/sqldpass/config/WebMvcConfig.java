@@ -9,10 +9,14 @@ public class WebMvcConfig implements WebMvcConfigurer {
 
     private final AdminAuthInterceptor adminAuthInterceptor;
     private final MemberAuthInterceptor memberAuthInterceptor;
+    private final OptionalMemberAuthInterceptor optionalMemberAuthInterceptor;
 
-    public WebMvcConfig(AdminAuthInterceptor adminAuthInterceptor, MemberAuthInterceptor memberAuthInterceptor) {
+    public WebMvcConfig(AdminAuthInterceptor adminAuthInterceptor,
+                        MemberAuthInterceptor memberAuthInterceptor,
+                        OptionalMemberAuthInterceptor optionalMemberAuthInterceptor) {
         this.adminAuthInterceptor = adminAuthInterceptor;
         this.memberAuthInterceptor = memberAuthInterceptor;
+        this.optionalMemberAuthInterceptor = optionalMemberAuthInterceptor;
     }
 
     @Override
@@ -32,5 +36,9 @@ public class WebMvcConfig implements WebMvcConfigurer {
                         "/api/feedback/**",
                         "/api/notifications/**",
                         "/api/streak/**");
+
+        // 비로그인도 접근 가능하지만 로그인 시 memberId 를 부가적으로 주입
+        registry.addInterceptor(optionalMemberAuthInterceptor)
+                .addPathPatterns("/api/public/past-exams/**");
     }
 }

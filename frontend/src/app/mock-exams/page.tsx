@@ -278,6 +278,7 @@ function MockExamsListContent() {
 function MockExamCard({ exam }: { exam: MockExamSummary }) {
   const cert = certFromExamType(exam.examType);
   const isPremium = exam.visibility === "PREMIUM";
+  const isNew = isWithinDays(exam.createdAt, 3);
 
   return (
     <Link href={`/mock-exams/${exam.id}`} className="group relative block">
@@ -317,6 +318,11 @@ function MockExamCard({ exam }: { exam: MockExamSummary }) {
             <Badge variant="soft" size="xs" className="border-amber-500/50 bg-amber-500/15 text-amber-600 dark:text-amber-300">
               🔒 프리미엄
             </Badge>
+          )}
+          {isNew && (
+            <span className="inline-flex items-center rounded-full border border-rose-500/40 bg-rose-500/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-rose-500 dark:text-rose-300">
+              NEW
+            </span>
           )}
         </div>
 
@@ -386,6 +392,13 @@ function SubFilterRow({
       </div>
     </div>
   );
+}
+
+function isWithinDays(iso: string | null | undefined, days: number): boolean {
+  if (!iso) return false;
+  const created = new Date(iso).getTime();
+  if (Number.isNaN(created)) return false;
+  return Date.now() - created <= days * 24 * 60 * 60 * 1000;
 }
 
 export function DifficultyBadge({ label }: { label: MockExamSummary["difficultyLabel"] }) {

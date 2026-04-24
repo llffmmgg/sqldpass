@@ -22,11 +22,12 @@ public interface MockExamRepository extends JpaRepository<MockExamEntity, Long> 
             "GROUP BY m ORDER BY m.sequence DESC")
     List<Object[]> findAllWithQuestionCounts();
 
-    /** 사용자용 — 전문가 검수 완료 + (PUBLISHED 또는 PREMIUM). PREMIUM은 프론트에서 잠금 */
+    /** 사용자용 — AI 모의고사 + 전문가 검수 완료 + (PUBLISHED 또는 PREMIUM). 기출 복원(PAST_EXAM) 은 /past-exams 전용 */
     @Query("SELECT m, COUNT(q), AVG(q.difficulty), MIN(q.difficulty), MAX(q.difficulty) " +
             "FROM MockExamEntity m LEFT JOIN m.questions q " +
             "WHERE m.visibility <> com.sqldpass.persistent.mockexam.MockExamVisibility.DRAFT " +
             "  AND m.expertVerified = true " +
+            "  AND m.kind = com.sqldpass.persistent.mockexam.MockExamKind.AI " +
             "GROUP BY m ORDER BY m.sequence DESC")
     List<Object[]> findUserVisibleWithQuestionCounts();
 

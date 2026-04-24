@@ -4,6 +4,7 @@
  */
 
 import type { ExamType, QuestionType } from "@/lib/mockExamApi";
+import { getToken } from "@/lib/auth";
 
 export interface PastExamSummary {
   id: number;
@@ -16,6 +17,9 @@ export interface PastExamSummary {
   examDate: string | null;
   expertVerified: boolean;
   createdAt: string;
+  solved: boolean;
+  bestCorrectCount: number | null;
+  bestTotalCount: number | null;
 }
 
 export interface PastExamQuestion {
@@ -66,10 +70,17 @@ export interface PastExamGradeResponse {
 }
 
 async function publicFetch<T>(path: string, init?: RequestInit): Promise<T> {
+  // 로그인 사용자는 Authorization 헤더를 선택적으로 붙여 서버가 memberId 주입 가능하게 한다.
+  const token = getToken();
+  const authHeaders: Record<string, string> = token
+    ? { Authorization: `Bearer ${token}` }
+    : {};
+
   const res = await fetch(`/api/public${path}`, {
     ...init,
     headers: {
       "Content-Type": "application/json",
+      ...authHeaders,
       ...(init?.headers ?? {}),
     },
   });

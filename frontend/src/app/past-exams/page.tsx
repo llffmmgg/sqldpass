@@ -219,6 +219,7 @@ function PastExamsPageContent() {
 function PastExamCard({ exam }: { exam: PastExamSummary }) {
   const cert = certFromExamType(exam.examType);
   const token = cert ? CERT_TOKENS[cert] : null;
+  const isNew = isWithinDays(exam.createdAt, 3);
 
   return (
     <Link href={`/past-exams/${exam.id}`} className="group relative block">
@@ -233,6 +234,19 @@ function PastExamCard({ exam }: { exam: PastExamSummary }) {
             전문가 검수
           </div>
         )}
+
+        {exam.solved &&
+          exam.bestCorrectCount != null &&
+          exam.bestTotalCount != null && (
+            <span
+              className="pointer-events-none absolute right-2 top-1 select-none font-[family-name:var(--font-caveat)] text-3xl font-bold leading-none text-red-500/90 sm:text-4xl"
+              style={{ transform: "rotate(-12deg)" }}
+            >
+              {exam.bestCorrectCount}
+              <span className="text-2xl sm:text-3xl">/</span>
+              {exam.bestTotalCount}
+            </span>
+          )}
 
         <div className="flex flex-wrap items-center gap-1.5 pr-20">
           {token && (
@@ -250,6 +264,7 @@ function PastExamCard({ exam }: { exam: PastExamSummary }) {
           >
             기출
           </Badge>
+          {isNew && <NewBadge />}
         </div>
 
         <h3 className="mt-3 text-lg font-semibold leading-tight">
@@ -272,6 +287,21 @@ function PastExamCard({ exam }: { exam: PastExamSummary }) {
       </Card>
     </Link>
   );
+}
+
+function NewBadge() {
+  return (
+    <span className="inline-flex items-center rounded-full border border-rose-500/40 bg-rose-500/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-rose-500 dark:text-rose-300">
+      NEW
+    </span>
+  );
+}
+
+function isWithinDays(iso: string | null | undefined, days: number): boolean {
+  if (!iso) return false;
+  const created = new Date(iso).getTime();
+  if (Number.isNaN(created)) return false;
+  return Date.now() - created <= days * 24 * 60 * 60 * 1000;
 }
 
 function formatExamDate(iso: string): string {

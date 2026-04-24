@@ -166,23 +166,14 @@ export default function Home() {
                 실제 시험 그대로, 회차별 복원
               </h2>
               <p className="mt-3 text-sm leading-relaxed text-text-muted sm:text-base">
-                SQLD 52~57회 · 정보처리기사 실기 — 실제 출제 회차를 연도별로 모아두었어요.
+                최근 회차를 연도별로 모아 타이머·해설과 함께 제공해요.
                 <br className="hidden sm:block" />
-                로그인 없이도 해설과 정답까지 바로 확인할 수 있습니다.
+                로그인 없이도 결과를 바로 확인할 수 있습니다.
               </p>
             </div>
           </ScrollReveal>
 
           <ScrollReveal delay={1}>
-            <div className="mx-auto mt-8 grid max-w-3xl grid-cols-2 gap-3 sm:grid-cols-4">
-              <YearChip year={2025} label="2025년" />
-              <YearChip year={2024} label="2024년" />
-              <YearChip year={null} label="타이머 응시" />
-              <YearChip year={null} label="해설 포함" />
-            </div>
-          </ScrollReveal>
-
-          <ScrollReveal delay={2}>
             <div className="mt-10 flex justify-center">
               <ButtonLink href="/past-exams" variant="outline" size="md">
                 기출 복원 보러가기 →
@@ -280,17 +271,3 @@ export default function Home() {
   );
 }
 
-function YearChip({ year, label }: { year: number | null; label: string }) {
-  const accent = year != null;
-  return (
-    <div
-      className={`rounded-lg border px-3 py-2.5 text-center text-sm font-medium ${
-        accent
-          ? "border-primary/25 bg-primary/5 text-primary"
-          : "border-border bg-surface text-text-muted"
-      }`}
-    >
-      {label}
-    </div>
-  );
-}
