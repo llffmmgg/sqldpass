@@ -167,3 +167,48 @@ export function parseCategorySlug(slug: string): number | null {
   const m = /^cat-(\d+)$/.exec(slug);
   return m ? parseInt(m[1], 10) : null;
 }
+
+// ================= 기출 복원 (past-exams) — 서버용 SEO 호출 =================
+
+export type PublicExamType =
+  | "SQLD"
+  | "ENGINEER_PRACTICAL"
+  | "ENGINEER_WRITTEN"
+  | "COMPUTER_LITERACY_1"
+  | "COMPUTER_LITERACY_2"
+  | "ADSP";
+
+export interface PublicPastExamSummary {
+  id: number;
+  name: string;
+  examType: PublicExamType;
+  certSlug: string;
+  totalQuestions: number;
+  examYear: number | null;
+  examRound: number | null;
+  examDate: string | null;
+  expertVerified: boolean;
+  createdAt: string;
+}
+
+export interface PublicPastExamDetail {
+  id: number;
+  name: string;
+  examType: PublicExamType;
+  certSlug: string;
+  totalQuestions: number;
+  examYear: number | null;
+  examRound: number | null;
+  examDate: string | null;
+  expertVerified: boolean;
+}
+
+export function getPublicPastExamsByCert(
+  slug: CertSlug | string,
+): Promise<PublicPastExamSummary[]> {
+  return publicFetch(`/past-exams?cert=${encodeURIComponent(slug)}`);
+}
+
+export function getPublicPastExam(id: number): Promise<PublicPastExamDetail> {
+  return publicFetch(`/past-exams/${id}`);
+}

@@ -6,6 +6,7 @@ import {
   getPublicAllQuestionIds,
   getPublicCategoriesByCert,
   getPublicCerts,
+  getPublicPastExamsByCert,
 } from "@/lib/publicApi";
 import { getAllSlugs } from "@/lib/blog";
 
@@ -170,11 +171,29 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       /* 스킵 */
     }
 
+    const pastExamEntries: MetadataRoute.Sitemap = [];
+    for (const cert of certs) {
+      try {
+        const pastExams = await getPublicPastExamsByCert(cert.slug);
+        for (const pe of pastExams) {
+          pastExamEntries.push({
+            url: `${SITE_URL}/past-exams/${pe.id}`,
+            lastModified: (pe.createdAt ?? "").slice(0, 10) || DYNAMIC_LAST_MOD,
+            changeFrequency: "monthly",
+            priority: 0.75,
+          });
+        }
+      } catch {
+        /* 스킵 */
+      }
+    }
+
     return [
       ...staticEntries,
       ...certEntries,
       ...categoryEntries,
       ...questionEntries,
+      ...pastExamEntries,
     ];
   } catch {
     return staticEntries;
