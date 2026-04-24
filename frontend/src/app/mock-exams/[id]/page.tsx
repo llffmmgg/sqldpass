@@ -27,6 +27,7 @@ import AdInfeed from "@/components/AdInfeed";
 import AdDisplay from "@/components/AdDisplay";
 import { useToast } from "@/components/Toast";
 import { trackEvent } from "@/lib/gtag";
+import { hapticError, hapticLight, hapticSuccess } from "@/lib/haptic";
 
 /** 자격증별 실제 시험 시간 (분) */
 const EXAM_TIME_MINUTES: Record<string, number> = {
@@ -218,7 +219,7 @@ function MockExamDetailContent() {
           <h1 className="mt-3 text-2xl font-bold">{exam.name} 결과</h1>
           <div className="mt-8 rounded-xl border border-border bg-surface p-8 text-center">
             <p className="text-sm text-muted">점수</p>
-            <p className={`mt-2 text-5xl font-bold ${accent.text}`}>{result.score}점</p>
+            <p className={`mt-2 inline-block text-5xl font-bold animate-score-pop ${accent.text}`}>{result.score}점</p>
             <p className="mt-4 text-sm text-muted">
               {result.correctCount} / {result.totalCount} 정답
             </p>
@@ -266,6 +267,7 @@ function MockExamDetailContent() {
 
   function selectOption(opt: number) {
     updateAnswer(current.id, (prev) => ({ ...prev, option: opt }));
+    hapticLight();
   }
 
   function setAnswerText(text: string) {
@@ -307,6 +309,11 @@ function MockExamDetailContent() {
       };
       const res = await submitSolve(payload);
       setResult(res);
+      if (res.totalCount > 0 && res.correctCount * 2 >= res.totalCount) {
+        hapticSuccess();
+      } else {
+        hapticError();
+      }
       if (res.milestoneReached) {
         toast.show(`🎉 ${res.milestoneReached}일 연속 학습! 잘하고 있어요`, "success");
       }
@@ -560,7 +567,7 @@ function MCQOptions({
               onClick={() => onSelect(num)}
               className={`w-full rounded-lg border px-4 py-3 text-left text-base transition ${
                 isSelected
-                  ? `${accent.border} bg-amber-500/10 text-foreground`
+                  ? `${accent.border} bg-amber-500/10 text-foreground animate-tap-bounce`
                   : `border-border ${accent.hoverBorder} hover:bg-amber-500/5`
               }`}
             >

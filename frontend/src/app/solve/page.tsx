@@ -30,6 +30,7 @@ import {
   type CertKey,
   type CertToken,
 } from "@/lib/cert-tokens";
+import { hapticError, hapticLight, hapticSuccess } from "@/lib/haptic";
 
 type Phase = "select" | "solve" | "session-complete";
 
@@ -230,6 +231,7 @@ function SolvePageContent() {
   function handleSelect(option: number) {
     if (revealed || !current) return;
     setSelectedOption(option);
+    hapticLight();
   }
 
   function hasAnswer(): boolean {
@@ -256,8 +258,12 @@ function SolvePageContent() {
     const d = await fetchDetail(current.id);
     setDetail(d);
     setSolvedCount((c) => c + 1);
-    if (isClientSideCorrect(d)) {
+    const correct = isClientSideCorrect(d);
+    if (correct) {
       setCorrectCount((c) => c + 1);
+      hapticSuccess();
+    } else {
+      hapticError();
     }
 
     if (selectedSubject && !loggedIn) {
@@ -603,7 +609,10 @@ function SolvePageContent() {
             ← 과목 선택
           </button>
           <span className="truncate text-sm text-text-muted">{selectedSubject?.name}</span>
-          <span className="rounded-full border border-border bg-surface px-2.5 py-0.5 text-xs tabular-nums text-text-muted">
+          <span
+            key={`${correctCount}-${solvedCount}`}
+            className="inline-flex origin-center rounded-full border border-border bg-surface px-2.5 py-0.5 text-xs tabular-nums text-text-muted animate-score-pop"
+          >
             {correctCount}/{solvedCount} 정답
           </span>
         </div>
@@ -648,16 +657,20 @@ function SolvePageContent() {
                 const isCorrectOption = detail?.correctOption === num;
 
                 let style = "border-border hover:border-primary/40 hover:bg-primary/5";
+                let motion = "";
                 if (revealed) {
                   if (isCorrectOption) {
                     style = "border-success/60 bg-success/10 text-success";
+                    motion = "animate-correct-reveal";
                   } else if (isSelected && !isCorrectOption) {
                     style = "border-danger/60 bg-danger/10 text-danger";
+                    motion = "animate-shake-x";
                   } else {
                     style = "border-border opacity-50";
                   }
                 } else if (isSelected) {
                   style = "border-primary/60 bg-primary/10 text-text ring-1 ring-primary/40";
+                  motion = "animate-tap-bounce";
                 }
 
                 return (
@@ -665,7 +678,7 @@ function SolvePageContent() {
                     <button
                       onClick={() => handleSelect(num)}
                       disabled={revealed}
-                      className={`flex min-h-[52px] w-full items-start gap-3 rounded-lg border px-4 py-3 text-left text-base leading-relaxed transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 ${style} disabled:cursor-default`}
+                      className={`flex min-h-[52px] w-full items-start gap-3 rounded-lg border px-4 py-3 text-left text-base leading-relaxed transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 ${style} ${motion} disabled:cursor-default`}
                     >
                       <span
                         className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold ${

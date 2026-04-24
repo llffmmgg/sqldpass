@@ -25,6 +25,7 @@ import {
 } from "@/lib/pastExamApi";
 import { isLoggedIn } from "@/lib/auth";
 import { getGoogleLoginUrl } from "@/lib/oauth";
+import { hapticError, hapticLight, hapticSuccess } from "@/lib/haptic";
 
 const CountdownCircleTimer = dynamic(
   () => import("react-countdown-circle-timer").then((m) => m.CountdownCircleTimer),
@@ -213,6 +214,7 @@ function PastExamRunner({ id }: { id: number }) {
 
   function selectOption(opt: number) {
     updateAnswer(current.id, (prev) => ({ ...prev, option: opt }));
+    hapticLight();
   }
 
   function setAnswerText(text: string) {
@@ -250,6 +252,12 @@ function PastExamRunner({ id }: { id: number }) {
       });
       const graded = await gradePastExam(exam.id, payload);
       setResult(graded);
+      // 정답률 50% 이상이면 성공 햅틱, 미만이면 오답 햅틱
+      if (graded.totalCount > 0 && graded.correctCount * 2 >= graded.totalCount) {
+        hapticSuccess();
+      } else {
+        hapticError();
+      }
     } catch (e) {
       alert(e instanceof Error ? e.message : "채점에 실패했습니다.");
     } finally {
@@ -494,7 +502,7 @@ function PastExamResultView({
 
         <div className="mt-6 rounded-2xl border border-border bg-gradient-to-br from-surface via-surface to-transparent p-8 text-center">
           <p className="text-xs font-semibold uppercase tracking-wider text-text-muted">점수</p>
-          <p className={`mt-2 text-6xl font-bold tabular-nums ${rateTone}`}>
+          <p className={`mt-2 inline-block text-6xl font-bold tabular-nums animate-score-pop ${rateTone}`}>
             {result.score}
             <span className="text-3xl text-text-subtle">점</span>
           </p>
@@ -716,7 +724,7 @@ function MCQOptions({
               onClick={() => onSelect(num)}
               className={`w-full rounded-lg border px-4 py-3 text-left text-base transition ${
                 isSelected
-                  ? `${token.tailwind.border} ${token.tailwind.bgSoft} text-text`
+                  ? `${token.tailwind.border} ${token.tailwind.bgSoft} text-text animate-tap-bounce`
                   : `border-border text-text ${token.tailwind.borderHover}`
               }`}
             >
