@@ -17,7 +17,7 @@ const BLOG_DIR = path.join(process.cwd(), "content", "blog");
 const STATIC_LAST_MOD: Record<string, string> = {
   "/": "2026-04-23",
   "/learn": "2026-04-22",
-  "/blog": "2026-04-22",
+  "/blog": "2026-04-25",
   "/solve": "2026-04-16",
   "/mock-exams": "2026-04-16",
   "/past-exams": "2026-04-23",
