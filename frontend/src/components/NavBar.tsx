@@ -76,10 +76,10 @@ export default function NavBar() {
 
   return (
     <header className="sticky top-0 z-50 border-b border-border bg-bg/80 backdrop-blur-md">
-      <nav className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4 sm:px-6 lg:px-8">
+      <nav className="mx-auto flex h-14 max-w-6xl flex-nowrap items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">
         <Link
           href="/"
-          className="flex items-center gap-2 text-lg font-bold tracking-tight text-text"
+          className="flex shrink-0 items-center gap-2 text-lg font-bold tracking-tight text-text"
         >
           <Image
             src="/logo/logo.webp"
@@ -95,8 +95,8 @@ export default function NavBar() {
           </span>
         </Link>
 
-        {/* Desktop */}
-        <div className="hidden items-center gap-1 sm:flex">
+        {/* Desktop (lg 이상에서만 전체 메뉴 — 그 아래는 햄버거로 전환) */}
+        <div className="hidden items-center gap-1 lg:flex">
           <ul className="flex items-center gap-0.5">
             {NAV_LINKS.map((item) => {
               if (item.kind === "link") {
@@ -126,17 +126,17 @@ export default function NavBar() {
             })}
           </ul>
 
-          <div className="ml-4 flex items-center gap-1.5">
+          <div className="ml-3 flex shrink-0 items-center gap-1.5">
             <button
               onClick={() => setFeedbackOpen(true)}
-              className="flex h-9 items-center gap-1.5 rounded-md px-3 text-xs font-medium text-text-muted transition-colors hover:bg-primary/10 hover:text-primary"
+              className="flex h-9 shrink-0 items-center gap-1.5 rounded-md px-2.5 text-xs font-medium text-text-muted transition-colors hover:bg-primary/10 hover:text-primary xl:px-3"
               aria-label="피드백 보내기"
               title="건의/오류 제보"
             >
               <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
               </svg>
-              피드백
+              <span className="hidden xl:inline">피드백</span>
             </button>
             {loggedIn && <NotificationBell />}
             <button
@@ -158,12 +158,12 @@ export default function NavBar() {
               <>
                 <Link
                   href="/profile"
-                  className="group inline-flex h-9 items-center gap-1.5 rounded-md border border-border bg-surface px-3 text-sm text-text-muted transition-colors hover:border-border-strong hover:bg-surface-hover hover:text-text"
-                  title="닉네임 변경 / 프로필"
+                  className="group inline-flex h-9 shrink-0 items-center gap-1.5 rounded-md border border-border bg-surface px-3 text-sm text-text-muted transition-colors hover:border-border-strong hover:bg-surface-hover hover:text-text"
+                  title={`${nickname ?? ""} — 닉네임 변경 / 프로필`}
                 >
-                  <span>{nickname}</span>
+                  <span className="block max-w-[120px] truncate">{nickname}</span>
                   <svg
-                    className="h-3.5 w-3.5 opacity-60 transition-opacity group-hover:opacity-100"
+                    className="h-3.5 w-3.5 shrink-0 opacity-60 transition-opacity group-hover:opacity-100"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -175,7 +175,7 @@ export default function NavBar() {
                 </Link>
                 <button
                   onClick={handleLogout}
-                  className="flex h-9 items-center rounded-md px-3 text-sm font-medium text-text-muted transition-colors hover:bg-surface-hover hover:text-text"
+                  className="flex h-9 shrink-0 items-center rounded-md px-3 text-sm font-medium text-text-muted transition-colors hover:bg-surface-hover hover:text-text"
                 >
                   로그아웃
                 </button>
@@ -197,8 +197,8 @@ export default function NavBar() {
           </div>
         </div>
 
-        {/* Mobile controls */}
-        <div className="flex items-center gap-1 sm:hidden">
+        {/* Mobile / Tablet controls — lg 미만에서 모두 햄버거 */}
+        <div className="flex items-center gap-1 lg:hidden">
           <button
             onClick={toggleTheme}
             className="flex h-9 w-9 items-center justify-center rounded-md text-text-muted transition-colors hover:bg-surface-hover hover:text-text"
@@ -233,9 +233,9 @@ export default function NavBar() {
 
       <FeedbackModal open={feedbackOpen} onClose={() => setFeedbackOpen(false)} />
 
-      {/* Mobile menu */}
+      {/* Mobile / Tablet menu */}
       <div
-        className={`border-t border-border transition-all duration-300 ease-out sm:hidden ${
+        className={`border-t border-border transition-all duration-300 ease-out lg:hidden ${
           menuOpen
             ? "max-h-[80vh] overflow-y-auto overscroll-contain opacity-100"
             : "max-h-0 overflow-hidden opacity-0"
