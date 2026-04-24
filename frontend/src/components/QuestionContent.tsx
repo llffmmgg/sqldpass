@@ -257,6 +257,17 @@ export default function QuestionContent({
           strong({ children }) {
             return <strong className="font-semibold text-foreground">{children}</strong>;
           },
+          img({ src, alt }) {
+            if (!src || typeof src !== "string") return null;
+            return (
+              <img
+                src={src}
+                alt={alt ?? ""}
+                loading="lazy"
+                className="my-3 max-w-full rounded-lg border border-border bg-white"
+              />
+            );
+          },
         }}
       >
         {ensureSqlFences(content)}
