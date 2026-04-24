@@ -26,6 +26,8 @@ const CERT_TO_SLUG: Record<CertKey, string> = {
   ADSP: "adsp",
 };
 
+const UNKNOWN_YEAR = -1;
+
 export default function PastExamsPage() {
   return (
     <Suspense fallback={null}>
@@ -40,8 +42,39 @@ function PastExamsPageContent() {
   const activeCert: CertKey =
     (certParam && certParam in CERT_TOKENS ? (certParam as CertKey) : null) ?? "SQLD";
 
+  // 자격증별 개수 카운트용 — 최초 1회 전 자격증을 병렬로 조회
+  const [countsByCert, setCountsByCert] = useState<Record<CertKey, number>>({
+    SQLD: 0,
+    ENGINEER_PRACTICAL: 0,
+    ENGINEER_WRITTEN: 0,
+    COMPUTER_LITERACY_1: 0,
+    COMPUTER_LITERACY_2: 0,
+    ADSP: 0,
+  });
+
   const [exams, setExams] = useState<PastExamSummary[] | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    Promise.all(
+      (Object.keys(CERT_TO_SLUG) as CertKey[]).map((k) =>
+        listPastExams(CERT_TO_SLUG[k])
+          .then((list) => [k, list.length] as const)
+          .catch(() => [k, 0] as const),
+      ),
+    ).then((entries) => {
+      if (cancelled) return;
+      const next = { ...countsByCert };
+      for (const [k, n] of entries) next[k] = n;
+      setCountsByCert(next);
+    });
+    return () => {
+      cancelled = true;
+    };
+    // 최초 1회만 집계. activeCert와 무관.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -61,36 +94,57 @@ function PastExamsPageContent() {
 
   const token = CERT_TOKENS[activeCert];
 
+  // 연도별 그룹핑 — 최신 연도 먼저, 같은 연도 안에서는 회차 내림차순
+  const grouped = useMemo(() => {
+    if (!exams) return null;
+    const map = new Map<number, PastExamSummary[]>();
+    for (const e of exams) {
+      const year = e.examYear ?? UNKNOWN_YEAR;
+      const arr = map.get(year) ?? [];
+      arr.push(e);
+      map.set(year, arr);
+    }
+    const sorted = Array.from(map.entries())
+      .map(([year, list]) => ({
+        year,
+        list: list.slice().sort((a, b) => {
+          const ra = a.examRound ?? 0;
+          const rb = b.examRound ?? 0;
+          if (ra !== rb) return rb - ra;
+          return b.id - a.id;
+        }),
+      }))
+      .sort((a, b) => b.year - a.year);
+    return sorted;
+  }, [exams]);
+
   return (
     <main className="min-h-screen bg-bg text-text">
-      <Container size="narrow" className="py-14">
-        <header>
-          <Badge cert={token.key} variant="soft" size="sm" dot>
-            기출 복원
-          </Badge>
-          <h1 className="mt-3 text-2xl font-bold tracking-tight sm:text-3xl">
-            {token.labelLong} 기출 복원
-          </h1>
-          <p className="mt-2 text-sm leading-relaxed text-text-muted">
-            실제 시험 회차를 복원해서 제한 시간 안에 응시해보세요. 로그인 없이도 해설과 정답을 바로 확인할 수 있습니다.
-          </p>
-        </header>
+      <Container size="narrow" className="py-16">
+        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">기출 복원</h1>
+        <p className="mt-2 text-sm text-text-muted">
+          {token.labelLong} · 실제 시험 회차를 복원해서 제한 시간 안에 응시해보세요. 로그인 없이도 해설과 정답을 바로 확인할 수 있습니다.
+        </p>
 
-        {/* 자격증 탭 */}
-        <div className="mt-8 flex flex-wrap gap-2">
-          {CERT_LIST.map((t) => {
-            const active = t.key === activeCert;
+        {/* 자격증 탭 — 모의고사와 동일한 단일 pill + cert dot + count */}
+        <div className="mt-6 -mx-1 flex gap-1 overflow-x-auto rounded-lg border border-border bg-surface p-1 text-sm">
+          {CERT_LIST.map((c) => {
+            const active = c.key === activeCert;
+            const count = countsByCert[c.key] ?? 0;
             return (
               <Link
-                key={t.key}
-                href={`/past-exams?cert=${t.key}`}
-                className={`rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-colors ${
+                key={c.key}
+                href={`/past-exams?cert=${c.key}`}
+                scroll={false}
+                className={`flex shrink-0 items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
                   active
-                    ? `${t.tailwind.border} ${t.tailwind.bgSoft} ${t.tailwind.text}`
-                    : "border-border text-text-muted hover:border-primary/40 hover:text-text"
+                    ? "bg-primary/10 text-primary ring-1 ring-primary/20"
+                    : "text-text-muted hover:bg-surface-hover hover:text-text"
                 }`}
               >
-                {t.label}
+                <span className={`h-1.5 w-1.5 rounded-full ${c.tailwind.dot}`} />
+                {c.label}
+                <span className="text-xs opacity-60 tabular-nums">{count}</span>
               </Link>
             );
           })}
@@ -125,18 +179,30 @@ function PastExamsPageContent() {
             </Card>
           )}
 
-          {exams && exams.length > 0 && (
-            <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              {exams.map((exam) => (
-                <li key={exam.id}>
-                  <PastExamCard exam={exam} />
-                </li>
+          {grouped && grouped.length > 0 && (
+            <div className="flex flex-col gap-10">
+              {grouped.map(({ year, list }) => (
+                <section key={year}>
+                  <div className="mb-3 flex items-baseline justify-between border-b border-border pb-2">
+                    <h2 className="text-lg font-semibold tracking-tight">
+                      {year === UNKNOWN_YEAR ? "연도 미상" : `${year}년`}
+                    </h2>
+                    <span className="text-xs text-text-muted tabular-nums">
+                      {list.length}회차
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    {list.map((exam) => (
+                      <PastExamCard key={exam.id} exam={exam} />
+                    ))}
+                  </div>
+                </section>
               ))}
-            </ul>
+            </div>
           )}
         </div>
 
-        <div className="mt-12 flex items-center justify-center gap-6 text-sm text-text-muted">
+        <div className="mt-14 flex items-center justify-center gap-6 text-sm text-text-muted">
           <Link href="/solve" className="transition-colors hover:text-text">
             무한 문제 풀이 →
           </Link>
@@ -153,55 +219,65 @@ function PastExamsPageContent() {
 function PastExamCard({ exam }: { exam: PastExamSummary }) {
   const cert = certFromExamType(exam.examType);
   const token = cert ? CERT_TOKENS[cert] : null;
-  const metaLabel = useMemo(() => buildMeta(exam), [exam]);
 
   return (
-    <Link
-      href={`/past-exams/${exam.id}`}
-      className={`group block rounded-xl border border-border bg-surface p-5 transition-all duration-200 ${
-        token?.tailwind.borderHover ?? "hover:border-primary/40"
-      } ${token?.tailwind.bgHover ?? ""}`}
-    >
-      <div className="flex items-center justify-between gap-2">
-        <span className="text-[11px] font-semibold uppercase tracking-wider text-text-subtle">
-          {token?.shortLabel ?? exam.examType}
-        </span>
+    <Link href={`/past-exams/${exam.id}`} className="group relative block">
+      <Card
+        variant="interactive"
+        padding="md"
+        accent={cert ?? undefined}
+        className="relative overflow-hidden"
+      >
         {exam.expertVerified && (
-          <span className="rounded-full border border-emerald-500/40 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-bold text-emerald-400">
+          <div className="pointer-events-none absolute -left-[38px] top-[18px] z-10 -rotate-45 bg-emerald-600 px-10 py-0.5 text-center text-[9px] font-bold tracking-wide text-white shadow-sm dark:bg-emerald-500">
             전문가 검수
-          </span>
+          </div>
         )}
-      </div>
-      <h2 className="mt-2 text-lg font-bold tracking-tight">
-        {exam.examYear && exam.examRound
-          ? `${exam.examYear}년 제${exam.examRound}회`
-          : exam.examRound
-            ? `제${exam.examRound}회`
-            : exam.name}
-      </h2>
-      <p className="mt-1 text-sm text-text-muted">{metaLabel}</p>
-      <div className="mt-4 flex items-center justify-between text-xs font-semibold text-text-muted">
-        <span>실제 시험 복원 · 무료 응시</span>
-        <span className="text-primary transition-transform group-hover:translate-x-1">응시하기 →</span>
-      </div>
+
+        <div className="flex flex-wrap items-center gap-1.5 pr-20">
+          {token && (
+            <span
+              className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide ${token.tailwind.border} ${token.tailwind.bgSoft} ${token.tailwind.text}`}
+            >
+              <span className={`h-1.5 w-1.5 rounded-full ${token.tailwind.dot}`} />
+              {token.label}
+            </span>
+          )}
+          <Badge
+            variant="soft"
+            size="xs"
+            className="border-primary/40 bg-primary/10 text-primary"
+          >
+            기출
+          </Badge>
+        </div>
+
+        <h3 className="mt-3 text-lg font-semibold leading-tight">
+          {exam.examRound ? `제${exam.examRound}회` : exam.name}
+        </h3>
+
+        <div className="mt-2 flex items-center gap-2 text-sm text-text-muted">
+          <span>총 {exam.totalQuestions}문항</span>
+          {exam.examDate && (
+            <>
+              <span className="text-border">·</span>
+              <span className="tabular-nums">{formatExamDate(exam.examDate)}</span>
+            </>
+          )}
+        </div>
+
+        <div className="mt-4 inline-flex items-center gap-1.5 text-xs font-semibold text-primary transition-transform group-hover:translate-x-1">
+          응시하기 →
+        </div>
+      </Card>
     </Link>
   );
 }
 
-function buildMeta(exam: PastExamSummary): string {
-  const parts: string[] = [];
-  parts.push(`${exam.totalQuestions}문제`);
-  if (exam.examDate) {
-    const d = new Date(exam.examDate);
-    if (!Number.isNaN(d.getTime())) {
-      parts.push(
-        `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, "0")}.${String(
-          d.getDate(),
-        ).padStart(2, "0")}`,
-      );
-    }
-  } else if (exam.examYear) {
-    parts.push(`${exam.examYear}년`);
-  }
-  return parts.join(" · ");
+function formatExamDate(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, "0")}.${String(
+    d.getDate(),
+  ).padStart(2, "0")}`;
 }
