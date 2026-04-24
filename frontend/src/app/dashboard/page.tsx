@@ -18,6 +18,7 @@ import { getNickname } from "@/lib/auth";
 import AuthGuard from "@/components/AuthGuard";
 import Spinner from "@/components/Spinner";
 import StudyActivityChart from "@/components/StudyActivityChart";
+import AdBanner from "@/components/AdBanner";
 import { Container } from "@/components/ui";
 
 function buildSubjectMap(subjects: Subject[]): Record<number, string> {
@@ -316,6 +317,13 @@ function DashboardPageContent() {
                 </p>
               </div>
             </div>
+
+            <AdBanner
+              desktopSlot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_DASHBOARD_DESKTOP}
+              desktopWidth={728}
+              desktopHeight={90}
+              mobileSlot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_DASHBOARD_MOBILE}
+            />
 
             {/* ── 최근 2주 학습량 ──────────────────────────────────── */}
             <StudyActivityChart data={activity} overallAvg={overallAvg} />

@@ -22,6 +22,7 @@ import { parseQuestion } from "@/lib/parseQuestion";
 import QuestionContent from "@/components/QuestionContent";
 import AuthGuard from "@/components/AuthGuard";
 import Spinner from "@/components/Spinner";
+import AdBanner from "@/components/AdBanner";
 import Image from "next/image";
 import { trackEvent } from "@/lib/gtag";
 import { Button, ButtonLink, Container } from "@/components/ui";
@@ -563,6 +564,13 @@ function WrongAnswersPageContent() {
             </div>
           );
         })()}
+
+        <AdBanner
+          desktopSlot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_WRONG_ANSWERS_DESKTOP}
+          desktopWidth={336}
+          desktopHeight={280}
+          mobileSlot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_WRONG_ANSWERS_MOBILE}
+        />
 
         {/* 리스트 */}
         <section className="mt-8">
