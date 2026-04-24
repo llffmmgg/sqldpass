@@ -566,10 +566,10 @@ function WrongAnswersPageContent() {
         })()}
 
         <AdBanner
-          desktopSlot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_WRONG_ANSWERS_DESKTOP}
+          desktopSlot="3834951186"
           desktopWidth={336}
           desktopHeight={280}
-          mobileSlot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_WRONG_ANSWERS_MOBILE}
+          mobileSlot="7409777845"
         />
 
         {/* 리스트 */}

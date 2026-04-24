@@ -319,10 +319,10 @@ function DashboardPageContent() {
             </div>
 
             <AdBanner
-              desktopSlot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_DASHBOARD_DESKTOP}
+              desktopSlot="9997554373"
               desktopWidth={728}
               desktopHeight={90}
-              mobileSlot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_DASHBOARD_MOBILE}
+              mobileSlot="5148032850"
             />
 
             {/* ── 최근 2주 학습량 ──────────────────────────────────── */}

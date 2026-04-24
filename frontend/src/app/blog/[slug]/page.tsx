@@ -137,10 +137,10 @@ export default async function BlogPostPage({
       </header>
 
       <AdBanner
-        desktopSlot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_BLOG_TOP_DESKTOP}
+        desktopSlot="4783614503"
         desktopWidth={728}
         desktopHeight={90}
-        mobileSlot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_BLOG_TOP_MOBILE}
+        mobileSlot="3451807809"
       />
 
       <article className="prose-custom mt-10">
@@ -152,10 +152,10 @@ export default async function BlogPostPage({
       </article>
 
       <AdBanner
-        desktopSlot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_BLOG_BOTTOM_DESKTOP}
+        desktopSlot="3919231187"
         desktopWidth={336}
         desktopHeight={280}
-        mobileSlot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_BLOG_BOTTOM_MOBILE}
+        mobileSlot="2157451168"
       />
 
       <Card padding="lg" className="mt-12 text-center">
