@@ -6,6 +6,7 @@ import Footer from "@/components/Footer";
 import { SiteNoticeBanner } from "@/components/SiteNoticeBanner";
 import AnalyticsScripts from "@/components/AnalyticsScripts";
 import AdSidebar from "@/components/AdSidebar";
+import FeedbackRail from "@/components/FeedbackRail";
 import { ToastProvider } from "@/components/Toast";
 import "./globals.css";
 
@@ -200,6 +201,7 @@ export default function RootLayout({
           <div className="flex-1">{children}</div>
           <Footer />
           <AdSidebar adSlot={ADSENSE_SIDEBAR_SLOT} />
+          <FeedbackRail />
         </ToastProvider>
       </body>
     </html>

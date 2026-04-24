@@ -11,6 +11,7 @@ interface Props {
   onClose: () => void;
   defaultQuestionId?: number;
   defaultType?: FeedbackType;
+  defaultContentHint?: string;
 }
 
 const TYPE_OPTIONS: { value: FeedbackType; label: string }[] = [
@@ -25,6 +26,7 @@ export default function FeedbackModal({
   onClose,
   defaultQuestionId,
   defaultType,
+  defaultContentHint,
 }: Props) {
   const [type, setType] = useState<FeedbackType>(defaultType ?? (defaultQuestionId ? "QUESTION_ERROR" : "BUG"));
   const [content, setContent] = useState("");
@@ -37,13 +39,13 @@ export default function FeedbackModal({
   useEffect(() => {
     if (open) {
       setType(defaultType ?? (defaultQuestionId ? "QUESTION_ERROR" : "BUG"));
-      setContent("");
+      setContent(defaultContentHint ?? "");
       setSubmitting(false);
       setSuccess(false);
       setError(null);
       setLoggedIn(isLoggedIn());
     }
-  }, [open, defaultType, defaultQuestionId]);
+  }, [open, defaultType, defaultQuestionId, defaultContentHint]);
 
   // ESC로 닫기 + body scroll lock
   useEffect(() => {
