@@ -18,7 +18,7 @@ import { getNickname } from "@/lib/auth";
 import AuthGuard from "@/components/AuthGuard";
 import Spinner from "@/components/Spinner";
 import StudyActivityChart from "@/components/StudyActivityChart";
-import AdBanner from "@/components/AdBanner";
+import AdResponsive from "@/components/AdResponsive";
 import { Container } from "@/components/ui";
 
 function buildSubjectMap(subjects: Subject[]): Record<number, string> {
@@ -318,12 +318,7 @@ function DashboardPageContent() {
               </div>
             </div>
 
-            <AdBanner
-              desktopSlot="9997554373"
-              desktopWidth={728}
-              desktopHeight={90}
-              mobileSlot="5148032850"
-            />
+            <AdResponsive adSlot="4461637143" height={90} />
 
             {/* ── 최근 2주 학습량 ──────────────────────────────────── */}
             <StudyActivityChart data={activity} overallAvg={overallAvg} />

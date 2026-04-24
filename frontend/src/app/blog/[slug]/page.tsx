@@ -6,7 +6,7 @@ import remarkGfm from "remark-gfm";
 import { getAllPosts, getAllSlugs, getPostBySlug } from "@/lib/blog";
 import { getPublicBlogViews } from "@/lib/publicApi";
 import BlogViewCounter from "@/components/BlogViewCounter";
-import AdBanner from "@/components/AdBanner";
+import AdResponsive from "@/components/AdResponsive";
 import PassRateBar from "@/components/blog/PassRateBar";
 import PassRateTrend from "@/components/blog/PassRateTrend";
 import PassRateDial from "@/components/blog/PassRateDial";
@@ -136,12 +136,7 @@ export default async function BlogPostPage({
         <hr className="mt-8 border-border" />
       </header>
 
-      <AdBanner
-        desktopSlot="4783614503"
-        desktopWidth={728}
-        desktopHeight={90}
-        mobileSlot="3451807809"
-      />
+      <AdResponsive adSlot="9410711496" height={90} />
 
       <article className="prose-custom mt-10">
         <MDXRemote
@@ -151,12 +146,7 @@ export default async function BlogPostPage({
         />
       </article>
 
-      <AdBanner
-        desktopSlot="3919231187"
-        desktopWidth={336}
-        desktopHeight={280}
-        mobileSlot="2157451168"
-      />
+      <AdResponsive adSlot="1456719374" height={280} />
 
       <Card padding="lg" className="mt-12 text-center">
         <h2 className="text-lg font-semibold tracking-tight">직접 문제를 풀어보세요</h2>

@@ -22,7 +22,7 @@ import { parseQuestion } from "@/lib/parseQuestion";
 import QuestionContent from "@/components/QuestionContent";
 import AuthGuard from "@/components/AuthGuard";
 import Spinner from "@/components/Spinner";
-import AdBanner from "@/components/AdBanner";
+import AdResponsive from "@/components/AdResponsive";
 import Image from "next/image";
 import { trackEvent } from "@/lib/gtag";
 import { Button, ButtonLink, Container } from "@/components/ui";
@@ -565,12 +565,7 @@ function WrongAnswersPageContent() {
           );
         })()}
 
-        <AdBanner
-          desktopSlot="3834951186"
-          desktopWidth={336}
-          desktopHeight={280}
-          mobileSlot="7409777845"
-        />
+        <AdResponsive adSlot="2769801046" height={280} />
 
         {/* 리스트 */}
         <section className="mt-8">
