@@ -34,7 +34,7 @@ export async function generateMetadata({
     const exam = await getPublicPastExam(numId);
     const roundTitle = buildRoundTitle(exam);
     const title = `${roundTitle} 기출 복원 · ${exam.totalQuestions}문항 무료 CBT — 문어CBT`;
-    const description = `${roundTitle} 기출 복원 ${exam.totalQuestions}문항을 실제 시험 시간과 동일한 환경으로 무료 응시. 문제별 정답과 해설은 제출 후 바로 공개되며, 로그인하면 점수와 오답이 자동 저장됩니다.`;
+    const description = `${roundTitle} 기출 복원 ${exam.totalQuestions}문항을 실제 시험 시간과 동일한 환경에서 응시. 무료 회원 가입 후 이용 가능하며 점수·오답이 자동 저장됩니다.`;
     const canonical = `${SITE_URL}/past-exams/${numId}`;
     return {
       title,
@@ -87,10 +87,10 @@ function buildJsonLd(id: number, exam: PublicPastExamDetail) {
     "@context": "https://schema.org",
     "@type": "Quiz",
     name: `${roundTitle} 기출 복원`,
-    description: `${roundTitle} 기출을 복원한 ${exam.totalQuestions}문항 CBT. 무료로 응시 가능하며 제출 후 해설이 공개됩니다.`,
+    description: `${roundTitle} 기출을 복원한 ${exam.totalQuestions}문항 CBT. 무료 회원 가입 후 응시 가능하며 제출 후 해설이 공개됩니다.`,
     url: canonical,
     inLanguage: "ko",
-    isAccessibleForFree: true,
+    isAccessibleForFree: false,
     learningResourceType: "Quiz",
     numberOfQuestions: exam.totalQuestions,
     educationalUse: "practice",

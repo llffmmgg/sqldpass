@@ -22,6 +22,8 @@ import com.sqldpass.controller.publicapi.dto.PublicDtos.PublicSolveQuestionRespo
 import com.sqldpass.controller.publicapi.dto.PublicDtos.PublicSubjectResponse;
 import com.sqldpass.controller.publicapi.dto.PublicRankingResponse;
 import com.sqldpass.controller.publicapi.dto.PublicStatsResponse;
+import com.sqldpass.service.common.ErrorCode;
+import com.sqldpass.service.common.SqldpassException;
 import com.sqldpass.service.publicapi.PastExamPublicService;
 import com.sqldpass.service.publicapi.PublicContentService;
 
@@ -136,17 +138,25 @@ public class PublicContentController {
     }
 
     @GetMapping("/past-exams/{id}")
-    @Operation(summary = "기출 복원 회차 상세 (정답/해설 미포함)")
-    public PastExamDetail getPastExam(@PathVariable Long id) {
+    @Operation(summary = "기출 복원 회차 상세 (로그인 필수, 정답/해설 미포함)")
+    public PastExamDetail getPastExam(@PathVariable Long id,
+                                      jakarta.servlet.http.HttpServletRequest request) {
+        Long memberId = (Long) request.getAttribute("memberId");
+        if (memberId == null) {
+            throw new SqldpassException(ErrorCode.UNAUTHORIZED);
+        }
         return pastExamPublicService.get(id);
     }
 
     @PostMapping("/past-exams/{id}/grade")
-    @Operation(summary = "기출 복원 회차 채점 (로그인 사용자는 solve 기록 병행)")
+    @Operation(summary = "기출 복원 회차 채점 (로그인 필수, solve 기록 병행)")
     public PastExamGradeResponse gradePastExam(@PathVariable Long id,
                                                @org.springframework.web.bind.annotation.RequestBody PastExamGradeRequest body,
                                                jakarta.servlet.http.HttpServletRequest request) {
         Long memberId = (Long) request.getAttribute("memberId");
+        if (memberId == null) {
+            throw new SqldpassException(ErrorCode.UNAUTHORIZED);
+        }
         return pastExamPublicService.grade(id, body, memberId);
     }
 }

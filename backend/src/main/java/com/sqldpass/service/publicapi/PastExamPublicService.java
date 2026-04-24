@@ -123,11 +123,12 @@ public class PastExamPublicService {
     }
 
     /**
-     * 채점 — 비로그인은 계산만 수행, 로그인 사용자는 solve 테이블에도 적재하여
+     * 채점 — 로그인 회원 전용. solve 테이블에도 적재하여
      * 기출 복원 카드에 최고 점수 스탬프가 표시되도록 한다.
      * 정답/해설은 응답에 포함해 프론트가 결과 화면에서 바로 보여줄 수 있다.
      *
      * 클래스 레벨이 readOnly=true 이므로 solve 저장을 위해 명시적으로 쓰기 트랜잭션으로 열어준다.
+     * memberId 가 null 로 들어오는 경우는 컨트롤러에서 이미 401 로 차단되었음을 전제.
      */
     @Transactional
     public PastExamGradeResponse grade(Long id, PastExamGradeRequest request, Long memberId) {
