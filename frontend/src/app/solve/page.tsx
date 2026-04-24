@@ -656,7 +656,8 @@ function SolvePageContent() {
                 const isSelected = selectedOption === num;
                 const isCorrectOption = detail?.correctOption === num;
 
-                let style = "border-border hover:border-primary/40 hover:bg-primary/5";
+                let style =
+                  "border-border hover:border-primary/40 hover:bg-primary/5 hover:-translate-y-[1px] hover:shadow-sm hover:scale-[1.01]";
                 let motion = "";
                 if (revealed) {
                   if (isCorrectOption) {
@@ -678,7 +679,7 @@ function SolvePageContent() {
                     <button
                       onClick={() => handleSelect(num)}
                       disabled={revealed}
-                      className={`flex min-h-[52px] w-full items-start gap-3 rounded-lg border px-4 py-3 text-left text-base leading-relaxed transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 ${style} ${motion} disabled:cursor-default`}
+                      className={`flex min-h-[52px] w-full items-start gap-3 rounded-lg border px-4 py-3 text-left text-base leading-relaxed transition-all duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 ${style} ${motion} disabled:cursor-default`}
                     >
                       <span
                         className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold ${

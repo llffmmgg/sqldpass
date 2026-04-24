@@ -722,10 +722,10 @@ function MCQOptions({
           <li key={num}>
             <button
               onClick={() => onSelect(num)}
-              className={`w-full rounded-lg border px-4 py-3 text-left text-base transition ${
+              className={`w-full rounded-lg border px-4 py-3 text-left text-base transition-all duration-150 ease-out ${
                 isSelected
                   ? `${token.tailwind.border} ${token.tailwind.bgSoft} text-text animate-tap-bounce`
-                  : `border-border text-text ${token.tailwind.borderHover}`
+                  : `border-border text-text ${token.tailwind.borderHover} hover:-translate-y-[1px] hover:shadow-sm hover:scale-[1.01]`
               }`}
             >
               <span className="mr-3 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-current text-xs">
