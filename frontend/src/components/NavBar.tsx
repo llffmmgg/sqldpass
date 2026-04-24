@@ -33,6 +33,8 @@ export default function NavBar() {
   const [nickname, setNickname] = useState<string | null>(null);
   const [theme, setTheme] = useState<Theme>("dark");
   const [feedbackOpen, setFeedbackOpen] = useState(false);
+  // 모바일 아코디언 — 현재 열린 드롭다운 basePath (하나만 열림). null = 전부 닫힘
+  const [openMobileDropdown, setOpenMobileDropdown] = useState<string | null>(null);
 
   useEffect(() => {
     setLoggedIn(isLoggedIn());
@@ -48,6 +50,18 @@ export default function NavBar() {
       document.body.style.overflow = prev;
     };
   }, [menuOpen]);
+
+  // 햄버거 메뉴가 열리는 순간 현재 경로와 매칭되는 드롭다운 하나만 펼쳐 둠
+  useEffect(() => {
+    if (!menuOpen) {
+      setOpenMobileDropdown(null);
+      return;
+    }
+    const match = NAV_LINKS.find(
+      (item) => item.kind === "dropdown" && pathname?.startsWith(item.basePath),
+    );
+    setOpenMobileDropdown(match && match.kind === "dropdown" ? match.basePath : null);
+  }, [menuOpen, pathname]);
 
   function toggleTheme() {
     const next = theme === "dark" ? "light" : "dark";
@@ -262,22 +276,19 @@ export default function NavBar() {
                 );
               }
               return (
-                <li key={item.basePath}>
-                  <div className="mt-2 px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-text-subtle">
-                    {item.label}
-                  </div>
-                  {CERT_LIST.map((cert) => (
-                    <Link
-                      key={cert.key}
-                      href={item.build(cert.key)}
-                      onClick={() => setMenuOpen(false)}
-                      className="flex items-center gap-2.5 rounded-md px-3 py-2.5 text-sm text-text-muted hover:bg-surface-hover hover:text-text"
-                    >
-                      <span className={`h-1.5 w-1.5 rounded-full ${cert.tailwind.dot}`} />
-                      {cert.label}
-                    </Link>
-                  ))}
-                </li>
+                <MobileNavAccordion
+                  key={item.basePath}
+                  label={item.label}
+                  isActive={isActive(item.basePath)}
+                  isOpen={openMobileDropdown === item.basePath}
+                  onToggle={() =>
+                    setOpenMobileDropdown((prev) =>
+                      prev === item.basePath ? null : item.basePath,
+                    )
+                  }
+                  buildHref={item.build}
+                  onItemClick={() => setMenuOpen(false)}
+                />
               );
             })}
           </ul>
@@ -403,6 +414,69 @@ function NavDropdown({
           </div>
         </div>
       )}
+    </li>
+  );
+}
+
+function MobileNavAccordion({
+  label,
+  isActive,
+  isOpen,
+  onToggle,
+  buildHref,
+  onItemClick,
+}: {
+  label: string;
+  isActive: boolean;
+  isOpen: boolean;
+  onToggle: () => void;
+  buildHref: (cert: CertKey) => string;
+  onItemClick: () => void;
+}) {
+  return (
+    <li>
+      <button
+        onClick={onToggle}
+        aria-expanded={isOpen}
+        className={`flex w-full items-center justify-between rounded-md px-3 py-2.5 text-sm font-medium transition-colors ${
+          isActive
+            ? "bg-primary/10 text-primary"
+            : "text-text-muted hover:bg-surface-hover hover:text-text"
+        }`}
+      >
+        <span>{label}</span>
+        <svg
+          className={`h-3.5 w-3.5 transition-transform ${isOpen ? "rotate-180" : ""}`}
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={2.5}
+          aria-hidden="true"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+      <div
+        className={`grid transition-all duration-200 ease-out ${
+          isOpen ? "mt-0.5 grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
+        }`}
+      >
+        <div className="overflow-hidden">
+          <div className="ml-2 border-l border-border/60 pl-2">
+            {CERT_LIST.map((cert) => (
+              <Link
+                key={cert.key}
+                href={buildHref(cert.key)}
+                onClick={onItemClick}
+                className="flex items-center gap-2.5 rounded-md px-3 py-2.5 text-sm text-text-muted hover:bg-surface-hover hover:text-text"
+              >
+                <span className={`h-1.5 w-1.5 rounded-full ${cert.tailwind.dot}`} />
+                {cert.label}
+              </Link>
+            ))}
+          </div>
+        </div>
+      </div>
     </li>
   );
 }
