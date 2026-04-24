@@ -105,6 +105,24 @@ export default function AboutPage() {
         </p>
       </Section>
 
+      <Section title="기출 복원 출처">
+        <p>
+          SQLD 기출 복원 문항은 아래 블로그의 복원본을 참고해 재구성했습니다. 좋은 자료를 공개해 주신 데 감사드립니다.
+        </p>
+        <ul className="list-disc pl-5">
+          <li>
+            <a
+              href="https://yunamom.tistory.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary underline underline-offset-2 transition-colors hover:text-primary-hover"
+            >
+              yunamom.tistory.com
+            </a>
+          </li>
+        </ul>
+      </Section>
+
       <Section title="문의 / 피드백">
         <p>
           오류 신고, 기능 제안, 기타 문의는 사이트 내{" "}
