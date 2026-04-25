@@ -67,6 +67,8 @@ export interface PastExamGradeResponse {
   correctCount: number;
   score: number;
   items: PastExamGradedItem[];
+  /** solve 테이블에 적재된 풀이 id — /history/{id} 진입에 사용. solve 저장 실패 시 null. */
+  solveId: number | null;
 }
 
 async function publicFetch<T>(path: string, init?: RequestInit): Promise<T> {

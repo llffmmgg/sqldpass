@@ -173,7 +173,8 @@ public class PastExamPublicService {
         double sum = items.stream().mapToDouble(GradedItem::partialScore).sum();
         int score = totalCount > 0 ? (int) Math.round(sum / totalCount * 100) : 0;
 
-        // 로그인 사용자면 solve 테이블에도 기록 — 기출 카드 최고 점수 스탬프용
+        // 로그인 사용자면 solve 테이블에도 기록 — 최고 점수 스탬프 + history 상세 페이지 진입용
+        Long solveId = null;
         if (memberId != null && !items.isEmpty()) {
             try {
                 List<SolveAnswerRequest> solveAnswers = items.stream()
@@ -182,13 +183,14 @@ public class PastExamPublicService {
                                 it.selectedOption(),
                                 it.submittedAnswerText()))
                         .toList();
-                solveService.solve(memberId, new SolveRequest(null, entity.getId(), solveAnswers));
+                var saved = solveService.solve(memberId, new SolveRequest(null, entity.getId(), solveAnswers));
+                solveId = saved.solve().getId();
             } catch (Exception ignored) {
                 // solve 저장 실패해도 채점 결과는 반환 (공개 API 의 견고성 우선)
             }
         }
 
-        return new PastExamGradeResponse(totalCount, correctCount, score, items);
+        return new PastExamGradeResponse(totalCount, correctCount, score, items, solveId);
     }
 
     private MockExamEntity loadPublishedPastExam(Long id) {

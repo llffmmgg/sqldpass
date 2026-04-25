@@ -455,13 +455,13 @@ function buildRoundLabel(exam: PastExamDetail): string {
 }
 
 // ===========================================================
-// 결과 화면 — 문제별 정답/해설 공개 + 로그인 CTA
+// 결과 화면 — 모의고사와 동일한 점수 요약 + "상세 보기" 진입
+//   상세 보기 클릭 시 /history/{solveId} 로 이동해 문항별 정답·해설 펼침.
 // ===========================================================
 
 function PastExamResultView({
   exam,
   result,
-  answers,
   onRestart,
 }: {
   exam: PastExamDetail;
@@ -469,21 +469,21 @@ function PastExamResultView({
   answers: Map<number, AnswerState>;
   onRestart: () => void;
 }) {
+  const router = useRouter();
   const cert: CertKey = certFromExamType(exam.examType) ?? "SQLD";
   const token = CERT_TOKENS[cert];
   const roundLabel = buildRoundLabel(exam);
 
-  const correctRate = result.totalCount > 0
-    ? Math.round((result.correctCount / result.totalCount) * 100)
-    : 0;
+  const correctRate =
+    result.totalCount > 0
+      ? Math.round((result.correctCount / result.totalCount) * 100)
+      : 0;
   const rateTone =
-    correctRate >= 80 ? "text-success" : correctRate >= 60 ? "text-warning" : "text-danger";
-
-  const itemsById = useMemo(() => {
-    const map = new Map<number, PastExamGradeResponse["items"][number]>();
-    for (const it of result.items) map.set(it.questionId, it);
-    return map;
-  }, [result]);
+    correctRate >= 80
+      ? "text-success"
+      : correctRate >= 60
+        ? "text-warning"
+        : "text-danger";
 
   return (
     <main className="min-h-screen bg-bg text-text">
@@ -496,8 +496,12 @@ function PastExamResultView({
         </h1>
 
         <div className="mt-6 rounded-2xl border border-border bg-gradient-to-br from-surface via-surface to-transparent p-8 text-center">
-          <p className="text-xs font-semibold uppercase tracking-wider text-text-muted">점수</p>
-          <p className={`mt-2 inline-block text-6xl font-bold tabular-nums animate-score-pop ${rateTone}`}>
+          <p className="text-xs font-semibold uppercase tracking-wider text-text-muted">
+            점수
+          </p>
+          <p
+            className={`mt-2 inline-block text-6xl font-bold tabular-nums animate-score-pop ${rateTone}`}
+          >
             {result.score}
             <span className="text-3xl text-text-subtle">점</span>
           </p>
@@ -507,153 +511,40 @@ function PastExamResultView({
           </p>
         </div>
 
-        <div className="mt-10">
-          <h2 className="text-base font-bold">문제별 정답 확인</h2>
-          <div className="mt-4 space-y-4">
-            {exam.questions.map((q, idx) => {
-              const graded = itemsById.get(q.id);
-              if (!graded) return null;
-              return (
-                <PastExamReviewCard
-                  key={q.id}
-                  order={idx + 1}
-                  question={q}
-                  graded={graded}
-                  userAnswer={answers.get(q.id)}
-                />
-              );
-            })}
-          </div>
-        </div>
-
-        <div className="mt-10 flex flex-wrap gap-3">
+        <div className="mt-8 flex flex-wrap gap-3">
           <button
             onClick={onRestart}
             className="flex-1 rounded-lg border border-border bg-surface py-3 text-sm font-medium text-text-muted transition hover:text-text"
           >
             다시 응시
           </button>
+          {result.solveId != null ? (
+            <button
+              onClick={() => router.push(`/history/${result.solveId}`)}
+              className={`flex-1 rounded-lg py-3 text-sm font-semibold text-white transition ${token.tailwind.bg} hover:opacity-90`}
+            >
+              상세 보기
+            </button>
+          ) : (
+            <Link
+              href={`/past-exams?cert=${cert}`}
+              className={`flex-1 rounded-lg py-3 text-center text-sm font-semibold text-white transition ${token.tailwind.bg} hover:opacity-90`}
+            >
+              다른 회차 보기
+            </Link>
+          )}
+        </div>
+
+        <div className="mt-3 text-center">
           <Link
             href={`/past-exams?cert=${cert}`}
-            className={`flex-1 rounded-lg py-3 text-center text-sm font-semibold transition ${token.tailwind.bg} text-white hover:opacity-90`}
+            className="text-xs text-text-muted transition hover:text-text"
           >
-            다른 회차 보기
+            ← 기출 회차 목록으로
           </Link>
         </div>
       </Container>
     </main>
-  );
-}
-
-function PastExamReviewCard({
-  order,
-  question,
-  graded,
-  userAnswer,
-}: {
-  order: number;
-  question: PastExamQuestion;
-  graded: PastExamGradeResponse["items"][number];
-  userAnswer?: AnswerState;
-}) {
-  const parsed = parseQuestion(question.content);
-  const isCorrect = graded.correct;
-  const borderTone = isCorrect
-    ? "border-success/40 bg-success/[0.04]"
-    : graded.partialScore > 0
-      ? "border-warning/40 bg-warning/[0.04]"
-      : "border-danger/40 bg-danger/[0.04]";
-
-  return (
-    <div className={`rounded-xl border p-5 ${borderTone}`}>
-      <div className="flex items-center justify-between gap-2">
-        <span className="text-xs font-semibold text-text-muted">
-          문항 {order} · {question.subjectName}
-        </span>
-        <span
-          className={`rounded-full border px-2 py-0.5 text-[10px] font-bold ${
-            isCorrect
-              ? "border-success/50 bg-success/10 text-success"
-              : graded.partialScore > 0
-                ? "border-warning/50 bg-warning/10 text-warning"
-                : "border-danger/50 bg-danger/10 text-danger"
-          }`}
-        >
-          {isCorrect ? "정답" : graded.partialScore > 0 ? "부분점수" : "오답"}
-        </span>
-      </div>
-      <div className="mt-3 text-sm leading-relaxed">
-        <QuestionContent content={parsed.body} />
-      </div>
-
-      {question.questionType === "MCQ" && (
-        <ul className="mt-4 space-y-1.5 text-sm">
-          {parsed.options.map((opt, i) => {
-            const n = i + 1;
-            const isCorrectOpt = graded.correctOption === n;
-            const isUserPick = userAnswer?.option === n;
-            let tone = "border-border text-text-muted";
-            if (isCorrectOpt) {
-              tone = "border-success/50 bg-success/10 text-success font-medium";
-            } else if (isUserPick) {
-              tone = "border-danger/50 bg-danger/10 text-danger";
-            }
-            return (
-              <li key={n}>
-                <div className={`rounded-md border px-3 py-2 text-sm ${tone}`}>
-                  <span className="mr-2 font-bold">{n}.</span>
-                  {opt}
-                  {isCorrectOpt && <span className="ml-2 text-[11px]">✓ 정답</span>}
-                  {!isCorrectOpt && isUserPick && (
-                    <span className="ml-2 text-[11px]">내 선택</span>
-                  )}
-                </div>
-              </li>
-            );
-          })}
-        </ul>
-      )}
-
-      {question.questionType !== "MCQ" && (
-        <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
-          <div className="rounded-md border border-border bg-surface px-3 py-2 text-sm">
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-text-muted">
-              제출 답안
-            </p>
-            <p className="mt-1 whitespace-pre-wrap text-text">
-              {graded.submittedAnswerText || "-"}
-            </p>
-          </div>
-          <div className="rounded-md border border-success/40 bg-success/[0.04] px-3 py-2 text-sm">
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-success">
-              정답
-            </p>
-            <p className="mt-1 whitespace-pre-wrap font-mono text-text">{graded.answer ?? "-"}</p>
-            {graded.keywords.length > 0 && (
-              <div className="mt-2 flex flex-wrap gap-1.5">
-                {graded.keywords.map((kw, i) => (
-                  <span
-                    key={i}
-                    className="rounded bg-success/10 px-2 py-0.5 text-[11px] text-success"
-                  >
-                    {kw}
-                  </span>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {graded.explanation && (
-        <div className="mt-3 rounded-md border border-border bg-surface px-3 py-2">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-primary">해설</p>
-          <div className="mt-1 text-sm leading-relaxed text-text-muted">
-            <QuestionContent content={graded.explanation} />
-          </div>
-        </div>
-      )}
-    </div>
   );
 }
 

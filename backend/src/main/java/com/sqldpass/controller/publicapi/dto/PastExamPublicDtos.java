@@ -76,12 +76,13 @@ public final class PastExamPublicDtos {
     ) {
     }
 
-    /** 채점 응답 — 문제별 정답/해설 포함 */
+    /** 채점 응답 — 문제별 정답/해설 포함. solveId 는 history 상세 페이지로 이동하는 용도. */
     public record PastExamGradeResponse(
             int totalCount,
             int correctCount,
             int score,
-            List<GradedItem> items
+            List<GradedItem> items,
+            Long solveId
     ) {
     }
 
