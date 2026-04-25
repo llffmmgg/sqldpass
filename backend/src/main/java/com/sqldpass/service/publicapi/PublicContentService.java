@@ -23,8 +23,13 @@ import com.sqldpass.controller.publicapi.dto.PublicDtos.PublicQuestionPageRespon
 import com.sqldpass.controller.publicapi.dto.PublicDtos.PublicQuestionSummary;
 import com.sqldpass.controller.publicapi.dto.PublicDtos.PublicSolveQuestionResponse;
 import com.sqldpass.controller.publicapi.dto.PublicDtos.PublicSubjectResponse;
+import com.sqldpass.controller.publicapi.dto.PublicCertActivityResponse;
+import com.sqldpass.controller.publicapi.dto.PublicCertActivityResponse.ActivityBucket;
+import com.sqldpass.controller.publicapi.dto.PublicCertActivityResponse.CertActivityItem;
 import com.sqldpass.controller.publicapi.dto.PublicRankingResponse;
 import com.sqldpass.controller.publicapi.dto.PublicStatsResponse;
+import com.sqldpass.persistent.mockexam.ExamType;
+import com.sqldpass.persistent.mockexam.MockExamKind;
 import com.sqldpass.domain.question.Question;
 import com.sqldpass.domain.subject.Subject;
 import com.sqldpass.service.question.QuestionService;
@@ -123,6 +128,66 @@ public class PublicContentService {
      * 랜딩 페이지 노출용 TOP 30 랭킹 — 누적 정답 수 기준.
      * 1문제 이상 푼 사용자만 (INNER JOIN solve), 동점은 가입 순.
      */
+    /**
+     * 자격증별 풀이 활동 현황 — 모의고사(AI) 와 기출 복원(PAST_EXAM) 분리.
+     *
+     * 누적 + 오늘자 한 번에 집계 (single native query, GROUP BY exam_type, kind).
+     * 캐시 1시간. 자정 직후 1시간 동안 "오늘" 카운트가 0 으로 노출될 수 있으나
+     * 1시간 후 다시 갱신되므로 일별 추이엔 영향 미미.
+     */
+    @Cacheable(CacheConfig.CACHE_PUBLIC_CERT_ACTIVITY)
+    public PublicCertActivityResponse getCertActivity() {
+        java.time.LocalDate today = java.time.LocalDate.now();
+        LocalDateTime startOfToday = today.atStartOfDay();
+        List<Object[]> rows = solveRepository.findCertActivityBreakdown(startOfToday);
+
+        // (examType, kind) → ActivityBucket 매핑
+        Map<ExamType, Map<MockExamKind, ActivityBucket>> buckets = new java.util.EnumMap<>(ExamType.class);
+        for (Object[] row : rows) {
+            ExamType examType;
+            MockExamKind kind;
+            try {
+                examType = ExamType.valueOf((String) row[0]);
+                kind = MockExamKind.valueOf((String) row[1]);
+            } catch (IllegalArgumentException e) {
+                continue; // 알 수 없는 enum 값은 스킵
+            }
+            ActivityBucket bucket = new ActivityBucket(
+                    ((Number) row[2]).longValue(),
+                    ((Number) row[3]).longValue(),
+                    ((Number) row[4]).longValue(),
+                    ((Number) row[5]).longValue(),
+                    ((Number) row[6]).longValue(),
+                    ((Number) row[7]).longValue());
+            buckets.computeIfAbsent(examType, k -> new java.util.EnumMap<>(MockExamKind.class))
+                    .put(kind, bucket);
+        }
+
+        // 자격증 6종 고정 순서로 응답 빌드 (빈 카드도 0 으로 노출)
+        List<CertActivityItem> items = new ArrayList<>(6);
+        items.add(buildCertActivity(ExamType.SQLD, SQLD_SLUG, SQLD_NAME, buckets));
+        items.add(buildCertActivity(ExamType.ENGINEER_PRACTICAL, ENGINEER_SLUG, ENGINEER_NAME, buckets));
+        items.add(buildCertActivity(ExamType.ENGINEER_WRITTEN, ENGINEER_WRITTEN_SLUG, ENGINEER_WRITTEN_NAME, buckets));
+        items.add(buildCertActivity(ExamType.COMPUTER_LITERACY_1, COMPUTER_LITERACY_SLUG, COMPUTER_LITERACY_NAME, buckets));
+        items.add(buildCertActivity(ExamType.COMPUTER_LITERACY_2, COMPUTER_LITERACY_2_SLUG, COMPUTER_LITERACY_2_NAME, buckets));
+        items.add(buildCertActivity(ExamType.ADSP, ADSP_SLUG, ADSP_NAME, buckets));
+
+        return new PublicCertActivityResponse(LocalDateTime.now(), today, items);
+    }
+
+    private CertActivityItem buildCertActivity(
+            ExamType examType,
+            String certSlug,
+            String certName,
+            Map<ExamType, Map<MockExamKind, ActivityBucket>> buckets) {
+        Map<MockExamKind, ActivityBucket> kindMap = buckets.getOrDefault(examType, Map.of());
+        return new CertActivityItem(
+                certSlug,
+                certName,
+                kindMap.getOrDefault(MockExamKind.AI, ActivityBucket.empty()),
+                kindMap.getOrDefault(MockExamKind.PAST_EXAM, ActivityBucket.empty()));
+    }
+
     @Cacheable(CacheConfig.CACHE_PUBLIC_RANKING)
     public PublicRankingResponse getTopRanking() {
         List<Object[]> rows = solveRepository.findTopRanking(PageRequest.of(0, 30));

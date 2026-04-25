@@ -7,6 +7,7 @@ import DailyQuestionWidget from "@/components/DailyQuestionWidget";
 import { SiteNoticeModal } from "@/components/SiteNoticeModal";
 import CertChips from "@/components/CertChips";
 import RankingSection from "@/components/RankingSection";
+import CertActivityBreakdown from "@/components/CertActivityBreakdown";
 import { Badge, ButtonLink, Card, Container, Section } from "@/components/ui";
 import { getAllPosts } from "@/lib/blog";
 import { certFromBlogCategory } from "@/lib/cert-tokens";
@@ -151,6 +152,31 @@ export default function Home() {
               </Card>
             </ScrollReveal>
           </div>
+        </Container>
+      </Section>
+
+      {/* ── 자격증별 풀이 활동 ─────────────────────────────── */}
+      <Section>
+        <Container size="default">
+          <ScrollReveal>
+            <div className="mx-auto max-w-2xl text-center">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-3 py-1 text-[11px] font-medium text-text-muted">
+                실시간 학습 현황
+              </span>
+              <h2 className="mt-4 text-2xl font-bold tracking-tight sm:text-3xl md:text-4xl">
+                자격증별 풀이 현황
+              </h2>
+              <p className="mt-3 text-sm leading-relaxed text-text-muted sm:text-base">
+                자격증별로 모의고사와 기출 복원을 분리해 누적·오늘자 응시자, 풀이 회차, 답한 문항 수를 보여드려요.
+              </p>
+            </div>
+          </ScrollReveal>
+
+          <ScrollReveal delay={1}>
+            <div className="mt-10">
+              <CertActivityBreakdown />
+            </div>
+          </ScrollReveal>
         </Container>
       </Section>
 

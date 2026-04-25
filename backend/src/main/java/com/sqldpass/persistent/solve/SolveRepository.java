@@ -127,4 +127,37 @@ public interface SolveRepository extends JpaRepository<SolveEntity, Long> {
      */
     @Query("SELECT s.member.id, SUM(s.totalCount) FROM SolveEntity s WHERE s.createdAt >= :since GROUP BY s.member.id")
     List<Object[]> findMemberTotalsSince(@Param("since") LocalDateTime since);
+
+    /**
+     * 자격증(exam_type) × 종류(kind=AI/PAST_EXAM) 별 풀이 활동 집계.
+     * 랜딩 페이지 "자격증별 풀이 현황" 섹션용 — 누적 + 오늘자 한 쿼리.
+     *
+     * 결과 row:
+     * [0] String examType        — mock_exam.exam_type
+     * [1] String kind            — mock_exam.kind ("AI" / "PAST_EXAM")
+     * [2] Long totalSolves       — count(solve.id)
+     * [3] Long totalQuestions    — sum(solve.total_count)
+     * [4] Long uniqueMembers     — count(distinct solve.member_id)
+     * [5] Long todaySolves       — created_at >= startOfToday 인 것만
+     * [6] Long todayQuestions
+     * [7] Long todayUniqueMembers
+     *
+     * 집계 대상은 mock_exam 에 연결된 풀이만 — exam_type/kind 가 명확한 데이터.
+     * mock_exam_id IS NULL 인 free-style subject 풀이는 자격증 분리 키가 없어 제외.
+     */
+    @Query(value = """
+            SELECT
+              m.exam_type AS exam_type,
+              m.kind AS kind,
+              COUNT(sv.id) AS total_solves,
+              COALESCE(SUM(sv.total_count), 0) AS total_questions,
+              COUNT(DISTINCT sv.member_id) AS unique_members,
+              COALESCE(SUM(CASE WHEN sv.created_at >= :startOfToday THEN 1 ELSE 0 END), 0) AS today_solves,
+              COALESCE(SUM(CASE WHEN sv.created_at >= :startOfToday THEN sv.total_count ELSE 0 END), 0) AS today_questions,
+              COUNT(DISTINCT CASE WHEN sv.created_at >= :startOfToday THEN sv.member_id END) AS today_unique_members
+            FROM solve sv
+            JOIN mock_exam m ON sv.mock_exam_id = m.id
+            GROUP BY m.exam_type, m.kind
+            """, nativeQuery = true)
+    List<Object[]> findCertActivityBreakdown(@Param("startOfToday") LocalDateTime startOfToday);
 }
