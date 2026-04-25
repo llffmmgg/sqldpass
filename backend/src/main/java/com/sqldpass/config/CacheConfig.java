@@ -25,14 +25,12 @@ public class CacheConfig {
 
     public static final String CACHE_PUBLIC_STATS = "publicStats";
     public static final String CACHE_PUBLIC_RANKING = "publicRanking";
-    public static final String CACHE_PUBLIC_CERT_ACTIVITY = "publicCertActivity";
 
     @Bean
     public CacheManager cacheManager() {
         CaffeineCacheManager mgr = new CaffeineCacheManager(
                 CACHE_PUBLIC_STATS,
-                CACHE_PUBLIC_RANKING,
-                CACHE_PUBLIC_CERT_ACTIVITY
+                CACHE_PUBLIC_RANKING
         );
         mgr.setCaffeine(Caffeine.newBuilder()
                 .expireAfterWrite(1, TimeUnit.HOURS)

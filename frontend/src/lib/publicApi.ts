@@ -168,40 +168,6 @@ export function parseCategorySlug(slug: string): number | null {
   return m ? parseInt(m[1], 10) : null;
 }
 
-// ================= 자격증별 풀이 활동 (모의고사 / 기출 복원 분리) =================
-
-export interface PublicActivityBucket {
-  totalSolves: number;
-  totalQuestions: number;
-  uniqueMembers: number;
-  todaySolves: number;
-  todayQuestions: number;
-  todayUniqueMembers: number;
-}
-
-export interface PublicCertActivityItem {
-  certSlug: string;
-  certName: string;
-  mockExam: PublicActivityBucket;
-  pastExam: PublicActivityBucket;
-}
-
-export interface PublicCertActivity {
-  generatedAt: string;
-  today: string;
-  items: PublicCertActivityItem[];
-}
-
-/** 자격증별 풀이 활동 — 클라이언트 컴포넌트에서 사용 (Vercel rewrites/OCI nginx 경유). */
-export async function getPublicCertActivity(): Promise<PublicCertActivity> {
-  const res = await fetch(`/api/public/stats/cert-activity`, {
-    cache: "no-store",
-  });
-  if (!res.ok) {
-    throw new Error(`cert-activity failed: ${res.status}`);
-  }
-  return res.json();
-}
 
 // ================= 기출 복원 (past-exams) — 서버용 SEO 호출 =================
 

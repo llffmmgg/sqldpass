@@ -20,7 +20,6 @@ import com.sqldpass.controller.publicapi.dto.PublicDtos.PublicQuestionDetailResp
 import com.sqldpass.controller.publicapi.dto.PublicDtos.PublicQuestionPageResponse;
 import com.sqldpass.controller.publicapi.dto.PublicDtos.PublicSolveQuestionResponse;
 import com.sqldpass.controller.publicapi.dto.PublicDtos.PublicSubjectResponse;
-import com.sqldpass.controller.publicapi.dto.PublicCertActivityResponse;
 import com.sqldpass.controller.publicapi.dto.PublicRankingResponse;
 import com.sqldpass.controller.publicapi.dto.PublicStatsResponse;
 import com.sqldpass.service.common.ErrorCode;
@@ -55,12 +54,6 @@ public class PublicContentController {
     @Operation(summary = "랜딩 페이지 노출용 TOP 30 랭킹 (누적 정답 수)")
     public PublicRankingResponse getRanking() {
         return publicContentService.getTopRanking();
-    }
-
-    @GetMapping("/stats/cert-activity")
-    @Operation(summary = "자격증별 풀이 활동 (모의고사 / 기출 복원 분리, 누적+오늘자)")
-    public PublicCertActivityResponse getCertActivity() {
-        return publicContentService.getCertActivity();
     }
 
     @GetMapping("/certs")
