@@ -46,7 +46,7 @@ class AdminStatsControllerTest {
     @DisplayName("GET /api/admin/stats returns admin statistics")
     void getStats() throws Exception {
         given(adminStatsService.getStats()).willReturn(
-                new AdminStatsResponse(100L, 80L, 20L, 20L, 300L, 150L, 5L, 3L, 50L, 12L, List.of()));
+                new AdminStatsResponse(100L, 80L, 20L, 20L, 300L, 150L, 5L, 3L, 50L, 12L, List.of(), List.of()));
 
         mockMvc.perform(get("/api/admin/stats").header("Authorization", AUTH_HEADER))
                 .andExpect(status().isOk())

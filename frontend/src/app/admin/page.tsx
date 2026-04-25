@@ -1,12 +1,22 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getStats, type AdminStats } from "@/lib/adminApi";
+import { getStats, type AdminStats, type AdminCertActivity } from "@/lib/adminApi";
 import PageHeader from "@/components/admin/PageHeader";
 import StatCard from "@/components/admin/StatCard";
 import DataTable, { TableSkeleton } from "@/components/admin/DataTable";
 import EmptyState from "@/components/admin/EmptyState";
 import TrendChart from "@/components/admin/TrendChart";
+import { CERT_TOKENS, type CertKey } from "@/lib/cert-tokens";
+
+const SLUG_TO_CERT_KEY: Record<string, CertKey> = {
+  sqld: "SQLD",
+  engineer: "ENGINEER_PRACTICAL",
+  "engineer-written": "ENGINEER_WRITTEN",
+  "computer-literacy-1": "COMPUTER_LITERACY_1",
+  "computer-literacy-2": "COMPUTER_LITERACY_2",
+  adsp: "ADSP",
+};
 
 const ICON_SIZE = "h-4 w-4";
 
@@ -143,6 +153,107 @@ export default function AdminDashboardPage() {
           </DataTable>
         )}
       </section>
+
+      <section className="mt-10">
+        <div className="mb-4 flex items-baseline justify-between">
+          <h2 className="text-base font-semibold">자격증별 풀이 활동</h2>
+          <p className="text-xs text-muted">모의고사 / 기출 복원 분리 · 누적+오늘자</p>
+        </div>
+
+        {loading ? (
+          <CertActivitySkeleton />
+        ) : !stats?.certActivity || stats.certActivity.length === 0 ? (
+          <EmptyState
+            title="자격증별 활동이 아직 없어요"
+            description="모의고사·기출 복원이 풀리면 여기에 표시됩니다."
+          />
+        ) : (
+          <CertActivityGrid items={stats.certActivity} />
+        )}
+      </section>
+    </div>
+  );
+}
+
+function CertActivitySkeleton() {
+  return (
+    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+      {Array.from({ length: 6 }).map((_, i) => (
+        <div
+          key={i}
+          className="h-40 animate-pulse rounded-lg border border-border bg-surface/40"
+        />
+      ))}
+    </div>
+  );
+}
+
+function CertActivityGrid({ items }: { items: AdminCertActivity[] }) {
+  return (
+    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+      {items.map((item) => {
+        const certKey = SLUG_TO_CERT_KEY[item.certSlug];
+        const dotClass = certKey ? CERT_TOKENS[certKey].tailwind.dot : "bg-zinc-500";
+        const textClass = certKey ? CERT_TOKENS[certKey].tailwind.text : "text-zinc-400";
+        const todayUnique =
+          item.mockExam.todayUniqueMembers + item.pastExam.todayUniqueMembers;
+        return (
+          <div
+            key={item.certSlug}
+            className="rounded-lg border border-border bg-surface/60 p-4"
+          >
+            <div className="flex items-center gap-2">
+              <span className={`inline-block h-2 w-2 rounded-full ${dotClass}`} />
+              <h3 className="text-sm font-semibold">{item.certName}</h3>
+              <span className="ml-auto text-[10px] text-muted">
+                오늘{" "}
+                <span className="font-semibold tabular-nums text-foreground">
+                  {todayUnique.toLocaleString()}
+                </span>
+                명
+              </span>
+            </div>
+
+            <CertActivityRow label="모의고사" bucket={item.mockExam} accent={textClass} />
+            <CertActivityRow label="기출 복원" bucket={item.pastExam} accent={textClass} />
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function CertActivityRow({
+  label,
+  bucket,
+  accent,
+}: {
+  label: string;
+  bucket: AdminCertActivity["mockExam"];
+  accent: string;
+}) {
+  return (
+    <div className="mt-3 rounded-md border border-border bg-background/40 px-3 py-2 text-xs">
+      <div className="flex items-center justify-between font-medium">
+        <span className={accent}>{label}</span>
+        <span className="tabular-nums text-muted">
+          오늘 {bucket.todaySolves.toLocaleString()}회 ·{" "}
+          {bucket.todayQuestions.toLocaleString()}문항
+        </span>
+      </div>
+      <div className="mt-1 flex items-center justify-between text-muted">
+        <span>
+          누적{" "}
+          <span className="font-semibold tabular-nums text-foreground">
+            {bucket.uniqueMembers.toLocaleString()}
+          </span>
+          명
+        </span>
+        <span className="tabular-nums">
+          {bucket.totalSolves.toLocaleString()}회 ·{" "}
+          {bucket.totalQuestions.toLocaleString()}문항
+        </span>
+      </div>
     </div>
   );
 }

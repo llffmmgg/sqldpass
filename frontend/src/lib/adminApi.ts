@@ -62,6 +62,22 @@ export interface SubjectSolveStats {
   totalQuestions: number;
 }
 
+export interface AdminActivityBucket {
+  totalSolves: number;
+  totalQuestions: number;
+  uniqueMembers: number;
+  todaySolves: number;
+  todayQuestions: number;
+  todayUniqueMembers: number;
+}
+
+export interface AdminCertActivity {
+  certSlug: string;
+  certName: string;
+  mockExam: AdminActivityBucket;
+  pastExam: AdminActivityBucket;
+}
+
 export interface AdminStats {
   totalQuestions: number;
   verifiedQuestions: number;
@@ -74,6 +90,8 @@ export interface AdminStats {
   todaySolves?: number;
   todayAnonymousSolves?: number;
   subjectStats: SubjectSolveStats[];
+  /** 자격증별 풀이 활동 (모의고사 / 기출 복원 분리, 누적+오늘자) */
+  certActivity?: AdminCertActivity[];
 }
 
 export type AdminQuestionType = "MCQ" | "SHORT_ANSWER" | "DESCRIPTIVE";
