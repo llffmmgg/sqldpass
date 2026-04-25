@@ -1,11 +1,15 @@
--- ENGINEER_WRITTEN 2025년 제2회 기출 복원 — 100문항 일괄 적재
+-- ENGINEER_WRITTEN 2024년 제2회 기출 복원 — 100문항 일괄 적재
 -- mock_exam: kind=PAST_EXAM, visibility=PUBLISHED, expert_verified=0
+--
+-- 주의: 최초 배포 시 입력 JSON 의 examYear 가 2025 로 잘못 들어갔으나
+-- 실제 회차는 2024년 정기 기사 2회. 운영 DB 의 stale (2025, 2) row 는
+-- 후속 V57 마이그레이션이 정리한다.
 --
 -- 재실행 안전성 — 동일 조합(exam_type + PAST_EXAM + 연도/회차) 정리 후 재삽입
 DELETE FROM mock_exam
   WHERE exam_type = 'ENGINEER_WRITTEN'
     AND kind = 'PAST_EXAM'
-    AND exam_year = 2025
+    AND exam_year = 2024
     AND exam_round = 2;
 
 SET @seq := (SELECT COALESCE(MAX(sequence), 0) + 1 FROM mock_exam WHERE exam_type = 'ENGINEER_WRITTEN');
@@ -14,8 +18,8 @@ INSERT INTO mock_exam
   (name, exam_type, sequence, visibility, expert_verified,
    kind, exam_year, exam_round, exam_date, created_at, updated_at)
 VALUES
-  ('정보처리기사 필기 2025년 2회 복원', 'ENGINEER_WRITTEN', @seq, 'PUBLISHED', 0,
-   'PAST_EXAM', 2025, 2, NULL, NOW(6), NOW(6));
+  ('정보처리기사 필기 2024년 2회 복원', 'ENGINEER_WRITTEN', @seq, 'PUBLISHED', 0,
+   'PAST_EXAM', 2024, 2, '2024-05-15', NOW(6), NOW(6));
 
 SET @mock_exam_id := LAST_INSERT_ID();
 

@@ -1,13 +1,8 @@
--- ENGINEER_WRITTEN 2025년 제2회 기출 복원 — exam_date 보완
+-- DEPRECATED — 회차 메타가 (2025, 2) 로 잘못 적재된 후 작성된 픽스 마이그레이션.
+-- 사용자 정정으로 실제 회차는 2024년 2회임이 확인됐고, V55 와 V57 이 (2024, 2) 메타와
+-- exam_date='2024-05-15' 를 직접 채우므로 본 UPDATE 는 매칭 row 0건의 no-op 이다.
 --
--- V55 적재 시 사용자 입력 examDate 가 빈 문자열이라 NULL 로 들어갔다.
--- 큐넷 일정 기준 정보처리기사 필기 2025년 정기 2회 시험일 = 2025-05-10.
+-- 운영 DB 에 이미 success=1 로 기록된 V56 의 checksum 만 그대로 유지하기 위해
+-- 파일 자체는 보존하되 부수효과 없는 SELECT 1 만 남긴다.
 
-UPDATE mock_exam
-   SET exam_date = '2025-05-10',
-       updated_at = NOW(6)
- WHERE exam_type = 'ENGINEER_WRITTEN'
-   AND kind = 'PAST_EXAM'
-   AND exam_year = 2025
-   AND exam_round = 2
-   AND exam_date IS NULL;
+SELECT 1;
