@@ -3,7 +3,17 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useMemo, useState } from "react";
+
 import Spinner from "@/components/Spinner";
+import { Badge, Card, Container } from "@/components/ui";
+import {
+  CERT_LIST,
+  CERT_TOKENS,
+  certFromExamType,
+  type CertKey,
+} from "@/lib/cert-tokens";
+import { isLoggedIn } from "@/lib/auth";
+import { getGoogleLoginUrl } from "@/lib/oauth";
 import {
   getMockExams,
   type EngineerTemplateKey,
@@ -11,65 +21,24 @@ import {
   type MockExamSummary,
 } from "@/lib/mockExamApi";
 import { getPublicMockExams } from "@/lib/publicApi";
-import { isLoggedIn } from "@/lib/auth";
-import { getGoogleLoginUrl } from "@/lib/oauth";
-import { Badge, Card, Container } from "@/components/ui";
-import { CERT_LIST, CERT_TOKENS, certFromExamType } from "@/lib/cert-tokens";
 
 export default function MockExamsPage() {
   return (
     <Suspense fallback={null}>
-      <MockExamsListContent />
+      <MockExamsPageContent />
     </Suspense>
   );
 }
 
-type Filter = ExamType;
-type DifficultyFilter = "ALL" | NonNullable<MockExamSummary["difficultyLabel"]>;
-type TemplateFilter = "ALL" | EngineerTemplateKey;
-
-const DIFFICULTY_OPTIONS: { value: DifficultyFilter; label: string }[] = [
-  { value: "ALL", label: "전체" },
-  { value: "쉬움", label: "쉬움" },
-  { value: "보통", label: "보통" },
-  { value: "어려움", label: "어려움" },
-  { value: "매우 어려움", label: "매우 어려움" },
-];
-
-const TEMPLATE_OPTIONS: { value: TemplateFilter; label: string }[] = [
-  { value: "ALL", label: "전체 유형" },
-  { value: "PROGRAMMING_HEAVY", label: "프로그래밍 편중형" },
-  { value: "THEORY_HEAVY", label: "이론 편중형" },
-  { value: "BALANCED", label: "균형형" },
-  { value: "DB_HEAVY", label: "DB 강조형" },
-];
-
-function isExamType(v: string | null): v is ExamType {
-  return (
-    v === "SQLD" ||
-    v === "ENGINEER_PRACTICAL" ||
-    v === "ENGINEER_WRITTEN" ||
-    v === "COMPUTER_LITERACY_1" ||
-    v === "COMPUTER_LITERACY_2" ||
-    v === "ADSP"
-  );
-}
-
-function MockExamsListContent() {
+function MockExamsPageContent() {
   const searchParams = useSearchParams();
-  const certParam = searchParams?.get("cert") ?? null;
-  const initialFilter: Filter = isExamType(certParam) ? certParam : "SQLD";
+  const certParam = searchParams?.get("cert");
+  const activeCert: CertKey =
+    (certParam && certParam in CERT_TOKENS ? (certParam as CertKey) : null) ?? "SQLD";
 
   const [exams, setExams] = useState<MockExamSummary[] | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [filter, setFilter] = useState<Filter>(initialFilter);
-  const [difficultyFilter, setDifficultyFilter] = useState<DifficultyFilter>("ALL");
-  const [templateFilter, setTemplateFilter] = useState<TemplateFilter>("ALL");
   const [authed, setAuthed] = useState(false);
-
-  useEffect(() => {
-    if (isExamType(certParam)) setFilter(certParam);
-  }, [certParam]);
 
   useEffect(() => {
     const loggedIn = isLoggedIn();
@@ -80,73 +49,34 @@ function MockExamsListContent() {
       .catch((e) => setError(e instanceof Error ? e.message : "목록을 불러올 수 없습니다."));
   }, []);
 
-  useEffect(() => {
-    setTemplateFilter("ALL");
-  }, [filter]);
+  const token = CERT_TOKENS[activeCert];
 
   const filtered = useMemo(() => {
     if (!exams) return null;
     return exams
-      .filter((e) => e.examType === filter)
-      .filter((e) => difficultyFilter === "ALL" || e.difficultyLabel === difficultyFilter)
-      .filter((e) =>
-        filter === "ENGINEER_PRACTICAL" && templateFilter !== "ALL"
-          ? e.templateKey === templateFilter
-          : true,
-      )
+      .filter((e) => e.examType === activeCert)
       .slice()
       .sort((a, b) => b.sequence - a.sequence);
-  }, [exams, filter, difficultyFilter, templateFilter]);
-
-  if (error) {
-    return (
-      <main className="flex min-h-screen items-center justify-center bg-bg text-text">
-        <p className="text-danger">{error}</p>
-      </main>
-    );
-  }
-
-  if (!exams || !filtered) {
-    return (
-      <main className="flex min-h-screen items-center justify-center bg-bg text-text">
-        <Spinner message="모의고사 목록 불러오는 중..." />
-      </main>
-    );
-  }
+  }, [exams, activeCert]);
 
   return (
     <main className="min-h-screen bg-bg text-text">
       <Container size="narrow" className="py-16">
         <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">모의고사</h1>
         <p className="mt-2 text-sm text-text-muted">
-          SQLD · 정처기 · 컴활 · ADsP — 실전 타이머와 함께 무료 CBT
+          {token.labelLong} · 실전 타이머와 함께 무료 CBT 로 응시해보세요. 점수 기록·오답 노트는 로그인 후 자동 저장됩니다.
         </p>
 
-        {!authed && (
-          <Card padding="md" className="mt-4 border-primary/30 bg-primary/[0.04]">
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-sm text-text">
-                <span className="font-semibold">미리보기</span> — 모의고사 응시·점수 기록은 로그인 후 가능해요.
-              </p>
-              <Link
-                href={getGoogleLoginUrl()}
-                className="inline-flex h-9 shrink-0 items-center justify-center rounded-md border border-primary/40 bg-primary/10 px-4 text-xs font-semibold text-primary hover:bg-primary/15"
-              >
-                Google 로그인
-              </Link>
-            </div>
-          </Card>
-        )}
-
-        {/* 자격증 탭 — 단일 pill + cert dot */}
+        {/* 자격증 탭 — past-exams 와 동일한 단일 pill + cert dot + count */}
         <div className="mt-6 -mx-1 flex gap-1 overflow-x-auto rounded-lg border border-border bg-surface p-1 text-sm">
           {CERT_LIST.map((c) => {
-            const count = exams.filter((e) => e.examType === c.key).length;
-            const active = filter === c.key;
+            const active = c.key === activeCert;
+            const count = exams ? exams.filter((e) => e.examType === c.key).length : 0;
             return (
-              <button
+              <Link
                 key={c.key}
-                onClick={() => setFilter(c.key)}
+                href={`/mock-exams?cert=${c.key}`}
+                scroll={false}
                 className={`flex shrink-0 items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
                   active
                     ? "bg-primary/10 text-primary ring-1 ring-primary/20"
@@ -156,40 +86,52 @@ function MockExamsListContent() {
                 <span className={`h-1.5 w-1.5 rounded-full ${c.tailwind.dot}`} />
                 {c.label}
                 <span className="text-xs opacity-60 tabular-nums">{count}</span>
-              </button>
+              </Link>
             );
           })}
         </div>
 
-        {/* 부필터 */}
-        <div className="mt-3 flex flex-col gap-2">
-          <SubFilterRow
-            label="난이도"
-            options={DIFFICULTY_OPTIONS}
-            value={difficultyFilter}
-            onChange={(v) => setDifficultyFilter(v as DifficultyFilter)}
-          />
-          {filter === "ENGINEER_PRACTICAL" && (
-            <SubFilterRow
-              label="유형"
-              options={TEMPLATE_OPTIONS}
-              value={templateFilter}
-              onChange={(v) => setTemplateFilter(v as TemplateFilter)}
-            />
+        {/* 목록 */}
+        <div className="mt-8">
+          {error && (
+            <Card padding="md" className="border-danger/40 bg-danger/10 text-sm text-danger">
+              {error}
+            </Card>
+          )}
+
+          {!error && exams === null && (
+            <div className="flex justify-center py-16">
+              <Spinner message="모의고사 목록 불러오는 중..." />
+            </div>
+          )}
+
+          {!error && filtered && filtered.length === 0 && (
+            <Card padding="lg" className="text-center">
+              <p className="text-base font-semibold">아직 준비 중입니다</p>
+              <p className="mt-2 text-sm text-text-muted">
+                {token.label} 모의고사가 아직 등록되지 않았습니다.
+              </p>
+            </Card>
+          )}
+
+          {filtered && filtered.length > 0 && (
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              {filtered.map((exam) => (
+                <MockExamCard key={exam.id} exam={exam} authed={authed} />
+              ))}
+            </div>
           )}
         </div>
 
-        {filtered.length === 0 ? (
-          <Card padding="lg" className="mt-12 text-center text-text-muted">
-            해당 시험의 모의고사가 아직 없습니다.
-          </Card>
-        ) : (
-          <div className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-2">
-            {filtered.map((exam) => (
-              <MockExamCard key={exam.id} exam={exam} authed={authed} />
-            ))}
-          </div>
-        )}
+        <div className="mt-14 flex items-center justify-center gap-6 text-sm text-text-muted">
+          <Link href="/solve" className="transition-colors hover:text-text">
+            무한 문제 풀이 →
+          </Link>
+          <span className="text-border">·</span>
+          <Link href="/past-exams" className="transition-colors hover:text-text">
+            기출 복원 →
+          </Link>
+        </div>
       </Container>
     </main>
   );
@@ -254,6 +196,10 @@ function MockExamCard({ exam, authed }: { exam: MockExamSummary; authed: boolean
 
         <h2 className="mt-3 text-lg font-semibold leading-tight">{exam.name}</h2>
         <div className="mt-2 text-sm text-text-muted">총 {exam.totalQuestions}문항</div>
+
+        <div className="mt-4 inline-flex items-center gap-1.5 text-xs font-semibold text-primary transition-transform group-hover:translate-x-1">
+          {authed ? "응시하기 →" : "로그인하고 응시 →"}
+        </div>
       </Card>
     </Link>
   );
@@ -279,39 +225,6 @@ function TemplateBadge({
     <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold ${cls}`}>
       {label}
     </span>
-  );
-}
-
-function SubFilterRow({
-  label,
-  options,
-  value,
-  onChange,
-}: {
-  label: string;
-  options: { value: string; label: string }[];
-  value: string;
-  onChange: (v: string) => void;
-}) {
-  return (
-    <div className="flex flex-wrap items-center gap-2">
-      <span className="text-[11px] font-medium text-text-muted">{label}</span>
-      <div className="flex flex-wrap gap-1">
-        {options.map((opt) => (
-          <button
-            key={opt.value}
-            onClick={() => onChange(opt.value)}
-            className={`rounded-full border px-2.5 py-0.5 text-[11px] font-medium transition ${
-              value === opt.value
-                ? "border-primary/40 bg-primary/10 text-primary"
-                : "border-border text-text-muted hover:border-border-strong hover:text-text"
-            }`}
-          >
-            {opt.label}
-          </button>
-        ))}
-      </div>
-    </div>
   );
 }
 

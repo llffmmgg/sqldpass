@@ -101,10 +101,8 @@ function SolvePageContent() {
   const [authChecked, setAuthChecked] = useState(false);
   const [anonQuota, setAnonQuota] = useState<PublicSolveQuota | null>(null);
   const [quotaExhausted, setQuotaExhausted] = useState(false);
-  const initialCert: CertKey = (certParam && certParam in CERT_TOKENS)
-    ? (certParam as CertKey)
-    : "SQLD";
-  const [certFilter, setCertFilter] = useState<CertKey>(initialCert);
+  const activeCert: CertKey =
+    (certParam && certParam in CERT_TOKENS ? (certParam as CertKey) : null) ?? "SQLD";
 
   useEffect(() => {
     const logged = isLoggedIn();
@@ -125,12 +123,6 @@ function SolvePageContent() {
         });
     }
   }, []);
-
-  useEffect(() => {
-    if (certParam && certParam in CERT_TOKENS) {
-      setCertFilter(certParam as CertKey);
-    }
-  }, [certParam]);
 
   useEffect(() => {
     function onPopState() {
@@ -460,7 +452,7 @@ function SolvePageContent() {
       certGroups.get(key)!.roots.push(root);
     }
 
-    const activeGroup = certGroups.get(certFilter) ?? null;
+    const activeGroup = certGroups.get(activeCert) ?? null;
 
     return (
       <main className="min-h-screen bg-bg text-text">
@@ -471,7 +463,7 @@ function SolvePageContent() {
             자격증을 고른 뒤 과목 하나로 {SET_SIZE}문제 한 세트를 풀어보세요.
           </p>
 
-          {/* 자격증 탭 — pill + cert dot (mock-exams 패턴 동일) */}
+          {/* 자격증 탭 — past-exams/mock-exams 와 동일한 pill + cert dot + count */}
           <div className="mt-6 -mx-1 flex gap-1 overflow-x-auto rounded-lg border border-border bg-surface p-1 text-sm">
             {CERT_LIST.map((c) => {
               const subjectCount = (() => {
@@ -482,11 +474,12 @@ function SolvePageContent() {
                   0,
                 );
               })();
-              const active = certFilter === c.key;
+              const active = activeCert === c.key;
               return (
-                <button
+                <Link
                   key={c.key}
-                  onClick={() => setCertFilter(c.key)}
+                  href={`/solve?cert=${c.key}`}
+                  scroll={false}
                   className={`flex shrink-0 items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
                     active
                       ? "bg-primary/10 text-primary ring-1 ring-primary/20"
@@ -496,7 +489,7 @@ function SolvePageContent() {
                   <span className={`h-1.5 w-1.5 rounded-full ${c.tailwind.dot}`} />
                   {c.label}
                   <span className="text-xs opacity-60 tabular-nums">{subjectCount}</span>
-                </button>
+                </Link>
               );
             })}
           </div>
