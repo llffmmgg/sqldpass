@@ -190,6 +190,12 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(siteNavLd) }}
         />
         <link rel="manifest" href="/manifest.json" />
+        <link
+          rel="alternate"
+          type="application/rss+xml"
+          title="문어CBT 블로그"
+          href="/rss.xml"
+        />
       </head>
       <body className="min-h-full flex flex-col">
         <Suspense fallback={null}>
