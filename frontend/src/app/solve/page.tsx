@@ -42,6 +42,11 @@ type Phase = "select" | "solve" | "session-complete";
 
 const SET_SIZE = 10;
 
+// AdSense 슬롯 ID — /solve 세션 종료 화면 "문제별 상세" 섹션 하단용 (신규 발급 예정)
+// TODO: AdSense 콘솔에서 발급 후 실제 ID 로 교체. 그동안은 빈 ins 태그로 마운트만 됨.
+const SOLVE_REVIEW_INFEED_SLOT = "TODO_SOLVE_REVIEW_INFEED";
+const SOLVE_REVIEW_DISPLAY_SLOT = "TODO_SOLVE_REVIEW_DISPLAY";
+
 export default function SolvePage() {
   return (
     <Suspense fallback={null}>
@@ -1048,6 +1053,17 @@ function SessionReviewList({ entries }: { entries: PastEntry[] }) {
             onToggle={() => setOpenIdx(openIdx === i ? null : i)}
           />
         ))}
+      </div>
+
+      {/* 상세 보기 끝 직후 광고 — 결과 카드 슬롯과 분리해 RPM 따로 측정 */}
+      <div className="mt-8 md:hidden">
+        <AdInfeed
+          adSlot={SOLVE_REVIEW_INFEED_SLOT}
+          adLayoutKey="-h4-h+1c-4h+8p"
+        />
+      </div>
+      <div className="mt-8 hidden md:block">
+        <AdDisplay adSlot={SOLVE_REVIEW_DISPLAY_SLOT} />
       </div>
     </section>
   );

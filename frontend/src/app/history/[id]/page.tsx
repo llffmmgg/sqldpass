@@ -8,6 +8,8 @@ import { parseQuestion, OPTION_MARKERS } from "@/lib/parseQuestion";
 import QuestionContent from "@/components/QuestionContent";
 import AuthGuard from "@/components/AuthGuard";
 import Spinner from "@/components/Spinner";
+import AdInfeed from "@/components/AdInfeed";
+import AdDisplay from "@/components/AdDisplay";
 import { Container } from "@/components/ui";
 import { trackEvent } from "@/lib/gtag";
 
@@ -118,6 +120,14 @@ function HistoryDetailContent({ params }: { params: Promise<{ id: string }> }) {
           <p className="mt-2 text-sm text-muted">
             {solve.correctCount}/{solve.totalCount} 정답 &middot; {formatDate(solve.solvedAt)}
           </p>
+        </div>
+
+        {/* 상단 광고 — 점수 확인 직후, 답안 검토 진입 직전 자리 */}
+        <div className="mt-6 md:hidden">
+          <AdInfeed adSlot="5227022543" adLayoutKey="-h4-h+1c-4h+8p" />
+        </div>
+        <div className="mt-6 hidden md:block">
+          <AdDisplay adSlot="3622084801" />
         </div>
 
         {/* Answers */}
