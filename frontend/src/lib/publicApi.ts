@@ -169,6 +169,35 @@ export function parseCategorySlug(slug: string): number | null {
 }
 
 
+// ================= 비회원 풀이 일일 한도 =================
+
+export interface PublicSolveQuota {
+  used: number;
+  limit: number;
+  remaining: number;
+  exhausted: boolean;
+  /** 서버 기준 오늘 (YYYY-MM-DD). 자정 리셋 안내용 */
+  today: string;
+}
+
+/** 페이지 진입 시 1회 호출 — 헤더 칩 표시용. */
+export async function getSolveQuota(): Promise<PublicSolveQuota> {
+  const res = await fetch(`/api/public/solve-quota`, { cache: "no-store" });
+  if (!res.ok) throw new Error(`solve-quota failed: ${res.status}`);
+  return res.json();
+}
+
+/** 정답 제출 후 호출 — 서버에서 +1 한 뒤 갱신된 한도 상태를 반환. */
+export async function incrementAnonymousSolve(
+  delta: number = 1,
+): Promise<PublicSolveQuota> {
+  const res = await fetch(`/api/public/anonymous-solve?delta=${delta}`, {
+    method: "POST",
+  });
+  if (!res.ok) throw new Error(`anonymous-solve failed: ${res.status}`);
+  return res.json();
+}
+
 // ================= 기출 복원 (past-exams) — 서버용 SEO 호출 =================
 
 export type PublicExamType =

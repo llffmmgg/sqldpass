@@ -33,6 +33,9 @@ public enum ErrorCode {
     NICKNAME_DUPLICATE(HttpStatus.CONFLICT, "NICKNAME_DUPLICATE", "이미 사용 중인 닉네임입니다."),
     MOCK_EXAM_INSUFFICIENT_QUESTIONS(HttpStatus.CONFLICT, "MOCK_EXAM_INSUFFICIENT_QUESTIONS", "문제가 부족하여 모의고사를 생성할 수 없습니다."),
 
+    // 429
+    ANONYMOUS_SOLVE_LIMIT_EXCEEDED(HttpStatus.TOO_MANY_REQUESTS, "ANONYMOUS_SOLVE_LIMIT_EXCEEDED", "오늘의 무료 풀이 한도를 모두 사용했어요. 가입하면 무제한으로 풀 수 있어요."),
+
     // 500
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "INTERNAL_SERVER_ERROR", "서버 오류가 발생했습니다."),
     AI_GENERATION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "AI_GENERATION_FAILED", "AI 문제 생성에 실패했습니다."),

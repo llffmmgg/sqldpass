@@ -14,6 +14,11 @@ import {
 } from "@/lib/api";
 import { isLoggedIn } from "@/lib/auth";
 import { getGoogleLoginUrl } from "@/lib/oauth";
+import {
+  getSolveQuota,
+  incrementAnonymousSolve as incrementAnonymousSolveQuota,
+  type PublicSolveQuota,
+} from "@/lib/publicApi";
 import { parseQuestion } from "@/lib/parseQuestion";
 import QuestionContent from "@/components/QuestionContent";
 import Spinner from "@/components/Spinner";
@@ -93,6 +98,8 @@ function SolvePageContent() {
   const [sessionQuestions, setSessionQuestions] = useState<Question[]>([]);
   const [loggedIn, setLoggedIn] = useState(false);
   const [authChecked, setAuthChecked] = useState(false);
+  const [anonQuota, setAnonQuota] = useState<PublicSolveQuota | null>(null);
+  const [quotaExhausted, setQuotaExhausted] = useState(false);
 
   useEffect(() => {
     const logged = isLoggedIn();
@@ -102,6 +109,16 @@ function SolvePageContent() {
       ? getSubjects()
       : fetchPublic<Subject[]>("/subjects");
     subjectPromise.then(setSubjects).catch(() => setSubjects([]));
+    if (!logged) {
+      getSolveQuota()
+        .then((q) => {
+          setAnonQuota(q);
+          if (q.exhausted) setQuotaExhausted(true);
+        })
+        .catch(() => {
+          // 한도 조회 실패 시 풀이 자체는 막지 않는다 — 서버 가드가 최종 방어
+        });
+    }
   }, []);
 
   useEffect(() => {
@@ -267,10 +284,15 @@ function SolvePageContent() {
     }
 
     if (selectedSubject && !loggedIn) {
-      // 비회원 풀이 카운터 증가 (집계만, DB 저장 없음)
-      fetch("/api/public/anonymous-solve?delta=1", { method: "POST" }).catch(() => {
-        // 집계 실패는 UX 에 영향 없으니 무시
-      });
+      // 비회원 풀이 카운터 증가 (집계 + IP 단위 일일 한도). 응답으로 받은 잔여 한도를 즉시 UI 에 반영.
+      incrementAnonymousSolveQuota(1)
+        .then((q) => {
+          setAnonQuota(q);
+          if (q.exhausted) setQuotaExhausted(true);
+        })
+        .catch(() => {
+          // 집계 실패는 UX 에 영향 없으니 무시 — 서버 가드가 최종 방어
+        });
     }
 
     if (selectedSubject && loggedIn) {
@@ -326,10 +348,26 @@ function SolvePageContent() {
       return;
     }
 
+    // 비회원 일일 한도 소진 시 다음 문제 fetch 차단 → 즉시 세션 완료 + 로그인 CTA
+    if (!loggedIn && quotaExhausted) {
+      setPhase("session-complete");
+      return;
+    }
+
     let nextQueue = [...queue];
     if (nextQueue.length === 0) {
       setLoading(true);
-      nextQueue = await fetchQuestions(selectedSubject.id);
+      try {
+        nextQueue = await fetchQuestions(selectedSubject.id);
+      } catch (e) {
+        setLoading(false);
+        // 서버 측 한도 초과(429) 가드에 걸렸을 때
+        if (!loggedIn) {
+          setQuotaExhausted(true);
+          setPhase("session-complete");
+        }
+        throw e;
+      }
       setLoading(false);
     }
 
@@ -463,9 +501,11 @@ function SolvePageContent() {
 
   // ── 3. 세션 종료 카드 ────────────────────────────────────
   if (phase === "session-complete") {
-    const rate = SET_SIZE > 0 ? Math.round((correctCount / SET_SIZE) * 100) : 0;
-    const ment =
-      rate >= 90
+    const totalSolved = solvedCount > 0 ? solvedCount : SET_SIZE;
+    const rate = totalSolved > 0 ? Math.round((correctCount / totalSolved) * 100) : 0;
+    const ment = quotaExhausted
+      ? "오늘 무료 풀이를 모두 사용했어요. 가입하면 무제한으로 풀고 점수도 자동 저장돼요."
+      : rate >= 90
         ? "완벽해요! 같은 과목을 더 풀어볼까요?"
         : rate >= 70
           ? "잘하고 있어요. 한 세트 더 풀면 손에 더 익을 거예요."
@@ -477,7 +517,7 @@ function SolvePageContent() {
         <Container size="narrow" className="py-16">
           <div className="rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/[0.08] via-primary/[0.04] to-transparent p-8 sm:p-10">
             <p className="text-[11px] font-semibold uppercase tracking-wider text-primary">
-              세션 완료
+              {quotaExhausted ? "오늘 무료 풀이 종료" : "세션 완료"}
             </p>
             <h1 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">
               {selectedSubject?.name}
@@ -486,7 +526,7 @@ function SolvePageContent() {
             <div className="mt-6 flex items-end gap-4">
               <span className={`text-6xl font-bold tabular-nums sm:text-7xl ${rateColor}`}>
                 {correctCount}
-                <span className="text-3xl text-text-subtle">/{SET_SIZE}</span>
+                <span className="text-3xl text-text-subtle">/{totalSolved}</span>
               </span>
               <span className={`mb-2 text-2xl font-bold tabular-nums ${rateColor}`}>{rate}%</span>
             </div>
@@ -498,6 +538,7 @@ function SolvePageContent() {
                 variant="outline"
                 size="lg"
                 onClick={replaySameSession}
+                disabled={quotaExhausted}
                 className="!justify-between text-left"
                 rightIcon={
                   <svg className="h-5 w-5 shrink-0 transition-transform group-hover:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
@@ -514,6 +555,7 @@ function SolvePageContent() {
                 variant="primary"
                 size="lg"
                 onClick={newRandomSession}
+                disabled={quotaExhausted}
                 className="!justify-between text-left"
                 rightIcon={
                   <svg className="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
@@ -531,9 +573,12 @@ function SolvePageContent() {
             {!loggedIn && authChecked && (
               <div className="mt-6 rounded-xl border border-primary/30 bg-primary/[0.06] p-5">
                 <p className="text-xs font-semibold uppercase tracking-wider text-primary">
-                  로그인 시 가능한 기능
+                  {quotaExhausted ? "가입하면 무제한 풀이" : "로그인 시 가능한 기능"}
                 </p>
                 <ul className="mt-3 space-y-1.5 text-sm text-text">
+                  {quotaExhausted && (
+                    <li>· 오늘 한도 없이 무제한 풀이</li>
+                  )}
                   <li>· 오답만 모아서 자동 복습</li>
                   <li>· 과목별 정답률·연속 학습 기록 대시보드</li>
                   <li>· 실전 모의고사 응시</li>
@@ -616,6 +661,28 @@ function SolvePageContent() {
             {correctCount}/{solvedCount} 정답
           </span>
         </div>
+
+        {/* 비회원 일일 풀이 한도 칩 — 자정 리셋 안내 */}
+        {!loggedIn && anonQuota && (
+          <div className="mt-3 flex items-center justify-center">
+            <span
+              className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-[11px] font-medium ${
+                anonQuota.exhausted
+                  ? "border-danger/40 bg-danger/[0.08] text-danger"
+                  : anonQuota.remaining <= 3
+                    ? "border-warning/40 bg-warning/[0.08] text-warning"
+                    : "border-border bg-surface text-text-muted"
+              }`}
+            >
+              무료 풀이 {anonQuota.used}/{anonQuota.limit}
+              {anonQuota.exhausted ? (
+                <span>· 오늘 한도 도달</span>
+              ) : (
+                <span className="text-text-subtle">· 자정에 리셋</span>
+              )}
+            </span>
+          </div>
+        )}
 
         {/* 진행 바 */}
         <div className="mt-5">

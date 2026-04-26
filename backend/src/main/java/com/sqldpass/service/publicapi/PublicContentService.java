@@ -32,7 +32,9 @@ import com.sqldpass.service.subject.SubjectService;
 import com.sqldpass.persistent.member.MemberRepository;
 import com.sqldpass.persistent.question.QuestionEntity;
 import com.sqldpass.persistent.question.QuestionRepository;
+import com.sqldpass.controller.publicapi.dto.PublicSolveQuotaResponse;
 import com.sqldpass.persistent.solve.AnonymousSolveCountRepository;
+import com.sqldpass.persistent.solve.AnonymousSolveIpQuotaRepository;
 import com.sqldpass.persistent.solve.SolveAnswerRepository;
 import com.sqldpass.persistent.solve.SolveRepository;
 import com.sqldpass.persistent.subject.SubjectEntity;
@@ -99,9 +101,13 @@ public class PublicContentService {
     private final SolveRepository solveRepository;
     private final BlogViewCountRepository blogViewCountRepository;
     private final AnonymousSolveCountRepository anonymousSolveCountRepository;
+    private final AnonymousSolveIpQuotaRepository anonymousSolveIpQuotaRepository;
     private final SubjectService subjectService;
     private final QuestionService questionService;
     private final ObjectMapper objectMapper = new ObjectMapper();
+
+    /** 비회원 1인(IP) 일일 풀이 한도. 자정에 자연 리셋. */
+    public static final int ANON_DAILY_LIMIT = 10;
 
     // ----------------------------------------------------------
     // 랜딩 페이지 공개 캐시 (Caffeine, TTL 1시간 — CacheConfig에서 일괄 관리)
@@ -377,8 +383,17 @@ public class PublicContentService {
 
     /**
      * 비로그인 /solve 화면용 랜덤 N개 문제. QuestionService 가 memberId=null 을 이미 지원.
+     *
+     * 비회원 일일 한도가 소진된 IP 면 진입 자체를 차단해 새 문제 페치를 막는다.
+     * (현재 풀이 중인 문제는 이미 받아간 상태이므로 영향 없음)
      */
-    public List<PublicSolveQuestionResponse> getRandomSolveQuestions(Long subjectId, int size) {
+    public List<PublicSolveQuestionResponse> getRandomSolveQuestions(Long subjectId, int size, String clientIp) {
+        if (clientIp != null) {
+            int used = currentUsed(clientIp, java.time.LocalDate.now());
+            if (used >= ANON_DAILY_LIMIT) {
+                throw new SqldpassException(ErrorCode.ANONYMOUS_SOLVE_LIMIT_EXCEEDED);
+            }
+        }
         return questionService.getRandomQuestions(subjectId, null, size).stream()
                 .map(q -> new PublicSolveQuestionResponse(
                         q.getId(),
@@ -390,11 +405,37 @@ public class PublicContentService {
     }
 
     /**
-     * 비회원 풀이 카운터 오늘자 +delta. DB 에 풀이 내용은 저장하지 않고 집계만 유지.
+     * 비회원 풀이 카운터 오늘자 +delta.
+     *
+     * - {@link AnonymousSolveCountEntity}(V41 일별 전체 합계)는 admin 통계용으로 그대로 +1
+     * - {@link AnonymousSolveIpQuotaEntity}(V62 IP 단위 quota)도 +1 — 이쪽이 한도 차감의 진실
+     *
+     * 응답으로 한도 상태를 즉시 돌려줘 프런트가 별도 조회 없이 UI 갱신 가능.
      */
     @Transactional
-    public void incrementAnonymousSolve(long delta) {
-        if (delta <= 0) return;
-        anonymousSolveCountRepository.increment(java.time.LocalDate.now(), delta);
+    public PublicSolveQuotaResponse incrementAnonymousSolve(long delta, String clientIp) {
+        java.time.LocalDate today = java.time.LocalDate.now();
+        if (delta > 0) {
+            anonymousSolveCountRepository.increment(today, delta);
+            if (clientIp != null) {
+                anonymousSolveIpQuotaRepository.increment(clientIp, today, (int) delta);
+            }
+        }
+        int used = clientIp != null ? currentUsed(clientIp, today) : 0;
+        return PublicSolveQuotaResponse.of(used, ANON_DAILY_LIMIT, today);
+    }
+
+    /**
+     * 현재 IP 의 오늘 quota 조회 (증가 없음). 페이지 진입 시 헤더 칩 표시용.
+     */
+    public PublicSolveQuotaResponse getAnonymousSolveQuota(String clientIp) {
+        java.time.LocalDate today = java.time.LocalDate.now();
+        int used = clientIp != null ? currentUsed(clientIp, today) : 0;
+        return PublicSolveQuotaResponse.of(used, ANON_DAILY_LIMIT, today);
+    }
+
+    private int currentUsed(String clientIp, java.time.LocalDate date) {
+        Integer used = anonymousSolveIpQuotaRepository.usedCount(clientIp, date);
+        return used != null ? used : 0;
     }
 }

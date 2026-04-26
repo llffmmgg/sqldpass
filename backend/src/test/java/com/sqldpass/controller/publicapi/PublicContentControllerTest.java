@@ -21,6 +21,8 @@ import com.sqldpass.service.notification.DiscordNotifier;
 import com.sqldpass.service.publicapi.PastExamPublicService;
 import com.sqldpass.service.publicapi.PublicContentService;
 
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -114,7 +116,7 @@ class PublicContentControllerTest {
     @Test
     @DisplayName("GET /api/public/subjects/{id}/random-questions returns random questions")
     void getRandomQuestions() throws Exception {
-        given(publicContentService.getRandomSolveQuestions(7L, 10))
+        given(publicContentService.getRandomSolveQuestions(eq(7L), eq(10), anyString()))
                 .willReturn(List.of(new PublicSolveQuestionResponse(100L, 7L, "Q1", "MCQ")));
 
         mockMvc.perform(get("/api/public/subjects/7/random-questions?size=10"))

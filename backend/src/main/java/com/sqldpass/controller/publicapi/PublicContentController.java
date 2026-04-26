@@ -21,6 +21,7 @@ import com.sqldpass.controller.publicapi.dto.PublicDtos.PublicQuestionPageRespon
 import com.sqldpass.controller.publicapi.dto.PublicDtos.PublicSolveQuestionResponse;
 import com.sqldpass.controller.publicapi.dto.PublicDtos.PublicSubjectResponse;
 import com.sqldpass.controller.publicapi.dto.PublicRankingResponse;
+import com.sqldpass.controller.publicapi.dto.PublicSolveQuotaResponse;
 import com.sqldpass.controller.publicapi.dto.PublicStatsResponse;
 import com.sqldpass.service.common.ErrorCode;
 import com.sqldpass.service.common.SqldpassException;
@@ -114,17 +115,40 @@ public class PublicContentController {
     }
 
     @GetMapping("/subjects/{id}/random-questions")
-    @Operation(summary = "Subject 기반 랜덤 문제 (비로그인 무한 풀이용)")
+    @Operation(summary = "Subject 기반 랜덤 문제 (비로그인 일일 한도 체크 포함)")
     public List<PublicSolveQuestionResponse> getRandomQuestions(
             @PathVariable long id,
-            @RequestParam(defaultValue = "10") int size) {
-        return publicContentService.getRandomSolveQuestions(id, size);
+            @RequestParam(defaultValue = "10") int size,
+            jakarta.servlet.http.HttpServletRequest request) {
+        return publicContentService.getRandomSolveQuestions(id, size, extractClientIp(request));
     }
 
     @PostMapping("/anonymous-solve")
-    @Operation(summary = "비회원 풀이 카운터 증가 (집계만)")
-    public void incrementAnonymousSolve(@RequestParam(defaultValue = "1") long delta) {
-        publicContentService.incrementAnonymousSolve(delta);
+    @Operation(summary = "비회원 풀이 카운터 증가 + 일일 한도 응답")
+    public PublicSolveQuotaResponse incrementAnonymousSolve(
+            @RequestParam(defaultValue = "1") long delta,
+            jakarta.servlet.http.HttpServletRequest request) {
+        return publicContentService.incrementAnonymousSolve(delta, extractClientIp(request));
+    }
+
+    @GetMapping("/solve-quota")
+    @Operation(summary = "비회원 일일 풀이 한도 상태 조회")
+    public PublicSolveQuotaResponse getSolveQuota(jakarta.servlet.http.HttpServletRequest request) {
+        return publicContentService.getAnonymousSolveQuota(extractClientIp(request));
+    }
+
+    /**
+     * 운영 OCI nginx 뒤이므로 X-Forwarded-For 우선 추출.
+     * 콤마 구분 첫 토큰이 원래 클라이언트 IP. 헤더 없으면 RemoteAddr 폴백.
+     */
+    private static String extractClientIp(jakarta.servlet.http.HttpServletRequest request) {
+        String xff = request.getHeader("X-Forwarded-For");
+        if (xff != null && !xff.isBlank()) {
+            int comma = xff.indexOf(',');
+            String first = (comma >= 0 ? xff.substring(0, comma) : xff).trim();
+            if (!first.isEmpty()) return first;
+        }
+        return request.getRemoteAddr();
     }
 
     // ================= 기출 복원 (past-exams) — 비로그인 공개 =================
