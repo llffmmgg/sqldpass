@@ -9,6 +9,12 @@ import {
   getPublicPastExamsByCert,
 } from "@/lib/publicApi";
 import { getAllSlugs } from "@/lib/blog";
+import { CERT_LIST, slugFromCert } from "@/lib/cert-tokens";
+import { pastExamBlogSlug } from "@/lib/pastExamBlog";
+
+// 빌드타임 생성 시 백엔드가 안 닿아 빈 sitemap 이 캐시되는 문제 방지.
+// 매 요청 시 신선하게 생성한다.
+export const dynamic = "force-dynamic";
 
 const SITE_URL = "https://www.sqldpass.com";
 const BLOG_DIR = path.join(process.cwd(), "content", "blog");
@@ -132,103 +138,92 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
   ];
 
+  // cert 목록은 우선 백엔드에서 받아오고 실패 시 하드코딩 fallback.
+  // 둘 다 같은 6개 cert 를 반환하므로 결과가 빈 sitemap 이 되는 일이 없다.
+  let certs: { slug: string }[];
   try {
-    const certs = await getPublicCerts();
-    const certEntries: MetadataRoute.Sitemap = certs.map((c) => ({
-      url: `${SITE_URL}/learn/${c.slug}`,
-      lastModified: DYNAMIC_LAST_MOD,
-      changeFrequency: "weekly",
-      priority: 0.8,
-    }));
-
-    const categoryEntries: MetadataRoute.Sitemap = [];
-    for (const cert of certs) {
-      try {
-        const categories = await getPublicCategoriesByCert(cert.slug);
-        for (const cat of categories) {
-          categoryEntries.push({
-            url: `${SITE_URL}/learn/${cert.slug}/${cat.slug}`,
-            lastModified: DYNAMIC_LAST_MOD,
-            changeFrequency: "weekly",
-            priority: 0.7,
-          });
-        }
-      } catch {
-        /* 스킵 */
-      }
-    }
-
-    let questionEntries: MetadataRoute.Sitemap = [];
-    try {
-      const ids = await getPublicAllQuestionIds();
-      questionEntries = ids.map((id) => ({
-        url: `${SITE_URL}/q/${id}`,
-        lastModified: DYNAMIC_LAST_MOD,
-        changeFrequency: "monthly",
-        priority: 0.6,
-      }));
-    } catch {
-      /* 스킵 */
-    }
-
-    // 기출 복원 블로그 글 (SEO용 자동 생성)
-    const pastExamBlogEntries: MetadataRoute.Sitemap = [];
-    try {
-      const { pastExamBlogSlug } = await import("@/lib/pastExamBlog");
-      for (const cert of certs) {
-        try {
-          const list = await getPublicPastExamsByCert(cert.slug);
-          for (const exam of list) {
-            const slug = pastExamBlogSlug(exam);
-            pastExamBlogEntries.push({
-              url: `${SITE_URL}/blog/past-exam/${slug}`,
-              lastModified: (exam.createdAt ?? "").slice(0, 10) || DYNAMIC_LAST_MOD,
-              changeFrequency: "monthly",
-              priority: 0.7,
-            });
-          }
-        } catch {
-          /* 스킵 */
-        }
-      }
-    } catch {
-      /* 스킵 */
-    }
-
-    const pastExamCertEntries: MetadataRoute.Sitemap = certs.map((cert) => ({
-      url: `${SITE_URL}/past-exams/${cert.slug}`,
-      lastModified: DYNAMIC_LAST_MOD,
-      changeFrequency: "weekly",
-      priority: 0.8,
-    }));
-
-    const pastExamEntries: MetadataRoute.Sitemap = [];
-    for (const cert of certs) {
-      try {
-        const pastExams = await getPublicPastExamsByCert(cert.slug);
-        for (const pe of pastExams) {
-          pastExamEntries.push({
-            url: `${SITE_URL}/past-exams/${pe.id}`,
-            lastModified: (pe.createdAt ?? "").slice(0, 10) || DYNAMIC_LAST_MOD,
-            changeFrequency: "monthly",
-            priority: 0.75,
-          });
-        }
-      } catch {
-        /* 스킵 */
-      }
-    }
-
-    return [
-      ...staticEntries,
-      ...certEntries,
-      ...categoryEntries,
-      ...questionEntries,
-      ...pastExamCertEntries,
-      ...pastExamEntries,
-      ...pastExamBlogEntries,
-    ];
+    certs = await getPublicCerts();
   } catch {
-    return staticEntries;
+    certs = CERT_LIST.map((c) => ({ slug: slugFromCert(c.key) }));
   }
+
+  const certEntries: MetadataRoute.Sitemap = certs.map((c) => ({
+    url: `${SITE_URL}/learn/${c.slug}`,
+    lastModified: DYNAMIC_LAST_MOD,
+    changeFrequency: "weekly",
+    priority: 0.8,
+  }));
+
+  const categoryEntries: MetadataRoute.Sitemap = [];
+  for (const cert of certs) {
+    try {
+      const categories = await getPublicCategoriesByCert(cert.slug);
+      for (const cat of categories) {
+        categoryEntries.push({
+          url: `${SITE_URL}/learn/${cert.slug}/${cat.slug}`,
+          lastModified: DYNAMIC_LAST_MOD,
+          changeFrequency: "weekly",
+          priority: 0.7,
+        });
+      }
+    } catch {
+      /* 스킵 */
+    }
+  }
+
+  let questionEntries: MetadataRoute.Sitemap = [];
+  try {
+    const ids = await getPublicAllQuestionIds();
+    questionEntries = ids.map((id) => ({
+      url: `${SITE_URL}/q/${id}`,
+      lastModified: DYNAMIC_LAST_MOD,
+      changeFrequency: "monthly",
+      priority: 0.6,
+    }));
+  } catch {
+    /* 스킵 */
+  }
+
+  const pastExamCertEntries: MetadataRoute.Sitemap = certs.map((cert) => ({
+    url: `${SITE_URL}/past-exams/${cert.slug}`,
+    lastModified: DYNAMIC_LAST_MOD,
+    changeFrequency: "weekly",
+    priority: 0.8,
+  }));
+
+  // 기출 복원 회차별 풀이 페이지 + SEO 블로그 글 (한 번의 API 호출로 둘 다 만든다)
+  const pastExamEntries: MetadataRoute.Sitemap = [];
+  const pastExamBlogEntries: MetadataRoute.Sitemap = [];
+  for (const cert of certs) {
+    try {
+      const pastExams = await getPublicPastExamsByCert(cert.slug);
+      for (const pe of pastExams) {
+        const lastMod = (pe.createdAt ?? "").slice(0, 10) || DYNAMIC_LAST_MOD;
+        pastExamEntries.push({
+          url: `${SITE_URL}/past-exams/${pe.id}`,
+          lastModified: lastMod,
+          changeFrequency: "monthly",
+          priority: 0.75,
+        });
+        pastExamBlogEntries.push({
+          url: `${SITE_URL}/blog/past-exam/${pastExamBlogSlug(pe)}`,
+          lastModified: lastMod,
+          changeFrequency: "monthly",
+          priority: 0.7,
+        });
+      }
+    } catch {
+      /* 스킵 */
+    }
+  }
+
+  return [
+    ...staticEntries,
+    ...certEntries,
+    ...categoryEntries,
+    ...questionEntries,
+    ...pastExamCertEntries,
+    ...pastExamEntries,
+    ...pastExamBlogEntries,
+  ];
 }
