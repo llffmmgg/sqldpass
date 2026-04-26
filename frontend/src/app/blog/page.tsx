@@ -34,11 +34,13 @@ export default async function BlogPage() {
     ? flattenPastExamLists(listsByCert).map((exam) => {
         const cert = certFromExamType(exam.examType);
         const category = cert ? CERT_TOKENS[cert].blogCategory : "일반";
+        // examDate(시험 응시일)이 아니라 createdAt(시스템 등록일)을 사용.
+        // 그래야 새로 등록된 회차가 최근 글 위쪽에 자연스럽게 섞여 노출됨.
         return {
           slug: `past-exam/${pastExamBlogSlug(exam)}`,
           title: pastExamBlogTitle(exam),
           description: pastExamBlogDescription(exam),
-          date: exam.examDate ?? exam.createdAt.slice(0, 10),
+          date: exam.createdAt.slice(0, 10),
           category,
           tags: ["기출 복원", category],
           readingTime: `${Math.max(5, Math.round(exam.totalQuestions / 4))}분`,
