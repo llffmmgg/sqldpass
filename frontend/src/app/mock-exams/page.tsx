@@ -13,7 +13,6 @@ import {
   type CertKey,
 } from "@/lib/cert-tokens";
 import { isLoggedIn } from "@/lib/auth";
-import { getGoogleLoginUrl } from "@/lib/oauth";
 import {
   getMockExams,
   type EngineerTemplateKey,
@@ -117,7 +116,7 @@ function MockExamsPageContent() {
           {filtered && filtered.length > 0 && (
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               {filtered.map((exam) => (
-                <MockExamCard key={exam.id} exam={exam} authed={authed} />
+                <MockExamCard key={exam.id} exam={exam} />
               ))}
             </div>
           )}
@@ -137,11 +136,11 @@ function MockExamsPageContent() {
   );
 }
 
-function MockExamCard({ exam, authed }: { exam: MockExamSummary; authed: boolean }) {
+function MockExamCard({ exam }: { exam: MockExamSummary }) {
   const cert = certFromExamType(exam.examType);
   const isPremium = exam.visibility === "PREMIUM";
   const isNew = isWithinDays(exam.createdAt, 3);
-  const href = authed ? `/mock-exams/${exam.id}` : getGoogleLoginUrl();
+  const href = `/mock-exams/${exam.id}`;
 
   return (
     <Link href={href} className="group relative block">
@@ -198,7 +197,7 @@ function MockExamCard({ exam, authed }: { exam: MockExamSummary; authed: boolean
         <div className="mt-2 text-sm text-text-muted">총 {exam.totalQuestions}문항</div>
 
         <div className="mt-4 inline-flex items-center gap-1.5 text-xs font-semibold text-primary transition-transform group-hover:translate-x-1">
-          {authed ? "응시하기 →" : "로그인하고 응시 →"}
+          응시하기 →
         </div>
       </Card>
     </Link>
