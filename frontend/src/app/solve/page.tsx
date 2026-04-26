@@ -46,8 +46,8 @@ const SET_SIZE = 10;
 // 인피드: sqldpass-solve-review-infeed (모바일)
 const SOLVE_REVIEW_INFEED_SLOT = "7711219655";
 const SOLVE_REVIEW_INFEED_LAYOUT_KEY = "-ex+5o+5o-ct+35";
-// 디스플레이(데스크톱) — TODO: AdSense 콘솔에서 발급 후 교체
-const SOLVE_REVIEW_DISPLAY_SLOT = "TODO_SOLVE_REVIEW_DISPLAY";
+// 디스플레이: sqldpass-solve-review-display (데스크톱)
+const SOLVE_REVIEW_DISPLAY_SLOT = "7421154621";
 
 export default function SolvePage() {
   return (
