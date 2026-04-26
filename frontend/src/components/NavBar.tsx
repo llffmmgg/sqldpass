@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { isLoggedIn, getNickname, clearAuth } from "@/lib/auth";
 import { getGoogleLoginUrl } from "@/lib/oauth";
 import { type Theme, getInitialTheme, setStoredTheme, applyTheme } from "@/lib/theme";
@@ -360,22 +360,60 @@ function NavDropdown({
   buildHref: (cert: CertKey) => string;
 }) {
   const [open, setOpen] = useState(false);
+  const triggerRef = useRef<HTMLButtonElement | null>(null);
+  const menuRef = useRef<HTMLDivElement | null>(null);
+
+  function focusFirstItem() {
+    requestAnimationFrame(() => {
+      const firstLink = menuRef.current?.querySelector<HTMLAnchorElement>("a[href]");
+      firstLink?.focus();
+    });
+  }
+
+  function handleTriggerKeyDown(e: React.KeyboardEvent<HTMLButtonElement>) {
+    if (e.key === "ArrowDown" || e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      setOpen(true);
+      focusFirstItem();
+      return;
+    }
+    if (e.key === "Escape") {
+      setOpen(false);
+      triggerRef.current?.focus();
+    }
+  }
+
+  function handleMenuKeyDown(e: React.KeyboardEvent<HTMLDivElement>) {
+    if (e.key === "Escape") {
+      e.preventDefault();
+      setOpen(false);
+      triggerRef.current?.focus();
+    }
+  }
+
   return (
     <li
       className="relative"
       onMouseEnter={() => setOpen(true)}
       onMouseLeave={() => setOpen(false)}
+      onBlur={(e) => {
+        if (!e.currentTarget.contains(e.relatedTarget as Node | null)) {
+          setOpen(false);
+        }
+      }}
     >
       <button
+        ref={triggerRef}
         onClick={() => setOpen((v) => !v)}
         onFocus={() => setOpen(true)}
-        onBlur={() => setOpen(false)}
+        onKeyDown={handleTriggerKeyDown}
         className={`inline-flex h-9 items-center gap-1 rounded-md px-3 text-sm font-medium transition-colors ${
           active
             ? "bg-primary/10 text-primary"
             : "text-text-muted hover:text-text hover:bg-surface-hover"
         }`}
         aria-expanded={open}
+        aria-haspopup="menu"
       >
         {label}
         <svg
@@ -390,9 +428,12 @@ function NavDropdown({
       </button>
       {open && (
         <div
+          ref={menuRef}
           className="absolute left-0 top-full z-50 min-w-[260px] pt-2"
           onMouseEnter={() => setOpen(true)}
           onMouseLeave={() => setOpen(false)}
+          onKeyDown={handleMenuKeyDown}
+          role="menu"
         >
           <div className="animate-[dropdown-enter_0.15s_ease-out] overflow-hidden rounded-xl border border-border bg-bg-elevated shadow-[var(--shadow-lg)]">
             {CERT_LIST.map((cert, idx) => (
@@ -400,6 +441,7 @@ function NavDropdown({
                 key={cert.key}
                 href={buildHref(cert.key)}
                 onClick={() => setOpen(false)}
+                role="menuitem"
                 className={`flex items-center gap-3 px-4 py-2.5 transition-colors hover:bg-surface-hover ${
                   idx !== 0 ? "border-t border-border/50" : ""
                 }`}

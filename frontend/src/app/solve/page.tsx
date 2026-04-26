@@ -883,6 +883,7 @@ function SolvePageContent() {
                 variant="primary"
                 size="sm"
                 onClick={handleNext}
+                className="hidden sm:inline-flex"
                 rightIcon={
                   <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
@@ -934,7 +935,7 @@ function SolvePageContent() {
         <Button
           variant="primary"
           size="lg"
-          className="fixed bottom-6 right-6 z-50 shadow-[var(--shadow-xl)] shadow-primary/30"
+          className="fixed bottom-6 right-6 z-50 shadow-[var(--shadow-xl)] shadow-primary/30 sm:hidden"
           onClick={handleNext}
           aria-label={solvedCount >= SET_SIZE ? "결과 보기" : "다음 문제"}
           rightIcon={

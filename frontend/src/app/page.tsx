@@ -81,7 +81,7 @@ export default function Home() {
       </section>
 
       {/* ── Daily Question ─────────────────────────────────── */}
-      <Section>
+      <Section id="preview" className="scroll-mt-24">
         <Container size="default">
           <DailyQuestionWidget />
         </Container>
