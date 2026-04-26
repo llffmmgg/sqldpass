@@ -210,23 +210,49 @@ function SolvePageContent() {
 
   async function handleSelectSubject(subject: Subject) {
     setSelectedSubject(subject);
+    // 비회원이고 이미 한도 소진이면 fetch 호출 자체를 건너뛰고 종료 화면으로
+    if (!loggedIn && quotaExhausted) {
+      setPhase("session-complete");
+      return;
+    }
     setLoading(true);
-    const qs = await fetchQuestions(subject.id);
-    setLoading(false);
-    startSessionWithQuestions(qs);
+    try {
+      const qs = await fetchQuestions(subject.id);
+      startSessionWithQuestions(qs);
+    } catch {
+      // 서버 429 (한도 초과) 등 — 로딩 풀고 종료 화면으로 안내
+      if (!loggedIn) setQuotaExhausted(true);
+      setPhase("session-complete");
+    } finally {
+      setLoading(false);
+    }
   }
 
   function replaySameSession() {
+    if (!loggedIn && quotaExhausted) {
+      setPhase("session-complete");
+      return;
+    }
     if (sessionQuestions.length === 0) return;
     startSessionWithQuestions(sessionQuestions);
   }
 
   async function newRandomSession() {
     if (!selectedSubject) return;
+    if (!loggedIn && quotaExhausted) {
+      setPhase("session-complete");
+      return;
+    }
     setLoading(true);
-    const qs = await fetchQuestions(selectedSubject.id);
-    setLoading(false);
-    startSessionWithQuestions(qs);
+    try {
+      const qs = await fetchQuestions(selectedSubject.id);
+      startSessionWithQuestions(qs);
+    } catch {
+      if (!loggedIn) setQuotaExhausted(true);
+      setPhase("session-complete");
+    } finally {
+      setLoading(false);
+    }
   }
 
   function goPrevious() {
@@ -359,16 +385,16 @@ function SolvePageContent() {
       setLoading(true);
       try {
         nextQueue = await fetchQuestions(selectedSubject.id);
-      } catch (e) {
-        setLoading(false);
+      } catch {
         // 서버 측 한도 초과(429) 가드에 걸렸을 때
         if (!loggedIn) {
           setQuotaExhausted(true);
           setPhase("session-complete");
         }
-        throw e;
+        return;
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     }
 
     setPastEntries((prev) => [
