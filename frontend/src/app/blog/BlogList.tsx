@@ -10,98 +10,67 @@ type CategoryMeta = {
   name: string;
   slug: string;
   label: string;
-  description: string;
   iconBg: string;
   emoji: string;
 };
 
 const CATEGORIES: CategoryMeta[] = [
-  {
-    name: "SQLD",
-    slug: "SQLD",
-    label: "SQLD",
-    description: "SQL 개발자 자격증 공부법, 핵심 개념, 합격률, 시험일정",
-    iconBg: "bg-amber-500/10",
-    emoji: "🗃️",
-  },
-  {
-    name: "정보처리기사",
-    slug: "정보처리기사",
-    label: "정보처리기사 실기",
-    description: "정처기 실기 출제 경향, 코드 문제 풀이, 암기 과목 정리",
-    iconBg: "bg-emerald-500/10",
-    emoji: "💻",
-  },
-  {
-    name: "정보처리기사 필기",
-    slug: "정보처리기사 필기",
-    label: "정보처리기사 필기",
-    description: "정처기 필기 5과목 공부법, 핵심 개념 요약, 합격률 분석",
-    iconBg: "bg-rose-500/10",
-    emoji: "📝",
-  },
-  {
-    name: "컴퓨터활용능력",
-    slug: "컴퓨터활용능력",
-    label: "컴퓨터활용능력",
-    description: "컴활 1급 필기 벼락치기, 실기 대비, 합격률 분석",
-    iconBg: "bg-sky-500/10",
-    emoji: "📊",
-  },
-  {
-    name: "컴퓨터활용능력 2급",
-    slug: "컴퓨터활용능력 2급",
-    label: "컴퓨터활용능력 2급",
-    description: "컴활 2급 필기 공부법, 핵심 개념, 합격률, 시험일정",
-    iconBg: "bg-indigo-500/10",
-    emoji: "📋",
-  },
-  {
-    name: "ADsP",
-    slug: "ADsP",
-    label: "데이터분석 준전문가(ADsP)",
-    description: "ADsP 공부법, 핵심 개념 요약, 합격률, 2024 개편 대응",
-    iconBg: "bg-teal-500/10",
-    emoji: "📈",
-  },
-  {
-    name: "일반",
-    slug: "일반",
-    label: "시험 팁",
-    description: "자격증 비교, 시험 당일 꿀팁, CBT 모의고사 활용법",
-    iconBg: "bg-primary/10",
-    emoji: "🎯",
-  },
+  { name: "SQLD", slug: "SQLD", label: "SQLD", iconBg: "bg-amber-500/10", emoji: "🗃️" },
+  { name: "정보처리기사", slug: "정보처리기사", label: "정보처리기사 실기", iconBg: "bg-emerald-500/10", emoji: "💻" },
+  { name: "정보처리기사 필기", slug: "정보처리기사 필기", label: "정보처리기사 필기", iconBg: "bg-rose-500/10", emoji: "📝" },
+  { name: "컴퓨터활용능력", slug: "컴퓨터활용능력", label: "컴퓨터활용능력", iconBg: "bg-sky-500/10", emoji: "📊" },
+  { name: "컴퓨터활용능력 2급", slug: "컴퓨터활용능력 2급", label: "컴퓨터활용능력 2급", iconBg: "bg-indigo-500/10", emoji: "📋" },
+  { name: "ADsP", slug: "ADsP", label: "ADsP", iconBg: "bg-teal-500/10", emoji: "📈" },
+  { name: "일반", slug: "일반", label: "시험 팁", iconBg: "bg-primary/10", emoji: "🎯" },
 ];
+
+const CATEGORY_BY_NAME: Record<string, CategoryMeta> = Object.fromEntries(
+  CATEGORIES.map((c) => [c.name, c]),
+);
+
+function formatDate(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, "0")}.${String(d.getDate()).padStart(2, "0")}`;
+}
 
 export default function BlogList({
   posts,
   categories,
   viewCounts,
-  recommendedPosts,
 }: {
   posts: BlogPostMeta[];
   categories: { category: string; count: number }[];
   viewCounts: Record<string, number>;
   recommendedPosts: BlogPostMeta[];
 }) {
-  const countMap = Object.fromEntries(categories.map((c) => [c.category, c.count]));
   const totalViews = Object.values(viewCounts).reduce((s, v) => s + v, 0);
+  const countMap = Object.fromEntries(categories.map((c) => [c.category, c.count]));
+  const orderedCategories = CATEGORIES.filter((c) => (countMap[c.name] ?? 0) > 0);
+
+  const popularPosts = [...posts]
+    .map((p) => ({ post: p, views: viewCounts[p.slug] ?? 0 }))
+    .sort((a, b) => b.views - a.views)
+    .filter((x) => x.views > 0)
+    .slice(0, 5)
+    .map((x) => x.post);
+
+  const recentPosts = posts.slice(0, 5);
 
   return (
-    <Container size="default" className="py-16">
-      <header className="mb-14 flex items-center gap-5">
+    <Container size="default" className="py-12">
+      <header className="mb-10 flex items-center gap-5">
         <Image
           src="/blog-mascot.webp"
           alt="시험 준비 팁 마스코트"
-          width={120}
-          height={120}
+          width={96}
+          height={96}
           className="shrink-0"
           priority
         />
         <div>
-          <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">시험 준비 팁</h1>
-          <p className="mt-2 max-w-lg text-base text-text-muted">
+          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">시험 준비 팁</h1>
+          <p className="mt-2 max-w-lg text-sm text-text-muted">
             자격증별 학습 전략과 합격 노하우를 정리했어요.
           </p>
           <div className="mt-2 flex items-center gap-3 text-xs text-text-subtle">
@@ -116,99 +85,160 @@ export default function BlogList({
         </div>
       </header>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {CATEGORIES.map((cat) => {
-          const count = countMap[cat.name] ?? 0;
-          if (count === 0) return null;
-          return (
-            <Link
-              key={cat.name}
-              href={`/blog/category/${encodeURIComponent(cat.slug)}`}
-              className="group block h-full"
-            >
-              <Card variant="interactive" padding="md" className="h-full">
-                <div className="flex items-center justify-between">
-                  <div className={`flex h-12 w-12 items-center justify-center rounded-xl ${cat.iconBg}`}>
-                    <span className="text-2xl">{cat.emoji}</span>
-                  </div>
-                  <span className="rounded-full border border-border bg-surface px-2.5 py-0.5 text-xs font-medium text-text-muted">
-                    {count}개의 글
-                  </span>
-                </div>
-                <h2 className="mt-5 text-lg font-semibold tracking-tight group-hover:text-primary">
-                  {cat.label}
-                </h2>
-                <p className="mt-2 text-sm leading-relaxed text-text-muted">
-                  {cat.description}
-                </p>
-                <div className="mt-5 inline-flex items-center gap-1 text-sm font-medium text-text-muted transition-colors group-hover:text-primary">
-                  글 보러가기
-                  <svg
-                    className="h-4 w-4 transition-transform group-hover:translate-x-0.5"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth={2}
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_280px]">
+        <main>
+          <h2 className="mb-4 text-xs font-semibold uppercase tracking-wider text-text-muted">
+            전체 글 ({posts.length})
+          </h2>
+          <ul className="divide-y divide-border border-y border-border">
+            {posts.map((post) => (
+              <li key={post.slug}>
+                <PostListItem post={post} views={viewCounts[post.slug] ?? 0} />
+              </li>
+            ))}
+          </ul>
+        </main>
+
+        <aside className="lg:sticky lg:top-20 lg:self-start lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto">
+          <SidebarSection title="카테고리">
+            <ul className="space-y-1">
+              {orderedCategories.map((cat) => (
+                <li key={cat.name}>
+                  <Link
+                    href={`/blog/category/${encodeURIComponent(cat.slug)}`}
+                    className="flex items-center justify-between rounded-md px-3 py-2 text-sm transition-colors hover:bg-surface-hover"
                   >
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                  </svg>
-                </div>
-              </Card>
-            </Link>
-          );
-        })}
+                    <span className="flex items-center gap-2 text-text">
+                      <span className={`flex h-6 w-6 items-center justify-center rounded ${cat.iconBg} text-sm`}>
+                        {cat.emoji}
+                      </span>
+                      {cat.label}
+                    </span>
+                    <span className="text-xs tabular-nums text-text-muted">
+                      {countMap[cat.name]}
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </SidebarSection>
+
+          {popularPosts.length > 0 && (
+            <SidebarSection title="인기 글" className="mt-8">
+              <ol className="space-y-2.5">
+                {popularPosts.map((post, i) => (
+                  <li key={post.slug}>
+                    <Link
+                      href={`/blog/${post.slug}`}
+                      className="group flex gap-3 rounded-md p-2 text-sm transition-colors hover:bg-surface-hover"
+                    >
+                      <span className="shrink-0 text-base font-bold tabular-nums text-text-muted">
+                        {i + 1}
+                      </span>
+                      <span className="flex-1">
+                        <span className="line-clamp-2 font-medium leading-snug group-hover:text-primary">
+                          {post.title}
+                        </span>
+                        <span className="mt-0.5 block text-xs text-text-subtle">
+                          조회 {(viewCounts[post.slug] ?? 0).toLocaleString()}
+                        </span>
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </ol>
+            </SidebarSection>
+          )}
+
+          <SidebarSection title="최근 글" className="mt-8">
+            <ul className="space-y-2.5">
+              {recentPosts.map((post) => (
+                <li key={post.slug}>
+                  <Link
+                    href={`/blog/${post.slug}`}
+                    className="group block rounded-md p-2 text-sm transition-colors hover:bg-surface-hover"
+                  >
+                    <span className="line-clamp-2 font-medium leading-snug group-hover:text-primary">
+                      {post.title}
+                    </span>
+                    <span className="mt-0.5 block text-xs text-text-subtle">
+                      {formatDate(post.date)}
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </SidebarSection>
+        </aside>
+      </div>
+    </Container>
+  );
+}
+
+function PostListItem({ post, views }: { post: BlogPostMeta; views: number }) {
+  const cert = certFromBlogCategory(post.category);
+  const meta = CATEGORY_BY_NAME[post.category];
+
+  return (
+    <Link href={`/blog/${post.slug}`} className="group flex items-start gap-4 py-5 transition-colors">
+      <div
+        className={`flex h-20 w-20 shrink-0 items-center justify-center rounded-lg ${
+          meta?.iconBg ?? "bg-surface-hover"
+        } sm:h-24 sm:w-24`}
+        aria-hidden
+      >
+        <span className="text-3xl sm:text-4xl">{meta?.emoji ?? "📚"}</span>
       </div>
 
-      {recommendedPosts.length > 0 && (
-        <section className="mt-16">
-          <h2 className="text-xl font-semibold tracking-tight">추천 글</h2>
-          <div className="mt-5 space-y-3">
-            {recommendedPosts.map((post) => {
-              const views = viewCounts[post.slug] ?? 0;
-              const cert = certFromBlogCategory(post.category);
-              return (
-                <Link key={post.slug} href={`/blog/${post.slug}`} className="group block">
-                  <Card variant="interactive" padding="sm" className="flex items-center gap-4">
-                    <div className="flex-1">
-                      <div className="flex flex-wrap items-center gap-2 text-xs">
-                        {cert ? (
-                          <Badge cert={cert} variant="soft" size="xs">
-                            {post.category}
-                          </Badge>
-                        ) : (
-                          <Badge variant="soft" tone="neutral" size="xs">
-                            {post.category}
-                          </Badge>
-                        )}
-                        <span className="text-text-muted">
-                          {new Date(post.date).toLocaleDateString("ko-KR", {
-                            month: "long",
-                            day: "numeric",
-                          })}
-                        </span>
-                        <span className="text-text-subtle">{post.readingTime}</span>
-                        <span className="text-text-subtle">조회 {views.toLocaleString()}</span>
-                      </div>
-                      <h3 className="mt-2 text-base font-semibold leading-snug group-hover:text-primary">
-                        {post.title}
-                      </h3>
-                    </div>
-                    <svg
-                      className="h-5 w-5 shrink-0 text-text-subtle transition-transform group-hover:translate-x-0.5 group-hover:text-primary"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      strokeWidth={2}
-                    >
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
-                    </svg>
-                  </Card>
-                </Link>
-              );
-            })}
-          </div>
-        </section>
-      )}
-    </Container>
+      <div className="min-w-0 flex-1">
+        <div className="flex flex-wrap items-center gap-2 text-xs">
+          {cert ? (
+            <Badge cert={cert} variant="soft" size="xs">
+              {post.category}
+            </Badge>
+          ) : (
+            <Badge variant="soft" tone="neutral" size="xs">
+              {post.category}
+            </Badge>
+          )}
+          <span className="text-text-muted">{formatDate(post.date)}</span>
+          <span className="text-text-subtle">·</span>
+          <span className="text-text-subtle">{post.readingTime}</span>
+          {views > 0 && (
+            <>
+              <span className="text-text-subtle">·</span>
+              <span className="text-text-subtle">조회 {views.toLocaleString()}</span>
+            </>
+          )}
+        </div>
+        <h3 className="mt-2 text-base font-semibold leading-snug text-text group-hover:text-primary sm:text-lg">
+          {post.title}
+        </h3>
+        {post.description && (
+          <p className="mt-1.5 line-clamp-2 text-sm leading-relaxed text-text-muted">
+            {post.description}
+          </p>
+        )}
+      </div>
+    </Link>
+  );
+}
+
+function SidebarSection({
+  title,
+  className,
+  children,
+}: {
+  title: string;
+  className?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <Card padding="md" className={className}>
+      <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-text-muted">
+        {title}
+      </h3>
+      {children}
+    </Card>
   );
 }
