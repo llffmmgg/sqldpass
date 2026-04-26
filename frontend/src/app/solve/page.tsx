@@ -373,12 +373,25 @@ function SolvePageContent() {
     if (!selectedSubject || !current) return;
 
     if (solvedCount >= SET_SIZE) {
+      // 마지막 문제도 상세 보기 리스트에 포함되도록 종료 직전 push
+      if (current && detail) {
+        setPastEntries((prev) => [
+          ...prev,
+          { question: current, selectedOption, answerText, revealed, detail },
+        ]);
+      }
       setPhase("session-complete");
       return;
     }
 
     // 비회원 일일 한도 소진 시 다음 문제 fetch 차단 → 즉시 세션 완료 + 로그인 CTA
     if (!loggedIn && quotaExhausted) {
+      if (current && detail) {
+        setPastEntries((prev) => [
+          ...prev,
+          { question: current, selectedOption, answerText, revealed, detail },
+        ]);
+      }
       setPhase("session-complete");
       return;
     }
@@ -677,6 +690,8 @@ function SolvePageContent() {
               </button>
             </div>
           </div>
+
+          <SessionReviewList entries={pastEntries} />
         </Container>
       </main>
     );
@@ -996,5 +1011,168 @@ function QuestionTypeBadge({ type }: { type: Question["questionType"] }) {
     <Badge variant="soft" tone="info" size="xs">
       서술형
     </Badge>
+  );
+}
+
+// ── 세션 종료 후 문제별 상세 보기 ───────────────────────────
+// 푼 문제 N개를 인라인 아코디언으로 노출. 한 번에 한 카드만 펼침.
+// 데이터는 모두 클라이언트 상태(pastEntries) — 비회원/회원 동일 동작.
+
+function isClientSideCorrectStatic(d: QuestionDetail, selectedOption: number | null, answerText: string): boolean {
+  if (d.questionType === "MCQ") {
+    return selectedOption === d.correctOption;
+  }
+  const norm = (s: string) => s.trim().toLowerCase().replace(/\s+/g, " ");
+  const submitted = norm(answerText);
+  if (!submitted) return false;
+  if (d.answer && norm(d.answer) === submitted) return true;
+  return d.keywords.some((k) => norm(k) === submitted);
+}
+
+function SessionReviewList({ entries }: { entries: PastEntry[] }) {
+  const [openIdx, setOpenIdx] = useState<number | null>(null);
+  if (entries.length === 0) return null;
+  return (
+    <section className="mt-10">
+      <h2 className="text-lg font-semibold tracking-tight">문제별 상세</h2>
+      <p className="mt-1 text-xs text-text-muted">
+        오답·정답 모두 다시 보고 해설을 확인하세요. 카드를 클릭하면 펼쳐집니다.
+      </p>
+      <div className="mt-4 space-y-2">
+        {entries.map((e, i) => (
+          <SessionReviewCard
+            key={`${e.question.id}-${i}`}
+            index={i}
+            entry={e}
+            open={openIdx === i}
+            onToggle={() => setOpenIdx(openIdx === i ? null : i)}
+          />
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function SessionReviewCard({
+  index,
+  entry,
+  open,
+  onToggle,
+}: {
+  index: number;
+  entry: PastEntry;
+  open: boolean;
+  onToggle: () => void;
+}) {
+  const parsed = parseQuestion(entry.question.content);
+  const preview = parsed.body.replace(/\s+/g, " ").trim();
+  const previewShort = preview.length > 40 ? preview.slice(0, 40) + "…" : preview;
+  const graded = entry.detail !== null;
+  const isCorrect = entry.detail
+    ? isClientSideCorrectStatic(entry.detail, entry.selectedOption, entry.answerText)
+    : false;
+
+  return (
+    <Card padding="none" className="overflow-hidden">
+      <button
+        onClick={onToggle}
+        className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-surface-hover"
+      >
+        <span
+          className={`inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-bold ${
+            !graded
+              ? "bg-surface-hover text-text-subtle"
+              : isCorrect
+                ? "bg-success/15 text-success"
+                : "bg-danger/15 text-danger"
+          }`}
+        >
+          {!graded ? "–" : isCorrect ? "✓" : "✗"}
+        </span>
+        <span className="text-xs font-semibold tabular-nums text-text-muted">
+          문제 {index + 1}
+        </span>
+        <span className="flex-1 truncate text-sm text-text">{previewShort}</span>
+        <span
+          className={`text-xs text-text-subtle transition-transform ${open ? "rotate-180" : ""}`}
+        >
+          ▾
+        </span>
+      </button>
+
+      {open && (
+        <div className="border-t border-border bg-surface-subtle/50 px-4 py-4">
+          <QuestionContent content={parsed.body} />
+
+          {entry.detail?.questionType === "MCQ" && parsed.options.length > 0 && (
+            <ul className="mt-3 space-y-1.5">
+              {parsed.options.map((opt, i) => {
+                const num = i + 1;
+                const isAnswer = num === entry.detail!.correctOption;
+                const isMine = num === entry.selectedOption;
+                return (
+                  <li
+                    key={num}
+                    className={`rounded-md border px-3 py-2 text-sm ${
+                      isAnswer
+                        ? "border-success/40 bg-success/10"
+                        : isMine
+                          ? "border-danger/40 bg-danger/10"
+                          : "border-border bg-bg"
+                    }`}
+                  >
+                    <span className="mr-2 font-semibold tabular-nums">{num}.</span>
+                    {opt}
+                    {isAnswer && (
+                      <span className="ml-2 text-[11px] font-bold text-success">정답</span>
+                    )}
+                    {isMine && !isAnswer && (
+                      <span className="ml-2 text-[11px] font-bold text-danger">내 답</span>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+
+          {entry.detail && entry.detail.questionType !== "MCQ" && (
+            <div className="mt-3 rounded-md border border-border bg-bg p-3 text-sm">
+              <p className="text-xs font-semibold text-text-muted">내 답</p>
+              <p className="mt-1">
+                {entry.answerText || (
+                  <span className="text-text-subtle">(미응답)</span>
+                )}
+              </p>
+              {entry.detail.answer && (
+                <>
+                  <p className="mt-3 text-xs font-semibold text-text-muted">모범답안</p>
+                  <p className="mt-1">{entry.detail.answer}</p>
+                </>
+              )}
+              {entry.detail.keywords.length > 0 && (
+                <p className="mt-2 text-xs text-text-muted">
+                  키워드: {entry.detail.keywords.join(", ")}
+                </p>
+              )}
+            </div>
+          )}
+
+          {entry.detail?.explanation && (
+            <div className="mt-3 rounded-md border border-primary/20 bg-primary/[0.04] p-3">
+              <p className="text-[11px] font-bold uppercase tracking-wider text-primary">
+                해설
+              </p>
+              <div className="mt-2 text-sm leading-relaxed">
+                <QuestionContent content={entry.detail.explanation} />
+              </div>
+            </div>
+          )}
+
+          {!entry.detail && (
+            <p className="mt-3 text-xs text-text-subtle">채점 전 문제입니다.</p>
+          )}
+        </div>
+      )}
+    </Card>
   );
 }
