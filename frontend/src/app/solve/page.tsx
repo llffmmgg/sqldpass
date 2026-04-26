@@ -30,6 +30,7 @@ import AdDisplay from "@/components/AdDisplay";
 import { useToast } from "@/components/Toast";
 import { Badge, Button, Card, Container } from "@/components/ui";
 import {
+  CERT_LIST,
   CERT_TOKENS,
   certFromRootName,
   type CertKey,
@@ -100,6 +101,10 @@ function SolvePageContent() {
   const [authChecked, setAuthChecked] = useState(false);
   const [anonQuota, setAnonQuota] = useState<PublicSolveQuota | null>(null);
   const [quotaExhausted, setQuotaExhausted] = useState(false);
+  const initialCert: CertKey = (certParam && certParam in CERT_TOKENS)
+    ? (certParam as CertKey)
+    : "SQLD";
+  const [certFilter, setCertFilter] = useState<CertKey>(initialCert);
 
   useEffect(() => {
     const logged = isLoggedIn();
@@ -120,6 +125,12 @@ function SolvePageContent() {
         });
     }
   }, []);
+
+  useEffect(() => {
+    if (certParam && certParam in CERT_TOKENS) {
+      setCertFilter(certParam as CertKey);
+    }
+  }, [certParam]);
 
   useEffect(() => {
     function onPopState() {
@@ -449,10 +460,7 @@ function SolvePageContent() {
       certGroups.get(key)!.roots.push(root);
     }
 
-    const certKey = (certParam && certParam in CERT_TOKENS) ? (certParam as CertKey) : null;
-    const visibleGroups = certKey
-      ? Array.from(certGroups.entries()).filter(([k]) => k === certKey).map(([, v]) => v)
-      : Array.from(certGroups.values());
+    const activeGroup = certGroups.get(certFilter) ?? null;
 
     return (
       <main className="min-h-screen bg-bg text-text">
@@ -460,52 +468,77 @@ function SolvePageContent() {
         <Container size="narrow" className="py-16">
           <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">과목 선택</h1>
           <p className="mt-2 text-sm text-text-muted">
-            과목 하나를 골라 {SET_SIZE}문제 한 세트를 풀어보세요.
+            자격증을 고른 뒤 과목 하나로 {SET_SIZE}문제 한 세트를 풀어보세요.
           </p>
 
-          <div className="mt-10 space-y-10">
-            {visibleGroups.map(({ cert, roots }) => (
-              <section key={cert.key}>
-                <div className="flex items-center gap-2">
-                  <Badge cert={cert.key} variant="soft" size="sm" dot>
-                    {cert.label}
-                  </Badge>
-                  <span className="h-px flex-1 bg-border" />
-                </div>
-
-                <div className="mt-4 space-y-5">
-                  {roots.map((root) => {
-                    const items = root.children.length > 0 ? root.children : [root];
-                    const showSubHeading = cert.key === "SQLD" && root.children.length > 0;
-                    return (
-                      <div key={root.id}>
-                        {showSubHeading && (
-                          <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-text-subtle">
-                            {root.name}
-                          </h3>
-                        )}
-                        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                          {items.map((child) => (
-                            <button
-                              key={child.id}
-                              onClick={() => handleSelectSubject(child)}
-                              className={`group flex items-center gap-3 rounded-lg border border-border bg-surface px-4 py-3 text-left transition-all duration-200 ${cert.tailwind.borderHover} ${cert.tailwind.bgHover}`}
-                            >
-                              <span className={`h-9 w-1 shrink-0 rounded-full transition-colors ${cert.tailwind.bg} opacity-60 group-hover:opacity-100`} />
-                              <span className="flex-1 text-sm font-medium">{child.name}</span>
-                              <span className="text-xs text-text-subtle transition-transform group-hover:translate-x-0.5">
-                                →
-                              </span>
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </section>
-            ))}
+          {/* 자격증 탭 — pill + cert dot (mock-exams 패턴 동일) */}
+          <div className="mt-6 -mx-1 flex gap-1 overflow-x-auto rounded-lg border border-border bg-surface p-1 text-sm">
+            {CERT_LIST.map((c) => {
+              const subjectCount = (() => {
+                const g = certGroups.get(c.key);
+                if (!g) return 0;
+                return g.roots.reduce(
+                  (sum, r) => sum + (r.children.length > 0 ? r.children.length : 1),
+                  0,
+                );
+              })();
+              const active = certFilter === c.key;
+              return (
+                <button
+                  key={c.key}
+                  onClick={() => setCertFilter(c.key)}
+                  className={`flex shrink-0 items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+                    active
+                      ? "bg-primary/10 text-primary ring-1 ring-primary/20"
+                      : "text-text-muted hover:bg-surface-hover hover:text-text"
+                  }`}
+                >
+                  <span className={`h-1.5 w-1.5 rounded-full ${c.tailwind.dot}`} />
+                  {c.label}
+                  <span className="text-xs opacity-60 tabular-nums">{subjectCount}</span>
+                </button>
+              );
+            })}
           </div>
+
+          {!activeGroup && subjects.length > 0 && (
+            <Card padding="lg" className="mt-8 text-center text-text-muted">
+              해당 자격증의 과목이 아직 없습니다.
+            </Card>
+          )}
+
+          {activeGroup && (
+            <div className="mt-6 space-y-5">
+              {activeGroup.roots.map((root) => {
+                const items = root.children.length > 0 ? root.children : [root];
+                const showSubHeading = activeGroup.cert.key === "SQLD" && root.children.length > 0;
+                return (
+                  <div key={root.id}>
+                    {showSubHeading && (
+                      <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-text-subtle">
+                        {root.name}
+                      </h3>
+                    )}
+                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                      {items.map((child) => (
+                        <button
+                          key={child.id}
+                          onClick={() => handleSelectSubject(child)}
+                          className={`group flex items-center gap-3 rounded-lg border border-border bg-surface px-4 py-3 text-left transition-all duration-200 ${activeGroup.cert.tailwind.borderHover} ${activeGroup.cert.tailwind.bgHover}`}
+                        >
+                          <span className={`h-9 w-1 shrink-0 rounded-full transition-colors ${activeGroup.cert.tailwind.bg} opacity-60 group-hover:opacity-100`} />
+                          <span className="flex-1 text-sm font-medium">{child.name}</span>
+                          <span className="text-xs text-text-subtle transition-transform group-hover:translate-x-0.5">
+                            →
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
 
           {subjects.length === 0 && (
             <p className="mt-8 text-center text-text-muted">과목 데이터를 불러오는 중...</p>

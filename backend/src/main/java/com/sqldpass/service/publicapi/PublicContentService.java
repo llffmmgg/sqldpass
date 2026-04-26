@@ -25,8 +25,10 @@ import com.sqldpass.controller.publicapi.dto.PublicDtos.PublicSolveQuestionRespo
 import com.sqldpass.controller.publicapi.dto.PublicDtos.PublicSubjectResponse;
 import com.sqldpass.controller.publicapi.dto.PublicRankingResponse;
 import com.sqldpass.controller.publicapi.dto.PublicStatsResponse;
+import com.sqldpass.controller.mockexam.dto.MockExamSummaryResponse;
 import com.sqldpass.domain.question.Question;
 import com.sqldpass.domain.subject.Subject;
+import com.sqldpass.service.mockexam.MockExamService;
 import com.sqldpass.service.question.QuestionService;
 import com.sqldpass.service.subject.SubjectService;
 import com.sqldpass.persistent.member.MemberRepository;
@@ -104,6 +106,7 @@ public class PublicContentService {
     private final AnonymousSolveIpQuotaRepository anonymousSolveIpQuotaRepository;
     private final SubjectService subjectService;
     private final QuestionService questionService;
+    private final MockExamService mockExamService;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     /** 비회원 1인(IP) 일일 풀이 한도. 자정에 자연 리셋. */
@@ -437,5 +440,16 @@ public class PublicContentService {
     private int currentUsed(String clientIp, java.time.LocalDate date) {
         Integer used = anonymousSolveIpQuotaRepository.usedCount(clientIp, date);
         return used != null ? used : 0;
+    }
+
+    /**
+     * 비로그인 /mock-exams 화면용 모의고사 목록.
+     * 로그인 사용자와 동일한 노출 조건(AI + 전문가 검수 + 비DRAFT)을 따른다.
+     * best-score 정보는 비로그인이라 모두 null.
+     */
+    public List<MockExamSummaryResponse> listPublicMockExams() {
+        return mockExamService.getAllForUser().stream()
+                .map(MockExamSummaryResponse::from)
+                .toList();
     }
 }

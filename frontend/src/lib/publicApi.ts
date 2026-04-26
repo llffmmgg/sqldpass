@@ -198,6 +198,23 @@ export async function incrementAnonymousSolve(
   return res.json();
 }
 
+// ================= 모의고사 (mock-exams) — 비로그인 공개 목록 =================
+
+import type { MockExamSummary } from "@/lib/mockExamApi";
+
+/**
+ * 비로그인 /mock-exams 화면용 모의고사 목록.
+ * 로그인 사용자와 동일한 노출 조건(AI + 전문가 검수 + 비DRAFT) 백엔드에서 적용.
+ * 클릭 시 /mock-exams/[id] 진입 → AuthGuard 가 로그인 화면 노출.
+ */
+export async function getPublicMockExams(): Promise<MockExamSummary[]> {
+  const res = await fetch(`/api/public/mock-exams`, {
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`public mock-exams failed: ${res.status}`);
+  return res.json();
+}
+
 // ================= 기출 복원 (past-exams) — 서버용 SEO 호출 =================
 
 export type PublicExamType =

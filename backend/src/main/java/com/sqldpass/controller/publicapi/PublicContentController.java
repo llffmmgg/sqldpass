@@ -14,6 +14,7 @@ import com.sqldpass.controller.publicapi.dto.PastExamPublicDtos.PastExamDetail;
 import com.sqldpass.controller.publicapi.dto.PastExamPublicDtos.PastExamGradeRequest;
 import com.sqldpass.controller.publicapi.dto.PastExamPublicDtos.PastExamGradeResponse;
 import com.sqldpass.controller.publicapi.dto.PastExamPublicDtos.PastExamSummary;
+import com.sqldpass.controller.mockexam.dto.MockExamSummaryResponse;
 import com.sqldpass.controller.publicapi.dto.PublicDtos.PublicCategoryResponse;
 import com.sqldpass.controller.publicapi.dto.PublicDtos.PublicCertResponse;
 import com.sqldpass.controller.publicapi.dto.PublicDtos.PublicQuestionDetailResponse;
@@ -149,6 +150,12 @@ public class PublicContentController {
             if (!first.isEmpty()) return first;
         }
         return request.getRemoteAddr();
+    }
+
+    @GetMapping("/mock-exams")
+    @Operation(summary = "모의고사 목록 (비로그인 공개, AI + 전문가 검수 통과만)")
+    public List<MockExamSummaryResponse> listPublicMockExams() {
+        return publicContentService.listPublicMockExams();
     }
 
     // ================= 기출 복원 (past-exams) — 비로그인 공개 =================
