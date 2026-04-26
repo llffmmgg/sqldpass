@@ -42,9 +42,11 @@ type Phase = "select" | "solve" | "session-complete";
 
 const SET_SIZE = 10;
 
-// AdSense 슬롯 ID — /solve 세션 종료 화면 "문제별 상세" 섹션 하단용 (신규 발급 예정)
-// TODO: AdSense 콘솔에서 발급 후 실제 ID 로 교체. 그동안은 빈 ins 태그로 마운트만 됨.
-const SOLVE_REVIEW_INFEED_SLOT = "TODO_SOLVE_REVIEW_INFEED";
+// AdSense 슬롯 — /solve 세션 종료 화면 "문제별 상세" 섹션 하단용
+// 인피드: sqldpass-solve-review-infeed (모바일)
+const SOLVE_REVIEW_INFEED_SLOT = "7711219655";
+const SOLVE_REVIEW_INFEED_LAYOUT_KEY = "-ex+5o+5o-ct+35";
+// 디스플레이(데스크톱) — TODO: AdSense 콘솔에서 발급 후 교체
 const SOLVE_REVIEW_DISPLAY_SLOT = "TODO_SOLVE_REVIEW_DISPLAY";
 
 export default function SolvePage() {
@@ -1059,7 +1061,7 @@ function SessionReviewList({ entries }: { entries: PastEntry[] }) {
       <div className="mt-8 md:hidden">
         <AdInfeed
           adSlot={SOLVE_REVIEW_INFEED_SLOT}
-          adLayoutKey="-h4-h+1c-4h+8p"
+          adLayoutKey={SOLVE_REVIEW_INFEED_LAYOUT_KEY}
         />
       </div>
       <div className="mt-8 hidden md:block">
