@@ -269,3 +269,20 @@ export function getPublicPastExamsByCert(
 export function getPublicPastExam(id: number): Promise<PublicPastExamDetail> {
   return publicFetch(`/past-exams/${id}`);
 }
+
+export interface PublicPastExamQuestionWithAnswer extends PublicPastExamQuestion {
+  correctOption: number | null;
+  answer: string | null;
+  keywords: string[];
+  explanation: string | null;
+}
+
+export interface PublicPastExamDetailWithAnswers extends Omit<PublicPastExamDetail, "questions"> {
+  questions: PublicPastExamQuestionWithAnswer[];
+}
+
+export function getPublicPastExamWithAnswers(
+  id: number,
+): Promise<PublicPastExamDetailWithAnswers> {
+  return publicFetch(`/past-exams/${id}/with-answers`);
+}

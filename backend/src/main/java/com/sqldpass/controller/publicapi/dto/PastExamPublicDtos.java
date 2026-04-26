@@ -63,6 +63,35 @@ public final class PastExamPublicDtos {
     ) {
     }
 
+    /** 상세 — 블로그 SEO 페이지 전용. 정답·해설 포함. */
+    public record PastExamDetailWithAnswers(
+            Long id,
+            String name,
+            ExamType examType,
+            String certSlug,
+            int totalQuestions,
+            Integer examYear,
+            Integer examRound,
+            LocalDate examDate,
+            boolean expertVerified,
+            List<PastExamQuestionWithAnswer> questions
+    ) {
+    }
+
+    public record PastExamQuestionWithAnswer(
+            Long id,
+            int displayOrder,
+            String content,
+            QuestionType questionType,
+            Long subjectId,
+            String subjectName,
+            Integer correctOption,
+            String answer,
+            List<String> keywords,
+            String explanation
+    ) {
+    }
+
     /** 채점 요청 */
     public record PastExamGradeRequest(
             List<PastExamAnswer> answers

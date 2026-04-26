@@ -1,7 +1,16 @@
 import type { Metadata } from "next";
-import { getAllPosts, getAllCategories } from "@/lib/blog";
+import { getAllPosts, getAllCategories, type BlogPostMeta } from "@/lib/blog";
 import { getPublicBlogViews } from "@/lib/publicApi";
+import { CERT_TOKENS, certFromExamType } from "@/lib/cert-tokens";
+import {
+  pastExamBlogDescription,
+  pastExamBlogSlug,
+  pastExamBlogTitle,
+} from "@/lib/pastExamBlog";
+import { loadPastExamListsByCert, flattenPastExamLists } from "@/lib/pastExamCatalog";
 import BlogList from "./BlogList";
+
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "자격증 시험 준비 블로그",
@@ -17,8 +26,46 @@ export const metadata: Metadata = {
 };
 
 export default async function BlogPage() {
-  const posts = getAllPosts();
-  const categories = getAllCategories();
+  const mdxPosts = getAllPosts();
+
+  // 기출 복원 회차를 가상 BlogPostMeta 로 변환해 메인 리스트에 합류시킴.
+  const listsByCert = await loadPastExamListsByCert().catch(() => null);
+  const pastExamPosts: BlogPostMeta[] = listsByCert
+    ? flattenPastExamLists(listsByCert).map((exam) => {
+        const cert = certFromExamType(exam.examType);
+        const category = cert ? CERT_TOKENS[cert].blogCategory : "일반";
+        return {
+          slug: `past-exam/${pastExamBlogSlug(exam)}`,
+          title: pastExamBlogTitle(exam),
+          description: pastExamBlogDescription(exam),
+          date: exam.examDate ?? exam.createdAt.slice(0, 10),
+          category,
+          tags: ["기출 복원", category],
+          readingTime: `${Math.max(5, Math.round(exam.totalQuestions / 4))}분`,
+        };
+      })
+    : [];
+
+  const posts: BlogPostMeta[] = [...mdxPosts, ...pastExamPosts].sort((a, b) =>
+    a.date > b.date ? -1 : 1,
+  );
+
+  const baseCategories = getAllCategories();
+  const pastExamCategoryCounts = new Map<string, number>();
+  for (const p of pastExamPosts) {
+    pastExamCategoryCounts.set(
+      p.category,
+      (pastExamCategoryCounts.get(p.category) ?? 0) + 1,
+    );
+  }
+  const categoryMap = new Map(baseCategories.map((c) => [c.category, c.count]));
+  for (const [cat, n] of pastExamCategoryCounts) {
+    categoryMap.set(cat, (categoryMap.get(cat) ?? 0) + n);
+  }
+  const categories = Array.from(categoryMap.entries())
+    .map(([category, count]) => ({ category, count }))
+    .sort((a, b) => b.count - a.count);
+
   let viewCounts: Record<string, number> = {};
   try {
     viewCounts = await getPublicBlogViews();

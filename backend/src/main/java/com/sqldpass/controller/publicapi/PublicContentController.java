@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.sqldpass.controller.publicapi.dto.PastExamPublicDtos.PastExamDetail;
+import com.sqldpass.controller.publicapi.dto.PastExamPublicDtos.PastExamDetailWithAnswers;
 import com.sqldpass.controller.publicapi.dto.PastExamPublicDtos.PastExamGradeRequest;
 import com.sqldpass.controller.publicapi.dto.PastExamPublicDtos.PastExamGradeResponse;
 import com.sqldpass.controller.publicapi.dto.PastExamPublicDtos.PastExamSummary;
@@ -170,6 +171,12 @@ public class PublicContentController {
     @Operation(summary = "기출 복원 회차 상세 (로그인 필수, 정답/해설 미포함)")
     public PastExamDetail getPastExam(@PathVariable Long id) {
         return pastExamPublicService.get(id);
+    }
+
+    @GetMapping("/past-exams/{id}/with-answers")
+    @Operation(summary = "기출 복원 회차 상세 + 정답·해설 (블로그 SEO 페이지 전용)")
+    public PastExamDetailWithAnswers getPastExamWithAnswers(@PathVariable Long id) {
+        return pastExamPublicService.getWithAnswers(id);
     }
 
     @PostMapping("/past-exams/{id}/grade")

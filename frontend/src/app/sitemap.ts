@@ -171,6 +171,30 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       /* 스킵 */
     }
 
+    // 기출 복원 블로그 글 (SEO용 자동 생성)
+    const pastExamBlogEntries: MetadataRoute.Sitemap = [];
+    try {
+      const { pastExamBlogSlug } = await import("@/lib/pastExamBlog");
+      for (const cert of certs) {
+        try {
+          const list = await getPublicPastExamsByCert(cert.slug);
+          for (const exam of list) {
+            const slug = pastExamBlogSlug(exam);
+            pastExamBlogEntries.push({
+              url: `${SITE_URL}/blog/past-exam/${slug}`,
+              lastModified: (exam.createdAt ?? "").slice(0, 10) || DYNAMIC_LAST_MOD,
+              changeFrequency: "monthly",
+              priority: 0.7,
+            });
+          }
+        } catch {
+          /* 스킵 */
+        }
+      }
+    } catch {
+      /* 스킵 */
+    }
+
     const pastExamCertEntries: MetadataRoute.Sitemap = certs.map((cert) => ({
       url: `${SITE_URL}/past-exams/${cert.slug}`,
       lastModified: DYNAMIC_LAST_MOD,
@@ -202,6 +226,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       ...questionEntries,
       ...pastExamCertEntries,
       ...pastExamEntries,
+      ...pastExamBlogEntries,
     ];
   } catch {
     return staticEntries;

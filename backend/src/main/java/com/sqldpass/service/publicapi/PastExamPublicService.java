@@ -10,9 +10,11 @@ import org.springframework.transaction.annotation.Transactional;
 import com.sqldpass.controller.publicapi.dto.PastExamPublicDtos.GradedItem;
 import com.sqldpass.controller.publicapi.dto.PastExamPublicDtos.PastExamAnswer;
 import com.sqldpass.controller.publicapi.dto.PastExamPublicDtos.PastExamDetail;
+import com.sqldpass.controller.publicapi.dto.PastExamPublicDtos.PastExamDetailWithAnswers;
 import com.sqldpass.controller.publicapi.dto.PastExamPublicDtos.PastExamGradeRequest;
 import com.sqldpass.controller.publicapi.dto.PastExamPublicDtos.PastExamGradeResponse;
 import com.sqldpass.controller.publicapi.dto.PastExamPublicDtos.PastExamQuestion;
+import com.sqldpass.controller.publicapi.dto.PastExamPublicDtos.PastExamQuestionWithAnswer;
 import com.sqldpass.controller.publicapi.dto.PastExamPublicDtos.PastExamSummary;
 import com.sqldpass.persistent.mockexam.ExamType;
 import com.sqldpass.persistent.mockexam.MockExamEntity;
@@ -110,6 +112,42 @@ public class PastExamPublicService {
                 })
                 .toList();
         return new PastExamDetail(
+                entity.getId(),
+                entity.getName(),
+                entity.getExamType(),
+                certSlugFromExamType(entity.getExamType()),
+                questions.size(),
+                entity.getExamYear(),
+                entity.getExamRound(),
+                entity.getExamDate(),
+                entity.isExpertVerified(),
+                questions);
+    }
+
+    /**
+     * 상세 + 정답·해설. 블로그 SEO 페이지 전용 (검색 노출 목적).
+     * 풀이 페이지는 여전히 답이 없는 {@link #get} 를 사용해야 한다.
+     */
+    public PastExamDetailWithAnswers getWithAnswers(Long id) {
+        MockExamEntity entity = loadPublishedPastExam(id);
+        List<PastExamQuestionWithAnswer> questions = entity.getQuestions().stream()
+                .map(q -> {
+                    SubjectEntity leaf = q.getSubject();
+                    SubjectEntity shown = leaf.getParent() != null ? leaf.getParent() : leaf;
+                    return new PastExamQuestionWithAnswer(
+                            q.getId(),
+                            q.getDisplayOrder() != null ? q.getDisplayOrder() : 0,
+                            q.getContent(),
+                            q.getQuestionType(),
+                            shown.getId(),
+                            shown.getName(),
+                            q.getCorrectOption(),
+                            q.getAnswer(),
+                            QuestionMapper.parseKeywords(q.getKeywords()),
+                            q.getExplanation());
+                })
+                .toList();
+        return new PastExamDetailWithAnswers(
                 entity.getId(),
                 entity.getName(),
                 entity.getExamType(),
