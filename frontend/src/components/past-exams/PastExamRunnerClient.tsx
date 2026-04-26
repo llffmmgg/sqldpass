@@ -20,6 +20,7 @@ import {
   gradePastExam,
   type PastExamAnswerPayload,
   type PastExamDetail,
+  type PastExamGradedItem,
   type PastExamGradeResponse,
   type PastExamQuestion,
 } from "@/lib/pastExamApi";
@@ -464,6 +465,8 @@ function PastExamResultView({
           </p>
         </div>
 
+        <PastExamReviewList exam={exam} items={result.items} />
+
         <div className="mt-8 flex flex-wrap gap-3">
           <button
             onClick={onRestart}
@@ -769,4 +772,174 @@ function ExamTimer({
 
 function cnProgress(bgClass: string, done: boolean): string {
   return `h-full transition-all ${done ? bgClass : `${bgClass} opacity-60`}`;
+}
+
+// ── 결과 화면 문제별 상세 아코디언 ─────────────────────────────
+// /solve 의 SessionReviewList 와 동일한 패턴.
+// 데이터는 모두 클라이언트에 와 있으므로 비로그인·로그인 동일 동작.
+
+function PastExamReviewList({
+  exam,
+  items,
+}: {
+  exam: PastExamDetail;
+  items: PastExamGradedItem[];
+}) {
+  const [openIdx, setOpenIdx] = useState<number | null>(null);
+
+  const itemMap = useMemo(() => {
+    const map = new Map<number, PastExamGradedItem>();
+    for (const it of items) map.set(it.questionId, it);
+    return map;
+  }, [items]);
+
+  if (exam.questions.length === 0) return null;
+
+  return (
+    <section className="mt-10">
+      <h2 className="text-lg font-semibold tracking-tight">문제별 상세</h2>
+      <p className="mt-1 text-xs text-text-muted">
+        오답·정답 모두 다시 보고 해설을 확인하세요. 카드를 클릭하면 펼쳐집니다.
+      </p>
+      <div className="mt-4 space-y-2">
+        {exam.questions.map((question, index) => {
+          const item = itemMap.get(question.id);
+          if (!item) return null;
+          return (
+            <PastExamReviewCard
+              key={question.id}
+              index={index}
+              question={question}
+              item={item}
+              open={openIdx === index}
+              onToggle={() => setOpenIdx(openIdx === index ? null : index)}
+            />
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+function PastExamReviewCard({
+  index,
+  question,
+  item,
+  open,
+  onToggle,
+}: {
+  index: number;
+  question: PastExamQuestion;
+  item: PastExamGradedItem;
+  open: boolean;
+  onToggle: () => void;
+}) {
+  const parsed = parseQuestion(question.content);
+  const preview = parsed.body.replace(/\s+/g, " ").trim();
+  const previewShort = preview.length > 40 ? preview.slice(0, 40) + "…" : preview;
+  const answered =
+    item.selectedOption != null ||
+    (item.submittedAnswerText != null && item.submittedAnswerText.trim() !== "");
+
+  return (
+    <Card padding="none" className="overflow-hidden">
+      <button
+        onClick={onToggle}
+        className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-surface-hover"
+      >
+        <span
+          className={`inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-bold ${
+            !answered
+              ? "bg-surface-hover text-text-subtle"
+              : item.correct
+                ? "bg-success/15 text-success"
+                : "bg-danger/15 text-danger"
+          }`}
+        >
+          {!answered ? "–" : item.correct ? "✓" : "✗"}
+        </span>
+        <span className="text-xs font-semibold tabular-nums text-text-muted">
+          문제 {index + 1}
+        </span>
+        <span className="flex-1 truncate text-sm text-text">{previewShort}</span>
+        <span
+          className={`text-xs text-text-subtle transition-transform ${open ? "rotate-180" : ""}`}
+        >
+          ▾
+        </span>
+      </button>
+
+      {open && (
+        <div className="border-t border-border bg-surface-subtle/50 px-4 py-4">
+          <QuestionContent content={parsed.body} />
+
+          {question.questionType === "MCQ" && parsed.options.length > 0 && (
+            <ul className="mt-3 space-y-1.5">
+              {parsed.options.map((opt, i) => {
+                const num = i + 1;
+                const isAnswer = num === item.correctOption;
+                const isMine = num === item.selectedOption;
+                return (
+                  <li
+                    key={num}
+                    className={`rounded-md border px-3 py-2 text-sm ${
+                      isAnswer
+                        ? "border-success/40 bg-success/10"
+                        : isMine
+                          ? "border-danger/40 bg-danger/10"
+                          : "border-border bg-bg"
+                    }`}
+                  >
+                    <span className="mr-2 font-semibold tabular-nums">{num}.</span>
+                    {opt}
+                    {isAnswer && (
+                      <span className="ml-2 text-[11px] font-bold text-success">정답</span>
+                    )}
+                    {isMine && !isAnswer && (
+                      <span className="ml-2 text-[11px] font-bold text-danger">내 답</span>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+
+          {question.questionType !== "MCQ" && (
+            <div className="mt-3 rounded-md border border-border bg-bg p-3 text-sm">
+              <p className="text-xs font-semibold text-text-muted">내 답</p>
+              <p className="mt-1">
+                {item.submittedAnswerText && item.submittedAnswerText.trim() !== "" ? (
+                  item.submittedAnswerText
+                ) : (
+                  <span className="text-text-subtle">(미응답)</span>
+                )}
+              </p>
+              {item.answer && (
+                <>
+                  <p className="mt-3 text-xs font-semibold text-text-muted">모범답안</p>
+                  <p className="mt-1">{item.answer}</p>
+                </>
+              )}
+              {item.keywords.length > 0 && (
+                <p className="mt-2 text-xs text-text-muted">
+                  키워드: {item.keywords.join(", ")}
+                </p>
+              )}
+            </div>
+          )}
+
+          {item.explanation && (
+            <div className="mt-3 rounded-md border border-primary/20 bg-primary/[0.04] p-3">
+              <p className="text-[11px] font-bold uppercase tracking-wider text-primary">
+                해설
+              </p>
+              <div className="mt-2 text-sm leading-relaxed">
+                <QuestionContent content={item.explanation} />
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </Card>
+  );
 }
