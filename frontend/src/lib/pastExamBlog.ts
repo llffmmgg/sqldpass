@@ -27,12 +27,23 @@ export function findPastExamBySlug(
 }
 
 /**
+ * 블로그 글에 노출할 cert 라벨.
+ * 컴활은 SEO 키워드 매칭을 위해 풀네임("컴퓨터활용능력 1급/2급") 사용,
+ * 나머지(SQLD, 정처기 실기/필기, ADsP)는 기존 짧은 라벨 유지.
+ */
+function pastExamBlogCertLabel(cert: CertKey | null, fallback: string): string {
+  if (cert === "COMPUTER_LITERACY_1") return "컴퓨터활용능력 1급";
+  if (cert === "COMPUTER_LITERACY_2") return "컴퓨터활용능력 2급";
+  return cert ? CERT_TOKENS[cert].label : fallback;
+}
+
+/**
  * 블로그 페이지에 노출할 제목.
- * 예: `[SQLD] 2025년 57회 기출 복원`
+ * 예: `[SQLD] 2025년 57회 기출 복원`, `[컴퓨터활용능력 1급] 2024년 1회 기출 복원`
  */
 export function pastExamBlogTitle(exam: PublicPastExamSummary): string {
   const cert = certFromExamType(exam.examType);
-  const label = cert ? CERT_TOKENS[cert].label : exam.certSlug;
+  const label = pastExamBlogCertLabel(cert, exam.certSlug);
 
   const parts: string[] = [];
   if (exam.examYear != null) parts.push(`${exam.examYear}년`);
@@ -47,7 +58,15 @@ export function pastExamBlogTitle(exam: PublicPastExamSummary): string {
  */
 export function pastExamBlogDescription(exam: PublicPastExamSummary): string {
   const cert = certFromExamType(exam.examType);
-  const labelLong = cert ? CERT_TOKENS[cert].labelLong : exam.certSlug;
+  // 컴활은 풀네임으로, 그 외는 labelLong (예: "SQL 개발자 자격증")
+  const labelLong =
+    cert === "COMPUTER_LITERACY_1"
+      ? "컴퓨터활용능력 1급"
+      : cert === "COMPUTER_LITERACY_2"
+        ? "컴퓨터활용능력 2급"
+        : cert
+          ? CERT_TOKENS[cert].labelLong
+          : exam.certSlug;
 
   const parts: string[] = [];
   if (exam.examYear != null) parts.push(`${exam.examYear}년`);
