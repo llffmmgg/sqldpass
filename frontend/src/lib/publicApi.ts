@@ -248,6 +248,16 @@ export interface PublicPastExamDetail {
   examRound: number | null;
   examDate: string | null;
   expertVerified: boolean;
+  questions: PublicPastExamQuestion[];
+}
+
+export interface PublicPastExamQuestion {
+  id: number;
+  displayOrder: number;
+  content: string;
+  questionType: "MCQ" | "SHORT_ANSWER" | "DESCRIPTIVE";
+  subjectId: number;
+  subjectName: string;
 }
 
 export function getPublicPastExamsByCert(

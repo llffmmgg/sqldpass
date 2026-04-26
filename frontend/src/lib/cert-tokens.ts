@@ -236,3 +236,16 @@ const SLUG_TO_CERT: Record<string, CertKey> = {
 export function certFromSlug(slug: string): CertKey | null {
   return SLUG_TO_CERT[slug] ?? null;
 }
+
+const CERT_TO_SLUG: Record<CertKey, string> = {
+  SQLD: "sqld",
+  ENGINEER_PRACTICAL: "engineer",
+  ENGINEER_WRITTEN: "engineer-written",
+  COMPUTER_LITERACY_1: "computer-literacy-1",
+  COMPUTER_LITERACY_2: "computer-literacy-2",
+  ADSP: "adsp",
+};
+
+export function slugFromCert(cert: CertKey): string {
+  return CERT_TO_SLUG[cert];
+}

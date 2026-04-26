@@ -1,0 +1,205 @@
+import Link from "next/link";
+
+import { Badge, Card, cn } from "@/components/ui";
+import {
+  CERT_LIST,
+  CERT_TOKENS,
+  certFromExamType,
+  slugFromCert,
+  type CertKey,
+} from "@/lib/cert-tokens";
+import type {
+  PublicPastExamSummary,
+} from "@/lib/publicApi";
+import type { PastExamCountsByCert } from "@/lib/pastExamCatalog";
+
+const UNKNOWN_YEAR = -1;
+
+export function PastExamTabs({
+  activeCert,
+  countsByCert,
+}: {
+  activeCert: CertKey;
+  countsByCert: PastExamCountsByCert;
+}) {
+  return (
+    <div className="mt-6 -mx-1 flex gap-1 overflow-x-auto rounded-lg border border-border bg-surface p-1 text-sm">
+      {CERT_LIST.map((cert) => {
+        const active = cert.key === activeCert;
+        const count = countsByCert[cert.key] ?? 0;
+
+        return (
+          <Link
+            key={cert.key}
+            href={`/past-exams/${slugFromCert(cert.key)}`}
+            className={cn(
+              "flex shrink-0 items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
+              active
+                ? "bg-primary/10 text-primary ring-1 ring-primary/20"
+                : "text-text-muted hover:bg-surface-hover hover:text-text",
+            )}
+          >
+            <span className={cn("h-1.5 w-1.5 rounded-full", cert.tailwind.dot)} />
+            {cert.label}
+            <span className="text-xs opacity-60 tabular-nums">{count}</span>
+          </Link>
+        );
+      })}
+    </div>
+  );
+}
+
+export function PastExamGrid({
+  exams,
+}: {
+  exams: PublicPastExamSummary[];
+}) {
+  const grouped = groupPastExams(exams);
+
+  return (
+    <div className="flex flex-col gap-10">
+      {grouped.map(({ year, list }) => (
+        <section key={year}>
+          <div className="mb-3 flex items-baseline justify-between border-b border-border pb-2">
+            <h2 className="text-lg font-semibold tracking-tight">
+              {year === UNKNOWN_YEAR ? "연도 미상" : `${year}년`}
+            </h2>
+            <span className="text-xs text-text-muted tabular-nums">
+              {list.length}회차
+            </span>
+          </div>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            {list.map((exam) => (
+              <PastExamCard key={exam.id} exam={exam} />
+            ))}
+          </div>
+        </section>
+      ))}
+    </div>
+  );
+}
+
+export function PastExamCard({
+  exam,
+}: {
+  exam: PublicPastExamSummary;
+}) {
+  const cert = certFromExamType(exam.examType);
+  const token = cert ? CERT_TOKENS[cert] : null;
+  const isNew = isWithinDays(exam.createdAt, 3);
+
+  return (
+    <Link href={`/past-exams/${exam.id}`} className="group relative block">
+      <Card
+        variant="interactive"
+        padding="md"
+        accent={cert ?? undefined}
+        className="relative overflow-hidden"
+      >
+        {exam.expertVerified && (
+          <div className="pointer-events-none absolute -left-[38px] top-[18px] z-10 -rotate-45 bg-emerald-600 px-10 py-0.5 text-center text-[9px] font-bold tracking-wide text-white shadow-sm dark:bg-emerald-500">
+            전문가 검수
+          </div>
+        )}
+
+        <div className="flex flex-wrap items-center gap-1.5 pr-20">
+          {token && (
+            <span
+              className={cn(
+                "inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide",
+                token.tailwind.border,
+                token.tailwind.bgSoft,
+                token.tailwind.text,
+              )}
+            >
+              <span className={cn("h-1.5 w-1.5 rounded-full", token.tailwind.dot)} />
+              {token.label}
+            </span>
+          )}
+          <Badge
+            variant="soft"
+            size="xs"
+            className="border-primary/40 bg-primary/10 text-primary"
+          >
+            기출
+          </Badge>
+          {isNew && <NewBadge />}
+        </div>
+
+        <h3 className="mt-3 text-lg font-semibold leading-tight">
+          {buildExamTitle(exam)}
+        </h3>
+
+        <div className="mt-2 flex items-center gap-2 text-sm text-text-muted">
+          <span>총 {exam.totalQuestions}문항</span>
+          {exam.examDate && (
+            <>
+              <span className="text-border">·</span>
+              <span className="tabular-nums">{formatExamDate(exam.examDate)}</span>
+            </>
+          )}
+        </div>
+
+        <div className="mt-4 inline-flex items-center gap-1.5 text-xs font-semibold text-primary transition-transform group-hover:translate-x-1">
+          문제 보러가기 →
+        </div>
+      </Card>
+    </Link>
+  );
+}
+
+export function buildExamTitle(exam: PublicPastExamSummary): string {
+  if (exam.examRound) {
+    return `${exam.examRound}회`;
+  }
+  return exam.name;
+}
+
+function groupPastExams(exams: PublicPastExamSummary[]) {
+  const map = new Map<number, PublicPastExamSummary[]>();
+
+  for (const exam of exams) {
+    const year = exam.examYear ?? UNKNOWN_YEAR;
+    const list = map.get(year) ?? [];
+    list.push(exam);
+    map.set(year, list);
+  }
+
+  return Array.from(map.entries())
+    .map(([year, list]) => ({
+      year,
+      list: list.slice().sort((a, b) => {
+        const roundA = a.examRound ?? 0;
+        const roundB = b.examRound ?? 0;
+        if (roundA !== roundB) return roundB - roundA;
+        return b.id - a.id;
+      }),
+    }))
+    .sort((a, b) => b.year - a.year);
+}
+
+function NewBadge() {
+  return (
+    <span className="inline-flex items-center rounded-full border border-rose-500/40 bg-rose-500/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-rose-500 dark:text-rose-300">
+      NEW
+    </span>
+  );
+}
+
+function isWithinDays(iso: string | null | undefined, days: number): boolean {
+  if (!iso) return false;
+
+  const created = new Date(iso).getTime();
+  if (Number.isNaN(created)) return false;
+
+  return Date.now() - created <= days * 24 * 60 * 60 * 1000;
+}
+
+function formatExamDate(iso: string): string {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return iso;
+
+  return `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, "0")}.${String(
+    date.getDate(),
+  ).padStart(2, "0")}`;
+}

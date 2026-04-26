@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+
 import { getPublicPastExam, type PublicPastExamDetail } from "@/lib/publicApi";
 
 const SITE_URL = "https://www.sqldpass.com";
@@ -16,7 +17,7 @@ function buildRoundTitle(exam: PublicPastExamDetail): string {
   const cert = CERT_DISPLAY[exam.examType] ?? exam.name;
   const parts: string[] = [cert];
   if (exam.examYear) parts.push(`${exam.examYear}년`);
-  if (exam.examRound) parts.push(`제${exam.examRound}회`);
+  if (exam.examRound) parts.push(`${exam.examRound}회`);
   return parts.join(" ");
 }
 
@@ -26,16 +27,19 @@ export async function generateMetadata({
   params: Promise<{ id: string }>;
 }): Promise<Metadata> {
   const { id } = await params;
-  const numId = Number(id);
-  if (!Number.isFinite(numId)) {
-    return { title: "기출 복원 — 문어CBT" };
+  const examId = Number(id);
+
+  if (!Number.isFinite(examId)) {
+    return { title: "기출 복원 | 문어CBT" };
   }
+
   try {
-    const exam = await getPublicPastExam(numId);
+    const exam = await getPublicPastExam(examId);
     const roundTitle = buildRoundTitle(exam);
-    const title = `${roundTitle} 기출 복원 · ${exam.totalQuestions}문항 무료 CBT — 문어CBT`;
-    const description = `${roundTitle} 기출 복원 ${exam.totalQuestions}문항을 실제 시험 시간과 동일한 환경에서 응시. 무료 회원 가입 후 이용 가능하며 점수·오답이 자동 저장됩니다.`;
-    const canonical = `${SITE_URL}/past-exams/${numId}`;
+    const title = `${roundTitle} 기출 복원 | ${exam.totalQuestions}문항 무료 CBT | 문어CBT`;
+    const description = `${roundTitle} 기출 복원 ${exam.totalQuestions}문항을 실전처럼 풀어보고, 로그인 후 채점과 해설까지 이어서 확인할 수 있는 무료 CBT 페이지입니다.`;
+    const canonical = `${SITE_URL}/past-exams/${examId}`;
+
     return {
       title,
       description,
@@ -54,9 +58,9 @@ export async function generateMetadata({
     };
   } catch {
     return {
-      title: "기출 복원 · 무료 CBT — 문어CBT",
+      title: "기출 복원 | 무료 CBT | 문어CBT",
       description:
-        "실제 시험 시간과 동일한 환경으로 기출 복원 회차를 풀어볼 수 있는 무료 CBT.",
+        "실전처럼 기출 복원 문제를 풀어보고 로그인 후 채점과 해설까지 확인할 수 있는 무료 CBT 페이지입니다.",
     };
   }
 }
@@ -64,6 +68,7 @@ export async function generateMetadata({
 function buildJsonLd(id: number, exam: PublicPastExamDetail) {
   const roundTitle = buildRoundTitle(exam);
   const canonical = `${SITE_URL}/past-exams/${id}`;
+
   const breadcrumb = {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
@@ -83,14 +88,15 @@ function buildJsonLd(id: number, exam: PublicPastExamDetail) {
       },
     ],
   };
+
   const quiz = {
     "@context": "https://schema.org",
     "@type": "Quiz",
     name: `${roundTitle} 기출 복원`,
-    description: `${roundTitle} 기출을 복원한 ${exam.totalQuestions}문항 CBT. 무료 회원 가입 후 응시 가능하며 제출 후 해설이 공개됩니다.`,
+    description: `${roundTitle} 기출 복원 ${exam.totalQuestions}문항 CBT. 문제는 로그인 없이 볼 수 있고, 채점과 해설 확인은 로그인 후 가능합니다.`,
     url: canonical,
     inLanguage: "ko",
-    isAccessibleForFree: false,
+    isAccessibleForFree: true,
     learningResourceType: "Quiz",
     numberOfQuestions: exam.totalQuestions,
     educationalUse: "practice",
@@ -101,6 +107,7 @@ function buildJsonLd(id: number, exam: PublicPastExamDetail) {
       url: SITE_URL,
     },
   };
+
   return [breadcrumb, quiz];
 }
 
@@ -112,21 +119,23 @@ export default async function PastExamDetailLayout({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const numId = Number(id);
+  const examId = Number(id);
+
   let ldBlocks: ReturnType<typeof buildJsonLd> | null = null;
-  if (Number.isFinite(numId)) {
+  if (Number.isFinite(examId)) {
     try {
-      const exam = await getPublicPastExam(numId);
-      ldBlocks = buildJsonLd(numId, exam);
+      const exam = await getPublicPastExam(examId);
+      ldBlocks = buildJsonLd(examId, exam);
     } catch {
       ldBlocks = null;
     }
   }
+
   return (
     <>
-      {ldBlocks?.map((ld, i) => (
+      {ldBlocks?.map((ld, index) => (
         <script
-          key={i}
+          key={index}
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(ld) }}
         />

@@ -1,16 +1,16 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "기출 복원 · 무료 CBT — 문어CBT",
+  title: "기출 복원 | 무료 CBT | 문어CBT",
   description:
-    "SQLD, 정보처리기사, 컴퓨터활용능력, ADsP 기출 복원 회차를 실제 시험 시간과 동일한 환경으로 무료 응시. 로그인 없이 해설과 정답까지 바로 확인.",
+    "SQLD, 정보처리기사, 컴퓨터활용능력, ADsP 기출 복원 문제를 자격증별로 확인하고 로그인 후 채점과 해설까지 이어서 볼 수 있는 무료 CBT 페이지입니다.",
   alternates: {
     canonical: "https://www.sqldpass.com/past-exams",
   },
   openGraph: {
-    title: "기출 복원 · 무료 CBT — 문어CBT",
+    title: "기출 복원 | 무료 CBT | 문어CBT",
     description:
-      "SQLD, 정보처리기사, 컴퓨터활용능력, ADsP 기출 복원 회차를 실제 시험 시간과 동일한 환경으로 무료 응시.",
+      "SQLD, 정보처리기사, 컴퓨터활용능력, ADsP 기출 복원 문제를 자격증별로 확인할 수 있는 무료 CBT 페이지입니다.",
     url: "https://www.sqldpass.com/past-exams",
     type: "website",
   },
@@ -35,7 +35,11 @@ const BREADCRUMB_LD = {
   ],
 };
 
-export default function PastExamsLayout({ children }: { children: React.ReactNode }) {
+export default function PastExamsLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <>
       <script

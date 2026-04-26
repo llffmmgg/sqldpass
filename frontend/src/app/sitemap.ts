@@ -171,6 +171,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       /* 스킵 */
     }
 
+    const pastExamCertEntries: MetadataRoute.Sitemap = certs.map((cert) => ({
+      url: `${SITE_URL}/past-exams/${cert.slug}`,
+      lastModified: DYNAMIC_LAST_MOD,
+      changeFrequency: "weekly",
+      priority: 0.8,
+    }));
+
     const pastExamEntries: MetadataRoute.Sitemap = [];
     for (const cert of certs) {
       try {
@@ -193,6 +200,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       ...certEntries,
       ...categoryEntries,
       ...questionEntries,
+      ...pastExamCertEntries,
       ...pastExamEntries,
     ];
   } catch {

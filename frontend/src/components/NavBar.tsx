@@ -9,7 +9,7 @@ import { getGoogleLoginUrl } from "@/lib/oauth";
 import { type Theme, getInitialTheme, setStoredTheme, applyTheme } from "@/lib/theme";
 import FeedbackModal from "@/components/FeedbackModal";
 import NotificationBell from "@/components/NotificationBell";
-import { CERT_LIST, type CertKey } from "@/lib/cert-tokens";
+import { CERT_LIST, slugFromCert, type CertKey } from "@/lib/cert-tokens";
 
 type NavItem =
   | { kind: "link"; href: string; label: string }
@@ -19,7 +19,7 @@ const NAV_LINKS: NavItem[] = [
   { kind: "link", href: "/", label: "홈" },
   { kind: "dropdown", label: "문제 풀기", basePath: "/solve", build: (cert) => `/solve?cert=${cert}` },
   { kind: "dropdown", label: "모의고사", basePath: "/mock-exams", build: (cert) => `/mock-exams?cert=${cert}` },
-  { kind: "dropdown", label: "기출 복원", basePath: "/past-exams", build: (cert) => `/past-exams?cert=${cert}` },
+  { kind: "dropdown", label: "기출 복원", basePath: "/past-exams", build: (cert) => `/past-exams/${slugFromCert(cert)}` },
   { kind: "link", href: "/dashboard", label: "대시보드" },
   { kind: "link", href: "/wrong-answers", label: "오답 노트" },
   { kind: "link", href: "/blog", label: "시험 준비 팁" },
