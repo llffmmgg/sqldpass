@@ -10,18 +10,18 @@
  */
 
 :root {
-  /* surfaces */
+  /* surfaces — LeetCode 라이트 톤. 흰 배경 위에 카드 단차와 보더가 또렷이 보이도록 */
   --bg: #ffffff;
-  --bg-elevated: #fbfbfb;
-  --surface: #f8f8f8;
-  --surface-hover: #f1f1f1;
-  --border: #e5e5e5;
-  --border-strong: #d4d4d4;
+  --bg-elevated: #f0f1f3;     /* 카드 안의 강조 박스 (마스터·피드백) — 카드보다 더 회색 */
+  --surface: #f7f8fa;         /* 카드 — 살짝 회색 */
+  --surface-hover: #eef0f3;
+  --border: #d0d3d9;          /* 또렷한 솔리드 보더 (이전 #e5e5e5 너무 옅음) */
+  --border-strong: #a8acb6;   /* 호버·강조 */
 
   /* text */
-  --text: #171717;
-  --text-muted: #525252;
-  --text-subtle: #737373;
+  --text: #181a1f;
+  --text-muted: #525964;
+  --text-subtle: #757a85;
 
   /* brand */
   --primary: #24b47e;
@@ -30,24 +30,24 @@
   --primary-soft: rgba(36, 180, 126, 0.10);
   --primary-ring: rgba(36, 180, 126, 0.35);
 
-  /* semantic */
-  --danger: #dc2626;
+  /* semantic — LeetCode 라이트 (살짝 더 진해서 흰 배경 위 대비 확보) */
+  --danger: #ef4444;
   --warning: #d97706;
-  --success: #059669;
-  --info: #0284c7;
+  --success: #00997a;
+  --info: #0a84ff;
 
   /* effects */
   --glow: rgba(62, 207, 142, 0.18);
   --accent-glow: rgba(62, 207, 142, 0.10);
 
   /* code block bg (prose) */
-  --code-bg: #f5f5f5;
+  --code-bg: #f0f1f3;
 
-  /* shadow elevation (light) */
-  --shadow-subtle: 0 1px 2px rgba(0, 0, 0, 0.04);
-  --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
-  --shadow-lg: 0 10px 28px rgba(0, 0, 0, 0.08), 0 2px 6px rgba(0, 0, 0, 0.04);
-  --shadow-xl: 0 20px 48px rgba(0, 0, 0, 0.10);
+  /* shadow elevation (light) — 살짝 진해서 카드 elevation 살림 */
+  --shadow-subtle: 0 1px 2px rgba(15, 23, 42, 0.06);
+  --shadow-md: 0 2px 8px rgba(15, 23, 42, 0.08), 0 1px 2px rgba(15, 23, 42, 0.05);
+  --shadow-lg: 0 10px 28px rgba(15, 23, 42, 0.10), 0 2px 6px rgba(15, 23, 42, 0.05);
+  --shadow-xl: 0 20px 48px rgba(15, 23, 42, 0.12);
 
   /* cert accents (same across modes, tuned for AA) */
   --cert-sqld: #f59e0b;
