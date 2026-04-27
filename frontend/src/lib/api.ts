@@ -421,3 +421,7 @@ export function adminEditPost(id: number, body: PostEditRequest): Promise<void> 
 export function adminDeletePost(id: number): Promise<void> {
   return adminFetch<void>(`/posts/${id}`, { method: "DELETE" });
 }
+
+export function adminDeleteComment(commentId: number): Promise<void> {
+  return adminFetch<void>(`/posts/comments/${commentId}`, { method: "DELETE" });
+}

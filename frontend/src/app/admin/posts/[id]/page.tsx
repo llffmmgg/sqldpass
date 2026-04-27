@@ -8,6 +8,7 @@ import PostMarkdown from "@/components/PostMarkdown";
 import { CERT_TOKENS, certFromExamType, type CertKey } from "@/lib/cert-tokens";
 import {
   adminApprovePost,
+  adminDeleteComment,
   adminDeletePost,
   adminEditPost,
   adminGetPost,
@@ -81,6 +82,18 @@ export default function AdminPostDetailPage({ params }: { params: Promise<{ id: 
     setView("preview");
   }
 
+  async function handleDeleteComment(commentId: number) {
+    if (!confirm("이 댓글을 삭제할까요?")) return;
+    try {
+      await adminDeleteComment(commentId);
+      setPost((prev) =>
+        prev ? { ...prev, comments: prev.comments.filter((c) => c.id !== commentId) } : prev,
+      );
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "댓글 삭제에 실패했습니다.");
+    }
+  }
+
   async function handleDelete() {
     if (!confirm("이 게시글을 삭제할까요? (반려 처리, 복구 불가)")) return;
     setBusy(true);
@@ -112,7 +125,8 @@ export default function AdminPostDetailPage({ params }: { params: Promise<{ id: 
   const token = cert ? CERT_TOKENS[cert] : null;
 
   return (
-    <div className="max-w-3xl space-y-6">
+    <div className="space-y-6 lg:grid lg:grid-cols-[minmax(0,1fr)_300px] lg:gap-6 lg:space-y-0">
+      <div className="space-y-6">
       <Link href="/admin/posts" className="text-sm text-muted hover:text-foreground">
         ← 후기 승인
       </Link>
@@ -259,6 +273,110 @@ export default function AdminPostDetailPage({ params }: { params: Promise<{ id: 
           🗑 반려/삭제
         </button>
       </div>
+
+      {/* 댓글 관리 — 어드민이 임의 삭제 가능 */}
+      <section className="rounded-xl border border-border bg-surface p-6">
+        <div className="flex items-baseline justify-between">
+          <h2 className="text-sm font-semibold">댓글 관리 ({post.comments.length})</h2>
+          <span className="text-xs text-muted">어드민은 모든 댓글을 삭제할 수 있어요</span>
+        </div>
+        {post.comments.length === 0 ? (
+          <p className="mt-4 text-center text-sm text-muted">아직 댓글이 없습니다.</p>
+        ) : (
+          <ul className="mt-4 space-y-2">
+            {post.comments.map((c) => (
+              <li
+                key={c.id}
+                className="rounded-lg border border-border bg-background/40 px-4 py-3"
+              >
+                <div className="flex items-center justify-between gap-2 text-xs text-muted tabular-nums">
+                  <span className="font-medium text-foreground">{c.authorNickname}</span>
+                  <div className="flex items-center gap-2">
+                    <span>{new Date(c.createdAt).toLocaleString("ko-KR")}</span>
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteComment(c.id)}
+                      className="rounded border border-red-500/40 bg-red-500/10 px-2 py-0.5 text-[11px] text-red-400 hover:bg-red-500/15"
+                    >
+                      삭제
+                    </button>
+                  </div>
+                </div>
+                <p className="mt-1.5 whitespace-pre-wrap text-sm text-foreground">{c.content}</p>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+      </div>
+
+      {/* 우측 사이드 — 복붙용 스니펫 */}
+      <aside className="lg:sticky lg:top-4 lg:self-start lg:max-h-[calc(100vh-2rem)] lg:overflow-y-auto">
+        <CopySnippets />
+      </aside>
     </div>
+  );
+}
+
+/** 어드민이 후기에 자주 추가하는 마크다운 스니펫 — 클릭 시 클립보드 복사. */
+function CopySnippets() {
+  const snippets = [
+    {
+      title: "쿠팡 SQLD 교재 링크",
+      hint: "본문 자료 소개 섹션에 한 번 삽입",
+      text: "[SQLD 교재 쿠팡에서 보기](https://link.coupang.com/a/exyFNq)",
+    },
+    {
+      title: "쿠팡 파트너스 면책 문구",
+      hint: "글 맨 하단에 한 번",
+      text: "이 포스팅은 쿠팡 파트너스 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받습니다.",
+    },
+  ];
+
+  return (
+    <div className="space-y-3 rounded-xl border border-border bg-surface p-4">
+      <div>
+        <h3 className="text-sm font-semibold">📋 자주 쓰는 스니펫</h3>
+        <p className="mt-1 text-[11px] text-muted">클릭하면 클립보드에 복사됩니다.</p>
+      </div>
+      {snippets.map((s) => (
+        <SnippetCard key={s.title} {...s} />
+      ))}
+    </div>
+  );
+}
+
+function SnippetCard({ title, hint, text }: { title: string; hint: string; text: string }) {
+  const [copied, setCopied] = useState(false);
+
+  async function copy() {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1200);
+    } catch {
+      alert("복사에 실패했습니다. 직접 선택해서 복사해주세요.");
+    }
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={copy}
+      className="block w-full rounded-lg border border-border bg-background/40 p-3 text-left transition-colors hover:border-primary/40"
+    >
+      <div className="flex items-center justify-between text-xs">
+        <span className="font-semibold text-foreground">{title}</span>
+        <span
+          className={`text-[11px] ${copied ? "text-primary" : "text-muted"}`}
+        >
+          {copied ? "✓ 복사됨" : "복사"}
+        </span>
+      </div>
+      <p className="mt-1 text-[10px] text-muted">{hint}</p>
+      <pre className="mt-2 overflow-x-auto whitespace-pre-wrap break-all rounded border border-border bg-background/60 p-2 text-[11px] leading-relaxed text-muted">
+        {text}
+      </pre>
+    </button>
   );
 }

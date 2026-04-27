@@ -199,6 +199,14 @@ public class PostService {
         postRepository.delete(p);
     }
 
+    /** 어드민이 임의 댓글 삭제 (작성자 무관 권한). */
+    @Transactional
+    public void deleteCommentByAdmin(Long commentId) {
+        PostCommentEntity c = commentRepository.findById(commentId)
+                .orElseThrow(() -> new SqldpassException(ErrorCode.COMMENT_NOT_FOUND));
+        commentRepository.delete(c);
+    }
+
     // ========== 헬퍼 ==========
 
     private MemberEntity loadMember(Long memberId) {

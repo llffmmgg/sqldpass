@@ -59,4 +59,10 @@ public class AdminPostController {
     public void delete(@PathVariable Long id) {
         postService.deleteByAdmin(id);
     }
+
+    @DeleteMapping("/comments/{commentId}")
+    @Operation(summary = "댓글 삭제 (어드민 — 작성자 무관)")
+    public void deleteComment(@PathVariable Long commentId) {
+        postService.deleteCommentByAdmin(commentId);
+    }
 }

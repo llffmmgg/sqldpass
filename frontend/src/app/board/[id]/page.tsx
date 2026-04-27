@@ -1,13 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState, use } from "react";
+import { useEffect, useState, use } from "react";
 import { useRouter } from "next/navigation";
 
-import ImageUploadButton from "@/components/ImageUploadButton";
 import PostMarkdown from "@/components/PostMarkdown";
 import { Button, Container } from "@/components/ui";
-import { handleImagePaste } from "@/lib/imagePaste";
 import {
   CERT_TOKENS,
   certFromExamType,
@@ -34,23 +32,6 @@ export default function PostDetailPage({ params }: { params: Promise<{ id: strin
   const [submittingComment, setSubmittingComment] = useState(false);
   const [myNickname, setMyNickname] = useState<string | null>(null);
   const [loggedIn, setLoggedIn] = useState(false);
-  const commentRef = useRef<HTMLTextAreaElement | null>(null);
-
-  function insertCommentText(text: string) {
-    const ta = commentRef.current;
-    if (!ta) {
-      setCommentText((prev) => prev + text);
-      return;
-    }
-    const start = ta.selectionStart ?? commentText.length;
-    const end = ta.selectionEnd ?? commentText.length;
-    setCommentText(commentText.slice(0, start) + text + commentText.slice(end));
-    requestAnimationFrame(() => {
-      ta.focus();
-      const cursor = start + text.length;
-      ta.setSelectionRange(cursor, cursor);
-    });
-  }
 
   useEffect(() => {
     setMyNickname(getNickname());
@@ -180,18 +161,13 @@ export default function PostDetailPage({ params }: { params: Promise<{ id: strin
           {loggedIn ? (
             <div className="rounded-lg border border-border bg-surface p-3">
               <textarea
-                ref={commentRef}
                 value={commentText}
                 onChange={(e) => setCommentText(e.target.value)}
-                onPaste={(e) => {
-                  handleImagePaste(e, setCommentText, (msg) => alert(msg));
-                }}
-                placeholder="댓글을 입력하세요 (마크다운·Ctrl+V 이미지 가능)"
+                placeholder="댓글을 입력하세요"
                 rows={3}
                 className="w-full resize-none rounded-md border border-border bg-bg-elevated px-3 py-2 text-sm text-text placeholder:text-text-subtle focus:border-primary focus:outline-none"
               />
-              <div className="mt-2 flex items-center justify-between">
-                <ImageUploadButton onInsert={insertCommentText} disabled={submittingComment} />
+              <div className="mt-2 flex justify-end">
                 <Button
                   variant="primary"
                   size="sm"
