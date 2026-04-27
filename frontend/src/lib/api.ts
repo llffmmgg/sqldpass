@@ -395,18 +395,22 @@ export async function uploadImage(file: File): Promise<string> {
 }
 
 // ===== 어드민 =====
+// 어드민 토큰(admin_token)을 쓰므로 adminFetch 사용. fetchApi 의 401 핸들러는
+// 사용자 토큰을 클리어하고 / 로 보내버려 어드민 흐름이 망가짐.
+import { adminFetch } from "@/lib/adminApi";
+
 export function adminListPendingPosts(): Promise<PostSummary[]> {
-  return fetchApi<PostSummary[]>(`/admin/posts/pending`);
+  return adminFetch<PostSummary[]>(`/posts/pending`);
 }
 
 export function adminGetPost(id: number): Promise<PostDetail> {
-  return fetchApi<PostDetail>(`/admin/posts/${id}`);
+  return adminFetch<PostDetail>(`/posts/${id}`);
 }
 
 export function adminApprovePost(id: number): Promise<void> {
-  return fetchApiVoid(`/admin/posts/${id}/approve`, { method: "POST" });
+  return adminFetch<void>(`/posts/${id}/approve`, { method: "POST" });
 }
 
 export function adminDeletePost(id: number): Promise<void> {
-  return fetchApiVoid(`/admin/posts/${id}`, { method: "DELETE" });
+  return adminFetch<void>(`/posts/${id}`, { method: "DELETE" });
 }

@@ -23,6 +23,8 @@ export default function AdminPostDetailPage({ params }: { params: Promise<{ id: 
   const [post, setPost] = useState<PostDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  // 본문을 사용자가 보는 렌더링(preview) 으로 볼지, 원본 markdown 텍스트로 볼지
+  const [view, setView] = useState<"preview" | "raw">("preview");
 
   useEffect(() => {
     setError(null);
@@ -105,9 +107,47 @@ export default function AdminPostDetailPage({ params }: { params: Promise<{ id: 
           {post.authorNickname} · {new Date(post.createdAt).toLocaleString("ko-KR")}
         </div>
 
-        <hr className="my-5 border-border" />
+        <div className="mt-5 flex items-center justify-between border-t border-border pt-5">
+          <span className="text-xs text-muted">
+            {view === "preview"
+              ? "사용자가 보는 모습 (마크다운 렌더링)"
+              : "원본 마크다운 텍스트"}
+          </span>
+          <div className="flex gap-1 rounded-md border border-border p-0.5 text-xs">
+            <button
+              type="button"
+              onClick={() => setView("preview")}
+              className={`rounded px-2 py-1 transition-colors ${
+                view === "preview"
+                  ? "bg-primary/10 font-semibold text-primary"
+                  : "text-muted hover:text-foreground"
+              }`}
+            >
+              미리보기
+            </button>
+            <button
+              type="button"
+              onClick={() => setView("raw")}
+              className={`rounded px-2 py-1 transition-colors ${
+                view === "raw"
+                  ? "bg-primary/10 font-semibold text-primary"
+                  : "text-muted hover:text-foreground"
+              }`}
+            >
+              원본
+            </button>
+          </div>
+        </div>
 
-        <PostMarkdown content={post.content} />
+        <div className="mt-4">
+          {view === "preview" ? (
+            <PostMarkdown content={post.content} />
+          ) : (
+            <pre className="overflow-x-auto whitespace-pre-wrap rounded-md border border-border bg-background/40 p-4 text-xs leading-relaxed text-muted">
+              {post.content}
+            </pre>
+          )}
+        </div>
       </article>
 
       <div className="flex justify-end gap-2">

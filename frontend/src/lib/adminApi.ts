@@ -17,7 +17,7 @@ export function isAuthenticated(): boolean {
   return !!getToken();
 }
 
-async function adminFetch<T>(path: string, options?: RequestInit): Promise<T> {
+export async function adminFetch<T>(path: string, options?: RequestInit): Promise<T> {
   const token = getToken();
   const res = await fetch(`${BASE}${path}`, {
     ...options,
@@ -40,7 +40,14 @@ async function adminFetch<T>(path: string, options?: RequestInit): Promise<T> {
   }
 
   if (res.status === 204 || res.status === 202) return undefined as T;
-  return res.json();
+  // 200 인데 빈 body 인 경우 (Spring 의 void 반환) — json 파싱 시도하면 SyntaxError
+  const text = await res.text();
+  if (!text) return undefined as T;
+  try {
+    return JSON.parse(text) as T;
+  } catch {
+    return undefined as T;
+  }
 }
 
 // Types
