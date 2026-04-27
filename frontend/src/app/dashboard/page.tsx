@@ -216,9 +216,9 @@ function getRecentActivity(solves: SolveSummaryResponse[]): { date: string; coun
 }
 
 function rateColor(rate: number) {
-  if (rate >= 80) return "text-green-400";
-  if (rate >= 60) return "text-amber-400";
-  return "text-red-400";
+  if (rate >= 80) return "text-success";
+  if (rate >= 60) return "text-warning";
+  return "text-danger";
 }
 
 /** 정답률 링 게이지. 부모 text 색을 SVG stroke 로 사용 (currentColor). r=15.9155 → 둘레 ≈ 100 */
@@ -349,16 +349,16 @@ function DashboardPageContent() {
         {totalSolved > 0 && (
           <>
             {/* ── Today's Focus — 가장 큰 카드 ─────────────────────── */}
-            <div className="mt-8 rounded-2xl border border-amber-500/20 bg-gradient-to-br from-amber-500/[0.08] via-amber-500/[0.04] to-transparent p-6 sm:p-7">
+            <div className="mt-8 rounded-2xl border border-border-strong bg-surface p-6 shadow-[var(--shadow-subtle)] sm:p-7">
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div className="min-w-0 flex-1">
-                  <p className="text-[11px] font-semibold uppercase tracking-wider text-amber-300">
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-text-subtle">
                     오늘의 학습
                   </p>
                   {focus ? (
                     <>
                       <h2 className="mt-2 text-xl font-bold sm:text-2xl">
-                        <span className="text-amber-300">{focus.name}</span> 부터 다시 풀어보세요
+                        <span className="text-primary">{focus.name}</span> 부터 다시 풀어보세요
                       </h2>
                       <p className="mt-1 text-sm text-muted">
                         오답 {focus.wrongCount}개 · 오답률 {Math.round(focus.wrongRate)}%
@@ -375,7 +375,7 @@ function DashboardPageContent() {
                 </div>
                 <Link
                   href={focus ? `/wrong-answers?subjectId=${focus.id}` : "/solve"}
-                  className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-primary-fg transition-all hover:bg-primary-hover hover:scale-[1.02]"
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-primary-fg transition-colors hover:bg-primary-hover"
                 >
                   {focus ? "복습 시작" : "문제 풀기"}
                   <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
@@ -387,28 +387,28 @@ function DashboardPageContent() {
 
             {/* ── KPI — 보조 정보로 강등 (작은 패딩, 작은 폰트) ──────── */}
             <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
-              <div className="rounded-lg border border-border bg-surface p-3">
+              <div className="rounded-lg border border-border bg-surface/70 p-3">
                 <p className="text-[11px] font-medium text-muted">총 풀이</p>
                 <p className="mt-0.5 text-xl font-bold">
                   {totalSolved}
                   <span className="ml-1 text-xs font-normal text-muted">문제</span>
                 </p>
               </div>
-              <div className="rounded-lg border border-border bg-surface p-3">
+              <div className="rounded-lg border border-border bg-surface/70 p-3">
                 <p className="text-[11px] font-medium text-muted">정답률</p>
                 <p className={`mt-0.5 text-xl font-bold ${rateColor(overallRate)}`}>
                   {overallRate}
                   <span className="ml-0.5 text-xs font-normal">%</span>
                 </p>
               </div>
-              <div className="rounded-lg border border-border bg-surface p-3">
+              <div className="rounded-lg border border-border bg-surface/70 p-3">
                 <p className="text-[11px] font-medium text-muted">연속 학습</p>
                 <p className="mt-0.5 text-xl font-bold text-primary">
                   {streak}
                   <span className="ml-1 text-xs font-normal text-muted">일</span>
                 </p>
               </div>
-              <div className="rounded-lg border border-border bg-surface p-3">
+              <div className="rounded-lg border border-border bg-surface/70 p-3">
                 <p className="text-[11px] font-medium text-muted">풀이 세션</p>
                 <p className="mt-0.5 text-xl font-bold">
                   {solves.length}
@@ -438,7 +438,7 @@ function DashboardPageContent() {
                   {certGroups.map((g) => (
                     <article
                       key={g.cert}
-                      className={`overflow-hidden rounded-xl border bg-surface ${g.token.tailwind.border}`}
+                      className="overflow-hidden rounded-xl border border-border bg-surface"
                     >
                       {/* 카드 헤더 */}
                       <header className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-border/60 px-5 py-3.5">
@@ -474,7 +474,7 @@ function DashboardPageContent() {
                               key={m.id}
                               className={`flex flex-col rounded-lg border p-3.5 transition-colors ${
                                 isTopWeak
-                                  ? `${g.token.tailwind.border} ${g.token.tailwind.bgSoft}`
+                                  ? "border-border-strong bg-bg-elevated"
                                   : "border-border/60 bg-background"
                               }`}
                             >
@@ -489,7 +489,7 @@ function DashboardPageContent() {
                                   </p>
                                   {m.wrongCount > 0 && (
                                     <p
-                                      className={`mt-0.5 text-[11px] font-medium tabular-nums ${g.token.tailwind.textSoft}`}
+                                      className="mt-0.5 text-[11px] font-medium text-text-muted tabular-nums"
                                     >
                                       오답 {m.wrongCount}개
                                     </p>
@@ -500,7 +500,7 @@ function DashboardPageContent() {
                               {m.wrongCount > 0 ? (
                                 <Link
                                   href={`/wrong-answers?subjectId=${m.id}`}
-                                  className={`mt-3 inline-flex items-center justify-center gap-1 rounded-md border px-2.5 py-1.5 text-xs font-semibold transition-colors ${g.token.tailwind.border} ${g.token.tailwind.bgSoft} ${g.token.tailwind.text} ${g.token.tailwind.bgHover}`}
+                                  className="mt-3 inline-flex items-center justify-center gap-1 rounded-md border border-border bg-surface-hover px-2.5 py-1.5 text-xs font-semibold text-text transition-colors hover:border-border-strong"
                                 >
                                   오답 {m.wrongCount}개 복습하기
                                   <svg
@@ -549,7 +549,7 @@ function DashboardPageContent() {
                       <div className="flex min-w-0 items-center gap-2.5">
                         <span
                           className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-md ${
-                            isMock ? "bg-violet-500/10 text-violet-400" : "bg-amber-500/10 text-amber-400"
+                            isMock ? "bg-surface-hover text-text-muted" : "bg-surface-hover text-text-muted"
                           }`}
                           aria-hidden="true"
                           title={isMock ? "모의고사" : "과목별"}
