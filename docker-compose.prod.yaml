@@ -55,6 +55,13 @@ services:
       DISCORD_WEBHOOK_SIGNUP: ${DISCORD_WEBHOOK_SIGNUP}
       DISCORD_WEBHOOK_ERROR: ${DISCORD_WEBHOOK_ERROR}
       DISCORD_WEBHOOK_FEEDBACK: ${DISCORD_WEBHOOK_FEEDBACK}
+
+      # --- Cloudflare R2 (게시판 이미지 업로드) ---
+      R2_ENDPOINT: ${R2_ENDPOINT}
+      R2_BUCKET: ${R2_BUCKET}
+      R2_ACCESS_KEY: ${R2_ACCESS_KEY}
+      R2_SECRET_KEY: ${R2_SECRET_KEY}
+      R2_PUBLIC_BASE_URL: ${R2_PUBLIC_BASE_URL}
     depends_on:
       db:
         condition: service_healthy   # DB healthcheck 통과 후 앱 시작
