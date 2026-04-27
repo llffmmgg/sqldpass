@@ -87,5 +87,5 @@ sqldpass:
     bucket: ${R2_BUCKET:}                        # 예: sqldpass-uploads
     access-key: ${R2_ACCESS_KEY:}
     secret-key: ${R2_SECRET_KEY:}
-    public-base-url: ${R2_PUBLIC_BASE_URL:}      # 예: https://pub-xxxxxxxxxxxx.r2.dev   또는 사용자 커스텀 도메인
+    public-base-url: ${R2_PUBLIC_BASE_URL:}      # 예: https://pub-xxx.r2.dev/{bucket}  (path-style 이면 bucket 까지 포함)
     max-bytes: ${R2_MAX_BYTES:5242880}           # 5 MB
