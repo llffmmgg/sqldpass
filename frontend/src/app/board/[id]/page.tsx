@@ -184,7 +184,7 @@ export default function PostDetailPage({ params }: { params: Promise<{ id: strin
                 value={commentText}
                 onChange={(e) => setCommentText(e.target.value)}
                 onPaste={(e) => {
-                  handleImagePaste(e, insertCommentText, (msg) => alert(msg));
+                  handleImagePaste(e, setCommentText, (msg) => alert(msg));
                 }}
                 placeholder="댓글을 입력하세요 (마크다운·Ctrl+V 이미지 가능)"
                 rows={3}

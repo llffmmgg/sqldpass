@@ -127,7 +127,7 @@ function SubmitPostContent() {
               rows={14}
               onChange={(e) => setContent(e.target.value)}
               onPaste={(e) => {
-                handleImagePaste(e, insertAtCursor, setError);
+                handleImagePaste(e, setContent, setError);
               }}
               placeholder={[
                 "공부 기간, 사용한 교재·강의, 점수, 도움된 팁 등을 자유롭게 적어주세요.",
