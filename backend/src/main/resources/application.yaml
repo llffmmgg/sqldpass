@@ -81,7 +81,8 @@ sqldpass:
       error: ${DISCORD_WEBHOOK_ERROR:}
       feedback: ${DISCORD_WEBHOOK_FEEDBACK:}
   r2:
-    # Cloudflare R2 — 게시판 이미지 업로드용. 미설정이면 업로드 엔드포인트가 503.
+    # Cloudflare R2 — 게시판 이미지 업로드용 (presigned PUT URL 발급).
+    # 미설정이면 /api/uploads/image-url 이 503 반환.
     endpoint: ${R2_ENDPOINT:}                    # 예: https://<account-id>.r2.cloudflarestorage.com
     bucket: ${R2_BUCKET:}                        # 예: sqldpass-uploads
     access-key: ${R2_ACCESS_KEY:}
