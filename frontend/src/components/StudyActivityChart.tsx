@@ -148,7 +148,7 @@ export default function StudyActivityChart({ data, overallAvg }: StudyActivityCh
         >
           <defs>
             <linearGradient id="study-activity-area" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="var(--primary)" stopOpacity="0.14" />
+              <stop offset="0%" stopColor="var(--primary)" stopOpacity="0.28" />
               <stop offset="100%" stopColor="var(--primary)" stopOpacity="0" />
             </linearGradient>
           </defs>
@@ -184,7 +184,7 @@ export default function StudyActivityChart({ data, overallAvg }: StudyActivityCh
               stroke="var(--accent)"
               strokeWidth={1}
               strokeDasharray="4 4"
-              opacity={0.42}
+              opacity={0.6}
               vectorEffect="non-scaling-stroke"
             />
           )}
@@ -228,7 +228,7 @@ export default function StudyActivityChart({ data, overallAvg }: StudyActivityCh
                 onFocus={() => setHoveredIdx(i)}
                 onBlur={() => setHoveredIdx(null)}
                 className={`group relative flex h-full flex-1 cursor-pointer flex-col items-center justify-end rounded-md outline-none transition-colors duration-100 focus-visible:ring-2 focus-visible:ring-primary ${
-                  isActive ? "bg-surface-hover" : "hover:bg-surface-hover/70"
+                  isActive ? "bg-primary/[0.06]" : "hover:bg-primary/[0.04]"
                 }`}
                 aria-label={`${day.month}월 ${day.dayNum}일 ${DOW_LONG[day.dow]}, ${day.count}문제`}
               >
@@ -236,12 +236,12 @@ export default function StudyActivityChart({ data, overallAvg }: StudyActivityCh
                   <div
                     className={`w-full max-w-[24px] origin-bottom rounded-t-md ${
                       day.isToday
-                        ? "bg-primary"
+                        ? "bg-primary shadow-[0_0_12px_var(--glow)]"
                         : isActive
-                          ? "bg-primary/80 scale-y-105"
+                          ? "bg-primary shadow-[0_0_10px_var(--glow)] scale-y-105"
                           : dim
-                            ? "bg-primary/20"
-                            : "bg-primary/45"
+                            ? "bg-primary/25"
+                            : "bg-primary/55"
                     }`}
                     style={{
                       height: `${barHeight}%`,
