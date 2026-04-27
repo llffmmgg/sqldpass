@@ -71,7 +71,7 @@ export default function BlogList({
     <Container size="default" className="py-12">
       <header className="mb-10 flex items-center gap-5">
         <Image
-          src="/blog-mascot.webp"
+          src="/logo/blog-mascot.webp"
           alt="시험 준비 팁 마스코트"
           width={96}
           height={96}

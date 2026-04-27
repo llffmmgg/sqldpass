@@ -475,7 +475,7 @@ function WrongAnswersPageContent() {
       <Container size="default" className="py-16">
         <div className="flex items-center gap-5">
           <Image
-            src="/wrong-answer-mascot.webp"
+            src="/logo/wrong-answer-mascot.webp"
             alt="오답노트 마스코트"
             width={220}
             height={220}

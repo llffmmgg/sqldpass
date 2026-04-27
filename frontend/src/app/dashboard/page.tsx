@@ -312,7 +312,7 @@ function DashboardPageContent() {
         {/* 헤더 */}
         <div className="flex items-center gap-5">
           <Image
-            src="/dashboard-mascot.webp"
+            src="/logo/dashboard-mascot.webp"
             alt="대시보드 마스코트"
             width={220}
             height={220}
