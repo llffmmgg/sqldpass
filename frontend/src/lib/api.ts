@@ -145,8 +145,9 @@ export function submitSolve(request: SolveRequest) {
   });
 }
 
-export function getSolves() {
-  return fetchApi<SolveSummaryResponse[]>("/solves");
+export function getSolves(opts?: { mockExamId?: number }) {
+  const qs = opts?.mockExamId != null ? `?mockExamId=${opts.mockExamId}` : "";
+  return fetchApi<SolveSummaryResponse[]>(`/solves${qs}`);
 }
 
 export function getSolve(id: number) {

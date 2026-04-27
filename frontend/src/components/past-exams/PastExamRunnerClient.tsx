@@ -24,6 +24,8 @@ import {
   type PastExamGradeResponse,
   type PastExamQuestion,
 } from "@/lib/pastExamApi";
+import { getSolves, type SolveSummaryResponse } from "@/lib/api";
+import MockExamAttemptsView from "@/components/MockExamAttemptsView";
 import { hapticError, hapticLight, hapticSuccess } from "@/lib/haptic";
 
 const CountdownCircleTimer = dynamic(
@@ -66,6 +68,9 @@ export default function PastExamRunnerClient({
   const [timerRunning, setTimerRunning] = useState(false);
   const [timerSeconds, setTimerSeconds] = useState(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [attempts, setAttempts] = useState<SolveSummaryResponse[]>([]);
+  const [attemptsLoaded, setAttemptsLoaded] = useState(false);
+  const [started, setStarted] = useState(false);
 
   const timerLimit = useMemo(
     () => (EXAM_TIME_MINUTES[exam.examType] ?? 90) * 60,
@@ -103,6 +108,24 @@ export default function PastExamRunnerClient({
     };
   }, []);
 
+  // 로그인 사용자만 시도 fetch. 비로그인은 401 → catch 후 빈 배열로 fallback
+  useEffect(() => {
+    let cancelled = false;
+    getSolves({ mockExamId: exam.id })
+      .then((rows) => {
+        if (!cancelled) setAttempts(rows);
+      })
+      .catch(() => {
+        if (!cancelled) setAttempts([]);
+      })
+      .finally(() => {
+        if (!cancelled) setAttemptsLoaded(true);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [exam.id]);
+
   const answeredCount = useMemo(
     () => Array.from(answers.values()).filter(hasAnswer).length,
     [answers],
@@ -129,6 +152,27 @@ export default function PastExamRunnerClient({
       <main className="flex min-h-screen items-center justify-center bg-bg text-text">
         <Spinner message="기출 회차를 불러오는 중..." />
       </main>
+    );
+  }
+
+  // 시도 1개 이상 + 아직 새로 풀기 안 시작 + 결과 화면도 아닐 때 → 인터스티셜
+  if (attemptsLoaded && attempts.length > 0 && !started && !result) {
+    const roundLabel = buildRoundLabel(exam);
+    const examTitle = roundLabel === exam.name
+      ? `[${token.label}] ${exam.name} 기출 복원`
+      : `[${token.label}] ${roundLabel} 기출 복원`;
+    return (
+      <MockExamAttemptsView
+        attempts={attempts}
+        examTitle={examTitle}
+        examType={exam.examType}
+        meta={
+          <span className="text-text-muted tabular-nums">
+            {exam.questions.length}문항
+          </span>
+        }
+        onStartNew={() => setStarted(true)}
+      />
     );
   }
 

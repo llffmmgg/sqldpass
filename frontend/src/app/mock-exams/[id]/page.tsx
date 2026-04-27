@@ -20,7 +20,14 @@ import {
   type MockExamDetail,
   type MockExamQuestion,
 } from "@/lib/mockExamApi";
-import { submitSolve, type SolveAnswerRequest, type SolveResponse } from "@/lib/api";
+import {
+  getSolves,
+  submitSolve,
+  type SolveAnswerRequest,
+  type SolveResponse,
+  type SolveSummaryResponse,
+} from "@/lib/api";
+import MockExamAttemptsView from "@/components/MockExamAttemptsView";
 import { ExamBadge } from "@/app/mock-exams/page";
 import { GradingDisclaimerModal } from "@/components/GradingDisclaimerModal";
 import AdInfeed from "@/components/AdInfeed";
@@ -71,6 +78,8 @@ function MockExamDetailContent() {
   const [answers, setAnswers] = useState<Map<number, AnswerState>>(new Map());
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<SolveResponse | null>(null);
+  const [attempts, setAttempts] = useState<SolveSummaryResponse[] | null>(null);
+  const [started, setStarted] = useState(false);
 
   // ── 타이머 ──
   const [timerRunning, setTimerRunning] = useState(false);
@@ -117,9 +126,13 @@ function MockExamDetailContent() {
 
   useEffect(() => {
     if (!id) return;
-    getMockExam(id)
-      .then((data) => {
+    Promise.all([
+      getMockExam(id),
+      getSolves({ mockExamId: id }).catch(() => [] as SolveSummaryResponse[]),
+    ])
+      .then(([data, mySolves]) => {
         setExam(data);
+        setAttempts(mySolves);
         // GA4 — 모의고사 시작
         trackEvent("start_exam", {
           exam_id: data.id,
@@ -176,11 +189,28 @@ function MockExamDetailContent() {
     );
   }
 
-  if (!exam) {
+  if (!exam || attempts === null) {
     return (
       <main className="min-h-screen bg-background text-foreground flex items-center justify-center">
         <Spinner message="모의고사 불러오는 중..." />
       </main>
+    );
+  }
+
+  // 시도 1개 이상 + 아직 새로 풀기 안 시작 + 결과 화면도 아닐 때 → 인터스티셜
+  if (attempts.length > 0 && !started && !result) {
+    return (
+      <MockExamAttemptsView
+        attempts={attempts}
+        examTitle={exam.name}
+        examType={exam.examType}
+        meta={
+          <span className="text-text-muted tabular-nums">
+            {exam.questions.length}문항
+          </span>
+        }
+        onStartNew={() => setStarted(true)}
+      />
     );
   }
 

@@ -158,6 +158,17 @@ public class SolveService {
     }
 
     /**
+     * 모의고사·기출복원 진입 화면의 "이전 시도" 인터스티셜용.
+     * mockExamId 가 null 이면 전체, 아니면 해당 시험의 내 시도만 최신순 반환.
+     */
+    public List<Solve> getMySolves(Long memberId, Long mockExamId) {
+        List<SolveEntity> rows = (mockExamId == null)
+                ? solveRepository.findByMemberIdOrderByCreatedAtDesc(memberId)
+                : solveRepository.findByMemberIdAndMockExamIdOrderByCreatedAtDesc(memberId, mockExamId);
+        return rows.stream().map(SolveMapper::toDomain).toList();
+    }
+
+    /**
      * 회원의 마지막 풀이 자격증 slug. Daily Question 기본 탭 계산용.
      * 풀이 기록이 없으면 null.
      */

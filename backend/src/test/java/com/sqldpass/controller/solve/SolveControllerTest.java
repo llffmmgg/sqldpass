@@ -71,7 +71,7 @@ class SolveControllerTest {
     void getSolves() throws Exception {
         mockAuth();
         Solve solve = new Solve(1L, 1L, 5L, null, 10, 7, 70, LocalDateTime.now(), List.of());
-        given(solveService.getMySolves(1L)).willReturn(List.of(solve));
+        given(solveService.getMySolves(1L, null)).willReturn(List.of(solve));
 
         mockMvc.perform(get("/api/solves")
                         .header("Authorization", "Bearer test-token"))

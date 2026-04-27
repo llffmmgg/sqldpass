@@ -42,6 +42,20 @@ public interface SolveRepository extends JpaRepository<SolveEntity, Long> {
             + "ORDER BY s.createdAt DESC")
     List<SolveEntity> findByMemberIdOrderByCreatedAtDesc(@Param("memberId") Long memberId);
 
+    /**
+     * 회원의 특정 모의고사·기출복원 시도 목록 (최신순).
+     * mock-exams/[id], past-exams/[id] 진입 시 "이전 시도" 인터스티셜용.
+     */
+    @Query("SELECT DISTINCT s FROM SolveEntity s "
+            + "LEFT JOIN FETCH s.subject subj "
+            + "LEFT JOIN FETCH subj.parent "
+            + "LEFT JOIN FETCH s.mockExam "
+            + "WHERE s.member.id = :memberId AND s.mockExam.id = :mockExamId "
+            + "ORDER BY s.createdAt DESC")
+    List<SolveEntity> findByMemberIdAndMockExamIdOrderByCreatedAtDesc(
+            @Param("memberId") Long memberId,
+            @Param("mockExamId") Long mockExamId);
+
     /** 회원의 가장 최근 풀이 1건 (Daily Question 탭 기본값 계산용). Pageable로 Top 1 제한. */
     @Query("SELECT s FROM SolveEntity s "
             + "LEFT JOIN FETCH s.subject subj "

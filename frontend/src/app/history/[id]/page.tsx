@@ -1,8 +1,11 @@
 "use client";
 
+/* eslint-disable react-hooks/set-state-in-effect -- 마운트 시 풀이 상세 fetch 후 state 갱신 패턴이 필요. 외부 시스템(API) 동기화이므로 setState 호출이 자연스러움 */
+
 import Link from "next/link";
 import { useEffect, useState, use } from "react";
 import { getSolve, getQuestionDetail, getSubjects, type SolveResponse, type QuestionDetail, type Subject } from "@/lib/api";
+import { getPublicPastExam, type PublicPastExamDetail } from "@/lib/publicApi";
 import { formatDate } from "@/lib/format";
 import { parseQuestion, OPTION_MARKERS } from "@/lib/parseQuestion";
 import QuestionContent from "@/components/QuestionContent";
@@ -11,6 +14,7 @@ import Spinner from "@/components/Spinner";
 import AdInfeed from "@/components/AdInfeed";
 import AdDisplay from "@/components/AdDisplay";
 import { Container } from "@/components/ui";
+import { CERT_TOKENS, certFromExamType } from "@/lib/cert-tokens";
 import { trackEvent } from "@/lib/gtag";
 
 function buildSubjectMap(subjects: Subject[]): Record<number, string> {
@@ -22,6 +26,17 @@ function buildSubjectMap(subjects: Subject[]): Record<number, string> {
     }
   }
   return map;
+}
+
+/** PAST_EXAM 회차 라벨: "[SQLD] 2025년 57회 기출 복원" */
+function buildPastExamLabel(exam: PublicPastExamDetail): string {
+  const cert = certFromExamType(exam.examType);
+  const certLabel = cert ? CERT_TOKENS[cert].label : exam.certSlug;
+  const parts: string[] = [];
+  if (exam.examYear != null) parts.push(`${exam.examYear}년`);
+  if (exam.examRound != null) parts.push(`${exam.examRound}회`);
+  if (parts.length === 0) parts.push(exam.name);
+  return `[${certLabel}] ${parts.join(" ")} 기출 복원`;
 }
 
 export default function HistoryDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -37,6 +52,7 @@ function HistoryDetailContent({ params }: { params: Promise<{ id: string }> }) {
   const [solve, setSolve] = useState<SolveResponse | null>(null);
   const [details, setDetails] = useState<Record<number, QuestionDetail>>({});
   const [subjectMap, setSubjectMap] = useState<Record<number, string>>({});
+  const [pastExam, setPastExam] = useState<PublicPastExamDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -54,6 +70,12 @@ function HistoryDetailContent({ params }: { params: Promise<{ id: string }> }) {
           subject_id: solveData.subjectId ?? undefined,
           score: solveData.score,
         });
+        // 기출복원이면 회차 라벨용으로 메타 추가 fetch (실패 무시)
+        if (solveData.mockExamId != null) {
+          getPublicPastExam(solveData.mockExamId)
+            .then((meta) => setPastExam(meta))
+            .catch(() => setPastExam(null));
+        }
         return Promise.all(
           solveData.answers.map((a) => getQuestionDetail(a.questionId))
         );
@@ -105,7 +127,9 @@ function HistoryDetailContent({ params }: { params: Promise<{ id: string }> }) {
         {/* Score summary */}
         <div className="mt-6 rounded-xl border border-border bg-surface p-6 text-center">
           <p className="text-sm text-muted">
-            {solve.mockExamId != null
+            {pastExam
+              ? buildPastExamLabel(pastExam)
+              : solve.mockExamId != null
               ? `모의고사 #${solve.mockExamId}`
               : solve.subjectId != null
               ? subjectMap[solve.subjectId] || `과목 ${solve.subjectId}`

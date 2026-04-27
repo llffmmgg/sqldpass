@@ -113,4 +113,23 @@ class SolveServiceTest {
         assertThat(solves).hasSize(1);
         assertThat(solves.get(0).getTotalCount()).isEqualTo(1);
     }
+
+    @Test
+    @DisplayName("mockExamId 가 null 이면 전체 시도, 값이 있으면 해당 시험 시도만 반환된다")
+    void getMySolvesByMockExam() {
+        // subject 풀이 1건 (mockExamId 없음)
+        SolveRequest subjectReq = new SolveRequest(subject.getId(), null, List.of(
+                new SolveAnswerRequest(q1.getId(), 1, null)
+        ));
+        solveService.solve(member.getId(), subjectReq);
+        entityManager.flush();
+        entityManager.clear();
+
+        List<Solve> all = solveService.getMySolves(member.getId(), null);
+        assertThat(all).hasSize(1);
+
+        // 다른 mockExamId 로 필터하면 비어있어야 함
+        List<Solve> filtered = solveService.getMySolves(member.getId(), 999L);
+        assertThat(filtered).isEmpty();
+    }
 }
