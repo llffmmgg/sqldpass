@@ -3,7 +3,7 @@
 /* eslint-disable react-hooks/set-state-in-effect -- 마운트 시 게시판 목록 fetch 후 setState */
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { Container } from "@/components/ui";
@@ -12,6 +12,25 @@ import { listPosts, type PostPage, type PostSummary } from "@/lib/api";
 import { formatRelativeDate } from "@/lib/format";
 
 export default function BoardPage() {
+  // useSearchParams 는 CSR bailout 이라 prerender 시 Suspense 경계 필요
+  return (
+    <Suspense fallback={<BoardLoading />}>
+      <BoardContent />
+    </Suspense>
+  );
+}
+
+function BoardLoading() {
+  return (
+    <main className="min-h-screen bg-bg text-text">
+      <Container size="default" className="py-12">
+        <p className="py-16 text-center text-sm text-text-muted">불러오는 중…</p>
+      </Container>
+    </main>
+  );
+}
+
+function BoardContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const certParam = searchParams.get("cert"); // ExamType key (예: SQLD)
