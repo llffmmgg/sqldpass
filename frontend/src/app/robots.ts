@@ -6,6 +6,42 @@ export default function robots(): MetadataRoute.Robots {
   return {
     rules: [
       {
+        userAgent: "OAI-SearchBot",
+        allow: "/",
+        disallow: [
+          "/admin",
+          "/admin/",
+          "/auth/",
+          "/api/",
+          "/dashboard",
+          "/dashboard/",
+          "/wrong-answers",
+          "/wrong-answers/",
+          "/profile",
+          "/history",
+          "/history/",
+          "/mypage/",
+        ],
+      },
+      {
+        userAgent: "ChatGPT-User",
+        allow: "/",
+        disallow: [
+          "/admin",
+          "/admin/",
+          "/auth/",
+          "/api/",
+          "/dashboard",
+          "/dashboard/",
+          "/wrong-answers",
+          "/wrong-answers/",
+          "/profile",
+          "/history",
+          "/history/",
+          "/mypage/",
+        ],
+      },
+      {
         userAgent: "*",
         allow: "/",
         disallow: [
