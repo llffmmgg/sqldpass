@@ -1,5 +1,7 @@
 "use client";
 
+/* eslint-disable react-hooks/set-state-in-effect -- 인증 체크/폴링 효과는 setState 가 자연스러움 */
+
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, useRef, useCallback } from "react";
@@ -72,6 +74,7 @@ const SIDEBAR_SECTIONS: NavSection[] = [
       { href: "/admin/members", label: "회원 관리", icon: ICON.members },
       { href: "/admin/feedback", label: "피드백", icon: ICON.feedback },
       { href: "/admin/notices", label: "공지사항", icon: ICON.notices },
+      { href: "/admin/posts", label: "후기 승인", icon: ICON.feedback },
     ],
   },
 ];

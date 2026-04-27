@@ -250,3 +250,130 @@ export function getBookmarks(): Promise<BookmarkResponse[]> {
 export function checkBookmark(questionId: number): Promise<{ bookmarked: boolean }> {
   return fetchApi<{ bookmarked: boolean }>(`/bookmarks/exists/${questionId}`);
 }
+
+// ============================================================
+// 게시판 (Post / Comment)
+// ============================================================
+
+export type PostCategory = "PASS_REVIEW";
+export type PostStatus = "PENDING" | "PUBLISHED";
+
+export interface PostSummary {
+  id: number;
+  category: PostCategory;
+  status: PostStatus;
+  cert: string | null; // ExamType
+  title: string;
+  viewCount: number;
+  commentCount: number;
+  authorNickname: string;
+  createdAt: string;
+}
+
+export interface PostComment {
+  id: number;
+  content: string;
+  authorNickname: string;
+  authorId: number;
+  createdAt: string;
+}
+
+export interface PostDetail {
+  id: number;
+  category: PostCategory;
+  status: PostStatus;
+  cert: string | null;
+  title: string;
+  content: string;
+  viewCount: number;
+  authorNickname: string;
+  authorId: number;
+  createdAt: string;
+  updatedAt: string;
+  comments: PostComment[];
+}
+
+export interface PostPage {
+  items: PostSummary[];
+  page: number;
+  size: number;
+  total: number;
+  totalPages: number;
+}
+
+export interface PostSubmitRequest {
+  category: PostCategory;
+  cert?: string | null;
+  title: string;
+  content: string;
+}
+
+export interface PostEditRequest {
+  title: string;
+  content: string;
+}
+
+export function listPosts(opts?: {
+  category?: PostCategory;
+  cert?: string;
+  page?: number;
+  size?: number;
+}): Promise<PostPage> {
+  const params = new URLSearchParams();
+  if (opts?.category) params.set("category", opts.category);
+  if (opts?.cert) params.set("cert", opts.cert);
+  if (opts?.page != null) params.set("page", String(opts.page));
+  if (opts?.size != null) params.set("size", String(opts.size));
+  const qs = params.toString();
+  return fetchApi<PostPage>(`/posts${qs ? `?${qs}` : ""}`);
+}
+
+export function getPost(id: number): Promise<PostDetail> {
+  return fetchApi<PostDetail>(`/posts/${id}`);
+}
+
+export function submitPost(body: PostSubmitRequest): Promise<number> {
+  return fetchApi<number>(`/posts`, {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+}
+
+export function editPost(id: number, body: PostEditRequest): Promise<void> {
+  return fetchApiVoid(`/posts/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(body),
+  });
+}
+
+export function deletePost(id: number): Promise<void> {
+  return fetchApiVoid(`/posts/${id}`, { method: "DELETE" });
+}
+
+export function addComment(postId: number, content: string): Promise<PostComment> {
+  return fetchApi<PostComment>(`/posts/${postId}/comments`, {
+    method: "POST",
+    body: JSON.stringify({ content }),
+  });
+}
+
+export function deleteComment(commentId: number): Promise<void> {
+  return fetchApiVoid(`/posts/comments/${commentId}`, { method: "DELETE" });
+}
+
+// ===== 어드민 =====
+export function adminListPendingPosts(): Promise<PostSummary[]> {
+  return fetchApi<PostSummary[]>(`/admin/posts/pending`);
+}
+
+export function adminGetPost(id: number): Promise<PostDetail> {
+  return fetchApi<PostDetail>(`/admin/posts/${id}`);
+}
+
+export function adminApprovePost(id: number): Promise<void> {
+  return fetchApiVoid(`/admin/posts/${id}/approve`, { method: "POST" });
+}
+
+export function adminDeletePost(id: number): Promise<void> {
+  return fetchApiVoid(`/admin/posts/${id}`, { method: "DELETE" });
+}

@@ -24,6 +24,7 @@ const NAV_LINKS: NavItem[] = [
   { kind: "dropdown", label: "기출", basePath: "/past-exams", build: (cert) => `/past-exams/${slugFromCert(cert)}` },
   { kind: "link", href: "/dashboard", label: "대시보드" },
   { kind: "link", href: "/wrong-answers", label: "오답 노트" },
+  { kind: "link", href: "/board", label: "게시판" },
   { kind: "link", href: "/blog", label: "블로그" },
 ];
 
