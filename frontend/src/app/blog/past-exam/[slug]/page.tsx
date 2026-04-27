@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 
 import QuestionContent from "@/components/QuestionContent";
 import AdResponsive from "@/components/AdResponsive";
+import BlogViewCounter from "@/components/BlogViewCounter";
 import { Badge, ButtonLink, Card, Container } from "@/components/ui";
 import {
   CERT_TOKENS,
@@ -13,6 +14,7 @@ import {
 } from "@/lib/cert-tokens";
 import { parseQuestion } from "@/lib/parseQuestion";
 import {
+  getPublicBlogViews,
   getPublicPastExamWithAnswers,
   getPublicPastExamsByCert,
   type PublicPastExamDetailWithAnswers,
@@ -91,6 +93,15 @@ export default async function PastExamBlogPage({
   const title = pastExamBlogTitle(summary);
   const description = pastExamBlogDescription(summary);
   const runnerHref = `/past-exams/${detail.id}`;
+  const viewSlug = `past-exam-${slug}`;
+
+  let viewCount = 0;
+  try {
+    const views = await getPublicBlogViews();
+    viewCount = views[viewSlug] ?? 0;
+  } catch {
+    /* 백엔드 미연결 시 무시 */
+  }
 
   const articleLd = {
     "@context": "https://schema.org",
@@ -105,6 +116,7 @@ export default async function PastExamBlogPage({
 
   return (
     <Container size="narrow" className="py-12">
+      <BlogViewCounter slug={viewSlug} />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(articleLd) }}
@@ -136,6 +148,7 @@ export default async function PastExamBlogPage({
             </span>
           )}
           <span className="text-text-subtle">· {detail.totalQuestions}문항</span>
+          <span className="text-text-subtle">· 조회 {viewCount.toLocaleString()}</span>
           {detail.expertVerified && (
             <Badge variant="soft" tone="success" size="xs">
               전문가 검수
