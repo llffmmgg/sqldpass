@@ -11,6 +11,7 @@ import ImageUploadButton from "@/components/ImageUploadButton";
 import { Button, Container } from "@/components/ui";
 import { CERT_LIST, type CertKey } from "@/lib/cert-tokens";
 import { submitPost } from "@/lib/api";
+import { handleImagePaste } from "@/lib/imagePaste";
 
 export default function SubmitPostPage() {
   return (
@@ -125,9 +126,12 @@ function SubmitPostContent() {
               value={content}
               rows={14}
               onChange={(e) => setContent(e.target.value)}
+              onPaste={(e) => {
+                handleImagePaste(e, insertAtCursor, setError);
+              }}
               placeholder={[
                 "공부 기간, 사용한 교재·강의, 점수, 도움된 팁 등을 자유롭게 적어주세요.",
-                "이미지를 첨부하면 markdown 으로 자동 삽입됩니다.",
+                "이미지는 첨부 버튼 또는 Ctrl+V (붙여넣기) 로 삽입할 수 있어요.",
                 "",
                 "예시 항목:",
                 "- 응시일·점수",
@@ -139,7 +143,7 @@ function SubmitPostContent() {
               className="mt-2 w-full resize-y rounded-md border border-border bg-bg-elevated px-3 py-2 text-sm text-text placeholder:text-text-subtle focus:border-primary focus:outline-none"
             />
             <p className="mt-1 text-[11px] text-text-subtle">
-              마크다운 지원 — 제목 (#), 강조 (**굵게**), 목록, 이미지 등
+              마크다운 지원 — 제목 (#), 강조 (**굵게**), 목록, 이미지 등 · 이미지는 Ctrl+V 로도 첨부 가능
             </p>
           </div>
 

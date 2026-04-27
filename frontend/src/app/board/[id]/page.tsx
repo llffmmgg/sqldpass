@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import ImageUploadButton from "@/components/ImageUploadButton";
 import PostMarkdown from "@/components/PostMarkdown";
 import { Button, Container } from "@/components/ui";
+import { handleImagePaste } from "@/lib/imagePaste";
 import {
   CERT_TOKENS,
   certFromExamType,
@@ -182,7 +183,10 @@ export default function PostDetailPage({ params }: { params: Promise<{ id: strin
                 ref={commentRef}
                 value={commentText}
                 onChange={(e) => setCommentText(e.target.value)}
-                placeholder="댓글을 입력하세요 (마크다운·이미지 가능)"
+                onPaste={(e) => {
+                  handleImagePaste(e, insertCommentText, (msg) => alert(msg));
+                }}
+                placeholder="댓글을 입력하세요 (마크다운·Ctrl+V 이미지 가능)"
                 rows={3}
                 className="w-full resize-none rounded-md border border-border bg-bg-elevated px-3 py-2 text-sm text-text placeholder:text-text-subtle focus:border-primary focus:outline-none"
               />
