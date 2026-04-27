@@ -73,8 +73,8 @@ export default function BlogList({
         <Image
           src="/logo/blog-mascot.webp"
           alt="시험 준비 팁 마스코트"
-          width={140}
-          height={140}
+          width={180}
+          height={180}
           className="shrink-0"
           priority
         />
