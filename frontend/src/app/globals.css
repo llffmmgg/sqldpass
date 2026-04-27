@@ -66,17 +66,17 @@
 }
 
 :root.dark {
-  /* surfaces — 단차를 키워 카드와 배경이 명확히 분리되도록 */
-  --bg: #0f0f10;
-  --bg-elevated: #18181b;
-  --surface: #1a1a1d;
-  --surface-hover: #232327;
-  --border: #2a2a2e;          /* surface 보다 한 단계 밝게 — 솔리드 보더 */
-  --border-strong: #3f3f46;   /* 호버·강조 용 */
+  /* surfaces — LeetCode 다크 톤 (회색조만). primary 는 sqldpass 정체성 유지(emerald) */
+  --bg: #1a1a1a;
+  --bg-elevated: #262626;
+  --surface: #262626;
+  --surface-hover: #2d2d2d;
+  --border: #3e3e3e;          /* 또렷한 솔리드 보더 — LeetCode 시그니처 */
+  --border-strong: #525252;   /* 호버·강조 */
 
-  --text: #ededed;
-  --text-muted: #a1a1aa;
-  --text-subtle: #71717a;
+  --text: #eff1f6;            /* 살짝 차가운 흰색 */
+  --text-muted: #8a8a93;
+  --text-subtle: #6b6b73;
 
   --primary: #3ecf8e;
   --primary-hover: #4fd6a0;
@@ -84,15 +84,15 @@
   --primary-soft: rgba(62, 207, 142, 0.12);
   --primary-ring: rgba(62, 207, 142, 0.40);
 
-  --danger: #f87171;
-  --warning: #fbbf24;
-  --success: #4ade80;
-  --info: #38bdf8;
+  --danger: #f63737;
+  --warning: #ffb800;
+  --success: #00b8a3;
+  --info: #0a84ff;
 
   --glow: rgba(62, 207, 142, 0.22);
   --accent-glow: rgba(62, 207, 142, 0.14);
 
-  --code-bg: #18181b;
+  --code-bg: #1f1f1f;
 
   --shadow-subtle: 0 1px 2px rgba(0, 0, 0, 0.40);
   --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.45);
