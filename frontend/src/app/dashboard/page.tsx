@@ -20,6 +20,12 @@ import Spinner from "@/components/Spinner";
 import StudyActivityChart from "@/components/StudyActivityChart";
 import AdResponsive from "@/components/AdResponsive";
 import { Container } from "@/components/ui";
+import {
+  CERT_TOKENS,
+  certFromRootName,
+  type CertKey,
+  type CertToken,
+} from "@/lib/cert-tokens";
 
 function buildSubjectMap(subjects: Subject[]): Record<number, string> {
   const map: Record<number, string> = {};
@@ -28,6 +34,21 @@ function buildSubjectMap(subjects: Subject[]): Record<number, string> {
     for (const child of s.children) {
       map[child.id] = child.name;
     }
+  }
+  return map;
+}
+
+/**
+ * leaf subject id → CertKey 매핑.
+ * SQLD 만 root 가 "1과목: 데이터 모델링" / "2과목: SQL 기본/활용" 으로 나뉘는데
+ * certFromRootName 이 SQLD 로 fallback 되므로 그대로 SQLD 매핑됨.
+ */
+function buildSubjectCertMap(subjects: Subject[]): Record<number, CertKey> {
+  const map: Record<number, CertKey> = {};
+  for (const root of subjects) {
+    const cert = certFromRootName(root.name);
+    map[root.id] = cert;
+    for (const child of root.children) map[child.id] = cert;
   }
   return map;
 }
@@ -119,6 +140,57 @@ function mergeSubjectStats(
   return merged;
 }
 
+type CertGroup = {
+  cert: CertKey;
+  token: CertToken;
+  subjects: MergedSubject[];
+  totalSolved: number;
+  totalCorrect: number;
+  totalWrong: number;
+  avgRate: number;
+  avgWrongRate: number;
+};
+
+/**
+ * MergedSubject 들을 자격증 단위로 묶는다.
+ * - 카드 내부 과목은 약점순(오답률 desc → 정답률 asc) 정렬
+ * - 카드 자체는 약점이 큰 cert 부터(평균 오답률 desc → 평균 정답률 asc)
+ */
+function groupByCert(
+  merged: MergedSubject[],
+  subjectCertMap: Record<number, CertKey>,
+): CertGroup[] {
+  const buckets = new Map<CertKey, MergedSubject[]>();
+  for (const m of merged) {
+    const cert = subjectCertMap[m.id] ?? "SQLD";
+    if (!buckets.has(cert)) buckets.set(cert, []);
+    buckets.get(cert)!.push(m);
+  }
+
+  const groups: CertGroup[] = [];
+  for (const [cert, list] of buckets) {
+    list.sort((a, b) => b.wrongRate - a.wrongRate || a.rate - b.rate);
+    const totalSolved = list.reduce((s, m) => s + m.total, 0);
+    const totalCorrect = list.reduce((s, m) => s + m.correct, 0);
+    const totalWrong = list.reduce((s, m) => s + m.wrongCount, 0);
+    groups.push({
+      cert,
+      token: CERT_TOKENS[cert],
+      subjects: list,
+      totalSolved,
+      totalCorrect,
+      totalWrong,
+      avgRate: totalSolved > 0 ? Math.round((totalCorrect / totalSolved) * 100) : 0,
+      avgWrongRate:
+        totalSolved > 0 ? Math.round((totalWrong / totalSolved) * 100) : 0,
+    });
+  }
+  groups.sort(
+    (a, b) => b.avgWrongRate - a.avgWrongRate || a.avgRate - b.avgRate,
+  );
+  return groups;
+}
+
 function toLocalDateStr(date: Date): string {
   const y = date.getFullYear();
   const m = String(date.getMonth() + 1).padStart(2, "0");
@@ -155,12 +227,6 @@ function rateBarColor(rate: number) {
   return "bg-red-500";
 }
 
-function rateAccentBorder(rate: number) {
-  if (rate >= 80) return "bg-green-500";
-  if (rate >= 60) return "bg-amber-500";
-  return "bg-red-500";
-}
-
 export default function DashboardPage() {
   return (
     <AuthGuard>
@@ -172,6 +238,7 @@ export default function DashboardPage() {
 function DashboardPageContent() {
   const [solves, setSolves] = useState<SolveSummaryResponse[]>([]);
   const [subjectMap, setSubjectMap] = useState<Record<number, string>>({});
+  const [subjectCertMap, setSubjectCertMap] = useState<Record<number, CertKey>>({});
   const [weakStats, setWeakStats] = useState<WrongAnswerStatsResponse[]>([]);
   const [overallAvg, setOverallAvg] = useState<number | undefined>(undefined);
   const [loading, setLoading] = useState(true);
@@ -183,6 +250,7 @@ function DashboardPageContent() {
       .then(([solvesData, subjects, stats, overall]) => {
         setSolves(solvesData);
         setSubjectMap(buildSubjectMap(subjects));
+        setSubjectCertMap(buildSubjectCertMap(subjects));
         setWeakStats(stats);
         setOverallAvg(overall.avgDailyCount);
       })
@@ -202,6 +270,7 @@ function DashboardPageContent() {
   const streak = getStreakDays(solves);
   const subjectStats = getSubjectStats(solves, subjectMap);
   const merged = mergeSubjectStats(subjectStats, weakStats);
+  const certGroups = groupByCert(merged, subjectCertMap);
   const activity = getRecentActivity(solves);
 
   // 가장 약한 과목 — 오답이 있는 것 중 첫 번째
@@ -323,60 +392,99 @@ function DashboardPageContent() {
             {/* ── 최근 2주 학습량 ──────────────────────────────────── */}
             <StudyActivityChart data={activity} overallAvg={overallAvg} />
 
-            {/* ── 과목별 학습 현황 (정답률 + 오답수 통합) ─────────────── */}
-            <div className="mt-6 rounded-xl border border-border bg-surface p-5">
-              <h2 className="text-sm font-semibold">과목별 학습 현황</h2>
-              <p className="mt-1 text-xs text-muted/70">약한 순으로 정렬됩니다</p>
-              <div className="mt-4 space-y-2.5">
-                {merged.length === 0 && (
-                  <p className="text-sm text-muted">데이터가 없습니다.</p>
-                )}
-                {merged.map((m, i) => {
-                  const isTopWeak = i === 0 && m.wrongCount > 0;
-                  return (
-                    <div
-                      key={m.id}
-                      className={`relative flex items-center gap-3 rounded-lg px-3 py-2.5 transition-colors ${
-                        isTopWeak ? "bg-red-500/[0.04]" : ""
-                      }`}
-                    >
-                      {/* 좌측 컬러 바 */}
-                      <span
-                        className={`h-10 w-1 shrink-0 rounded-full ${rateAccentBorder(m.rate)}`}
-                      />
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="truncate text-sm font-medium">{m.name}</span>
-                          <span className={`shrink-0 text-sm font-semibold tabular-nums ${rateColor(m.rate)}`}>
-                            {m.rate}%
-                          </span>
-                        </div>
-                        <div className="mt-1.5 h-1 w-full rounded-full bg-border/50">
-                          <div
-                            className={`h-full rounded-full transition-all ${rateBarColor(m.rate)}`}
-                            style={{ width: `${m.rate}%` }}
-                          />
-                        </div>
-                        <div className="mt-1 flex items-center justify-between text-[11px] text-muted/70">
-                          <span>
-                            {m.correct}/{m.total} 정답
-                            {m.wrongCount > 0 && <> · {m.wrongCount}개 오답</>}
-                          </span>
-                          {m.wrongCount > 0 && (
-                            <Link
-                              href={`/wrong-answers?subjectId=${m.id}`}
-                              className="rounded text-amber-400/80 transition-colors hover:text-amber-300"
-                            >
-                              이 과목 복습 →
-                            </Link>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
+            {/* ── 과목별 학습 현황 (자격증별 그룹) ───────────────────── */}
+            <section className="mt-6">
+              <div className="flex items-baseline justify-between gap-2">
+                <h2 className="text-sm font-semibold">과목별 학습 현황</h2>
+                <p className="text-xs text-muted/70">자격증별 · 약점 우선</p>
               </div>
-            </div>
+
+              {certGroups.length === 0 ? (
+                <div className="mt-4 rounded-xl border border-border bg-surface p-5">
+                  <p className="text-sm text-muted">데이터가 없습니다.</p>
+                </div>
+              ) : (
+                <div className="mt-4 space-y-3">
+                  {certGroups.map((g) => (
+                    <article
+                      key={g.cert}
+                      className={`overflow-hidden rounded-xl border bg-surface ${g.token.tailwind.border}`}
+                    >
+                      {/* 카드 헤더 */}
+                      <header className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-border/60 px-5 py-3.5">
+                        <span
+                          className={`h-2 w-2 shrink-0 rounded-full ${g.token.tailwind.dot}`}
+                          aria-hidden
+                        />
+                        <h3 className="text-base font-bold">{g.token.label}</h3>
+                        <p className="hidden text-xs text-muted sm:block">
+                          {g.token.labelLong}
+                        </p>
+                        <p className="ml-auto flex items-center gap-2.5 text-xs text-muted tabular-nums">
+                          <span>풀이 {g.totalSolved}</span>
+                          {g.totalWrong > 0 && (
+                            <>
+                              <span aria-hidden>·</span>
+                              <span>오답 {g.totalWrong}</span>
+                            </>
+                          )}
+                          <span aria-hidden>·</span>
+                          <span className={`text-sm font-semibold ${rateColor(g.avgRate)}`}>
+                            {g.avgRate}%
+                          </span>
+                        </p>
+                      </header>
+
+                      {/* 과목 리스트 */}
+                      <ul className="divide-y divide-border/50">
+                        {g.subjects.map((m, i) => {
+                          const isTopWeak = i === 0 && m.wrongCount > 0;
+                          return (
+                            <li
+                              key={m.id}
+                              className={`px-5 py-3 ${
+                                isTopWeak ? g.token.tailwind.bgSoft : ""
+                              }`}
+                            >
+                              <div className="flex items-center justify-between gap-2">
+                                <span className="truncate text-sm font-medium">
+                                  {m.name}
+                                </span>
+                                <span
+                                  className={`shrink-0 text-sm font-semibold tabular-nums ${rateColor(m.rate)}`}
+                                >
+                                  {m.rate}%
+                                </span>
+                              </div>
+                              <div className="mt-1.5 h-1 w-full overflow-hidden rounded-full bg-border/50">
+                                <div
+                                  className={`h-full rounded-full transition-all ${rateBarColor(m.rate)}`}
+                                  style={{ width: `${m.rate}%` }}
+                                />
+                              </div>
+                              <div className="mt-1.5 flex items-center justify-between gap-3 text-[11px] text-muted/70 tabular-nums">
+                                <span>
+                                  {m.correct}/{m.total} 정답
+                                  {m.wrongCount > 0 && <> · {m.wrongCount}개 오답</>}
+                                </span>
+                                {m.wrongCount > 0 && (
+                                  <Link
+                                    href={`/wrong-answers?subjectId=${m.id}`}
+                                    className={`shrink-0 font-medium underline-offset-2 hover:underline ${g.token.tailwind.textSoft}`}
+                                  >
+                                    복습 →
+                                  </Link>
+                                )}
+                              </div>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    </article>
+                  ))}
+                </div>
+              )}
+            </section>
 
             {/* ── 최근 풀이 ──────────────────────────────────────── */}
             <div className="mt-6 rounded-xl border border-border bg-surface p-5">
