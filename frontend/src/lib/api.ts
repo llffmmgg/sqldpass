@@ -403,6 +403,12 @@ export function adminListPendingPosts(): Promise<PostSummary[]> {
   return adminFetch<PostSummary[]>(`/posts/pending`);
 }
 
+/** 어드민 게시글 목록 — status 필터 (미지정 시 전체). */
+export function adminListPosts(status?: PostStatus): Promise<PostSummary[]> {
+  const qs = status ? `?status=${status}` : "";
+  return adminFetch<PostSummary[]>(`/posts${qs}`);
+}
+
 export function adminGetPost(id: number): Promise<PostDetail> {
   return adminFetch<PostDetail>(`/posts/${id}`);
 }

@@ -29,6 +29,11 @@ public interface PostRepository extends JpaRepository<PostEntity, Long> {
             "ORDER BY p.createdAt DESC")
     List<PostEntity> findByStatusOrderByCreatedAtDesc(@Param("status") PostStatus status);
 
+    /** 어드민 — 모든 status 의 게시글 (최신순). */
+    @Query("SELECT p FROM PostEntity p JOIN FETCH p.member " +
+            "ORDER BY p.createdAt DESC")
+    List<PostEntity> findAllForAdmin();
+
     /** 상세 — member fetch. comments 는 별도 쿼리로 가져오는 게 안전 (페이지네이션 가능성). */
     @Query("SELECT p FROM PostEntity p JOIN FETCH p.member WHERE p.id = :id")
     Optional<PostEntity> findByIdWithMember(@Param("id") Long id);

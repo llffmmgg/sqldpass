@@ -163,7 +163,17 @@ public class PostService {
     // ========== 어드민 ==========
 
     public List<PostSummaryResponse> listPending() {
-        List<PostEntity> rows = postRepository.findByStatusOrderByCreatedAtDesc(PostStatus.PENDING);
+        return listForAdmin(PostStatus.PENDING);
+    }
+
+    /**
+     * 어드민용 게시글 목록.
+     * @param status null 이면 전체, 값이 있으면 해당 status 만
+     */
+    public List<PostSummaryResponse> listForAdmin(PostStatus status) {
+        List<PostEntity> rows = (status == null)
+                ? postRepository.findAllForAdmin()
+                : postRepository.findByStatusOrderByCreatedAtDesc(status);
         Map<Long, Integer> commentCountMap = countCommentsBatch(rows.stream().map(PostEntity::getId).toList());
         return rows.stream()
                 .map(p -> PostSummaryResponse.from(p, commentCountMap.getOrDefault(p.getId(), 0)))

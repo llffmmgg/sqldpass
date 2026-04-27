@@ -9,11 +9,13 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.sqldpass.controller.post.dto.PostDtos.PostDetailResponse;
 import com.sqldpass.controller.post.dto.PostDtos.PostEditRequest;
 import com.sqldpass.controller.post.dto.PostDtos.PostSummaryResponse;
+import com.sqldpass.persistent.post.PostStatus;
 import com.sqldpass.service.post.PostService;
 
 import jakarta.validation.Valid;
@@ -34,6 +36,12 @@ public class AdminPostController {
     @Operation(summary = "승인 대기 중인 게시글 (PENDING) 최신 제출순")
     public List<PostSummaryResponse> listPending() {
         return postService.listPending();
+    }
+
+    @GetMapping
+    @Operation(summary = "어드민 게시글 목록 (status 필터, 미지정 시 전체)")
+    public List<PostSummaryResponse> list(@RequestParam(required = false) PostStatus status) {
+        return postService.listForAdmin(status);
     }
 
     @GetMapping("/{id}")
