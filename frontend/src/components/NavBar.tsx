@@ -1,5 +1,7 @@
 "use client";
 
+/* eslint-disable react-hooks/set-state-in-effect -- localStorage 인증 상태와 메뉴 토글 동기화는 마운트 effect 안에서 setState 가 자연스러움 */
+
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -17,12 +19,12 @@ type NavItem =
 
 const NAV_LINKS: NavItem[] = [
   { kind: "link", href: "/", label: "홈" },
-  { kind: "dropdown", label: "문제 풀기", basePath: "/solve", build: (cert) => `/solve?cert=${cert}` },
+  { kind: "dropdown", label: "문제", basePath: "/solve", build: (cert) => `/solve?cert=${cert}` },
   { kind: "dropdown", label: "모의고사", basePath: "/mock-exams", build: (cert) => `/mock-exams?cert=${cert}` },
   { kind: "dropdown", label: "기출", basePath: "/past-exams", build: (cert) => `/past-exams/${slugFromCert(cert)}` },
   { kind: "link", href: "/dashboard", label: "대시보드" },
   { kind: "link", href: "/wrong-answers", label: "오답 노트" },
-  { kind: "link", href: "/blog", label: "시험 준비 팁" },
+  { kind: "link", href: "/blog", label: "블로그" },
 ];
 
 export default function NavBar() {
@@ -90,7 +92,7 @@ export default function NavBar() {
 
   return (
     <header className="sticky top-0 z-50 border-b border-border bg-bg/80 backdrop-blur-md">
-      <nav className="mx-auto flex h-14 max-w-6xl flex-nowrap items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">
+      <nav className="mx-auto flex h-14 max-w-7xl flex-nowrap items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">
         <Link
           href="/"
           className="flex shrink-0 items-center gap-2 text-lg font-bold tracking-tight text-text"
@@ -118,7 +120,7 @@ export default function NavBar() {
                   <li key={item.href}>
                     <Link
                       href={item.href}
-                      className={`flex h-9 items-center rounded-md px-3 text-sm font-medium transition-colors ${
+                      className={`flex h-9 items-center whitespace-nowrap rounded-md px-3 text-sm font-medium transition-colors ${
                         isActive(item.href)
                           ? "bg-primary/10 text-primary"
                           : "text-text-muted hover:text-text hover:bg-surface-hover"
@@ -407,7 +409,7 @@ function NavDropdown({
         onClick={() => setOpen((v) => !v)}
         onFocus={() => setOpen(true)}
         onKeyDown={handleTriggerKeyDown}
-        className={`inline-flex h-9 items-center gap-1 rounded-md px-3 text-sm font-medium transition-colors ${
+        className={`inline-flex h-9 items-center gap-1 whitespace-nowrap rounded-md px-3 text-sm font-medium transition-colors ${
           active
             ? "bg-primary/10 text-primary"
             : "text-text-muted hover:text-text hover:bg-surface-hover"
