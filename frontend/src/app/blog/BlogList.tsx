@@ -34,6 +34,16 @@ function formatDate(iso: string): string {
   return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, "0")}.${String(d.getDate()).padStart(2, "0")}`;
 }
 
+/**
+ * past-exam 글은 백엔드에 `past-exam-{slug}` 키로 카운트되므로
+ * 슬러그(`past-exam/{slug}`)를 그 형식으로 변환해 lookup 한다.
+ */
+function viewKeyOf(slug: string): string {
+  return slug.startsWith("past-exam/")
+    ? `past-exam-${slug.slice("past-exam/".length)}`
+    : slug;
+}
+
 export default function BlogList({
   posts,
   categories,
@@ -49,7 +59,7 @@ export default function BlogList({
   const orderedCategories = CATEGORIES.filter((c) => (countMap[c.name] ?? 0) > 0);
 
   const popularPosts = [...posts]
-    .map((p) => ({ post: p, views: viewCounts[p.slug] ?? 0 }))
+    .map((p) => ({ post: p, views: viewCounts[viewKeyOf(p.slug)] ?? 0 }))
     .sort((a, b) => b.views - a.views)
     .filter((x) => x.views > 0)
     .slice(0, 5)
@@ -93,7 +103,7 @@ export default function BlogList({
           <ul className="divide-y divide-border border-y border-border">
             {posts.map((post) => (
               <li key={post.slug}>
-                <PostListItem post={post} views={viewCounts[post.slug] ?? 0} />
+                <PostListItem post={post} views={viewCounts[viewKeyOf(post.slug)] ?? 0} />
               </li>
             ))}
           </ul>
@@ -140,7 +150,7 @@ export default function BlogList({
                           {post.title}
                         </span>
                         <span className="mt-0.5 block text-xs text-text-subtle">
-                          조회 {(viewCounts[post.slug] ?? 0).toLocaleString()}
+                          조회 {(viewCounts[viewKeyOf(post.slug)] ?? 0).toLocaleString()}
                         </span>
                       </span>
                     </Link>

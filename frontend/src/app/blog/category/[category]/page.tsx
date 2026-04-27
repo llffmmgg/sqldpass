@@ -1,11 +1,19 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getAllCategories, getPostsByCategory } from "@/lib/blog";
+import { getAllCategories, getPostsByCategory, type BlogPostMeta } from "@/lib/blog";
 import { getPublicBlogViews } from "@/lib/publicApi";
 import { groupPostsByMeta } from "@/lib/blogGroups";
 import { Badge, Card, Container } from "@/components/ui";
-import { certFromBlogCategory, CERT_TOKENS } from "@/lib/cert-tokens";
+import { certFromBlogCategory, certFromExamType, CERT_TOKENS } from "@/lib/cert-tokens";
+import {
+  pastExamBlogDescription,
+  pastExamBlogSlug,
+  pastExamBlogTitle,
+} from "@/lib/pastExamBlog";
+import { flattenPastExamLists, loadPastExamListsByCert } from "@/lib/pastExamCatalog";
+
+export const dynamic = "force-dynamic";
 
 type Params = { category: string };
 
@@ -36,7 +44,32 @@ export default async function BlogCategoryPage({
 }) {
   const { category } = await params;
   const decoded = decodeURIComponent(category);
-  const posts = getPostsByCategory(decoded);
+  const mdxPosts = getPostsByCategory(decoded);
+
+  // 기출 복원 회차 → 가상 BlogPostMeta 합류 (decoded 카테고리만 필터)
+  const listsByCert = await loadPastExamListsByCert().catch(() => null);
+  const pastExamPosts: BlogPostMeta[] = listsByCert
+    ? flattenPastExamLists(listsByCert)
+        .map((exam) => {
+          const cert = certFromExamType(exam.examType);
+          const examCategory = cert ? CERT_TOKENS[cert].blogCategory : "일반";
+          return {
+            slug: `past-exam/${pastExamBlogSlug(exam)}`,
+            title: pastExamBlogTitle(exam),
+            description: pastExamBlogDescription(exam),
+            date: exam.createdAt.slice(0, 10),
+            category: examCategory,
+            tags: ["기출 복원", examCategory],
+            readingTime: `${Math.max(5, Math.round(exam.totalQuestions / 4))}분`,
+            group: "기출 복원",
+          } satisfies BlogPostMeta;
+        })
+        .filter((p) => p.category === decoded)
+    : [];
+
+  const posts: BlogPostMeta[] = [...mdxPosts, ...pastExamPosts].sort((a, b) =>
+    a.date > b.date ? -1 : 1,
+  );
 
   if (posts.length === 0) notFound();
 
@@ -46,6 +79,9 @@ export default async function BlogCategoryPage({
   } catch {
     /* 백엔드 미연결 시 무시 */
   }
+
+  const viewKeyOf = (slug: string) =>
+    slug.startsWith("past-exam/") ? `past-exam-${slug.slice("past-exam/".length)}` : slug;
 
   const cert = certFromBlogCategory(decoded);
   const barClass = cert ? CERT_TOKENS[cert].tailwind.bg : "bg-primary";
@@ -89,7 +125,7 @@ export default async function BlogCategoryPage({
                   </span>
                   <span className="text-text-subtle">{featured.readingTime}</span>
                   <span className="text-text-subtle">
-                    조회 {(viewCounts[featured.slug] ?? 0).toLocaleString()}
+                    조회 {(viewCounts[viewKeyOf(featured.slug)] ?? 0).toLocaleString()}
                   </span>
                 </div>
                 <h2 className="mt-4 text-2xl font-bold leading-tight tracking-tight group-hover:text-primary sm:text-3xl">
@@ -151,7 +187,7 @@ export default async function BlogCategoryPage({
             )}
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {section.posts.map((post) => {
-                const views = viewCounts[post.slug] ?? 0;
+                const views = viewCounts[viewKeyOf(post.slug)] ?? 0;
                 return (
                   <Link key={post.slug} href={`/blog/${post.slug}`} className="group block h-full">
                     <Card variant="interactive" padding="none" className="flex h-full flex-col overflow-hidden">

@@ -157,6 +157,12 @@ export type GroupDef = {
  */
 const COMMON_GROUPS: GroupDef[] = [
   {
+    key: "기출 복원",
+    label: "기출 복원",
+    icon: "📜",
+    description: "회차별 기출 복원 — 정답·해설 포함",
+  },
+  {
     key: "과목별 개념",
     label: "과목별 개념",
     icon: "📚",
@@ -196,6 +202,8 @@ export const CATEGORY_GROUPS: Record<string, GroupDef[]> = {
  * 위에서부터 매칭되는 패턴 우선 (순서 중요).
  */
 export function inferGroupFromSlug(slug: string): string {
+  // 기출 복원: past-exam/ prefix
+  if (slug.startsWith("past-exam/")) return "기출 복원";
   // 시험 정보: 일정·합격률·유효기간·응시료·CBT vs PBT·당일 팁·개편
   if (
     /(2026-schedule|-schedule$|pass-rate|expiry-renewal|fees-refund|cbt-vs-pbt|exam-day-tips|2024-reform|written-vs-practical)/.test(
