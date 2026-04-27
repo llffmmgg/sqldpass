@@ -320,13 +320,13 @@ function WrongAnswersPageContent() {
       wa.wrongCount >= 3 ? "high" : wa.wrongCount === 2 ? "mid" : "low";
 
     const borderClass = isMastered
-      ? "border-green-500/60 bg-green-500/10 opacity-60 scale-95 border"
+      ? "border border-border opacity-70 border-l-4 border-l-green-500"
       : isBookmark
       ? "border border-border"
       : priority === "high"
-      ? "border border-border border-l-4 border-l-red-500/70"
+      ? "border border-border border-l-4 border-l-red-500"
       : priority === "mid"
-      ? "border border-border border-l-4 border-l-amber-500/70"
+      ? "border border-border border-l-4 border-l-amber-500"
       : "border border-border";
 
     const priorityBg = priority === "high" ? "bg-red-500" : priority === "mid" ? "bg-amber-500" : "bg-zinc-500";
@@ -341,7 +341,7 @@ function WrongAnswersPageContent() {
           <div className="flex flex-col items-center gap-1 shrink-0 w-8">
             {num && <span className="text-[10px] text-muted/70 tabular-nums">#{num}</span>}
             {isBookmark ? (
-              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-amber-400/20 text-amber-400" title="즐겨찾기">
+              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-amber-500/15 text-amber-400 ring-1 ring-amber-500/40" title="즐겨찾기">
                 <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                   <path d="M12 2.5l2.9 5.88 6.48.94-4.69 4.57 1.11 6.46L12 17.3l-5.8 3.05 1.11-6.46L2.62 9.32l6.48-.94L12 2.5z" />
                 </svg>
@@ -413,9 +413,10 @@ function WrongAnswersPageContent() {
                 </div>
 
                 {isMastered && (
-                  <div className="rounded-lg border border-green-500/40 bg-green-500/10 px-4 py-3 text-center">
-                    <p className="text-base font-semibold text-green-300">🎉 정답! 마스터 완료</p>
-                    <p className="mt-1 text-xs text-green-400/80">잠시 후 목록에서 사라집니다</p>
+                  <div className="relative overflow-hidden rounded-lg border border-border bg-bg-elevated px-4 py-3 text-center">
+                    <span className="absolute left-0 top-0 h-full w-1 bg-green-500" aria-hidden />
+                    <p className="text-base font-semibold text-green-400">🎉 정답! 마스터 완료</p>
+                    <p className="mt-1 text-xs text-text-muted">잠시 후 목록에서 사라집니다</p>
                   </div>
                 )}
 
@@ -431,22 +432,23 @@ function WrongAnswersPageContent() {
 
                 {state.result && !state.result.correct && (
                   <div className="space-y-3">
-                    <div className="rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-3">
-                      <p className="text-sm font-semibold text-red-300">❌ 다시 도전!</p>
+                    <div className="relative overflow-hidden rounded-lg border border-border bg-bg-elevated px-4 py-3">
+                      <span className="absolute left-0 top-0 h-full w-1 bg-red-500" aria-hidden />
+                      <p className="text-sm font-semibold text-red-400">❌ 다시 도전!</p>
                       {detail.questionType === "MCQ" ? (
-                        <p className="mt-1 text-sm text-red-200/90">
-                          정답: <span className="font-bold">{state.result.correctOption}번</span>
+                        <p className="mt-1 text-sm text-text-muted">
+                          정답: <span className="font-bold text-text">{state.result.correctOption}번</span>
                         </p>
                       ) : (
-                        <p className="mt-1 text-sm text-red-200/90">
+                        <p className="mt-1 text-sm text-text-muted">
                           모범답안:{" "}
-                          <span className="font-mono">{state.result.correctAnswer}</span>
+                          <span className="font-mono text-text">{state.result.correctAnswer}</span>
                         </p>
                       )}
                     </div>
-                    <div className="rounded-lg border border-border px-3 py-3 text-sm">
+                    <div className="rounded-lg border border-border bg-bg-elevated px-3 py-3 text-sm">
                       <p className="font-medium text-amber-400">해설</p>
-                      <div className="mt-1 leading-relaxed text-muted">
+                      <div className="mt-1 leading-relaxed text-text-muted">
                         <QuestionContent content={state.result.explanation ?? ""} />
                       </div>
                     </div>

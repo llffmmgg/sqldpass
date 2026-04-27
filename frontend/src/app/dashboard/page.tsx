@@ -348,34 +348,36 @@ function DashboardPageContent() {
 
         {totalSolved > 0 && (
           <>
-            {/* ── Today's Focus — 가장 큰 카드 ─────────────────────── */}
-            <div className="mt-8 rounded-2xl border border-amber-500/20 bg-gradient-to-br from-amber-500/[0.08] via-amber-500/[0.04] to-transparent p-6 sm:p-7">
-              <div className="flex flex-wrap items-start justify-between gap-4">
+            {/* ── Today's Focus — 솔리드 카드 + 좌측 amber strip ───── */}
+            <div className="mt-8 relative overflow-hidden rounded-2xl border border-border bg-surface p-6 sm:p-7">
+              <span className="absolute left-0 top-0 h-full w-1 bg-amber-500" aria-hidden />
+              <div className="flex flex-wrap items-start justify-between gap-4 pl-2">
                 <div className="min-w-0 flex-1">
-                  <p className="text-[11px] font-semibold uppercase tracking-wider text-amber-300">
+                  <span className="inline-flex items-center gap-1.5 rounded-md bg-amber-500/15 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-amber-400">
+                    <span className="h-1.5 w-1.5 rounded-full bg-amber-500" aria-hidden />
                     오늘의 학습
-                  </p>
+                  </span>
                   {focus ? (
                     <>
-                      <h2 className="mt-2 text-xl font-bold sm:text-2xl">
-                        <span className="text-amber-300">{focus.name}</span> 부터 다시 풀어보세요
+                      <h2 className="mt-3 text-xl font-bold sm:text-2xl">
+                        <span className="text-amber-400">{focus.name}</span> 부터 다시 풀어보세요
                       </h2>
-                      <p className="mt-1 text-sm text-muted">
+                      <p className="mt-1.5 text-sm text-text-muted tabular-nums">
                         오답 {focus.wrongCount}개 · 오답률 {Math.round(focus.wrongRate)}%
                       </p>
                     </>
                   ) : (
                     <>
-                      <h2 className="mt-2 text-xl font-bold sm:text-2xl">
+                      <h2 className="mt-3 text-xl font-bold sm:text-2xl">
                         오늘도 한 세트 풀어볼까요?
                       </h2>
-                      <p className="mt-1 text-sm text-muted">오답이 모두 정리됐습니다. 새 문제로 실력을 더 다져보세요.</p>
+                      <p className="mt-1.5 text-sm text-text-muted">오답이 모두 정리됐습니다. 새 문제로 실력을 더 다져보세요.</p>
                     </>
                   )}
                 </div>
                 <Link
                   href={focus ? `/wrong-answers?subjectId=${focus.id}` : "/solve"}
-                  className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-primary-fg transition-all hover:bg-primary-hover hover:scale-[1.02]"
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-primary-fg transition-colors hover:bg-primary-hover"
                 >
                   {focus ? "복습 시작" : "문제 풀기"}
                   <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
@@ -438,19 +440,24 @@ function DashboardPageContent() {
                   {certGroups.map((g) => (
                     <article
                       key={g.cert}
-                      className={`overflow-hidden rounded-xl border bg-surface ${g.token.tailwind.border}`}
+                      className="relative overflow-hidden rounded-xl border border-border bg-surface"
                     >
+                      {/* 좌측 cert 컬러 strip */}
+                      <span
+                        className={`absolute left-0 top-0 h-full w-1 ${g.token.tailwind.bg}`}
+                        aria-hidden
+                      />
                       {/* 카드 헤더 */}
-                      <header className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-border/60 px-5 py-3.5">
+                      <header className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-border px-5 py-3.5 pl-6">
                         <span
                           className={`h-2 w-2 shrink-0 rounded-full ${g.token.tailwind.dot}`}
                           aria-hidden
                         />
                         <h3 className="text-base font-bold">{g.token.label}</h3>
-                        <p className="hidden text-xs text-muted sm:block">
+                        <p className="hidden text-xs text-text-muted sm:block">
                           {g.token.labelLong}
                         </p>
-                        <p className="ml-auto flex items-center gap-2.5 text-xs text-muted tabular-nums">
+                        <p className="ml-auto flex items-center gap-2.5 text-xs text-text-muted tabular-nums">
                           <span>풀이 {g.totalSolved}</span>
                           {g.totalWrong > 0 && (
                             <>
@@ -466,18 +473,24 @@ function DashboardPageContent() {
                       </header>
 
                       {/* 과목 타일 그리드 — 링 게이지 + 복습 CTA */}
-                      <ul className="grid grid-cols-1 gap-2 p-3 sm:grid-cols-2 lg:grid-cols-3">
+                      <ul className="grid grid-cols-1 gap-2 p-3 pl-4 sm:grid-cols-2 lg:grid-cols-3">
                         {g.subjects.map((m, i) => {
                           const isTopWeak = i === 0 && m.wrongCount > 0;
                           return (
                             <li
                               key={m.id}
-                              className={`flex flex-col rounded-lg border p-3.5 transition-colors ${
+                              className={`relative flex flex-col overflow-hidden rounded-lg border bg-bg-elevated p-3.5 transition-colors ${
                                 isTopWeak
-                                  ? `${g.token.tailwind.border} ${g.token.tailwind.bgSoft}`
-                                  : "border-border/60 bg-background"
+                                  ? "border-border-strong"
+                                  : "border-border hover:border-border-strong"
                               }`}
                             >
+                              {isTopWeak && (
+                                <span
+                                  className={`absolute left-0 top-0 h-full w-0.5 ${g.token.tailwind.bg}`}
+                                  aria-hidden
+                                />
+                              )}
                               <div className="flex items-start gap-3">
                                 <RateRing rate={m.rate} />
                                 <div className="min-w-0 flex-1">
@@ -500,7 +513,7 @@ function DashboardPageContent() {
                               {m.wrongCount > 0 ? (
                                 <Link
                                   href={`/wrong-answers?subjectId=${m.id}`}
-                                  className={`mt-3 inline-flex items-center justify-center gap-1 rounded-md border px-2.5 py-1.5 text-xs font-semibold transition-colors ${g.token.tailwind.border} ${g.token.tailwind.bgSoft} ${g.token.tailwind.text} ${g.token.tailwind.bgHover}`}
+                                  className={`mt-3 inline-flex items-center justify-center gap-1 rounded-md border px-2.5 py-1.5 text-xs font-semibold transition-colors ${g.token.tailwind.border} ${g.token.tailwind.bgSoft} ${g.token.tailwind.textSoft} ${g.token.tailwind.bgHover}`}
                                 >
                                   오답 {m.wrongCount}개 복습하기
                                   <svg
