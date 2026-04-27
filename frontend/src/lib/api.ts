@@ -361,6 +361,39 @@ export function deleteComment(commentId: number): Promise<void> {
   return fetchApiVoid(`/posts/comments/${commentId}`, { method: "DELETE" });
 }
 
+// ----- 이미지 업로드 (Cloudflare R2 presigned PUT) -----
+export interface PresignedUpload {
+  uploadUrl: string;
+  publicUrl: string;
+  key: string;
+  maxBytes: number;
+}
+
+/** 이미지 업로드 presigned URL 발급 + R2 직접 PUT 후 public URL 반환. */
+export async function uploadImage(file: File): Promise<string> {
+  if (!file.type.startsWith("image/")) {
+    throw new Error("이미지 파일만 업로드할 수 있습니다.");
+  }
+  const presigned = await fetchApi<PresignedUpload>(`/uploads/image-url`, {
+    method: "POST",
+    body: JSON.stringify({ contentType: file.type }),
+  });
+  if (file.size > presigned.maxBytes) {
+    throw new Error(
+      `파일 크기가 한도(${Math.floor(presigned.maxBytes / 1024 / 1024)}MB)를 초과합니다.`,
+    );
+  }
+  const putRes = await fetch(presigned.uploadUrl, {
+    method: "PUT",
+    headers: { "Content-Type": file.type },
+    body: file,
+  });
+  if (!putRes.ok) {
+    throw new Error(`업로드에 실패했습니다 (${putRes.status})`);
+  }
+  return presigned.publicUrl;
+}
+
 // ===== 어드민 =====
 export function adminListPendingPosts(): Promise<PostSummary[]> {
   return fetchApi<PostSummary[]>(`/admin/posts/pending`);

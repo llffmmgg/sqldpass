@@ -80,3 +80,11 @@ sqldpass:
       signup: ${DISCORD_WEBHOOK_SIGNUP:}
       error: ${DISCORD_WEBHOOK_ERROR:}
       feedback: ${DISCORD_WEBHOOK_FEEDBACK:}
+  r2:
+    # Cloudflare R2 — 게시판 이미지 업로드용. 미설정이면 업로드 엔드포인트가 503.
+    endpoint: ${R2_ENDPOINT:}                    # 예: https://<account-id>.r2.cloudflarestorage.com
+    bucket: ${R2_BUCKET:}                        # 예: sqldpass-uploads
+    access-key: ${R2_ACCESS_KEY:}
+    secret-key: ${R2_SECRET_KEY:}
+    public-base-url: ${R2_PUBLIC_BASE_URL:}      # 예: https://pub-xxxxxxxxxxxx.r2.dev   또는 사용자 커스텀 도메인
+    max-bytes: ${R2_MAX_BYTES:5242880}           # 5 MB

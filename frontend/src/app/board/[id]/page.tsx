@@ -1,9 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState, use } from "react";
+import { useEffect, useRef, useState, use } from "react";
 import { useRouter } from "next/navigation";
 
+import ImageUploadButton from "@/components/ImageUploadButton";
+import PostMarkdown from "@/components/PostMarkdown";
 import { Button, Container } from "@/components/ui";
 import {
   CERT_TOKENS,
@@ -31,6 +33,23 @@ export default function PostDetailPage({ params }: { params: Promise<{ id: strin
   const [submittingComment, setSubmittingComment] = useState(false);
   const [myNickname, setMyNickname] = useState<string | null>(null);
   const [loggedIn, setLoggedIn] = useState(false);
+  const commentRef = useRef<HTMLTextAreaElement | null>(null);
+
+  function insertCommentText(text: string) {
+    const ta = commentRef.current;
+    if (!ta) {
+      setCommentText((prev) => prev + text);
+      return;
+    }
+    const start = ta.selectionStart ?? commentText.length;
+    const end = ta.selectionEnd ?? commentText.length;
+    setCommentText(commentText.slice(0, start) + text + commentText.slice(end));
+    requestAnimationFrame(() => {
+      ta.focus();
+      const cursor = start + text.length;
+      ta.setSelectionRange(cursor, cursor);
+    });
+  }
 
   useEffect(() => {
     setMyNickname(getNickname());
@@ -142,9 +161,7 @@ export default function PostDetailPage({ params }: { params: Promise<{ id: strin
 
           <hr className="my-6 border-border" />
 
-          <div className="whitespace-pre-wrap text-[0.95rem] leading-relaxed text-text">
-            {post.content}
-          </div>
+          <PostMarkdown content={post.content} />
 
           {isAuthor && (
             <div className="mt-8 flex justify-end">
@@ -162,13 +179,15 @@ export default function PostDetailPage({ params }: { params: Promise<{ id: strin
           {loggedIn ? (
             <div className="rounded-lg border border-border bg-surface p-3">
               <textarea
+                ref={commentRef}
                 value={commentText}
                 onChange={(e) => setCommentText(e.target.value)}
-                placeholder="댓글을 입력하세요"
+                placeholder="댓글을 입력하세요 (마크다운·이미지 가능)"
                 rows={3}
                 className="w-full resize-none rounded-md border border-border bg-bg-elevated px-3 py-2 text-sm text-text placeholder:text-text-subtle focus:border-primary focus:outline-none"
               />
-              <div className="mt-2 flex justify-end">
+              <div className="mt-2 flex items-center justify-between">
+                <ImageUploadButton onInsert={insertCommentText} disabled={submittingComment} />
                 <Button
                   variant="primary"
                   size="sm"
@@ -210,7 +229,9 @@ export default function PostDetailPage({ params }: { params: Promise<{ id: strin
                         )}
                       </div>
                     </div>
-                    <p className="mt-1.5 whitespace-pre-wrap text-sm text-text">{c.content}</p>
+                    <div className="mt-1.5 text-sm">
+                      <PostMarkdown content={c.content} />
+                    </div>
                   </li>
                 );
               })}

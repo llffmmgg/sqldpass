@@ -4,7 +4,10 @@ import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
+import { useRef } from "react";
+
 import AuthGuard from "@/components/AuthGuard";
+import ImageUploadButton from "@/components/ImageUploadButton";
 import { Button, Container } from "@/components/ui";
 import { CERT_LIST, type CertKey } from "@/lib/cert-tokens";
 import { submitPost } from "@/lib/api";
@@ -24,6 +27,24 @@ function SubmitPostContent() {
   const [content, setContent] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+
+  function insertAtCursor(text: string) {
+    const ta = textareaRef.current;
+    if (!ta) {
+      setContent((prev) => prev + text);
+      return;
+    }
+    const start = ta.selectionStart ?? content.length;
+    const end = ta.selectionEnd ?? content.length;
+    const next = content.slice(0, start) + text + content.slice(end);
+    setContent(next);
+    requestAnimationFrame(() => {
+      ta.focus();
+      const cursor = start + text.length;
+      ta.setSelectionRange(cursor, cursor);
+    });
+  }
 
   const canSubmit = !!cert && title.trim().length > 0 && content.trim().length > 0;
 
@@ -95,13 +116,18 @@ function SubmitPostContent() {
 
           {/* 본문 */}
           <div>
-            <label className="block text-sm font-semibold">본문</label>
+            <div className="flex items-center justify-between">
+              <label className="block text-sm font-semibold">본문</label>
+              <ImageUploadButton onInsert={insertAtCursor} disabled={submitting} />
+            </div>
             <textarea
+              ref={textareaRef}
               value={content}
               rows={14}
               onChange={(e) => setContent(e.target.value)}
               placeholder={[
                 "공부 기간, 사용한 교재·강의, 점수, 도움된 팁 등을 자유롭게 적어주세요.",
+                "이미지를 첨부하면 markdown 으로 자동 삽입됩니다.",
                 "",
                 "예시 항목:",
                 "- 응시일·점수",
@@ -112,6 +138,9 @@ function SubmitPostContent() {
               ].join("\n")}
               className="mt-2 w-full resize-y rounded-md border border-border bg-bg-elevated px-3 py-2 text-sm text-text placeholder:text-text-subtle focus:border-primary focus:outline-none"
             />
+            <p className="mt-1 text-[11px] text-text-subtle">
+              마크다운 지원 — 제목 (#), 강조 (**굵게**), 목록, 이미지 등
+            </p>
           </div>
 
           {error && (

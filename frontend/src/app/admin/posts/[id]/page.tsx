@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useEffect, useState, use } from "react";
 import { useRouter } from "next/navigation";
 
+import PostMarkdown from "@/components/PostMarkdown";
 import { CERT_TOKENS, certFromExamType, type CertKey } from "@/lib/cert-tokens";
 import {
   adminApprovePost,
@@ -106,9 +107,7 @@ export default function AdminPostDetailPage({ params }: { params: Promise<{ id: 
 
         <hr className="my-5 border-border" />
 
-        <div className="whitespace-pre-wrap text-[0.95rem] leading-relaxed text-foreground">
-          {post.content}
-        </div>
+        <PostMarkdown content={post.content} />
       </article>
 
       <div className="flex justify-end gap-2">
