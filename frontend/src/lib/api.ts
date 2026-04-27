@@ -411,6 +411,13 @@ export function adminApprovePost(id: number): Promise<void> {
   return adminFetch<void>(`/posts/${id}/approve`, { method: "POST" });
 }
 
+export function adminEditPost(id: number, body: PostEditRequest): Promise<void> {
+  return adminFetch<void>(`/posts/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(body),
+  });
+}
+
 export function adminDeletePost(id: number): Promise<void> {
   return adminFetch<void>(`/posts/${id}`, { method: "DELETE" });
 }

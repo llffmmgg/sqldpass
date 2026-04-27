@@ -184,6 +184,14 @@ public class PostService {
         p.approve();
     }
 
+    /** 어드민이 본문/제목 직접 수정 (작성자 확인 없이 권한). */
+    @Transactional
+    public void editByAdmin(Long id, PostEditRequest req) {
+        PostEntity p = postRepository.findById(id)
+                .orElseThrow(() -> new SqldpassException(ErrorCode.POST_NOT_FOUND));
+        p.edit(req.title().trim(), req.content().trim());
+    }
+
     @Transactional
     public void deleteByAdmin(Long id) {
         PostEntity p = postRepository.findById(id)

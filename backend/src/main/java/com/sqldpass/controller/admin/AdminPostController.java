@@ -4,14 +4,19 @@ import java.util.List;
 
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.sqldpass.controller.post.dto.PostDtos.PostDetailResponse;
+import com.sqldpass.controller.post.dto.PostDtos.PostEditRequest;
 import com.sqldpass.controller.post.dto.PostDtos.PostSummaryResponse;
 import com.sqldpass.service.post.PostService;
+
+import jakarta.validation.Valid;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -41,6 +46,12 @@ public class AdminPostController {
     @Operation(summary = "게시글 승인 (PENDING → PUBLISHED)")
     public void approve(@PathVariable Long id) {
         postService.approve(id);
+    }
+
+    @PatchMapping("/{id}")
+    @Operation(summary = "게시글 직접 수정 (어드민) — 작성자 무관")
+    public void edit(@PathVariable Long id, @Valid @RequestBody PostEditRequest body) {
+        postService.editByAdmin(id, body);
     }
 
     @DeleteMapping("/{id}")

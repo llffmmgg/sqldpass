@@ -1,7 +1,5 @@
 "use client";
 
-/* eslint-disable react-hooks/set-state-in-effect -- 마운트 시 게시글 fetch 후 setState */
-
 import Link from "next/link";
 import { useEffect, useState, use } from "react";
 import { useRouter } from "next/navigation";
@@ -11,6 +9,7 @@ import { CERT_TOKENS, certFromExamType, type CertKey } from "@/lib/cert-tokens";
 import {
   adminApprovePost,
   adminDeletePost,
+  adminEditPost,
   adminGetPost,
   type PostDetail,
 } from "@/lib/api";
@@ -23,8 +22,11 @@ export default function AdminPostDetailPage({ params }: { params: Promise<{ id: 
   const [post, setPost] = useState<PostDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  // 본문을 사용자가 보는 렌더링(preview) 으로 볼지, 원본 markdown 텍스트로 볼지
-  const [view, setView] = useState<"preview" | "raw">("preview");
+  // 본문 표시 모드: preview(렌더) / raw(원본) / edit(편집)
+  const [view, setView] = useState<"preview" | "raw" | "edit">("preview");
+  // 편집 모드 임시 버퍼 (저장 시 백엔드 반영)
+  const [draftTitle, setDraftTitle] = useState("");
+  const [draftContent, setDraftContent] = useState("");
 
   useEffect(() => {
     setError(null);
@@ -43,6 +45,40 @@ export default function AdminPostDetailPage({ params }: { params: Promise<{ id: 
       alert(e instanceof Error ? e.message : "승인에 실패했습니다.");
       setBusy(false);
     }
+  }
+
+  function startEdit() {
+    if (!post) return;
+    setDraftTitle(post.title);
+    setDraftContent(post.content);
+    setView("edit");
+  }
+
+  async function saveEdit() {
+    if (!draftTitle.trim() || !draftContent.trim()) {
+      alert("제목과 본문을 모두 입력해주세요.");
+      return;
+    }
+    setBusy(true);
+    try {
+      await adminEditPost(postId, {
+        title: draftTitle.trim(),
+        content: draftContent.trim(),
+      });
+      // 로컬 state 동기화
+      setPost((prev) =>
+        prev ? { ...prev, title: draftTitle.trim(), content: draftContent.trim() } : prev,
+      );
+      setView("preview");
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "수정에 실패했습니다.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  function cancelEdit() {
+    setView("preview");
   }
 
   async function handleDelete() {
@@ -109,11 +145,11 @@ export default function AdminPostDetailPage({ params }: { params: Promise<{ id: 
 
         <div className="mt-5 flex items-center justify-between border-t border-border pt-5">
           <span className="text-xs text-muted">
-            {view === "preview"
-              ? "사용자가 보는 모습 (마크다운 렌더링)"
-              : "원본 마크다운 텍스트"}
+            {view === "preview" && "사용자가 보는 모습 (마크다운 렌더링)"}
+            {view === "raw" && "원본 마크다운 텍스트"}
+            {view === "edit" && "편집 모드 — 저장하면 게시판에 반영됩니다"}
           </span>
-          <div className="flex gap-1 rounded-md border border-border p-0.5 text-xs">
+          <div className="flex items-center gap-1 rounded-md border border-border p-0.5 text-xs">
             <button
               type="button"
               onClick={() => setView("preview")}
@@ -136,16 +172,69 @@ export default function AdminPostDetailPage({ params }: { params: Promise<{ id: 
             >
               원본
             </button>
+            {view !== "edit" ? (
+              <button
+                type="button"
+                onClick={startEdit}
+                className="rounded border-l border-border px-2 py-1 text-muted hover:text-foreground"
+              >
+                ✏️ 편집
+              </button>
+            ) : (
+              <span className="rounded bg-amber-500/10 px-2 py-1 font-semibold text-amber-400">
+                편집 중
+              </span>
+            )}
           </div>
         </div>
 
         <div className="mt-4">
-          {view === "preview" ? (
-            <PostMarkdown content={post.content} />
-          ) : (
+          {view === "preview" && <PostMarkdown content={post.content} />}
+          {view === "raw" && (
             <pre className="overflow-x-auto whitespace-pre-wrap rounded-md border border-border bg-background/40 p-4 text-xs leading-relaxed text-muted">
               {post.content}
             </pre>
+          )}
+          {view === "edit" && (
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs font-semibold text-muted">제목</label>
+                <input
+                  type="text"
+                  value={draftTitle}
+                  maxLength={120}
+                  onChange={(e) => setDraftTitle(e.target.value)}
+                  className="mt-1 w-full rounded-md border border-border bg-background/40 px-3 py-2 text-sm focus:border-primary focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-muted">본문 (마크다운)</label>
+                <textarea
+                  value={draftContent}
+                  rows={20}
+                  onChange={(e) => setDraftContent(e.target.value)}
+                  className="mt-1 w-full resize-y rounded-md border border-border bg-background/40 px-3 py-2 text-sm font-mono leading-relaxed focus:border-primary focus:outline-none"
+                />
+              </div>
+              <div className="flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={cancelEdit}
+                  disabled={busy}
+                  className="rounded-md border border-border px-3 py-1.5 text-xs text-muted hover:text-foreground disabled:opacity-50"
+                >
+                  취소
+                </button>
+                <button
+                  type="button"
+                  onClick={saveEdit}
+                  disabled={busy}
+                  className="rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-primary-fg hover:bg-primary-hover disabled:opacity-50"
+                >
+                  💾 저장
+                </button>
+              </div>
+            </div>
           )}
         </div>
       </article>
