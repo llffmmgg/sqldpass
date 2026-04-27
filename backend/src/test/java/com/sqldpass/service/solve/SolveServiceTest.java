@@ -15,6 +15,9 @@ import com.sqldpass.controller.solve.dto.SolveRequest;
 import com.sqldpass.domain.solve.Solve;
 import com.sqldpass.persistent.member.MemberEntity;
 import com.sqldpass.persistent.member.MemberRepository;
+import com.sqldpass.persistent.mockexam.ExamType;
+import com.sqldpass.persistent.mockexam.MockExamEntity;
+import com.sqldpass.persistent.mockexam.MockExamRepository;
 import com.sqldpass.persistent.question.QuestionEntity;
 import com.sqldpass.persistent.question.QuestionRepository;
 import com.sqldpass.persistent.solve.SolveRepository;
@@ -43,6 +46,9 @@ class SolveServiceTest {
 
     @Autowired
     private MemberRepository memberRepository;
+
+    @Autowired
+    private MockExamRepository mockExamRepository;
 
     @Autowired
     private EntityManager entityManager;
@@ -131,5 +137,42 @@ class SolveServiceTest {
         // 다른 mockExamId 로 필터하면 비어있어야 함
         List<Solve> filtered = solveService.getMySolves(member.getId(), 999L);
         assertThat(filtered).isEmpty();
+    }
+
+    @Test
+    @DisplayName("같은 모의고사를 4번 풀면 가장 오래된 시도가 삭제되어 최신 3개만 남는다")
+    void mockExamAttemptCap() {
+        MockExamEntity mockExam = new MockExamEntity("캡 테스트 회차", ExamType.SQLD, 1);
+        mockExamRepository.save(mockExam);
+        entityManager.flush();
+
+        // 동일 모의고사를 4번 풀이
+        SolveRequest req = new SolveRequest(null, mockExam.getId(), List.of(
+                new SolveAnswerRequest(q1.getId(), 1, null)
+        ));
+        for (int i = 0; i < 4; i++) {
+            solveService.solve(member.getId(), req);
+            entityManager.flush();
+        }
+        entityManager.clear();
+
+        List<Solve> attempts = solveService.getMySolves(member.getId(), mockExam.getId());
+        assertThat(attempts).hasSize(3);
+    }
+
+    @Test
+    @DisplayName("subject(자유 풀이) 시도는 캡 정책 영향을 받지 않는다")
+    void subjectAttemptsNotCapped() {
+        SolveRequest req = new SolveRequest(subject.getId(), null, List.of(
+                new SolveAnswerRequest(q1.getId(), 1, null)
+        ));
+        for (int i = 0; i < 5; i++) {
+            solveService.solve(member.getId(), req);
+            entityManager.flush();
+        }
+        entityManager.clear();
+
+        List<Solve> all = solveService.getMySolves(member.getId(), null);
+        assertThat(all).hasSize(5);
     }
 }

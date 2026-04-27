@@ -44,6 +44,9 @@ public class SolveService {
 
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
+    /** 한 사용자가 같은 모의고사·기출에서 보존할 최근 시도 개수. 초과분은 새 풀이 저장 직후 정리됨. */
+    private static final int MAX_ATTEMPTS_PER_MOCK_EXAM = 3;
+
     public SolveService(SolveRepository solveRepository, QuestionRepository questionRepository,
                         MemberRepository memberRepository, SubjectRepository subjectRepository,
                         MockExamRepository mockExamRepository, GradingService gradingService,
@@ -142,6 +145,17 @@ public class SolveService {
         }
 
         solveRepository.save(solveEntity);
+
+        // 모의고사·기출은 최근 N개만 보존. 초과분은 가장 오래된 것부터 삭제.
+        // SolveEntity 의 cascade=ALL + orphanRemoval=true 로 SolveAnswer 도 함께 삭제됨.
+        if (request.mockExamId() != null) {
+            List<SolveEntity> all = solveRepository
+                    .findByMemberIdAndMockExamIdOrderByCreatedAtDesc(memberId, request.mockExamId());
+            if (all.size() > MAX_ATTEMPTS_PER_MOCK_EXAM) {
+                List<SolveEntity> stale = all.subList(MAX_ATTEMPTS_PER_MOCK_EXAM, all.size());
+                solveRepository.deleteAll(stale);
+            }
+        }
 
         StreakUpdateResult streakUpdate = streakService.updateOnSolve(memberId);
         return new SolveWithStreak(SolveMapper.toDomain(solveEntity), streakUpdate);
