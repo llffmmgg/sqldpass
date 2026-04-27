@@ -57,7 +57,7 @@ function BoardContent() {
       <Container size="default" className="py-12">
         <header className="mb-8 flex items-start justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">게시판</h1>
+            <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">합격 후기</h1>
             <p className="mt-1.5 text-sm text-text-muted">
               합격 후기를 공유해주세요. 운영자 검토 후 게시됩니다.
             </p>
@@ -70,14 +70,7 @@ function BoardContent() {
           </Link>
         </header>
 
-        {/* 카테고리 탭 (현재 1개) */}
-        <div className="mb-4 flex gap-1 rounded-lg border border-border bg-surface p-1 text-sm">
-          <span className="rounded-md bg-primary/10 px-3 py-1.5 font-medium text-primary">
-            합격 후기
-          </span>
-        </div>
-
-        {/* 자격증 chip filter */}
+        {/* 자격증 chip filter (태그) */}
         <div className="mb-6 flex flex-wrap items-center gap-1.5">
           <FilterChip active={!certParam} onClick={() => setCertFilter(null)} label="전체" />
           {CERT_LIST.map((c) => (
