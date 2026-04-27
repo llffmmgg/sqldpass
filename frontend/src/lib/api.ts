@@ -158,6 +158,16 @@ export function getOverallStats() {
   return fetchApi<OverallStatsResponse>("/solves/stats/overall-avg");
 }
 
+/**
+ * 내 모의고사·기출 best score 맵.
+ * 기출 카탈로그가 SSR + ISR 이라 회원별 점수를 클라이언트에서 별도로 머지하는 용도.
+ */
+export type BestScoreMap = Record<number, { correct: number; total: number }>;
+
+export function getMyBestScores(): Promise<BestScoreMap> {
+  return fetchApi<BestScoreMap>("/mock-exams/best-scores");
+}
+
 export function getWrongAnswers(subjectId?: number) {
   const params = subjectId ? `?subjectId=${subjectId}` : "";
   return fetchApi<WrongAnswerResponse[]>(`/wrong-answers${params}`);

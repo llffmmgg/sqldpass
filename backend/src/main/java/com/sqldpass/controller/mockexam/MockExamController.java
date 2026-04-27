@@ -61,4 +61,26 @@ public class MockExamController {
         // PREMIUM이면 403 LOCKED, DRAFT면 404
         return MockExamDetailResponse.from(mockExamService.getForUser(id));
     }
+
+    /**
+     * 회원의 모의고사·기출 best score 맵.
+     * 기출 카탈로그 (/past-exams/{cert}) 가 SSR + ISR 캐시라 회원별 점수를
+     * SSR 응답에 못 실음. 클라이언트에서 별도 호출해 카드에 머지하는 용도.
+     *
+     * 응답: { "{mockExamId}": { "correct": N, "total": M }, ... }
+     */
+    @GetMapping("/best-scores")
+    @Operation(summary = "내 모의고사·기출 best score 맵 (mockExamId → {correct, total})")
+    public Map<Long, Map<String, Integer>> getMyBestScores(HttpServletRequest request) {
+        Long memberId = (Long) request.getAttribute("memberId");
+        Map<Long, Map<String, Integer>> result = new HashMap<>();
+        if (memberId == null) return result;
+        for (Object[] row : solveRepository.findBestScoresByMember(memberId)) {
+            Long mockExamId = (Long) row[0];
+            int bestCorrect = ((Number) row[1]).intValue();
+            int bestTotal = ((Number) row[2]).intValue();
+            result.put(mockExamId, Map.of("correct", bestCorrect, "total", bestTotal));
+        }
+        return result;
+    }
 }

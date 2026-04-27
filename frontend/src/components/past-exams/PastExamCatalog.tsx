@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { useEffect, useState } from "react";
 
 import { Badge, Card, cn } from "@/components/ui";
 import {
@@ -12,6 +15,7 @@ import type {
   PublicPastExamSummary,
 } from "@/lib/publicApi";
 import type { PastExamCountsByCert } from "@/lib/pastExamCatalog";
+import { getMyBestScores, type BestScoreMap } from "@/lib/api";
 
 const UNKNOWN_YEAR = -1;
 
@@ -55,6 +59,22 @@ export function PastExamGrid({
   exams: PublicPastExamSummary[];
 }) {
   const grouped = groupPastExams(exams);
+  // 회원의 best score 를 클라이언트에서 별도 머지 (SSR + ISR 캐시 우회).
+  // 비로그인은 401 → catch 후 빈 객체 fallback.
+  const [bestScores, setBestScores] = useState<BestScoreMap>({});
+  useEffect(() => {
+    let cancelled = false;
+    getMyBestScores()
+      .then((map) => {
+        if (!cancelled) setBestScores(map);
+      })
+      .catch(() => {
+        if (!cancelled) setBestScores({});
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   return (
     <div className="flex flex-col gap-10">
@@ -70,7 +90,7 @@ export function PastExamGrid({
           </div>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             {list.map((exam) => (
-              <PastExamCard key={exam.id} exam={exam} />
+              <PastExamCard key={exam.id} exam={exam} best={bestScores[exam.id]} />
             ))}
           </div>
         </section>
@@ -81,8 +101,10 @@ export function PastExamGrid({
 
 export function PastExamCard({
   exam,
+  best,
 }: {
   exam: PublicPastExamSummary;
+  best?: { correct: number; total: number };
 }) {
   const cert = certFromExamType(exam.examType);
   const token = cert ? CERT_TOKENS[cert] : null;
@@ -100,6 +122,17 @@ export function PastExamCard({
           <div className="pointer-events-none absolute -left-[38px] top-[18px] z-10 -rotate-45 bg-emerald-600 px-10 py-0.5 text-center text-[9px] font-bold tracking-wide text-white shadow-sm dark:bg-emerald-500">
             전문가 검수
           </div>
+        )}
+
+        {best && (
+          <span
+            className="pointer-events-none absolute right-2 top-1 select-none font-[family-name:var(--font-caveat)] text-3xl font-bold leading-none text-red-500/90 sm:text-4xl"
+            style={{ transform: "rotate(-12deg)" }}
+          >
+            {best.correct}
+            <span className="text-2xl sm:text-3xl">/</span>
+            {best.total}
+          </span>
         )}
 
         <div className="flex flex-wrap items-center gap-1.5 pr-20">
