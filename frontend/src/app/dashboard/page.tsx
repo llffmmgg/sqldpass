@@ -221,10 +221,40 @@ function rateColor(rate: number) {
   return "text-red-400";
 }
 
-function rateBarColor(rate: number) {
-  if (rate >= 80) return "bg-green-500";
-  if (rate >= 60) return "bg-amber-500";
-  return "bg-red-500";
+/** 정답률 링 게이지. 부모 text 색을 SVG stroke 로 사용 (currentColor). r=15.9155 → 둘레 ≈ 100 */
+function RateRing({ rate }: { rate: number }) {
+  const clamped = Math.max(0, Math.min(100, rate));
+  return (
+    <div
+      className={`relative h-14 w-14 shrink-0 ${rateColor(rate)}`}
+      aria-label={`정답률 ${rate}%`}
+    >
+      <svg viewBox="0 0 36 36" className="h-full w-full -rotate-90">
+        <circle
+          cx="18"
+          cy="18"
+          r="15.9155"
+          fill="none"
+          stroke="currentColor"
+          strokeOpacity="0.15"
+          strokeWidth="3"
+        />
+        <circle
+          cx="18"
+          cy="18"
+          r="15.9155"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="3"
+          strokeLinecap="round"
+          strokeDasharray={`${clamped} 100`}
+        />
+      </svg>
+      <span className="absolute inset-0 flex items-center justify-center text-xs font-bold tabular-nums">
+        {rate}%
+      </span>
+    </div>
+  );
 }
 
 export default function DashboardPage() {
@@ -435,47 +465,60 @@ function DashboardPageContent() {
                         </p>
                       </header>
 
-                      {/* 과목 리스트 */}
-                      <ul className="divide-y divide-border/50">
+                      {/* 과목 타일 그리드 — 링 게이지 + 복습 CTA */}
+                      <ul className="grid grid-cols-1 gap-2 p-3 sm:grid-cols-2 lg:grid-cols-3">
                         {g.subjects.map((m, i) => {
                           const isTopWeak = i === 0 && m.wrongCount > 0;
                           return (
                             <li
                               key={m.id}
-                              className={`px-5 py-3 ${
-                                isTopWeak ? g.token.tailwind.bgSoft : ""
+                              className={`flex flex-col rounded-lg border p-3.5 transition-colors ${
+                                isTopWeak
+                                  ? `${g.token.tailwind.border} ${g.token.tailwind.bgSoft}`
+                                  : "border-border/60 bg-background"
                               }`}
                             >
-                              <div className="flex items-center justify-between gap-2">
-                                <span className="truncate text-sm font-medium">
-                                  {m.name}
-                                </span>
-                                <span
-                                  className={`shrink-0 text-sm font-semibold tabular-nums ${rateColor(m.rate)}`}
+                              <div className="flex items-start gap-3">
+                                <RateRing rate={m.rate} />
+                                <div className="min-w-0 flex-1">
+                                  <p className="truncate text-sm font-semibold leading-tight">
+                                    {m.name}
+                                  </p>
+                                  <p className="mt-1 text-[11px] text-muted/80 tabular-nums">
+                                    정답 {m.correct}/{m.total}
+                                  </p>
+                                  {m.wrongCount > 0 && (
+                                    <p
+                                      className={`mt-0.5 text-[11px] font-medium tabular-nums ${g.token.tailwind.textSoft}`}
+                                    >
+                                      오답 {m.wrongCount}개
+                                    </p>
+                                  )}
+                                </div>
+                              </div>
+
+                              {m.wrongCount > 0 ? (
+                                <Link
+                                  href={`/wrong-answers?subjectId=${m.id}`}
+                                  className={`mt-3 inline-flex items-center justify-center gap-1 rounded-md border px-2.5 py-1.5 text-xs font-semibold transition-colors ${g.token.tailwind.border} ${g.token.tailwind.bgSoft} ${g.token.tailwind.text} ${g.token.tailwind.bgHover}`}
                                 >
-                                  {m.rate}%
-                                </span>
-                              </div>
-                              <div className="mt-1.5 h-1 w-full overflow-hidden rounded-full bg-border/50">
-                                <div
-                                  className={`h-full rounded-full transition-all ${rateBarColor(m.rate)}`}
-                                  style={{ width: `${m.rate}%` }}
-                                />
-                              </div>
-                              <div className="mt-1.5 flex items-center justify-between gap-3 text-[11px] text-muted/70 tabular-nums">
-                                <span>
-                                  {m.correct}/{m.total} 정답
-                                  {m.wrongCount > 0 && <> · {m.wrongCount}개 오답</>}
-                                </span>
-                                {m.wrongCount > 0 && (
-                                  <Link
-                                    href={`/wrong-answers?subjectId=${m.id}`}
-                                    className={`shrink-0 font-medium underline-offset-2 hover:underline ${g.token.tailwind.textSoft}`}
+                                  오답 {m.wrongCount}개 복습하기
+                                  <svg
+                                    className="h-3 w-3"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
+                                    strokeWidth={2.5}
+                                    aria-hidden
                                   >
-                                    복습 →
-                                  </Link>
-                                )}
-                              </div>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                                  </svg>
+                                </Link>
+                              ) : (
+                                <p className="mt-3 text-center text-[11px] text-muted/60">
+                                  탄탄해요 · 새 문제 도전
+                                </p>
+                              )}
                             </li>
                           );
                         })}
