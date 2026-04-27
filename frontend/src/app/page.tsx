@@ -36,7 +36,7 @@ export default function Home() {
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-60" />
                 <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-primary" />
               </span>
-              CBT 모의고사 플랫폼 · 모두 무료
+              CBT 모의고사 · 기출 복원 · 모두 무료
             </span>
           </ScrollReveal>
 
