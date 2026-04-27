@@ -477,8 +477,8 @@ function WrongAnswersPageContent() {
           <Image
             src="/logo/wrong-answer-mascot.webp"
             alt="오답노트 마스코트"
-            width={320}
-            height={320}
+            width={180}
+            height={180}
             className="shrink-0"
             priority
           />

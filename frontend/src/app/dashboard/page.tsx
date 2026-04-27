@@ -314,8 +314,8 @@ function DashboardPageContent() {
           <Image
             src="/logo/dashboard-mascot.webp"
             alt="대시보드 마스코트"
-            width={320}
-            height={320}
+            width={180}
+            height={180}
             className="shrink-0"
             priority
           />
