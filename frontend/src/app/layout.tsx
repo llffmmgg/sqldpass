@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Noto_Sans_KR, JetBrains_Mono, Caveat } from "next/font/google";
 import { Suspense } from "react";
 import NavBar from "@/components/NavBar";
+import BottomTabBar from "@/components/BottomTabBar";
 import Footer from "@/components/Footer";
 import { SiteNoticeBanner } from "@/components/SiteNoticeBanner";
 import AnalyticsScripts from "@/components/AnalyticsScripts";
@@ -197,7 +198,9 @@ export default function RootLayout({
           href="/rss.xml"
         />
       </head>
-      <body className="min-h-full flex flex-col">
+      <body
+        className="flex min-h-full flex-col pb-[calc(3.75rem+env(safe-area-inset-bottom))] lg:pb-0"
+      >
         <Suspense fallback={null}>
           <AnalyticsScripts />
         </Suspense>
@@ -208,6 +211,7 @@ export default function RootLayout({
           <Footer />
           <AdSidebar adSlot={ADSENSE_SIDEBAR_SLOT} />
           <FeedbackRail />
+          <BottomTabBar />
         </ToastProvider>
       </body>
     </html>
