@@ -887,7 +887,7 @@ function SolvePageContent() {
         </Card>
 
         {!revealed && (
-          <div className="mt-5 flex justify-center">
+          <div className="mt-5 hidden justify-center lg:flex">
             <Button
               variant="primary"
               size="lg"
@@ -978,23 +978,37 @@ function SolvePageContent() {
         )}
       </Container>
 
-      {/* Fixed 하단 다음 버튼 */}
-      {revealed && detail && (
-        <Button
-          variant="primary"
-          size="lg"
-          className="fixed bottom-6 right-6 z-50 shadow-[var(--shadow-xl)] shadow-primary/30 lg:hidden"
-          onClick={handleNext}
-          aria-label={solvedCount >= SET_SIZE ? "결과 보기" : "다음 문제"}
-          rightIcon={
-            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-            </svg>
-          }
-        >
-          {solvedCount >= SET_SIZE ? "결과 보기" : "다음 문제"}
-        </Button>
-      )}
+      {/* 모바일 하단 sticky 액션 바 — 채점 전: 정답 제출 / 채점 후: 다음 문제 */}
+      <div
+        className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-bg/95 px-4 py-3 backdrop-blur-md lg:hidden"
+        style={{ paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom))" }}
+      >
+        {!revealed ? (
+          <Button
+            variant="primary"
+            size="lg"
+            className="w-full"
+            onClick={handleSubmit}
+            disabled={!hasAnswer()}
+          >
+            정답 제출
+          </Button>
+        ) : detail ? (
+          <Button
+            variant="primary"
+            size="lg"
+            className="w-full"
+            onClick={handleNext}
+            rightIcon={
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+              </svg>
+            }
+          >
+            {solvedCount >= SET_SIZE ? "결과 보기" : "다음 문제"}
+          </Button>
+        ) : null}
+      </div>
     </main>
   );
 }
