@@ -62,6 +62,18 @@ export interface PastExamGradedItem {
   explanation: string | null;
 }
 
+export interface PastExamSubjectScore {
+  subjectName: string;
+  total: number;
+  correct: number;
+  /** 정답률 0~100, 소수 한자리 */
+  rate: number;
+  /** 100점 만점 환산 (정답률 백분율과 동일) */
+  weighted: number;
+  /** 자격증의 과목별 과락 컷에 미달했는지 (단일 과목 자격증에선 false) */
+  failed: boolean;
+}
+
 export interface PastExamGradeResponse {
   totalCount: number;
   correctCount: number;
@@ -69,6 +81,12 @@ export interface PastExamGradeResponse {
   items: PastExamGradedItem[];
   /** solve 테이블에 적재된 풀이 id — /history/{id} 진입에 사용. solve 저장 실패 시 null. */
   solveId: number | null;
+  /** 합격 기준 과목 단위 정답률 / 과락 표시 */
+  subjectScores: PastExamSubjectScore[];
+  /** 자격증별 공식 합격 기준 적용한 최종 합격 여부 */
+  passed: boolean;
+  /** 합격/불합격 한 줄 요약 (UI 배너) */
+  passReason: string;
 }
 
 async function publicFetch<T>(path: string, init?: RequestInit): Promise<T> {

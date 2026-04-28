@@ -32,6 +32,10 @@ import { ExamBadge } from "@/app/mock-exams/page";
 import { GradingDisclaimerModal } from "@/components/GradingDisclaimerModal";
 import AdInfeed from "@/components/AdInfeed";
 import AdDisplay from "@/components/AdDisplay";
+import QuestionJumpPanel, {
+  type QuestionJumpGroup,
+} from "@/components/exam/QuestionJumpPanel";
+import { evaluatePass } from "@/lib/pass-criteria";
 import { useToast } from "@/components/Toast";
 import { trackEvent } from "@/lib/gtag";
 import { hapticError, hapticLight, hapticSuccess } from "@/lib/haptic";
@@ -242,18 +246,87 @@ function MockExamDetailContent() {
 
   // 결과 화면
   if (result) {
+    const passOutcome = evaluatePass(
+      exam.examType,
+      exam.questions.map((q) => ({ id: q.id, subjectName: q.subjectName })),
+      result.answers.map((a) => ({ questionId: a.questionId, correct: a.correct })),
+      result.score,
+    );
     return (
       <main className="min-h-screen bg-background text-foreground">
         <Container size="narrow" className="py-16">
           <ExamBadge examType={exam.examType} />
           <h1 className="mt-3 text-2xl font-bold">{exam.name} 결과</h1>
-          <div className="mt-8 rounded-xl border border-border bg-surface p-8 text-center">
+
+          {/* 합격/불합격 배너 — 자격증별 공식 기준 적용 */}
+          <div
+            className={`mt-6 rounded-xl border p-5 ${
+              passOutcome.passed
+                ? "border-success/40 bg-success/10"
+                : "border-danger/40 bg-danger/10"
+            }`}
+            role="status"
+          >
+            <div className="flex items-center gap-3">
+              <span
+                className={`inline-flex items-center rounded-md px-2.5 py-1 text-sm font-bold ${
+                  passOutcome.passed
+                    ? "bg-success text-white"
+                    : "bg-danger text-white"
+                }`}
+              >
+                {passOutcome.passed ? "합격" : "불합격"}
+              </span>
+              <p className="text-sm text-text">{passOutcome.passReason}</p>
+            </div>
+          </div>
+
+          <div className="mt-6 rounded-xl border border-border bg-surface p-8 text-center">
             <p className="text-sm text-muted">점수</p>
             <p className={`mt-2 inline-block text-5xl font-bold animate-score-pop ${accent.text}`}>{result.score}점</p>
             <p className="mt-4 text-sm text-muted">
               {result.correctCount} / {result.totalCount} 정답
             </p>
           </div>
+
+          {/* 과목별 점수 표 — 단일 과목 자격증(정처기 실기 등)도 카테고리별 학습 진단으로 노출 */}
+          {passOutcome.subjectScores.length > 0 && (
+            <div className="mt-6 rounded-xl border border-border bg-surface p-5">
+              <p className="text-sm font-semibold text-text">
+                {passOutcome.subjectScores.some((s) => s.failed) || exam.examType !== "ENGINEER_PRACTICAL"
+                  ? "과목별 점수"
+                  : "카테고리별 학습 진단"}
+              </p>
+              <ul className="mt-3 space-y-2">
+                {passOutcome.subjectScores.map((s) => (
+                  <li key={s.subjectName} className="flex items-center gap-3">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center justify-between gap-2 text-sm">
+                        <span className="truncate text-text">{s.subjectName}</span>
+                        <span className="tabular-nums text-text-muted">
+                          {s.correct}/{s.total} · {s.weighted}점
+                        </span>
+                      </div>
+                      <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-border">
+                        <div
+                          className={`h-full transition-all ${
+                            s.failed ? "bg-danger" : "bg-primary"
+                          }`}
+                          style={{ width: `${Math.max(2, s.weighted)}%` }}
+                        />
+                      </div>
+                    </div>
+                    {s.failed && (
+                      <span className="shrink-0 rounded-md bg-danger/15 px-2 py-0.5 text-[11px] font-bold text-danger">
+                        과락
+                      </span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
           <div className="mt-6 md:hidden">
             <AdInfeed
               adSlot="5227022543"
@@ -286,6 +359,35 @@ function MockExamDetailContent() {
   const current = exam.questions[currentIdx];
   const parsed = parseQuestion(current.content);
   const currentAnswer = answers.get(current.id);
+
+  // 응답 완료된 문제 인덱스 (0-based) — QuestionJumpPanel 용
+  const answeredIndices = useMemo(() => {
+    const s = new Set<number>();
+    exam.questions.forEach((q, i) => {
+      if (hasAnswer(answers.get(q.id))) s.add(i);
+    });
+    return s;
+  }, [exam.questions, answers]);
+
+  // subjectName 이 인접해서 연속되는 구간을 그룹으로 묶음.
+  // 그룹이 1개뿐이면 빈 배열을 돌려 패널이 단일 모드로 렌더하도록 함.
+  const jumpGroups = useMemo<QuestionJumpGroup[]>(() => {
+    const qs = exam.questions;
+    if (qs.length === 0) return [];
+    const groups: QuestionJumpGroup[] = [];
+    let from = 0;
+    let label = qs[0].subjectName ?? "";
+    for (let i = 1; i < qs.length; i++) {
+      const name = qs[i].subjectName ?? "";
+      if (name !== label) {
+        groups.push({ label, from, to: i - 1 });
+        from = i;
+        label = name;
+      }
+    }
+    groups.push({ label, from, to: qs.length - 1 });
+    return groups.length <= 1 ? [] : groups;
+  }, [exam.questions]);
 
   function updateAnswer(questionId: number, updater: (prev: AnswerState) => AnswerState) {
     setAnswers((prev) => {
@@ -363,7 +465,6 @@ function MockExamDetailContent() {
   }
 
   // 빠른 이동 그리드 — 20문항 이하면 5열, 이상이면 10열
-  const jumpGridCols = total <= 20 ? "grid-cols-5 sm:grid-cols-10" : "grid-cols-10";
 
   return (
     <main className="min-h-screen bg-background text-foreground">
@@ -483,31 +584,6 @@ function MockExamDetailContent() {
           </button>
         </div>
 
-        {/* 빠른 이동 */}
-        <div className="mt-6">
-          <p className="text-xs text-muted mb-2">빠른 이동</p>
-          <div className={`grid gap-1.5 ${jumpGridCols}`}>
-            {exam.questions.map((q, i) => {
-              const answered = hasAnswer(answers.get(q.id));
-              return (
-                <button
-                  key={q.id}
-                  onClick={() => setCurrentIdx(i)}
-                  className={`h-9 rounded text-xs font-medium transition ${
-                    i === currentIdx
-                      ? accent.chipActive
-                      : answered
-                      ? accent.chipAnswered
-                      : "bg-surface text-muted hover:bg-border"
-                  }`}
-                >
-                  {i + 1}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
         {/* 하단 제출 */}
         <div className="mt-8">
           <button
@@ -529,6 +605,20 @@ function MockExamDetailContent() {
           )}
         </div>
       </div>
+
+      {/* 문제 번호 빠른 이동 — 데스크탑 우측 sticky / 모바일 floating + drawer */}
+      <QuestionJumpPanel
+        total={total}
+        currentIdx={currentIdx}
+        answered={answeredIndices}
+        onJump={(i) => setCurrentIdx(i)}
+        groups={jumpGroups}
+        accent={{
+          bg: accent.chipActive,
+          text: "",
+          border: accent.border,
+        }}
+      />
 
       {/* 모바일 타이머 — 우하단 고정 */}
       <div className="fixed bottom-4 right-4 z-40 lg:hidden">

@@ -30,6 +30,7 @@ import com.sqldpass.controller.solve.dto.SolveAnswerRequest;
 import com.sqldpass.controller.solve.dto.SolveRequest;
 import com.sqldpass.service.common.ErrorCode;
 import com.sqldpass.service.common.SqldpassException;
+import com.sqldpass.service.grading.SubjectScoringCalculator;
 import com.sqldpass.service.solve.GradingService;
 import com.sqldpass.service.solve.SolveService;
 
@@ -228,7 +229,22 @@ public class PastExamPublicService {
             }
         }
 
-        return new PastExamGradeResponse(totalCount, correctCount, score, items, solveId);
+        // 자격증별 합격/과락 판정 — 응답의 subjectScores / passed / passReason 채움
+        SubjectScoringCalculator.Outcome outcome = SubjectScoringCalculator.compute(
+                entity.getExamType(),
+                entity.getQuestions(),
+                items,
+                score);
+
+        return new PastExamGradeResponse(
+                totalCount,
+                correctCount,
+                score,
+                items,
+                solveId,
+                outcome.subjectScores(),
+                outcome.passed(),
+                outcome.passReason());
     }
 
     private MockExamEntity loadPublishedPastExam(Long id) {

@@ -28,6 +28,9 @@ import { getSolves, type SolveSummaryResponse } from "@/lib/api";
 import { getToken } from "@/lib/auth";
 import MockExamAttemptsView from "@/components/MockExamAttemptsView";
 import { hapticError, hapticLight, hapticSuccess } from "@/lib/haptic";
+import QuestionJumpPanel, {
+  type QuestionJumpGroup,
+} from "@/components/exam/QuestionJumpPanel";
 
 const CountdownCircleTimer = dynamic(
   () => import("react-countdown-circle-timer").then((m) => m.CountdownCircleTimer),
@@ -203,7 +206,34 @@ export default function PastExamRunnerClient({
   const parsed = parseQuestion(current.content);
   const currentAnswer = answers.get(current.id);
   const roundLabel = buildRoundLabel(exam);
-  const jumpGridCols = total <= 20 ? "grid-cols-5 sm:grid-cols-10" : "grid-cols-10";
+
+  // QuestionJumpPanel 용 — 응답 완료 인덱스 (0-based)
+  const answeredIndices = useMemo(() => {
+    const s = new Set<number>();
+    exam.questions.forEach((q, i) => {
+      if (hasAnswer(answers.get(q.id))) s.add(i);
+    });
+    return s;
+  }, [exam.questions, answers]);
+
+  // QuestionJumpPanel 용 — 인접한 같은 subjectName 묶음을 그룹으로
+  const jumpGroups = useMemo<QuestionJumpGroup[]>(() => {
+    const qs = exam.questions;
+    if (qs.length === 0) return [];
+    const groups: QuestionJumpGroup[] = [];
+    let from = 0;
+    let label = qs[0].subjectName ?? "";
+    for (let i = 1; i < qs.length; i++) {
+      const name = qs[i].subjectName ?? "";
+      if (name !== label) {
+        groups.push({ label, from, to: i - 1 });
+        from = i;
+        label = name;
+      }
+    }
+    groups.push({ label, from, to: qs.length - 1 });
+    return groups.length <= 1 ? [] : groups;
+  }, [exam.questions]);
 
   function updateAnswer(questionId: number, updater: (prev: AnswerState) => AnswerState) {
     setAnswers((prev) => {
@@ -388,32 +418,6 @@ export default function PastExamRunnerClient({
               </button>
             </div>
 
-            <div className="mt-6">
-              <p className="mb-2 text-xs text-text-muted">빠른 이동</p>
-              <div className={`grid gap-1.5 ${jumpGridCols}`}>
-                {exam.questions.map((question, index) => {
-                  const answered = hasAnswer(answers.get(question.id));
-                  const active = index === currentIdx;
-
-                  return (
-                    <button
-                      key={question.id}
-                      onClick={() => setCurrentIdx(index)}
-                      className={`h-9 rounded text-xs font-medium transition ${
-                        active
-                          ? `${token.tailwind.bg} text-white`
-                          : answered
-                            ? `${token.tailwind.bgSoft} text-text`
-                            : "bg-surface text-text-muted hover:bg-border"
-                      }`}
-                    >
-                      {index + 1}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
             <div className="mt-8">
               <Button
                 variant="primary"
@@ -436,6 +440,20 @@ export default function PastExamRunnerClient({
               )}
             </div>
           </div>
+
+          {/* 문제 번호 빠른 이동 — 데스크탑 우측 sticky / 모바일 floating + drawer */}
+          <QuestionJumpPanel
+            total={total}
+            currentIdx={currentIdx}
+            answered={answeredIndices}
+            onJump={(i) => setCurrentIdx(i)}
+            groups={jumpGroups}
+            accent={{
+              bg: token.tailwind.bg,
+              text: "text-white",
+              border: token.tailwind.border,
+            }}
+          />
 
           <div className="fixed bottom-4 right-4 z-40 lg:hidden">
             <div className="flex flex-col items-center gap-2 rounded-xl border border-border bg-surface/95 px-3 py-3 shadow-xl backdrop-blur">
@@ -500,6 +518,27 @@ function PastExamResultView({
           {roundLabel} <span className="text-text-subtle">· 채점 완료</span>
         </h1>
 
+        {/* 합격/불합격 배너 — 자격증별 공식 기준 (백엔드 PassFailCriteria 적용) */}
+        <div
+          className={`mt-6 rounded-xl border p-5 ${
+            result.passed
+              ? "border-success/40 bg-success/10"
+              : "border-danger/40 bg-danger/10"
+          }`}
+          role="status"
+        >
+          <div className="flex items-center gap-3">
+            <span
+              className={`inline-flex items-center rounded-md px-2.5 py-1 text-sm font-bold text-white ${
+                result.passed ? "bg-success" : "bg-danger"
+              }`}
+            >
+              {result.passed ? "합격" : "불합격"}
+            </span>
+            <p className="text-sm text-text">{result.passReason}</p>
+          </div>
+        </div>
+
         <div className="mt-6 rounded-2xl border border-border bg-gradient-to-br from-surface via-surface to-transparent p-8 text-center">
           <p className="text-xs font-semibold uppercase tracking-wider text-text-muted">
             점수
@@ -515,6 +554,44 @@ function PastExamResultView({
             <span className={rateTone}>{correctRate}%</span>
           </p>
         </div>
+
+        {/* 과목별 점수 — 단일 과목 자격증(정처기 실기 등)도 학습 진단으로 표시 */}
+        {result.subjectScores && result.subjectScores.length > 0 && (
+          <div className="mt-6 rounded-xl border border-border bg-surface p-5">
+            <p className="text-sm font-semibold text-text">
+              {exam.examType === "ENGINEER_PRACTICAL"
+                ? "카테고리별 학습 진단"
+                : "과목별 점수"}
+            </p>
+            <ul className="mt-3 space-y-2">
+              {result.subjectScores.map((s) => (
+                <li key={s.subjectName} className="flex items-center gap-3">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center justify-between gap-2 text-sm">
+                      <span className="truncate text-text">{s.subjectName}</span>
+                      <span className="tabular-nums text-text-muted">
+                        {s.correct}/{s.total} · {s.weighted}점
+                      </span>
+                    </div>
+                    <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-border">
+                      <div
+                        className={`h-full transition-all ${
+                          s.failed ? "bg-danger" : "bg-primary"
+                        }`}
+                        style={{ width: `${Math.max(2, s.weighted)}%` }}
+                      />
+                    </div>
+                  </div>
+                  {s.failed && (
+                    <span className="shrink-0 rounded-md bg-danger/15 px-2 py-0.5 text-[11px] font-bold text-danger">
+                      과락
+                    </span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
 
         <PastExamReviewList exam={exam} items={result.items} />
 

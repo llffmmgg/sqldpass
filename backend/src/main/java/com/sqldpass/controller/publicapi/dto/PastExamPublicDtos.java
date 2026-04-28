@@ -105,13 +105,36 @@ public final class PastExamPublicDtos {
     ) {
     }
 
-    /** 채점 응답 — 문제별 정답/해설 포함. solveId 는 history 상세 페이지로 이동하는 용도. */
+    /**
+     * 채점 응답 — 문제별 정답/해설 + 자격증별 합격/과락 판정 포함.
+     * solveId 는 history 상세 페이지로 이동하는 용도.
+     */
     public record PastExamGradeResponse(
             int totalCount,
             int correctCount,
             int score,
             List<GradedItem> items,
-            Long solveId
+            Long solveId,
+            /** 합격 기준 과목 단위 (leaf subject 의 parent) 정답률 / 과락 표시 */
+            List<SubjectScore> subjectScores,
+            /** 자격증별 공식 합격 기준 적용한 최종 합격 여부 */
+            boolean passed,
+            /** 합격/불합격 한 줄 요약 (UI 배너) */
+            String passReason
+    ) {
+    }
+
+    /** 합격 기준 과목 단위 점수 — 채점 응답에 함께 내려감 */
+    public record SubjectScore(
+            String subjectName,
+            int total,
+            int correct,
+            /** 정답률 0~100, 소수 한 자리 */
+            double rate,
+            /** 100점 만점 환산 점수 (자격증별 가중치는 동일하게 정답률 백분율) */
+            int weighted,
+            /** 자격증의 과목별 과락 컷에 미달했는지 (단일 과목 자격증에선 항상 false) */
+            boolean failed
     ) {
     }
 
