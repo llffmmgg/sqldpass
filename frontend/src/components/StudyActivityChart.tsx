@@ -115,9 +115,6 @@ function niceCeil(v: number): number {
 export default function StudyActivityChart({ data, overallAvg }: StudyActivityChartProps) {
   const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
   const [mounted, setMounted] = useState(false);
-  const totalRef = useRef<SVGPathElement | null>(null);
-  const correctRef = useRef<SVGPathElement | null>(null);
-  const wrongRef = useRef<SVGPathElement | null>(null);
   const svgRef = useRef<SVGSVGElement | null>(null);
 
   useEffect(() => {
@@ -173,19 +170,6 @@ export default function StudyActivityChart({ data, overallAvg }: StudyActivityCh
   const totalArea = buildAreaPath(totalPoints, baselineY);
   const correctLine = buildLinePath(correctPoints);
   const wrongLine = buildLinePath(wrongPoints);
-
-  // 라인 draw 애니메이션 — 마운트 후 path 길이 측정
-  const [pathLens, setPathLens] = useState<{ t: number; c: number; w: number }>({
-    t: 1000,
-    c: 1000,
-    w: 1000,
-  });
-  useEffect(() => {
-    const t = totalRef.current?.getTotalLength() ?? 1000;
-    const c = correctRef.current?.getTotalLength() ?? 1000;
-    const w = wrongRef.current?.getTotalLength() ?? 1000;
-    setPathLens({ t, c, w });
-  }, [totalLine, correctLine, wrongLine]);
 
   const yTicks = [0, 0.25, 0.5, 0.75, 1].map((r) => ({
     value: Math.round(max * r),
@@ -348,9 +332,8 @@ export default function StudyActivityChart({ data, overallAvg }: StudyActivityCh
             />
           )}
 
-          {/* 라인들 — draw 애니메이션 */}
+          {/* 라인들 — pathLength=1 정규화로 dataset 변경에도 안정적인 draw 애니메이션 */}
           <path
-            ref={wrongRef}
             d={wrongLine}
             fill="none"
             stroke={COLOR_WRONG}
@@ -359,14 +342,14 @@ export default function StudyActivityChart({ data, overallAvg }: StudyActivityCh
             strokeLinejoin="round"
             opacity={0.85}
             vectorEffect="non-scaling-stroke"
+            pathLength={1}
+            strokeDasharray="1 1"
             style={{
-              strokeDasharray: pathLens.w,
-              strokeDashoffset: mounted ? 0 : pathLens.w,
+              strokeDashoffset: mounted ? 0 : 1,
               transition: "stroke-dashoffset 1100ms cubic-bezier(0.22,1,0.36,1) 250ms",
             }}
           />
           <path
-            ref={correctRef}
             d={correctLine}
             fill="none"
             stroke={COLOR_CORRECT}
@@ -375,14 +358,14 @@ export default function StudyActivityChart({ data, overallAvg }: StudyActivityCh
             strokeLinejoin="round"
             opacity={0.9}
             vectorEffect="non-scaling-stroke"
+            pathLength={1}
+            strokeDasharray="1 1"
             style={{
-              strokeDasharray: pathLens.c,
-              strokeDashoffset: mounted ? 0 : pathLens.c,
+              strokeDashoffset: mounted ? 0 : 1,
               transition: "stroke-dashoffset 1000ms cubic-bezier(0.22,1,0.36,1) 150ms",
             }}
           />
           <path
-            ref={totalRef}
             d={totalLine}
             fill="none"
             stroke={COLOR_TOTAL}
@@ -390,9 +373,10 @@ export default function StudyActivityChart({ data, overallAvg }: StudyActivityCh
             strokeLinecap="round"
             strokeLinejoin="round"
             vectorEffect="non-scaling-stroke"
+            pathLength={1}
+            strokeDasharray="1 1"
             style={{
-              strokeDasharray: pathLens.t,
-              strokeDashoffset: mounted ? 0 : pathLens.t,
+              strokeDashoffset: mounted ? 0 : 1,
               transition: "stroke-dashoffset 900ms cubic-bezier(0.22,1,0.36,1) 0ms",
               filter: "drop-shadow(0 0 6px var(--glow))",
             }}
