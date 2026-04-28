@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.sqldpass.controller.post.dto.PostDtos.PostDetailResponse;
 import com.sqldpass.controller.publicapi.dto.PastExamPublicDtos.PastExamDetail;
 import com.sqldpass.controller.publicapi.dto.PastExamPublicDtos.PastExamDetailWithAnswers;
 import com.sqldpass.controller.publicapi.dto.PastExamPublicDtos.PastExamGradeRequest;
@@ -22,9 +23,11 @@ import com.sqldpass.controller.publicapi.dto.PublicDtos.PublicQuestionDetailResp
 import com.sqldpass.controller.publicapi.dto.PublicDtos.PublicQuestionPageResponse;
 import com.sqldpass.controller.publicapi.dto.PublicDtos.PublicSolveQuestionResponse;
 import com.sqldpass.controller.publicapi.dto.PublicDtos.PublicSubjectResponse;
+import com.sqldpass.controller.publicapi.dto.PublicPostDtos.PublicPostSeoSummary;
 import com.sqldpass.controller.publicapi.dto.PublicRankingResponse;
 import com.sqldpass.controller.publicapi.dto.PublicSolveQuotaResponse;
 import com.sqldpass.controller.publicapi.dto.PublicStatsResponse;
+import com.sqldpass.service.post.PostService;
 import com.sqldpass.service.publicapi.PastExamPublicService;
 import com.sqldpass.service.publicapi.PublicContentService;
 
@@ -44,6 +47,7 @@ public class PublicContentController {
 
     private final PublicContentService publicContentService;
     private final PastExamPublicService pastExamPublicService;
+    private final PostService postService;
 
     @GetMapping("/stats")
     @Operation(summary = "랜딩 페이지 노출용 공개 통계 (회원 수 + 누적 풀이 수)")
@@ -186,5 +190,21 @@ public class PublicContentController {
                                                jakarta.servlet.http.HttpServletRequest request) {
         Long memberId = (Long) request.getAttribute("memberId");
         return pastExamPublicService.grade(id, body, memberId);
+    }
+
+    // ================= 게시판 (PUBLISHED) — SSR/sitemap 전용 =================
+
+    @GetMapping("/posts/{id}")
+    @Operation(summary = "게시글 상세 (PUBLISHED 만, 조회수 증가 없음 — SSR generateMetadata/JSON-LD 용)")
+    public PostDetailResponse getPublicPost(@PathVariable Long id) {
+        return postService.getPublicDetail(id);
+    }
+
+    @GetMapping("/posts/seo-list")
+    @Operation(summary = "PUBLISHED 게시글 ID + lastModified (sitemap.xml 용)")
+    public List<PublicPostSeoSummary> listPublicPostSeoSummary() {
+        return postService.listPublishedSeoSummary().stream()
+                .map(s -> new PublicPostSeoSummary(s.getId(), s.getUpdatedAt()))
+                .toList();
     }
 }

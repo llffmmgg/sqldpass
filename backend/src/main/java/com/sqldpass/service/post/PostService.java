@@ -72,6 +72,26 @@ public class PostService {
         ));
     }
 
+    /**
+     * SSR/SEO 전용 — 조회수 증가·PENDING 노출 일절 없음. PUBLISHED 가 아니면 NOT_FOUND.
+     * generateMetadata + JSON-LD + 본문 SSR 용도. ISR 캐시로 30분 한 번만 호출되므로
+     * 조회수 증가 로직을 분리해 게시글 상세의 사용자용 카운터(getDetail)와 격리한다.
+     */
+    public PostDetailResponse getPublicDetail(Long id) {
+        PostEntity p = postRepository.findByIdWithMember(id)
+                .orElseThrow(() -> new SqldpassException(ErrorCode.POST_NOT_FOUND));
+        if (p.getStatus() != PostStatus.PUBLISHED) {
+            throw new SqldpassException(ErrorCode.POST_NOT_FOUND);
+        }
+        List<PostCommentEntity> comments = commentRepository.findByPostIdOrderByCreatedAtAsc(id);
+        return PostDetailResponse.from(p, comments);
+    }
+
+    /** sitemap 전용 — PUBLISHED 게시글 ID + updatedAt 목록. */
+    public List<com.sqldpass.persistent.post.PostRepository.PostSeoSummary> listPublishedSeoSummary() {
+        return postRepository.findPublishedSeoSummary();
+    }
+
     @Transactional
     public PostDetailResponse getDetail(Long id, Long viewerMemberId) {
         PostEntity p = postRepository.findByIdWithMember(id)

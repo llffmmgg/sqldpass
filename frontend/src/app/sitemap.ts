@@ -7,6 +7,7 @@ import {
   getPublicCategoriesByCert,
   getPublicCerts,
   getPublicPastExamsByCert,
+  getPublicPostSeoList,
 } from "@/lib/publicApi";
 import { getAllSlugs } from "@/lib/blog";
 import { CERT_LIST, slugFromCert } from "@/lib/cert-tokens";
@@ -28,6 +29,7 @@ const STATIC_LAST_MOD: Record<string, string> = {
   "/mock-exams": "2026-04-16",
   "/past-exams": "2026-04-23",
   "/cbt-mock-exam": "2026-04-22",
+  "/board": "2026-04-28",
   "/about": "2026-04-22",
   "/changelog": "2026-04-22",
   "/privacy": "2026-04-09",
@@ -111,6 +113,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       lastModified: STATIC_LAST_MOD["/cbt-mock-exam"],
       changeFrequency: "monthly",
       priority: 0.8,
+    },
+    {
+      url: `${SITE_URL}/board`,
+      lastModified: STATIC_LAST_MOD["/board"],
+      changeFrequency: "daily",
+      priority: 0.7,
     },
     {
       url: `${SITE_URL}/about`,
@@ -217,6 +225,19 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }
   }
 
+  let postEntries: MetadataRoute.Sitemap = [];
+  try {
+    const posts = await getPublicPostSeoList();
+    postEntries = posts.map((p) => ({
+      url: `${SITE_URL}/board/${p.id}`,
+      lastModified: (p.updatedAt ?? "").slice(0, 10) || DYNAMIC_LAST_MOD,
+      changeFrequency: "weekly" as const,
+      priority: 0.65,
+    }));
+  } catch {
+    /* 스킵 */
+  }
+
   return [
     ...staticEntries,
     ...certEntries,
@@ -225,5 +246,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...pastExamCertEntries,
     ...pastExamEntries,
     ...pastExamBlogEntries,
+    ...postEntries,
   ];
 }

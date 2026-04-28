@@ -37,4 +37,15 @@ public interface PostRepository extends JpaRepository<PostEntity, Long> {
     /** 상세 — member fetch. comments 는 별도 쿼리로 가져오는 게 안전 (페이지네이션 가능성). */
     @Query("SELECT p FROM PostEntity p JOIN FETCH p.member WHERE p.id = :id")
     Optional<PostEntity> findByIdWithMember(@Param("id") Long id);
+
+    /** sitemap 용 — PUBLISHED 게시글 ID + updatedAt (lastmod). */
+    @Query("SELECT p.id AS id, p.updatedAt AS updatedAt FROM PostEntity p " +
+            "WHERE p.status = com.sqldpass.persistent.post.PostStatus.PUBLISHED " +
+            "ORDER BY p.updatedAt DESC")
+    List<PostSeoSummary> findPublishedSeoSummary();
+
+    interface PostSeoSummary {
+        Long getId();
+        java.time.LocalDateTime getUpdatedAt();
+    }
 }

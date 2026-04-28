@@ -286,3 +286,50 @@ export function getPublicPastExamWithAnswers(
 ): Promise<PublicPastExamDetailWithAnswers> {
   return publicFetch(`/past-exams/${id}/with-answers`);
 }
+
+// ================= 게시판 (PUBLISHED) — SSR/sitemap =================
+
+export type PublicPostExamType =
+  | "SQLD"
+  | "ENGINEER_PRACTICAL"
+  | "ENGINEER_WRITTEN"
+  | "COMPUTER_LITERACY_1"
+  | "COMPUTER_LITERACY_2"
+  | "ADSP";
+
+export interface PublicPostComment {
+  id: number;
+  content: string;
+  authorNickname: string;
+  authorId: number;
+  createdAt: string;
+}
+
+export interface PublicPostDetail {
+  id: number;
+  category: "PASS_REVIEW";
+  status: "PUBLISHED";
+  cert: PublicPostExamType | null;
+  title: string;
+  content: string;
+  viewCount: number;
+  authorNickname: string;
+  authorId: number;
+  createdAt: string;
+  updatedAt: string;
+  comments: PublicPostComment[];
+}
+
+/** SSR 전용 — 조회수 증가 없음. PUBLISHED 가 아니면 404. */
+export function getPublicPost(id: number): Promise<PublicPostDetail> {
+  return publicFetch(`/posts/${id}`);
+}
+
+export interface PublicPostSeoSummary {
+  id: number;
+  updatedAt: string;
+}
+
+export function getPublicPostSeoList(): Promise<PublicPostSeoSummary[]> {
+  return publicFetch(`/posts/seo-list`);
+}
