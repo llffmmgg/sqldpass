@@ -25,6 +25,7 @@ import {
   type PastExamQuestion,
 } from "@/lib/pastExamApi";
 import { getSolves, type SolveSummaryResponse } from "@/lib/api";
+import { getToken } from "@/lib/auth";
 import MockExamAttemptsView from "@/components/MockExamAttemptsView";
 import { hapticError, hapticLight, hapticSuccess } from "@/lib/haptic";
 
@@ -108,8 +109,14 @@ export default function PastExamRunnerClient({
     };
   }, []);
 
-  // 로그인 사용자만 시도 fetch. 비로그인은 401 → catch 후 빈 배열로 fallback
+  // 비로그인은 호출 자체를 스킵. fetchApi 가 401 만나면 "/" 로 강제 이동시키므로
+  // 비로그인 풀이 허용 정책과 충돌함.
   useEffect(() => {
+    if (!getToken()) {
+      setAttempts([]);
+      setAttemptsLoaded(true);
+      return;
+    }
     let cancelled = false;
     getSolves({ mockExamId: exam.id })
       .then((rows) => {
