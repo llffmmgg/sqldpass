@@ -2,6 +2,10 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
+
+const LAST_CERT_KEY = "sqldpass:lastCert";
+const DEFAULT_CERT_SLUG = "sqld";
 
 type Tab = {
   href: string;
@@ -58,7 +62,8 @@ const TABS: Tab[] = [
     Icon: HomeIcon,
   },
   {
-    href: "/learn",
+    // href는 런타임에 마지막 본 cert로 덮어씀 (BottomTabBar 본체에서 처리)
+    href: `/learn/${DEFAULT_CERT_SLUG}`,
     label: "학습",
     match: (p) => p.startsWith("/learn"),
     Icon: LearnIcon,
@@ -99,6 +104,17 @@ const HIDE_PATTERNS: RegExp[] = [
 
 export default function BottomTabBar() {
   const pathname = usePathname() ?? "/";
+  const [learnHref, setLearnHref] = useState(`/learn/${DEFAULT_CERT_SLUG}`);
+
+  useEffect(() => {
+    try {
+      const last = window.localStorage.getItem(LAST_CERT_KEY);
+      if (last) setLearnHref(`/learn/${last}`);
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
   if (HIDE_PATTERNS.some((re) => re.test(pathname))) return null;
 
   return (
@@ -110,10 +126,11 @@ export default function BottomTabBar() {
       <ul className="mx-auto grid max-w-md grid-cols-5">
         {TABS.map((tab) => {
           const active = tab.match(pathname);
+          const href = tab.label === "학습" ? learnHref : tab.href;
           return (
-            <li key={tab.href}>
+            <li key={tab.label}>
               <Link
-                href={tab.href}
+                href={href}
                 aria-current={active ? "page" : undefined}
                 className={`flex flex-col items-center justify-center gap-0.5 py-2 text-[10px] font-medium transition-colors ${
                   active

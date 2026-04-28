@@ -7,6 +7,7 @@ import {
   type CertSlug,
 } from "@/lib/publicApi";
 import { Container } from "@/components/ui";
+import RememberCert from "@/components/RememberCert";
 import { getPostsByCategory } from "@/lib/blog";
 import { CERT_TOKENS, certFromSlug } from "@/lib/cert-tokens";
 
@@ -134,6 +135,7 @@ export default async function CertPage(
   return (
     <main className="py-16">
       <Container size="default">
+      <RememberCert slug={cert} />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbLd) }}
