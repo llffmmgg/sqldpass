@@ -205,8 +205,8 @@ function getRecentActivity(
   for (const s of solves) {
     const date = toLocalDateStr(new Date(s.solvedAt));
     const cur = map[date] ?? { total: 0, correct: 0 };
-    cur.total += s.totalCount;
-    cur.correct += s.correctCount;
+    cur.total += Number(s.totalCount) || 0;
+    cur.correct += Number(s.correctCount) || 0;
     map[date] = cur;
   }
   const result: { date: string; total: number; correct: number; wrong: number }[] = [];

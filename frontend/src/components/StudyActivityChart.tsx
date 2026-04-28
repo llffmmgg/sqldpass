@@ -1,7 +1,5 @@
 "use client";
 
-/* eslint-disable react-hooks/set-state-in-effect -- 마운트 트리거, count-up RAF, SVG path 길이 측정은 effect 안에서 setState 가 자연스러운 패턴 */
-
 import { useEffect, useRef, useState } from "react";
 
 type DayData = { date: string; total: number; correct: number; wrong: number };
@@ -161,15 +159,39 @@ export default function StudyActivityChart({ data, overallAvg }: StudyActivityCh
   const todayIdx = enriched.findIndex((d) => d.isToday);
   const todayPoint = todayIdx >= 0 ? enriched[todayIdx] : null;
 
-  const totalPoints = enriched.map((d) => ({ x: d.cx, y: d.yTotal }));
-  const correctPoints = enriched.map((d) => ({ x: d.cx, y: d.yCorrect }));
-  const wrongPoints = enriched.map((d) => ({ x: d.cx, y: d.yWrong }));
-
+  // total>0 인 연속 구간만 segment 로 분할 — 0인 날엔 라인을 끊어 V자 골짜기 방지
   const baselineY = PADDING_TOP + PLOT_H;
-  const totalLine = buildLinePath(totalPoints);
-  const totalArea = buildAreaPath(totalPoints, baselineY);
-  const correctLine = buildLinePath(correctPoints);
-  const wrongLine = buildLinePath(wrongPoints);
+  type Pt = { x: number; y: number };
+  const totalSegs: Pt[][] = [];
+  const correctSegs: Pt[][] = [];
+  const wrongSegs: Pt[][] = [];
+  let curT: Pt[] = [];
+  let curC: Pt[] = [];
+  let curW: Pt[] = [];
+  for (const e of enriched) {
+    if (e.total > 0) {
+      curT.push({ x: e.cx, y: e.yTotal });
+      curC.push({ x: e.cx, y: e.yCorrect });
+      curW.push({ x: e.cx, y: e.yWrong });
+    } else {
+      if (curT.length) totalSegs.push(curT);
+      if (curC.length) correctSegs.push(curC);
+      if (curW.length) wrongSegs.push(curW);
+      curT = [];
+      curC = [];
+      curW = [];
+    }
+  }
+  if (curT.length) totalSegs.push(curT);
+  if (curC.length) correctSegs.push(curC);
+  if (curW.length) wrongSegs.push(curW);
+
+  // 0인 날(끊긴 점) 표시 — baseline 위 작은 회색 dot
+  const emptyDots = enriched.filter((e) => e.total === 0);
+  // 단일 점 segment(앞뒤가 0이라 라인이 안 그려짐) — 각 라인 색의 작은 dot 으로 보강
+  const totalSoloDots = totalSegs.filter((s) => s.length === 1).map((s) => s[0]);
+  const correctSoloDots = correctSegs.filter((s) => s.length === 1).map((s) => s[0]);
+  const wrongSoloDots = wrongSegs.filter((s) => s.length === 1).map((s) => s[0]);
 
   const yTicks = [0, 0.25, 0.5, 0.75, 1].map((r) => ({
     value: Math.round(max * r),
@@ -320,67 +342,131 @@ export default function StudyActivityChart({ data, overallAvg }: StudyActivityCh
             />
           )}
 
-          {/* 전체 area */}
-          {totalSum > 0 && (
+          {/* 0인 날 baseline dot */}
+          {emptyDots.map((d) => (
+            <circle
+              key={`empty-${d.date}`}
+              cx={d.cx}
+              cy={baselineY}
+              r={1.8}
+              fill="var(--border)"
+              opacity={0.7}
+              style={{
+                opacity: mounted ? 0.7 : 0,
+                transition: "opacity 400ms ease-out 700ms",
+              }}
+            />
+          ))}
+
+          {/* 전체 area — segment 별로 분리 그리기 */}
+          {totalSegs.map((seg, i) => (
             <path
-              d={totalArea}
+              key={`area-${i}`}
+              d={buildAreaPath(seg, baselineY)}
               fill="url(#study-area-total)"
               style={{
                 opacity: mounted ? 1 : 0,
-                transition: "opacity 500ms ease-out 700ms",
+                transition: `opacity 500ms ease-out ${600 + i * 80}ms`,
               }}
             />
-          )}
+          ))}
 
-          {/* 라인들 — pathLength=1 정규화로 dataset 변경에도 안정적인 draw 애니메이션 */}
-          <path
-            d={wrongLine}
-            fill="none"
-            stroke={COLOR_WRONG}
-            strokeWidth={2}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            opacity={0.85}
-            vectorEffect="non-scaling-stroke"
-            pathLength={1}
-            strokeDasharray="1 1"
-            style={{
-              strokeDashoffset: mounted ? 0 : 1,
-              transition: "stroke-dashoffset 1100ms cubic-bezier(0.22,1,0.36,1) 250ms",
-            }}
-          />
-          <path
-            d={correctLine}
-            fill="none"
-            stroke={COLOR_CORRECT}
-            strokeWidth={2}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            opacity={0.9}
-            vectorEffect="non-scaling-stroke"
-            pathLength={1}
-            strokeDasharray="1 1"
-            style={{
-              strokeDashoffset: mounted ? 0 : 1,
-              transition: "stroke-dashoffset 1000ms cubic-bezier(0.22,1,0.36,1) 150ms",
-            }}
-          />
-          <path
-            d={totalLine}
-            fill="none"
-            stroke={COLOR_TOTAL}
-            strokeWidth={2.5}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            vectorEffect="non-scaling-stroke"
-            pathLength={1}
-            strokeDasharray="1 1"
-            style={{
-              strokeDashoffset: mounted ? 0 : 1,
-              transition: "stroke-dashoffset 900ms cubic-bezier(0.22,1,0.36,1) 0ms",
-              filter: "drop-shadow(0 0 6px var(--glow))",
-            }}
-          />
+          {/* 전체 라인 (z-order 가장 아래) */}
+          {totalSegs.map((seg, i) => (
+            <path
+              key={`tl-${i}`}
+              d={buildLinePath(seg)}
+              fill="none"
+              stroke={COLOR_TOTAL}
+              strokeWidth={2.5}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              vectorEffect="non-scaling-stroke"
+              style={{
+                opacity: mounted ? 1 : 0,
+                transition: `opacity 600ms ease-out ${i * 80}ms`,
+                filter: "drop-shadow(0 0 6px var(--glow))",
+              }}
+            />
+          ))}
+          {totalSoloDots.map((p, i) => (
+            <circle
+              key={`tdot-${i}`}
+              cx={p.x}
+              cy={p.y}
+              r={2.5}
+              fill={COLOR_TOTAL}
+              style={{
+                opacity: mounted ? 1 : 0,
+                transition: `opacity 600ms ease-out ${i * 80}ms`,
+              }}
+            />
+          ))}
+
+          {/* 맞춘 라인 (가운데) */}
+          {correctSegs.map((seg, i) => (
+            <path
+              key={`cl-${i}`}
+              d={buildLinePath(seg)}
+              fill="none"
+              stroke={COLOR_CORRECT}
+              strokeWidth={2}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              opacity={0.92}
+              vectorEffect="non-scaling-stroke"
+              style={{
+                opacity: mounted ? 0.92 : 0,
+                transition: `opacity 600ms ease-out ${150 + i * 80}ms`,
+              }}
+            />
+          ))}
+          {correctSoloDots.map((p, i) => (
+            <circle
+              key={`cdot-${i}`}
+              cx={p.x}
+              cy={p.y}
+              r={2.25}
+              fill={COLOR_CORRECT}
+              style={{
+                opacity: mounted ? 0.92 : 0,
+                transition: `opacity 600ms ease-out ${150 + i * 80}ms`,
+              }}
+            />
+          ))}
+
+          {/* 틀린 라인 (z-order 맨 위) — dashed 로 total 과 겹쳐도 분리 인식 가능 */}
+          {wrongSegs.map((seg, i) => (
+            <path
+              key={`wl-${i}`}
+              d={buildLinePath(seg)}
+              fill="none"
+              stroke={COLOR_WRONG}
+              strokeWidth={2}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeDasharray="5 4"
+              opacity={0.92}
+              vectorEffect="non-scaling-stroke"
+              style={{
+                opacity: mounted ? 0.92 : 0,
+                transition: `opacity 600ms ease-out ${250 + i * 80}ms`,
+              }}
+            />
+          ))}
+          {wrongSoloDots.map((p, i) => (
+            <circle
+              key={`wdot-${i}`}
+              cx={p.x}
+              cy={p.y}
+              r={2.25}
+              fill={COLOR_WRONG}
+              style={{
+                opacity: mounted ? 0.92 : 0,
+                transition: `opacity 600ms ease-out ${250 + i * 80}ms`,
+              }}
+            />
+          ))}
 
           {/* 호버 점 3개 */}
           {hovered && (
