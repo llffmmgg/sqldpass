@@ -1,11 +1,14 @@
 "use client";
 
+/* eslint-disable react-hooks/set-state-in-effect -- localStorage 의 마지막 cert 를 마운트 시점에 한 번 읽어 학습 탭 href 에 반영하는 것은 정당한 동기화 effect */
+
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import { certFromSlug, type CertKey } from "@/lib/cert-tokens";
 
 const LAST_CERT_KEY = "sqldpass:lastCert";
-const DEFAULT_CERT_SLUG = "sqld";
+const DEFAULT_CERT_KEY: CertKey = "SQLD";
 
 type Tab = {
   href: string;
@@ -63,9 +66,9 @@ const TABS: Tab[] = [
   },
   {
     // href는 런타임에 마지막 본 cert로 덮어씀 (BottomTabBar 본체에서 처리)
-    href: `/learn/${DEFAULT_CERT_SLUG}`,
+    href: `/solve?cert=${DEFAULT_CERT_KEY}`,
     label: "학습",
-    match: (p) => p.startsWith("/learn"),
+    match: (p) => p.startsWith("/solve"),
     Icon: LearnIcon,
   },
   {
@@ -104,12 +107,13 @@ const HIDE_PATTERNS: RegExp[] = [
 
 export default function BottomTabBar() {
   const pathname = usePathname() ?? "/";
-  const [learnHref, setLearnHref] = useState(`/learn/${DEFAULT_CERT_SLUG}`);
+  const [learnHref, setLearnHref] = useState(`/solve?cert=${DEFAULT_CERT_KEY}`);
 
   useEffect(() => {
     try {
       const last = window.localStorage.getItem(LAST_CERT_KEY);
-      if (last) setLearnHref(`/learn/${last}`);
+      const certKey = last ? certFromSlug(last) : null;
+      if (certKey) setLearnHref(`/solve?cert=${certKey}`);
     } catch {
       /* ignore */
     }
