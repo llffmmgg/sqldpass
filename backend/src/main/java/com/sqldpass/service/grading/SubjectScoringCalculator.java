@@ -45,7 +45,7 @@ public final class SubjectScoringCalculator {
         Map<String, Integer> orderBySubject = new LinkedHashMap<>();
         for (QuestionEntity q : questions) {
             SubjectEntity leaf = q.getSubject();
-            SubjectEntity group = SubjectGrouping.groupOf(leaf, examType);
+            SubjectEntity group = SubjectGrouping.scoringGroupOf(leaf, examType);
             String groupName = group != null ? group.getName() : "기타";
             groupNameByQuestion.put(q.getId(), groupName);
             orderBySubject.putIfAbsent(groupName, orderBySubject.size());

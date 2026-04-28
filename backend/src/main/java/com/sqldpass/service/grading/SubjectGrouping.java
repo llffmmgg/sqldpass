@@ -33,6 +33,19 @@ public final class SubjectGrouping {
         return leaf;
     }
 
+    /**
+     * 채점 결과 그룹핑용. 응시 화면(groupOf)과 다른 자격증이 두 개 있다:
+     * - 정처기 실기: 단일 통합 과목 ("정보처리 실무"). 응시 화면에선 카테고리(C/Java/Python/SQL...)
+     *   를 학습용으로 보여주지만, 채점은 자격증 root 단위(=단일 그룹)로 합쳐서 1줄로만 표시.
+     */
+    public static SubjectEntity scoringGroupOf(SubjectEntity leaf, ExamType examType) {
+        if (leaf == null) return null;
+        if (examType == ExamType.ENGINEER_PRACTICAL) {
+            return leaf.getParent() != null ? leaf.getParent() : leaf;
+        }
+        return groupOf(leaf, examType);
+    }
+
     public static String groupName(SubjectEntity leaf, ExamType examType) {
         SubjectEntity g = groupOf(leaf, examType);
         return g != null ? g.getName() : "기타";

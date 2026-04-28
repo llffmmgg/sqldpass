@@ -560,9 +560,7 @@ function PastExamResultView({
         {result.subjectScores && result.subjectScores.length > 0 && (
           <div className="mt-6 rounded-xl border border-border bg-surface p-5">
             <p className="text-sm font-semibold text-text">
-              {exam.examType === "ENGINEER_PRACTICAL"
-                ? "카테고리별 학습 진단"
-                : "과목별 점수"}
+              {exam.examType === "ENGINEER_PRACTICAL" ? "총점" : "과목별 점수"}
             </p>
             <ul className="mt-3 space-y-2">
               {result.subjectScores.map((s) => (

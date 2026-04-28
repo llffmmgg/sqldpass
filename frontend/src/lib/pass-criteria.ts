@@ -66,16 +66,20 @@ export function evaluatePass(
 ): PassOutcome {
   const criteria = PASS_CRITERIA[examType] ?? PASS_CRITERIA.ENGINEER_PRACTICAL;
 
+  // 정처기 실기는 단일 통합 과목 — 카테고리(C/Java/Python 등) 분리 없이 1줄로 합침.
+  const groupLabelOf = (name: string | undefined) =>
+    examType === "ENGINEER_PRACTICAL" ? "정보처리기사 실기" : (name ?? "기타");
+
   const subjectByQuestion = new Map<number, string>();
   for (const q of questions) {
-    subjectByQuestion.set(q.id, q.subjectName ?? "기타");
+    subjectByQuestion.set(q.id, groupLabelOf(q.subjectName));
   }
 
   // 과목별 total/correct 집계 — 등장 순서 유지
   const order: string[] = [];
   const agg = new Map<string, { total: number; correct: number }>();
   for (const a of answers) {
-    const name = subjectByQuestion.get(a.questionId) ?? "기타";
+    const name = subjectByQuestion.get(a.questionId) ?? groupLabelOf(undefined);
     if (!agg.has(name)) {
       order.push(name);
       agg.set(name, { total: 0, correct: 0 });
