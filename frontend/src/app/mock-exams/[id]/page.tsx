@@ -164,8 +164,10 @@ function MockExamDetailContent() {
   }, [exam, answers]);
 
   // QuestionJumpPanel — subjectName 별로 인덱스 묶음 (시드가 섞여 들어와도 라벨 한 번씩만)
+  // 정처기 실기는 단일 통합 과목이라 그룹 분리 자체를 안 함 (1번~끝 연속 표시)
   const jumpGroups = useMemo<QuestionJumpGroup[]>(() => {
     if (!exam) return [];
+    if (exam.examType === "ENGINEER_PRACTICAL") return [];
     const qs = exam.questions;
     if (qs.length === 0) return [];
     const map = new Map<string, number[]>();
@@ -522,7 +524,9 @@ function MockExamDetailContent() {
         {/* 문제 */}
         <div className="mt-6 rounded-xl border border-border bg-surface p-6">
           <div className="flex items-center justify-between gap-2">
-            <p className="text-xs font-medium text-muted">{current.subjectName}</p>
+            <p className="text-xs font-medium text-muted">
+              {exam.examType === "ENGINEER_PRACTICAL" ? "" : current.subjectName}
+            </p>
             <div className="flex items-center gap-3">
               <BookmarkButton questionId={current.id} />
               <ReportQuestionButton questionId={current.id} />
