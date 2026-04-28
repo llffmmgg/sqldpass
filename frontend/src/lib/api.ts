@@ -14,8 +14,13 @@ export async function fetchApi<T>(path: string, options?: RequestInit): Promise<
   });
 
   if (res.status === 401) {
-    clearAuth();
-    window.location.replace("/");
+    // 토큰이 있을 때만 = 만료된 세션 → 정리하고 홈으로.
+    // 토큰 없이 401 = 비로그인 페이지가 인증 API 를 우연히 건드린 케이스.
+    // 이 경우 호출자가 catch 로 fallback 하도록 단순 throw 만 한다.
+    if (token) {
+      clearAuth();
+      window.location.replace("/");
+    }
     throw new Error("로그인이 필요합니다.");
   }
 
@@ -221,8 +226,10 @@ async function fetchApiVoid(path: string, options?: RequestInit): Promise<void> 
     },
   });
   if (res.status === 401) {
-    clearAuth();
-    window.location.replace("/");
+    if (token) {
+      clearAuth();
+      window.location.replace("/");
+    }
     throw new Error("로그인이 필요합니다.");
   }
   if (!res.ok) {
