@@ -19,6 +19,7 @@ import {
   type ExamType,
   type MockExamSummary,
 } from "@/lib/mockExamApi";
+import { isExamNew, markExamSeen } from "@/lib/mockExamNew";
 import { getPublicMockExams } from "@/lib/publicApi";
 
 export default function MockExamsPage() {
@@ -66,11 +67,14 @@ function MockExamsPageContent() {
           {token.labelLong} · 실전 타이머와 함께 무료 CBT 로 응시해보세요. 점수 기록·오답 노트는 로그인 후 자동 저장됩니다.
         </p>
 
-        {/* 자격증 탭 — past-exams 와 동일한 단일 pill + cert dot + count */}
+        {/* 자격증 탭 — past-exams 와 동일한 단일 pill + cert dot + count + NEW 카운트 */}
         <div className="mt-6 -mx-1 flex gap-1 overflow-x-auto rounded-lg border border-border bg-surface p-1 text-sm">
           {CERT_LIST.map((c) => {
             const active = c.key === activeCert;
             const count = exams ? exams.filter((e) => e.examType === c.key).length : 0;
+            const newCount = exams
+              ? exams.filter((e) => e.examType === c.key && isExamNew(e)).length
+              : 0;
             return (
               <Link
                 key={c.key}
@@ -85,6 +89,14 @@ function MockExamsPageContent() {
                 <span className={`h-1.5 w-1.5 rounded-full ${c.tailwind.dot}`} />
                 {c.label}
                 <span className="text-xs opacity-60 tabular-nums">{count}</span>
+                {newCount > 0 && (
+                  <span
+                    className="inline-flex items-center rounded-full bg-emerald-500 px-1.5 text-[9px] font-bold leading-4 text-white"
+                    aria-label={`새로운 회차 ${newCount}개`}
+                  >
+                    +{newCount}
+                  </span>
+                )}
               </Link>
             );
           })}
@@ -139,11 +151,15 @@ function MockExamsPageContent() {
 function MockExamCard({ exam }: { exam: MockExamSummary }) {
   const cert = certFromExamType(exam.examType);
   const isPremium = exam.visibility === "PREMIUM";
-  const isNew = isWithinDays(exam.createdAt, 3);
+  const isNew = isExamNew(exam);
   const href = `/mock-exams/${exam.id}`;
 
   return (
-    <Link href={href} className="group relative block">
+    <Link
+      href={href}
+      onClick={() => markExamSeen(exam.id)}
+      className="group relative block"
+    >
       <Card
         variant="interactive"
         padding="md"
@@ -173,6 +189,11 @@ function MockExamCard({ exam }: { exam: MockExamSummary }) {
 
         <div className="flex flex-wrap items-center gap-1.5 pr-20">
           <ExamBadge examType={exam.examType} />
+          {exam.kind === "PAST_EXAM" && exam.examYear != null && exam.examRound != null && (
+            <span className="inline-flex items-center rounded-full border border-border bg-surface px-2 py-0.5 text-[10px] font-semibold text-text-muted">
+              기출 {exam.examYear} {exam.examRound}회
+            </span>
+          )}
           {exam.templateKey && exam.templateLabel && (
             <TemplateBadge templateKey={exam.templateKey} label={exam.templateLabel} />
           )}
@@ -182,7 +203,8 @@ function MockExamCard({ exam }: { exam: MockExamSummary }) {
             </Badge>
           )}
           {isNew && (
-            <span className="inline-flex items-center rounded-full border border-rose-500/40 bg-rose-500/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-rose-500 dark:text-rose-300">
+            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white shadow-sm">
+              <span className="h-1 w-1 rounded-full bg-white/90" />
               NEW
             </span>
           )}
@@ -225,13 +247,6 @@ function TemplateBadge({
       {label}
     </span>
   );
-}
-
-function isWithinDays(iso: string | null | undefined, days: number): boolean {
-  if (!iso) return false;
-  const created = new Date(iso).getTime();
-  if (Number.isNaN(created)) return false;
-  return Date.now() - created <= days * 24 * 60 * 60 * 1000;
 }
 
 export function DifficultyBadge({ label }: { label: MockExamSummary["difficultyLabel"] }) {

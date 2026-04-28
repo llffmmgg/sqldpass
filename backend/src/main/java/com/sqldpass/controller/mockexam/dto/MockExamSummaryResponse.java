@@ -27,7 +27,9 @@ public record MockExamSummaryResponse(
         MockExamKind kind,
         Integer examYear,
         Integer examRound,
-        LocalDate examDate
+        LocalDate examDate,
+        LocalDateTime publishedAt,
+        LocalDateTime pastExamLinkedAt
 ) {
     public static MockExamSummaryResponse from(MockExam mockExam) {
         return from(mockExam, null, null);
@@ -59,7 +61,9 @@ public record MockExamSummaryResponse(
                 mockExam.getKind(),
                 mockExam.getExamYear(),
                 mockExam.getExamRound(),
-                mockExam.getExamDate());
+                mockExam.getExamDate(),
+                mockExam.getPublishedAt(),
+                mockExam.getPastExamLinkedAt());
     }
 
     /**

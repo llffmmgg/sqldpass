@@ -7,6 +7,8 @@ export type DifficultyLabel = "쉬움" | "보통" | "어려움" | "매우 어려
 
 export type MockExamVisibility = "DRAFT" | "PUBLISHED" | "PREMIUM";
 
+export type MockExamKind = "AI" | "PAST_EXAM";
+
 export interface MockExamSummary {
   id: number;
   name: string;
@@ -30,6 +32,15 @@ export interface MockExamSummary {
   visibility: MockExamVisibility;
   /** 전문가 검수 완료 여부 */
   expertVerified: boolean;
+  /** AI 생성 / 기출 복원 */
+  kind: MockExamKind;
+  examYear: number | null;
+  examRound: number | null;
+  examDate: string | null;
+  /** DRAFT->PUBLISHED 첫 전환 시각 (NEW 뱃지 트리거) */
+  publishedAt: string | null;
+  /** 기출 복원으로 승격된 시각 (NEW 뱃지 트리거) */
+  pastExamLinkedAt: string | null;
 }
 
 export type EngineerTemplateKey =

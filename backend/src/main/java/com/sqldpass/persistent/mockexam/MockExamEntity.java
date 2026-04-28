@@ -1,6 +1,7 @@
 package com.sqldpass.persistent.mockexam;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -69,6 +70,12 @@ public class MockExamEntity extends BaseTimeEntity {
     @Column(name = "exam_date")
     private LocalDate examDate;
 
+    @Column(name = "published_at")
+    private LocalDateTime publishedAt;
+
+    @Column(name = "past_exam_linked_at")
+    private LocalDateTime pastExamLinkedAt;
+
     @OneToMany(mappedBy = "mockExam")
     @OrderBy("displayOrder ASC")
     private List<QuestionEntity> questions = new ArrayList<>();
@@ -100,6 +107,11 @@ public class MockExamEntity extends BaseTimeEntity {
         if (visibility == null) {
             throw new IllegalArgumentException("visibility는 null일 수 없습니다.");
         }
+        // 최초 공개 시점만 기록 — 한 번 공개한 회차는 PUBLISHED↔PREMIUM 사이를 오가도
+        // publishedAt 을 보존해 NEW 뱃지 트리거 시점이 흔들리지 않게 한다.
+        if (this.publishedAt == null && visibility != MockExamVisibility.DRAFT) {
+            this.publishedAt = LocalDateTime.now();
+        }
         this.visibility = visibility;
     }
 
@@ -116,6 +128,7 @@ public class MockExamEntity extends BaseTimeEntity {
         this.examYear = examYear;
         this.examRound = examRound;
         this.examDate = examDate;
+        this.pastExamLinkedAt = LocalDateTime.now();
     }
 
     public void demoteToAi() {
@@ -123,5 +136,6 @@ public class MockExamEntity extends BaseTimeEntity {
         this.examYear = null;
         this.examRound = null;
         this.examDate = null;
+        this.pastExamLinkedAt = null;
     }
 }

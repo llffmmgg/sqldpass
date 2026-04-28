@@ -48,38 +48,45 @@ public class MockExam {
     /** 시험 실시일 (PAST_EXAM 만 유효) */
     private final LocalDate examDate;
 
+    /** DRAFT->PUBLISHED 첫 전환 시각 (NEW 뱃지 트리거) */
+    private final LocalDateTime publishedAt;
+
+    /** 기출 복원 승격 시각 (NEW 뱃지 트리거) */
+    private final LocalDateTime pastExamLinkedAt;
+
     /** 상세 조회용 — 문제 목록 포함. 난이도 통계는 questions에서 직접 계산. */
     public MockExam(Long id, String name, ExamType examType, int sequence, LocalDateTime createdAt,
                     List<MockExamQuestion> questions) {
         this(id, name, examType, sequence, createdAt, questions, null, MockExamVisibility.PUBLISHED, false,
-                MockExamKind.AI, null, null, null);
+                MockExamKind.AI, null, null, null, null, null);
     }
 
     public MockExam(Long id, String name, ExamType examType, int sequence, LocalDateTime createdAt,
                     List<MockExamQuestion> questions, EngineerExamTemplate template) {
         this(id, name, examType, sequence, createdAt, questions, template, MockExamVisibility.PUBLISHED, false,
-                MockExamKind.AI, null, null, null);
+                MockExamKind.AI, null, null, null, null, null);
     }
 
     public MockExam(Long id, String name, ExamType examType, int sequence, LocalDateTime createdAt,
                     List<MockExamQuestion> questions, EngineerExamTemplate template,
                     MockExamVisibility visibility) {
         this(id, name, examType, sequence, createdAt, questions, template, visibility, false,
-                MockExamKind.AI, null, null, null);
+                MockExamKind.AI, null, null, null, null, null);
     }
 
     public MockExam(Long id, String name, ExamType examType, int sequence, LocalDateTime createdAt,
                     List<MockExamQuestion> questions, EngineerExamTemplate template,
                     MockExamVisibility visibility, boolean expertVerified) {
         this(id, name, examType, sequence, createdAt, questions, template, visibility, expertVerified,
-                MockExamKind.AI, null, null, null);
+                MockExamKind.AI, null, null, null, null, null);
     }
 
     /** 상세 조회 + 기출 메타까지 포함 */
     public MockExam(Long id, String name, ExamType examType, int sequence, LocalDateTime createdAt,
                     List<MockExamQuestion> questions, EngineerExamTemplate template,
                     MockExamVisibility visibility, boolean expertVerified,
-                    MockExamKind kind, Integer examYear, Integer examRound, LocalDate examDate) {
+                    MockExamKind kind, Integer examYear, Integer examRound, LocalDate examDate,
+                    LocalDateTime publishedAt, LocalDateTime pastExamLinkedAt) {
         this.id = id;
         this.name = name;
         this.examType = examType != null ? examType : ExamType.SQLD;
@@ -97,41 +104,44 @@ public class MockExam {
         this.examYear = examYear;
         this.examRound = examRound;
         this.examDate = examDate;
+        this.publishedAt = publishedAt;
+        this.pastExamLinkedAt = pastExamLinkedAt;
     }
 
     /** 목록 조회용 — 문제 카운트 + 난이도 통계 */
     public MockExam(Long id, String name, ExamType examType, int sequence, LocalDateTime createdAt,
                     int totalQuestions, Double avgDifficulty, Integer minDifficulty, Integer maxDifficulty) {
         this(id, name, examType, sequence, createdAt, totalQuestions, avgDifficulty, minDifficulty, maxDifficulty,
-                null, MockExamVisibility.PUBLISHED, false, MockExamKind.AI, null, null, null);
+                null, MockExamVisibility.PUBLISHED, false, MockExamKind.AI, null, null, null, null, null);
     }
 
     public MockExam(Long id, String name, ExamType examType, int sequence, LocalDateTime createdAt,
                     int totalQuestions, Double avgDifficulty, Integer minDifficulty, Integer maxDifficulty,
                     EngineerExamTemplate template) {
         this(id, name, examType, sequence, createdAt, totalQuestions, avgDifficulty, minDifficulty, maxDifficulty,
-                template, MockExamVisibility.PUBLISHED, false, MockExamKind.AI, null, null, null);
+                template, MockExamVisibility.PUBLISHED, false, MockExamKind.AI, null, null, null, null, null);
     }
 
     public MockExam(Long id, String name, ExamType examType, int sequence, LocalDateTime createdAt,
                     int totalQuestions, Double avgDifficulty, Integer minDifficulty, Integer maxDifficulty,
                     EngineerExamTemplate template, MockExamVisibility visibility) {
         this(id, name, examType, sequence, createdAt, totalQuestions, avgDifficulty, minDifficulty, maxDifficulty,
-                template, visibility, false, MockExamKind.AI, null, null, null);
+                template, visibility, false, MockExamKind.AI, null, null, null, null, null);
     }
 
     public MockExam(Long id, String name, ExamType examType, int sequence, LocalDateTime createdAt,
                     int totalQuestions, Double avgDifficulty, Integer minDifficulty, Integer maxDifficulty,
                     EngineerExamTemplate template, MockExamVisibility visibility, boolean expertVerified) {
         this(id, name, examType, sequence, createdAt, totalQuestions, avgDifficulty, minDifficulty, maxDifficulty,
-                template, visibility, expertVerified, MockExamKind.AI, null, null, null);
+                template, visibility, expertVerified, MockExamKind.AI, null, null, null, null, null);
     }
 
     /** 목록 조회 + 기출 메타까지 포함 */
     public MockExam(Long id, String name, ExamType examType, int sequence, LocalDateTime createdAt,
                     int totalQuestions, Double avgDifficulty, Integer minDifficulty, Integer maxDifficulty,
                     EngineerExamTemplate template, MockExamVisibility visibility, boolean expertVerified,
-                    MockExamKind kind, Integer examYear, Integer examRound, LocalDate examDate) {
+                    MockExamKind kind, Integer examYear, Integer examRound, LocalDate examDate,
+                    LocalDateTime publishedAt, LocalDateTime pastExamLinkedAt) {
         this.id = id;
         this.name = name;
         this.examType = examType != null ? examType : ExamType.SQLD;
@@ -149,5 +159,7 @@ public class MockExam {
         this.examYear = examYear;
         this.examRound = examRound;
         this.examDate = examDate;
+        this.publishedAt = publishedAt;
+        this.pastExamLinkedAt = pastExamLinkedAt;
     }
 }
