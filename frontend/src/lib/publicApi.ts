@@ -150,6 +150,29 @@ export function getPublicRanking(): Promise<PublicRanking> {
   return publicFetch("/ranking");
 }
 
+// =====================
+// 인사이트 — 오답률 best 30
+// =====================
+export interface HardestQuestionItem {
+  questionId: number;
+  questionPreview: string;
+  attempts: number;
+  wrongCount: number;
+  wrongRate: number;
+}
+
+export interface HardestQuestions {
+  subjectId: number;
+  subjectName: string;
+  totalSamples: number;
+  items: HardestQuestionItem[];
+}
+
+/** 과목별 오답률 best 30 — 평균 정답률 50%+ 학생들의 답안만 집계. ISR 30분. */
+export function getHardestQuestions(subjectId: number): Promise<HardestQuestions> {
+  return publicFetch(`/insights/hardest?subjectId=${subjectId}`);
+}
+
 /** 블로그 전체 조회수 조회 — 증가 반영이 즉시 보이도록 짧은 revalidate. */
 export async function getPublicBlogViews(): Promise<Record<string, number>> {
   const res = await fetch(`${BASE}/api/public/blog/views`, {
