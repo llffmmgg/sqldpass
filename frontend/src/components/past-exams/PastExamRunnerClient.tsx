@@ -141,6 +141,37 @@ export default function PastExamRunnerClient({
     [answers],
   );
 
+  // QuestionJumpPanel — 응답 완료 인덱스 (0-based). exam 로드 전엔 빈 Set.
+  // hooks 호출 위치는 무조건 early return 이전이어야 함 (React error #310 회피).
+  const answeredIndices = useMemo(() => {
+    const s = new Set<number>();
+    if (!exam) return s;
+    exam.questions.forEach((q, i) => {
+      if (hasAnswer(answers.get(q.id))) s.add(i);
+    });
+    return s;
+  }, [exam, answers]);
+
+  // QuestionJumpPanel — 인접한 같은 subjectName 묶음을 그룹으로
+  const jumpGroups = useMemo<QuestionJumpGroup[]>(() => {
+    if (!exam) return [];
+    const qs = exam.questions;
+    if (qs.length === 0) return [];
+    const groups: QuestionJumpGroup[] = [];
+    let from = 0;
+    let label = qs[0].subjectName ?? "";
+    for (let i = 1; i < qs.length; i++) {
+      const name = qs[i].subjectName ?? "";
+      if (name !== label) {
+        groups.push({ label, from, to: i - 1 });
+        from = i;
+        label = name;
+      }
+    }
+    groups.push({ label, from, to: qs.length - 1 });
+    return groups.length <= 1 ? [] : groups;
+  }, [exam]);
+
   useEffect(() => {
     if (result) return;
     if (answeredCount === 0) return;
@@ -206,34 +237,6 @@ export default function PastExamRunnerClient({
   const parsed = parseQuestion(current.content);
   const currentAnswer = answers.get(current.id);
   const roundLabel = buildRoundLabel(exam);
-
-  // QuestionJumpPanel 용 — 응답 완료 인덱스 (0-based)
-  const answeredIndices = useMemo(() => {
-    const s = new Set<number>();
-    exam.questions.forEach((q, i) => {
-      if (hasAnswer(answers.get(q.id))) s.add(i);
-    });
-    return s;
-  }, [exam.questions, answers]);
-
-  // QuestionJumpPanel 용 — 인접한 같은 subjectName 묶음을 그룹으로
-  const jumpGroups = useMemo<QuestionJumpGroup[]>(() => {
-    const qs = exam.questions;
-    if (qs.length === 0) return [];
-    const groups: QuestionJumpGroup[] = [];
-    let from = 0;
-    let label = qs[0].subjectName ?? "";
-    for (let i = 1; i < qs.length; i++) {
-      const name = qs[i].subjectName ?? "";
-      if (name !== label) {
-        groups.push({ label, from, to: i - 1 });
-        from = i;
-        label = name;
-      }
-    }
-    groups.push({ label, from, to: qs.length - 1 });
-    return groups.length <= 1 ? [] : groups;
-  }, [exam.questions]);
 
   function updateAnswer(questionId: number, updater: (prev: AnswerState) => AnswerState) {
     setAnswers((prev) => {
