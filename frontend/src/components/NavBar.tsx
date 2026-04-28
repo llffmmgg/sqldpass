@@ -103,6 +103,7 @@ export default function NavBar() {
             alt="문어CBT"
             width={160}
             height={90}
+            sizes="80px"
             className="h-11 w-20 rounded-md object-contain"
             priority
           />
