@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Noto_Sans_KR, JetBrains_Mono, Caveat } from "next/font/google";
+import Script from "next/script";
 import { Suspense } from "react";
 import NavBar from "@/components/NavBar";
 import BottomTabBar from "@/components/BottomTabBar";
@@ -169,14 +170,7 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
         <meta name="google-adsense-account" content={ADSENSE_CLIENT} />
-        <script
-          async
-          src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_CLIENT}`}
-          crossOrigin="anonymous"
-        />
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
         <script
           type="application/ld+json"
@@ -213,6 +207,12 @@ export default function RootLayout({
           <FeedbackRail />
           <BottomTabBar />
         </ToastProvider>
+        <Script
+          id="adsbygoogle-loader"
+          src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_CLIENT}`}
+          crossOrigin="anonymous"
+          strategy="lazyOnload"
+        />
       </body>
     </html>
   );

@@ -18,10 +18,10 @@
   --border: #d0d3d9;          /* 또렷한 솔리드 보더 (이전 #e5e5e5 너무 옅음) */
   --border-strong: #a8acb6;   /* 호버·강조 */
 
-  /* text */
+  /* text — WCAG AA 4.5:1 on white(#fff) and surface(#f7f8fa) */
   --text: #181a1f;
-  --text-muted: #525964;
-  --text-subtle: #757a85;
+  --text-muted: #4a505a;
+  --text-subtle: #5e636e;
 
   /* brand */
   --primary: #24b47e;
@@ -75,8 +75,8 @@
   --border-strong: #525252;   /* 호버·강조 */
 
   --text: #eff1f6;            /* 살짝 차가운 흰색 */
-  --text-muted: #8a8a93;
-  --text-subtle: #6b6b73;
+  --text-muted: #a1a1aa;      /* WCAG AA 4.5:1 on bg(#1a1a1a) */
+  --text-subtle: #8a8e98;     /* AA 4.5:1 on bg/surface */
 
   --primary: #3ecf8e;
   --primary-hover: #4fd6a0;
@@ -436,13 +436,14 @@ html:not(.dark) .hero-ambient { opacity: 0.55; }
   from { opacity: 0; transform: translateY(-4px); }
   to   { opacity: 1; transform: translateY(0); }
 }
+/* Compositor-friendly: opacity/transform only, runs on GPU layer */
 @keyframes glow-pulse {
-  0%, 100% { box-shadow: 0 0 16px var(--glow), 0 0 48px transparent; }
-  50%      { box-shadow: 0 0 24px var(--glow), 0 0 64px var(--glow); }
+  0%, 100% { opacity: 0.55; }
+  50%      { opacity: 1; }
 }
 @keyframes shimmer {
-  0%   { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
+  0%   { transform: translateX(-50%); }
+  100% { transform: translateX(50%); }
 }
 @keyframes float {
   0%, 100% { transform: translateY(-4px); }
@@ -497,14 +498,27 @@ html:not(.dark) .hero-ambient { opacity: 0.55; }
 .reveal-delay-2 { transition-delay: 300ms; }
 .reveal-delay-3 { transition-delay: 450ms; }
 
-/* ── Glow button (opt-in) ── */
+/* ── Glow button (opt-in) — compositor-friendly opacity pulse ── */
 .btn-glow {
+  position: relative;
+}
+.btn-glow::after {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  pointer-events: none;
+  box-shadow: 0 0 24px var(--glow), 0 0 48px var(--glow);
   animation: glow-pulse 3s ease-in-out infinite;
+  will-change: opacity;
+  z-index: -1;
 }
 
-/* ── Shimmer line ── */
+/* ── Shimmer line — static gradient (compositor-friendly) ── */
 .shimmer-line {
   height: 1px;
+  position: relative;
+  overflow: hidden;
   background: linear-gradient(
     90deg,
     transparent 0%,
@@ -513,8 +527,19 @@ html:not(.dark) .hero-ambient { opacity: 0.55; }
     var(--primary) 75%,
     transparent 100%
   );
-  background-size: 200% 100%;
-  animation: shimmer 2s linear infinite;
+}
+.shimmer-line::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.5) 50%,
+    transparent 100%
+  );
+  animation: shimmer 2.5s linear infinite;
+  will-change: transform;
 }
 
 /* ── Grid background pattern ── */
