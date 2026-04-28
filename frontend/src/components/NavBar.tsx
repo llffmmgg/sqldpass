@@ -12,6 +12,7 @@ import { type Theme, getInitialTheme, setStoredTheme, applyTheme } from "@/lib/t
 import FeedbackModal from "@/components/FeedbackModal";
 import NotificationBell from "@/components/NotificationBell";
 import { CERT_LIST, slugFromCert, type CertKey } from "@/lib/cert-tokens";
+import { useMockExamNewSignal } from "@/lib/hooks/useMockExamNewSignal";
 
 type NavItem =
   | { kind: "link"; href: string; label: string }
@@ -28,6 +29,9 @@ const NAV_LINKS: NavItem[] = [
   { kind: "link", href: "/blog", label: "블로그" },
 ];
 
+// "이 드롭다운에 새 콘텐츠 신호를 붙일지" — 모의고사 응답을 공통 소스로 쓰므로 둘 다 ON
+const DROPDOWN_NEW_SIGNAL = new Set<string>(["/mock-exams", "/past-exams"]);
+
 export default function NavBar() {
   const pathname = usePathname();
   const router = useRouter();
@@ -38,6 +42,7 @@ export default function NavBar() {
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   // 모바일 아코디언 — 현재 열린 드롭다운 basePath (하나만 열림). null = 전부 닫힘
   const [openMobileDropdown, setOpenMobileDropdown] = useState<string | null>(null);
+  const { newCount, hasNewByCert } = useMockExamNewSignal();
 
   useEffect(() => {
     setLoggedIn(isLoggedIn());
@@ -139,6 +144,10 @@ export default function NavBar() {
                   label={item.label}
                   active={isActive(item.basePath)}
                   buildHref={item.build}
+                  showDot={DROPDOWN_NEW_SIGNAL.has(item.basePath) && newCount > 0}
+                  hasNewByCert={
+                    DROPDOWN_NEW_SIGNAL.has(item.basePath) ? hasNewByCert : undefined
+                  }
                 />
               );
             })}
@@ -292,6 +301,10 @@ export default function NavBar() {
                   }
                   buildHref={item.build}
                   onItemClick={() => setMenuOpen(false)}
+                  showDot={DROPDOWN_NEW_SIGNAL.has(item.basePath) && newCount > 0}
+                  hasNewByCert={
+                    DROPDOWN_NEW_SIGNAL.has(item.basePath) ? hasNewByCert : undefined
+                  }
                 />
               );
             })}
@@ -358,10 +371,14 @@ function NavDropdown({
   label,
   active,
   buildHref,
+  showDot = false,
+  hasNewByCert,
 }: {
   label: string;
   active: boolean;
   buildHref: (cert: CertKey) => string;
+  showDot?: boolean;
+  hasNewByCert?: (cert: CertKey) => boolean;
 }) {
   const [open, setOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
@@ -420,6 +437,12 @@ function NavDropdown({
         aria-haspopup="menu"
       >
         {label}
+        {showDot && (
+          <span
+            className="ml-1 h-1.5 w-1.5 rounded-full bg-emerald-500"
+            aria-label="새로운 모의고사 있음"
+          />
+        )}
         <svg
           className={`h-3 w-3 transition-transform ${open ? "rotate-180" : ""}`}
           fill="none"
@@ -440,23 +463,33 @@ function NavDropdown({
           role="menu"
         >
           <div className="animate-[dropdown-enter_0.15s_ease-out] overflow-hidden rounded-xl border border-border bg-bg-elevated shadow-[var(--shadow-lg)]">
-            {CERT_LIST.map((cert, idx) => (
-              <Link
-                key={cert.key}
-                href={buildHref(cert.key)}
-                onClick={() => setOpen(false)}
-                role="menuitem"
-                className={`flex items-center gap-3 px-4 py-2.5 transition-colors hover:bg-surface-hover ${
-                  idx !== 0 ? "border-t border-border/50" : ""
-                }`}
-              >
-                <span className={`h-2 w-2 shrink-0 rounded-full ${cert.tailwind.dot}`} />
-                <div className="min-w-0">
-                  <p className="text-sm font-semibold text-text">{cert.label}</p>
-                  <p className="mt-0.5 text-xs text-text-muted">{cert.labelLong}</p>
-                </div>
-              </Link>
-            ))}
+            {CERT_LIST.map((cert, idx) => {
+              const certHasNew = hasNewByCert?.(cert.key) ?? false;
+              return (
+                <Link
+                  key={cert.key}
+                  href={buildHref(cert.key)}
+                  onClick={() => setOpen(false)}
+                  role="menuitem"
+                  className={`flex items-center gap-3 px-4 py-2.5 transition-colors hover:bg-surface-hover ${
+                    idx !== 0 ? "border-t border-border/50" : ""
+                  }`}
+                >
+                  <span className={`h-2 w-2 shrink-0 rounded-full ${cert.tailwind.dot}`} />
+                  <div className="min-w-0 flex-1">
+                    <p className="flex items-center gap-1.5 text-sm font-semibold text-text">
+                      {cert.label}
+                      {certHasNew && (
+                        <span className="inline-flex items-center rounded-full bg-emerald-500 px-1.5 text-[9px] font-bold leading-4 text-white">
+                          NEW
+                        </span>
+                      )}
+                    </p>
+                    <p className="mt-0.5 text-xs text-text-muted">{cert.labelLong}</p>
+                  </div>
+                </Link>
+              );
+            })}
           </div>
         </div>
       )}
@@ -471,6 +504,8 @@ function MobileNavAccordion({
   onToggle,
   buildHref,
   onItemClick,
+  showDot = false,
+  hasNewByCert,
 }: {
   label: string;
   isActive: boolean;
@@ -478,6 +513,8 @@ function MobileNavAccordion({
   onToggle: () => void;
   buildHref: (cert: CertKey) => string;
   onItemClick: () => void;
+  showDot?: boolean;
+  hasNewByCert?: (cert: CertKey) => boolean;
 }) {
   return (
     <li>
@@ -490,7 +527,15 @@ function MobileNavAccordion({
             : "text-text-muted hover:bg-surface-hover hover:text-text"
         }`}
       >
-        <span>{label}</span>
+        <span className="flex items-center gap-1.5">
+          {label}
+          {showDot && (
+            <span
+              className="h-1.5 w-1.5 rounded-full bg-emerald-500"
+              aria-label="새로운 모의고사 있음"
+            />
+          )}
+        </span>
         <svg
           className={`h-3.5 w-3.5 transition-transform ${isOpen ? "rotate-180" : ""}`}
           fill="none"
@@ -509,17 +554,25 @@ function MobileNavAccordion({
       >
         <div className="overflow-hidden">
           <div className="ml-2 border-l border-border/60 pl-2">
-            {CERT_LIST.map((cert) => (
-              <Link
-                key={cert.key}
-                href={buildHref(cert.key)}
-                onClick={onItemClick}
-                className="flex items-center gap-2.5 rounded-md px-3 py-2.5 text-sm text-text-muted hover:bg-surface-hover hover:text-text"
-              >
-                <span className={`h-1.5 w-1.5 rounded-full ${cert.tailwind.dot}`} />
-                {cert.label}
-              </Link>
-            ))}
+            {CERT_LIST.map((cert) => {
+              const certHasNew = hasNewByCert?.(cert.key) ?? false;
+              return (
+                <Link
+                  key={cert.key}
+                  href={buildHref(cert.key)}
+                  onClick={onItemClick}
+                  className="flex items-center gap-2.5 rounded-md px-3 py-2.5 text-sm text-text-muted hover:bg-surface-hover hover:text-text"
+                >
+                  <span className={`h-1.5 w-1.5 rounded-full ${cert.tailwind.dot}`} />
+                  <span>{cert.label}</span>
+                  {certHasNew && (
+                    <span className="ml-auto inline-flex items-center rounded-full bg-emerald-500 px-1.5 text-[9px] font-bold leading-4 text-white">
+                      NEW
+                    </span>
+                  )}
+                </Link>
+              );
+            })}
           </div>
         </div>
       </div>

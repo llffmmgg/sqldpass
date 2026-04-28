@@ -50,6 +50,9 @@ class PublicContentControllerTest {
     @MockitoBean
     private PostService postService;
 
+    @MockitoBean
+    private com.sqldpass.service.publicapi.InsightsService insightsService;
+
     @Test
     @DisplayName("GET /api/public/stats returns public stats")
     void getStats() throws Exception {

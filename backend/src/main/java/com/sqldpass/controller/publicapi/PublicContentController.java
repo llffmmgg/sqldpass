@@ -48,6 +48,7 @@ public class PublicContentController {
     private final PublicContentService publicContentService;
     private final PastExamPublicService pastExamPublicService;
     private final PostService postService;
+    private final com.sqldpass.service.publicapi.InsightsService insightsService;
 
     @GetMapping("/stats")
     @Operation(summary = "랜딩 페이지 노출용 공개 통계 (회원 수 + 누적 풀이 수)")
@@ -59,6 +60,13 @@ public class PublicContentController {
     @Operation(summary = "랜딩 페이지 노출용 TOP 30 랭킹 (누적 정답 수)")
     public PublicRankingResponse getRanking() {
         return publicContentService.getTopRanking();
+    }
+
+    @GetMapping("/insights/hardest")
+    @Operation(summary = "과목별 오답률 best 30 — 평균 정답률 50%+ 학생들의 답안만 집계")
+    public com.sqldpass.controller.publicapi.dto.InsightsDtos.HardestQuestionsResponse getHardestQuestions(
+            @org.springframework.web.bind.annotation.RequestParam Long subjectId) {
+        return insightsService.getHardestQuestions(subjectId);
     }
 
     @GetMapping("/certs")
