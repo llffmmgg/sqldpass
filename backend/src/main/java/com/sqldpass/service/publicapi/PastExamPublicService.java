@@ -30,6 +30,7 @@ import com.sqldpass.controller.solve.dto.SolveAnswerRequest;
 import com.sqldpass.controller.solve.dto.SolveRequest;
 import com.sqldpass.service.common.ErrorCode;
 import com.sqldpass.service.common.SqldpassException;
+import com.sqldpass.service.grading.SubjectGrouping;
 import com.sqldpass.service.grading.SubjectScoringCalculator;
 import com.sqldpass.service.solve.GradingService;
 import com.sqldpass.service.solve.SolveService;
@@ -102,7 +103,8 @@ public class PastExamPublicService {
         List<PastExamQuestion> questions = entity.getQuestions().stream()
                 .map(q -> {
                     SubjectEntity leaf = q.getSubject();
-                    SubjectEntity shown = leaf.getParent() != null ? leaf.getParent() : leaf;
+                    SubjectEntity shown = SubjectGrouping.groupOf(leaf, entity.getExamType());
+                    if (shown == null) shown = leaf;
                     return new PastExamQuestion(
                             q.getId(),
                             q.getDisplayOrder() != null ? q.getDisplayOrder() : 0,
@@ -134,7 +136,8 @@ public class PastExamPublicService {
         List<PastExamQuestionWithAnswer> questions = entity.getQuestions().stream()
                 .map(q -> {
                     SubjectEntity leaf = q.getSubject();
-                    SubjectEntity shown = leaf.getParent() != null ? leaf.getParent() : leaf;
+                    SubjectEntity shown = SubjectGrouping.groupOf(leaf, entity.getExamType());
+                    if (shown == null) shown = leaf;
                     return new PastExamQuestionWithAnswer(
                             q.getId(),
                             q.getDisplayOrder() != null ? q.getDisplayOrder() : 0,

@@ -5,10 +5,8 @@ import { useEffect, useState } from "react";
 export interface QuestionJumpGroup {
   /** 화면에 노출할 라벨 (예: "1과목 데이터 모델링") */
   label: string;
-  /** 시작 인덱스 (0-based, inclusive) */
-  from: number;
-  /** 끝 인덱스 (0-based, inclusive) */
-  to: number;
+  /** 이 그룹에 속하는 문제 인덱스 (0-based). 띄엄띄엄도 가능. */
+  indices: number[];
 }
 
 export interface QuestionJumpPanelProps {
@@ -55,9 +53,16 @@ export default function QuestionJumpPanel({
     };
   }, [drawerOpen]);
 
-  // groups 가 비어있으면 단일 그룹으로 처리
+  // groups 가 비어있으면 단일 그룹으로 처리 (모든 인덱스 한 그룹)
   const effectiveGroups: QuestionJumpGroup[] =
-    groups.length > 0 ? groups : [{ label: "전체", from: 0, to: total - 1 }];
+    groups.length > 0
+      ? groups
+      : [
+          {
+            label: "전체",
+            indices: Array.from({ length: total }, (_, i) => i),
+          },
+        ];
 
   const answeredCount = answered.size;
 
@@ -167,10 +172,7 @@ function GroupedGrid({
             </p>
           )}
           <div className="grid grid-cols-5 gap-1">
-            {Array.from(
-              { length: group.to - group.from + 1 },
-              (_, j) => group.from + j,
-            ).map((idx) => {
+            {group.indices.map((idx) => {
               const isCurrent = idx === currentIdx;
               const isAnswered = answered.has(idx);
               const cls = isCurrent

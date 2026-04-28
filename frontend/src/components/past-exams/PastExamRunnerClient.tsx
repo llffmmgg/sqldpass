@@ -152,24 +152,22 @@ export default function PastExamRunnerClient({
     return s;
   }, [exam, answers]);
 
-  // QuestionJumpPanel — 인접한 같은 subjectName 묶음을 그룹으로
+  // QuestionJumpPanel — subjectName 별로 인덱스 묶음 (시드가 섞여 들어와도 라벨 한 번씩만)
   const jumpGroups = useMemo<QuestionJumpGroup[]>(() => {
     if (!exam) return [];
     const qs = exam.questions;
     if (qs.length === 0) return [];
-    const groups: QuestionJumpGroup[] = [];
-    let from = 0;
-    let label = qs[0].subjectName ?? "";
-    for (let i = 1; i < qs.length; i++) {
-      const name = qs[i].subjectName ?? "";
-      if (name !== label) {
-        groups.push({ label, from, to: i - 1 });
-        from = i;
-        label = name;
-      }
-    }
-    groups.push({ label, from, to: qs.length - 1 });
-    return groups.length <= 1 ? [] : groups;
+    const map = new Map<string, number[]>();
+    qs.forEach((q, i) => {
+      const name = q.subjectName ?? "";
+      if (!map.has(name)) map.set(name, []);
+      map.get(name)!.push(i);
+    });
+    if (map.size <= 1) return [];
+    return Array.from(map.entries()).map(([label, indices]) => ({
+      label,
+      indices,
+    }));
   }, [exam]);
 
   useEffect(() => {

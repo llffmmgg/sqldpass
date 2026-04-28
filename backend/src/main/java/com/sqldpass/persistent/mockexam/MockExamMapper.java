@@ -6,6 +6,7 @@ import com.sqldpass.domain.mockexam.MockExam;
 import com.sqldpass.domain.mockexam.MockExamQuestion;
 import com.sqldpass.persistent.question.QuestionEntity;
 import com.sqldpass.persistent.subject.SubjectEntity;
+import com.sqldpass.service.grading.SubjectGrouping;
 
 public class MockExamMapper {
 
@@ -56,9 +57,12 @@ public class MockExamMapper {
     }
 
     public static MockExamQuestion toDomain(QuestionEntity q) {
-        // 상위 과목 표시 — SQLD는 "1과목:..", 정보처리기사는 "정보처리기사 실기". parent 없으면 본인.
+        // 합격 기준 과목 단위로 매핑 — 자격증마다 트리 구조가 다르므로 SubjectGrouping 사용.
         SubjectEntity leaf = q.getSubject();
-        SubjectEntity shown = leaf.getParent() != null ? leaf.getParent() : leaf;
+        SubjectEntity shown = SubjectGrouping.groupOf(
+                leaf,
+                q.getMockExam() != null ? q.getMockExam().getExamType() : null);
+        if (shown == null) shown = leaf;
         return new MockExamQuestion(
                 q.getId(),
                 q.getDisplayOrder() != null ? q.getDisplayOrder() : 0,
