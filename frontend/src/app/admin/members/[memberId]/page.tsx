@@ -115,8 +115,16 @@ export default function AdminMemberDetailPage({
 
       {stats.totalSolved > 0 && (
         <>
-          {/* 최근 14일 활동 — 사용자 대시보드와 동일한 차트 */}
-          <StudyActivityChart data={recentActivity} />
+          {/* 최근 14일 활동 — 사용자 대시보드와 동일한 차트.
+              어드민 응답은 일별 count만 있어 total 라인만 채우고 correct/wrong 은 0으로 둠. */}
+          <StudyActivityChart
+            data={recentActivity.map((d) => ({
+              date: d.date,
+              total: d.count,
+              correct: 0,
+              wrong: 0,
+            }))}
+          />
 
           {/* 과목별 정답률 */}
           {subjectStats.length > 0 && (

@@ -198,19 +198,30 @@ function toLocalDateStr(date: Date): string {
   return `${y}-${m}-${d}`;
 }
 
-function getRecentActivity(solves: SolveSummaryResponse[]): { date: string; count: number }[] {
-  const map: Record<string, number> = {};
+function getRecentActivity(
+  solves: SolveSummaryResponse[],
+): { date: string; total: number; correct: number; wrong: number }[] {
+  const map: Record<string, { total: number; correct: number }> = {};
   for (const s of solves) {
     const date = toLocalDateStr(new Date(s.solvedAt));
-    map[date] = (map[date] || 0) + s.totalCount;
+    const cur = map[date] ?? { total: 0, correct: 0 };
+    cur.total += s.totalCount;
+    cur.correct += s.correctCount;
+    map[date] = cur;
   }
-  const result: { date: string; count: number }[] = [];
+  const result: { date: string; total: number; correct: number; wrong: number }[] = [];
   const today = new Date();
   for (let i = 13; i >= 0; i--) {
     const d = new Date(today);
     d.setDate(d.getDate() - i);
     const key = toLocalDateStr(d);
-    result.push({ date: key, count: map[key] || 0 });
+    const v = map[key] ?? { total: 0, correct: 0 };
+    result.push({
+      date: key,
+      total: v.total,
+      correct: v.correct,
+      wrong: Math.max(0, v.total - v.correct),
+    });
   }
   return result;
 }

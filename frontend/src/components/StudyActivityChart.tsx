@@ -1,8 +1,10 @@
 "use client";
 
+/* eslint-disable react-hooks/set-state-in-effect -- 마운트 트리거, count-up RAF, SVG path 길이 측정은 effect 안에서 setState 가 자연스러운 패턴 */
+
 import { useEffect, useRef, useState } from "react";
 
-type DayData = { date: string; count: number };
+type DayData = { date: string; total: number; correct: number; wrong: number };
 
 type StudyActivityChartProps = {
   data: DayData[];
@@ -11,14 +13,20 @@ type StudyActivityChartProps = {
 };
 
 const DOW_SHORT = ["일", "월", "화", "수", "목", "금", "토"];
-const DOW_LONG = ["일요일", "월요일", "화요일", "수요일", "목요일", "금요일", "토요일"];
 
-const VB_W = 560;
-const VB_H = 160;
-const CHART_TOP = 12;
-const CHART_BOTTOM = 150;
-const CHART_H = CHART_BOTTOM - CHART_TOP;
-const COL_W = VB_W / 14;
+const VB_W = 600;
+const VB_H = 200;
+const PADDING_LEFT = 32; // Y축 라벨 폭
+const PADDING_RIGHT = 12;
+const PADDING_TOP = 16;
+const PADDING_BOTTOM = 28;
+const PLOT_W = VB_W - PADDING_LEFT - PADDING_RIGHT;
+const PLOT_H = VB_H - PADDING_TOP - PADDING_BOTTOM;
+const COL_W = PLOT_W / 13; // 14 점이면 간격은 13개
+
+const COLOR_TOTAL = "var(--primary)"; // emerald
+const COLOR_CORRECT = "#3b82f6"; // blue-500 — primary 와 톤 분리
+const COLOR_WRONG = "#f43f5e"; // rose-500
 
 function toLocalDateStr(date: Date): string {
   const y = date.getFullYear();
@@ -27,12 +35,15 @@ function toLocalDateStr(date: Date): string {
   return `${y}-${m}-${d}`;
 }
 
-function yFor(count: number, max: number): number {
-  return CHART_BOTTOM - (count / max) * CHART_H;
+function yFor(value: number, max: number): number {
+  if (max <= 0) return PADDING_TOP + PLOT_H;
+  return PADDING_TOP + (1 - value / max) * PLOT_H;
 }
 
-function buildAreaPath(points: { x: number; y: number }[]): string {
+/** Catmull-Rom 효과의 부드러운 곡선 — midpoint cubic bezier */
+function buildLinePath(points: { x: number; y: number }[]): string {
   if (points.length === 0) return "";
+  if (points.length === 1) return `M ${points[0].x} ${points[0].y}`;
   let d = `M ${points[0].x} ${points[0].y}`;
   for (let i = 1; i < points.length; i++) {
     const prev = points[i - 1];
@@ -40,18 +51,20 @@ function buildAreaPath(points: { x: number; y: number }[]): string {
     const midX = (prev.x + cur.x) / 2;
     d += ` C ${midX} ${prev.y}, ${midX} ${cur.y}, ${cur.x} ${cur.y}`;
   }
-  d += ` L ${points[points.length - 1].x} ${CHART_BOTTOM}`;
-  d += ` L ${points[0].x} ${CHART_BOTTOM}`;
-  d += " Z";
   return d;
 }
 
-/** 0 → target 까지 ease-out으로 ramp. target 변경되면 다시 시작. */
+function buildAreaPath(points: { x: number; y: number }[], baselineY: number): string {
+  const line = buildLinePath(points);
+  if (!line) return "";
+  const last = points[points.length - 1];
+  const first = points[0];
+  return `${line} L ${last.x} ${baselineY} L ${first.x} ${baselineY} Z`;
+}
+
 function useCountUp(target: number, durationMs = 900): number {
   const [value, setValue] = useState(0);
-  const startedRef = useRef(false);
   useEffect(() => {
-    startedRef.current = false;
     let raf = 0;
     let start: number | null = null;
     const tick = (ts: number) => {
@@ -67,29 +80,45 @@ function useCountUp(target: number, durationMs = 900): number {
   return value;
 }
 
-/** 가장 최근 날짜부터 거꾸로 연속해서 풀이가 있는 일수. */
 function computeStreak(data: DayData[]): number {
   let streak = 0;
   for (let i = data.length - 1; i >= 0; i--) {
-    if (data[i].count > 0) streak++;
+    if (data[i].total > 0) streak++;
     else break;
   }
   return streak;
 }
 
-/** 전주(0..6) 대비 이번 주(7..13) 변동률 (%). 전주 0이면 +∞로 보지 않고 단순 +100. */
 function computeWeekDelta(data: DayData[]): number | null {
   if (data.length < 14) return null;
-  const prev = data.slice(0, 7).reduce((s, d) => s + d.count, 0);
-  const cur = data.slice(7, 14).reduce((s, d) => s + d.count, 0);
+  const prev = data.slice(0, 7).reduce((s, d) => s + d.total, 0);
+  const cur = data.slice(7, 14).reduce((s, d) => s + d.total, 0);
   if (prev === 0 && cur === 0) return 0;
   if (prev === 0) return 100;
   return Math.round(((cur - prev) / prev) * 100);
 }
 
+function fmtNum(v: number): string {
+  if (v >= 10) return Math.round(v).toString();
+  return v.toFixed(1);
+}
+
+function niceCeil(v: number): number {
+  if (v <= 5) return 5;
+  if (v <= 10) return 10;
+  if (v <= 20) return 20;
+  if (v <= 50) return 50;
+  if (v <= 100) return 100;
+  return Math.ceil(v / 50) * 50;
+}
+
 export default function StudyActivityChart({ data, overallAvg }: StudyActivityChartProps) {
   const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
   const [mounted, setMounted] = useState(false);
+  const totalRef = useRef<SVGPathElement | null>(null);
+  const correctRef = useRef<SVGPathElement | null>(null);
+  const wrongRef = useRef<SVGPathElement | null>(null);
+  const svgRef = useRef<SVGSVGElement | null>(null);
 
   useEffect(() => {
     const t = requestAnimationFrame(() => setMounted(true));
@@ -97,22 +126,18 @@ export default function StudyActivityChart({ data, overallAvg }: StudyActivityCh
   }, []);
 
   const todayStr = toLocalDateStr(new Date());
-  const total = data.reduce((s, d) => s + d.count, 0);
-  const avg = total / data.length;
+  const totalSum = data.reduce((s, d) => s + d.total, 0);
+  const correctSum = data.reduce((s, d) => s + d.correct, 0);
+  const totalAvg = totalSum / data.length;
+  const correctAvg = correctSum / data.length;
+  const wrongAvg = (totalSum - correctSum) / data.length;
+  const accuracy = totalSum > 0 ? Math.round((correctSum / totalSum) * 100) : null;
+
   const hasOverall = typeof overallAvg === "number" && overallAvg > 0;
-  // 전체 평균선이 차트 바깥으로 튀지 않도록 max에 포함
-  const max = Math.max(...data.map((d) => d.count), hasOverall ? overallAvg! : 0, 1);
+  const dataMax = Math.max(...data.map((d) => d.total), hasOverall ? overallAvg! : 0, 1);
+  const max = niceCeil(dataMax);
 
-  let maxIdx = 0;
-  data.forEach((d, i) => {
-    if (d.count > data[maxIdx].count) maxIdx = i;
-  });
-  const hasMax = data[maxIdx].count > 0;
-  const fmtAvg = (v: number) => (v >= 10 ? Math.round(v).toString() : v.toFixed(1));
-  const avgDisplay = fmtAvg(avg);
-  const overallDisplay = hasOverall ? fmtAvg(overallAvg!) : null;
-
-  const totalAnimated = useCountUp(total);
+  const totalAnimated = useCountUp(totalSum);
   const streak = computeStreak(data);
   const weekDelta = computeWeekDelta(data);
 
@@ -121,9 +146,7 @@ export default function StudyActivityChart({ data, overallAvg }: StudyActivityCh
     const dow = d.getDay();
     const isToday = day.date === todayStr;
     const isWeekend = dow === 0 || dow === 6;
-    const centerX = i * COL_W + COL_W / 2;
-    const y = yFor(day.count, max);
-    const heightPct = day.count > 0 ? Math.max((day.count / max) * 100, 5) : 0;
+    const cx = PADDING_LEFT + i * COL_W;
     return {
       ...day,
       dow,
@@ -131,23 +154,60 @@ export default function StudyActivityChart({ data, overallAvg }: StudyActivityCh
       dayNum: d.getDate(),
       isToday,
       isWeekend,
-      centerX,
-      y,
-      heightPct,
+      cx,
+      yTotal: yFor(day.total, max),
+      yCorrect: yFor(day.correct, max),
+      yWrong: yFor(day.wrong, max),
     };
   });
 
   const todayIdx = enriched.findIndex((d) => d.isToday);
-  const todayBar = todayIdx >= 0 ? enriched[todayIdx] : null;
+  const todayPoint = todayIdx >= 0 ? enriched[todayIdx] : null;
 
-  const areaPath = buildAreaPath(enriched.map((d) => ({ x: d.centerX, y: d.y })));
-  const avgY = yFor(avg, max);
-  const avgTopPct = (avgY / VB_H) * 100;
-  const overallY = hasOverall ? yFor(overallAvg!, max) : 0;
-  const overallTopPct = hasOverall ? (overallY / VB_H) * 100 : 0;
-  const labelsOverlap = hasOverall && Math.abs(avgTopPct - overallTopPct) < 12;
+  const totalPoints = enriched.map((d) => ({ x: d.cx, y: d.yTotal }));
+  const correctPoints = enriched.map((d) => ({ x: d.cx, y: d.yCorrect }));
+  const wrongPoints = enriched.map((d) => ({ x: d.cx, y: d.yWrong }));
+
+  const baselineY = PADDING_TOP + PLOT_H;
+  const totalLine = buildLinePath(totalPoints);
+  const totalArea = buildAreaPath(totalPoints, baselineY);
+  const correctLine = buildLinePath(correctPoints);
+  const wrongLine = buildLinePath(wrongPoints);
+
+  // 라인 draw 애니메이션 — 마운트 후 path 길이 측정
+  const [pathLens, setPathLens] = useState<{ t: number; c: number; w: number }>({
+    t: 1000,
+    c: 1000,
+    w: 1000,
+  });
+  useEffect(() => {
+    const t = totalRef.current?.getTotalLength() ?? 1000;
+    const c = correctRef.current?.getTotalLength() ?? 1000;
+    const w = wrongRef.current?.getTotalLength() ?? 1000;
+    setPathLens({ t, c, w });
+  }, [totalLine, correctLine, wrongLine]);
+
+  const yTicks = [0, 0.25, 0.5, 0.75, 1].map((r) => ({
+    value: Math.round(max * r),
+    y: PADDING_TOP + (1 - r) * PLOT_H,
+  }));
 
   const hovered = hoveredIdx !== null ? enriched[hoveredIdx] : null;
+
+  function onSvgMouseMove(e: React.MouseEvent<SVGSVGElement>) {
+    const svg = svgRef.current;
+    if (!svg) return;
+    const rect = svg.getBoundingClientRect();
+    const xRatio = (e.clientX - rect.left) / rect.width;
+    const xInView = xRatio * VB_W;
+    const xInPlot = xInView - PADDING_LEFT;
+    if (xInPlot < -COL_W / 2 || xInPlot > PLOT_W + COL_W / 2) {
+      setHoveredIdx(null);
+      return;
+    }
+    const idx = Math.round(xInPlot / COL_W);
+    setHoveredIdx(Math.max(0, Math.min(13, idx)));
+  }
 
   const deltaPositive = weekDelta != null && weekDelta > 0;
   const deltaNegative = weekDelta != null && weekDelta < 0;
@@ -156,9 +216,9 @@ export default function StudyActivityChart({ data, overallAvg }: StudyActivityCh
     <div
       className="mt-6 overflow-hidden rounded-xl border border-border bg-surface p-5"
       role="img"
-      aria-label={`최근 2주 학습량 차트. 총 ${total}문제, 일평균 ${avgDisplay}문제`}
+      aria-label={`최근 2주 학습량. 총 ${totalSum}문제, 정답 ${correctSum}, 오답 ${totalSum - correctSum}`}
     >
-      {/* ── 헤더: 큰 총합 + 변동률 chip / 우측 보조 메타 ─────────── */}
+      {/* ── 헤더 ───────────────────────────────────────────────── */}
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h2 className="text-xs font-medium uppercase tracking-wider text-muted">
@@ -169,7 +229,7 @@ export default function StudyActivityChart({ data, overallAvg }: StudyActivityCh
               {totalAnimated}
             </span>
             <span className="text-xs text-muted">문제</span>
-            {weekDelta != null && total > 0 && (
+            {weekDelta != null && totalSum > 0 && (
               <span
                 className={`inline-flex items-center gap-0.5 rounded-full px-2 py-0.5 text-[10px] font-bold tabular-nums transition-opacity duration-500 ${
                   mounted ? "opacity-100" : "opacity-0"
@@ -187,310 +247,381 @@ export default function StudyActivityChart({ data, overallAvg }: StudyActivityCh
                 {weekDelta > 0 ? `+${weekDelta}` : weekDelta}%
               </span>
             )}
+            {accuracy != null && (
+              <span className="rounded-full border border-border bg-background px-2 py-0.5 text-[10px] font-semibold tabular-nums text-muted">
+                정답률 <span className="text-foreground">{accuracy}%</span>
+              </span>
+            )}
           </div>
         </div>
-        <div className="flex items-center gap-2 text-[10px] text-muted tabular-nums">
+        <div className="flex flex-wrap items-center gap-2 text-[10px] text-muted tabular-nums">
           {streak > 0 && (
             <span className="inline-flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold text-amber-600 dark:text-amber-300">
               <span aria-hidden>🔥</span>
               {streak}일 연속
             </span>
           )}
-          <span className="inline-flex items-center gap-1">
-            <span
-              className="inline-block h-0.5 w-2.5 border-t border-dashed border-muted"
-              aria-hidden
-            />
-            내 평균 <span className="font-semibold text-foreground">{avgDisplay}</span>
-          </span>
+          <Legend color={COLOR_TOTAL} label="전체" value={fmtNum(totalAvg)} />
+          <Legend color={COLOR_CORRECT} label="맞춘" value={fmtNum(correctAvg)} />
+          <Legend color={COLOR_WRONG} label="틀린" value={fmtNum(wrongAvg)} />
           {hasOverall && (
             <span className="inline-flex items-center gap-1">
               <span
                 className="inline-block h-0.5 w-2.5 border-t border-dashed border-accent"
                 aria-hidden
               />
-              전체 <span className="font-semibold text-accent">{overallDisplay}</span>
-            </span>
-          )}
-          {hasMax && (
-            <span>
-              최다 <span className="font-semibold text-foreground">{data[maxIdx].count}</span>
+              전체 <span className="font-semibold text-accent">{fmtNum(overallAvg!)}</span>
             </span>
           )}
         </div>
       </div>
 
       {/* ── 차트 본체 ─────────────────────────────────────────── */}
-      <div className="relative mt-5 h-44">
+      <div className="relative mt-5 h-52">
         <svg
+          ref={svgRef}
           className="absolute inset-0 h-full w-full"
           viewBox={`0 0 ${VB_W} ${VB_H}`}
           preserveAspectRatio="none"
-          aria-hidden
+          onMouseMove={onSvgMouseMove}
+          onMouseLeave={() => setHoveredIdx(null)}
         >
           <defs>
-            <linearGradient id="study-activity-area" x1="0" y1="0" x2="0" y2="1">
+            <linearGradient id="study-area-total" x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor="var(--primary)" stopOpacity="0.32" />
               <stop offset="100%" stopColor="var(--primary)" stopOpacity="0" />
             </linearGradient>
-            <linearGradient id="study-activity-bar" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="var(--primary)" stopOpacity="1" />
-              <stop offset="100%" stopColor="var(--primary)" stopOpacity="0.55" />
-            </linearGradient>
-            <linearGradient id="study-activity-bar-today" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="var(--primary)" stopOpacity="1" />
-              <stop offset="100%" stopColor="var(--primary)" stopOpacity="0.85" />
-            </linearGradient>
           </defs>
 
-          {total > 0 && (
+          {/* 가로 그리드 + Y축 라벨 */}
+          {yTicks.map((tick) => (
+            <g key={tick.value}>
+              <line
+                x1={PADDING_LEFT}
+                y1={tick.y}
+                x2={VB_W - PADDING_RIGHT}
+                y2={tick.y}
+                stroke="var(--border)"
+                strokeWidth={1}
+                strokeDasharray="2 4"
+                opacity={tick.value === 0 ? 0.6 : 0.35}
+                vectorEffect="non-scaling-stroke"
+              />
+              <text
+                x={PADDING_LEFT - 6}
+                y={tick.y + 3}
+                textAnchor="end"
+                fill="var(--muted)"
+                fontSize="10"
+                opacity="0.7"
+                style={{ fontVariantNumeric: "tabular-nums" }}
+              >
+                {tick.value}
+              </text>
+            </g>
+          ))}
+
+          {/* 호버 세로 점선 */}
+          {hovered && (
+            <line
+              x1={hovered.cx}
+              y1={PADDING_TOP}
+              x2={hovered.cx}
+              y2={baselineY}
+              stroke="var(--muted)"
+              strokeWidth={1}
+              strokeDasharray="3 3"
+              opacity={0.45}
+              vectorEffect="non-scaling-stroke"
+            />
+          )}
+
+          {/* 전체 area */}
+          {totalSum > 0 && (
             <path
-              d={areaPath}
-              fill="url(#study-activity-area)"
+              d={totalArea}
+              fill="url(#study-area-total)"
               style={{
                 opacity: mounted ? 1 : 0,
-                transition: "opacity 600ms ease-out 200ms",
+                transition: "opacity 500ms ease-out 700ms",
               }}
             />
           )}
 
-          {/* 평균선 — dash flow 애니메이션 */}
-          {total > 0 && (
-            <line
-              x1={0}
-              y1={avgY}
-              x2={VB_W}
-              y2={avgY}
-              stroke="var(--muted)"
-              strokeWidth={1}
-              strokeDasharray="6 5"
-              opacity={0.5}
-              vectorEffect="non-scaling-stroke"
-              style={{
-                animation: "study-dash-flow 1.6s linear infinite",
-              }}
-            />
+          {/* 라인들 — draw 애니메이션 */}
+          <path
+            ref={wrongRef}
+            d={wrongLine}
+            fill="none"
+            stroke={COLOR_WRONG}
+            strokeWidth={2}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            opacity={0.85}
+            vectorEffect="non-scaling-stroke"
+            style={{
+              strokeDasharray: pathLens.w,
+              strokeDashoffset: mounted ? 0 : pathLens.w,
+              transition: "stroke-dashoffset 1100ms cubic-bezier(0.22,1,0.36,1) 250ms",
+            }}
+          />
+          <path
+            ref={correctRef}
+            d={correctLine}
+            fill="none"
+            stroke={COLOR_CORRECT}
+            strokeWidth={2}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            opacity={0.9}
+            vectorEffect="non-scaling-stroke"
+            style={{
+              strokeDasharray: pathLens.c,
+              strokeDashoffset: mounted ? 0 : pathLens.c,
+              transition: "stroke-dashoffset 1000ms cubic-bezier(0.22,1,0.36,1) 150ms",
+            }}
+          />
+          <path
+            ref={totalRef}
+            d={totalLine}
+            fill="none"
+            stroke={COLOR_TOTAL}
+            strokeWidth={2.5}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            vectorEffect="non-scaling-stroke"
+            style={{
+              strokeDasharray: pathLens.t,
+              strokeDashoffset: mounted ? 0 : pathLens.t,
+              transition: "stroke-dashoffset 900ms cubic-bezier(0.22,1,0.36,1) 0ms",
+              filter: "drop-shadow(0 0 6px var(--glow))",
+            }}
+          />
+
+          {/* 호버 점 3개 */}
+          {hovered && (
+            <>
+              <HoverDot cx={hovered.cx} cy={hovered.yWrong} color={COLOR_WRONG} />
+              <HoverDot cx={hovered.cx} cy={hovered.yCorrect} color={COLOR_CORRECT} />
+              <HoverDot cx={hovered.cx} cy={hovered.yTotal} color={COLOR_TOTAL} primary />
+            </>
           )}
-          {hasOverall && (
-            <line
-              x1={0}
-              y1={overallY}
-              x2={VB_W}
-              y2={overallY}
-              stroke="var(--accent)"
-              strokeWidth={1}
-              strokeDasharray="6 5"
-              opacity={0.65}
-              vectorEffect="non-scaling-stroke"
-              style={{
-                animation: "study-dash-flow 1.6s linear infinite reverse",
-              }}
-            />
+
+          {/* 오늘 위치 ring pulse — 호버 중엔 숨김 */}
+          {todayPoint && totalSum > 0 && hoveredIdx === null && (
+            <g>
+              <circle
+                cx={todayPoint.cx}
+                cy={todayPoint.yTotal}
+                r={5}
+                fill="var(--primary)"
+                stroke="var(--surface)"
+                strokeWidth={2}
+              />
+              <circle
+                cx={todayPoint.cx}
+                cy={todayPoint.yTotal}
+                r={5}
+                fill="none"
+                stroke="var(--primary)"
+                strokeOpacity={0.55}
+                strokeWidth={2}
+                style={{ animation: "study-ping 1.8s ease-out infinite", transformBox: "fill-box", transformOrigin: "center" }}
+              />
+            </g>
           )}
         </svg>
 
-        {/* 평균선 인라인 라벨 */}
-        {total > 0 && (
-          <span
-            className="pointer-events-none absolute -translate-y-1/2 rounded-sm bg-surface px-1 text-[9px] font-medium text-muted tabular-nums"
-            style={{
-              top: `${avgTopPct}%`,
-              right: labelsOverlap && avgY > overallY ? "2.5rem" : "0",
-            }}
-          >
-            내 {avgDisplay}
-          </span>
-        )}
-        {hasOverall && (
-          <span
-            className="pointer-events-none absolute -translate-y-1/2 rounded-sm bg-surface px-1 text-[9px] font-medium text-accent tabular-nums"
-            style={{
-              top: `${overallTopPct}%`,
-              right: labelsOverlap && overallY >= avgY ? "2.5rem" : "0",
-            }}
-          >
-            전체 {overallDisplay}
-          </span>
-        )}
-
-        {/* 막대 + 호버 영역 */}
-        <div className="absolute inset-0 flex items-end gap-1.5">
-          {enriched.map((day, i) => {
-            const isActive = hoveredIdx === i;
-            const isAdjacent =
-              hoveredIdx !== null && Math.abs(hoveredIdx - i) === 1 && !isActive;
-            const dim = hoveredIdx !== null && !isActive && !isAdjacent;
-            const barHeight = mounted ? day.heightPct : 0;
-            return (
-              <button
-                type="button"
-                key={day.date}
-                onMouseEnter={() => setHoveredIdx(i)}
-                onMouseLeave={() => setHoveredIdx(null)}
-                onFocus={() => setHoveredIdx(i)}
-                onBlur={() => setHoveredIdx(null)}
-                className={`group relative flex h-full flex-1 cursor-pointer flex-col items-center justify-end rounded-md outline-none transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-primary ${
-                  isActive ? "bg-primary/[0.08]" : "hover:bg-primary/[0.05]"
-                }`}
-                aria-label={`${day.month}월 ${day.dayNum}일 ${DOW_LONG[day.dow]}, ${day.count}문제`}
-              >
-                {/* 오늘 막대 위 불꽃 + ring pulse */}
-                {day.isToday && day.count > 0 && (
-                  <span
-                    className="pointer-events-none absolute z-[1] -translate-y-1 text-[11px] leading-none"
-                    style={{
-                      bottom: `calc(${barHeight}% + 4px)`,
-                      animation: "study-flame-bob 1.6s ease-in-out infinite",
-                    }}
-                    aria-hidden
-                  >
-                    🔥
-                  </span>
-                )}
-                {day.count > 0 ? (
-                  <div
-                    className={`relative w-full max-w-[26px] origin-bottom overflow-hidden rounded-full ${
-                      day.isToday
-                        ? "bg-[linear-gradient(180deg,var(--primary)_0%,var(--primary)_100%)] shadow-[0_0_18px_var(--glow)]"
-                        : isActive
-                          ? "bg-primary scale-y-[1.06] shadow-[0_0_14px_var(--glow)]"
-                          : isAdjacent
-                            ? "bg-primary/75 scale-y-[1.02]"
-                            : dim
-                              ? "bg-primary/25"
-                              : "bg-[linear-gradient(180deg,var(--primary)_0%,var(--primary)_55%,transparent_120%)] opacity-90"
-                    }`}
-                    style={{
-                      height: `${barHeight}%`,
-                      transition: `height 520ms cubic-bezier(0.22, 1, 0.36, 1) ${i * 28}ms, background-color 140ms ease, transform 160ms ease, opacity 140ms ease`,
-                    }}
-                  >
-                    {day.isToday && (
-                      <span
-                        className="pointer-events-none absolute inset-x-0 top-0 h-full rounded-full ring-2 ring-primary/55"
-                        style={{ animation: "study-ring-pulse 1.8s ease-out infinite" }}
-                        aria-hidden
-                      />
-                    )}
-                  </div>
-                ) : (
-                  <div
-                    className={`mb-1 h-1.5 w-1.5 rounded-full transition-colors duration-150 ${
-                      isActive ? "bg-primary" : "bg-border"
-                    }`}
-                  />
-                )}
-              </button>
-            );
-          })}
-        </div>
-
-        {/* 호버 툴팁 */}
+        {/* 다크 툴팁 — ref.png 스타일 */}
         {hovered && (
-          <div
-            className="pointer-events-none absolute z-10 -translate-x-1/2 -translate-y-full rounded-lg border border-border bg-background px-2.5 py-1.5 text-xs shadow-lg"
-            style={{
-              left: `${(hovered.centerX / VB_W) * 100}%`,
-              top: `${(hovered.y / VB_H) * 100}%`,
-              marginTop: "-12px",
-            }}
-          >
-            <p className="font-semibold tabular-nums">{hovered.count}문제</p>
-            <p className="text-[10px] text-muted tabular-nums">
-              {hovered.month}/{hovered.dayNum} ({DOW_SHORT[hovered.dow]})
-            </p>
-          </div>
-        )}
-
-        {/* 오늘 라벨 (정적, 항상 표시) — 호버 중엔 숨김 */}
-        {todayBar && todayBar.count > 0 && hoveredIdx === null && (
-          <div
-            className="pointer-events-none absolute z-[1] -translate-x-1/2 -translate-y-full whitespace-nowrap rounded-md bg-primary px-1.5 py-0.5 text-[9px] font-bold text-white shadow-md"
-            style={{
-              left: `${(todayBar.centerX / VB_W) * 100}%`,
-              top: `${(todayBar.y / VB_H) * 100}%`,
-              marginTop: "-22px",
-              animation: "study-today-bob 2s ease-in-out infinite",
-            }}
-          >
-            오늘 {todayBar.count}
-          </div>
+          <Tooltip
+            x={hovered.cx}
+            y={Math.min(hovered.yTotal, hovered.yCorrect, hovered.yWrong)}
+            month={hovered.month}
+            day={hovered.dayNum}
+            dow={hovered.dow}
+            total={hovered.total}
+            correct={hovered.correct}
+            wrong={hovered.wrong}
+            isLeft={hoveredIdx! > 9}
+          />
         )}
       </div>
 
-      {/* ── X축 라벨 ───────────────────────────────────────── */}
-      <div className="mt-2 flex gap-1.5">
-        {enriched.map((day) => (
-          <div
-            key={`label-${day.date}`}
-            className="flex flex-1 flex-col items-center gap-0.5"
-          >
-            <span
-              className={`text-[9px] tabular-nums ${
-                day.isToday
-                  ? "font-bold text-primary"
-                  : day.isWeekend
-                    ? "text-accent/70"
-                    : "text-muted/60"
-              }`}
+      {/* X축 라벨 — 호버 인덱스만 pill highlight */}
+      <div
+        className="mt-1 flex"
+        style={{
+          paddingLeft: `calc(${(PADDING_LEFT / VB_W) * 100}% - ${COL_W / 2 / VB_W * 100}%)`,
+          paddingRight: `calc(${(PADDING_RIGHT / VB_W) * 100}% - ${COL_W / 2 / VB_W * 100}%)`,
+        }}
+      >
+        {enriched.map((day, i) => {
+          const isHovered = hoveredIdx === i;
+          return (
+            <div
+              key={`label-${day.date}`}
+              className="flex flex-1 flex-col items-center"
             >
-              {day.month}/{day.dayNum}
-            </span>
-            <span
-              className={`text-[8px] ${
-                day.isToday
-                  ? "font-semibold text-primary"
-                  : day.isWeekend
-                    ? "text-accent/60"
-                    : "text-muted/45"
-              }`}
-            >
-              {DOW_SHORT[day.dow]}
-            </span>
-          </div>
-        ))}
+              <span
+                className={`rounded-full px-1.5 py-0.5 text-[9px] tabular-nums transition-colors duration-150 ${
+                  isHovered
+                    ? "bg-border text-foreground font-semibold"
+                    : day.isToday
+                      ? "font-bold text-primary"
+                      : day.isWeekend
+                        ? "text-accent/70"
+                        : "text-muted/60"
+                }`}
+              >
+                {day.dayNum}
+              </span>
+              <span
+                className={`text-[8px] ${
+                  day.isToday
+                    ? "font-semibold text-primary"
+                    : day.isWeekend
+                      ? "text-accent/60"
+                      : "text-muted/45"
+                }`}
+              >
+                {DOW_SHORT[day.dow]}
+              </span>
+            </div>
+          );
+        })}
       </div>
 
-      {/* keyframes — 컴포넌트 스코프 내 정의 (Tailwind 미설정 키프레임) */}
       <style jsx>{`
-        @keyframes study-dash-flow {
-          to {
-            stroke-dashoffset: -22;
-          }
-        }
-        @keyframes study-ring-pulse {
+        @keyframes study-ping {
           0% {
-            box-shadow: 0 0 0 0 rgba(36, 180, 126, 0.55);
-            opacity: 0.9;
+            transform: scale(1);
+            opacity: 0.7;
           }
-          70% {
-            box-shadow: 0 0 0 10px rgba(36, 180, 126, 0);
-            opacity: 0.2;
+          75% {
+            transform: scale(2.6);
+            opacity: 0;
           }
           100% {
-            box-shadow: 0 0 0 0 rgba(36, 180, 126, 0);
+            transform: scale(2.6);
             opacity: 0;
           }
         }
-        @keyframes study-flame-bob {
-          0%,
-          100% {
-            transform: translateY(-2px) scale(1);
-          }
-          50% {
-            transform: translateY(-5px) scale(1.08);
-          }
-        }
-        @keyframes study-today-bob {
-          0%,
-          100% {
-            transform: translate(-50%, 0);
-          }
-          50% {
-            transform: translate(-50%, -3px);
-          }
-        }
       `}</style>
+    </div>
+  );
+}
+
+function Legend({ color, label, value }: { color: string; label: string; value: string }) {
+  return (
+    <span className="inline-flex items-center gap-1">
+      <span
+        className="inline-block h-2 w-2 rounded-full"
+        style={{ backgroundColor: color }}
+        aria-hidden
+      />
+      {label} <span className="font-semibold text-foreground">{value}</span>
+    </span>
+  );
+}
+
+function HoverDot({
+  cx,
+  cy,
+  color,
+  primary = false,
+}: {
+  cx: number;
+  cy: number;
+  color: string;
+  primary?: boolean;
+}) {
+  return (
+    <g>
+      <circle
+        cx={cx}
+        cy={cy}
+        r={primary ? 5 : 4}
+        fill="var(--surface)"
+        stroke={color}
+        strokeWidth={primary ? 2.5 : 2}
+      />
+      {primary && (
+        <circle
+          cx={cx}
+          cy={cy}
+          r={2}
+          fill={color}
+        />
+      )}
+    </g>
+  );
+}
+
+function Tooltip({
+  x,
+  y,
+  month,
+  day,
+  dow,
+  total,
+  correct,
+  wrong,
+  isLeft,
+}: {
+  x: number;
+  y: number;
+  month: number;
+  day: number;
+  dow: number;
+  total: number;
+  correct: number;
+  wrong: number;
+  isLeft: boolean;
+}) {
+  const xPct = (x / VB_W) * 100;
+  const yPct = (y / VB_H) * 100;
+  const rate = total > 0 ? Math.round((correct / total) * 100) : 0;
+  return (
+    <div
+      className="pointer-events-none absolute z-10 rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2 text-xs text-white shadow-xl ring-1 ring-black/10"
+      style={{
+        left: `${xPct}%`,
+        top: `${yPct}%`,
+        transform: `translate(${isLeft ? "-100%" : "0"}, calc(-100% - 14px))`,
+        marginLeft: isLeft ? "-12px" : "12px",
+        minWidth: 150,
+      }}
+    >
+      <p className="text-[11px] font-semibold tabular-nums">
+        {month}월 {day}일 ({DOW_SHORT[dow]})
+      </p>
+      <div className="mt-1.5 space-y-0.5">
+        <TooltipRow color={COLOR_TOTAL} label="전체" value={total} />
+        <TooltipRow color={COLOR_CORRECT} label="맞춘" value={correct} />
+        <TooltipRow color={COLOR_WRONG} label="틀린" value={wrong} />
+      </div>
+      {total > 0 && (
+        <p className="mt-1.5 border-t border-zinc-700 pt-1 text-[10px] tabular-nums text-zinc-400">
+          정답률 <span className="font-semibold text-white">{rate}%</span>
+        </p>
+      )}
+    </div>
+  );
+}
+
+function TooltipRow({ color, label, value }: { color: string; label: string; value: number }) {
+  return (
+    <div className="flex items-center justify-between gap-3 text-[11px] tabular-nums">
+      <span className="flex items-center gap-1.5">
+        <span
+          className="inline-block h-2 w-0.5 rounded-full"
+          style={{ backgroundColor: color }}
+          aria-hidden
+        />
+        <span className="text-zinc-300">{label}</span>
+      </span>
+      <span className="font-semibold">{value}</span>
     </div>
   );
 }
