@@ -18,6 +18,7 @@ import com.sqldpass.controller.publicapi.dto.PublicRankingResponse;
 import com.sqldpass.controller.publicapi.dto.PublicStatsResponse;
 import com.sqldpass.service.admin.JwtProvider;
 import com.sqldpass.service.notification.DiscordNotifier;
+import com.sqldpass.service.post.PostService;
 import com.sqldpass.service.publicapi.PastExamPublicService;
 import com.sqldpass.service.publicapi.PublicContentService;
 
@@ -45,6 +46,9 @@ class PublicContentControllerTest {
 
     @MockitoBean
     private DiscordNotifier discordNotifier;
+
+    @MockitoBean
+    private PostService postService;
 
     @Test
     @DisplayName("GET /api/public/stats returns public stats")
