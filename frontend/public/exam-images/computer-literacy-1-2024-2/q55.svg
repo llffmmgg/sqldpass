@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 380" width="600" height="380" role="img" aria-label="우편물 레이블 출력물 — A4 라벨지에 이름과 주소가 격자로 배치">
+  <style>
+    .sheet{fill:#fff;stroke:#9ca3af;stroke-width:1.5}
+    .label{fill:#fff;stroke:#374151;stroke-dasharray:5 3}
+    .name{font:600 13px sans-serif;fill:#111}
+    .addr{font:500 11px sans-serif;fill:#374151}
+    .zip{font:500 10px sans-serif;fill:#6b7280}
+    .title{font:600 12px sans-serif;fill:#6b7280;text-anchor:middle}
+  </style>
+  <text x="300" y="20" class="title">우편물 레이블 출력물 (A4 라벨지)</text>
+  <rect x="20" y="30" width="560" height="340" class="sheet"/>
+  <rect x="40" y="50" width="250" height="70" class="label"/>
+  <text x="55" y="72" class="name">홍길동 님</text>
+  <text x="55" y="92" class="addr">서울시 종로구 종로 1길 23</text>
+  <text x="55" y="108" class="zip">우편번호 03058</text>
+  <rect x="310" y="50" width="250" height="70" class="label"/>
+  <text x="325" y="72" class="name">김민서 님</text>
+  <text x="325" y="92" class="addr">부산시 해운대구 우동 567</text>
+  <text x="325" y="108" class="zip">우편번호 48058</text>
+  <rect x="40" y="135" width="250" height="70" class="label"/>
+  <text x="55" y="157" class="name">박지훈 님</text>
+  <text x="55" y="177" class="addr">대전시 유성구 대학로 99</text>
+  <text x="55" y="193" class="zip">우편번호 34134</text>
+  <rect x="310" y="135" width="250" height="70" class="label"/>
+  <text x="325" y="157" class="name">이서연 님</text>
+  <text x="325" y="177" class="addr">광주시 북구 용봉동 300</text>
+  <text x="325" y="193" class="zip">우편번호 61186</text>
+  <rect x="40" y="220" width="250" height="70" class="label"/>
+  <text x="55" y="242" class="name">최도윤 님</text>
+  <text x="55" y="262" class="addr">인천시 연수구 송도동 12</text>
+  <text x="55" y="278" class="zip">우편번호 21984</text>
+  <rect x="310" y="220" width="250" height="70" class="label"/>
+  <text x="325" y="242" class="name">정유진 님</text>
+  <text x="325" y="262" class="addr">대구시 수성구 범어동 88</text>
+  <text x="325" y="278" class="zip">우편번호 42118</text>
+  <rect x="40" y="305" width="250" height="55" class="label"/>
+  <text x="55" y="327" class="name">강지민 님</text>
+  <text x="55" y="347" class="addr">제주시 노형동 1234</text>
+  <rect x="310" y="305" width="250" height="55" class="label"/>
+  <text x="325" y="327" class="name">조하늘 님</text>
+  <text x="325" y="347" class="addr">청주시 흥덕구 가경동 56</text>
+</svg>

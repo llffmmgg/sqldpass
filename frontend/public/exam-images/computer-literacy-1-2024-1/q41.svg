@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 200" width="600" height="200" role="img" aria-label="고객과 제품정보 테이블의 1대N 관계 ERD">
+  <defs>
+    <marker id="one" markerWidth="14" markerHeight="14" refX="2" refY="7" orient="auto">
+      <line x1="2" y1="0" x2="2" y2="14" stroke="#374151" stroke-width="1.5"/>
+      <line x1="8" y1="3" x2="8" y2="11" stroke="#374151" stroke-width="1.5"/>
+    </marker>
+    <marker id="many" markerWidth="14" markerHeight="14" refX="13" refY="7" orient="auto">
+      <line x1="0" y1="7" x2="12" y2="0" stroke="#374151" stroke-width="1.5"/>
+      <line x1="0" y1="7" x2="12" y2="7" stroke="#374151" stroke-width="1.5"/>
+      <line x1="0" y1="7" x2="12" y2="14" stroke="#374151" stroke-width="1.5"/>
+    </marker>
+  </defs>
+  <style>
+    .box{fill:#fafafa;stroke:#374151;stroke-width:1.5}
+    .title{fill:#0f766e}
+    .ttext{font:700 14px sans-serif;fill:#fff;text-anchor:middle}
+    .ftext{font:500 12px ui-monospace,monospace;fill:#111}
+    .pk{font-weight:700;fill:#b45309}
+    .fk{font-weight:700;fill:#dc2626}
+    .rel{font:600 12px sans-serif;fill:#374151;text-anchor:middle}
+  </style>
+  <rect x="40" y="40" width="180" height="120" class="box" rx="4"/>
+  <rect x="40" y="40" width="180" height="28" class="title" rx="4"/>
+  <text x="130" y="60" class="ttext">고객</text>
+  <text x="56" y="92" class="ftext pk">PK  고객번호</text>
+  <text x="56" y="116" class="ftext">      고객명</text>
+  <text x="56" y="140" class="ftext">      연락처</text>
+  <line x1="220" y1="100" x2="380" y2="100" stroke="#374151" stroke-width="1.5"
+        marker-start="url(#one)" marker-end="url(#many)"/>
+  <text x="300" y="92" class="rel">1 : N</text>
+  <rect x="380" y="40" width="180" height="120" class="box" rx="4"/>
+  <rect x="380" y="40" width="180" height="28" class="title" rx="4"/>
+  <text x="470" y="60" class="ttext">제품정보</text>
+  <text x="396" y="92" class="ftext pk">PK  제품번호</text>
+  <text x="396" y="116" class="ftext">      제품명</text>
+  <text x="396" y="140" class="ftext fk">FK  고객번호</text>
+</svg>

@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 540 120" width="540" height="120" role="img" aria-label="A1:C1에 5,3,1이 입력되어 있고 채우기 핸들로 F1까지 드래그">
+  <style>
+    .colhdr,.rowhdr{fill:#e5e7eb;stroke:#9ca3af;stroke-width:1}
+    .cell{fill:#fff;stroke:#9ca3af;stroke-width:1}
+    .sel{fill:#dbeafe;stroke:#1d4ed8;stroke-width:2}
+    .lbl{font:600 11px sans-serif;fill:#374151;text-anchor:middle}
+    .val{font:600 14px sans-serif;fill:#111;text-anchor:middle}
+    .q{font:500 14px sans-serif;fill:#9ca3af;text-anchor:middle}
+    .ann{font:500 11px sans-serif;fill:#1d4ed8;text-anchor:middle}
+  </style>
+  <rect x="10" y="10" width="30" height="22" class="colhdr"/>
+  <rect x="40" y="10" width="80" height="22" class="colhdr"/><text x="80" y="26" class="lbl">A</text>
+  <rect x="120" y="10" width="80" height="22" class="colhdr"/><text x="160" y="26" class="lbl">B</text>
+  <rect x="200" y="10" width="80" height="22" class="colhdr"/><text x="240" y="26" class="lbl">C</text>
+  <rect x="280" y="10" width="80" height="22" class="colhdr"/><text x="320" y="26" class="lbl">D</text>
+  <rect x="360" y="10" width="80" height="22" class="colhdr"/><text x="400" y="26" class="lbl">E</text>
+  <rect x="440" y="10" width="80" height="22" class="colhdr"/><text x="480" y="26" class="lbl">F</text>
+  <rect x="10" y="32" width="30" height="32" class="rowhdr"/><text x="25" y="52" class="lbl">1</text>
+  <rect x="40" y="32" width="80" height="32" class="sel"/><text x="80" y="54" class="val">5</text>
+  <rect x="120" y="32" width="80" height="32" class="sel"/><text x="160" y="54" class="val">3</text>
+  <rect x="200" y="32" width="80" height="32" class="sel"/><text x="240" y="54" class="val">1</text>
+  <rect x="280" y="32" width="80" height="32" class="cell"/><text x="320" y="54" class="q">?</text>
+  <rect x="360" y="32" width="80" height="32" class="cell"/><text x="400" y="54" class="q">?</text>
+  <rect x="440" y="32" width="80" height="32" class="cell"/><text x="480" y="54" class="q">?</text>
+  <rect x="276" y="60" width="8" height="8" fill="#1d4ed8"/>
+  <line x1="284" y1="78" x2="500" y2="78" stroke="#1d4ed8" stroke-width="1.5" stroke-dasharray="4 3"/>
+  <polygon points="500,74 510,78 500,82" fill="#1d4ed8"/>
+  <text x="392" y="100" class="ann">채우기 핸들을 [F1] 셀까지 드래그</text>
+</svg>

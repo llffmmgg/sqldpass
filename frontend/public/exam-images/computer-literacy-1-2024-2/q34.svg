@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 380 240" width="380" height="240" role="img" aria-label="통합 문서 보호 대화 상자에서 보호 대상 구조가 선택됨">
+  <style>
+    .dialog{fill:#f9fafb;stroke:#9ca3af;stroke-width:1.5}
+    .title{fill:#1f2937}
+    .ttext{font:600 12px sans-serif;fill:#fff}
+    .label{font:500 12px sans-serif;fill:#111}
+    .small{font:11px sans-serif;fill:#9ca3af}
+    .btn{fill:#fff;stroke:#9ca3af}
+    .btnp{fill:#2563eb;stroke:#1d4ed8}
+    .btnt{font:600 11px sans-serif;text-anchor:middle}
+    .input{fill:#fff;stroke:#9ca3af}
+  </style>
+  <rect x="10" y="10" width="360" height="220" class="dialog" rx="3"/>
+  <rect x="10" y="10" width="360" height="22" class="title" rx="3"/>
+  <text x="20" y="26" class="ttext">통합 문서 보호</text>
+  <text x="358" y="26" class="ttext" text-anchor="end">×</text>
+  <text x="22" y="56" class="label" font-weight="600">보호 대상</text>
+  <rect x="40" y="68" width="14" height="14" fill="#fff" stroke="#374151"/>
+  <polyline points="42,75 47,80 52,70" stroke="#1d4ed8" stroke-width="2.5" fill="none"/>
+  <text x="62" y="80" class="label">구조(S)</text>
+  <rect x="40" y="92" width="14" height="14" fill="#fff" stroke="#9ca3af"/>
+  <text x="62" y="104" class="small">창(W)</text>
+  <text x="22" y="132" class="label" font-weight="600">암호(선택 사항)(P):</text>
+  <rect x="22" y="140" width="320" height="22" class="input"/>
+  <rect x="200" y="180" width="70" height="26" class="btnp" rx="3"/>
+  <text x="235" y="198" class="btnt" fill="#fff">확인</text>
+  <rect x="278" y="180" width="70" height="26" class="btn" rx="3"/>
+  <text x="313" y="198" class="btnt" fill="#111">취소</text>
+</svg>
