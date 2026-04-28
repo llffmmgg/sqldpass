@@ -718,7 +718,7 @@ function SolvePageContent() {
   const progressPct = Math.min((solvedCount / SET_SIZE) * 100, 100);
 
   return (
-    <main className="min-h-screen bg-bg pb-24 text-text">
+    <main className="min-h-screen bg-bg pb-40 text-text lg:pb-24">
       <Container size="narrow" className="py-10">
         <div className="flex items-center justify-between gap-3">
           <button
@@ -927,19 +927,20 @@ function SolvePageContent() {
                     ? `오답 — 정답은 ${detail.correctOption}번입니다.`
                     : `오답 — 모범답안: ${detail.answer ?? "(없음)"}`}
               </div>
-              <Button
-                variant="primary"
-                size="sm"
-                onClick={handleNext}
-                className="hidden lg:inline-flex"
-                rightIcon={
-                  <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                  </svg>
-                }
-              >
-                {solvedCount >= SET_SIZE ? "결과 보기" : "다음 문제"}
-              </Button>
+              <div className="hidden lg:block">
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={handleNext}
+                  rightIcon={
+                    <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                    </svg>
+                  }
+                >
+                  {solvedCount >= SET_SIZE ? "결과 보기" : "다음 문제"}
+                </Button>
+              </div>
             </div>
 
             {detail.questionType !== "MCQ" && (
@@ -978,10 +979,10 @@ function SolvePageContent() {
         )}
       </Container>
 
-      {/* 모바일 하단 sticky 액션 바 — 채점 전: 정답 제출 / 채점 후: 다음 문제 */}
+      {/* 모바일 하단 sticky 액션 바 — 하단 탭바(약 3rem) 위에 위치 */}
       <div
-        className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-bg/95 px-4 py-3 backdrop-blur-md lg:hidden"
-        style={{ paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom))" }}
+        className="fixed inset-x-0 z-40 border-t border-border bg-bg/95 px-4 py-3 backdrop-blur-md lg:hidden"
+        style={{ bottom: "calc(3rem + env(safe-area-inset-bottom))" }}
       >
         {!revealed ? (
           <Button

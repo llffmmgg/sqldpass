@@ -96,10 +96,10 @@ const TABS: Tab[] = [
 ];
 
 // 시험/풀이 진행 중인 페이지에서는 오탭 방지를 위해 숨김
+// /solve 는 학습 탭 destination 이므로 숨기지 않는다.
 const HIDE_PATTERNS: RegExp[] = [
   /^\/admin(\/|$)/,
   /^\/auth(\/|$)/,
-  /^\/solve\/?$/,
   /^\/mock-exams\/\d+/,
   /^\/cbt-mock-exam(\/|$)/,
   /^\/past-exams\/\d+/,
