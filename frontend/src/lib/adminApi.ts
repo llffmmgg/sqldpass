@@ -680,8 +680,11 @@ export interface ManualMockExamQuestion {
 }
 
 export interface ManualMockExamPayload {
-  name: string;
+  /** 비우면 백엔드가 "{자격증} 모의고사 {seq}회 ({난이도})" 자동 생성 */
+  name?: string;
   examType: CreateMockExamType;
+  /** 자동 이름 라벨용 (EASY/NORMAL/HARD/VERY_HARD). 없으면 NORMAL */
+  difficulty?: MockExamCreationDifficulty;
   /** true 면 PAST_EXAM 으로 승격 */
   pastExam?: boolean;
   examYear?: number;

@@ -14,6 +14,7 @@ import com.sqldpass.controller.admin.dto.ManualMockExamRequest;
 import com.sqldpass.controller.admin.dto.ManualMockExamRequest.ManualQuestion;
 import com.sqldpass.domain.mockexam.MockExam;
 import com.sqldpass.persistent.mockexam.ExamType;
+import com.sqldpass.persistent.mockexam.MockExamDifficulty;
 import com.sqldpass.persistent.mockexam.MockExamEntity;
 import com.sqldpass.persistent.mockexam.MockExamRepository;
 import com.sqldpass.persistent.question.QuestionEntity;
@@ -134,6 +135,7 @@ class MockExamServiceTest {
         ManualMockExamRequest request = new ManualMockExamRequest(
                 "SQLD 수동 등록",
                 ExamType.SQLD,
+                null,
                 false, null, null, null,
                 true,
                 List.of(
@@ -154,6 +156,41 @@ class MockExamServiceTest {
     }
 
     @Test
+    @DisplayName("createManual auto-generates name when blank — '{자격증} 모의고사 N회 ({난이도})'")
+    void createManual_autoNameOnBlank() {
+        SubjectEntity subject = new SubjectEntity(null, "SQL 활용", 0);
+        setSubjectId(subject, 6L);
+
+        given(mockExamRepository.findMaxSequenceByExamType(ExamType.SQLD)).willReturn(Optional.of(57));
+        given(subjectRepository.findById(6L)).willReturn(Optional.of(subject));
+
+        org.mockito.ArgumentCaptor<MockExamEntity> examCaptor =
+                org.mockito.ArgumentCaptor.forClass(MockExamEntity.class);
+        given(mockExamRepository.save(examCaptor.capture())).willAnswer(inv -> {
+            MockExamEntity e = inv.getArgument(0);
+            setId(e, 200L);
+            return e;
+        });
+        given(questionRepository.save(org.mockito.ArgumentMatchers.any(QuestionEntity.class)))
+                .willAnswer(inv -> inv.getArgument(0));
+        given(mockExamRepository.findByIdWithQuestions(200L))
+                .willAnswer(inv -> Optional.of(examCaptor.getValue()));
+
+        ManualMockExamRequest request = new ManualMockExamRequest(
+                null,
+                ExamType.SQLD,
+                MockExamDifficulty.NORMAL,
+                false, null, null, null,
+                false,
+                List.of(new ManualQuestion(6L, "문제1", null, 2, null, null, "해설", null, null, 2))
+        );
+
+        mockExamService.createManual(request);
+
+        assertThat(examCaptor.getValue().getName()).isEqualTo("SQLD 모의고사 58회 (보통)");
+    }
+
+    @Test
     @DisplayName("createManual rejects when MCQ correctOption is missing")
     void createManual_missingCorrectOption() {
         SubjectEntity subject = new SubjectEntity(null, "SQL 활용", 0);
@@ -164,7 +201,7 @@ class MockExamServiceTest {
                 .willAnswer(inv -> inv.getArgument(0));
 
         ManualMockExamRequest request = new ManualMockExamRequest(
-                "SQLD 수동", ExamType.SQLD, false, null, null, null, false,
+                "SQLD 수동", ExamType.SQLD, null, false, null, null, null, false,
                 List.of(new ManualQuestion(6L, "문제", null, null, null, null, "해설", null, null, 2))
         );
 

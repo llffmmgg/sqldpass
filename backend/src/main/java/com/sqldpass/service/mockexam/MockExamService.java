@@ -202,9 +202,6 @@ public class MockExamService {
         if (request.examType() == null) {
             throw new SqldpassException(ErrorCode.INVALID_INPUT, "examType 은 필수입니다.");
         }
-        if (request.name() == null || request.name().isBlank()) {
-            throw new SqldpassException(ErrorCode.INVALID_INPUT, "name 은 필수입니다.");
-        }
         List<ManualQuestion> questions = request.questions();
         if (questions == null || questions.isEmpty()) {
             throw new SqldpassException(ErrorCode.INVALID_INPUT, "questions 는 1개 이상이어야 합니다.");
@@ -219,7 +216,14 @@ public class MockExamService {
         ExamType examType = request.examType();
         int nextSeq = mockExamRepository.findMaxSequenceByExamType(examType).orElse(0) + 1;
 
-        MockExamEntity entity = new MockExamEntity(request.name().trim(), examType, nextSeq);
+        String name;
+        if (request.name() != null && !request.name().isBlank()) {
+            name = request.name().trim();
+        } else {
+            name = autoMockExamName(examType, nextSeq, request.difficulty());
+        }
+
+        MockExamEntity entity = new MockExamEntity(name, examType, nextSeq);
         mockExamRepository.save(entity);
 
         if (promote) {
@@ -239,6 +243,23 @@ public class MockExamService {
         MockExamEntity loaded = mockExamRepository.findByIdWithQuestions(entity.getId())
                 .orElseThrow(() -> new SqldpassException(ErrorCode.MOCK_EXAM_NOT_FOUND));
         return MockExamMapper.toDomain(loaded);
+    }
+
+    /**
+     * "{자격증} 모의고사 {sequence}회 ({difficulty라벨})" 형태의 자동 이름.
+     * 사용자 측 manual 등록 시 이름을 비워두면 백엔드가 sequence 기반으로 채워준다.
+     */
+    private static String autoMockExamName(ExamType type, int sequence, MockExamDifficulty difficulty) {
+        String typeLabel = switch (type) {
+            case SQLD -> "SQLD";
+            case ENGINEER_PRACTICAL -> "정처기 실기";
+            case ENGINEER_WRITTEN -> "정처기 필기";
+            case COMPUTER_LITERACY_1 -> "컴활 1급";
+            case COMPUTER_LITERACY_2 -> "컴활 2급";
+            case ADSP -> "ADsP";
+        };
+        MockExamDifficulty resolved = difficulty != null ? difficulty : MockExamDifficulty.NORMAL;
+        return String.format("%s 모의고사 %d회 (%s)", typeLabel, sequence, resolved.label());
     }
 
     private QuestionEntity buildQuestion(ManualQuestion q, int index) {
