@@ -156,8 +156,17 @@ export function PastExamCard({
           >
             기출
           </Badge>
-          {isNew && <NewBadge />}
         </div>
+
+        {isNew && (
+          /* eslint-disable-next-line @next/next/no-img-element -- 정적 배지 이미지, next/image 의 추가 최적화가 비용 대비 의미 없음 */
+          <img
+            src="/badges/new-logo.webp"
+            alt="NEW"
+            aria-label="새로 추가된 회차"
+            className="pointer-events-none absolute -bottom-1 -right-1 z-10 h-16 w-16 select-none rotate-[8deg] object-contain drop-shadow-[0_4px_10px_rgba(16,185,129,0.35)] transition-transform duration-300 ease-out group-hover:-rotate-3 group-hover:scale-110 sm:h-20 sm:w-20"
+          />
+        )}
 
         <h3 className="mt-3 text-lg font-semibold leading-tight">
           {buildExamTitle(exam)}
@@ -209,14 +218,6 @@ function groupPastExams(exams: PublicPastExamSummary[]) {
       }),
     }))
     .sort((a, b) => b.year - a.year);
-}
-
-function NewBadge() {
-  return (
-    <span className="inline-flex items-center rounded-full border border-rose-500/40 bg-rose-500/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-rose-500 dark:text-rose-300">
-      NEW
-    </span>
-  );
 }
 
 function isWithinDays(iso: string | null | undefined, days: number): boolean {

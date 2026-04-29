@@ -19,7 +19,7 @@ import {
   type ExamType,
   type MockExamSummary,
 } from "@/lib/mockExamApi";
-import { isExamNew, markExamSeen } from "@/lib/mockExamNew";
+import { isExamNew } from "@/lib/mockExamNew";
 import { getPublicMockExams } from "@/lib/publicApi";
 
 export default function MockExamsPage() {
@@ -155,11 +155,7 @@ function MockExamCard({ exam }: { exam: MockExamSummary }) {
   const href = `/mock-exams/${exam.id}`;
 
   return (
-    <Link
-      href={href}
-      onClick={() => markExamSeen(exam.id)}
-      className="group relative block"
-    >
+    <Link href={href} className="group relative block">
       <Card
         variant="interactive"
         padding="md"
@@ -202,13 +198,17 @@ function MockExamCard({ exam }: { exam: MockExamSummary }) {
               🔒 프리미엄
             </Badge>
           )}
-          {isNew && (
-            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white shadow-sm">
-              <span className="h-1 w-1 rounded-full bg-white/90" />
-              NEW
-            </span>
-          )}
         </div>
+
+        {isNew && (
+          /* eslint-disable-next-line @next/next/no-img-element -- 정적 배지 이미지, next/image 의 추가 최적화가 비용 대비 의미 없음 */
+          <img
+            src="/badges/new-logo.webp"
+            alt="NEW"
+            aria-label="새로 추가된 회차"
+            className="pointer-events-none absolute -bottom-1 -right-1 z-10 h-16 w-16 select-none rotate-[8deg] object-contain drop-shadow-[0_4px_10px_rgba(16,185,129,0.35)] transition-transform duration-300 ease-out group-hover:-rotate-3 group-hover:scale-110 sm:h-20 sm:w-20"
+          />
+        )}
 
         <div className="mt-2 flex items-center gap-2">
           <DifficultyBadge label={exam.difficultyLabel} />
