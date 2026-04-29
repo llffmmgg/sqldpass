@@ -222,12 +222,20 @@ export default function AdminMockExamsPage() {
   return (
     <div>
       {/* Header */}
-      <div className="flex flex-col gap-1">
-        <h1 className="text-2xl font-bold">모의고사 관리</h1>
-        <p className="text-sm text-muted">
-          자격증별로 모의고사를 생성/삭제합니다. 생성 시 해당 자격증의 분포
-          템플릿에 따라 문제가 자동 편성됩니다.
-        </p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="flex flex-col gap-1">
+          <h1 className="text-2xl font-bold">모의고사 관리</h1>
+          <p className="text-sm text-muted">
+            자격증별로 모의고사를 생성/삭제합니다. 생성 시 해당 자격증의 분포
+            템플릿에 따라 문제가 자동 편성됩니다.
+          </p>
+        </div>
+        <Link
+          href="/admin/mock-exams/manual"
+          className="rounded-lg border border-violet-500/40 bg-violet-500/10 px-3 py-2 text-xs font-semibold text-violet-300 hover:bg-violet-500/20"
+        >
+          + JSON 으로 직접 등록
+        </Link>
       </div>
 
       {/* Tabs */}

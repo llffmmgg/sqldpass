@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.sqldpass.controller.admin.dto.CreateMockExamRequest;
+import com.sqldpass.controller.admin.dto.ManualMockExamRequest;
 import com.sqldpass.controller.mockexam.dto.MockExamDetailResponse;
 import com.sqldpass.controller.mockexam.dto.MockExamSummaryResponse;
 import com.sqldpass.persistent.mockexam.EngineerExamTemplate;
@@ -60,6 +61,16 @@ public class AdminMockExamController {
         MockExamDifficulty difficulty = (body != null) ? body.difficulty() : null;
         EngineerExamTemplate engineerTemplate = (body != null) ? body.engineerTemplate() : null;
         return MockExamSummaryResponse.from(mockExamService.create(type, difficulty, engineerTemplate));
+    }
+
+    @PostMapping("/manual")
+    @Operation(
+            summary = "수동 모의고사 등록 (JSON 한 통으로 메타 + 문제 N개 적재)",
+            description = "AI 생성 없이 어드민이 직접 JSON 으로 모의고사를 적재한다. PAST_EXAM 승격 / 전문가 검수 플래그도 같은 트랜잭션에서 처리."
+    )
+    @ResponseStatus(HttpStatus.CREATED)
+    public MockExamSummaryResponse createManual(@RequestBody ManualMockExamRequest body) {
+        return MockExamSummaryResponse.from(mockExamService.createManual(body));
     }
 
     @PatchMapping("/{id}/visibility")

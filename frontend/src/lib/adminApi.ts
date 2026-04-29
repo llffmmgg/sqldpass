@@ -658,6 +658,49 @@ export function deleteMockExam(id: number) {
 }
 
 // ----------------------------------------------------------
+// 어드민 수동 모의고사 등록 (JSON 한 통으로 메타 + 문제 N개)
+// ----------------------------------------------------------
+
+export type ManualQuestionType = "MCQ" | "SHORT_ANSWER" | "DESCRIPTIVE";
+
+export interface ManualMockExamQuestion {
+  subjectId: number;
+  content: string;
+  /** 생략 시 MCQ */
+  questionType?: ManualQuestionType;
+  /** MCQ 일 때 1~4 필수 */
+  correctOption?: number;
+  /** SHORT_ANSWER / DESCRIPTIVE 일 때 필수 */
+  answer?: string;
+  keywords?: string[];
+  explanation: string;
+  summary?: string;
+  topic?: string;
+  difficulty?: number;
+}
+
+export interface ManualMockExamPayload {
+  name: string;
+  examType: CreateMockExamType;
+  /** true 면 PAST_EXAM 으로 승격 */
+  pastExam?: boolean;
+  examYear?: number;
+  examRound?: number;
+  /** YYYY-MM-DD */
+  examDate?: string;
+  /** true 면 등록과 동시에 전문가 검수 완료 처리 */
+  expertVerified?: boolean;
+  questions: ManualMockExamQuestion[];
+}
+
+export function createManualMockExam(payload: ManualMockExamPayload) {
+  return adminFetch<AdminMockExam>("/mock-exams/manual", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+// ----------------------------------------------------------
 // LLM 검증용 Markdown export
 // ----------------------------------------------------------
 

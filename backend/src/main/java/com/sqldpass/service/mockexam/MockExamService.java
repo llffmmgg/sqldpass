@@ -10,7 +10,10 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import tools.jackson.databind.ObjectMapper;
 import com.sqldpass.config.CacheConfig;
+import com.sqldpass.controller.admin.dto.ManualMockExamRequest;
+import com.sqldpass.controller.admin.dto.ManualMockExamRequest.ManualQuestion;
 import com.sqldpass.domain.mockexam.MockExam;
 import com.sqldpass.persistent.mockexam.ExamType;
 import com.sqldpass.persistent.mockexam.MockExamDifficulty;
@@ -18,9 +21,14 @@ import com.sqldpass.persistent.mockexam.MockExamEntity;
 import com.sqldpass.persistent.mockexam.MockExamMapper;
 import com.sqldpass.persistent.mockexam.MockExamRepository;
 import com.sqldpass.persistent.mockexam.MockExamVisibility;
+import com.sqldpass.persistent.question.QuestionEntity;
 import com.sqldpass.persistent.question.QuestionRepository;
+import com.sqldpass.persistent.question.QuestionType;
+import com.sqldpass.persistent.subject.SubjectEntity;
+import com.sqldpass.persistent.subject.SubjectRepository;
 import com.sqldpass.service.common.ErrorCode;
 import com.sqldpass.service.common.SqldpassException;
+import com.sqldpass.service.generation.QuestionContentHasher;
 
 import lombok.RequiredArgsConstructor;
 
@@ -31,12 +39,14 @@ public class MockExamService {
 
     private final MockExamRepository mockExamRepository;
     private final QuestionRepository questionRepository;
+    private final SubjectRepository subjectRepository;
     private final MockExamCreator mockExamCreator;
     private final EngineerMockExamCreator engineerMockExamCreator;
     private final ComputerLiteracyMockExamCreator computerLiteracyMockExamCreator;
     private final ComputerLiteracy2MockExamCreator computerLiteracy2MockExamCreator;
     private final EngineerWrittenMockExamCreator engineerWrittenMockExamCreator;
     private final AdspMockExamCreator adspMockExamCreator;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     /** 어드민용 — DRAFT 포함 전체 회차 */
     public List<MockExam> getAll() {
@@ -177,6 +187,117 @@ public class MockExamService {
         MockExamEntity loaded = mockExamRepository.findByIdWithQuestions(created.getId())
                 .orElseThrow(() -> new SqldpassException(ErrorCode.MOCK_EXAM_NOT_FOUND));
         return MockExamMapper.toDomain(loaded);
+    }
+
+    /**
+     * 어드민 수동 모의고사 등록 — JSON 한 통으로 모의고사 메타 + 문제 N개를 동시에 적재한다.
+     * AI 자동 생성과 별도 경로. PAST_EXAM 승격 / 전문가 검수 플래그도 같은 트랜잭션에서 처리.
+     */
+    @Transactional
+    @CacheEvict(value = CacheConfig.CACHE_MOCK_EXAM_LIST, allEntries = true)
+    public MockExam createManual(ManualMockExamRequest request) {
+        if (request == null) {
+            throw new SqldpassException(ErrorCode.INVALID_INPUT, "요청 본문이 비어 있습니다.");
+        }
+        if (request.examType() == null) {
+            throw new SqldpassException(ErrorCode.INVALID_INPUT, "examType 은 필수입니다.");
+        }
+        if (request.name() == null || request.name().isBlank()) {
+            throw new SqldpassException(ErrorCode.INVALID_INPUT, "name 은 필수입니다.");
+        }
+        List<ManualQuestion> questions = request.questions();
+        if (questions == null || questions.isEmpty()) {
+            throw new SqldpassException(ErrorCode.INVALID_INPUT, "questions 는 1개 이상이어야 합니다.");
+        }
+
+        boolean promote = Boolean.TRUE.equals(request.pastExam());
+        if (promote && (request.examYear() == null || request.examRound() == null)) {
+            throw new SqldpassException(ErrorCode.INVALID_INPUT,
+                    "pastExam=true 이면 examYear/examRound 는 필수입니다.");
+        }
+
+        ExamType examType = request.examType();
+        int nextSeq = mockExamRepository.findMaxSequenceByExamType(examType).orElse(0) + 1;
+
+        MockExamEntity entity = new MockExamEntity(request.name().trim(), examType, nextSeq);
+        mockExamRepository.save(entity);
+
+        if (promote) {
+            entity.promoteToPastExam(request.examYear(), request.examRound(), request.examDate());
+        }
+        if (Boolean.TRUE.equals(request.expertVerified())) {
+            entity.toggleExpertVerified();
+        }
+
+        for (int i = 0; i < questions.size(); i++) {
+            ManualQuestion q = questions.get(i);
+            QuestionEntity saved = buildQuestion(q, i + 1);
+            questionRepository.save(saved);
+            entity.linkQuestion(saved, i + 1);
+        }
+
+        MockExamEntity loaded = mockExamRepository.findByIdWithQuestions(entity.getId())
+                .orElseThrow(() -> new SqldpassException(ErrorCode.MOCK_EXAM_NOT_FOUND));
+        return MockExamMapper.toDomain(loaded);
+    }
+
+    private QuestionEntity buildQuestion(ManualQuestion q, int index) {
+        if (q == null) {
+            throw new SqldpassException(ErrorCode.INVALID_INPUT,
+                    "questions[" + (index - 1) + "] 가 null 입니다.");
+        }
+        if (q.subjectId() == null) {
+            throw new SqldpassException(ErrorCode.INVALID_INPUT,
+                    "questions[" + (index - 1) + "].subjectId 는 필수입니다.");
+        }
+        if (q.content() == null || q.content().isBlank()) {
+            throw new SqldpassException(ErrorCode.INVALID_INPUT,
+                    "questions[" + (index - 1) + "].content 는 필수입니다.");
+        }
+        SubjectEntity subject = subjectRepository.findById(q.subjectId())
+                .orElseThrow(() -> new SqldpassException(ErrorCode.SUBJECT_NOT_FOUND,
+                        "questions[" + (index - 1) + "].subjectId=" + q.subjectId() + " 가 존재하지 않습니다."));
+
+        QuestionType qt = q.questionType() != null ? q.questionType() : QuestionType.MCQ;
+        QuestionEntity entity;
+        if (qt == QuestionType.MCQ) {
+            if (q.correctOption() == null || q.correctOption() < 1 || q.correctOption() > 4) {
+                throw new SqldpassException(ErrorCode.INVALID_INPUT,
+                        "questions[" + (index - 1) + "].correctOption 은 1~4 사이여야 합니다 (MCQ).");
+            }
+            entity = new QuestionEntity(
+                    subject,
+                    q.content(),
+                    q.correctOption(),
+                    q.explanation() != null ? q.explanation() : "",
+                    q.summary(),
+                    q.topic(),
+                    q.difficulty());
+        } else {
+            if (q.answer() == null || q.answer().isBlank()) {
+                throw new SqldpassException(ErrorCode.INVALID_INPUT,
+                        "questions[" + (index - 1) + "].answer 는 필수입니다 (SHORT_ANSWER/DESCRIPTIVE).");
+            }
+            String keywordsJson;
+            try {
+                List<String> kws = q.keywords() != null ? q.keywords() : List.of();
+                keywordsJson = objectMapper.writeValueAsString(kws);
+            } catch (Exception e) {
+                keywordsJson = "[]";
+            }
+            entity = new QuestionEntity(
+                    subject,
+                    q.content(),
+                    qt,
+                    q.answer(),
+                    keywordsJson,
+                    q.explanation() != null ? q.explanation() : "",
+                    q.summary(),
+                    q.topic(),
+                    q.difficulty());
+        }
+        entity.assignContentHash(QuestionContentHasher.hashOf(q.content()));
+        return entity;
     }
 
     @Transactional
