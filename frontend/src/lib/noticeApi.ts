@@ -21,7 +21,9 @@ export interface ActiveNotice {
 export async function getActiveNotice(type: NoticeDisplayType): Promise<ActiveNotice | null> {
   try {
     const res = await fetch(`${BASE}/api/notices/active?type=${type}`, {
-      cache: "no-store",
+      // 브라우저/CDN HTTP 캐시는 백엔드의 Cache-Control 헤더를 따른다 (PublicCacheControlInterceptor).
+      // SSR/RSC 경로에서 호출될 때를 위한 Next.js 캐시 힌트는 30분 ISR.
+      next: { revalidate: 1800 },
     });
     if (res.status === 204) return null;
     if (!res.ok) return null;

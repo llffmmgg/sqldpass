@@ -10,7 +10,7 @@ import {
 import { loadPastExamListsByCert, flattenPastExamLists } from "@/lib/pastExamCatalog";
 import BlogList from "./BlogList";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 1800;
 
 export const metadata: Metadata = {
   title: "자격증 시험 준비 블로그",

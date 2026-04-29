@@ -225,6 +225,13 @@ public interface QuestionRepository extends JpaRepository<QuestionEntity, Long> 
 
     long countBySubjectId(Long subjectId);
 
+    /**
+     * 여러 과목의 question 개수를 한 번의 GROUP BY로 집계.
+     * 카테고리 N+1(child별 count) 제거용.
+     */
+    @Query("SELECT q.subject.id, COUNT(q) FROM QuestionEntity q WHERE q.subject.id IN :subjectIds GROUP BY q.subject.id")
+    List<Object[]> countBySubjectIdIn(@Param("subjectIds") List<Long> subjectIds);
+
     @Query("""
             SELECT q FROM QuestionEntity q
             JOIN FETCH q.subject s

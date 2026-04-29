@@ -13,7 +13,7 @@ import {
 } from "@/lib/pastExamBlog";
 import { flattenPastExamLists, loadPastExamListsByCert } from "@/lib/pastExamCatalog";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 1800;
 
 type Params = { category: string };
 

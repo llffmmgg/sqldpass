@@ -1,11 +1,22 @@
 server:
   shutdown: graceful
+  # 큰 JSON 응답(모의고사 50문항, 카테고리 트리, 기출 본문)을 gzip/br 압축해 전송 비용을 60%+ 절감.
+  compression:
+    enabled: true
+    mime-types: application/json,application/xml,text/html,text/plain,text/css,application/javascript
+    min-response-size: 1024
 
 spring:
   datasource:
     url: ${DB_URL}
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
+    # 운영 동시성 대비 풀 확장 (기본 max=10 → 20). idle 5로 콜드 스타트 단축.
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+      connection-timeout: 20000
+      idle-timeout: 600000
   jpa:
     properties:
       hibernate:

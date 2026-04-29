@@ -10,13 +10,16 @@ public class WebMvcConfig implements WebMvcConfigurer {
     private final AdminAuthInterceptor adminAuthInterceptor;
     private final MemberAuthInterceptor memberAuthInterceptor;
     private final OptionalMemberAuthInterceptor optionalMemberAuthInterceptor;
+    private final PublicCacheControlInterceptor publicCacheControlInterceptor;
 
     public WebMvcConfig(AdminAuthInterceptor adminAuthInterceptor,
                         MemberAuthInterceptor memberAuthInterceptor,
-                        OptionalMemberAuthInterceptor optionalMemberAuthInterceptor) {
+                        OptionalMemberAuthInterceptor optionalMemberAuthInterceptor,
+                        PublicCacheControlInterceptor publicCacheControlInterceptor) {
         this.adminAuthInterceptor = adminAuthInterceptor;
         this.memberAuthInterceptor = memberAuthInterceptor;
         this.optionalMemberAuthInterceptor = optionalMemberAuthInterceptor;
+        this.publicCacheControlInterceptor = publicCacheControlInterceptor;
     }
 
     @Override
@@ -44,5 +47,26 @@ public class WebMvcConfig implements WebMvcConfigurer {
                 .addPathPatterns(
                         "/api/public/past-exams/**",
                         "/api/posts/**");
+
+        // 회원/IP 의존성이 없는 공개 GET 응답에만 Cache-Control: public, max-age=1800.
+        // 의존성이 있는 경로(예: /past-exams 목록의 best-score, /random-questions의 IP 한도)는
+        // 화이트리스트에서 의도적으로 제외.
+        registry.addInterceptor(publicCacheControlInterceptor)
+                .addPathPatterns(
+                        "/api/public/stats",
+                        "/api/public/ranking",
+                        "/api/public/insights/hardest",
+                        "/api/public/certs",
+                        "/api/public/certs/*/categories",
+                        "/api/public/categories/*/questions",
+                        "/api/public/questions/*",
+                        "/api/public/daily-question",
+                        "/api/public/subjects",
+                        "/api/public/mock-exams",
+                        "/api/public/past-exams/*/with-answers",
+                        "/api/public/blog/views",
+                        "/api/public/posts/*",
+                        "/api/public/posts/seo-list",
+                        "/api/notices/active");
     }
 }

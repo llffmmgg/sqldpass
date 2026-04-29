@@ -847,8 +847,9 @@ function SolvePageContent() {
 
           {current.questionType === "SHORT_ANSWER" && (
             <div className="mt-6">
-              <label className="mb-2 block text-xs text-text-muted">정답 입력</label>
+              <label htmlFor="solve-short-answer" className="mb-2 block text-xs text-text-muted">정답 입력</label>
               <input
+                id="solve-short-answer"
                 type="text"
                 value={answerText}
                 onChange={(e) => setAnswerText(e.target.value)}

@@ -1,7 +1,7 @@
 import PastExamCertPage from "@/components/past-exams/PastExamCertPage";
 import { buildPastExamCertMetadata } from "@/lib/pastExamSeo";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 1800;
 export const metadata = buildPastExamCertMetadata("sqld");
 
 export default function SqldPastExamsPage() {

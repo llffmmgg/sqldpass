@@ -1,10 +1,16 @@
 "use client";
 
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { useEffect, useState, use } from "react";
 import { useRouter } from "next/navigation";
 
-import PostMarkdown from "@/components/PostMarkdown";
+const PostMarkdown = dynamic(() => import("@/components/PostMarkdown"), {
+  ssr: false,
+  loading: () => (
+    <div className="my-3 h-24 rounded-lg border border-border bg-surface/40 animate-pulse" />
+  ),
+});
 import { CERT_TOKENS, certFromExamType, type CertKey } from "@/lib/cert-tokens";
 import {
   adminApprovePost,

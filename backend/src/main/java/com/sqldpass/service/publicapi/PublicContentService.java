@@ -2,7 +2,9 @@ package com.sqldpass.service.publicapi;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -147,6 +149,7 @@ public class PublicContentService {
 
     // =================== 자격증 목록 ===================
 
+    @Cacheable(CacheConfig.CACHE_PUBLIC_CERTS)
     public List<PublicCertResponse> listCerts() {
         List<PublicCategoryResponse> sqldCats = listSqldCategories();
         List<PublicCategoryResponse> engCats = listEngineerCategories();
@@ -173,6 +176,7 @@ public class PublicContentService {
 
     // =================== 카테고리 목록 ===================
 
+    @Cacheable(value = CacheConfig.CACHE_PUBLIC_CATEGORIES, key = "#certSlug")
     public List<PublicCategoryResponse> listCategoriesByCert(String certSlug) {
         return switch (certSlug) {
             case SQLD_SLUG -> listSqldCategories();
@@ -186,17 +190,25 @@ public class PublicContentService {
     }
 
     private List<PublicCategoryResponse> listSqldCategories() {
-        List<SubjectEntity> roots = subjectRepository.findByParentIsNullOrderByDisplayOrder();
-        List<PublicCategoryResponse> result = new ArrayList<>();
+        List<SubjectEntity> roots = subjectRepository.findRootsWithChildren();
+        List<SubjectEntity> sqldRoots = new ArrayList<>();
+        List<Long> childIds = new ArrayList<>();
         for (SubjectEntity root : roots) {
             if (ENGINEER_ROOT_SUBJECT_NAME.equals(root.getName())) continue;
             if (COMPUTER_LITERACY_ROOT_SUBJECT_NAME.equals(root.getName())) continue;
             if (COMPUTER_LITERACY_2_ROOT_SUBJECT_NAME.equals(root.getName())) continue;
             if (ENGINEER_WRITTEN_ROOT_SUBJECT_NAME.equals(root.getName())) continue;
             if (ADSP_ROOT_SUBJECT_NAME.equals(root.getName())) continue;
-            List<SubjectEntity> children = subjectRepository.findByParentIdOrderByDisplayOrder(root.getId());
-            for (SubjectEntity child : children) {
-                int count = (int) questionRepository.countBySubjectId(child.getId());
+            sqldRoots.add(root);
+            for (SubjectEntity child : sortByDisplayOrder(root.getChildren())) {
+                childIds.add(child.getId());
+            }
+        }
+        Map<Long, Integer> counts = countQuestionsBySubjectIds(childIds);
+        List<PublicCategoryResponse> result = new ArrayList<>();
+        for (SubjectEntity root : sqldRoots) {
+            for (SubjectEntity child : sortByDisplayOrder(root.getChildren())) {
+                int count = counts.getOrDefault(child.getId(), 0);
                 result.add(new PublicCategoryResponse(child.getId(), child.getName(), root.getName(), count));
             }
         }
@@ -224,15 +236,38 @@ public class PublicContentService {
     }
 
     private List<PublicCategoryResponse> listSingleRootCategories(String rootName) {
-        SubjectEntity root = subjectRepository.findByNameAndParentIsNull(rootName).orElse(null);
+        SubjectEntity root = subjectRepository.findRootsWithChildren().stream()
+                .filter(s -> rootName.equals(s.getName()))
+                .findFirst()
+                .orElse(null);
         if (root == null) return List.of();
-        List<SubjectEntity> children = subjectRepository.findByParentIdOrderByDisplayOrder(root.getId());
+        List<SubjectEntity> children = sortByDisplayOrder(root.getChildren());
+        List<Long> childIds = children.stream().map(SubjectEntity::getId).toList();
+        Map<Long, Integer> counts = countQuestionsBySubjectIds(childIds);
         List<PublicCategoryResponse> result = new ArrayList<>();
         for (SubjectEntity child : children) {
-            int count = (int) questionRepository.countBySubjectId(child.getId());
+            int count = counts.getOrDefault(child.getId(), 0);
             result.add(new PublicCategoryResponse(child.getId(), child.getName(), root.getName(), count));
         }
         return result;
+    }
+
+    /** 카테고리 응답 정렬에 사용할 displayOrder 정렬. JOIN FETCH는 컬렉션 순서를 보장하지 않음. */
+    private static List<SubjectEntity> sortByDisplayOrder(Collection<SubjectEntity> children) {
+        List<SubjectEntity> sorted = new ArrayList<>(children);
+        sorted.sort((a, b) -> Integer.compare(a.getDisplayOrder(), b.getDisplayOrder()));
+        return sorted;
+    }
+
+    /** 여러 과목의 question 개수 일괄 집계 (1 GROUP BY 쿼리). */
+    private Map<Long, Integer> countQuestionsBySubjectIds(Collection<Long> subjectIds) {
+        if (subjectIds == null || subjectIds.isEmpty()) return Collections.emptyMap();
+        List<Object[]> rows = questionRepository.countBySubjectIdIn(new ArrayList<>(subjectIds));
+        Map<Long, Integer> map = new HashMap<>();
+        for (Object[] row : rows) {
+            map.put((Long) row[0], ((Number) row[1]).intValue());
+        }
+        return map;
     }
 
     // =================== 카테고리별 문제 페이지네이션 ===================

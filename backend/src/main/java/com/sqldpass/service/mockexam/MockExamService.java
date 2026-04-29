@@ -5,9 +5,12 @@ import java.util.List;
 
 import java.time.LocalDate;
 
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.sqldpass.config.CacheConfig;
 import com.sqldpass.domain.mockexam.MockExam;
 import com.sqldpass.persistent.mockexam.ExamType;
 import com.sqldpass.persistent.mockexam.MockExamDifficulty;
@@ -41,6 +44,7 @@ public class MockExamService {
     }
 
     /** 사용자용 — DRAFT 제외 (PUBLISHED + PREMIUM만) */
+    @Cacheable(CacheConfig.CACHE_MOCK_EXAM_LIST)
     public List<MockExam> getAllForUser() {
         return mapRows(mockExamRepository.findUserVisibleWithQuestionCounts());
     }
@@ -60,6 +64,7 @@ public class MockExamService {
 
     /** 어드민 — visibility 변경 */
     @Transactional
+    @CacheEvict(value = CacheConfig.CACHE_MOCK_EXAM_LIST, allEntries = true)
     public MockExam changeVisibility(Long id, MockExamVisibility visibility) {
         MockExamEntity entity = mockExamRepository.findById(id)
                 .orElseThrow(() -> new SqldpassException(ErrorCode.MOCK_EXAM_NOT_FOUND));
@@ -91,6 +96,7 @@ public class MockExamService {
 
     /** 전문가 검증 완료 토글 */
     @Transactional
+    @CacheEvict(value = CacheConfig.CACHE_MOCK_EXAM_LIST, allEntries = true)
     public boolean toggleExpertVerified(Long mockExamId) {
         MockExamEntity entity = mockExamRepository.findById(mockExamId)
                 .orElseThrow(() -> new SqldpassException(ErrorCode.MOCK_EXAM_NOT_FOUND));
@@ -103,6 +109,7 @@ public class MockExamService {
      * promote=true 면 kind=PAST_EXAM + 연도/회차/시험일 세팅, false 면 AI 로 초기화.
      */
     @Transactional
+    @CacheEvict(value = CacheConfig.CACHE_MOCK_EXAM_LIST, allEntries = true)
     public MockExam setPastExamMeta(Long id, boolean promote,
                                     Integer examYear, Integer examRound, LocalDate examDate) {
         MockExamEntity entity = mockExamRepository.findById(id)
@@ -154,6 +161,7 @@ public class MockExamService {
      * - engineerTemplate is only used for ENGINEER_PRACTICAL (null → 랜덤 선택).
      */
     @Transactional
+    @CacheEvict(value = CacheConfig.CACHE_MOCK_EXAM_LIST, allEntries = true)
     public MockExam create(ExamType examType, MockExamDifficulty difficulty,
                            com.sqldpass.persistent.mockexam.EngineerExamTemplate engineerTemplate) {
         ExamType type = examType != null ? examType : ExamType.SQLD;
@@ -172,6 +180,7 @@ public class MockExamService {
     }
 
     @Transactional
+    @CacheEvict(value = CacheConfig.CACHE_MOCK_EXAM_LIST, allEntries = true)
     public void delete(Long id) {
         if (!mockExamRepository.existsById(id)) {
             throw new SqldpassException(ErrorCode.MOCK_EXAM_NOT_FOUND);

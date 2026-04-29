@@ -15,7 +15,6 @@ import {
   type PublicCategory,
 } from "@/lib/publicApi";
 
-export const dynamic = "force-dynamic";
 export const revalidate = 1800; // 30분 ISR
 
 export const metadata: Metadata = {
