@@ -10,14 +10,14 @@ import { isExamNew, countNewExams } from "@/lib/mockExamNew";
 import { getMockExams, type MockExamSummary } from "@/lib/mockExamApi";
 import { getPublicMockExams } from "@/lib/publicApi";
 
-const CACHE_KEY = "mockexam:new-signal:v1";
+const CACHE_KEY = "mockexam:new-signal:v2";
 const TTL_MS = 5 * 60 * 1000;
 
 interface CachedPayload {
   fetchedAt: number;
   exams: Pick<
     MockExamSummary,
-    "id" | "examType" | "createdAt" | "publishedAt" | "pastExamLinkedAt"
+    "id" | "examType" | "kind" | "createdAt" | "publishedAt"
   >[];
 }
 
@@ -82,9 +82,9 @@ function writeCache(list: MockExamSummary[]): void {
       exams: list.map((e) => ({
         id: e.id,
         examType: e.examType,
+        kind: e.kind,
         createdAt: e.createdAt,
         publishedAt: e.publishedAt,
-        pastExamLinkedAt: e.pastExamLinkedAt,
       })),
     };
     window.sessionStorage.setItem(CACHE_KEY, JSON.stringify(slim));
