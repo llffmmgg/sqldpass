@@ -201,13 +201,13 @@ export default function DailyQuestionWidget() {
 
             {/* 비로그인: 링크로 이동 유도 */}
             {!logged && (
-              <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+              <div className="mt-4 flex flex-col items-stretch gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
                 <p className="text-xs text-muted">
                   로그인하면 <span className="text-foreground font-medium">여기서 바로 풀고 연속 학습 기록</span>이 쌓여요.
                 </p>
                 <Link
                   href={`/q/${question.id}`}
-                  className="inline-flex items-center gap-1 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-fg hover:bg-primary-hover"
+                  className="inline-flex items-center justify-center gap-1 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-fg hover:bg-primary-hover sm:w-auto"
                 >
                   문제 풀러 가기 →
                 </Link>
@@ -226,7 +226,7 @@ export default function DailyQuestionWidget() {
                     className="w-full resize-y rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
                   />
                 )}
-                <div className="mt-4 flex items-center justify-between">
+                <div className="mt-4 flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <p className="text-xs text-muted">
                     {isMcq ? "정답 번호를 고르세요" : "핵심 키워드를 포함해 간단히"}
                   </p>
@@ -234,7 +234,7 @@ export default function DailyQuestionWidget() {
                     type="button"
                     onClick={handleSubmit}
                     disabled={!canSubmit}
-                    className="inline-flex items-center gap-1 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-fg hover:bg-primary-hover disabled:opacity-40"
+                    className="inline-flex items-center justify-center gap-1 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-fg hover:bg-primary-hover disabled:opacity-40 sm:w-auto"
                   >
                     {submitting ? "제출 중…" : "제출하기"}
                   </button>

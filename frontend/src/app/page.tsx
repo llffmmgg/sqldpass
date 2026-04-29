@@ -29,7 +29,7 @@ export default function Home() {
         <div className="hero-orb hero-orb-3" aria-hidden="true" />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_50%_at_50%_50%,transparent_0%,var(--bg)_100%)]" />
 
-        <Container size="default" className="relative py-24 text-center sm:py-32 md:py-40">
+        <Container size="default" className="relative py-16 text-center sm:py-24 md:py-40">
           <ScrollReveal>
             <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/25 bg-primary/10 px-3.5 py-1.5 text-xs font-medium text-primary">
               <span className="relative flex h-1.5 w-1.5">
@@ -41,7 +41,7 @@ export default function Home() {
           </ScrollReveal>
 
           <ScrollReveal delay={1}>
-            <h1 className="mt-6 text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl lg:text-7xl">
+            <h1 className="mt-6 text-3xl font-bold tracking-tight sm:text-5xl md:text-6xl lg:text-7xl">
               CBT 모의고사,
               <br />
               <span className="bg-gradient-to-r from-primary to-[#5ee0a5] bg-clip-text text-transparent">
@@ -51,44 +51,68 @@ export default function Home() {
           </ScrollReveal>
 
           <ScrollReveal delay={2}>
-            <p className="mx-auto mt-6 max-w-xl text-base leading-relaxed text-text-muted sm:text-lg">
+            <p className="mx-auto mt-5 max-w-xl text-sm leading-relaxed text-text-muted sm:mt-6 sm:text-lg">
               자격증 CBT 모의고사를 무료로 풀고, 무한 문제 디펜스로 합격을 만들어 가세요.
             </p>
           </ScrollReveal>
 
           <ScrollReveal delay={3}>
-            <div className="mt-8">
-              <CertChips />
-            </div>
-          </ScrollReveal>
-
-          <ScrollReveal delay={4}>
-            <div className="mt-10">
+            <div className="mt-8 sm:mt-10">
               <HeroCta />
             </div>
           </ScrollReveal>
 
           <ScrollReveal delay={4}>
-            <div className="mt-6">
+            <div className="mt-8 sm:hidden">
+              <DailyQuestionWidget />
+            </div>
+          </ScrollReveal>
+
+          <ScrollReveal delay={4}>
+            <div className="mt-8">
+              <CertChips />
+            </div>
+          </ScrollReveal>
+
+          <ScrollReveal delay={5}>
+            <div className="mt-6 hidden sm:block">
               <ExamCountdownStrip />
             </div>
           </ScrollReveal>
 
           <ScrollReveal delay={5}>
-            <HeroStats />
+            <div className="mt-6 sm:hidden">
+              <ButtonLink href="/past-exams" variant="outline" size="md">
+                기출 복원 보러가기 →
+              </ButtonLink>
+            </div>
+          </ScrollReveal>
+
+          <ScrollReveal delay={5}>
+            <div className="mt-6 sm:hidden">
+              <ButtonLink href="/blog" variant="outline" size="md">
+                시험 준비 팁 보기
+              </ButtonLink>
+            </div>
+          </ScrollReveal>
+
+          <ScrollReveal delay={5}>
+            <div className="mt-6 hidden sm:block">
+              <HeroStats />
+            </div>
           </ScrollReveal>
         </Container>
       </section>
 
       {/* ── Daily Question ─────────────────────────────────── */}
-      <Section id="preview" className="scroll-mt-24">
+      <Section id="preview" className="hidden scroll-mt-24 sm:block" spacing="compact">
         <Container size="default">
           <DailyQuestionWidget />
         </Container>
       </Section>
 
       {/* ── Features ───────────────────────────────────────── */}
-      <Section>
+      <Section spacing="compact">
         <Container size="default">
           <ScrollReveal>
             <h2 className="text-center text-2xl font-bold tracking-tight sm:text-3xl md:text-4xl">
@@ -97,7 +121,7 @@ export default function Home() {
             <p className="mt-3 text-center text-text-muted">한 곳에서, 매일 조금씩</p>
           </ScrollReveal>
 
-          <div className="mt-14 grid grid-cols-1 gap-5 lg:grid-cols-3">
+          <div className="mt-10 grid grid-cols-1 gap-4 sm:mt-14 sm:gap-5 lg:grid-cols-3">
             <ScrollReveal delay={1}>
               <Card variant="interactive" padding="md" className="group relative h-full">
                 <span className="pointer-events-none absolute right-4 top-4 select-none text-[64px] font-bold leading-none text-text/[0.03]">
@@ -155,7 +179,7 @@ export default function Home() {
       </Section>
 
       {/* ── Past Exams ─────────────────────────────────────── */}
-      <Section>
+      <Section spacing="compact">
         <Container size="default">
           <ScrollReveal>
             <div className="mx-auto max-w-2xl text-center">
@@ -185,7 +209,7 @@ export default function Home() {
 
       {/* ── Blog ─────────────────────────────────────────── */}
       {recentPosts.length > 0 && (
-        <Section>
+        <Section spacing="compact">
           <Container size="default">
             <ScrollReveal>
               <h2 className="text-center text-2xl font-bold tracking-tight sm:text-3xl md:text-4xl">
@@ -196,7 +220,7 @@ export default function Home() {
               </p>
             </ScrollReveal>
 
-            <div className="mt-14 grid grid-cols-1 gap-5 md:grid-cols-3">
+            <div className="mt-10 grid grid-cols-1 gap-4 sm:mt-14 sm:gap-5 md:grid-cols-3">
               {recentPosts.map((post, i) => {
                 const cert = certFromBlogCategory(post.category);
                 return (
@@ -251,7 +275,7 @@ export default function Home() {
       </ScrollReveal>
 
       {/* ── CTA ────────────────────────────────────────────── */}
-      <Section>
+      <Section spacing="compact">
         <Container size="default" className="text-center">
           <div className="shimmer-line mx-auto mb-14 max-w-md" />
           <ScrollReveal>
