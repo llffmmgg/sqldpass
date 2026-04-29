@@ -6,6 +6,7 @@ import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -37,6 +38,16 @@ public interface PostRepository extends JpaRepository<PostEntity, Long> {
     /** 상세 — member fetch. comments 는 별도 쿼리로 가져오는 게 안전 (페이지네이션 가능성). */
     @Query("SELECT p FROM PostEntity p JOIN FETCH p.member WHERE p.id = :id")
     Optional<PostEntity> findByIdWithMember(@Param("id") Long id);
+
+    /**
+     * 조회수 +1 — JPQL native UPDATE.
+     * dirty checking 대신 사용해 lost update 를 방지하고 영속성 컨텍스트 부담을 줄인다.
+     * 호출 시 영속성 컨텍스트의 entity 와 동기화되지 않으므로, 응답에 갱신값을 반영하려면
+     * 호출 측에서 entity.incrementView() 도 같이 호출해야 한다.
+     */
+    @Modifying
+    @Query("UPDATE PostEntity p SET p.viewCount = p.viewCount + 1 WHERE p.id = :id")
+    int incrementViewCount(@Param("id") Long id);
 
     /** sitemap 용 — PUBLISHED 게시글 ID + updatedAt (lastmod). */
     @Query("SELECT p.id AS id, p.updatedAt AS updatedAt FROM PostEntity p " +
