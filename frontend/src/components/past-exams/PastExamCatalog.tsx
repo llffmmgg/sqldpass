@@ -22,15 +22,18 @@ const UNKNOWN_YEAR = -1;
 export function PastExamTabs({
   activeCert,
   countsByCert,
+  newCountsByCert,
 }: {
   activeCert: CertKey;
   countsByCert: PastExamCountsByCert;
+  newCountsByCert?: PastExamCountsByCert;
 }) {
   return (
     <div className="mt-6 -mx-1 flex gap-1 overflow-x-auto rounded-lg border border-border bg-surface p-1 text-sm">
       {CERT_LIST.map((cert) => {
         const active = cert.key === activeCert;
         const count = countsByCert[cert.key] ?? 0;
+        const newCount = newCountsByCert?.[cert.key] ?? 0;
 
         return (
           <Link
@@ -46,6 +49,14 @@ export function PastExamTabs({
             <span className={cn("h-1.5 w-1.5 rounded-full", cert.tailwind.dot)} />
             {cert.label}
             <span className="text-xs opacity-60 tabular-nums">{count}</span>
+            {newCount > 0 && (
+              <span
+                className="inline-flex items-center rounded-full bg-emerald-500 px-1.5 text-[9px] font-bold leading-4 text-white"
+                aria-label={`새로운 회차 ${newCount}개`}
+              >
+                +{newCount}
+              </span>
+            )}
           </Link>
         );
       })}

@@ -8,6 +8,7 @@ import {
 } from "@/lib/cert-tokens";
 import {
   buildPastExamCountsByCert,
+  buildPastExamNewCountsByCert,
   loadPastExamListsByCert,
 } from "@/lib/pastExamCatalog";
 import { PastExamGrid, PastExamTabs } from "@/components/past-exams/PastExamCatalog";
@@ -24,6 +25,7 @@ export default async function PastExamCertPage({
 
   const listsByCert = await loadPastExamListsByCert();
   const countsByCert = buildPastExamCountsByCert(listsByCert);
+  const newCountsByCert = buildPastExamNewCountsByCert(listsByCert);
   const exams = listsByCert[cert];
   const token = CERT_TOKENS[cert];
 
@@ -37,7 +39,11 @@ export default async function PastExamCertPage({
           {token.labelLong} 기출 복원 문제를 로그인 없이 확인하고, 로그인 후 채점과 해설까지 이어서 볼 수 있습니다.
         </p>
 
-        <PastExamTabs activeCert={cert} countsByCert={countsByCert} />
+        <PastExamTabs
+          activeCert={cert}
+          countsByCert={countsByCert}
+          newCountsByCert={newCountsByCert}
+        />
 
         <div className="mt-8">
           {exams.length === 0 ? (
