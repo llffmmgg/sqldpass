@@ -8,7 +8,6 @@ import {
   type CreateMockExamType,
   type ManualMockExamPayload,
   type ManualMockExamQuestion,
-  type MockExamCreationDifficulty,
 } from "@/lib/adminApi";
 
 const EXAM_TYPES: { id: CreateMockExamType; label: string }[] = [
@@ -18,13 +17,6 @@ const EXAM_TYPES: { id: CreateMockExamType; label: string }[] = [
   { id: "COMPUTER_LITERACY_1", label: "컴활 1급" },
   { id: "COMPUTER_LITERACY_2", label: "컴활 2급" },
   { id: "ADSP", label: "ADsP" },
-];
-
-const DIFFICULTIES: { id: MockExamCreationDifficulty; label: string }[] = [
-  { id: "EASY", label: "쉬움" },
-  { id: "NORMAL", label: "보통" },
-  { id: "HARD", label: "어려움" },
-  { id: "VERY_HARD", label: "매우 어려움" },
 ];
 
 const EXAMPLE_QUESTIONS: ManualMockExamQuestion[] = [
@@ -76,7 +68,6 @@ export default function ManualMockExamPage() {
   const router = useRouter();
 
   const [examType, setExamType] = useState<CreateMockExamType>("SQLD");
-  const [difficulty, setDifficulty] = useState<MockExamCreationDifficulty>("NORMAL");
   const [expertVerified, setExpertVerified] = useState(true);
   const [isPastExam, setIsPastExam] = useState(false);
   const [examYear, setExamYear] = useState<string>("");
@@ -94,9 +85,8 @@ export default function ManualMockExamPage() {
   const namePreview = useMemo(() => {
     if (customName.trim()) return customName.trim();
     const examLabel = EXAM_TYPES.find((e) => e.id === examType)?.label ?? examType;
-    const diffLabel = DIFFICULTIES.find((d) => d.id === difficulty)?.label ?? "";
-    return `${examLabel} 모의고사 N회 (${diffLabel})  ※ N은 등록 시 백엔드가 자동 부여`;
-  }, [customName, examType, difficulty]);
+    return `${examLabel} 모의고사 N회  ※ N은 등록 시 백엔드가 자동 부여`;
+  }, [customName, examType]);
 
   function handleValidate() {
     setError(null);
@@ -128,7 +118,6 @@ export default function ManualMockExamPage() {
 
     const payload: ManualMockExamPayload = {
       examType,
-      difficulty,
       expertVerified,
       questions: parsed as ManualMockExamQuestion[],
     };
@@ -165,39 +154,20 @@ export default function ManualMockExamPage() {
 
       {/* 메타 폼 */}
       <div className="mt-6 rounded-xl border border-border bg-surface/30 p-4">
-        <div className="grid gap-4 sm:grid-cols-2">
-          <label className="flex flex-col gap-1.5 text-xs">
-            <span className="font-semibold text-foreground">자격증</span>
-            <select
-              value={examType}
-              onChange={(e) => setExamType(e.target.value as CreateMockExamType)}
-              className="rounded border border-border bg-background px-2 py-1.5 text-sm"
-            >
-              {EXAM_TYPES.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.label}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <label className="flex flex-col gap-1.5 text-xs">
-            <span className="font-semibold text-foreground">평균 난이도 (이름 라벨용)</span>
-            <select
-              value={difficulty}
-              onChange={(e) =>
-                setDifficulty(e.target.value as MockExamCreationDifficulty)
-              }
-              className="rounded border border-border bg-background px-2 py-1.5 text-sm"
-            >
-              {DIFFICULTIES.map((d) => (
-                <option key={d.id} value={d.id}>
-                  {d.label}
-                </option>
-              ))}
-            </select>
-          </label>
-        </div>
+        <label className="flex flex-col gap-1.5 text-xs">
+          <span className="font-semibold text-foreground">자격증</span>
+          <select
+            value={examType}
+            onChange={(e) => setExamType(e.target.value as CreateMockExamType)}
+            className="rounded border border-border bg-background px-2 py-1.5 text-sm"
+          >
+            {EXAM_TYPES.map((t) => (
+              <option key={t.id} value={t.id}>
+                {t.label}
+              </option>
+            ))}
+          </select>
+        </label>
 
         <div className="mt-4 flex flex-wrap items-center gap-4 text-xs">
           <label className="inline-flex items-center gap-2">

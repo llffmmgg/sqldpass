@@ -15,6 +15,7 @@ import com.sqldpass.config.CacheConfig;
 import com.sqldpass.controller.admin.dto.ManualMockExamRequest;
 import com.sqldpass.controller.admin.dto.ManualMockExamRequest.ManualQuestion;
 import com.sqldpass.domain.mockexam.MockExam;
+import com.sqldpass.persistent.mockexam.EngineerExamTemplate;
 import com.sqldpass.persistent.mockexam.ExamType;
 import com.sqldpass.persistent.mockexam.MockExamDifficulty;
 import com.sqldpass.persistent.mockexam.MockExamEntity;
@@ -220,10 +221,11 @@ public class MockExamService {
         if (request.name() != null && !request.name().isBlank()) {
             name = request.name().trim();
         } else {
-            name = autoMockExamName(examType, nextSeq, request.difficulty());
+            name = autoMockExamName(examType, nextSeq);
         }
 
-        MockExamEntity entity = new MockExamEntity(name, examType, nextSeq);
+        // AI 모의고사들과 동일하게 LATEST template ("최신 기출 분포 반영") 자동 적용
+        MockExamEntity entity = new MockExamEntity(name, examType, nextSeq, EngineerExamTemplate.LATEST);
         mockExamRepository.save(entity);
 
         if (promote) {
@@ -246,10 +248,10 @@ public class MockExamService {
     }
 
     /**
-     * "{자격증} 모의고사 {sequence}회 ({difficulty라벨})" 형태의 자동 이름.
+     * "{자격증} 모의고사 {sequence}회" 형태의 자동 이름 — AI 모의고사들과 동일 형식.
      * 사용자 측 manual 등록 시 이름을 비워두면 백엔드가 sequence 기반으로 채워준다.
      */
-    private static String autoMockExamName(ExamType type, int sequence, MockExamDifficulty difficulty) {
+    private static String autoMockExamName(ExamType type, int sequence) {
         String typeLabel = switch (type) {
             case SQLD -> "SQLD";
             case ENGINEER_PRACTICAL -> "정처기 실기";
@@ -258,8 +260,7 @@ public class MockExamService {
             case COMPUTER_LITERACY_2 -> "컴활 2급";
             case ADSP -> "ADsP";
         };
-        MockExamDifficulty resolved = difficulty != null ? difficulty : MockExamDifficulty.NORMAL;
-        return String.format("%s 모의고사 %d회 (%s)", typeLabel, sequence, resolved.label());
+        return String.format("%s 모의고사 %d회", typeLabel, sequence);
     }
 
     private QuestionEntity buildQuestion(ManualQuestion q, int index) {

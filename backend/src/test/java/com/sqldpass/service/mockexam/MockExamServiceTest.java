@@ -135,7 +135,6 @@ class MockExamServiceTest {
         ManualMockExamRequest request = new ManualMockExamRequest(
                 "SQLD 수동 등록",
                 ExamType.SQLD,
-                null,
                 false, null, null, null,
                 true,
                 List.of(
@@ -156,7 +155,7 @@ class MockExamServiceTest {
     }
 
     @Test
-    @DisplayName("createManual auto-generates name when blank — '{자격증} 모의고사 N회 ({난이도})'")
+    @DisplayName("createManual auto-generates name when blank — '{자격증} 모의고사 N회' (AI 와 동일 형식)")
     void createManual_autoNameOnBlank() {
         SubjectEntity subject = new SubjectEntity(null, "SQL 활용", 0);
         setSubjectId(subject, 6L);
@@ -179,7 +178,6 @@ class MockExamServiceTest {
         ManualMockExamRequest request = new ManualMockExamRequest(
                 null,
                 ExamType.SQLD,
-                MockExamDifficulty.NORMAL,
                 false, null, null, null,
                 false,
                 List.of(new ManualQuestion(6L, "문제1", null, 2, null, null, "해설", null, null, 2))
@@ -187,7 +185,11 @@ class MockExamServiceTest {
 
         mockExamService.createManual(request);
 
-        assertThat(examCaptor.getValue().getName()).isEqualTo("SQLD 모의고사 58회 (보통)");
+        MockExamEntity captured = examCaptor.getValue();
+        assertThat(captured.getName()).isEqualTo("SQLD 모의고사 58회");
+        // 모든 모의고사가 LATEST template ("최신 기출 분포 반영") 자동 적용 — AI 모의고사와 동일
+        assertThat(captured.getTemplate())
+                .isEqualTo(com.sqldpass.persistent.mockexam.EngineerExamTemplate.LATEST);
     }
 
     @Test
@@ -201,7 +203,7 @@ class MockExamServiceTest {
                 .willAnswer(inv -> inv.getArgument(0));
 
         ManualMockExamRequest request = new ManualMockExamRequest(
-                "SQLD 수동", ExamType.SQLD, null, false, null, null, null, false,
+                "SQLD 수동", ExamType.SQLD, false, null, null, null, false,
                 List.of(new ManualQuestion(6L, "문제", null, null, null, null, "해설", null, null, 2))
         );
 
