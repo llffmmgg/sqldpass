@@ -84,7 +84,7 @@ export const metadata: Metadata = {
     "IT 자격증",
     "랜덤 모의고사",
   ],
-  authors: [{ name: "sqldpass" }],
+  authors: [{ name: "문어CBT" }],
   alternates: {
     canonical: SITE_URL,
     languages: { ko: SITE_URL, "x-default": SITE_URL },

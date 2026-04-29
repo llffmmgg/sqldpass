@@ -21,7 +21,7 @@ export const metadata: Metadata = {
     canonical: `${SITE_URL}/mock-exams`,
   },
   openGraph: {
-    title: "모의고사 · 자격증별 실전 CBT | sqldpass",
+    title: "모의고사 · 자격증별 실전 CBT | 문어CBT",
     description:
       "SQLD, 정처기 실기·필기, 컴활 1·2급, ADsP 실전 모의고사. AI로 매번 새롭게 출제되는 CBT.",
     url: `${SITE_URL}/mock-exams`,
@@ -29,7 +29,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "모의고사 · 자격증별 실전 CBT | sqldpass",
+    title: "모의고사 · 자격증별 실전 CBT | 문어CBT",
     description:
       "SQLD, 정처기 실기·필기, 컴활 1·2급, ADsP 실전 모의고사.",
   },

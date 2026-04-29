@@ -3,9 +3,9 @@ import Link from "next/link";
 import { Container } from "@/components/ui";
 
 export const metadata: Metadata = {
-  title: "sqldpass 소개",
+  title: "문어CBT 소개",
   description:
-    "sqldpass는 SQLD, 정보처리기사 필기·실기, 컴퓨터활용능력 1·2급, ADsP를 무료로 풀어볼 수 있는 CBT 모의고사 사이트입니다.",
+    "문어CBT는 SQLD, 정보처리기사 필기·실기, 컴퓨터활용능력 1·2급, ADsP를 무료로 풀어볼 수 있는 CBT 모의고사 플랫폼입니다.",
   alternates: { canonical: "https://www.sqldpass.com/about" },
 };
 
@@ -43,7 +43,7 @@ export default function AboutPage() {
         name: "누가 만드나요?",
         acceptedAnswer: {
           "@type": "Answer",
-          text: "sqldpass는 자격증 학습자를 위해 1인 운영팀이 만들고 있습니다. 운영비(서버 + AI API)는 일부 광고로 충당합니다.",
+          text: "문어CBT는 자격증 학습자를 위해 1인 운영팀이 만들고 있습니다. 운영비(서버 + AI API)는 일부 광고로 충당합니다.",
         },
       },
       {
@@ -100,7 +100,7 @@ export default function AboutPage() {
 
       <Section title="누가 만드나요?">
         <p>
-          sqldpass는 자격증 학습자를 위해 1인 운영팀이 만들고 있습니다. 운영비(서버 + AI API)는
+          문어CBT는 자격증 학습자를 위해 1인 운영팀이 만들고 있습니다. 운영비(서버 + AI API)는
           일부 광고로 충당합니다. 학습 흐름을 방해하지 않는 위치에만 광고를 표시합니다.
         </p>
       </Section>

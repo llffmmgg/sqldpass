@@ -4,7 +4,7 @@ import { Container } from "@/components/ui";
 
 export const metadata: Metadata = {
   title: "이용약관",
-  description: "sqldpass 서비스 이용약관입니다.",
+  description: "문어CBT 서비스 이용약관입니다.",
   alternates: { canonical: "/terms" },
 };
 
@@ -17,7 +17,7 @@ export default function TermsPage() {
 
       <Section title="1. 목적">
         <p>
-          본 약관은 sqldpass(이하 &quot;사이트&quot;)가 제공하는 SQL 개발자(SQLD), 정보처리기사
+          본 약관은 문어CBT(이하 &quot;사이트&quot;)가 제공하는 SQL 개발자(SQLD), 정보처리기사
           실기, 컴퓨터활용능력 1급 필기 학습 지원 서비스의 이용 조건을 규정합니다.
         </p>
       </Section>
@@ -66,7 +66,7 @@ export default function TermsPage() {
 
       <Section title="6. 저작권">
         <p>
-          사이트가 생성·배포하는 모든 문제, 해설, 코드 예제, UI는 sqldpass에 귀속됩니다. 학습
+          사이트가 생성·배포하는 모든 문제, 해설, 코드 예제, UI는 문어CBT에 귀속됩니다. 학습
           목적의 개인적 사용은 자유이나, 무단 복제·재배포·상업적 이용은 금지됩니다.
         </p>
       </Section>

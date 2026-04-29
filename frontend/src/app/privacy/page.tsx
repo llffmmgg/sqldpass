@@ -4,7 +4,7 @@ import { Container } from "@/components/ui";
 
 export const metadata: Metadata = {
   title: "개인정보처리방침",
-  description: "sqldpass가 수집·이용하는 개인정보의 종류와 처리 방침입니다.",
+  description: "문어CBT가 수집·이용하는 개인정보의 종류와 처리 방침입니다.",
   alternates: { canonical: "/privacy" },
 };
 
@@ -16,7 +16,7 @@ export default function PrivacyPage() {
       <p className="mt-2 text-sm text-muted">최종 개정일: 2026년 4월 9일</p>
 
       <Section title="1. 수집하는 정보">
-        <p>sqldpass(이하 &quot;사이트&quot;)는 다음 정보를 수집합니다.</p>
+        <p>문어CBT(이하 &quot;사이트&quot;)는 다음 정보를 수집합니다.</p>
         <ul className="mt-2 list-disc pl-5">
           <li>
             <strong>회원가입 정보</strong> — Google OAuth 로그인을 통해 제공받는 닉네임, 프로필
