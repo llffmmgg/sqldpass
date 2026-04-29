@@ -136,12 +136,32 @@ export default function StudyActivityChart({ data, overallAvg }: StudyActivityCh
   const streak = computeStreak(data);
   const weekDelta = computeWeekDelta(data);
 
+  // 빈 날(total=0)은 양쪽 비-0 일자의 선형 보간으로 채워 라인이 끊기지 않게 한다.
+  // emptyDots 는 별개로 baseline 점 표시 — "그 날 학습 0" 정보 자체는 보존.
+  function interpolated(i: number, key: "total" | "correct" | "wrong"): number {
+    if (data[i].total > 0) return data[i][key];
+    let prev = i - 1;
+    while (prev >= 0 && data[prev].total === 0) prev--;
+    let next = i + 1;
+    while (next < data.length && data[next].total === 0) next++;
+    const hasPrev = prev >= 0;
+    const hasNext = next < data.length;
+    if (hasPrev && hasNext) {
+      const t = (i - prev) / (next - prev);
+      return data[prev][key] + (data[next][key] - data[prev][key]) * t;
+    }
+    if (hasPrev) return data[prev][key] * 0.6;
+    if (hasNext) return data[next][key] * 0.6;
+    return max * 0.05;
+  }
+
   const enriched = data.map((day, i) => {
     const d = new Date(day.date);
     const dow = d.getDay();
     const isToday = day.date === todayStr;
     const isWeekend = dow === 0 || dow === 6;
     const cx = PADDING_LEFT + i * COL_W;
+    const isEmpty = day.total === 0;
     return {
       ...day,
       dow,
@@ -149,49 +169,29 @@ export default function StudyActivityChart({ data, overallAvg }: StudyActivityCh
       dayNum: d.getDate(),
       isToday,
       isWeekend,
+      isEmpty,
       cx,
+      // 호버/툴팁용 — 실제 값
       yTotal: yFor(day.total, max),
       yCorrect: yFor(day.correct, max),
       yWrong: yFor(day.wrong, max),
+      // 라인/area 용 — 빈 날은 인접 보간
+      lyTotal: yFor(interpolated(i, "total"), max),
+      lyCorrect: yFor(interpolated(i, "correct"), max),
+      lyWrong: yFor(interpolated(i, "wrong"), max),
     };
   });
 
   const todayIdx = enriched.findIndex((d) => d.isToday);
   const todayPoint = todayIdx >= 0 ? enriched[todayIdx] : null;
 
-  // total>0 인 연속 구간만 segment 로 분할 — 0인 날엔 라인을 끊어 V자 골짜기 방지
+  // 14일 전체를 하나의 path 로 — 빈 날도 보간된 좌표가 들어가 V자 골짜기/끊김 없음
   const baselineY = PADDING_TOP + PLOT_H;
-  type Pt = { x: number; y: number };
-  const totalSegs: Pt[][] = [];
-  const correctSegs: Pt[][] = [];
-  const wrongSegs: Pt[][] = [];
-  let curT: Pt[] = [];
-  let curC: Pt[] = [];
-  let curW: Pt[] = [];
-  for (const e of enriched) {
-    if (e.total > 0) {
-      curT.push({ x: e.cx, y: e.yTotal });
-      curC.push({ x: e.cx, y: e.yCorrect });
-      curW.push({ x: e.cx, y: e.yWrong });
-    } else {
-      if (curT.length) totalSegs.push(curT);
-      if (curC.length) correctSegs.push(curC);
-      if (curW.length) wrongSegs.push(curW);
-      curT = [];
-      curC = [];
-      curW = [];
-    }
-  }
-  if (curT.length) totalSegs.push(curT);
-  if (curC.length) correctSegs.push(curC);
-  if (curW.length) wrongSegs.push(curW);
+  const totalPoints = totalSum > 0 ? enriched.map((e) => ({ x: e.cx, y: e.lyTotal })) : [];
+  const correctPoints = totalSum > 0 ? enriched.map((e) => ({ x: e.cx, y: e.lyCorrect })) : [];
+  const wrongPoints = totalSum > 0 ? enriched.map((e) => ({ x: e.cx, y: e.lyWrong })) : [];
 
-  // 0인 날(끊긴 점) 표시 — baseline 위 작은 회색 dot
-  const emptyDots = enriched.filter((e) => e.total === 0);
-  // 단일 점 segment(앞뒤가 0이라 라인이 안 그려짐) — 각 라인 색의 작은 dot 으로 보강
-  const totalSoloDots = totalSegs.filter((s) => s.length === 1).map((s) => s[0]);
-  const correctSoloDots = correctSegs.filter((s) => s.length === 1).map((s) => s[0]);
-  const wrongSoloDots = wrongSegs.filter((s) => s.length === 1).map((s) => s[0]);
+  const emptyDots = enriched.filter((e) => e.isEmpty);
 
   const yTicks = [0, 0.25, 0.5, 0.75, 1].map((r) => ({
     value: Math.round(max * r),
@@ -295,7 +295,16 @@ export default function StudyActivityChart({ data, overallAvg }: StudyActivityCh
           <defs>
             <linearGradient id="study-area-total" x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor="var(--primary)" stopOpacity="0.32" />
+              <stop offset="55%" stopColor="var(--primary)" stopOpacity="0.14" />
               <stop offset="100%" stopColor="var(--primary)" stopOpacity="0" />
+            </linearGradient>
+            <linearGradient id="study-area-correct" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.24" />
+              <stop offset="100%" stopColor="#3b82f6" stopOpacity="0" />
+            </linearGradient>
+            <linearGradient id="study-area-wrong" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#f43f5e" stopOpacity="0.22" />
+              <stop offset="100%" stopColor="#f43f5e" stopOpacity="0" />
             </linearGradient>
           </defs>
 
@@ -358,24 +367,40 @@ export default function StudyActivityChart({ data, overallAvg }: StudyActivityCh
             />
           ))}
 
-          {/* 전체 area — segment 별로 분리 그리기 */}
-          {totalSegs.map((seg, i) => (
-            <path
-              key={`area-${i}`}
-              d={buildAreaPath(seg, baselineY)}
-              fill="url(#study-area-total)"
-              style={{
-                opacity: mounted ? 1 : 0,
-                transition: `opacity 500ms ease-out ${600 + i * 80}ms`,
-              }}
-            />
-          ))}
+          {/* 면적 — 단일 path. 빈 날도 보간 좌표로 라인이 끊기지 않는다. */}
+          {totalPoints.length > 0 && (
+            <>
+              <path
+                d={buildAreaPath(totalPoints, baselineY)}
+                fill="url(#study-area-total)"
+                style={{
+                  opacity: mounted ? 1 : 0,
+                  transition: "opacity 600ms ease-out 600ms",
+                }}
+              />
+              <path
+                d={buildAreaPath(correctPoints, baselineY)}
+                fill="url(#study-area-correct)"
+                style={{
+                  opacity: mounted ? 1 : 0,
+                  transition: "opacity 600ms ease-out 700ms",
+                }}
+              />
+              <path
+                d={buildAreaPath(wrongPoints, baselineY)}
+                fill="url(#study-area-wrong)"
+                style={{
+                  opacity: mounted ? 1 : 0,
+                  transition: "opacity 600ms ease-out 800ms",
+                }}
+              />
+            </>
+          )}
 
-          {/* 전체 라인 (z-order 가장 아래) */}
-          {totalSegs.map((seg, i) => (
+          {/* 전체 라인 — 글로우 살림 */}
+          {totalPoints.length > 0 && (
             <path
-              key={`tl-${i}`}
-              d={buildLinePath(seg)}
+              d={buildLinePath(totalPoints)}
               fill="none"
               stroke={COLOR_TOTAL}
               strokeWidth={2.5}
@@ -384,30 +409,16 @@ export default function StudyActivityChart({ data, overallAvg }: StudyActivityCh
               vectorEffect="non-scaling-stroke"
               style={{
                 opacity: mounted ? 1 : 0,
-                transition: `opacity 600ms ease-out ${i * 80}ms`,
+                transition: "opacity 600ms ease-out",
                 filter: "drop-shadow(0 0 6px var(--glow))",
               }}
             />
-          ))}
-          {totalSoloDots.map((p, i) => (
-            <circle
-              key={`tdot-${i}`}
-              cx={p.x}
-              cy={p.y}
-              r={2.5}
-              fill={COLOR_TOTAL}
-              style={{
-                opacity: mounted ? 1 : 0,
-                transition: `opacity 600ms ease-out ${i * 80}ms`,
-              }}
-            />
-          ))}
+          )}
 
-          {/* 맞춘 라인 (가운데) */}
-          {correctSegs.map((seg, i) => (
+          {/* 맞춘 라인 */}
+          {correctPoints.length > 0 && (
             <path
-              key={`cl-${i}`}
-              d={buildLinePath(seg)}
+              d={buildLinePath(correctPoints)}
               fill="none"
               stroke={COLOR_CORRECT}
               strokeWidth={2}
@@ -417,56 +428,28 @@ export default function StudyActivityChart({ data, overallAvg }: StudyActivityCh
               vectorEffect="non-scaling-stroke"
               style={{
                 opacity: mounted ? 0.92 : 0,
-                transition: `opacity 600ms ease-out ${150 + i * 80}ms`,
+                transition: "opacity 600ms ease-out 150ms",
               }}
             />
-          ))}
-          {correctSoloDots.map((p, i) => (
-            <circle
-              key={`cdot-${i}`}
-              cx={p.x}
-              cy={p.y}
-              r={2.25}
-              fill={COLOR_CORRECT}
-              style={{
-                opacity: mounted ? 0.92 : 0,
-                transition: `opacity 600ms ease-out ${150 + i * 80}ms`,
-              }}
-            />
-          ))}
+          )}
 
-          {/* 틀린 라인 (z-order 맨 위) — dashed 로 total 과 겹쳐도 분리 인식 가능 */}
-          {wrongSegs.map((seg, i) => (
+          {/* 틀린 라인 — dashed 제거, 그라데이션 영역으로 시각 구분 */}
+          {wrongPoints.length > 0 && (
             <path
-              key={`wl-${i}`}
-              d={buildLinePath(seg)}
+              d={buildLinePath(wrongPoints)}
               fill="none"
               stroke={COLOR_WRONG}
               strokeWidth={2}
               strokeLinecap="round"
               strokeLinejoin="round"
-              strokeDasharray="5 4"
               opacity={0.92}
               vectorEffect="non-scaling-stroke"
               style={{
                 opacity: mounted ? 0.92 : 0,
-                transition: `opacity 600ms ease-out ${250 + i * 80}ms`,
+                transition: "opacity 600ms ease-out 250ms",
               }}
             />
-          ))}
-          {wrongSoloDots.map((p, i) => (
-            <circle
-              key={`wdot-${i}`}
-              cx={p.x}
-              cy={p.y}
-              r={2.25}
-              fill={COLOR_WRONG}
-              style={{
-                opacity: mounted ? 0.92 : 0,
-                transition: `opacity 600ms ease-out ${250 + i * 80}ms`,
-              }}
-            />
-          ))}
+          )}
 
           {/* 호버 점 3개 */}
           {hovered && (
