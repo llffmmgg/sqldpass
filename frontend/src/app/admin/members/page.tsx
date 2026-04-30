@@ -33,13 +33,24 @@ export default function AdminMembersPage() {
   const [loading, setLoading] = useState(true);
   const [sortKey, setSortKey] = useState<AdminMemberSort>("default");
   const [sortOrder, setSortOrder] = useState<AdminMemberOrder>("desc");
+  const [searchInput, setSearchInput] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+
+  // 검색어 디바운스 (300ms)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setSearchQuery(searchInput.trim());
+      setPage(0);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchInput]);
 
   useEffect(() => {
     setLoading(true);
-    getMembers(page, PAGE_SIZE, sortKey, sortOrder)
+    getMembers(page, PAGE_SIZE, sortKey, sortOrder, searchQuery || undefined)
       .then(setData)
       .finally(() => setLoading(false));
-  }, [page, sortKey, sortOrder]);
+  }, [page, sortKey, sortOrder, searchQuery]);
 
   const totalPages = data?.totalPages ?? 1;
 
@@ -69,6 +80,33 @@ export default function AdminMembersPage() {
             : "회원 목록을 불러오는 중..."
         }
       />
+
+      <div className="mb-4 flex items-center gap-2">
+        <div className="relative flex-1 max-w-sm">
+          <input
+            type="text"
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            placeholder="닉네임으로 검색"
+            className="w-full rounded-md border border-border bg-background px-3 py-2 pr-9 text-sm"
+          />
+          {searchInput && (
+            <button
+              type="button"
+              onClick={() => setSearchInput("")}
+              aria-label="검색어 지우기"
+              className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-muted hover:text-foreground"
+            >
+              ×
+            </button>
+          )}
+        </div>
+        {searchQuery && (
+          <span className="text-xs text-muted">
+            <span className="text-primary">{searchQuery}</span> 검색 중
+          </span>
+        )}
+      </div>
 
       {loading ? (
         <DataTable>

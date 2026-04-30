@@ -12,6 +12,7 @@ import java.util.Map;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -50,13 +51,16 @@ public class AdminMemberService {
         this.wrongAnswerService = wrongAnswerService;
     }
 
-    public Page<AdminMemberResponse> getMembers(int page, int size, String sort, String order) {
+    public Page<AdminMemberResponse> getMembers(int page, int size, String sort, String order, String q) {
         // 랭킹용 더미 시드(provider='SEED', V20 마이그레이션)는 어드민 목록에서 숨김.
         // 집계 기반 컬럼(풀이·정답·푼날)은 DB Sort로 표현 불가라 "전체 조회 → 메모리 정렬 → 페이징" 전략을 쓴다.
         // 어드민 전용이고 회원 수 규모가 크지 않으므로 N+1 제거(batch)로 충분하다.
-        Page<MemberEntity> firstPass = memberRepository.findByProviderNot(
-                "SEED",
-                PageRequest.of(0, Integer.MAX_VALUE, Sort.by("createdAt").descending()));
+        String trimmed = q == null ? null : q.trim();
+        boolean hasQuery = trimmed != null && !trimmed.isEmpty();
+        Pageable allPageable = PageRequest.of(0, Integer.MAX_VALUE, Sort.by("createdAt").descending());
+        Page<MemberEntity> firstPass = hasQuery
+                ? memberRepository.findByProviderNotAndNicknameContaining("SEED", trimmed, allPageable)
+                : memberRepository.findByProviderNot("SEED", allPageable);
         List<MemberEntity> all = firstPass.getContent();
 
         List<Long> ids = all.stream().map(MemberEntity::getId).toList();

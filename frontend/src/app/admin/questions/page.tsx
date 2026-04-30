@@ -96,6 +96,8 @@ export default function AdminQuestionsPage() {
   const [loading, setLoading] = useState(true);
   const [exportingKey, setExportingKey] = useState<string | null>(null);
   const [jumpId, setJumpId] = useState("");
+  const [searchInput, setSearchInput] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
 
   const [verifyLimit, setVerifyLimit] = useState(50);
   const [verifyExamType, setVerifyExamType] = useState<VerifyExamFilter>("ALL");
@@ -220,12 +222,21 @@ export default function AdminQuestionsPage() {
     }
   }, [verifySubjectId, subjectOptions]);
 
+  // 검색어 디바운스 (300ms) — 입력 직후 매 키 입력마다 호출하지 않도록
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setSearchQuery(searchInput.trim());
+      setPage(0);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchInput]);
+
   useEffect(() => {
     setLoading(true);
-    getQuestions(page, 20)
+    getQuestions(page, 20, undefined, searchQuery || undefined)
       .then(setData)
       .finally(() => setLoading(false));
-  }, [page]);
+  }, [page, searchQuery]);
 
   function handleJumpToId(e: React.FormEvent) {
     e.preventDefault();
@@ -274,7 +285,7 @@ export default function AdminQuestionsPage() {
     if (!confirm("정말 삭제하시겠습니까?")) return;
     await deleteQuestion(id);
     setLoading(true);
-    getQuestions(page, 20)
+    getQuestions(page, 20, undefined, searchQuery || undefined)
       .then(setData)
       .finally(() => setLoading(false));
   }
@@ -334,24 +345,53 @@ export default function AdminQuestionsPage() {
         </div>
       )}
 
-      <section className="mt-6 rounded-lg border border-border bg-surface p-4">
-        <h2 className="text-sm font-semibold text-muted">문제 ID로 바로 이동</h2>
-        <form onSubmit={handleJumpToId} className="mt-2 flex gap-2">
-          <input
-            type="number"
-            min={1}
-            value={jumpId}
-            onChange={(e) => setJumpId(e.target.value)}
-            placeholder="문제 ID"
-            className="flex-1 rounded border border-border bg-background px-3 py-2 text-sm"
-          />
-          <button
-            type="submit"
-            className="rounded bg-violet-500 px-4 py-2 text-sm font-medium text-white hover:bg-violet-600"
-          >
-            이동
-          </button>
-        </form>
+      <section className="mt-6 grid gap-3 md:grid-cols-2">
+        <div className="rounded-lg border border-border bg-surface p-4">
+          <h2 className="text-sm font-semibold text-muted">문제 ID로 바로 이동</h2>
+          <form onSubmit={handleJumpToId} className="mt-2 flex gap-2">
+            <input
+              type="number"
+              min={1}
+              value={jumpId}
+              onChange={(e) => setJumpId(e.target.value)}
+              placeholder="문제 ID"
+              className="flex-1 rounded border border-border bg-background px-3 py-2 text-sm"
+            />
+            <button
+              type="submit"
+              className="rounded bg-violet-500 px-4 py-2 text-sm font-medium text-white hover:bg-violet-600"
+            >
+              이동
+            </button>
+          </form>
+        </div>
+
+        <div className="rounded-lg border border-border bg-surface p-4">
+          <h2 className="text-sm font-semibold text-muted">문제 본문/요약 검색</h2>
+          <div className="mt-2 flex gap-2">
+            <input
+              type="text"
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              placeholder="키워드 입력 (예: JOIN, 정규화)"
+              className="flex-1 rounded border border-border bg-background px-3 py-2 text-sm"
+            />
+            {searchInput && (
+              <button
+                type="button"
+                onClick={() => setSearchInput("")}
+                className="rounded border border-border px-3 py-2 text-xs text-muted hover:text-foreground"
+              >
+                지우기
+              </button>
+            )}
+          </div>
+          {searchQuery && (
+            <p className="mt-2 text-xs text-muted">
+              <span className="text-violet-300">{searchQuery}</span> 검색 중
+            </p>
+          )}
+        </div>
       </section>
 
       <section className="mt-4 rounded-lg border border-border bg-surface p-4">

@@ -16,6 +16,16 @@ public interface MemberRepository extends JpaRepository<MemberEntity, Long> {
     /** 어드민 목록에서 더미(provider='SEED') 사용자를 제외 */
     Page<MemberEntity> findByProviderNot(String provider, Pageable pageable);
 
+    /** 어드민 목록에서 더미 제외 + 닉네임 LIKE 검색 (대소문자 무시) */
+    @org.springframework.data.jpa.repository.Query(
+            "SELECT m FROM MemberEntity m "
+                  + "WHERE m.provider <> :provider "
+                  + "  AND LOWER(m.nickname) LIKE LOWER(CONCAT('%', :q, '%'))")
+    Page<MemberEntity> findByProviderNotAndNicknameContaining(
+            @org.springframework.data.repository.query.Param("provider") String provider,
+            @org.springframework.data.repository.query.Param("q") String q,
+            Pageable pageable);
+
     long countByCreatedAtAfter(LocalDateTime dateTime);
 
     /**

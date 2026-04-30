@@ -192,9 +192,10 @@ export function getTrend(days: number) {
   return adminFetch<AdminTrend>(`/stats/trend?days=${days}`);
 }
 
-export function getQuestions(page = 0, size = 20, subjectId?: number) {
+export function getQuestions(page = 0, size = 20, subjectId?: number, q?: string) {
   const params = new URLSearchParams({ page: String(page), size: String(size) });
   if (subjectId) params.set("subjectId", String(subjectId));
+  if (q && q.trim()) params.set("q", q.trim());
   return adminFetch<AdminQuestionPage>(`/questions?${params}`);
 }
 
@@ -339,6 +340,7 @@ export function getMembers(
   size = 20,
   sort: AdminMemberSort = "default",
   order: AdminMemberOrder = "desc",
+  q?: string,
 ) {
   const params = new URLSearchParams({
     page: String(page),
@@ -346,6 +348,7 @@ export function getMembers(
     sort,
     order,
   });
+  if (q && q.trim()) params.set("q", q.trim());
   return adminFetch<AdminMemberPage>(`/members?${params.toString()}`);
 }
 

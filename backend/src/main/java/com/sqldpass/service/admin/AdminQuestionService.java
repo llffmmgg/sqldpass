@@ -557,10 +557,20 @@ public class AdminQuestionService {
                 .toList();
     }
 
-    public Page<AdminQuestionResponse> getQuestions(Long subjectId, int page, int size) {
+    public Page<AdminQuestionResponse> getQuestions(Long subjectId, String q, int page, int size) {
         PageRequest pageable = PageRequest.of(page, size);
+        String trimmed = q == null ? null : q.trim();
+        boolean hasQuery = trimmed != null && !trimmed.isEmpty();
+        if (subjectId != null && hasQuery) {
+            return questionRepository.searchBySubjectIdWithSubject(subjectId, trimmed, pageable)
+                    .map(AdminQuestionResponse::from);
+        }
         if (subjectId != null) {
             return questionRepository.findBySubjectIdWithSubject(subjectId, pageable)
+                    .map(AdminQuestionResponse::from);
+        }
+        if (hasQuery) {
+            return questionRepository.searchAllWithSubject(trimmed, pageable)
                     .map(AdminQuestionResponse::from);
         }
         return questionRepository.findAllWithSubject(pageable)

@@ -31,13 +31,14 @@ public class AdminMemberController {
     private final SolveService solveService;
 
     @GetMapping("/api/admin/members")
-    @Operation(summary = "회원 목록 조회 (sort: default|totalSolved|totalCorrect|activeDays|streakDays, order: desc|asc)")
+    @Operation(summary = "회원 목록 조회 (sort: default|totalSolved|totalCorrect|activeDays|streakDays, order: desc|asc, q: 닉네임 LIKE)")
     public Page<AdminMemberResponse> getMembers(
             @RequestParam(defaultValue = "0") @Min(0) int page,
             @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size,
             @RequestParam(defaultValue = "default") String sort,
-            @RequestParam(defaultValue = "desc") String order) {
-        return adminMemberService.getMembers(page, size, sort, order);
+            @RequestParam(defaultValue = "desc") String order,
+            @RequestParam(required = false) String q) {
+        return adminMemberService.getMembers(page, size, sort, order, q);
     }
 
     @GetMapping("/api/admin/members/{memberId}/dashboard")

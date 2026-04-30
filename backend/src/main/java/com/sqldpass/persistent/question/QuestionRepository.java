@@ -102,6 +102,29 @@ public interface QuestionRepository extends JpaRepository<QuestionEntity, Long> 
     @Query("SELECT q FROM QuestionEntity q JOIN FETCH q.subject ORDER BY q.createdAt DESC")
     Page<QuestionEntity> findAllWithSubject(Pageable pageable);
 
+    /** 어드민 본문/요약 키워드 LIKE 검색 — 전체 범위. */
+    @Query("""
+            SELECT q FROM QuestionEntity q
+            JOIN FETCH q.subject
+            WHERE LOWER(q.content) LIKE LOWER(CONCAT('%', :q, '%'))
+               OR LOWER(COALESCE(q.summary, '')) LIKE LOWER(CONCAT('%', :q, '%'))
+            ORDER BY q.createdAt DESC
+            """)
+    Page<QuestionEntity> searchAllWithSubject(@Param("q") String q, Pageable pageable);
+
+    /** 어드민 본문/요약 키워드 LIKE 검색 — 특정 과목 한정. */
+    @Query("""
+            SELECT q FROM QuestionEntity q
+            JOIN FETCH q.subject
+            WHERE q.subject.id = :subjectId
+              AND (LOWER(q.content) LIKE LOWER(CONCAT('%', :q, '%'))
+                   OR LOWER(COALESCE(q.summary, '')) LIKE LOWER(CONCAT('%', :q, '%')))
+            ORDER BY q.createdAt DESC
+            """)
+    Page<QuestionEntity> searchBySubjectIdWithSubject(@Param("subjectId") Long subjectId,
+                                                     @Param("q") String q,
+                                                     Pageable pageable);
+
     /**
      * 검증 대상 ID 페이징 (JOIN FETCH 없이 ID만 — Pageable과 안전하게 조합).
      * 페치는 별도 {@link #findByIdInWithSubjectAndParent(List)}로 분리.

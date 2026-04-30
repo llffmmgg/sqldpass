@@ -48,12 +48,13 @@ public class AdminQuestionController {
     private final QuestionExportService questionExportService;
 
     @GetMapping("/api/admin/questions")
-    @Operation(summary = "문제 목록 조회")
+    @Operation(summary = "문제 목록 조회 (q: 본문/요약 키워드 LIKE 검색)")
     public Page<AdminQuestionResponse> getQuestions(
             @RequestParam(required = false) Long subjectId,
+            @RequestParam(required = false) String q,
             @RequestParam(defaultValue = "0") @Min(0) int page,
             @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size) {
-        return adminQuestionService.getQuestions(subjectId, page, size);
+        return adminQuestionService.getQuestions(subjectId, q, page, size);
     }
 
     @GetMapping("/api/admin/questions/{id}")
