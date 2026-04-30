@@ -14,6 +14,8 @@ import QuestionContent from "@/components/QuestionContent";
 import { Container } from "@/components/ui";
 import ReportQuestionButton from "@/components/ReportQuestionButton";
 import BookmarkButton from "@/components/BookmarkButton";
+import MascotImage from "@/components/mascot/MascotImage";
+import { poseFromScore } from "@/components/mascot";
 import { parseQuestion } from "@/lib/parseQuestion";
 import {
   getMockExam,
@@ -312,12 +314,31 @@ function MockExamDetailContent() {
             </div>
           </div>
 
-          <div className="mt-6 rounded-xl border border-border bg-surface p-8 text-center">
-            <p className="text-sm text-muted">점수</p>
-            <p className={`mt-2 inline-block text-5xl font-bold animate-score-pop ${accent.text}`}>{result.score}점</p>
-            <p className="mt-4 text-sm text-muted">
-              {result.correctCount} / {result.totalCount} 정답
-            </p>
+          <div className="mt-6 rounded-xl border border-border bg-surface p-6 sm:p-8">
+            <div className="flex items-center gap-4 sm:gap-6">
+              <MascotImage
+                pose={poseFromScore(result.score)}
+                size={120}
+                className="shrink-0"
+              />
+              <div className="min-w-0 flex-1 text-left">
+                <p className="text-sm text-muted">점수</p>
+                <p className={`mt-1 text-5xl font-bold tabular-nums leading-none animate-score-pop ${accent.text}`}>
+                  {result.score}
+                  <span className="ml-1 align-middle text-2xl text-text-subtle">/100</span>
+                </p>
+                <p className="mt-3 text-sm text-muted">
+                  {result.correctCount} / {result.totalCount} 정답
+                </p>
+                <p className="mt-3 text-sm leading-relaxed text-text-muted">
+                  {result.score >= 90
+                    ? "거의 다 맞히셨어요. 남은 한두 문항만 정리해볼까요?"
+                    : result.score >= 60
+                      ? "합격선을 넘었어요. 이 페이스를 유지해볼까요?"
+                      : "한 발자국 더 가볼까요? 오답을 함께 정리해보세요."}
+                </p>
+              </div>
+            </div>
           </div>
 
           {/* 과목별 점수 표 — 단일 과목 자격증(정처기 실기 등)도 카테고리별 학습 진단으로 노출 */}

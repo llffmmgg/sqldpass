@@ -23,9 +23,10 @@ import QuestionContent from "@/components/QuestionContent";
 import AuthGuard from "@/components/AuthGuard";
 import Spinner from "@/components/Spinner";
 import AdResponsive from "@/components/AdResponsive";
-import Image from "next/image";
+import MascotImage from "@/components/mascot/MascotImage";
+import MascotEmpty from "@/components/mascot/MascotEmpty";
 import { trackEvent } from "@/lib/gtag";
-import { Button, ButtonLink, Container } from "@/components/ui";
+import { Button, Container } from "@/components/ui";
 import { CERT_TOKENS, certFromRootName, type CertKey } from "@/lib/cert-tokens";
 
 function buildCertLookupById(rawSubjects: Subject[]): Map<number, CertKey> {
@@ -474,14 +475,7 @@ function WrongAnswersPageContent() {
     <main className="min-h-screen bg-bg text-text">
       <Container size="default" className="py-16">
         <div className="flex items-center gap-5">
-          <Image
-            src="/logo/wrong-answer-mascot.webp"
-            alt="오답노트 마스코트"
-            width={180}
-            height={180}
-            className="shrink-0"
-            priority
-          />
+          <MascotImage pose="check" size={180} priority className="shrink-0" />
           <div>
             <h1 className="text-3xl font-bold sm:text-4xl">오답 노트</h1>
             <p className="mt-2 text-base text-muted">
@@ -574,32 +568,29 @@ function WrongAnswersPageContent() {
           {(loading || (topTab === "bookmark" && !bookmarksLoaded)) && <Spinner />}
 
           {!loading && topTab === "wrong" && sortedAnswers.length === 0 && (
-            <div className="py-16 text-center">
-              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-green-500/10 border border-green-500/20">
-                <svg className="h-8 w-8 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
-                </svg>
-              </div>
-              <p className="mt-4 text-muted">오답이 없습니다. 완벽해요!</p>
-              <ButtonLink href="/solve" variant="primary" size="md" className="mt-6">
-                문제 풀러 가기
-              </ButtonLink>
-            </div>
+            <MascotEmpty
+              pose="guide"
+              title="아직 오답이 쌓이지 않았어요"
+              description={
+                <>
+                  모의고사를 풀면 틀린 문제만 자동으로 모입니다.
+                  <br className="hidden sm:block" />
+                  취약한 부분만 골라 다시 풀어볼 수 있어요.
+                </>
+              }
+              primaryCta={{ href: "/solve", label: "모의고사 시작하기" }}
+              secondaryCta={{ href: "/past-exams", label: "기출 복원 보기" }}
+              hint="로그인 상태에서 푼 문제만 오답노트에 저장됩니다."
+            />
           )}
 
           {topTab === "bookmark" && bookmarksLoaded && sortedAnswers.length === 0 && (
-            <div className="py-16 text-center">
-              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-amber-400/10 border border-amber-400/20">
-                <svg className="h-8 w-8 text-amber-400" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M12 2.5l2.9 5.88 6.48.94-4.69 4.57 1.11 6.46L12 17.3l-5.8 3.05 1.11-6.46L2.62 9.32l6.48-.94L12 2.5z" />
-                </svg>
-              </div>
-              <p className="mt-4 text-muted">아직 즐겨찾기한 문제가 없어요.</p>
-              <p className="mt-1 text-xs text-muted/70">문제 풀이 중 별표 버튼을 눌러 저장하세요.</p>
-              <ButtonLink href="/solve" variant="primary" size="md" className="mt-6">
-                문제 풀러 가기
-              </ButtonLink>
-            </div>
+            <MascotEmpty
+              pose="guide"
+              title="아직 즐겨찾기한 문제가 없어요"
+              description="문제 풀이 중 별표 버튼을 눌러 저장하면 여기에 모입니다."
+              primaryCta={{ href: "/solve", label: "문제 풀러 가기" }}
+            />
           )}
 
           {!loading && sortedAnswers.length > 0 && (() => {
