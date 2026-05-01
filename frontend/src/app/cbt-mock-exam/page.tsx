@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Container } from "@/components/ui";
-import { CERT_LIST } from "@/lib/cert-tokens";
+import { CERT_LIST, slugFromCert } from "@/lib/cert-tokens";
 
 const SITE_URL = "https://www.sqldpass.com";
 
@@ -132,7 +132,7 @@ export default function CbtMockExamPage() {
             {CERT_LIST.map((cert) => (
               <Link
                 key={cert.key}
-                href={`/mock-exams?cert=${cert.key}`}
+                href={`/cbt-mock-exam/${slugFromCert(cert.key)}`}
                 className={`group rounded-xl border border-border bg-surface p-6 transition-all hover:scale-[1.02] active:scale-[0.98] ${cert.tailwind.borderHover} ${cert.tailwind.glow}`}
               >
                 <div className="flex items-center gap-2">
@@ -148,7 +148,7 @@ export default function CbtMockExamPage() {
                   {cert.label} CBT 모의고사 · 실전 타이머 · 오답 자동 복습
                 </p>
                 <p className={`mt-4 text-xs font-medium ${cert.tailwind.textSoft}`}>
-                  {cert.label} 모의고사 시작 →
+                  {cert.label} CBT 자세히 보기 →
                 </p>
               </Link>
             ))}

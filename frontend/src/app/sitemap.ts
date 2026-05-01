@@ -162,6 +162,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.8,
   }));
 
+  // 자격증별 CBT 랜딩 페이지 (/cbt-mock-exam/[cert])
+  const cbtLandingEntries: MetadataRoute.Sitemap = certs.map((c) => ({
+    url: `${SITE_URL}/cbt-mock-exam/${c.slug}`,
+    lastModified: DYNAMIC_LAST_MOD,
+    changeFrequency: "weekly",
+    priority: 0.85,
+  }));
+
   const categoryEntries: MetadataRoute.Sitemap = [];
   for (const cert of certs) {
     try {
@@ -241,6 +249,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   return [
     ...staticEntries,
     ...certEntries,
+    ...cbtLandingEntries,
     ...categoryEntries,
     ...questionEntries,
     ...pastExamCertEntries,

@@ -42,17 +42,18 @@ export default function Home() {
 
           <ScrollReveal delay={1}>
             <h1 className="mt-6 text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl lg:text-7xl">
-              CBT 모의고사,
+              SQLD · 정처기 · 컴활 · ADsP
               <br />
               <span className="bg-gradient-to-r from-primary to-[#5ee0a5] bg-clip-text text-transparent">
-                매일 한 세트 합격까지
+                무료 CBT 모의고사
               </span>
             </h1>
           </ScrollReveal>
 
           <ScrollReveal delay={2}>
             <p className="mx-auto mt-6 max-w-xl text-base leading-relaxed text-text-muted sm:text-lg">
-              자격증 CBT 모의고사를 무료로 풀고, 무한 문제 디펜스로 합격을 만들어 가세요.
+              SQLD CBT, 정처기 필기·실기 CBT, 컴활 1·2급 CBT, ADsP CBT 모의고사를 한 곳에서.
+              매일 한 세트 합격까지, 무한 문제 디펜스로 만들어 가세요.
             </p>
           </ScrollReveal>
 
@@ -92,7 +93,7 @@ export default function Home() {
         <Container size="default">
           <ScrollReveal>
             <h2 className="text-center text-2xl font-bold tracking-tight sm:text-3xl md:text-4xl">
-              합격에 필요한 모든 것
+              SQLD CBT부터 ADsP CBT까지, 합격에 필요한 모든 것
             </h2>
             <p className="mt-3 text-center text-text-muted">한 곳에서, 매일 조금씩</p>
           </ScrollReveal>
