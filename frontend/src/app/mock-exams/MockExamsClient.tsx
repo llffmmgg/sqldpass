@@ -60,8 +60,9 @@ function MockExamsContent() {
   }, [exams, activeCert]);
 
   return (
-    <Container size="narrow" className="pb-16">
-      <p className="text-sm text-text-muted">
+    <Container size="narrow" className="py-16">
+      <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">모의고사</h2>
+      <p className="mt-2 text-sm text-text-muted">
         {token.labelLong} · 실전 타이머와 함께 무료 CBT 로 응시해보세요. 점수 기록·오답 노트는 로그인 후 자동 저장됩니다.
       </p>
 

@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { Container } from "@/components/ui";
 import SolveClient from "./SolveClient";
 
 const TITLE = "문제 풀기 — SQLD·정처기·컴활·ADsP 무료 CBT";
@@ -67,26 +66,23 @@ export default function SolvePage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(webAppLd) }}
       />
 
-      <Container size="narrow" className="pt-16">
-        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">과목별 문제 풀기</h1>
-        <p className="mt-3 text-sm leading-relaxed text-text-muted">
+      {/* SEO 전용 — 화면에는 안 보이고 크롤러·스크린리더에만 노출. */}
+      <div className="sr-only">
+        <h1>과목별 문제 풀기</h1>
+        <p>
           자격증과 과목을 고른 뒤 10문제 한 세트를 풀어보세요. 매 세트마다 다른 랜덤 문제로 무한 반복할 수 있고, 문제마다 즉시 해설과 정답을 확인합니다.
           오답 노트와 정답률 통계는 로그인 후 자동으로 저장됩니다.
         </p>
-
-        <ul className="mt-6 grid grid-cols-1 gap-2 text-sm text-text-muted sm:grid-cols-2">
+        <ul>
           {CERT_INTRO.map((c) => (
-            <li key={c.key} className="rounded-lg border border-border bg-surface px-3 py-2">
-              <span className="font-semibold text-text">{c.label}</span>
-              <span className="ml-2 text-xs text-text-subtle">{c.desc}</span>
+            <li key={c.key}>
+              <span>{c.label}</span> <span>{c.desc}</span>
             </li>
           ))}
         </ul>
-      </Container>
-
-      <div className="mt-4">
-        <SolveClient />
       </div>
+
+      <SolveClient />
     </main>
   );
 }

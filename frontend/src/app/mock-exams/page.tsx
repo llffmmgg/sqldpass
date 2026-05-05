@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { Container } from "@/components/ui";
 import MockExamsClient from "./MockExamsClient";
 
 const TITLE = "무료 CBT 모의고사 — SQLD·정처기·컴활·ADsP";
@@ -70,26 +69,23 @@ export default function MockExamsPage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(collectionLd) }}
       />
 
-      <Container size="narrow" className="pt-16">
-        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">무료 CBT 모의고사</h1>
-        <p className="mt-3 text-sm leading-relaxed text-text-muted">
+      {/* SEO 전용 — 화면에는 안 보이고 크롤러·스크린리더에만 노출. */}
+      <div className="sr-only">
+        <h1>무료 CBT 모의고사</h1>
+        <p>
           SQLD · 정보처리기사 필기/실기 · 컴퓨터활용능력 1·2급 · ADsP 모의고사를 무료로 제공합니다.
           실전과 동일한 타이머·자동 채점·해설로 매주 새로운 회차가 추가됩니다. 점수 기록과 오답 노트는 로그인 후 자동으로 저장됩니다.
         </p>
-
-        <ul className="mt-6 grid grid-cols-1 gap-2 text-sm text-text-muted sm:grid-cols-2">
+        <ul>
           {CERT_INTRO.map((c) => (
-            <li key={c.key} className="rounded-lg border border-border bg-surface px-3 py-2">
-              <span className="font-semibold text-text">{c.label}</span>
-              <span className="ml-2 text-xs text-text-subtle">{c.desc}</span>
+            <li key={c.key}>
+              <span>{c.label}</span> <span>{c.desc}</span>
             </li>
           ))}
         </ul>
-      </Container>
-
-      <div className="mt-8">
-        <MockExamsClient />
       </div>
+
+      <MockExamsClient />
     </main>
   );
 }

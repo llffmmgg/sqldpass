@@ -477,7 +477,7 @@ function SolvePageContent() {
     return (
       <section className="bg-bg text-text">
         <GradingDisclaimerModal />
-        <Container size="narrow" className="pb-16">
+        <Container size="narrow" className="py-16">
           <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">과목 선택</h2>
           <p className="mt-2 text-sm text-text-muted">
             자격증을 고른 뒤 과목 하나로 {SET_SIZE}문제 한 세트를 풀어보세요.
