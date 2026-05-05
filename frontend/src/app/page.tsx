@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import ScrollReveal from "@/components/ScrollReveal";
 import HeroCta from "@/components/HeroCta";
@@ -10,6 +11,29 @@ import RankingSection from "@/components/RankingSection";
 import { Badge, ButtonLink, Card, Container, Section } from "@/components/ui";
 import { getAllPosts } from "@/lib/blog";
 import { certFromBlogCategory } from "@/lib/cert-tokens";
+
+const HOME_TITLE = "SQLD·정처기·컴활·ADsP 무료 CBT 모의고사";
+const HOME_DESCRIPTION =
+  "SQLD·정처기 필기/실기·컴활 1·2급·ADsP 무료 CBT 모의고사. 기출 변형 문제, 자동 채점, 회차별 실력 추적까지 가입 없이 바로 풀어보세요.";
+
+export const metadata: Metadata = {
+  title: { absolute: `${HOME_TITLE} | 문어CBT` },
+  description: HOME_DESCRIPTION,
+  alternates: { canonical: "/" },
+  openGraph: {
+    type: "website",
+    url: "/",
+    title: HOME_TITLE,
+    description: HOME_DESCRIPTION,
+    siteName: "문어CBT",
+    locale: "ko_KR",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: HOME_TITLE,
+    description: HOME_DESCRIPTION,
+  },
+};
 
 export default function Home() {
   const allPosts = getAllPosts();

@@ -43,7 +43,11 @@ function Column({ title, links }: { title: string; links: { href: string; label:
 
 export default function Footer() {
   return (
-    <footer className="mt-24 border-t border-border bg-bg-elevated">
+    <footer
+      role="contentinfo"
+      aria-label="사이트 푸터"
+      className="mt-24 border-t border-border bg-bg-elevated"
+    >
       <div className="mx-auto w-full max-w-6xl px-4 py-12 sm:px-6 lg:px-8">
         <div className="grid grid-cols-2 gap-8 sm:grid-cols-4">
           <div className="col-span-2 sm:col-span-1">
@@ -62,7 +66,7 @@ export default function Footer() {
           <Column title="정책" links={POLICY_LINKS} />
         </div>
 
-        <div className="mt-10 border-t border-border pt-6">
+        <div data-nosnippet className="mt-10 border-t border-border pt-6">
           <p className="text-xs text-text-muted">
             배너 광고 문의 및 비즈니스 제안 ·{" "}
             <a

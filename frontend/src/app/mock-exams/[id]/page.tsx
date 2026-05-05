@@ -30,7 +30,7 @@ import {
   type SolveSummaryResponse,
 } from "@/lib/api";
 import MockExamAttemptsView from "@/components/MockExamAttemptsView";
-import { ExamBadge } from "@/app/mock-exams/page";
+import { ExamBadge } from "@/app/mock-exams/MockExamsClient";
 import { GradingDisclaimerModal } from "@/components/GradingDisclaimerModal";
 import AdInfeed from "@/components/AdInfeed";
 import AdDisplay from "@/components/AdDisplay";
