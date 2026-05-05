@@ -57,9 +57,10 @@ public class MockExamController {
 
     @GetMapping("/{id}")
     @Operation(summary = "모의고사 상세 (50문항 포함, 정답 미포함)")
-    public MockExamDetailResponse get(@PathVariable Long id) {
-        // PREMIUM이면 403 LOCKED, DRAFT면 404
-        return MockExamDetailResponse.from(mockExamService.getForUser(id));
+    public MockExamDetailResponse get(@PathVariable Long id, HttpServletRequest request) {
+        // PREMIUM이면 403 LOCKED (단, memberId 가 결제 이력이 있으면 통과), DRAFT면 404
+        Long memberId = (Long) request.getAttribute("memberId");
+        return MockExamDetailResponse.from(mockExamService.getForUser(id, memberId));
     }
 
     /**

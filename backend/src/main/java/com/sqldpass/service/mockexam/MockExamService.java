@@ -24,6 +24,7 @@ import com.sqldpass.persistent.mockexam.MockExamEntity;
 import com.sqldpass.persistent.mockexam.MockExamMapper;
 import com.sqldpass.persistent.mockexam.MockExamRepository;
 import com.sqldpass.persistent.mockexam.MockExamVisibility;
+import com.sqldpass.persistent.payment.MockExamPurchaseRepository;
 import com.sqldpass.persistent.question.QuestionEntity;
 import com.sqldpass.persistent.question.QuestionRepository;
 import com.sqldpass.persistent.question.QuestionType;
@@ -50,6 +51,7 @@ public class MockExamService {
     private final EngineerWrittenMockExamCreator engineerWrittenMockExamCreator;
     private final AdspMockExamCreator adspMockExamCreator;
     private final ApplicationEventPublisher eventPublisher;
+    private final MockExamPurchaseRepository mockExamPurchaseRepository;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     /** 어드민용 — DRAFT 포함 전체 회차 */
@@ -153,17 +155,30 @@ public class MockExamService {
     }
 
     public MockExam getForUser(Long id) {
+        return getForUser(id, null);
+    }
+
+    /**
+     * 사용자용 상세 조회.
+     * - DRAFT 또는 검수 미완료 → 404
+     * - PREMIUM → memberId 가 해당 회차를 결제(MockExamPurchase) 했으면 통과, 아니면 403 LOCKED
+     * - PUBLISHED → 통과
+     */
+    public MockExam getForUser(Long id, Long memberId) {
         MockExamEntity entity = mockExamRepository.findByIdWithQuestions(id)
                 .orElseThrow(() -> new SqldpassException(ErrorCode.MOCK_EXAM_NOT_FOUND));
         if (entity.getVisibility() == MockExamVisibility.DRAFT) {
             throw new SqldpassException(ErrorCode.MOCK_EXAM_NOT_FOUND);
         }
         if (!entity.isExpertVerified()) {
-            // 전문가 검수 미완료 모의고사는 사용자에게 노출하지 않음
             throw new SqldpassException(ErrorCode.MOCK_EXAM_NOT_FOUND);
         }
         if (entity.getVisibility() == MockExamVisibility.PREMIUM) {
-            throw new SqldpassException(ErrorCode.MOCK_EXAM_LOCKED);
+            boolean unlocked = memberId != null
+                    && mockExamPurchaseRepository.existsByMemberIdAndMockExamId(memberId, id);
+            if (!unlocked) {
+                throw new SqldpassException(ErrorCode.MOCK_EXAM_LOCKED);
+            }
         }
         return MockExamMapper.toDomain(entity);
     }

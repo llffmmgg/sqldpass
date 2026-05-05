@@ -13,7 +13,7 @@ export default function PrivacyPage() {
     <main className="py-12 text-foreground">
       <Container size="narrow">
       <h1 className="text-3xl font-bold">개인정보처리방침</h1>
-      <p className="mt-2 text-sm text-muted">최종 개정일: 2026년 4월 9일</p>
+      <p className="mt-2 text-sm text-muted">최종 개정일: 2026년 5월 6일</p>
 
       <Section title="1. 수집하는 정보">
         <p>문어CBT(이하 &quot;사이트&quot;)는 다음 정보를 수집합니다.</p>
@@ -31,6 +31,11 @@ export default function PrivacyPage() {
           </li>
           <li>
             <strong>접속 정보</strong> — IP, User-Agent, 접속 경로 등 일반적인 웹 로그.
+          </li>
+          <li>
+            <strong>결제 정보</strong> — 유료 모의고사 결제 시 PortOne 으로부터 전달받은 결제
+            식별자(paymentId), 결제 상태, 결제 금액, 결제 시각, 잠금 해제 대상 회차 ID. 카드 번호·
+            CVC·유효기간 등 카드 정보는 사이트가 직접 수집·저장하지 않습니다.
           </li>
         </ul>
       </Section>
@@ -79,6 +84,11 @@ export default function PrivacyPage() {
             <strong>AI API (Anthropic Claude / Google Gemini)</strong> — 문제 생성과 검증.
             이 호출에는 사용자 식별 정보가 포함되지 않습니다.
           </li>
+          <li>
+            <strong>PortOne (코리아포트원)</strong> — 유료 모의고사 결제 처리. 결제창 호출과
+            결제 검증 단계에서 paymentId·금액·상태가 송수신되며, 카드 정보는 PortOne 및 카드사
+            구간에서만 처리됩니다.
+          </li>
         </ul>
         <p className="mt-3">
           브라우저 설정에서 쿠키를 차단할 수 있으나, 차단 시 일부 기능(로그인 등)이 제한될 수
@@ -90,6 +100,10 @@ export default function PrivacyPage() {
         <p>
           회원이 탈퇴를 요청하면 학습 기록·피드백을 포함한 개인 식별 가능 데이터를 즉시
           파기합니다. 통계 목적의 익명화된 집계 데이터는 보관될 수 있습니다.
+        </p>
+        <p className="mt-2">
+          단, 결제 정보(paymentId · 금액 · 결제 시각)는 전자상거래 등에서의 소비자보호에 관한
+          법률에 따라 거래 완료 시점부터 5년간 보관 후 파기합니다.
         </p>
       </Section>
 
@@ -109,6 +123,7 @@ export default function PrivacyPage() {
 
       <Section title="7. 개정 이력">
         <ul className="list-disc pl-5">
+          <li>2026-05-06 — 결제 정보 수집·PortOne 연동·보관 기간 조항 추가</li>
           <li>2026-04-09 — 최초 작성</li>
         </ul>
       </Section>

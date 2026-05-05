@@ -13,7 +13,7 @@ export default function TermsPage() {
     <main className="py-12 text-foreground">
       <Container size="narrow">
       <h1 className="text-3xl font-bold">이용약관</h1>
-      <p className="mt-2 text-sm text-muted">최종 개정일: 2026년 4월 9일</p>
+      <p className="mt-2 text-sm text-muted">최종 개정일: 2026년 5월 6일</p>
 
       <Section title="1. 목적">
         <p>
@@ -46,6 +46,26 @@ export default function TermsPage() {
           사이트는 기본 기능을 무료로 제공합니다. 운영비(서버·AI API) 충당을 위해 광고가 표시될
           수 있으며, 이는 학습 흐름을 방해하지 않는 위치에만 배치됩니다.
         </p>
+      </Section>
+
+      <Section title="3-1. 유료 서비스 (프리미엄 모의고사)">
+        <p>
+          사이트는 일부 모의고사를 유료 프리미엄 컨텐츠로 제공할 수 있습니다. 결제는
+          PortOne(주식회사 코리아포트원)의 PG 결제 모듈을 통해 신용/체크카드 등으로 진행되며,
+          사이트는 결제 정보를 직접 보관하지 않습니다.
+        </p>
+        <ul className="mt-2 list-disc pl-5">
+          <li>상품명·결제 금액·결제 수단은 결제 페이지(/checkout)에서 명시됩니다.</li>
+          <li>
+            결제 완료 시 해당 회차의 잠금이 즉시 해제되며, 동일 계정으로 영구 풀이가
+            가능합니다.
+          </li>
+          <li>
+            환불·취소 정책은 별도{" "}
+            <Link href="/refund" className="text-primary underline">환불 정책</Link>{" "}
+            페이지를 참고하세요.
+          </li>
+        </ul>
       </Section>
 
       <Section title="4. 이용자 의무">
@@ -95,6 +115,7 @@ export default function TermsPage() {
 
       <Section title="10. 개정 이력">
         <ul className="list-disc pl-5">
+          <li>2026-05-06 — 유료 결제(프리미엄 모의고사) 조항 추가</li>
           <li>2026-04-09 — 최초 작성</li>
         </ul>
       </Section>

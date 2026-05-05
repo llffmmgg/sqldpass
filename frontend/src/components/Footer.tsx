@@ -17,6 +17,7 @@ const COMPANY_LINKS = [
 const POLICY_LINKS = [
   { href: "/privacy", label: "개인정보처리방침" },
   { href: "/terms", label: "이용약관" },
+  { href: "/refund", label: "환불 정책" },
 ];
 
 function Column({ title, links }: { title: string; links: { href: string; label: string }[] }) {

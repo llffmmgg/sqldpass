@@ -89,6 +89,21 @@ sqldpass:
     secret-key: ${R2_SECRET_KEY:}
     public-base-url: ${R2_PUBLIC_BASE_URL:}      # 예: https://pub-xxx.r2.dev/{bucket}  (path-style 이면 bucket 까지 포함)
     max-bytes: ${R2_MAX_BYTES:5242880}           # 5 MB
+  payment:
+    # PortOne V2 가맹점 자격증.
+    # store-id: store-{uuid} 형태. PortOne 어드민 → 상점 → Store ID
+    # api-secret: V2 API 시크릿. 결제 검증·취소 호출에 사용. PortOne 어드민 → 결제 연동 → API V2 시크릿 발급
+    portone:
+      store-id: ${PORTONE_STORE_ID:}
+      api-secret: ${PORTONE_API_SECRET:}
+      api-base-url: ${PORTONE_API_BASE_URL:https://api.portone.io}
+    # 카드사 심사용 게이트 — 콤마 구분 닉네임 화이트리스트.
+    # 회원의 nickname 이 본 목록에 포함되어야만 /api/payment/** 호출이 통과한다.
+    # 토큰은 외부 추측 어려운 값으로 (예: pay-rv-7f2a91). 정식 오픈 시점에 화이트리스트 비우거나 가드 제거.
+    reviewer-nicknames: ${PAYMENT_REVIEWER_NICKNAMES:}
+    # 단건 결제 금액·상품명 (TEST/0원 금지 — 카드사 심사 필수 조건).
+    default-amount: ${PAYMENT_DEFAULT_AMOUNT:3000}
+    default-product-name: ${PAYMENT_DEFAULT_PRODUCT_NAME:문어CBT 프리미엄 모의고사 1회차 잠금 해제}
   pdf:
     # 모의고사 PDF 생성기 — Playwright 헤드리스 Chromium 으로 인쇄 페이지를 PDF 화.
     # print-page-base-url: 백엔드(Playwright) 가 호출할 프론트 인쇄 페이지 베이스 URL.
