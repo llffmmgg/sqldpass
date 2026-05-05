@@ -72,8 +72,41 @@ export default function Footer() {
               ssomker.dev@gmail.com
             </a>
           </p>
-          <p className="mt-2 text-xs text-text-subtle">
-            © {new Date().getFullYear()} 문어CBT · sqldpass.com
+          <dl className="mt-4 grid grid-cols-1 gap-x-6 gap-y-1 text-[11px] leading-relaxed text-text-subtle sm:grid-cols-2">
+            <div className="flex gap-2">
+              <dt className="shrink-0 text-text-muted">상호</dt>
+              <dd>에스큐엘디패스</dd>
+            </div>
+            <div className="flex gap-2">
+              <dt className="shrink-0 text-text-muted">대표자</dt>
+              <dd>정희훈</dd>
+            </div>
+            <div className="flex gap-2">
+              <dt className="shrink-0 text-text-muted">사업자등록번호</dt>
+              <dd>443-41-01548</dd>
+            </div>
+            <div className="flex gap-2">
+              <dt className="shrink-0 text-text-muted">통신판매업 신고</dt>
+              <dd>제2026-서울서대문-0466호</dd>
+            </div>
+            <div className="flex gap-2 sm:col-span-2">
+              <dt className="shrink-0 text-text-muted">사업장 주소</dt>
+              <dd>서울특별시 서대문구 독립문로10길 2, 101동 1801호 (천연동)</dd>
+            </div>
+            <div className="flex gap-2">
+              <dt className="shrink-0 text-text-muted">대표번호</dt>
+              <dd>
+                <a
+                  href="tel:+821046393411"
+                  className="transition-colors hover:text-text"
+                >
+                  010-4639-3411
+                </a>
+              </dd>
+            </div>
+          </dl>
+          <p className="mt-4 text-xs text-text-subtle">
+            © {new Date().getFullYear()} 에스큐엘디패스 · sqldpass.com
           </p>
         </div>
       </div>
