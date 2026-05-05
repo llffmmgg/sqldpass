@@ -15,8 +15,11 @@ import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
+import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.HeadObjectRequest;
+import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignRequest;
@@ -124,6 +127,50 @@ public class R2UploadService {
 
     private static String stripTrailingSlash(String s) {
         return s != null && s.endsWith("/") ? s.substring(0, s.length() - 1) : s;
+    }
+
+    /**
+     * 임의 바이트 객체를 R2 에 직접 업로드. (이미지 외 — 모의고사 PDF 캐시용)
+     * 이미지 업로드와 달리 백엔드가 직접 PUT 한다 (presigned 거치지 않음).
+     */
+    public String uploadBytes(String key, byte[] body, String contentType) {
+        if (!isEnabled()) {
+            throw new SqldpassException(ErrorCode.INTERNAL_SERVER_ERROR,
+                    "R2 업로드가 설정되지 않았습니다.");
+        }
+        PutObjectRequest put = PutObjectRequest.builder()
+                .bucket(props.getBucket())
+                .key(key)
+                .contentType(contentType)
+                .build();
+        s3Client.putObject(put, RequestBody.fromBytes(body));
+        return publicUrlFor(key);
+    }
+
+    /**
+     * 객체 존재 여부 확인. PDF 캐시 hit 판정용.
+     * 존재하면 publicUrl, 없으면 null.
+     */
+    public String publicUrlIfExists(String key) {
+        if (!isEnabled()) return null;
+        try {
+            s3Client.headObject(HeadObjectRequest.builder()
+                    .bucket(props.getBucket())
+                    .key(key)
+                    .build());
+            return publicUrlFor(key);
+        } catch (NoSuchKeyException e) {
+            return null;
+        } catch (software.amazon.awssdk.services.s3.model.S3Exception e) {
+            // R2 는 missing 시 404 (statusCode 404) 를 반환 — NoSuchKeyException 이 안 잡힐 수도 있음.
+            if (e.statusCode() == 404) return null;
+            throw e;
+        }
+    }
+
+    /** 키에 대응하는 public URL. */
+    public String publicUrlFor(String key) {
+        return stripTrailingSlash(props.getPublicBaseUrl()) + "/" + key;
     }
 
     public record PresignedUpload(

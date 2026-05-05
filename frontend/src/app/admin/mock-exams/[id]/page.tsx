@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { use } from "react";
 import {
+  generateMockExamPdf,
   getAdminMockExamDetail,
   getAdminMockExams,
   getQuestion,
@@ -40,6 +41,8 @@ export default function AdminMockExamDetailPage({
   const [error, setError] = useState<string | null>(null);
   const [verifying, setVerifying] = useState(false);
   const [verifyResult, setVerifyResult] = useState<string | null>(null);
+  const [pdfBusy, setPdfBusy] = useState(false);
+  const [pdfStatus, setPdfStatus] = useState<string | null>(null);
   const [allExams, setAllExams] = useState<AdminMockExam[] | null>(null);
   const [jsonMode, setJsonMode] = useState(false);
   const [jsonText, setJsonText] = useState("");
@@ -339,9 +342,32 @@ export default function AdminMockExamDetailPage({
             >
               MD
             </button>
+            <button
+              onClick={async () => {
+                setPdfBusy(true);
+                setPdfStatus("PDF 준비 중…");
+                try {
+                  const res = await generateMockExamPdf(examId);
+                  setPdfStatus(res.cached ? "PDF (캐시) 다운로드 시작" : "PDF 새로 생성 → 다운로드");
+                  window.open(res.url, "_blank", "noopener,noreferrer");
+                } catch (e) {
+                  setPdfStatus(e instanceof Error ? `실패: ${e.message}` : "PDF 생성 실패");
+                } finally {
+                  setPdfBusy(false);
+                }
+              }}
+              disabled={pdfBusy}
+              className="rounded border border-rose-500/40 bg-rose-500/10 px-3 py-1.5 text-xs font-medium text-rose-300 transition hover:bg-rose-500/20 disabled:opacity-50"
+              title="동일 콘텐츠는 R2 캐시에서 즉시 반환. 새로 생성 시 5~15초 소요."
+            >
+              {pdfBusy ? "PDF 생성 중…" : "PDF 다운로드"}
+            </button>
           </div>
           {verifyResult && (
             <p className="text-xs text-muted">{verifyResult}</p>
+          )}
+          {pdfStatus && (
+            <p className="text-xs text-muted">{pdfStatus}</p>
           )}
         </div>
       </div>

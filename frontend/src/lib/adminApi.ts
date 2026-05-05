@@ -611,6 +611,20 @@ export function setPastExamMeta(id: number, payload: SetPastExamMetaPayload) {
   });
 }
 
+export interface MockExamPdfResponse {
+  url: string;
+  contentHash: string;
+  cached: boolean;
+}
+
+/**
+ * 모의고사 PDF 생성/조회 — 동일 콘텐츠는 R2 캐시에서 즉시 반환,
+ * 신규/변경된 회차는 Playwright 가 새로 렌더 (5~15초 소요).
+ */
+export function generateMockExamPdf(id: number) {
+  return adminFetch<MockExamPdfResponse>(`/mock-exams/${id}/pdf`, { method: "POST" });
+}
+
 export interface AdminSolveDetail {
   solveId: number;
   memberId: number;

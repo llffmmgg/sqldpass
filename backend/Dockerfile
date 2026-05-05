@@ -26,26 +26,46 @@ COPY src/ src/
 RUN ./gradlew bootJar --no-daemon -x test
 
 # ============================================================
-# 2단계: 런타임 스테이지
-# - 빌드된 JAR만 가져와서 최소 크기의 실행 이미지 생성
-# - JRE Alpine 기반 (~80MB) — JDK, Gradle 등 빌드 도구 미포함
+# 2단계: 런타임 스테이지 (Debian/Ubuntu 기반 — Playwright 호환)
+# - 모의고사 PDF 생성에 Playwright + 헤드리스 Chromium 사용 → musl(alpine) 미지원
+# - eclipse-temurin:21-jre-jammy = Ubuntu 22.04 + JRE 21
 # ============================================================
-FROM eclipse-temurin:21-jre-alpine
+FROM eclipse-temurin:21-jre-jammy
 
-# 보안: 비루트(non-root) 사용자 생성
-# → 컨테이너가 탈취되더라도 호스트 시스템 권한 상승 방지
-RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+# 한글 폰트 + Chromium 시스템 의존성 + Playwright CLI 가 사용할 ca-certs/curl
+# - fonts-noto-cjk: PDF 본문 한글 렌더 (없으면 자모 분리)
+# - libnss3 외 다수: Chromium headless 실행 필수 라이브러리
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        fonts-noto-cjk fonts-noto-color-emoji \
+        ca-certificates curl \
+        libnss3 libatk1.0-0 libatk-bridge2.0-0 libcups2 \
+        libxkbcommon0 libxcomposite1 libxdamage1 libxrandr2 \
+        libgbm1 libpango-1.0-0 libcairo2 libasound2 \
+        libxshmfence1 libdrm2 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Playwright Chromium 캐시 위치 — appuser 가 쓸 수 있는 공유 경로.
+# (HOME 이 /root 가 아닌 사용자라도 동일 경로에서 찾도록 명시.)
+ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+
+# 비루트 사용자
+RUN groupadd -r appgroup && useradd -r -g appgroup -m -d /home/appuser appuser \
+ && mkdir -p /ms-playwright \
+ && chown -R appuser:appgroup /ms-playwright
 
 WORKDIR /app
 
-# 빌드 스테이지에서 생성된 JAR 파일만 복사
-COPY --from=build /app/build/libs/*.jar app.jar
+# 빌드 스테이지에서 생성된 JAR 파일 복사
+COPY --from=build --chown=appuser:appgroup /app/build/libs/*.jar app.jar
 
-# JAR 파일 소유권을 비루트 사용자로 변경
-RUN chown appuser:appgroup app.jar
-
-# 이후 모든 명령을 비루트 사용자로 실행
+# Playwright Chromium 사전 설치 (이미지 빌드 시 1회) — 첫 PDF 요청 지연 최소화.
+# Spring Boot fat-jar 에서 Playwright CLI 클래스를 호출하기 위해 jarmode tools 로 의존성을 추출,
+# 추출된 BOOT-INF/lib 의 jar 들을 클래스패스로 잡아 com.microsoft.playwright.CLI install 실행.
 USER appuser
+RUN java -Djarmode=tools -jar app.jar extract --destination /tmp/extracted \
+ && java -cp '/tmp/extracted/lib/*' com.microsoft.playwright.CLI install chromium \
+ && rm -rf /tmp/extracted \
+ || echo "[WARN] Chromium 사전 설치 실패 — 첫 PDF 요청 시 자동 다운로드(60~90s 지연)."
 
 # Spring Boot 기본 포트
 EXPOSE 8080
@@ -53,5 +73,4 @@ EXPOSE 8080
 # JVM 실행 옵션:
 # - UseContainerSupport: Docker 컨테이너의 메모리/CPU 제한을 JVM이 인식
 # - MaxRAMPercentage=75.0: 컨테이너 메모리 제한의 75%를 JVM 힙에 할당
-#   (나머지 25%는 메타스페이스, 스레드 스택, OS 등에 사용)
 ENTRYPOINT ["java", "-XX:+UseContainerSupport", "-XX:MaxRAMPercentage=75.0", "-jar", "app.jar"]

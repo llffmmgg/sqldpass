@@ -38,6 +38,8 @@ dependencies {
 	// Cloudflare R2 (S3 호환) — 게시판 이미지 업로드용 presigned PUT URL 발급
 	implementation platform('software.amazon.awssdk:bom:2.31.0')
 	implementation 'software.amazon.awssdk:s3'
+	// Playwright (헤드리스 Chromium) — 모의고사 PDF 결정론적 렌더용
+	implementation 'com.microsoft.playwright:playwright:1.48.0'
 	compileOnly 'org.projectlombok:lombok'
 	annotationProcessor 'org.projectlombok:lombok'
 	runtimeOnly 'com.mysql:mysql-connector-j'
