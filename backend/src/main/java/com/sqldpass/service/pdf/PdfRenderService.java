@@ -1,5 +1,8 @@
 package com.sqldpass.service.pdf;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.springframework.stereotype.Service;
 
 import com.microsoft.playwright.Browser;
@@ -40,7 +43,11 @@ public class PdfRenderService {
     private synchronized void ensureStarted() {
         if (browser != null) return;
         try {
-            playwright = Playwright.create();
+            // NodeJS 드라이버가 firefox/webkit 까지 자동 다운로드하는 동작 차단.
+            // Dockerfile ENV 가 이미 설정돼 있어도 이 코드 자체로 한 번 더 보장 (배포 안전망).
+            Map<String, String> env = new HashMap<>(System.getenv());
+            env.put("PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD", "1");
+            playwright = Playwright.create(new Playwright.CreateOptions().setEnv(env));
             browser = playwright.chromium().launch(new BrowserType.LaunchOptions().setHeadless(true));
             log.info("Playwright Chromium 시작됨 (PDF 렌더 준비)");
         } catch (Exception e) {

@@ -25,6 +25,12 @@ COPY src/ src/
 # - --no-daemon: 컨테이너 환경에서 Gradle 데몬 불필요
 RUN ./gradlew bootJar --no-daemon -x test
 
+# Playwright CLI 호출에 필요한 의존성 jar 디렉토리만 따로 추출.
+# - runtime stage 의 install layer 가 build.gradle 변경 시에만 무효화되어
+#   소스 변경 배포에서는 Chromium 재다운로드 없이 layer cache hit.
+# - extract 결과: /app/extracted/lib/* 에 fat-jar 의 모든 dependency jar.
+RUN java -Djarmode=tools -jar build/libs/*.jar extract --destination /app/extracted
+
 # ============================================================
 # 2단계: 런타임 스테이지 (Debian/Ubuntu 기반 — Playwright 호환)
 # - 모의고사 PDF 생성에 Playwright + 헤드리스 Chromium 사용 → musl(alpine) 미지원
@@ -47,6 +53,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Playwright Chromium 캐시 위치 — appuser 가 쓸 수 있는 공유 경로.
 # (HOME 이 /root 가 아닌 사용자라도 동일 경로에서 찾도록 명시.)
 ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+# 런타임에 NodeJS 드라이버가 chromium 외 firefox/webkit 까지 자동 다운로드하는 동작 차단.
+# (자동 다운로드는 헬스체크 90s 안에 못 끝나서 신규 컨테이너 기동 실패의 원인이었음)
+ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
 ENV PDF_VERIFY_ON_STARTUP=true
 
 # 비루트 사용자
@@ -56,16 +65,19 @@ RUN groupadd -r appgroup && useradd -r -g appgroup -m -d /home/appuser appuser \
 
 WORKDIR /app
 
-# 빌드 스테이지에서 생성된 JAR 파일 복사
-COPY --from=build --chown=appuser:appgroup /app/build/libs/*.jar app.jar
+# 의존성 lib 디렉토리만 먼저 COPY — Chromium install 의 layer cache 키가 됨.
+# build.gradle 변경 시에만 hash 가 변경되어 install 이 재실행되고,
+# 일반 소스 변경에는 캐시 hit 으로 Chromium 재다운로드를 건너뜀.
+COPY --from=build --chown=appuser:appgroup /app/extracted/lib/ /opt/pw-lib/
 
-# Playwright Chromium 사전 설치 (이미지 빌드 시 1회) — 첫 PDF 요청 지연 최소화.
-# Spring Boot fat-jar 에서 Playwright CLI 클래스를 호출하기 위해 jarmode tools 로 의존성을 추출,
-# 추출된 BOOT-INF/lib 의 jar 들을 클래스패스로 잡아 com.microsoft.playwright.CLI install 실행.
+# Playwright Chromium 사전 설치 — 위 lib 디렉토리가 동일하면 layer cache hit.
 USER appuser
-RUN java -Djarmode=tools -jar app.jar extract --destination /tmp/extracted \
- && java -cp '/tmp/extracted/lib/*' com.microsoft.playwright.CLI install chromium \
- && rm -rf /tmp/extracted
+RUN java -cp '/opt/pw-lib/*' com.microsoft.playwright.CLI install chromium
+
+# 빌드 산출물(매 빌드 변경) 은 install 이후에 COPY — install 캐시 보호.
+USER root
+COPY --from=build --chown=appuser:appgroup /app/build/libs/*.jar app.jar
+USER appuser
 
 # Spring Boot 기본 포트
 EXPOSE 8080
