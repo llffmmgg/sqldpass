@@ -87,8 +87,9 @@ jobs:
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:prod
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
           # GitHub Actions 캐시 활용 → 의존성 변경 없으면 레이어 재사용
+          # mode=min: final layer 만 캐시에 저장 (export 시간 단축, hit 률 영향 미미)
           cache-from: type=gha,scope=frontend
-          cache-to: type=gha,mode=max,scope=frontend
+          cache-to: type=gha,mode=min,scope=frontend
 
   # ----------------------------------------------------------
   # Job 2: OCI 서버 배포 (롤링 스왑 — docker run 방식)

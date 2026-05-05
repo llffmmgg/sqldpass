@@ -121,12 +121,26 @@ public class R2UploadService {
                 .build();
 
         PresignedPutObjectRequest signed = presigner.presignPutObject(presignReq);
-        String publicUrl = stripTrailingSlash(props.getPublicBaseUrl()) + "/" + key;
-        return new PresignedUpload(signed.url().toString(), publicUrl, key, props.getMaxBytes());
+        return new PresignedUpload(signed.url().toString(), publicUrlFor(key), key, props.getMaxBytes());
     }
 
     private static String stripTrailingSlash(String s) {
         return s != null && s.endsWith("/") ? s.substring(0, s.length() - 1) : s;
+    }
+
+    /**
+     * R2 public URL 은 path 에 bucket name 을 포함해야 정상 응답한다.
+     * 환경변수가 ".../<bucket>" 으로 끝나면 그대로 사용,
+     * bucket 이 빠진 root 만 들어 있으면 자동으로 "/<bucket>" 을 붙여서
+     * 일관된 형태(.../bucket/key) 의 URL 을 만든다.
+     */
+    private String normalizedPublicBaseUrl() {
+        String base = stripTrailingSlash(props.getPublicBaseUrl());
+        String bucket = props.getBucket();
+        if (base != null && bucket != null && !bucket.isBlank() && !base.endsWith("/" + bucket)) {
+            return base + "/" + bucket;
+        }
+        return base;
     }
 
     /**
@@ -170,7 +184,7 @@ public class R2UploadService {
 
     /** 키에 대응하는 public URL. */
     public String publicUrlFor(String key) {
-        return stripTrailingSlash(props.getPublicBaseUrl()) + "/" + key;
+        return normalizedPublicBaseUrl() + "/" + key;
     }
 
     public record PresignedUpload(

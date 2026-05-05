@@ -118,8 +118,11 @@ jobs:
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
           # GitHub Actions 캐시를 Docker 레이어 캐시로 활용
           # → 변경되지 않은 레이어는 재빌드 건너뜀 (빌드 시간 대폭 단축)
+          # mode=min: final layer 만 캐시에 저장 (export 시간 2분+ 절약).
+          # apt/gradle/playwright intermediate layer 는 어차피 build.gradle 변경 없으면
+          # Docker layer cache 로 재사용되므로 mode=max 와 hit 률 차이 거의 없음.
           cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-to: type=gha,mode=min
 
   # ----------------------------------------------------------
   # Job 2: OCI 서버 배포
