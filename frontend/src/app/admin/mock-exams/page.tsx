@@ -7,10 +7,13 @@ import {
   createMockExam,
   deleteMockExam,
   changeMockExamVisibility,
+  startMockExamPdfBackfill,
+  getMockExamPdfBackfillStatus,
   type AdminMockExam,
   type CreateMockExamType,
   type MockExamCreationDifficulty,
   type MockExamVisibility,
+  type PdfBackfillStatus,
 } from "@/lib/adminApi";
 
 /**
@@ -230,12 +233,15 @@ export default function AdminMockExamsPage() {
             템플릿에 따라 문제가 자동 편성됩니다.
           </p>
         </div>
-        <Link
-          href="/admin/mock-exams/manual"
-          className="rounded-lg border border-violet-500/40 bg-violet-500/10 px-3 py-2 text-xs font-semibold text-violet-300 hover:bg-violet-500/20"
-        >
-          + JSON 으로 직접 등록
-        </Link>
+        <div className="flex items-center gap-2">
+          <PdfBackfillButton />
+          <Link
+            href="/admin/mock-exams/manual"
+            className="rounded-lg border border-violet-500/40 bg-violet-500/10 px-3 py-2 text-xs font-semibold text-violet-300 hover:bg-violet-500/20"
+          >
+            + JSON 으로 직접 등록
+          </Link>
+        </div>
       </div>
 
       {/* Tabs */}
@@ -551,5 +557,77 @@ function TabButton({
         {count}
       </span>
     </button>
+  );
+}
+
+/**
+ * 사용자 노출 모의고사 전부의 PDF 를 R2 캐시에 미리 채워두는 백필 트리거.
+ * 시작 후 status 폴링 (3초 주기). RUNNING/DONE 상태를 라벨로 표시.
+ */
+function PdfBackfillButton() {
+  const [status, setStatus] = useState<PdfBackfillStatus | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  // 페이지 진입 시 한 번 + RUNNING 일 때 3초 폴링
+  useEffect(() => {
+    let cancelled = false;
+    let timer: ReturnType<typeof setInterval> | null = null;
+
+    const tick = async () => {
+      try {
+        const s = await getMockExamPdfBackfillStatus();
+        if (cancelled) return;
+        setStatus(s);
+        if (s.state !== "RUNNING" && timer) {
+          clearInterval(timer);
+          timer = null;
+        }
+      } catch {
+        // 권한·네트워크 실패는 조용히 무시 (어드민이 아니거나 일시적 장애)
+      }
+    };
+
+    tick();
+    timer = setInterval(tick, 3000);
+
+    return () => {
+      cancelled = true;
+      if (timer) clearInterval(timer);
+    };
+  }, [status?.state]);
+
+  const handleClick = async () => {
+    setError(null);
+    try {
+      const s = await startMockExamPdfBackfill();
+      setStatus(s);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "백필 시작 실패");
+    }
+  };
+
+  const isRunning = status?.state === "RUNNING";
+  const label = (() => {
+    if (isRunning) {
+      return `PDF 백필 중… ${status.processed}/${status.total}`;
+    }
+    if (status?.state === "DONE") {
+      return `PDF 백필 (직전: 신규 ${status.generated} · 캐시 ${status.cached}${status.failed ? ` · 실패 ${status.failed}` : ""})`;
+    }
+    return "PDF 백필 시작";
+  })();
+
+  return (
+    <div className="flex flex-col items-end gap-1">
+      <button
+        onClick={handleClick}
+        disabled={isRunning}
+        className="rounded-lg border border-rose-500/40 bg-rose-500/10 px-3 py-2 text-xs font-semibold text-rose-300 transition hover:bg-rose-500/20 disabled:opacity-50"
+        title="사용자 노출 모의고사(검수+공개) 의 PDF 를 백그라운드에서 일괄 생성해 R2 캐시에 채운다."
+      >
+        {label}
+      </button>
+      {error && <p className="text-[10px] text-rose-400">{error}</p>}
+    </div>
   );
 }

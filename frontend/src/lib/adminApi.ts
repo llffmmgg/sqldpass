@@ -625,6 +625,29 @@ export function generateMockExamPdf(id: number) {
   return adminFetch<MockExamPdfResponse>(`/mock-exams/${id}/pdf`, { method: "POST" });
 }
 
+export type PdfBackfillState = "IDLE" | "RUNNING" | "DONE";
+export interface PdfBackfillStatus {
+  state: PdfBackfillState;
+  total: number;
+  processed: number;
+  cached: number;
+  generated: number;
+  failed: number;
+  currentMockExamId: number | null;
+  startedAt: string | null;
+  finishedAt: string | null;
+}
+
+/** 사용자 노출 모의고사 전부의 PDF 를 백그라운드 일괄 생성 시작. */
+export function startMockExamPdfBackfill() {
+  return adminFetch<PdfBackfillStatus>(`/mock-exams/pdf/backfill`, { method: "POST" });
+}
+
+/** 백필 진행 상황 폴링. */
+export function getMockExamPdfBackfillStatus() {
+  return adminFetch<PdfBackfillStatus>(`/mock-exams/pdf/backfill/status`);
+}
+
 export interface AdminSolveDetail {
   solveId: number;
   memberId: number;

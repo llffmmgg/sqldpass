@@ -7,11 +7,13 @@ import java.time.LocalDate;
 
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import tools.jackson.databind.ObjectMapper;
 import com.sqldpass.config.CacheConfig;
+import com.sqldpass.service.pdf.MockExamPublishedEvent;
 import com.sqldpass.controller.admin.dto.ManualMockExamRequest;
 import com.sqldpass.controller.admin.dto.ManualMockExamRequest.ManualQuestion;
 import com.sqldpass.domain.mockexam.MockExam;
@@ -47,6 +49,7 @@ public class MockExamService {
     private final ComputerLiteracy2MockExamCreator computerLiteracy2MockExamCreator;
     private final EngineerWrittenMockExamCreator engineerWrittenMockExamCreator;
     private final AdspMockExamCreator adspMockExamCreator;
+    private final ApplicationEventPublisher eventPublisher;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     /** 어드민용 — DRAFT 포함 전체 회차 */
@@ -80,6 +83,10 @@ public class MockExamService {
         MockExamEntity entity = mockExamRepository.findById(id)
                 .orElseThrow(() -> new SqldpassException(ErrorCode.MOCK_EXAM_NOT_FOUND));
         entity.changeVisibility(visibility);
+        // PUBLISHED 로 전이하면 사용자가 곧 다운로드할 수 있도록 PDF 사전 생성 트리거
+        if (visibility == MockExamVisibility.PUBLISHED && entity.isExpertVerified()) {
+            eventPublisher.publishEvent(new MockExamPublishedEvent(id));
+        }
         return MockExamMapper.toSummary(entity, entity.getQuestions().size(), null, null, null);
     }
 
@@ -112,7 +119,12 @@ public class MockExamService {
         MockExamEntity entity = mockExamRepository.findById(mockExamId)
                 .orElseThrow(() -> new SqldpassException(ErrorCode.MOCK_EXAM_NOT_FOUND));
         entity.toggleExpertVerified();
-        return entity.isExpertVerified();
+        boolean nowVerified = entity.isExpertVerified();
+        // 검수 완료 + 이미 PUBLISHED 면 사용자 노출이 시작되므로 PDF 사전 생성 트리거
+        if (nowVerified && entity.getVisibility() == MockExamVisibility.PUBLISHED) {
+            eventPublisher.publishEvent(new MockExamPublishedEvent(mockExamId));
+        }
+        return nowVerified;
     }
 
     /**

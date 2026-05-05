@@ -51,6 +51,9 @@ class MockExamServiceTest {
     @Mock
     private SubjectRepository subjectRepository;
 
+    @Mock
+    private org.springframework.context.ApplicationEventPublisher eventPublisher;
+
     @InjectMocks
     private MockExamService mockExamService;
 
