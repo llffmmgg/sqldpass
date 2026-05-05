@@ -57,18 +57,46 @@ public class PdfRenderService {
     /**
      * 주어진 URL 을 열고 NetworkIdle 까지 대기 후 A4 PDF 바이너리 생성.
      * 페이지 푸터에 "현재 페이지 / 전체 페이지" 표기.
+     *
+     * 시그널:
+     *  - body[data-print-ready="1"]    : 정상 준비 완료
+     *  - body[data-print-ready="error"]: 페이지 안에서 fetch/렌더 실패 (60초 안 기다리고 즉시 실패)
+     *  - body[data-print-error]         : "error" 시그널과 함께 박히는 사유 텍스트
      */
     public synchronized byte[] renderUrlToPdf(String url) {
         ensureStarted();
         try (BrowserContext context = browser.newContext(new Browser.NewContextOptions());
              Page page = context.newPage()) {
 
+            // 페이지 콘솔 에러를 backend 로그로 흘려서 디버깅 가능하게.
+            page.onConsoleMessage(msg -> {
+                if ("error".equals(msg.type())) {
+                    log.warn("[print page console] {}", msg.text());
+                }
+            });
+            page.onPageError(err ->
+                    log.warn("[print page error] {}", err));
+
             page.navigate(url, new Page.NavigateOptions().setTimeout(60_000));
             // markdown/이미지/폰트가 모두 로드되어야 결정론적이라 NETWORKIDLE 까지 기다림.
             page.waitForLoadState(LoadState.NETWORKIDLE);
-            // 인쇄 페이지가 본인 준비를 마치면 body 에 data-print-ready="1" 을 박는다.
-            page.waitForFunction("document.body && document.body.getAttribute('data-print-ready') === '1'",
+            // 인쇄 페이지가 본인 준비를 마치면 body 에 data-print-ready 를 박는다 ("1" 또는 "error").
+            page.waitForFunction(
+                    "document.body && (document.body.getAttribute('data-print-ready') === '1' "
+                            + "|| document.body.getAttribute('data-print-ready') === 'error')",
                     null, new Page.WaitForFunctionOptions().setTimeout(60_000));
+
+            // 페이지가 명시적으로 error 시그널을 박았으면 그 사유로 즉시 실패시킨다.
+            String readyState = (String) page.evaluate(
+                    "document.body.getAttribute('data-print-ready')");
+            if ("error".equals(readyState)) {
+                String pageError = (String) page.evaluate(
+                        "document.body.getAttribute('data-print-error') || ''");
+                String msg = "인쇄 페이지가 에러 상태로 보고: "
+                        + (pageError == null || pageError.isBlank() ? "(메시지 없음)" : pageError);
+                log.error("PDF 렌더 실패 (페이지 자체 에러): url={}, pageError={}", url, pageError);
+                throw new SqldpassException(ErrorCode.INTERNAL_SERVER_ERROR, "PDF 생성에 실패했습니다. " + msg);
+            }
 
             return page.pdf(new Page.PdfOptions()
                     .setFormat("A4")
@@ -84,8 +112,10 @@ public class PdfRenderService {
             throw e;
         } catch (Exception e) {
             log.error("PDF 렌더 실패: url={}", url, e);
+            // 진짜 원인이 응답에도 노출되도록 cause 요약을 메시지에 포함.
+            // (스택트레이스는 보안상 노출하지 않고 root cause type + message 만)
             throw new SqldpassException(ErrorCode.INTERNAL_SERVER_ERROR,
-                    "PDF 생성에 실패했습니다.");
+                    "PDF 생성에 실패했습니다. 원인: " + summarizeCause(e));
         }
     }
 

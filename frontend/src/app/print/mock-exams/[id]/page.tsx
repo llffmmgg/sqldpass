@@ -246,7 +246,13 @@ export default function PrintMockExamPage({
   }, [id, token]);
 
   // 데이터·이미지·폰트 로드 완료 시그널 — Playwright 의 waitForFunction 이 이 attribute 를 본다.
+  // 에러 상태에서도 즉시 시그널을 박아서 Playwright 가 60초 대기 없이 빨리 실패하게 한다.
   useEffect(() => {
+    if (error) {
+      document.body.setAttribute("data-print-error", error);
+      document.body.setAttribute("data-print-ready", "error");
+      return;
+    }
     if (!data) return;
     const markReady = () => {
       document.body.setAttribute("data-print-ready", "1");
@@ -257,7 +263,7 @@ export default function PrintMockExamPage({
     } else {
       markReady();
     }
-  }, [data]);
+  }, [data, error]);
 
   if (error) {
     return (
