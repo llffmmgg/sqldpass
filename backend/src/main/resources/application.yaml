@@ -97,3 +97,5 @@ sqldpass:
     print-page-base-url: ${PDF_PRINT_PAGE_BASE_URL:http://localhost:3000}
     # PDF 캐시(R2 객체) 키 prefix.
     cache-key-prefix: ${PDF_CACHE_KEY_PREFIX:pdf/mock-exams}
+    # true 면 서버 시작 시 Chromium 을 실제로 띄워봐서 런타임 장애를 startup 단계로 당긴다.
+    verify-on-startup: ${PDF_VERIFY_ON_STARTUP:false}

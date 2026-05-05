@@ -22,4 +22,5 @@ import lombok.Setter;
 public class PdfProperties {
     private String printPageBaseUrl = "http://localhost:3000";
     private String cacheKeyPrefix = "pdf/mock-exams";
+    private boolean verifyOnStartup = false;
 }

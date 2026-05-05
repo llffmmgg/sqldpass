@@ -30,6 +30,10 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 public class PdfRenderService {
 
+    private static final String STARTUP_FAILURE_HINT =
+            "Chromium 실행 환경이 준비되지 않았습니다. "
+                    + "Playwright browser install 누락 또는 서버/컨테이너의 Chromium 필수 라이브러리 누락 가능성이 큽니다.";
+
     private Playwright playwright;
     private Browser browser;
 
@@ -42,8 +46,12 @@ public class PdfRenderService {
         } catch (Exception e) {
             log.error("Playwright Chromium 시작 실패 — 'playwright install chromium' 가 컨테이너/로컬에 적용됐는지 확인 필요", e);
             throw new SqldpassException(ErrorCode.INTERNAL_SERVER_ERROR,
-                    "PDF 렌더 엔진(Chromium) 을 시작할 수 없습니다.");
+                    STARTUP_FAILURE_HINT + " cause=" + summarizeCause(e), e);
         }
+    }
+
+    public void verifyEngine() {
+        ensureStarted();
     }
 
     /**
@@ -89,5 +97,18 @@ public class PdfRenderService {
         try {
             if (playwright != null) playwright.close();
         } catch (Exception ignored) {}
+    }
+
+    private static String summarizeCause(Throwable t) {
+        Throwable root = t;
+        while (root.getCause() != null && root.getCause() != root) {
+            root = root.getCause();
+        }
+        String type = root.getClass().getSimpleName();
+        String message = root.getMessage();
+        if (message == null || message.isBlank()) {
+            return type;
+        }
+        return type + ": " + message.replaceAll("\\s+", " ").trim();
     }
 }

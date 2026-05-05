@@ -47,6 +47,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Playwright Chromium 캐시 위치 — appuser 가 쓸 수 있는 공유 경로.
 # (HOME 이 /root 가 아닌 사용자라도 동일 경로에서 찾도록 명시.)
 ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+ENV PDF_VERIFY_ON_STARTUP=true
 
 # 비루트 사용자
 RUN groupadd -r appgroup && useradd -r -g appgroup -m -d /home/appuser appuser \
@@ -64,8 +65,7 @@ COPY --from=build --chown=appuser:appgroup /app/build/libs/*.jar app.jar
 USER appuser
 RUN java -Djarmode=tools -jar app.jar extract --destination /tmp/extracted \
  && java -cp '/tmp/extracted/lib/*' com.microsoft.playwright.CLI install chromium \
- && rm -rf /tmp/extracted \
- || echo "[WARN] Chromium 사전 설치 실패 — 첫 PDF 요청 시 자동 다운로드(60~90s 지연)."
+ && rm -rf /tmp/extracted
 
 # Spring Boot 기본 포트
 EXPOSE 8080
