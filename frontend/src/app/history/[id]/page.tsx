@@ -194,20 +194,23 @@ function HistoryDetailContent({ params }: { params: Promise<{ id: string }> }) {
                       const isSelected = optNum === answer.selectedOption;
                       const isCorrect = optNum === answer.correctOption;
                       return (
-                        <p
+                        <div
                           key={optIdx}
-                          className={`rounded px-2 py-1 text-sm ${
+                          className={`flex items-start gap-2 rounded px-2 py-1 text-sm ${
                             isCorrect
                               ? "bg-green-500/10 text-green-400 font-medium"
                               : isSelected && !answer.correct
-                              ? "bg-red-500/10 text-red-400 line-through"
+                              ? "bg-red-500/10 text-red-400"
                               : "text-muted"
                           }`}
                         >
-                          {OPTION_MARKERS[optIdx]} {opt}
-                          {isCorrect && " ✓"}
-                          {isSelected && !isCorrect && " (선택)"}
-                        </p>
+                          <span className="shrink-0">{OPTION_MARKERS[optIdx]}</span>
+                          <span className="min-w-0 flex-1">
+                            <QuestionContent content={opt} className="mcq-option" />
+                          </span>
+                          {isCorrect && <span className="shrink-0">✓</span>}
+                          {isSelected && !isCorrect && <span className="shrink-0">(선택)</span>}
+                        </div>
                       );
                     })}
                   </div>

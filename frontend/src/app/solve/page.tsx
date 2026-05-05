@@ -835,9 +835,11 @@ function SolvePageContent() {
                       >
                         {num}
                       </span>
-                      <span className="flex-1">{optionText}</span>
-                      {revealed && isCorrectOption && <span className="text-success">✓</span>}
-                      {revealed && isSelected && !isCorrectOption && <span className="text-danger">✗</span>}
+                      <span className="min-w-0 flex-1">
+                        <QuestionContent content={optionText} className="mcq-option" />
+                      </span>
+                      {revealed && isCorrectOption && <span className="shrink-0 text-success">✓</span>}
+                      {revealed && isSelected && !isCorrectOption && <span className="shrink-0 text-danger">✗</span>}
                     </button>
                   </li>
                 );
@@ -1147,7 +1149,7 @@ function SessionReviewCard({
                 return (
                   <li
                     key={num}
-                    className={`rounded-md border px-3 py-2 text-sm ${
+                    className={`flex items-start gap-2 rounded-md border px-3 py-2 text-sm ${
                       isAnswer
                         ? "border-success/40 bg-success/10"
                         : isMine
@@ -1155,13 +1157,15 @@ function SessionReviewCard({
                           : "border-border bg-bg"
                     }`}
                   >
-                    <span className="mr-2 font-semibold tabular-nums">{num}.</span>
-                    {opt}
+                    <span className="font-semibold tabular-nums">{num}.</span>
+                    <span className="min-w-0 flex-1">
+                      <QuestionContent content={opt} className="mcq-option" />
+                    </span>
                     {isAnswer && (
-                      <span className="ml-2 text-[11px] font-bold text-success">정답</span>
+                      <span className="ml-1 shrink-0 text-[11px] font-bold text-success">정답</span>
                     )}
                     {isMine && !isAnswer && (
-                      <span className="ml-2 text-[11px] font-bold text-danger">내 답</span>
+                      <span className="ml-1 shrink-0 text-[11px] font-bold text-danger">내 답</span>
                     )}
                   </li>
                 );

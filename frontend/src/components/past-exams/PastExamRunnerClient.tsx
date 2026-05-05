@@ -680,16 +680,18 @@ function MCQOptions({
           <li key={num}>
             <button
               onClick={() => onSelect(num)}
-              className={`w-full rounded-lg border px-4 py-3 text-left text-base transition-all duration-150 ease-out ${
+              className={`flex w-full items-start gap-3 rounded-lg border px-4 py-3 text-left text-base transition-all duration-150 ease-out ${
                 isSelected
                   ? `${token.tailwind.border} ${token.tailwind.bgSoft} text-text animate-tap-bounce`
                   : `border-border text-text ${token.tailwind.borderHover} hover:-translate-y-[1px] hover:shadow-sm hover:scale-[1.01]`
               }`}
             >
-              <span className="mr-3 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-current text-xs">
+              <span className="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-current text-xs">
                 {num}
               </span>
-              {optionText}
+              <span className="min-w-0 flex-1">
+                <QuestionContent content={optionText} className="mcq-option" />
+              </span>
             </button>
           </li>
         );
@@ -1013,7 +1015,7 @@ function PastExamReviewCard({
                 return (
                   <li
                     key={num}
-                    className={`rounded-md border px-3 py-2 text-sm ${
+                    className={`flex items-start gap-2 rounded-md border px-3 py-2 text-sm ${
                       isAnswer
                         ? "border-success/40 bg-success/10"
                         : isMine
@@ -1021,13 +1023,15 @@ function PastExamReviewCard({
                           : "border-border bg-bg"
                     }`}
                   >
-                    <span className="mr-2 font-semibold tabular-nums">{num}.</span>
-                    {opt}
+                    <span className="font-semibold tabular-nums">{num}.</span>
+                    <span className="min-w-0 flex-1">
+                      <QuestionContent content={opt} className="mcq-option" />
+                    </span>
                     {isAnswer && (
-                      <span className="ml-2 text-[11px] font-bold text-success">정답</span>
+                      <span className="ml-1 shrink-0 text-[11px] font-bold text-success">정답</span>
                     )}
                     {isMine && !isAnswer && (
-                      <span className="ml-2 text-[11px] font-bold text-danger">내 답</span>
+                      <span className="ml-1 shrink-0 text-[11px] font-bold text-danger">내 답</span>
                     )}
                   </li>
                 );

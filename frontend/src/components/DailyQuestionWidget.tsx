@@ -186,7 +186,7 @@ export default function DailyQuestionWidget() {
                           {num}
                         </span>
                         <div className="min-w-0 flex-1">
-                          <QuestionContent content={optionText} />
+                          <QuestionContent content={optionText} className="mcq-option" />
                         </div>
                       </button>
                     </li>

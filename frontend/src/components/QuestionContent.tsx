@@ -14,26 +14,63 @@ const QuestionCodeBlock = dynamic(() => import("./QuestionCodeBlock"), {
 });
 
 /**
- * 평문 SQL 블록을 감지해서 ```sql ... ``` 으로 자동 래핑.
+ * 펜스 없는 평문 코드 블록을 자동으로 ```<lang> ... ``` 으로 래핑.
  * 이미 펜스 안에 있는 코드는 건드리지 않는다.
  *
- * 배경: SQLD 레거시 문제는 SQL이 펜스 없이 평문으로 저장돼 있어
- * react-markdown이 일반 단락으로 렌더 → 신택스 하이라이팅 X.
- * 이 전처리로 모든 페이지에서 SQL이 코드 블록으로 표시됨.
+ * 배경:
+ * - SQLD 레거시 문제: SQL이 펜스 없이 평문으로 저장됨.
+ * - 정처기 필기 보기(① ② ③ ④): C/Java/Python 코드 조각이 펜스 없이 들어 있음.
+ * - 두 경우 모두 react-markdown이 일반 단락으로 렌더 → 신택스 하이라이팅 X.
+ * 이 전처리로 모든 페이지에서 코드가 블록으로 표시됨.
  */
-function ensureSqlFences(content: string): string {
+function ensureCodeFences(content: string): string {
   if (!content) return content;
   const lines = content.split("\n");
   const out: string[] = [];
   let i = 0;
 
-  // DCL(GRANT/REVOKE)·TCL(COMMIT/ROLLBACK/SAVEPOINT)도 SQL 시작으로 취급.
+  // 한글이 섞인 문장은 코드로 보지 않는다.
+  // "SELECT 문의 실행 결과는?" 같은 한글 질문이 코드로 잘못 펜싱되는 false positive 방지.
+  const HAS_KOREAN = /[가-힣]/;
+
+  // SQL: DCL(GRANT/REVOKE)·TCL(COMMIT/ROLLBACK/SAVEPOINT)도 시작으로 취급.
   const SQL_START = /^\s*(SELECT|INSERT|UPDATE|DELETE|CREATE|ALTER|DROP|WITH|MERGE|TRUNCATE|GRANT|REVOKE|COMMIT|ROLLBACK|SAVEPOINT)\b/i;
   const SQL_CONT =
     /^\s*(FROM|WHERE|AND|OR|GROUP\s+BY|ORDER\s+BY|HAVING|JOIN|INNER\s+JOIN|LEFT\s+JOIN|RIGHT\s+JOIN|FULL\s+JOIN|CROSS\s+JOIN|ON|UNION|UNION\s+ALL|INTERSECT|MINUS|EXCEPT|LIMIT|OFFSET|FETCH|VALUES|SET|RETURNING|WHEN|THEN|ELSE|END|CASE|INTO|USING|PARTITION\s+BY|WINDOW|RANGE|ROWS|TO|PUBLIC)\b/i;
-  // 한글이 섞인 문장은 SQL 블록으로 보지 않는다.
-  // "SELECT 문의 실행 결과는?" 같은 한글 질문이 SQL로 잘못 펜싱되는 false positive 방지.
-  const HAS_KOREAN = /[가-힣]/;
+
+  // C/C++: #include, 함수 시그니처, printf/scanf, 제어문(괄호 포함)
+  const C_START =
+    /^\s*(#include\b|int\s+main\b|int\s+\w+\s*[=;(\[]|void\s+\w+\s*\(|char\s+\*?\w+|float\s+\w+|double\s+\w+|long\s+\w+|short\s+\w+|unsigned\s+\w+|struct\s+\w+|typedef\s+\b|return\s+\d|printf\s*\(|scanf\s*\(|while\s*\(|for\s*\(|if\s*\(|do\s*\{|switch\s*\()/;
+  // Java: 접근 제어자/제어문/대표 API
+  const JAVA_START =
+    /^\s*(public\s+(static\s+)?(class|void|int|String|boolean)\b|private\s+\w+|protected\s+\w+|class\s+\w+\s*\{?|System\.out\.print|void\s+\w+\s*\(|try\s*\{|catch\s*\()/;
+  // Python: def/class/import/print + ":" 끝나는 제어문
+  const PY_START =
+    /^\s*(def\s+\w+\s*\(|class\s+\w+\s*[:(]|import\s+\w+|from\s+\w+\s+import\b|print\s*\(|for\s+\w+\s+in\s+|while\s+.+:|if\s+.+:)/;
+
+  // 들여쓰기 또는 닫는 괄호/세미콜론 위주의 연속 라인 (코드 본문 추정)
+  const CONT_INDENTED = /^\s{2,}\S/;
+  const CONT_SYMBOLS = /^\s*([{}();,]|\/\/|\/\*|\*\/|else\b|return\b)/;
+
+  function detectLang(line: string): "sql" | "c" | "java" | "python" | null {
+    if (HAS_KOREAN.test(line)) return null;
+    if (SQL_START.test(line)) return "sql";
+    if (C_START.test(line)) return "c";
+    if (JAVA_START.test(line)) return "java";
+    if (PY_START.test(line)) return "python";
+    return null;
+  }
+
+  function isContinuation(line: string, lang: "sql" | "c" | "java" | "python"): boolean {
+    if (line.trim() === "") return false;
+    if (HAS_KOREAN.test(line)) return false;
+    if (CONT_INDENTED.test(line) || CONT_SYMBOLS.test(line)) return true;
+    if (lang === "sql") return SQL_CONT.test(line) || SQL_START.test(line);
+    if (lang === "c") return C_START.test(line);
+    if (lang === "java") return JAVA_START.test(line);
+    if (lang === "python") return PY_START.test(line);
+    return false;
+  }
 
   while (i < lines.length) {
     const line = lines[i];
@@ -53,26 +90,26 @@ function ensureSqlFences(content: string): string {
       continue;
     }
 
-    // 2) SQL 시작 키워드 감지 → 같은 블록으로 묶어서 fence
-    //    단, 한글이 섞인 라인은 일반 질문 문장으로 간주하고 건너뛴다.
-    if (SQL_START.test(line) && !HAS_KOREAN.test(line)) {
-      const sqlLines: string[] = [line];
+    // 2) 코드 시작 키워드 감지 → 같은 블록으로 묶어서 fence
+    const lang = detectLang(line);
+    if (lang) {
+      const codeLines: string[] = [line];
       i++;
       while (i < lines.length) {
         const next = lines[i];
         if (next.trim() === "") break;
-        const isContinuation =
-          SQL_CONT.test(next) ||
-          /^\s{2,}/.test(next) ||
-          /^\s*[(),]/.test(next) ||
-          /^\s*(SELECT|INSERT|UPDATE|DELETE|GRANT|REVOKE|COMMIT|ROLLBACK|SAVEPOINT)\b/i.test(next) ||
-          /^\s*--/.test(next);
-        if (!isContinuation) break;
-        sqlLines.push(next);
+        if (!isContinuation(next, lang)) break;
+        codeLines.push(next);
         i++;
       }
-      out.push("```sql");
-      out.push(...sqlLines);
+      // 1줄짜리 짧은 토큰(`for(;;)`)은 인라인 코드로 두고 펜싱하지 않음.
+      // 다중 라인이거나 본문 길이가 충분할 때만 블록 처리.
+      if (codeLines.length === 1 && codeLines[0].length < 40) {
+        out.push(codeLines[0]);
+        continue;
+      }
+      out.push("```" + lang);
+      out.push(...codeLines);
       out.push("```");
       continue;
     }
@@ -198,7 +235,7 @@ export default function QuestionContent({
           },
         }}
       >
-        {ensureSqlFences(content)}
+        {ensureCodeFences(content)}
       </ReactMarkdown>
     </div>
   );

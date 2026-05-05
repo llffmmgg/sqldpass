@@ -633,3 +633,21 @@ details[open] summary .chevron-icon { transform: rotate(90deg); }
 
 /* ── Float animation ── */
 .animate-float { animation: float 4s ease-in-out infinite; }
+
+/* ── MCQ 보기용 컴팩트 스타일 ──
+ * <button>/<li> 안에 들어가는 옵션은 본문보다 컴팩트해야 함.
+ * - 단일 라인 옵션: <p>이 inline처럼 보이도록 마진 0
+ * - 다중 라인/코드 옵션: 내부 코드 블록 패딩·마진 축소
+ */
+.question-md.mcq-option > p { margin: 0; }
+.question-md.mcq-option > p + p { margin-top: 0.25rem; }
+.question-md.mcq-option > div:first-child,
+.question-md.mcq-option > pre:first-child { margin-top: 0; }
+.question-md.mcq-option > div:last-child,
+.question-md.mcq-option > pre:last-child { margin-bottom: 0; }
+.question-md.mcq-option > ul,
+.question-md.mcq-option > ol { margin-top: 0.25rem; margin-bottom: 0.25rem; }
+.question-md.mcq-option > div[class*="rounded-lg"] { /* QuestionCodeBlock wrapper */
+  margin-top: 0.5rem;
+  margin-bottom: 0.25rem;
+}

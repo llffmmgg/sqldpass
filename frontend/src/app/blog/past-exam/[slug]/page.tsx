@@ -547,10 +547,12 @@ function PastExamQuestionItem({
           {parsed.options.map((opt, i) => (
             <li
               key={i}
-              className="rounded-md border border-border bg-bg px-3 py-2 text-sm"
+              className="flex items-start gap-2 rounded-md border border-border bg-bg px-3 py-2 text-sm"
             >
-              <span className="mr-2 font-semibold tabular-nums">{i + 1}.</span>
-              {opt}
+              <span className="font-semibold tabular-nums">{i + 1}.</span>
+              <span className="min-w-0 flex-1">
+                <QuestionContent content={opt} className="mcq-option" />
+              </span>
             </li>
           ))}
         </ul>
@@ -567,11 +569,15 @@ function PastExamQuestionItem({
           {question.questionType === "MCQ" && question.correctOption != null && (
             <div>
               <p className="text-xs font-semibold text-text-muted">정답</p>
-              <p className="mt-1 text-base font-semibold text-success">
-                {question.correctOption}번
-                {parsed.options[question.correctOption - 1] &&
-                  `. ${parsed.options[question.correctOption - 1]}`}
-              </p>
+              <p className="mt-1 text-base font-semibold text-success">{question.correctOption}번</p>
+              {parsed.options[question.correctOption - 1] && (
+                <div className="mt-1 text-success">
+                  <QuestionContent
+                    content={parsed.options[question.correctOption - 1]}
+                    className="mcq-option"
+                  />
+                </div>
+              )}
             </div>
           )}
 

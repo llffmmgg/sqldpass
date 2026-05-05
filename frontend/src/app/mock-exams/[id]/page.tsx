@@ -708,16 +708,18 @@ function MCQOptions({
           <li key={num}>
             <button
               onClick={() => onSelect(num)}
-              className={`w-full rounded-lg border px-4 py-3 text-left text-base transition-all duration-150 ease-out ${
+              className={`flex w-full items-start gap-3 rounded-lg border px-4 py-3 text-left text-base transition-all duration-150 ease-out ${
                 isSelected
                   ? `${accent.border} bg-amber-500/10 text-foreground animate-tap-bounce`
                   : `border-border ${accent.hoverBorder} hover:bg-amber-500/5 hover:-translate-y-[1px] hover:shadow-sm hover:scale-[1.01]`
               }`}
             >
-              <span className="mr-3 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-current text-xs">
+              <span className="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-current text-xs">
                 {num}
               </span>
-              {optionText}
+              <span className="min-w-0 flex-1">
+                <QuestionContent content={optionText} className="mcq-option" />
+              </span>
             </button>
           </li>
         );
