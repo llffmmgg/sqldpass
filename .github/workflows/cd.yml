@@ -57,7 +57,9 @@ jobs:
   # ----------------------------------------------------------
   build-push:
     name: 이미지 빌드 및 푸시
-    runs-on: ubuntu-latest
+    # GitHub Actions ARM runner — OCI Ampere(arm64) 와 동일 아키텍처라 native 빌드.
+    # QEMU 에뮬레이션 페널티(2~5배) 제거 → apt-get/gradle bootJar/playwright install 모두 단축.
+    runs-on: ubuntu-24.04-arm
     permissions:
       contents: read       # 소스 코드 읽기 권한
       packages: write      # ghcr.io 패키지 쓰기 권한 (이미지 푸시)
@@ -90,14 +92,7 @@ jobs:
           chmod +x gradlew
           ./gradlew test --no-daemon
 
-      # QEMU: ARM64 크로스 빌드를 위한 에뮬레이션 설정
-      # ubuntu-latest는 amd64인데 OCI 서버는 arm64이므로 필요
-      - name: QEMU 설정
-        uses: docker/setup-qemu-action@v3
-        with:
-          platforms: arm64
-
-      # Docker Buildx: 멀티플랫폼 빌드, 캐시 등 고급 기능 지원
+      # Docker Buildx: 캐시 등 고급 기능 지원 (ARM runner 라 QEMU 불필요)
       - name: Docker Buildx 설정
         uses: docker/setup-buildx-action@v3
 
@@ -223,6 +218,7 @@ jobs:
               -e R2_ACCESS_KEY="${R2_ACCESS_KEY}" \
               -e R2_SECRET_KEY="${R2_SECRET_KEY}" \
               -e R2_PUBLIC_BASE_URL="${R2_PUBLIC_BASE_URL}" \
+              -e PDF_PRINT_PAGE_BASE_URL="https://www.sqldpass.com" \
               "$NEW_IMAGE"
 
             # === 3) 신규 컨테이너 헬스체크 (최대 90초) ===

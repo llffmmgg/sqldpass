@@ -65,8 +65,9 @@ services:
 
       # --- 모의고사 PDF 생성 (Playwright) ---
       # 백엔드 컨테이너의 Chromium 이 호출할 프론트 인쇄 페이지 베이스 URL.
-      # 같은 docker network 의 web 서비스 호스트명을 직접 사용해 nginx 우회.
-      PDF_PRINT_PAGE_BASE_URL: http://web:3000
+      # nginx 경유 외부 URL — web 컨테이너 swap/재시작·docker DNS 캐시와 무관하게 안정적.
+      # admin-only 가끔 호출이라 외부 트래픽 한 번 더 발생해도 비용 무시 가능.
+      PDF_PRINT_PAGE_BASE_URL: https://www.sqldpass.com
     depends_on:
       db:
         condition: service_healthy   # DB healthcheck 통과 후 앱 시작

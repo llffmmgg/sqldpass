@@ -49,7 +49,9 @@ jobs:
   # ----------------------------------------------------------
   build-push:
     name: 이미지 빌드 및 푸시
-    runs-on: ubuntu-latest
+    # GitHub Actions ARM runner — OCI Ampere(arm64) 와 동일 아키텍처라 native 빌드.
+    # npm ci + next build 가 에뮬레이션 없이 돌아 2배 가까이 빠름.
+    runs-on: ubuntu-24.04-arm
     permissions:
       contents: read
       packages: write
@@ -58,12 +60,7 @@ jobs:
       - name: 소스 코드 체크아웃
         uses: actions/checkout@v4
 
-      # QEMU: ARM64 최종 런타임 스테이지용 (파일 복사 수준이라 오버헤드 작음)
-      - name: QEMU 설정
-        uses: docker/setup-qemu-action@v3
-        with:
-          platforms: arm64
-
+      # Docker Buildx: 캐시 등 고급 기능 지원 (ARM runner 라 QEMU 불필요)
       - name: Docker Buildx 설정
         uses: docker/setup-buildx-action@v3
 
