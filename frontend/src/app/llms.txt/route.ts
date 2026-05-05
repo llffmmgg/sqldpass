@@ -47,8 +47,11 @@ export const dynamic = "force-static";
 export function GET() {
   return new Response(body, {
     headers: {
-      "Content-Type": "text/plain; charset=utf-8",
+      // Markdown for Agents — Accept: text/markdown 협상 응답에서도 그대로 사용된다.
+      "Content-Type": "text/markdown; charset=utf-8",
       "Cache-Control": "public, max-age=86400, s-maxage=86400",
+      "X-Markdown-Tokens": String(body.length),
+      Vary: "Accept",
     },
   });
 }

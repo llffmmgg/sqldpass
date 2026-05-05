@@ -35,6 +35,21 @@ const nextConfig: NextConfig = {
         },
       }
     : {}),
+  // RFC 8288 Link 헤더 — 에이전트 디스커버리.
+  // 홈에서 api-catalog, llms.txt, OpenAPI(swagger) 등의 위치를 광고한다.
+  async headers() {
+    const linkHeader = [
+      '</.well-known/api-catalog>; rel="api-catalog"; type="application/linkset+json"',
+      '</llms.txt>; rel="describedby"; type="text/markdown"',
+      '</.well-known/agent-skills/index.json>; rel="https://agentskills.io/rel/skills"; type="application/json"',
+    ].join(", ");
+    return [
+      {
+        source: "/",
+        headers: [{ key: "Link", value: linkHeader }],
+      },
+    ];
+  },
 };
 
 export default nextConfig;
