@@ -14,7 +14,6 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
-import jakarta.persistence.Lob;
 
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -59,8 +58,7 @@ public class PaymentEntity extends BaseTimeEntity {
     private PaymentStatus status;
 
     /** PortOne 검증 응답 원본(JSON). 디버깅·환불 분쟁 대비. */
-    @Lob
-    @Column(name = "pg_response")
+    @Column(name = "pg_response", columnDefinition = "TEXT")
     private String pgResponse;
 
     @Column(name = "paid_at")
