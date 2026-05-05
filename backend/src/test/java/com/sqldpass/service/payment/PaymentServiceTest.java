@@ -63,12 +63,14 @@ class PaymentServiceTest {
     }
 
     @Test
-    @DisplayName("화이트리스트 비어있으면 prepare 시 PAYMENT_REVIEWER_ONLY")
-    void prepareBlocksWhenWhitelistEmpty() {
+    @DisplayName("화이트리스트 비어있으면 정식 오픈 모드 — 어떤 회원이든 prepare 통과")
+    void prepareAllowsEveryoneWhenWhitelistEmpty() {
         properties.setReviewerNicknames("");
-        assertThatThrownBy(() -> service.prepare(1L, null))
-                .isInstanceOf(SqldpassException.class)
-                .extracting("errorCode").isEqualTo(ErrorCode.PAYMENT_REVIEWER_ONLY);
+
+        var result = service.prepare(1L, null);
+
+        assertThat(result.amount()).isEqualTo(3000);
+        verify(paymentRepository, times(1)).save(any(PaymentEntity.class));
     }
 
     @Test

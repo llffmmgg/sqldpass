@@ -29,13 +29,19 @@ public record MockExamSummaryResponse(
         Integer examRound,
         LocalDate examDate,
         LocalDateTime publishedAt,
-        LocalDateTime pastExamLinkedAt
+        LocalDateTime pastExamLinkedAt,
+        boolean purchased
 ) {
     public static MockExamSummaryResponse from(MockExam mockExam) {
-        return from(mockExam, null, null);
+        return from(mockExam, null, null, false);
     }
 
     public static MockExamSummaryResponse from(MockExam mockExam, Integer bestCorrect, Integer bestTotal) {
+        return from(mockExam, bestCorrect, bestTotal, false);
+    }
+
+    public static MockExamSummaryResponse from(MockExam mockExam, Integer bestCorrect, Integer bestTotal,
+                                               boolean purchased) {
         Double normalized = normalize(mockExam.getAvgDifficulty());
         String label = computeLabel(normalized);
         boolean solved = bestCorrect != null && bestTotal != null;
@@ -63,7 +69,8 @@ public record MockExamSummaryResponse(
                 mockExam.getExamRound(),
                 mockExam.getExamDate(),
                 mockExam.getPublishedAt(),
-                mockExam.getPastExamLinkedAt());
+                mockExam.getPastExamLinkedAt(),
+                purchased);
     }
 
     /**

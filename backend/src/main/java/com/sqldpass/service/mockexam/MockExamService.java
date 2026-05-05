@@ -22,10 +22,13 @@ import com.sqldpass.persistent.mockexam.ExamType;
 import com.sqldpass.persistent.mockexam.MockExamDifficulty;
 import com.sqldpass.persistent.mockexam.MockExamEntity;
 import com.sqldpass.persistent.mockexam.MockExamMapper;
+import com.sqldpass.persistent.member.MemberEntity;
+import com.sqldpass.persistent.member.MemberRepository;
 import com.sqldpass.persistent.mockexam.MockExamRepository;
 import com.sqldpass.persistent.mockexam.MockExamVisibility;
 import com.sqldpass.persistent.payment.MockExamPurchaseRepository;
 import com.sqldpass.persistent.question.QuestionEntity;
+import com.sqldpass.service.payment.PaymentProperties;
 import com.sqldpass.persistent.question.QuestionRepository;
 import com.sqldpass.persistent.question.QuestionType;
 import com.sqldpass.persistent.subject.SubjectEntity;
@@ -52,6 +55,8 @@ public class MockExamService {
     private final AdspMockExamCreator adspMockExamCreator;
     private final ApplicationEventPublisher eventPublisher;
     private final MockExamPurchaseRepository mockExamPurchaseRepository;
+    private final MemberRepository memberRepository;
+    private final PaymentProperties paymentProperties;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     /** 어드민용 — DRAFT 포함 전체 회차 */
@@ -174,13 +179,29 @@ public class MockExamService {
             throw new SqldpassException(ErrorCode.MOCK_EXAM_NOT_FOUND);
         }
         if (entity.getVisibility() == MockExamVisibility.PREMIUM) {
-            boolean unlocked = memberId != null
+            boolean purchased = memberId != null
                     && mockExamPurchaseRepository.existsByMemberIdAndMockExamId(memberId, id);
-            if (!unlocked) {
+            boolean reviewer = isReviewerNickname(memberId);
+            if (!purchased && !reviewer) {
                 throw new SqldpassException(ErrorCode.MOCK_EXAM_LOCKED);
             }
         }
         return MockExamMapper.toDomain(entity);
+    }
+
+    /**
+     * 화이트리스트 닉네임(심사 모드 리뷰어) 여부.
+     * 화이트리스트가 비어있으면 정식 오픈 모드 — 본 메서드는 항상 false 를 반환하여
+     * PREMIUM 풀이는 결제 검증으로만 통과시킨다.
+     */
+    private boolean isReviewerNickname(Long memberId) {
+        if (memberId == null) return false;
+        var allowed = paymentProperties.reviewerNicknameSet();
+        if (allowed.isEmpty()) return false;
+        return memberRepository.findById(memberId)
+                .map(MemberEntity::getNickname)
+                .map(allowed::contains)
+                .orElse(false);
     }
 
     @Transactional

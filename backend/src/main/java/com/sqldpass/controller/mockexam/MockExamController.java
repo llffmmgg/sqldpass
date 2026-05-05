@@ -1,8 +1,10 @@
 package com.sqldpass.controller.mockexam;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -11,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.sqldpass.controller.mockexam.dto.MockExamDetailResponse;
 import com.sqldpass.controller.mockexam.dto.MockExamSummaryResponse;
+import com.sqldpass.persistent.payment.MockExamPurchaseRepository;
 import com.sqldpass.persistent.solve.SolveRepository;
 import com.sqldpass.service.mockexam.MockExamService;
 
@@ -27,6 +30,7 @@ public class MockExamController {
 
     private final MockExamService mockExamService;
     private final SolveRepository solveRepository;
+    private final MockExamPurchaseRepository mockExamPurchaseRepository;
 
     @GetMapping
     @Operation(summary = "모의고사 목록", description = "로그인 사용자는 풀이 완료 마킹 + 최고 점수가 함께 응답된다.")
@@ -35,6 +39,7 @@ public class MockExamController {
 
         // 로그인 사용자: 한 번에 mockExamId → (bestCorrect, bestTotal) 맵 조회
         Map<Long, int[]> bestScoreMap = new HashMap<>();
+        Set<Long> purchasedIds = new HashSet<>();
         if (memberId != null) {
             for (Object[] row : solveRepository.findBestScoresByMember(memberId)) {
                 Long mockExamId = (Long) row[0];
@@ -42,15 +47,20 @@ public class MockExamController {
                 Integer bestTotal = ((Number) row[2]).intValue();
                 bestScoreMap.put(mockExamId, new int[]{bestCorrect, bestTotal});
             }
+            purchasedIds.addAll(mockExamPurchaseRepository.findMockExamIdsByMemberId(memberId));
         }
 
-        // 사용자 노출은 DRAFT 제외 (PUBLISHED + PREMIUM만 — PREMIUM은 프론트에서 잠금 표시)
+        // 사용자 노출은 DRAFT 제외 (PUBLISHED + PREMIUM만 — PREMIUM은 프론트에서 잠금 표시).
+        // purchased=true 면 프론트가 결제 페이지로 보내지 않고 바로 풀이 페이지로 진입.
         return mockExamService.getAllForUser().stream()
                 .map(exam -> {
                     int[] best = bestScoreMap.get(exam.getId());
-                    return best != null
-                            ? MockExamSummaryResponse.from(exam, best[0], best[1])
-                            : MockExamSummaryResponse.from(exam);
+                    boolean purchased = purchasedIds.contains(exam.getId());
+                    return MockExamSummaryResponse.from(
+                            exam,
+                            best != null ? best[0] : null,
+                            best != null ? best[1] : null,
+                            purchased);
                 })
                 .toList();
     }

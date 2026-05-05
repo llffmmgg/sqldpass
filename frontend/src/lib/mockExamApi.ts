@@ -41,6 +41,8 @@ export interface MockExamSummary {
   publishedAt: string | null;
   /** 기출 복원으로 승격된 시각 (NEW 뱃지 트리거) */
   pastExamLinkedAt: string | null;
+  /** 본 회원이 PREMIUM 회차의 잠금을 결제로 해제했는지 (비로그인/PUBLISHED 등은 항상 false) */
+  purchased: boolean;
 }
 
 export type EngineerTemplateKey =

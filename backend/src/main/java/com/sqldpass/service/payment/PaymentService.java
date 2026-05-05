@@ -131,9 +131,9 @@ public class PaymentService {
     private void ensureReviewer(Long memberId) {
         var allowed = properties.reviewerNicknameSet();
         if (allowed.isEmpty()) {
-            // 아직 정식 오픈 전 — 화이트리스트 비어있으면 전부 차단해 사고 방지
-            throw new SqldpassException(ErrorCode.PAYMENT_REVIEWER_ONLY,
-                    "결제는 현재 심사 단계입니다. 잠시 후 다시 시도해주세요.");
+            // 정식 오픈 모드 — 모든 로그인 회원 통과.
+            // 환경변수에 화이트리스트를 등록하면 자동으로 심사 모드로 전환된다.
+            return;
         }
         MemberEntity member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new SqldpassException(ErrorCode.MEMBER_NOT_FOUND));

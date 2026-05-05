@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 
 import { Badge, Button, Card } from "@/components/ui";
 import Spinner from "@/components/Spinner";
@@ -12,10 +13,27 @@ import { getCheckoutEligibility, startPayment } from "@/lib/payment";
 type AccessState = "loading" | "anonymous" | "denied" | "allowed";
 
 export default function CheckoutClient() {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-[40vh] items-center justify-center">
+        <Spinner message="확인 중..." />
+      </div>
+    }>
+      <CheckoutContent />
+    </Suspense>
+  );
+}
+
+function CheckoutContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const examIdRaw = searchParams?.get("examId");
+  const examId = examIdRaw && /^\d+$/.test(examIdRaw) ? Number(examIdRaw) : null;
+
   const toast = useToast();
   const [access, setAccess] = useState<AccessState>("loading");
   const [paying, setPaying] = useState(false);
-  const [paid, setPaid] = useState<{ amount: number; productName: string } | null>(null);
+  const [paid, setPaid] = useState<{ amount: number; productName: string; mockExamId: number | null } | null>(null);
 
   useEffect(() => {
     if (!isLoggedIn()) {
@@ -43,9 +61,13 @@ export default function CheckoutClient() {
     if (paying) return;
     setPaying(true);
     try {
-      const result = await startPayment({ mockExamId: null });
-      setPaid({ amount: result.amount, productName: result.productName });
+      const result = await startPayment({ mockExamId: examId });
+      setPaid({ amount: result.amount, productName: result.productName, mockExamId: result.mockExamId });
       toast.show("결제가 완료되었습니다.", "success");
+      // 잠금 해제 대상이 명시된 경우 자동으로 풀이 페이지로 이동
+      if (result.mockExamId != null) {
+        setTimeout(() => router.push(`/mock-exams/${result.mockExamId}`), 800);
+      }
     } catch (e) {
       toast.show(
         e instanceof Error ? e.message : "결제 처리 중 오류가 발생했습니다.",
@@ -70,10 +92,10 @@ export default function CheckoutClient() {
         </p>
         <div className="mt-6 flex items-center justify-center gap-4 text-sm">
           <Link
-            href="/mock-exams"
+            href={paid.mockExamId != null ? `/mock-exams/${paid.mockExamId}` : "/mock-exams"}
             className="rounded-lg border border-border bg-surface px-4 py-2 text-text transition-colors hover:border-primary/40"
           >
-            모의고사로 →
+            {paid.mockExamId != null ? "지금 풀러가기 →" : "모의고사로 →"}
           </Link>
         </div>
       </Card>
@@ -86,7 +108,9 @@ export default function CheckoutClient() {
         프리미엄 결제
       </Badge>
       <h1 className="mt-3 text-2xl font-bold tracking-tight sm:text-3xl">
-        문어CBT 프리미엄 모의고사 잠금 해제
+        {examId != null
+          ? `프리미엄 모의고사 #${examId} 잠금 해제`
+          : "문어CBT 프리미엄 모의고사 잠금 해제"}
       </h1>
       <p className="mt-3 text-sm leading-relaxed text-text-muted">
         결제 완료 시 잠금된 프리미엄 회차를 즉시 풀이할 수 있습니다.

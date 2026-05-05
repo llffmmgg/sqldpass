@@ -40,7 +40,7 @@ public class PaymentController {
     private final MemberRepository memberRepository;
 
     @GetMapping("/eligibility")
-    @Operation(summary = "결제 페이지 접근 가능 여부 — 화이트리스트 닉네임만 true")
+    @Operation(summary = "결제 페이지 접근 가능 여부 — 빈 화이트리스트 = 전체 허용(정식 오픈)")
     public EligibilityResponse eligibility(HttpServletRequest request) {
         Long memberId = (Long) request.getAttribute("memberId");
         if (memberId == null) {
@@ -48,7 +48,8 @@ public class PaymentController {
         }
         var allowed = paymentProperties.reviewerNicknameSet();
         if (allowed.isEmpty()) {
-            return new EligibilityResponse(false);
+            // 정식 오픈 모드 — 모든 로그인 회원 통과
+            return new EligibilityResponse(true);
         }
         MemberEntity member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new SqldpassException(ErrorCode.MEMBER_NOT_FOUND));

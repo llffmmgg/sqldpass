@@ -16,13 +16,18 @@ import com.sqldpass.domain.mockexam.MockExam;
 import com.sqldpass.persistent.mockexam.ExamType;
 import com.sqldpass.persistent.mockexam.MockExamDifficulty;
 import com.sqldpass.persistent.mockexam.MockExamEntity;
+import com.sqldpass.persistent.member.MemberEntity;
+import com.sqldpass.persistent.member.MemberRepository;
 import com.sqldpass.persistent.mockexam.MockExamRepository;
+import com.sqldpass.persistent.mockexam.MockExamVisibility;
+import com.sqldpass.persistent.payment.MockExamPurchaseRepository;
 import com.sqldpass.persistent.question.QuestionEntity;
 import com.sqldpass.persistent.question.QuestionRepository;
 import com.sqldpass.persistent.subject.SubjectEntity;
 import com.sqldpass.persistent.subject.SubjectRepository;
 import com.sqldpass.service.common.ErrorCode;
 import com.sqldpass.service.common.SqldpassException;
+import com.sqldpass.service.payment.PaymentProperties;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -49,10 +54,28 @@ class MockExamServiceTest {
     private ComputerLiteracyMockExamCreator computerLiteracyMockExamCreator;
 
     @Mock
+    private ComputerLiteracy2MockExamCreator computerLiteracy2MockExamCreator;
+
+    @Mock
+    private EngineerWrittenMockExamCreator engineerWrittenMockExamCreator;
+
+    @Mock
+    private AdspMockExamCreator adspMockExamCreator;
+
+    @Mock
     private SubjectRepository subjectRepository;
 
     @Mock
     private org.springframework.context.ApplicationEventPublisher eventPublisher;
+
+    @Mock
+    private MockExamPurchaseRepository mockExamPurchaseRepository;
+
+    @Mock
+    private MemberRepository memberRepository;
+
+    @org.mockito.Spy
+    private PaymentProperties paymentProperties = new PaymentProperties();
 
     @InjectMocks
     private MockExamService mockExamService;
@@ -214,6 +237,90 @@ class MockExamServiceTest {
                 .isInstanceOf(SqldpassException.class)
                 .extracting(ex -> ((SqldpassException) ex).getErrorCode())
                 .isEqualTo(ErrorCode.INVALID_INPUT);
+    }
+
+    @Test
+    @DisplayName("PREMIUM + 화이트리스트 닉네임 + 미구매 → 결제 없이 통과")
+    void getForUser_premium_reviewerPassesWithoutPurchase() {
+        MockExamEntity premium = newPremiumExam(10L);
+        given(mockExamRepository.findByIdWithQuestions(10L)).willReturn(Optional.of(premium));
+        paymentProperties.setReviewerNicknames("pay-rv-7f2a91");
+        given(mockExamPurchaseRepository.existsByMemberIdAndMockExamId(1L, 10L)).willReturn(false);
+        given(memberRepository.findById(1L)).willReturn(Optional.of(newMember(1L, "pay-rv-7f2a91")));
+
+        MockExam result = mockExamService.getForUser(10L, 1L);
+
+        assertThat(result.getId()).isEqualTo(10L);
+    }
+
+    @Test
+    @DisplayName("PREMIUM + 비화이트리스트 + 미구매 → MOCK_EXAM_LOCKED")
+    void getForUser_premium_nonReviewerWithoutPurchaseLocked() {
+        MockExamEntity premium = newPremiumExam(10L);
+        given(mockExamRepository.findByIdWithQuestions(10L)).willReturn(Optional.of(premium));
+        paymentProperties.setReviewerNicknames("pay-rv-7f2a91");
+        given(mockExamPurchaseRepository.existsByMemberIdAndMockExamId(2L, 10L)).willReturn(false);
+        given(memberRepository.findById(2L)).willReturn(Optional.of(newMember(2L, "normal-user")));
+
+        assertThatThrownBy(() -> mockExamService.getForUser(10L, 2L))
+                .isInstanceOf(SqldpassException.class)
+                .extracting(ex -> ((SqldpassException) ex).getErrorCode())
+                .isEqualTo(ErrorCode.MOCK_EXAM_LOCKED);
+    }
+
+    @Test
+    @DisplayName("PREMIUM + 비화이트리스트 + 결제 완료 → 통과 (회귀)")
+    void getForUser_premium_purchaseUnlocks() {
+        MockExamEntity premium = newPremiumExam(10L);
+        given(mockExamRepository.findByIdWithQuestions(10L)).willReturn(Optional.of(premium));
+        paymentProperties.setReviewerNicknames("pay-rv-7f2a91");
+        given(mockExamPurchaseRepository.existsByMemberIdAndMockExamId(2L, 10L)).willReturn(true);
+
+        MockExam result = mockExamService.getForUser(10L, 2L);
+
+        assertThat(result.getId()).isEqualTo(10L);
+    }
+
+    @Test
+    @DisplayName("PREMIUM + 화이트리스트 비어있음 (정식 오픈) + 미구매 → MOCK_EXAM_LOCKED")
+    void getForUser_premium_openModeRequiresPurchase() {
+        MockExamEntity premium = newPremiumExam(10L);
+        given(mockExamRepository.findByIdWithQuestions(10L)).willReturn(Optional.of(premium));
+        paymentProperties.setReviewerNicknames("");
+        given(mockExamPurchaseRepository.existsByMemberIdAndMockExamId(2L, 10L)).willReturn(false);
+
+        assertThatThrownBy(() -> mockExamService.getForUser(10L, 2L))
+                .isInstanceOf(SqldpassException.class)
+                .extracting(ex -> ((SqldpassException) ex).getErrorCode())
+                .isEqualTo(ErrorCode.MOCK_EXAM_LOCKED);
+    }
+
+    private static MockExamEntity newPremiumExam(Long id) {
+        MockExamEntity e = new MockExamEntity("프리미엄 회차", ExamType.SQLD, 1);
+        setId(e, id);
+        try {
+            var v = MockExamEntity.class.getDeclaredField("visibility");
+            v.setAccessible(true);
+            v.set(e, MockExamVisibility.PREMIUM);
+            var ev = MockExamEntity.class.getDeclaredField("expertVerified");
+            ev.setAccessible(true);
+            ev.set(e, true);
+        } catch (ReflectiveOperationException ex) {
+            throw new AssertionError(ex);
+        }
+        return e;
+    }
+
+    private static MemberEntity newMember(Long id, String nickname) {
+        MemberEntity m = new MemberEntity("google", "g-" + id, nickname);
+        try {
+            var f = MemberEntity.class.getDeclaredField("id");
+            f.setAccessible(true);
+            f.set(m, id);
+        } catch (ReflectiveOperationException ex) {
+            throw new AssertionError(ex);
+        }
+        return m;
     }
 
     private static void setSubjectId(SubjectEntity entity, Long id) {
