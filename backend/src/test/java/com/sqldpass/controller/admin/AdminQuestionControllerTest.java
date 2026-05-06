@@ -80,7 +80,8 @@ class AdminQuestionControllerTest {
                 "JOIN basics",
                 LocalDateTime.of(2026, 4, 1, 9, 0),
                 null,
-                VerificationCategory.NONE);
+                VerificationCategory.NONE,
+                null);
         given(adminQuestionService.getQuestions(10L, null, 0, 20)).willReturn(new PageImpl<>(List.of(question)));
 
         mockMvc.perform(get("/api/admin/questions")
@@ -108,7 +109,8 @@ class AdminQuestionControllerTest {
                 "JOIN basics",
                 LocalDateTime.of(2026, 4, 1, 9, 0),
                 null,
-                VerificationCategory.NONE);
+                VerificationCategory.NONE,
+                null);
         given(adminQuestionService.getQuestion(1L)).willReturn(question);
 
         mockMvc.perform(get("/api/admin/questions/1").header("Authorization", AUTH_HEADER))
@@ -133,7 +135,8 @@ class AdminQuestionControllerTest {
                 "Updated summary",
                 LocalDateTime.of(2026, 4, 1, 9, 0),
                 null,
-                VerificationCategory.NONE);
+                VerificationCategory.NONE,
+                null);
         given(adminQuestionService.updateQuestion(eq(1L), any())).willReturn(updated);
 
         mockMvc.perform(put("/api/admin/questions/1")

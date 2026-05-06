@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, use } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   getQuestion,
@@ -93,6 +94,46 @@ export default function AdminQuestionDetailPage({ params }: { params: Promise<{ 
           </span>
         )}
       </p>
+
+      {/* 수록 모의고사 — 자유 풀 문제는 표시 안 함 */}
+      {question.mockExam && (
+        <div className="mt-5 flex items-center justify-between gap-3 rounded-lg border border-violet-500/30 bg-violet-500/[0.05] px-4 py-3">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-violet-400">
+                수록 모의고사
+              </span>
+              <span
+                className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold ${
+                  question.mockExam.visibility === "PREMIUM"
+                    ? "bg-amber-500/15 text-amber-300"
+                    : question.mockExam.visibility === "DRAFT"
+                      ? "bg-zinc-500/15 text-zinc-400"
+                      : "bg-emerald-500/15 text-emerald-300"
+                }`}
+              >
+                {question.mockExam.visibility}
+              </span>
+            </div>
+            <p className="mt-1 truncate text-sm font-medium text-foreground">
+              {question.mockExam.name}{" "}
+              <span className="text-xs text-muted">#{question.mockExam.sequence}</span>
+            </p>
+          </div>
+          <Link
+            href={`/admin/mock-exams/${question.mockExam.id}`}
+            className="shrink-0 rounded border border-violet-500/40 bg-violet-500/10 px-3 py-1.5 text-xs font-medium text-violet-300 hover:bg-violet-500/20"
+          >
+            모의고사 보기 →
+          </Link>
+        </div>
+      )}
+      {!question.mockExam && (
+        <p className="mt-5 text-xs text-muted">
+          <span className="rounded bg-surface-hover px-2 py-0.5">자유 풀</span>{" "}
+          어떤 모의고사에도 수록되지 않은 문제입니다.
+        </p>
+      )}
 
       <div className="mt-6 space-y-4">
         <div>

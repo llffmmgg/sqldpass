@@ -103,6 +103,14 @@ export interface AdminStats {
 
 export type AdminQuestionType = "MCQ" | "SHORT_ANSWER" | "DESCRIPTIVE";
 
+export interface AdminQuestionMockExamRef {
+  id: number;
+  name: string;
+  examType: string;
+  sequence: number;
+  visibility: "DRAFT" | "PUBLISHED" | "PREMIUM";
+}
+
 export interface AdminQuestion {
   id: number;
   subjectId: number;
@@ -117,6 +125,8 @@ export interface AdminQuestion {
   createdAt: string;
   verifiedAt: string | null;
   verificationCategory: string | null;
+  /** 본 문제가 수록된 모의고사. 자유 풀(미수록) 이면 null. */
+  mockExam: AdminQuestionMockExamRef | null;
 }
 
 export interface AdminQuestionUpdatePayload {
