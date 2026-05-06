@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 export default function CheckoutPage() {
   return (
     <main className="min-h-screen bg-bg text-text">
-      <Container size="narrow" className="py-16">
+      <Container size="default" className="py-20">
         <CheckoutClient />
       </Container>
     </main>
