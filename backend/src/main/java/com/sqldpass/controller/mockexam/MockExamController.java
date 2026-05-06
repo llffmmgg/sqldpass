@@ -18,11 +18,14 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.sqldpass.controller.mockexam.dto.MockExamDetailResponse;
 import com.sqldpass.controller.mockexam.dto.MockExamSummaryResponse;
+import com.sqldpass.persistent.member.MemberEntity;
+import com.sqldpass.persistent.member.MemberRepository;
 import com.sqldpass.persistent.payment.MockExamPurchaseRepository;
 import com.sqldpass.persistent.solve.SolveRepository;
 import com.sqldpass.service.common.ErrorCode;
 import com.sqldpass.service.common.SqldpassException;
 import com.sqldpass.service.mockexam.MockExamService;
+import com.sqldpass.service.payment.PaymentProperties;
 import com.sqldpass.service.payment.SubscriptionService;
 import com.sqldpass.service.pdf.MockExamPdfService;
 import com.sqldpass.service.pdf.MockExamPdfService.DownloadResult;
@@ -43,6 +46,8 @@ public class MockExamController {
     private final MockExamPurchaseRepository mockExamPurchaseRepository;
     private final MockExamPdfService mockExamPdfService;
     private final SubscriptionService subscriptionService;
+    private final PaymentProperties paymentProperties;
+    private final MemberRepository memberRepository;
 
     @GetMapping
     @Operation(summary = "모의고사 목록", description = "로그인 사용자는 풀이 완료 마킹 + 최고 점수가 함께 응답된다.")
@@ -94,13 +99,24 @@ public class MockExamController {
      */
     @GetMapping("/pdf/eligibility")
     @Operation(
-            summary = "PDF 다운로드 가능 여부 — UNLIMITED 구독 회원만 true",
-            description = "프론트가 모의고사 카드/상세 화면에서 PDF 다운로드 버튼 노출 여부를 결정한다. "
-                    + "화이트리스트 닉네임 회원도 가상 UNLIMITED 로 자동 통과."
+            summary = "PDF 다운로드 버튼 노출 여부 (가시성 전용)",
+            description = "노출과 권한이 분리되어 있다. "
+                    + "베타 기간(화이트리스트 비어있지 않음): 화이트리스트 닉네임 회원에게 노출 — 미결제여도 버튼이 보이고, 클릭 시 결제 유도. "
+                    + "정식 오픈(화이트리스트 비움): UNLIMITED 결제 회원에게만 노출. "
+                    + "실제 다운로드 권한은 항상 UNLIMITED 결제 회원만 — /pdf/download 에서 별도 검사."
     )
     public Map<String, Boolean> pdfEligibility(HttpServletRequest request) {
         Long memberId = (Long) request.getAttribute("memberId");
-        return Map.of("eligible", subscriptionService.allowsPdf(memberId));
+        if (memberId == null) {
+            return Map.of("eligible", false);
+        }
+        Set<String> allowed = paymentProperties.reviewerNicknameSet();
+        if (allowed.isEmpty()) {
+            return Map.of("eligible", subscriptionService.allowsPdf(memberId));
+        }
+        MemberEntity member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new SqldpassException(ErrorCode.MEMBER_NOT_FOUND));
+        return Map.of("eligible", allowed.contains(member.getNickname()));
     }
 
     @GetMapping("/{id}/pdf/download")
@@ -115,7 +131,7 @@ public class MockExamController {
             throw new SqldpassException(ErrorCode.UNAUTHORIZED);
         }
         if (!subscriptionService.allowsPdf(memberId)) {
-            throw new SqldpassException(ErrorCode.FORBIDDEN);
+            throw new SqldpassException(ErrorCode.PDF_REQUIRES_SUBSCRIPTION);
         }
         DownloadResult d = mockExamPdfService.download(id);
         String encoded = URLEncoder.encode(d.filename(), StandardCharsets.UTF_8).replace("+", "%20");

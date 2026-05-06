@@ -1,10 +1,15 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { useToast } from "@/components/Toast";
 import { isLoggedIn } from "@/lib/auth";
-import { downloadMockExamPdfAsUser, getPdfEligibility } from "@/lib/payment";
+import {
+  downloadMockExamPdfAsUser,
+  getPdfEligibility,
+  PdfDownloadError,
+} from "@/lib/payment";
 
 /**
  * 모의고사 PDF 다운로드 버튼.
@@ -19,6 +24,7 @@ export default function MockExamPdfButton({
   className?: string;
 }) {
   const toast = useToast();
+  const router = useRouter();
   const [eligible, setEligible] = useState<boolean | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -42,10 +48,15 @@ export default function MockExamPdfButton({
         try {
           await downloadMockExamPdfAsUser(examId);
         } catch (e) {
-          toast.show(
-            e instanceof Error ? e.message : "PDF 다운로드에 실패했습니다.",
-            "error",
-          );
+          if (e instanceof PdfDownloadError && e.code === "PDF_REQUIRES_SUBSCRIPTION") {
+            toast.show("무제한 구독 후 이용 가능합니다. 구독 페이지로 이동합니다.", "info");
+            setTimeout(() => router.push("/checkout"), 600);
+          } else {
+            toast.show(
+              e instanceof Error ? e.message : "PDF 다운로드에 실패했습니다.",
+              "error",
+            );
+          }
         } finally {
           setBusy(false);
         }

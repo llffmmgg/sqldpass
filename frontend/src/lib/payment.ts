@@ -91,11 +91,23 @@ export async function previewPayment(plan: SubscriptionPlan): Promise<PreviewRes
 }
 
 /**
- * PDF 다운로드 가능 여부 — Phase 4 에서 subscription.allowsPdf 로 교체될 예정.
- * 현재는 백엔드의 옛 화이트리스트 가드를 그대로 호출.
+ * PDF 다운로드 버튼 노출 여부 (가시성 전용).
+ * 베타 기간엔 화이트리스트 닉네임 회원에게 true (미결제여도 노출 → 클릭 시 결제 유도).
+ * 정식 오픈 시 UNLIMITED 결제 회원에게만 true.
+ * 실 다운로드 권한은 별도 — downloadMockExamPdfAsUser 가 PDF_REQUIRES_SUBSCRIPTION 으로 거절.
  */
 export async function getPdfEligibility(): Promise<{ eligible: boolean }> {
   return authFetch<{ eligible: boolean }>("/api/mock-exams/pdf/eligibility");
+}
+
+/** PDF 다운로드 거절 시 throw 하는 에러 — code 로 분기 가능. */
+export class PdfDownloadError extends Error {
+  readonly code: string;
+  constructor(code: string, message: string) {
+    super(message);
+    this.code = code;
+    this.name = "PdfDownloadError";
+  }
 }
 
 /**
@@ -108,8 +120,16 @@ export async function downloadMockExamPdfAsUser(id: number): Promise<void> {
     headers: token ? { Authorization: `Bearer ${token}` } : {},
   });
   if (!res.ok) {
-    const text = await res.text().catch(() => "");
-    throw new Error(text || `PDF 다운로드 실패 (${res.status})`);
+    let code = `HTTP_${res.status}`;
+    let message = `PDF 다운로드 실패 (${res.status})`;
+    try {
+      const body = await res.json();
+      if (body?.code) code = body.code;
+      if (body?.message) message = body.message;
+    } catch {
+      // body 파싱 실패 시 기본 메시지 사용
+    }
+    throw new PdfDownloadError(code, message);
   }
   const disposition = res.headers.get("Content-Disposition") ?? "";
   const utf8Match = /filename\*=UTF-8''([^;]+)/i.exec(disposition);
