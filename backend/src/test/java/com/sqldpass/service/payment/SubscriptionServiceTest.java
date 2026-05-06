@@ -1,9 +1,7 @@
 package com.sqldpass.service.payment;
 
-import java.lang.reflect.Field;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -12,8 +10,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.sqldpass.persistent.member.MemberEntity;
-import com.sqldpass.persistent.member.MemberRepository;
 import com.sqldpass.persistent.payment.SubscriptionEntity;
 import com.sqldpass.persistent.payment.SubscriptionPlan;
 import com.sqldpass.persistent.payment.SubscriptionRepository;
@@ -28,16 +24,12 @@ class SubscriptionServiceTest {
 
     @Mock
     private SubscriptionRepository subscriptionRepository;
-    @Mock
-    private MemberRepository memberRepository;
 
-    private PaymentProperties properties;
     private SubscriptionService service;
 
     @BeforeEach
     void setUp() {
-        properties = new PaymentProperties();
-        service = new SubscriptionService(subscriptionRepository, memberRepository, properties);
+        service = new SubscriptionService(subscriptionRepository);
     }
 
     @Test
@@ -48,7 +40,7 @@ class SubscriptionServiceTest {
     }
 
     @Test
-    @DisplayName("활성 구독 row 없으면 비활성")
+    @DisplayName("활성 구독 row 없으면 비활성 — 화이트리스트 닉네임이어도 동일")
     void inactiveWithoutRow() {
         given(subscriptionRepository.findActiveByMemberId(eq(1L), any())).willReturn(List.of());
 
@@ -100,41 +92,5 @@ class SubscriptionServiceTest {
         assertThat(active.get().expiresAt()).isNull();
         assertThat(active.get().removesAds()).isTrue();
         assertThat(active.get().allowsPdf()).isTrue();
-    }
-
-    @Test
-    @DisplayName("화이트리스트 닉네임 회원은 DB row 없어도 가상 UNLIMITED")
-    void reviewerNicknameGetsVirtualUnlimited() {
-        properties.setReviewerNicknames("pay-rv-7f2a91");
-        MemberEntity m = newMember(1L, "pay-rv-7f2a91");
-        given(memberRepository.findById(1L)).willReturn(Optional.of(m));
-
-        var active = service.getActive(1L);
-        assertThat(active).isPresent();
-        assertThat(active.get().plan()).isEqualTo(SubscriptionPlan.UNLIMITED);
-        assertThat(active.get().allowsPdf()).isTrue();
-    }
-
-    @Test
-    @DisplayName("화이트리스트 비어있으면 닉네임 검사 건너뜀 (성능)")
-    void emptyWhitelistSkipsMemberLookup() {
-        properties.setReviewerNicknames("");
-        given(subscriptionRepository.findActiveByMemberId(eq(1L), any())).willReturn(List.of());
-
-        var active = service.getActive(1L);
-        assertThat(active).isEmpty();
-        // memberRepository.findById 가 호출되지 않았어야 함 (strict stubbing)
-    }
-
-    private MemberEntity newMember(Long id, String nickname) {
-        MemberEntity m = new MemberEntity("google", "g-" + id, nickname);
-        try {
-            Field f = MemberEntity.class.getDeclaredField("id");
-            f.setAccessible(true);
-            f.set(m, id);
-        } catch (ReflectiveOperationException e) {
-            throw new RuntimeException(e);
-        }
-        return m;
     }
 }
