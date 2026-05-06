@@ -216,6 +216,12 @@ function MockExamCard({ exam }: { exam: MockExamSummary }) {
             : "relative flex min-h-[124px] flex-col overflow-hidden rounded-md p-4 shadow-none hover:-translate-y-0 hover:shadow-none"
         }
       >
+        {exam.expertVerified && (
+          <div className="pointer-events-none absolute -left-[38px] top-[18px] z-10 -rotate-45 bg-emerald-600 px-10 py-0.5 text-center text-[9px] font-bold tracking-wide text-white shadow-sm dark:bg-emerald-500">
+            전문가 검수
+          </div>
+        )}
+
         {exam.solved && exam.bestCorrectCount != null && exam.bestTotalCount != null && (
           <span
             className="pointer-events-none absolute right-4 top-4 select-none font-[family-name:var(--font-caveat)] text-2xl font-bold leading-none text-red-500/90 sm:text-3xl"
@@ -227,16 +233,16 @@ function MockExamCard({ exam }: { exam: MockExamSummary }) {
           </span>
         )}
 
-        {/* Eyebrow — VS Code release-note 톤 (mono · uppercase · tracking) */}
-        <div className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[1.4px] text-text-subtle">
+        {/* Eyebrow: "SQLD 모의고사" · PASS+ · NEW */}
+        <div className="flex items-center gap-2 text-[9px] font-medium text-text-muted">
           <span>{certLabel} 모의고사</span>
           {isPremium && (
-            <span className="font-bold text-amber-600 dark:text-amber-400">
+            <span className="font-semibold text-amber-600 dark:text-amber-400">
               PASS+
             </span>
           )}
           {isNew && (
-            <span className="font-bold text-emerald-600 dark:text-emerald-400">
+            <span className="font-semibold text-emerald-600 dark:text-emerald-400">
               NEW
             </span>
           )}
@@ -250,14 +256,6 @@ function MockExamCard({ exam }: { exam: MockExamSummary }) {
           <span className="tabular-nums">
             {exam.totalQuestions}문항
             {exam.difficultyLabel && ` · ${exam.difficultyLabel}`}
-            {exam.expertVerified && (
-              <>
-                {" · "}
-                <span className="font-semibold text-emerald-600 dark:text-emerald-400">
-                  검수 완료
-                </span>
-              </>
-            )}
           </span>
           <span className="font-semibold text-text transition-transform group-hover:translate-x-0.5">
             {exam.solved ? "다시 응시 →" : "응시하기 →"}
