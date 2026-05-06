@@ -1,5 +1,11 @@
 package com.sqldpass.controller.admin;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -8,6 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.sqldpass.service.pdf.MockExamPdfBackfillService;
 import com.sqldpass.service.pdf.MockExamPdfService;
+import com.sqldpass.service.pdf.MockExamPdfService.DownloadResult;
 import com.sqldpass.service.pdf.MockExamPdfService.PdfResult;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -42,6 +49,22 @@ public class AdminMockExamPdfController {
     )
     public PdfResponse generate(@PathVariable Long id) {
         return PdfResponse.from(mockExamPdfService.generate(id));
+    }
+
+    @GetMapping("/{id}/pdf/download")
+    @Operation(
+            summary = "모의고사 PDF 다운로드 프록시",
+            description = "R2 public URL 을 직접 노출하지 않고 백엔드가 PDF 바이트를 스트리밍한다. "
+                    + "Content-Disposition: attachment 로 브라우저가 즉시 다운로드 처리. "
+                    + "파일명은 자격증·회차 기반 한글 파일명 (예: SQLD_모의고사_18회.pdf)."
+    )
+    public ResponseEntity<byte[]> download(@PathVariable Long id) {
+        DownloadResult d = mockExamPdfService.download(id);
+        String encoded = URLEncoder.encode(d.filename(), StandardCharsets.UTF_8).replace("+", "%20");
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_PDF)
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename*=UTF-8''" + encoded)
+                .body(d.bytes());
     }
 
     @PostMapping("/pdf/backfill")

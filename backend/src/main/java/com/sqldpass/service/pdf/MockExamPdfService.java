@@ -46,6 +46,8 @@ public class MockExamPdfService {
 
     public record PdfResult(String url, String contentHash, boolean cached) {}
 
+    public record DownloadResult(byte[] bytes, String filename) {}
+
     @Transactional(readOnly = true)
     public PdfResult generate(Long mockExamId) {
         if (!r2UploadService.isEnabled()) {
@@ -76,8 +78,51 @@ public class MockExamPdfService {
         long renderMs = System.currentTimeMillis() - t0;
         log.info("PDF 렌더 완료: mockExamId={}, bytes={}, renderMs={}", mockExamId, bytes.length, renderMs);
 
-        String publicUrl = r2UploadService.uploadBytes(key, bytes, "application/pdf");
+        // R2 객체에 다운로드용 Content-Disposition 메타도 박아서 직접 URL 접근 시에도
+        // 브라우저가 미리보기 대신 다운로드로 처리하도록 한다.
+        String disposition = buildContentDisposition(buildFilename(exam));
+        String publicUrl = r2UploadService.uploadBytes(key, bytes, "application/pdf", disposition);
         return new PdfResult(publicUrl, contentHash, false);
+    }
+
+    /**
+     * 다운로드 프록시용 — backend 가 R2 에서 PDF 를 받아 클라이언트로 스트리밍한다.
+     * R2 public URL 을 사용자에게 노출하지 않고, 적절한 한글 파일명을 보장.
+     */
+    @Transactional(readOnly = true)
+    public DownloadResult download(Long mockExamId) {
+        PdfResult result = generate(mockExamId);
+        MockExamEntity exam = mockExamRepository.findById(mockExamId)
+                .orElseThrow(() -> new SqldpassException(ErrorCode.MOCK_EXAM_NOT_FOUND));
+        String key = pdfProperties.getCacheKeyPrefix() + "/" + mockExamId + "/" + result.contentHash() + ".pdf";
+        byte[] bytes = r2UploadService.downloadBytes(key);
+        return new DownloadResult(bytes, buildFilename(exam));
+    }
+
+    /** 자격증 라벨 + 회차로 다운로드 파일명 구성 (예: SQLD_모의고사_18회.pdf). */
+    public String buildFilename(MockExamEntity exam) {
+        String label = switch (exam.getExamType()) {
+            case SQLD -> "SQLD";
+            case ENGINEER_PRACTICAL -> "정보처리기사_실기";
+            case ENGINEER_WRITTEN -> "정보처리기사_필기";
+            case COMPUTER_LITERACY_1 -> "컴활_1급";
+            case COMPUTER_LITERACY_2 -> "컴활_2급";
+            case ADSP -> "ADsP";
+        };
+        if (exam.getKind() == com.sqldpass.persistent.mockexam.MockExamKind.PAST_EXAM
+                && exam.getExamYear() != null && exam.getExamRound() != null) {
+            return String.format("%s_기출_%d_%d회.pdf", label, exam.getExamYear(), exam.getExamRound());
+        }
+        return String.format("%s_모의고사_%d회.pdf", label, exam.getSequence());
+    }
+
+    /**
+     * RFC 5987 filename* 형식으로 한글 파일명 인코딩.
+     * 모든 모던 브라우저(Chrome/Edge/Safari/Firefox) 가 UTF-8'' 디코딩 지원.
+     */
+    private String buildContentDisposition(String filename) {
+        String encoded = URLEncoder.encode(filename, StandardCharsets.UTF_8).replace("+", "%20");
+        return "attachment; filename*=UTF-8''" + encoded;
     }
 
     /**

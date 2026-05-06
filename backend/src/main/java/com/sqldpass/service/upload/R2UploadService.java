@@ -148,17 +148,39 @@ public class R2UploadService {
      * 이미지 업로드와 달리 백엔드가 직접 PUT 한다 (presigned 거치지 않음).
      */
     public String uploadBytes(String key, byte[] body, String contentType) {
+        return uploadBytes(key, body, contentType, null);
+    }
+
+    /**
+     * contentDisposition 까지 같이 PUT — R2 가 객체 응답 시 그 헤더를 그대로 내려준다.
+     * 누가 R2 public URL 을 직접 알아내도 브라우저가 미리보기 대신 다운로드로 처리.
+     */
+    public String uploadBytes(String key, byte[] body, String contentType, String contentDisposition) {
         if (!isEnabled()) {
             throw new SqldpassException(ErrorCode.INTERNAL_SERVER_ERROR,
                     "R2 업로드가 설정되지 않았습니다.");
         }
-        PutObjectRequest put = PutObjectRequest.builder()
+        PutObjectRequest.Builder b = PutObjectRequest.builder()
                 .bucket(props.getBucket())
                 .key(key)
-                .contentType(contentType)
-                .build();
-        s3Client.putObject(put, RequestBody.fromBytes(body));
+                .contentType(contentType);
+        if (contentDisposition != null && !contentDisposition.isBlank()) {
+            b.contentDisposition(contentDisposition);
+        }
+        s3Client.putObject(b.build(), RequestBody.fromBytes(body));
         return publicUrlFor(key);
+    }
+
+    /** R2 에서 객체 바이트를 받아온다. PDF 다운로드 프록시 용도. */
+    public byte[] downloadBytes(String key) {
+        if (!isEnabled()) {
+            throw new SqldpassException(ErrorCode.INTERNAL_SERVER_ERROR,
+                    "R2 가 설정되지 않았습니다.");
+        }
+        return s3Client.getObjectAsBytes(software.amazon.awssdk.services.s3.model.GetObjectRequest.builder()
+                .bucket(props.getBucket())
+                .key(key)
+                .build()).asByteArray();
     }
 
     /**

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { use } from "react";
 import {
-  generateMockExamPdf,
+  downloadMockExamPdf,
   getAdminMockExamDetail,
   getAdminMockExams,
   getQuestion,
@@ -347,11 +347,10 @@ export default function AdminMockExamDetailPage({
                 setPdfBusy(true);
                 setPdfStatus("PDF 준비 중…");
                 try {
-                  const res = await generateMockExamPdf(examId);
-                  setPdfStatus(res.cached ? "PDF (캐시) 다운로드 시작" : "PDF 새로 생성 → 다운로드");
-                  window.open(res.url, "_blank", "noopener,noreferrer");
+                  await downloadMockExamPdf(examId);
+                  setPdfStatus("PDF 다운로드 시작");
                 } catch (e) {
-                  setPdfStatus(e instanceof Error ? `실패: ${e.message}` : "PDF 생성 실패");
+                  setPdfStatus(e instanceof Error ? `실패: ${e.message}` : "PDF 다운로드 실패");
                 } finally {
                   setPdfBusy(false);
                 }

@@ -625,6 +625,48 @@ export function generateMockExamPdf(id: number) {
   return adminFetch<MockExamPdfResponse>(`/mock-exams/${id}/pdf`, { method: "POST" });
 }
 
+/**
+ * 모의고사 PDF 를 백엔드 프록시로 받아 즉시 다운로드 트리거.
+ * R2 public URL 을 사용자에게 노출하지 않고, Content-Disposition 헤더의
+ * 파일명(예: SQLD_모의고사_18회.pdf)으로 저장.
+ *
+ * 캐시 미스 시 첫 호출은 Playwright 렌더링까지 기다려야 하므로 5~15초 소요.
+ */
+export async function downloadMockExamPdf(id: number): Promise<void> {
+  const token = getToken();
+  const res = await fetch(`${BASE}/mock-exams/${id}/pdf/download`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  if (res.status === 401) {
+    clearToken();
+    window.location.href = "/admin/login";
+    throw new Error("인증이 만료되었습니다.");
+  }
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    throw new Error(text || `PDF 다운로드 실패 (${res.status})`);
+  }
+
+  // Content-Disposition: attachment; filename*=UTF-8''인코딩.pdf 에서 파일명 추출
+  const disposition = res.headers.get("Content-Disposition") ?? "";
+  const utf8Match = /filename\*=UTF-8''([^;]+)/i.exec(disposition);
+  const asciiMatch = /filename="?([^";]+)"?/i.exec(disposition);
+  const filename = utf8Match
+    ? decodeURIComponent(utf8Match[1])
+    : asciiMatch?.[1] ?? `mock-exam-${id}.pdf`;
+
+  const blob = await res.blob();
+  const objectUrl = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = objectUrl;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  // 다음 tick 에 revoke (브라우저가 다운로드 시작할 시간 확보)
+  setTimeout(() => URL.revokeObjectURL(objectUrl), 100);
+}
+
 export type PdfBackfillState = "IDLE" | "RUNNING" | "DONE";
 export interface PdfBackfillStatus {
   state: PdfBackfillState;
