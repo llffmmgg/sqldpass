@@ -91,14 +91,17 @@ public class PaymentService {
         PortOneClient.PortOnePaymentInfo info = portOneClient.getPayment(paymentId);
         if (!info.isPaid()) {
             entity.markFailed("status=" + info.status());
-            throw new SqldpassException(ErrorCode.PAYMENT_VERIFICATION_FAILED,
-                    "PortOne 결제 상태가 PAID 가 아닙니다: " + info.status());
+            // 사용자 노출 메시지는 ErrorCode 기본값만 — raw status 는 log 로
+            log.warn("결제 verify status mismatch memberId={} paymentId={} status={}",
+                    memberId, paymentId, info.status());
+            throw new SqldpassException(ErrorCode.PAYMENT_VERIFICATION_FAILED);
         }
         if (info.amountTotal() != entity.getAmount()) {
             entity.markFailed("expected=" + entity.getAmount() + " actual=" + info.amountTotal());
-            throw new SqldpassException(ErrorCode.PAYMENT_AMOUNT_MISMATCH,
-                    "결제 금액이 일치하지 않습니다 (expected=" + entity.getAmount()
-                            + ", actual=" + info.amountTotal() + ")");
+            // 금액 노출은 디버깅에는 유용하지만 사용자에겐 노출 X
+            log.warn("결제 금액 mismatch memberId={} paymentId={} expected={} actual={}",
+                    memberId, paymentId, entity.getAmount(), info.amountTotal());
+            throw new SqldpassException(ErrorCode.PAYMENT_AMOUNT_MISMATCH);
         }
 
         LocalDateTime paidAt = info.paidAt() != null

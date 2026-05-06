@@ -50,8 +50,8 @@ public class PortOneClient {
                     .retrieve()
                     .onStatus(HttpStatusCode::isError, (req, res) -> {
                         log.warn("PortOne getPayment 실패 status={} paymentId={}", res.getStatusCode(), paymentId);
-                        throw new SqldpassException(ErrorCode.PAYMENT_GATEWAY_ERROR,
-                                "PortOne 결제 조회 실패: " + res.getStatusCode());
+                        // 사용자 노출 메시지는 ErrorCode 기본값 — 내부 status 코드는 log 로만
+                        throw new SqldpassException(ErrorCode.PAYMENT_GATEWAY_ERROR);
                     })
                     .body(Map.class);
             return PortOnePaymentInfo.fromResponse(body);
@@ -59,8 +59,7 @@ public class PortOneClient {
             throw e;
         } catch (Exception e) {
             log.error("PortOne getPayment 호출 중 예외 paymentId={}", paymentId, e);
-            throw new SqldpassException(ErrorCode.PAYMENT_GATEWAY_ERROR,
-                    "PortOne 결제 조회 중 오류: " + e.getMessage());
+            throw new SqldpassException(ErrorCode.PAYMENT_GATEWAY_ERROR);
         }
     }
 
@@ -74,22 +73,22 @@ public class PortOneClient {
                     .body(Map.of("reason", reason == null ? "" : reason))
                     .retrieve()
                     .onStatus(HttpStatusCode::isError, (req, res) -> {
-                        throw new SqldpassException(ErrorCode.PAYMENT_GATEWAY_ERROR,
-                                "PortOne 결제 취소 실패: " + res.getStatusCode());
+                        log.warn("PortOne cancel 실패 status={} paymentId={}", res.getStatusCode(), paymentId);
+                        throw new SqldpassException(ErrorCode.PAYMENT_GATEWAY_ERROR);
                     })
                     .toBodilessEntity();
         } catch (SqldpassException e) {
             throw e;
         } catch (Exception e) {
-            throw new SqldpassException(ErrorCode.PAYMENT_GATEWAY_ERROR,
-                    "PortOne 결제 취소 중 오류: " + e.getMessage());
+            log.error("PortOne cancel 호출 중 예외 paymentId={}", paymentId, e);
+            throw new SqldpassException(ErrorCode.PAYMENT_GATEWAY_ERROR);
         }
     }
 
     private void ensureConfigured() {
         if (properties.getPortone().getApiSecret().isBlank()) {
-            throw new SqldpassException(ErrorCode.PAYMENT_GATEWAY_ERROR,
-                    "PortOne API 시크릿이 설정되지 않았습니다.");
+            log.error("PortOne API Secret 미설정 — 환경변수 PORTONE_API_SECRET 확인 필요");
+            throw new SqldpassException(ErrorCode.PAYMENT_GATEWAY_ERROR);
         }
     }
 
@@ -105,7 +104,8 @@ public class PortOneClient {
         @SuppressWarnings("unchecked")
         public static PortOnePaymentInfo fromResponse(Map<String, Object> body) {
             if (body == null) {
-                throw new SqldpassException(ErrorCode.PAYMENT_GATEWAY_ERROR, "PortOne 응답 본문이 비어있습니다.");
+                // 디버깅 메시지는 log 로 남기고 사용자엔 ErrorCode 기본 메시지만
+                throw new SqldpassException(ErrorCode.PAYMENT_GATEWAY_ERROR);
             }
             String paymentId = asString(body.get("id"));
             String status = asString(body.get("status"));

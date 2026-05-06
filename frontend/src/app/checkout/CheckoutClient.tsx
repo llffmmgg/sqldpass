@@ -151,10 +151,20 @@ function CheckoutContent() {
       toast.show(`${planLabel(result.plan)} 결제 완료`, "success");
       setTimeout(() => router.push("/mock-exams"), 800);
     } catch (e) {
-      toast.show(
-        e instanceof Error ? e.message : "결제 처리 중 오류가 발생했습니다.",
-        "error",
-      );
+      const message = e instanceof Error ? e.message : "";
+      // PortOne SDK 의 사용자 취소는 message 안에 "취소" / "cancel" 키워드 포함 — info 톤
+      const cancelled = /취소|cancel/i.test(message);
+      if (cancelled) {
+        toast.show("결제를 취소하셨습니다.", "info");
+      } else {
+        // 그 외는 백엔드 검증 실패 / 네트워크 오류 — 일반 사용자 친화 메시지로
+        toast.show(
+          message || "결제 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.",
+          "error",
+        );
+      }
+      // 디버깅용 — 콘솔에는 원문 남김
+      if (e instanceof Error) console.error("[checkout]", e);
     } finally {
       setPayingPlan(null);
     }
