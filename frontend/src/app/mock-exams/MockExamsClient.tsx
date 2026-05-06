@@ -170,7 +170,7 @@ function MockExamsContent() {
         )}
 
         {filtered && filtered.length > 0 && (
-          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             {filtered.map((exam) => (
               <MockExamCard key={exam.id} exam={exam} />
             ))}
@@ -208,12 +208,12 @@ function MockExamCard({ exam }: { exam: MockExamSummary }) {
     <Link href={href} className="group relative block">
       <Card
         variant="interactive"
-        padding="lg"
+        padding="none"
         accent={cert ?? undefined}
         className={
           isPremium
-            ? "relative flex min-h-[180px] flex-col overflow-hidden border-amber-500/60 outline outline-2 outline-amber-500/60 outline-offset-[4px] hover:border-amber-500/80 hover:outline-amber-500/90"
-            : "relative flex min-h-[180px] flex-col overflow-hidden"
+            ? "relative flex min-h-[124px] flex-col overflow-hidden rounded-md border-amber-500/55 p-4 shadow-none outline outline-1 outline-amber-500/45 outline-offset-[3px] hover:-translate-y-0 hover:border-amber-500/75 hover:shadow-none hover:outline-amber-500/70"
+            : "relative flex min-h-[124px] flex-col overflow-hidden rounded-md p-4 shadow-none hover:-translate-y-0 hover:shadow-none"
         }
       >
         {exam.expertVerified && (
@@ -224,40 +224,40 @@ function MockExamCard({ exam }: { exam: MockExamSummary }) {
 
         {exam.solved && exam.bestCorrectCount != null && exam.bestTotalCount != null && (
           <span
-            className="pointer-events-none absolute right-3 top-2 select-none font-[family-name:var(--font-caveat)] text-3xl font-bold leading-none text-red-500/90 sm:text-4xl"
+            className="pointer-events-none absolute right-4 top-4 select-none font-[family-name:var(--font-caveat)] text-2xl font-bold leading-none text-red-500/90 sm:text-3xl"
             style={{ transform: "rotate(-12deg)" }}
           >
             {exam.bestCorrectCount}
-            <span className="text-2xl sm:text-3xl">/</span>
+            <span className="text-xl sm:text-2xl">/</span>
             {exam.bestTotalCount}
           </span>
         )}
 
         {/* Eyebrow: "SQLD 모의고사" · PASS+ · NEW */}
-        <div className="flex items-center gap-2 text-[11px] font-medium text-text-muted">
+        <div className="flex items-center gap-2 text-[9px] font-medium text-text-muted">
           <span>{certLabel} 모의고사</span>
           {isPremium && (
-            <span className="font-semibold tracking-[0.06em] text-amber-600 dark:text-amber-400">
+            <span className="font-semibold text-amber-600 dark:text-amber-400">
               PASS+
             </span>
           )}
           {isNew && (
-            <span className="font-semibold tracking-[0.02em] text-emerald-600 dark:text-emerald-400">
+            <span className="font-semibold text-emerald-600 dark:text-emerald-400">
               NEW
             </span>
           )}
         </div>
 
         {/* Title */}
-        <h2 className="mt-3 text-xl font-bold leading-tight sm:text-2xl">{title}</h2>
+        <h2 className="mt-1.5 pr-16 text-base font-bold leading-tight">{title}</h2>
 
         {/* Footer: 메타 + 액션 (한 줄, 좌우 정렬) */}
-        <div className="mt-auto flex items-end justify-between pt-6 text-xs text-text-muted">
+        <div className="mt-auto flex items-end justify-between gap-3 pt-5 text-[10px] text-text-muted">
           <span className="tabular-nums">
             {exam.totalQuestions}문항
             {exam.difficultyLabel && ` · ${exam.difficultyLabel}`}
           </span>
-          <span className="font-semibold text-primary transition-transform group-hover:translate-x-1">
+          <span className="font-semibold text-text transition-transform group-hover:translate-x-0.5">
             {exam.solved ? "다시 응시 →" : "응시하기 →"}
           </span>
         </div>
