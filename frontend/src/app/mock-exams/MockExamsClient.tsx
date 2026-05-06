@@ -15,7 +15,6 @@ import {
 import { isLoggedIn } from "@/lib/auth";
 import {
   getMockExams,
-  type EngineerTemplateKey,
   type ExamType,
   type MockExamSummary,
 } from "@/lib/mockExamApi";
@@ -195,23 +194,26 @@ function MockExamsContent() {
 function MockExamCard({ exam }: { exam: MockExamSummary }) {
   const cert = certFromExamType(exam.examType);
   // PREMIUM 자동 분류 — backend 가 isPremium 을 계산해 응답 (visibility=PREMIUM 또는 난이도 ≥ 0.5).
-  // visibility 단독 체크는 deprecated.
   const isPremium = exam.isPremium ?? exam.visibility === "PREMIUM";
   const isNew = isExamNew(exam);
-  // PREMIUM 이면 구독 결제 페이지로 유도 (구독 없는 사용자는 풀이 페이지에서 LOCKED).
-  // 활성 구독이 있는 회원은 그대로 풀이 페이지로 가서 통과.
   const href = `/mock-exams/${exam.id}`;
+  const certLabel = cert ? CERT_TOKENS[cert].label : "";
+  const isPastExam =
+    exam.kind === "PAST_EXAM" && exam.examYear != null && exam.examRound != null;
+  const title = isPastExam
+    ? `기출 ${exam.examYear}년 ${exam.examRound}회`
+    : exam.name;
 
   return (
     <Link href={href} className="group relative block">
       <Card
         variant="interactive"
-        padding="md"
+        padding="lg"
         accent={cert ?? undefined}
         className={
           isPremium
-            ? "relative overflow-visible border-amber-500/40 shadow-[0_0_0_4px_var(--bg),0_0_0_5px_rgba(245,181,68,0.4)] hover:border-amber-500/60 hover:shadow-[0_0_0_4px_var(--bg),0_0_0_5px_rgba(245,181,68,0.6)]"
-            : "relative overflow-hidden"
+            ? "relative flex min-h-[180px] flex-col overflow-hidden border-amber-500/60 outline outline-2 outline-amber-500/60 outline-offset-[4px] hover:border-amber-500/80 hover:outline-amber-500/90"
+            : "relative flex min-h-[180px] flex-col overflow-hidden"
         }
       >
         {exam.expertVerified && (
@@ -222,7 +224,7 @@ function MockExamCard({ exam }: { exam: MockExamSummary }) {
 
         {exam.solved && exam.bestCorrectCount != null && exam.bestTotalCount != null && (
           <span
-            className="pointer-events-none absolute right-2 top-1 select-none font-[family-name:var(--font-caveat)] text-3xl font-bold leading-none text-red-500/90 sm:text-4xl"
+            className="pointer-events-none absolute right-3 top-2 select-none font-[family-name:var(--font-caveat)] text-3xl font-bold leading-none text-red-500/90 sm:text-4xl"
             style={{ transform: "rotate(-12deg)" }}
           >
             {exam.bestCorrectCount}
@@ -231,65 +233,36 @@ function MockExamCard({ exam }: { exam: MockExamSummary }) {
           </span>
         )}
 
-        {/* Eyebrow: ExamBadge · 기출/템플릿 · PASS+ · NEW */}
-        <div className="flex flex-wrap items-center gap-1.5 pr-20">
-          <ExamBadge examType={exam.examType} />
-          {exam.kind === "PAST_EXAM" && exam.examYear != null && exam.examRound != null && (
-            <span className="inline-flex items-center rounded-full border border-border bg-surface px-2 py-0.5 text-[10px] font-semibold text-text-muted">
-              기출 {exam.examYear} {exam.examRound}회
-            </span>
-          )}
-          {exam.templateKey && exam.templateLabel && (
-            <TemplateBadge templateKey={exam.templateKey} label={exam.templateLabel} />
-          )}
+        {/* Eyebrow: "SQLD 모의고사" · PASS+ · NEW */}
+        <div className="flex items-center gap-2 text-[11px] font-medium text-text-muted">
+          <span>{certLabel} 모의고사</span>
           {isPremium && (
-            <span className="text-[11px] font-semibold tracking-[0.06em] text-amber-600 dark:text-amber-400">
-              <span className="mr-1.5 text-text-subtle">·</span>PASS+
+            <span className="font-semibold tracking-[0.06em] text-amber-600 dark:text-amber-400">
+              PASS+
             </span>
           )}
           {isNew && (
-            <span className="text-[11px] font-semibold tracking-[0.02em] text-emerald-600 dark:text-emerald-400">
-              <span className="mr-1.5 text-text-subtle">·</span>NEW
+            <span className="font-semibold tracking-[0.02em] text-emerald-600 dark:text-emerald-400">
+              NEW
             </span>
           )}
         </div>
 
-        <div className="mt-2 flex items-center gap-2">
-          <DifficultyBadge label={exam.difficultyLabel} />
-          <span className="text-xs text-text-muted tabular-nums">#{exam.sequence}</span>
-        </div>
+        {/* Title */}
+        <h2 className="mt-3 text-xl font-bold leading-tight sm:text-2xl">{title}</h2>
 
-        <h2 className="mt-3 text-lg font-semibold leading-tight">{exam.name}</h2>
-        <div className="mt-2 text-sm text-text-muted">총 {exam.totalQuestions}문항</div>
-
-        <div className="mt-4 inline-flex items-center gap-1.5 text-xs font-semibold text-primary transition-transform group-hover:translate-x-1">
-          {exam.solved ? "다시 응시 →" : "응시하기 →"}
+        {/* Footer: 메타 + 액션 (한 줄, 좌우 정렬) */}
+        <div className="mt-auto flex items-end justify-between pt-6 text-xs text-text-muted">
+          <span className="tabular-nums">
+            {exam.totalQuestions}문항
+            {exam.difficultyLabel && ` · ${exam.difficultyLabel}`}
+          </span>
+          <span className="font-semibold text-primary transition-transform group-hover:translate-x-1">
+            {exam.solved ? "다시 응시 →" : "응시하기 →"}
+          </span>
         </div>
       </Card>
     </Link>
-  );
-}
-
-const TEMPLATE_BADGE_CLASS: Record<EngineerTemplateKey, string> = {
-  PROGRAMMING_HEAVY: "border-blue-500/40 bg-blue-500/10 text-blue-500 dark:text-blue-300",
-  THEORY_HEAVY: "border-purple-500/40 bg-purple-500/10 text-purple-500 dark:text-purple-300",
-  BALANCED: "border-slate-500/40 bg-slate-500/10 text-slate-500 dark:text-slate-300",
-  DB_HEAVY: "border-orange-500/40 bg-orange-500/10 text-orange-500 dark:text-orange-300",
-  LATEST: "border-emerald-500/40 bg-emerald-500/10 text-emerald-500 dark:text-emerald-300",
-};
-
-function TemplateBadge({
-  templateKey,
-  label,
-}: {
-  templateKey: EngineerTemplateKey;
-  label: string;
-}) {
-  const cls = TEMPLATE_BADGE_CLASS[templateKey];
-  return (
-    <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold ${cls}`}>
-      {label}
-    </span>
   );
 }
 
