@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { Noto_Sans_KR, JetBrains_Mono, Caveat } from "next/font/google";
-import Script from "next/script";
 import { Suspense } from "react";
 import NavBar from "@/components/NavBar";
 import BottomTabBar from "@/components/BottomTabBar";
@@ -8,6 +7,7 @@ import Footer from "@/components/Footer";
 import { SiteNoticeBanner } from "@/components/SiteNoticeBanner";
 import AnalyticsScripts from "@/components/AnalyticsScripts";
 import AdSidebar from "@/components/AdSidebar";
+import AdSenseLoader from "@/components/AdSenseLoader";
 import FeedbackRail from "@/components/FeedbackRail";
 import { ToastProvider } from "@/components/Toast";
 import "./globals.css";
@@ -207,12 +207,7 @@ export default function RootLayout({
           <FeedbackRail />
           <BottomTabBar />
         </ToastProvider>
-        <Script
-          id="adsbygoogle-loader"
-          src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_CLIENT}`}
-          crossOrigin="anonymous"
-          strategy="lazyOnload"
-        />
+        <AdSenseLoader />
       </body>
     </html>
   );
