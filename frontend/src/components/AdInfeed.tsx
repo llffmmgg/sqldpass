@@ -14,9 +14,10 @@ interface AdInfeedProps {
 
 export default function AdInfeed({ adSlot, adLayoutKey, className }: AdInfeedProps) {
   const pushed = useRef(false);
-  const { subscription } = useSubscription();
+  const { subscription, loading } = useSubscription();
 
   useEffect(() => {
+    if (loading) return;
     if (pushed.current) return;
     if (subscription.removesAds) return;
     pushed.current = true;
@@ -25,8 +26,9 @@ export default function AdInfeed({ adSlot, adLayoutKey, className }: AdInfeedPro
     } catch {
       // AdSense가 아직 로드되지 않은 경우 등 — 무시
     }
-  }, [subscription.removesAds]);
+  }, [loading, subscription.removesAds]);
 
+  if (loading) return null;
   if (subscription.removesAds) return null;
 
   return (

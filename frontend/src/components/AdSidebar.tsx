@@ -21,9 +21,11 @@ interface AdSidebarProps {
 export default function AdSidebar({ adSlot }: AdSidebarProps) {
   const pathname = usePathname();
   const pushed = useRef(false);
-  const { subscription } = useSubscription();
+  const { subscription, loading } = useSubscription();
 
   useEffect(() => {
+    // subscription 응답 받기 전엔 push 보류 — 구독 회원에게 광고가 잠깐이라도 노출되는 걸 방지
+    if (loading) return;
     if (pushed.current) return;
     if (subscription.removesAds) return;
     pushed.current = true;
@@ -32,9 +34,10 @@ export default function AdSidebar({ adSlot }: AdSidebarProps) {
     } catch {
       // AdSense 스크립트가 아직 로드되지 않았을 수 있음 — 무시
     }
-  }, [subscription.removesAds]);
+  }, [loading, subscription.removesAds]);
 
   if (!adSlot) return null;
+  if (loading) return null;
   // 한달권/무제한권 회원은 광고 제거
   if (subscription.removesAds) return null;
   if (EXCLUDED_PREFIXES.some((prefix) => pathname?.startsWith(prefix))) {

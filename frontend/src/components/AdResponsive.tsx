@@ -25,9 +25,10 @@ interface AdResponsiveProps {
 
 export default function AdResponsive({ adSlot, height, className }: AdResponsiveProps) {
   const pushed = useRef(false);
-  const { subscription } = useSubscription();
+  const { subscription, loading } = useSubscription();
 
   useEffect(() => {
+    if (loading) return;
     if (pushed.current) return;
     if (subscription.removesAds) return;
     pushed.current = true;
@@ -36,8 +37,9 @@ export default function AdResponsive({ adSlot, height, className }: AdResponsive
     } catch {
       // AdSense 스크립트 미로드 — 무시
     }
-  }, [subscription.removesAds]);
+  }, [loading, subscription.removesAds]);
 
+  if (loading) return null;
   if (subscription.removesAds) return null;
 
   return (
