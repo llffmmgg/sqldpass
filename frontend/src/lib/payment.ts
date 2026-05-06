@@ -44,6 +44,15 @@ export type ActiveSubscription = {
   allowsPdf: boolean;
 };
 
+export type PreviewResponse = {
+  plan: SubscriptionPlan;
+  baseAmount: number;
+  prorateDiscount: number;
+  finalAmount: number;
+  allowed: boolean;
+  reason: string | null;
+};
+
 async function authFetch<T>(path: string, init?: RequestInit): Promise<T> {
   const token = getToken();
   const res = await fetch(path, {
@@ -74,6 +83,11 @@ export async function getCheckoutEligibility(): Promise<CheckoutEligibility> {
 /** 활성 구독 정보 조회. 없으면 active=false 반환. */
 export async function getActiveSubscription(): Promise<ActiveSubscription> {
   return authFetch<ActiveSubscription>("/api/payment/subscription");
+}
+
+/** plan 별 결제 미리보기 — 활성 구독의 prorate 차감 적용된 실 결제 금액 반환. */
+export async function previewPayment(plan: SubscriptionPlan): Promise<PreviewResponse> {
+  return authFetch<PreviewResponse>(`/api/payment/preview?plan=${encodeURIComponent(plan)}`);
 }
 
 /**

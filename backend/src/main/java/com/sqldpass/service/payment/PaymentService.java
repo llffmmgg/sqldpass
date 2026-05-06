@@ -38,8 +38,33 @@ public class PaymentService {
     private final SubscriptionRepository subscriptionRepository;
     private final MemberRepository memberRepository;
 
+    /** 카드사 심사 가이드 + PG 정책상 최소 결제 금액. */
+    private static final int MIN_CHARGE_AMOUNT = 100;
+
+    /**
+     * 미리 보기 — 회원의 활성 구독을 고려한 실제 결제 금액(prorate 적용) 계산.
+     * UI 가 결제 카드에 차감 가격을 미리 표시할 때 사용. PaymentEntity 저장 X.
+     */
+    public PreviewResult preview(Long memberId, SubscriptionPlan plan) {
+        ensureReviewer(memberId);
+        if (plan == null) {
+            throw new SqldpassException(ErrorCode.INVALID_INPUT, "plan 은 필수입니다.");
+        }
+        PaymentProperties.PlanConfig cfg = properties.configFor(plan);
+        int baseAmount = cfg.getAmount();
+
+        SubscriptionEntity active = subscriptionRepository
+                .findActiveByMemberId(memberId, LocalDateTime.now())
+                .stream().findFirst().orElse(null);
+
+        UpgradeEvaluation eval = evaluateUpgrade(active, plan, baseAmount);
+        return new PreviewResult(plan, baseAmount, eval.discount(),
+                eval.finalAmount(), eval.allowed(), eval.reason());
+    }
+
     /**
      * 결제 직전 — client 가 PortOne 결제창을 띄우기 전에 paymentId 를 사전 등록한다.
+     * 활성 구독이 있으면 prorate 차감 / 다운그레이드·동등 plan 차단 적용.
      */
     @Transactional
     public PreparePaymentResult prepare(Long memberId, SubscriptionPlan plan) {
@@ -49,8 +74,8 @@ public class PaymentService {
         }
 
         PaymentProperties.PlanConfig cfg = properties.configFor(plan);
-        int amount = cfg.getAmount();
-        if (amount < 1) {
+        int baseAmount = cfg.getAmount();
+        if (baseAmount < 1) {
             throw new SqldpassException(ErrorCode.PAYMENT_VERIFICATION_FAILED,
                     "결제 금액 설정이 올바르지 않습니다.");
         }
@@ -60,16 +85,72 @@ public class PaymentService {
                     "결제 상품명 설정이 올바르지 않습니다.");
         }
 
+        SubscriptionEntity active = subscriptionRepository
+                .findActiveByMemberId(memberId, LocalDateTime.now())
+                .stream().findFirst().orElse(null);
+        UpgradeEvaluation eval = evaluateUpgrade(active, plan, baseAmount);
+        if (!eval.allowed()) {
+            throw new SqldpassException(ErrorCode.INVALID_INPUT, eval.reason());
+        }
+
+        int finalAmount = eval.finalAmount();
         String paymentId = "sqldpass-" + System.currentTimeMillis() + "-" + memberId;
-        PaymentEntity entity = new PaymentEntity(paymentId, memberId, null, productName, plan, amount);
+        PaymentEntity entity = new PaymentEntity(paymentId, memberId, null,
+                productName, plan, finalAmount, baseAmount, eval.discount());
         paymentRepository.save(entity);
 
-        log.info("결제 prepare memberId={} plan={} paymentId={} amount={}",
-                memberId, plan, paymentId, amount);
+        log.info("결제 prepare memberId={} plan={} paymentId={} base={} discount={} final={}",
+                memberId, plan, paymentId, baseAmount, eval.discount(), finalAmount);
         return new PreparePaymentResult(
-                paymentId, amount, productName, plan,
-                properties.getPortone().getStoreId());
+                paymentId, finalAmount, productName, plan,
+                properties.getPortone().getStoreId(),
+                baseAmount, eval.discount());
     }
+
+    /**
+     * 활성 구독 + 새 plan 의 업그레이드 가능성 + prorate 차감액을 평가.
+     * 차감액 (잔여 가치) = currentPlan 정가 × (만료까지 남은 일수 / currentPlan.days). 올림.
+     */
+    private UpgradeEvaluation evaluateUpgrade(SubscriptionEntity active, SubscriptionPlan newPlan, int baseAmount) {
+        if (active == null) {
+            // 활성 구독 없음 — 일반 결제
+            return new UpgradeEvaluation(true, 0, baseAmount, null);
+        }
+        SubscriptionPlan currentPlan = active.getPlan();
+        if (currentPlan == SubscriptionPlan.UNLIMITED) {
+            return new UpgradeEvaluation(false, 0, baseAmount,
+                    "이미 무제한 이용권을 이용 중입니다.");
+        }
+        if (!newPlan.isUpgradeFrom(currentPlan)) {
+            // 같은/낮은 plan — 다운그레이드 또는 갱신은 만료 후
+            return new UpgradeEvaluation(false, 0, baseAmount,
+                    "현재 이용권이 만료된 후 결제하실 수 있습니다.");
+        }
+        // 업그레이드 — prorate 차감
+        int discount = calculateProrateDiscount(active);
+        int finalAmount = Math.max(MIN_CHARGE_AMOUNT, baseAmount - discount);
+        return new UpgradeEvaluation(true, discount, finalAmount, null);
+    }
+
+    /** 활성 구독의 잔여 가치. UNLIMITED 또는 invalid 데이터면 0. */
+    private int calculateProrateDiscount(SubscriptionEntity active) {
+        SubscriptionPlan currentPlan = active.getPlan();
+        Integer totalDays = currentPlan.getDays();
+        if (totalDays == null || totalDays <= 0) return 0;
+        if (active.getExpiresAt() == null) return 0;
+
+        LocalDateTime now = LocalDateTime.now();
+        if (!active.getExpiresAt().isAfter(now)) return 0;
+        long remainingMillis = java.time.Duration.between(now, active.getExpiresAt()).toMillis();
+        long remainingDays = (long) Math.ceil(remainingMillis / 86_400_000.0);
+        if (remainingDays <= 0) return 0;
+        if (remainingDays > totalDays) remainingDays = totalDays;
+
+        int currentBaseAmount = properties.configFor(currentPlan).getAmount();
+        return (int) Math.round(currentBaseAmount * (remainingDays / (double) totalDays));
+    }
+
+    private record UpgradeEvaluation(boolean allowed, int discount, int finalAmount, String reason) {}
 
     /**
      * 결제 완료 후 — PortOne REST 로 status/amount 재검증 후 SubscriptionEntity 발급.
@@ -135,8 +216,17 @@ public class PaymentService {
     }
 
     public record PreparePaymentResult(String paymentId, int amount, String productName,
-                                       SubscriptionPlan plan, String storeId) {}
+                                       SubscriptionPlan plan, String storeId,
+                                       int baseAmount, int prorateDiscount) {}
 
     public record VerifyPaymentResult(String paymentId, int amount, String productName,
                                       SubscriptionPlan plan, LocalDateTime expiresAt) {}
+
+    /**
+     * /checkout 카드별 미리 보기 응답.
+     * - allowed=false 면 결제 불가 (다운그레이드/UNLIMITED 활성), reason 표시.
+     * - allowed=true + prorateDiscount>0 면 업그레이드 (원가 - 차감 = finalAmount).
+     */
+    public record PreviewResult(SubscriptionPlan plan, int baseAmount, int prorateDiscount,
+                                int finalAmount, boolean allowed, String reason) {}
 }

@@ -11,8 +11,10 @@ import { isLoggedIn } from "@/lib/auth";
 import {
   getActiveSubscription,
   getCheckoutEligibility,
+  previewPayment,
   startPayment,
   type ActiveSubscription,
+  type PreviewResponse,
   type SubscriptionPlan,
 } from "@/lib/payment";
 
@@ -114,6 +116,12 @@ function CheckoutContent() {
   const [access, setAccess] = useState<AccessState>("loading");
   const [subscription, setSubscription] = useState<ActiveSubscription | null>(null);
   const [payingPlan, setPayingPlan] = useState<SubscriptionPlan | null>(null);
+  // plan 별 미리보기 — 활성 구독 prorate 차감 적용된 finalAmount 표시용
+  const [previews, setPreviews] = useState<Record<SubscriptionPlan, PreviewResponse | null>>({
+    THREE_DAY: null,
+    ONE_MONTH: null,
+    UNLIMITED: null,
+  });
 
   useEffect(() => {
     if (!isLoggedIn()) {
@@ -124,6 +132,18 @@ function CheckoutContent() {
       .then(([elig, sub]) => {
         setAccess(elig.eligible ? "allowed" : "denied");
         setSubscription(sub);
+
+        // 활성 구독이 있으면 plan 별 미리보기 호출 (prorate 표시용).
+        // 비활성이면 baseAmount 그대로 표시되니 호출 생략 (네트워크 절약).
+        if (elig.eligible && sub.active) {
+          (["THREE_DAY", "ONE_MONTH", "UNLIMITED"] as const).forEach((plan) => {
+            previewPayment(plan)
+              .then((p) => setPreviews((prev) => ({ ...prev, [plan]: p })))
+              .catch(() => {
+                // 개별 plan 미리보기 실패는 무시 — 카드는 baseAmount 로 fallback
+              });
+          });
+        }
       })
       .catch(() => setAccess("denied"));
   }, []);
@@ -227,6 +247,7 @@ function CheckoutContent() {
             disabled={payingPlan !== null}
             currentPlan={subscription?.active ? subscription.plan : null}
             payingPlan={payingPlan}
+            preview={tier.key !== "FREE" ? previews[tier.key] : null}
           />
         ))}
       </div>
@@ -270,16 +291,21 @@ function TierCard({
   disabled,
   currentPlan,
   payingPlan,
+  preview,
 }: {
   tier: Tier;
   onPay: (plan: SubscriptionPlan) => void;
   disabled: boolean;
   currentPlan: SubscriptionPlan | null;
   payingPlan: SubscriptionPlan | null;
+  preview: PreviewResponse | null;
 }) {
   const isFree = tier.key === "FREE";
   const isCurrent = !isFree && currentPlan === tier.key;
   const isPaying = payingPlan === tier.key;
+  // 활성 구독으로 인해 결제 막힘 (다운그레이드 또는 UNLIMITED 활성)
+  const isBlocked = preview ? !preview.allowed : false;
+  const hasProrate = preview ? preview.allowed && preview.prorateDiscount > 0 : false;
 
   return (
     <div
@@ -305,10 +331,28 @@ function TierCard({
         <p className="mt-1 text-xs text-text-muted">{tier.tagline}</p>
       </div>
 
-      <div className="mt-6 flex items-baseline gap-1">
-        <span className="text-4xl font-bold tabular-nums tracking-tight">
-          {tier.price === 0 ? "무료" : `₩${tier.price.toLocaleString()}`}
-        </span>
+      <div className="mt-6">
+        {hasProrate ? (
+          <>
+            <div className="flex items-baseline gap-2">
+              <span className="text-4xl font-bold tabular-nums tracking-tight">
+                ₩{preview!.finalAmount.toLocaleString()}
+              </span>
+              <span className="text-sm text-text-subtle line-through tabular-nums">
+                ₩{preview!.baseAmount.toLocaleString()}
+              </span>
+            </div>
+            <p className="mt-1 text-xs text-success">
+              현재 구독 잔여 ₩{preview!.prorateDiscount.toLocaleString()} 차감
+            </p>
+          </>
+        ) : (
+          <div className="flex items-baseline gap-1">
+            <span className="text-4xl font-bold tabular-nums tracking-tight">
+              {tier.price === 0 ? "무료" : `₩${tier.price.toLocaleString()}`}
+            </span>
+          </div>
+        )}
       </div>
       <p className="mt-1 text-xs text-text-subtle">{tier.priceUnit}</p>
 
@@ -342,6 +386,18 @@ function TierCard({
           >
             ✓ 이용 중
           </button>
+        ) : isBlocked ? (
+          <div>
+            <button
+              disabled
+              className="w-full rounded-lg border border-border bg-transparent px-4 py-2.5 text-sm font-medium text-text-subtle"
+            >
+              현재 구독 종료 후 가능
+            </button>
+            {preview?.reason && (
+              <p className="mt-2 text-[11px] text-text-subtle">{preview.reason}</p>
+            )}
+          </div>
         ) : (
           <button
             onClick={() => onPay(tier.key as SubscriptionPlan)}
@@ -360,6 +416,8 @@ function TierCard({
                 </svg>
                 결제 진행 중...
               </span>
+            ) : hasProrate ? (
+              "업그레이드"
             ) : (
               tier.cta
             )}

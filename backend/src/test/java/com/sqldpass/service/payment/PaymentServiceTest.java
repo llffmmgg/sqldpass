@@ -1,9 +1,12 @@
 package com.sqldpass.service.payment;
 
 import java.lang.reflect.Field;
+import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.util.Map;
 import java.util.Optional;
+
+import com.sqldpass.persistent.payment.SubscriptionEntity;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -101,6 +104,94 @@ class PaymentServiceTest {
         assertThatThrownBy(() -> service.prepare(1L, null))
                 .isInstanceOf(SqldpassException.class)
                 .extracting("errorCode").isEqualTo(ErrorCode.INVALID_INPUT);
+    }
+
+    @Test
+    @DisplayName("ONE_MONTH 활성 (15일 남음) + UNLIMITED 업그레이드 → prorate 차감 ₩4,950 적용")
+    void prepareUnlimitedUpgradeApplyProrate() {
+        properties.setReviewerNicknames("");
+        SubscriptionEntity active = new SubscriptionEntity(
+                1L, SubscriptionPlan.ONE_MONTH, 100L,
+                LocalDateTime.now().minusDays(15), LocalDateTime.now().plusDays(15));
+        given(subscriptionRepository.findActiveByMemberId(any(), any()))
+                .willReturn(java.util.List.of(active));
+
+        var result = service.prepare(1L, SubscriptionPlan.UNLIMITED);
+
+        // 잔여 15일 / 30일 × ₩9,900 = ₩4,950 차감 → ₩29,900 - ₩4,950 = ₩24,950
+        assertThat(result.baseAmount()).isEqualTo(29900);
+        assertThat(result.prorateDiscount()).isEqualTo(4950);
+        assertThat(result.amount()).isEqualTo(24950);
+    }
+
+    @Test
+    @DisplayName("UNLIMITED 활성 + 어떤 plan 결제 시도 → INVALID_INPUT")
+    void prepareBlockedWhenUnlimitedActive() {
+        properties.setReviewerNicknames("");
+        SubscriptionEntity active = new SubscriptionEntity(
+                1L, SubscriptionPlan.UNLIMITED, 100L, LocalDateTime.now(), null);
+        given(subscriptionRepository.findActiveByMemberId(any(), any()))
+                .willReturn(java.util.List.of(active));
+
+        assertThatThrownBy(() -> service.prepare(1L, SubscriptionPlan.ONE_MONTH))
+                .isInstanceOf(SqldpassException.class)
+                .extracting("errorCode").isEqualTo(ErrorCode.INVALID_INPUT);
+    }
+
+    @Test
+    @DisplayName("ONE_MONTH 활성 + 같은 ONE_MONTH 결제 → INVALID_INPUT (만료 후 가능)")
+    void prepareBlockedSamePlan() {
+        properties.setReviewerNicknames("");
+        SubscriptionEntity active = new SubscriptionEntity(
+                1L, SubscriptionPlan.ONE_MONTH, 100L,
+                LocalDateTime.now().minusDays(5), LocalDateTime.now().plusDays(25));
+        given(subscriptionRepository.findActiveByMemberId(any(), any()))
+                .willReturn(java.util.List.of(active));
+
+        assertThatThrownBy(() -> service.prepare(1L, SubscriptionPlan.ONE_MONTH))
+                .isInstanceOf(SqldpassException.class)
+                .extracting("errorCode").isEqualTo(ErrorCode.INVALID_INPUT);
+    }
+
+    @Test
+    @DisplayName("ONE_MONTH 활성 + THREE_DAY 다운그레이드 시도 → INVALID_INPUT")
+    void prepareBlockedDowngrade() {
+        properties.setReviewerNicknames("");
+        SubscriptionEntity active = new SubscriptionEntity(
+                1L, SubscriptionPlan.ONE_MONTH, 100L,
+                LocalDateTime.now().minusDays(5), LocalDateTime.now().plusDays(25));
+        given(subscriptionRepository.findActiveByMemberId(any(), any()))
+                .willReturn(java.util.List.of(active));
+
+        assertThatThrownBy(() -> service.prepare(1L, SubscriptionPlan.THREE_DAY))
+                .isInstanceOf(SqldpassException.class)
+                .extracting("errorCode").isEqualTo(ErrorCode.INVALID_INPUT);
+    }
+
+    @Test
+    @DisplayName("preview — 활성 구독 없으면 baseAmount 그대로, allowed=true")
+    void previewWithoutSubscription() {
+        properties.setReviewerNicknames("");
+        var preview = service.preview(1L, SubscriptionPlan.ONE_MONTH);
+
+        assertThat(preview.allowed()).isTrue();
+        assertThat(preview.baseAmount()).isEqualTo(9900);
+        assertThat(preview.prorateDiscount()).isEqualTo(0);
+        assertThat(preview.finalAmount()).isEqualTo(9900);
+    }
+
+    @Test
+    @DisplayName("preview — UNLIMITED 활성이면 allowed=false")
+    void previewUnlimitedActive() {
+        properties.setReviewerNicknames("");
+        SubscriptionEntity active = new SubscriptionEntity(
+                1L, SubscriptionPlan.UNLIMITED, 100L, LocalDateTime.now(), null);
+        given(subscriptionRepository.findActiveByMemberId(any(), any()))
+                .willReturn(java.util.List.of(active));
+
+        var preview = service.preview(1L, SubscriptionPlan.ONE_MONTH);
+        assertThat(preview.allowed()).isFalse();
+        assertThat(preview.reason()).contains("무제한");
     }
 
     @Test

@@ -55,8 +55,17 @@ public class PaymentEntity extends BaseTimeEntity {
     @Column(name = "plan", length = 20)
     private SubscriptionPlan plan;
 
+    /** 실제 결제 금액 (PG 청구액). 업그레이드 prorate 차감 후의 값. */
     @Column(name = "amount", nullable = false)
     private int amount;
+
+    /** plan 의 정가 (PaymentProperties.PlanConfig.amount). 회계 보존용. */
+    @Column(name = "base_amount", nullable = false)
+    private int baseAmount;
+
+    /** 업그레이드 prorate 차감액 (없으면 0). amount = baseAmount - prorateDiscount. */
+    @Column(name = "prorate_discount", nullable = false)
+    private int prorateDiscount;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 20)
@@ -71,17 +80,25 @@ public class PaymentEntity extends BaseTimeEntity {
 
     public PaymentEntity(String paymentId, Long memberId, Long mockExamId,
                          String productName, int amount) {
-        this(paymentId, memberId, mockExamId, productName, null, amount);
+        this(paymentId, memberId, mockExamId, productName, null, amount, amount, 0);
     }
 
     public PaymentEntity(String paymentId, Long memberId, Long mockExamId,
                          String productName, SubscriptionPlan plan, int amount) {
+        this(paymentId, memberId, mockExamId, productName, plan, amount, amount, 0);
+    }
+
+    public PaymentEntity(String paymentId, Long memberId, Long mockExamId,
+                         String productName, SubscriptionPlan plan,
+                         int amount, int baseAmount, int prorateDiscount) {
         this.paymentId = paymentId;
         this.memberId = memberId;
         this.mockExamId = mockExamId;
         this.productName = productName;
         this.plan = plan;
         this.amount = amount;
+        this.baseAmount = baseAmount;
+        this.prorateDiscount = prorateDiscount;
         this.status = PaymentStatus.PENDING;
     }
 

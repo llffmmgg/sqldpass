@@ -8,18 +8,30 @@ package com.sqldpass.persistent.payment;
  * - removesAds, allowsPdf 는 plan 별 차등.
  */
 public enum SubscriptionPlan {
-    THREE_DAY(3, false, false),
-    ONE_MONTH(30, true, false),
-    UNLIMITED(null, true, true);
+    THREE_DAY(3, false, false, 1),
+    ONE_MONTH(30, true, false, 2),
+    UNLIMITED(null, true, true, 3);
 
     private final Integer days;
     private final boolean removesAds;
     private final boolean allowsPdf;
+    /** 업그레이드 비교용 강도. 큰 값일수록 강한 plan. */
+    private final int tier;
 
-    SubscriptionPlan(Integer days, boolean removesAds, boolean allowsPdf) {
+    SubscriptionPlan(Integer days, boolean removesAds, boolean allowsPdf, int tier) {
         this.days = days;
         this.removesAds = removesAds;
         this.allowsPdf = allowsPdf;
+        this.tier = tier;
+    }
+
+    public int getTier() {
+        return tier;
+    }
+
+    /** 본 plan 이 currentPlan 의 업그레이드인지. 같은 plan 또는 약한 plan 은 false. */
+    public boolean isUpgradeFrom(SubscriptionPlan currentPlan) {
+        return currentPlan != null && this.tier > currentPlan.tier;
     }
 
     public Integer getDays() {

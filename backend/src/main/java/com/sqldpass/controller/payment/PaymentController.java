@@ -4,6 +4,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.sqldpass.persistent.member.MemberEntity;
@@ -14,6 +15,7 @@ import com.sqldpass.service.common.SqldpassException;
 import com.sqldpass.service.payment.PaymentProperties;
 import com.sqldpass.service.payment.PaymentService;
 import com.sqldpass.service.payment.PaymentService.PreparePaymentResult;
+import com.sqldpass.service.payment.PaymentService.PreviewResult;
 import com.sqldpass.service.payment.PaymentService.VerifyPaymentResult;
 import com.sqldpass.service.payment.SubscriptionService;
 import com.sqldpass.service.payment.SubscriptionService.ActiveSubscription;
@@ -57,6 +59,16 @@ public class PaymentController {
         MemberEntity member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new SqldpassException(ErrorCode.MEMBER_NOT_FOUND));
         return new EligibilityResponse(allowed.contains(member.getNickname()));
+    }
+
+    @GetMapping("/preview")
+    @Operation(summary = "결제 미리 보기 — 활성 구독 prorate 차감 적용된 실 결제 금액 반환")
+    public PreviewResult preview(@RequestParam SubscriptionPlan plan, HttpServletRequest request) {
+        Long memberId = (Long) request.getAttribute("memberId");
+        if (memberId == null) {
+            throw new SqldpassException(ErrorCode.UNAUTHORIZED);
+        }
+        return paymentService.preview(memberId, plan);
     }
 
     @PostMapping("/prepare")
