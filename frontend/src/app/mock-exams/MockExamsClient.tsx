@@ -5,7 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useMemo, useState } from "react";
 
 import Spinner from "@/components/Spinner";
-import { Badge, Card, Container } from "@/components/ui";
+import { Card, Container } from "@/components/ui";
 import {
   CERT_LIST,
   CERT_TOKENS,
@@ -171,7 +171,7 @@ function MockExamsContent() {
         )}
 
         {filtered && filtered.length > 0 && (
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
             {filtered.map((exam) => (
               <MockExamCard key={exam.id} exam={exam} />
             ))}
@@ -210,7 +210,7 @@ function MockExamCard({ exam }: { exam: MockExamSummary }) {
         accent={cert ?? undefined}
         className={
           isPremium
-            ? "relative overflow-hidden bg-gradient-to-br from-amber-500/[0.06] to-surface hover:border-amber-500/60"
+            ? "relative overflow-visible border-amber-500/40 shadow-[0_0_0_4px_var(--bg),0_0_0_5px_rgba(245,181,68,0.4)] hover:border-amber-500/60 hover:shadow-[0_0_0_4px_var(--bg),0_0_0_5px_rgba(245,181,68,0.6)]"
             : "relative overflow-hidden"
         }
       >
@@ -231,6 +231,7 @@ function MockExamCard({ exam }: { exam: MockExamSummary }) {
           </span>
         )}
 
+        {/* Eyebrow: ExamBadge · 기출/템플릿 · PASS+ · NEW */}
         <div className="flex flex-wrap items-center gap-1.5 pr-20">
           <ExamBadge examType={exam.examType} />
           {exam.kind === "PAST_EXAM" && exam.examYear != null && exam.examRound != null && (
@@ -242,21 +243,16 @@ function MockExamCard({ exam }: { exam: MockExamSummary }) {
             <TemplateBadge templateKey={exam.templateKey} label={exam.templateLabel} />
           )}
           {isPremium && (
-            <Badge variant="soft" size="xs" className="border-amber-500/50 bg-amber-500/15 text-amber-600 dark:text-amber-300">
-              🔒 프리미엄
-            </Badge>
+            <span className="text-[11px] font-semibold tracking-[0.06em] text-amber-600 dark:text-amber-400">
+              <span className="mr-1.5 text-text-subtle">·</span>PASS+
+            </span>
+          )}
+          {isNew && (
+            <span className="text-[11px] font-semibold tracking-[0.02em] text-emerald-600 dark:text-emerald-400">
+              <span className="mr-1.5 text-text-subtle">·</span>NEW
+            </span>
           )}
         </div>
-
-        {isNew && (
-          /* eslint-disable-next-line @next/next/no-img-element -- 정적 배지 이미지, next/image 의 추가 최적화가 비용 대비 의미 없음 */
-          <img
-            src="/badges/new-logo.webp"
-            alt="NEW"
-            aria-label="새로 추가된 회차"
-            className="pointer-events-none absolute -bottom-1 -right-1 z-10 h-16 w-16 select-none rotate-[8deg] object-contain drop-shadow-[0_4px_10px_rgba(16,185,129,0.35)] transition-transform duration-300 ease-out group-hover:-rotate-3 group-hover:scale-110 sm:h-20 sm:w-20"
-          />
-        )}
 
         <div className="mt-2 flex items-center gap-2">
           <DifficultyBadge label={exam.difficultyLabel} />
@@ -267,7 +263,7 @@ function MockExamCard({ exam }: { exam: MockExamSummary }) {
         <div className="mt-2 text-sm text-text-muted">총 {exam.totalQuestions}문항</div>
 
         <div className="mt-4 inline-flex items-center gap-1.5 text-xs font-semibold text-primary transition-transform group-hover:translate-x-1">
-          응시하기 →
+          {exam.solved ? "다시 응시 →" : "응시하기 →"}
         </div>
       </Card>
     </Link>
