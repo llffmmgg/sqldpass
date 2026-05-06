@@ -5,6 +5,7 @@ const PRODUCT_LINKS = [
   { href: "/mock-exams", label: "모의고사" },
   { href: "/wrong-answers", label: "오답 노트" },
   { href: "/dashboard", label: "대시보드" },
+  { href: "/checkout", label: "이용권 구매" },
   { href: "/blog", label: "시험 준비 팁" },
   { href: "/changelog", label: "업데이트 내역" },
 ];

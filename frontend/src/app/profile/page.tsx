@@ -1,12 +1,33 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { isLoggedIn, setNickname as saveNickname, clearAuth } from "@/lib/auth";
 import { getMe, updateNickname, withdrawMember, type MemberMe } from "@/lib/memberApi";
 import { generateNickname } from "@/lib/nickname";
 import LoginRequired from "@/components/LoginRequired";
 import StreakBox from "@/components/StreakBox";
+import { useSubscription } from "@/hooks/useSubscription";
+import type { SubscriptionPlan } from "@/lib/payment";
+
+function planLabel(plan: SubscriptionPlan): string {
+  switch (plan) {
+    case "THREE_DAY":
+      return "3일권";
+    case "ONE_MONTH":
+      return "한달권";
+    case "UNLIMITED":
+      return "무제한";
+  }
+}
+
+/** 만료까지 남은 일수. UNLIMITED 는 null. */
+function daysUntilExpiry(expiresAt: string | null): number | null {
+  if (!expiresAt) return null;
+  const ms = new Date(expiresAt).getTime() - Date.now();
+  return Math.max(0, Math.ceil(ms / (1000 * 60 * 60 * 24)));
+}
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -20,6 +41,7 @@ export default function ProfilePage() {
   const [withdrawConfirm, setWithdrawConfirm] = useState("");
   const [withdrawing, setWithdrawing] = useState(false);
   const [withdrawError, setWithdrawError] = useState<string | null>(null);
+  const { subscription, loading: subLoading } = useSubscription();
 
   const WITHDRAW_PHRASE = "탈퇴합니다";
 
@@ -152,6 +174,8 @@ export default function ProfilePage() {
           </div>
         )}
 
+        {me && !subLoading && <SubscriptionCard subscription={subscription} />}
+
         {me && (
           <div className="mt-8 rounded-xl border border-rose-500/20 bg-rose-500/5 p-6">
             <h2 className="text-sm font-semibold text-rose-300">위험 구역</h2>
@@ -227,5 +251,99 @@ export default function ProfilePage() {
         </div>
       )}
     </main>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────
+ * 구독 카드 — 활성 구독 정보 표시 + 업그레이드 동선
+ * ───────────────────────────────────────────────────────────── */
+function SubscriptionCard({ subscription }: { subscription: ReturnType<typeof useSubscription>["subscription"] }) {
+  if (!subscription.active || !subscription.plan) {
+    return <FreePlanCard />;
+  }
+
+  const remaining = daysUntilExpiry(subscription.expiresAt);
+  const isExpiringSoon = remaining !== null && remaining <= 7;
+  const isLifetime = subscription.expiresAt === null;
+
+  return (
+    <div className="mt-8 relative overflow-hidden rounded-xl border-2 border-primary/40 bg-gradient-to-br from-primary/[0.08] via-bg to-bg p-6 shadow-[0_0_40px_-15px_rgba(124,92,196,0.5)]">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-success/15 px-2.5 py-0.5 text-[10px] font-bold text-success">
+            <span className="relative flex h-1.5 w-1.5">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-success opacity-60" />
+              <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-success" />
+            </span>
+            이용 중
+          </span>
+          <h2 className="mt-2 text-2xl font-bold tracking-tight">
+            {planLabel(subscription.plan)}
+          </h2>
+          <p className="mt-1 text-xs text-muted">
+            {isLifetime
+              ? "평생 이용 가능"
+              : `만료까지 ${remaining}일 남음 · ${new Date(subscription.expiresAt!).toLocaleDateString("ko-KR")}`}
+          </p>
+          {isExpiringSoon && !isLifetime && (
+            <span className="mt-2 inline-flex items-center gap-1 rounded-full border border-warning/40 bg-warning/[0.08] px-2 py-0.5 text-[10px] font-medium text-warning">
+              ⚠ 곧 만료 — 미리 연장하세요
+            </span>
+          )}
+        </div>
+      </div>
+
+      <div className="mt-4 flex flex-wrap gap-1.5">
+        <FeatureChip enabled label="프리미엄 모의고사" />
+        <FeatureChip enabled={subscription.removesAds} label="광고 제거" />
+        <FeatureChip enabled={subscription.allowsPdf} label="PDF 다운로드" />
+      </div>
+
+      <Link
+        href="/checkout"
+        className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-primary/40 bg-primary/[0.08] px-4 py-2.5 text-sm font-semibold text-primary transition-all hover:border-primary/60 hover:bg-primary/[0.12]"
+      >
+        다른 요금제 보기 / 업그레이드 →
+      </Link>
+    </div>
+  );
+}
+
+function FreePlanCard() {
+  return (
+    <div className="mt-8 rounded-xl border border-border bg-surface p-6">
+      <span className="inline-flex items-center rounded-full bg-surface-hover px-2.5 py-0.5 text-[10px] font-bold text-muted">
+        무료
+      </span>
+      <h2 className="mt-2 text-xl font-bold tracking-tight">무료 플랜 이용 중</h2>
+      <p className="mt-2 text-sm leading-relaxed text-muted">
+        쉬움/보통 모의고사·오답 노트·대시보드 등 기본 기능을 무료로 사용 중이에요.
+        <br />
+        프리미엄 모의고사·광고 제거·PDF 다운로드는 유료 이용권에서 제공됩니다.
+      </p>
+      <Link
+        href="/checkout"
+        className="mt-5 inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-primary to-[#5ee0a5] px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-primary/20 transition-all hover:shadow-xl hover:shadow-primary/30 hover:-translate-y-0.5"
+      >
+        이용권 보러가기
+        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+        </svg>
+      </Link>
+    </div>
+  );
+}
+
+function FeatureChip({ enabled, label }: { enabled: boolean; label: string }) {
+  return (
+    <span
+      className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-medium ${
+        enabled
+          ? "border-success/40 bg-success/[0.08] text-success"
+          : "border-border bg-surface text-text-subtle line-through"
+      }`}
+    >
+      {enabled ? "✓" : "—"} {label}
+    </span>
   );
 }
