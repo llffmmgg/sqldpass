@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
-import { Card } from "@/components/ui";
+import { Card, cn } from "@/components/ui";
 import {
   CERT_LIST,
   CERT_TOKENS,
