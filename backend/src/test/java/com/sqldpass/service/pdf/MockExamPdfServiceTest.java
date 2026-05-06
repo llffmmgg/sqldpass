@@ -80,7 +80,7 @@ class MockExamPdfServiceTest {
         when(mockExamRepository.findByIdWithQuestions(11L)).thenReturn(Optional.of(exam));
         when(r2UploadService.publicUrlIfExists(anyString())).thenReturn(null);
         when(pdfRenderService.renderUrlToPdf(anyString())).thenReturn(new byte[]{1, 2, 3});
-        when(r2UploadService.uploadBytes(anyString(), any(), eq("application/pdf")))
+        when(r2UploadService.uploadBytes(anyString(), any(), eq("application/pdf"), anyString()))
                 .thenReturn("https://cdn.example/new.pdf");
 
         MockExamPdfService.PdfResult result = service.generate(11L);
