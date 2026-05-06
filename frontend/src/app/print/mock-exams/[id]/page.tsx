@@ -70,6 +70,17 @@ const EXAM_TYPE_LABEL: Record<string, string> = {
   ADSP: "데이터분석 준전문가 (ADsP)",
 };
 
+/** 표지에 들어갈 자격증별 메타 — 큰 제목(KOR), 영문 라벨(ENG), 시간/과목수.
+ *  문항수는 실제 totalQuestions 우선, fallback 으로 본 표의 값 사용. */
+const COVER_META: Record<string, { kor: string; eng: string; questions: number; minutes: number; subjects: number }> = {
+  SQLD: { kor: "SQLD", eng: "SQLD MOCK EXAM", questions: 50, minutes: 90, subjects: 5 },
+  ENGINEER_WRITTEN: { kor: "정처기 필기", eng: "ENGINEER WRITTEN", questions: 100, minutes: 150, subjects: 5 },
+  ENGINEER_PRACTICAL: { kor: "정처기 실기", eng: "ENGINEER PRACTICAL", questions: 20, minutes: 150, subjects: 1 },
+  COMPUTER_LITERACY_1: { kor: "컴활 1급", eng: "COMPUTER LITERACY 1", questions: 60, minutes: 60, subjects: 3 },
+  COMPUTER_LITERACY_2: { kor: "컴활 2급", eng: "COMPUTER LITERACY 2", questions: 40, minutes: 40, subjects: 2 },
+  ADSP: { kor: "ADsP", eng: "ADSP MOCK EXAM", questions: 50, minutes: 90, subjects: 3 },
+};
+
 /* ---------- 평문 SQL → ```sql 자동 펜싱 (QuestionContent 와 동일 로직) ---------- */
 function ensureSqlFences(content: string): string {
   if (!content) return content;
@@ -282,36 +293,49 @@ export default function PrintMockExamPage({
       <style dangerouslySetInnerHTML={{ __html: PRINT_CSS }} />
 
       <div className="print-root">
-        {/* 표지 */}
-        <section className="print-cover">
-          <div className="print-cover-brand">문어CBT · sqldpass.com</div>
-          <h1 className="print-cover-title">
-            {EXAM_TYPE_LABEL[data.examType] ?? data.examType}
-          </h1>
-          <p className="print-cover-name">{data.name}</p>
-          <dl className="print-cover-meta">
-            {data.examYear && (
-              <>
-                <dt>회차</dt>
-                <dd>
-                  {data.examYear}년
-                  {data.examRound != null ? ` ${data.examRound}회` : ""}
-                </dd>
-              </>
-            )}
-            {data.examDate && (
-              <>
-                <dt>시험일</dt>
-                <dd>{data.examDate}</dd>
-              </>
-            )}
-            <dt>총 문항</dt>
-            <dd>{data.totalQuestions}문항</dd>
-          </dl>
-          <p className="print-cover-notice">
-            ※ 본 자료는 학습 목적의 모의고사로, 실제 시험과 차이가 있을 수 있습니다.
-          </p>
-        </section>
+        {/* 표지 — 보라 Hero 디자인 */}
+        {(() => {
+          const meta = COVER_META[data.examType] ?? {
+            kor: EXAM_TYPE_LABEL[data.examType] ?? data.examType,
+            eng: data.examType,
+            questions: data.totalQuestions,
+            minutes: 90,
+            subjects: 1,
+          };
+          const totalQ = data.totalQuestions || meta.questions;
+          const volume = `VOL.${data.sequence}`;
+          return (
+            <section className="print-cover">
+              <div className="cover-block" />
+
+              <div className="cover-topRow">
+                <div className="cover-brand">
+                  <div className="cover-mark">문</div>
+                  <div className="cover-name">문어CBT</div>
+                </div>
+              </div>
+
+              <div className="cover-vlabel">── {meta.eng} / {volume}</div>
+
+              <div className="cover-headline">
+                <div className="cover-big">{meta.kor}</div>
+                <div className="cover-sub">모의고사<b>.</b></div>
+              </div>
+
+              <div className="cover-stats">
+                <div className="cover-chip">{totalQ}문항</div>
+                <div className="cover-chip">{meta.minutes}분</div>
+                <div className="cover-chip">{meta.subjects}과목</div>
+                <div className="cover-chip">해설포함</div>
+              </div>
+
+              <div className="cover-mascot">
+                {/* eslint-disable-next-line @next/next/no-img-element -- 인쇄 페이지는 same-origin 정적 이미지를 그대로 사용 */}
+                <img src="/logo/logo.webp" alt="" />
+              </div>
+            </section>
+          );
+        })()}
 
         {/* 본문 */}
         <section className="print-body">
@@ -419,49 +443,79 @@ const PRINT_CSS = `
   color: #555;
 }
 
-/* === 표지 === */
+/* === 표지 — 보라 Hero ===
+   원본 standalone HTML 의 .cover (794×1123) 를 A4 본문 폭에 맞게 재현.
+   .print-root 가 max-width 182mm 라 표지는 그 안에서 가득 채우는 형태. */
 .print-cover {
-  min-height: calc(297mm - 32mm);
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  text-align: center;
+  position: relative;
+  width: 182mm;
+  height: 257mm;            /* A4 297mm − 상하 여백 16mm × 2 */
+  margin: 0;
+  background: #fff;
+  color: #0F1424;
+  overflow: hidden;
   page-break-after: always;
   break-after: page;
+  font-family: "Noto Sans KR", -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
 }
-.print-cover-brand {
-  font-size: 11px;
-  letter-spacing: 0.2em;
-  color: #888;
-  margin-bottom: 24px;
+.print-cover .cover-block {
+  position: absolute; top: 0; left: 0; right: 0; height: 65%;
+  background: #7C5CC4;
+  -webkit-clip-path: polygon(0 0, 100% 0, 100% 88%, 0 100%);
+          clip-path: polygon(0 0, 100% 0, 100% 88%, 0 100%);
 }
-.print-cover-title {
-  font-size: 28px;
-  font-weight: 800;
-  margin: 0 0 12px 0;
-  letter-spacing: -0.02em;
+.print-cover .cover-topRow {
+  position: absolute; top: 14mm; left: 14mm; right: 14mm;
+  display: flex; align-items: center; justify-content: space-between;
+  color: #fff;
 }
-.print-cover-name {
-  font-size: 18px;
-  color: #333;
-  margin: 0 0 40px 0;
-  font-weight: 500;
+.print-cover .cover-brand {
+  display: flex; align-items: center; gap: 8px;
 }
-.print-cover-meta {
-  display: grid;
-  grid-template-columns: auto auto;
-  column-gap: 16px;
-  row-gap: 6px;
-  font-size: 13px;
-  margin: 0 0 80px 0;
+.print-cover .cover-mark {
+  width: 28px; height: 28px; border-radius: 7px; background: #fff;
+  display: flex; align-items: center; justify-content: center;
+  color: #7C5CC4; font-weight: 800; font-size: 14px;
 }
-.print-cover-meta dt { color: #888; text-align: right; }
-.print-cover-meta dd { margin: 0; text-align: left; font-weight: 500; }
-.print-cover-notice {
-  font-size: 10px;
-  color: #999;
-  margin-top: auto;
+.print-cover .cover-name { font-weight: 700; font-size: 15px; }
+.print-cover .cover-vlabel {
+  position: absolute; top: 30mm; left: 14mm;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 10px; color: rgba(255,255,255,0.78);
+  letter-spacing: 4px; font-weight: 500;
+}
+.print-cover .cover-headline {
+  position: absolute; top: 42mm; left: 14mm; right: 14mm; color: #fff;
+}
+.print-cover .cover-big {
+  font-size: 110px; font-weight: 900; line-height: 0.85; letter-spacing: -5px;
+}
+.print-cover .cover-sub {
+  font-size: 48px; font-weight: 300; line-height: 1; letter-spacing: -2px; margin-top: 6px;
+}
+.print-cover .cover-sub b { font-weight: 800; }
+.print-cover .cover-stats {
+  position: absolute; top: 130mm; left: 14mm;
+  display: flex; gap: 8px; flex-wrap: wrap;
+}
+.print-cover .cover-chip {
+  padding: 7px 14px; border-radius: 999px;
+  background: rgba(255,255,255,0.18);
+  border: 1px solid rgba(255,255,255,0.32);
+  color: #fff; font-size: 12px; font-weight: 600;
+}
+.print-cover .cover-mascot {
+  position: absolute; right: -20mm; top: 130mm;
+  width: 110mm; height: 95mm;
+}
+.print-cover .cover-mascot img { width: 100%; height: 100%; object-fit: contain; }
+
+@media print {
+  .print-cover .cover-block,
+  .print-cover .cover-chip {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
 }
 
 /* === 본문 === */
