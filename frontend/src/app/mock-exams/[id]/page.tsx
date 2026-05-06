@@ -200,7 +200,7 @@ function MockExamDetailContent() {
   }, [answeredCount, result]);
 
   if (error) {
-    const isLocked = error.includes("프리미엄");
+    const isLocked = error.includes("프리미엄") || error.includes("고난이도");
     if (isLocked) {
       return (
         <main className="min-h-screen bg-background text-foreground">

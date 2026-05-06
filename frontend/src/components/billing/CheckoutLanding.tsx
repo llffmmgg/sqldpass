@@ -74,54 +74,51 @@ export default function CheckoutLanding({
   onPay,
 }: Props) {
   return (
-    <div
-      className="
-        mx-auto w-full max-w-[1200px] px-6 pt-[72px] pb-20 sm:px-10 lg:px-20
-        bg-[radial-gradient(ellipse_80%_50%_at_50%_-10%,rgba(245,181,68,0.08),transparent_60%)]
-        dark:bg-[radial-gradient(ellipse_80%_50%_at_50%_-10%,rgba(245,181,68,0.06),transparent_60%)]
-      "
-    >
-      <h1 className="mx-auto max-w-[820px] text-center text-[34px] font-extrabold leading-[1.2] tracking-[-0.027em] text-neutral-900 dark:text-neutral-100 sm:text-[44px]">
-        내 시험 일정에 맞는<br />
-        <span className="bg-gradient-to-b from-amber-400 to-amber-600 dark:from-amber-300 dark:to-amber-600 bg-clip-text text-transparent">
-          플랜을 선택하세요
+    <div className="relative">
+      {/* 배경 amber radial glow — PASS+ 액센트 */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 -top-24 -z-10 h-[420px] bg-[radial-gradient(ellipse_60%_50%_at_50%_0%,rgba(245,181,68,0.10),transparent_70%)]"
+      />
+
+      <header className="text-center">
+        <span className="inline-flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-500/[0.08] px-3 py-1 text-xs font-medium text-amber-700 dark:text-amber-300">
+          <span className="relative flex h-1.5 w-1.5">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-400 opacity-60" />
+            <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-amber-500" />
+          </span>
+          요금제
         </span>
-      </h1>
-
-      <p className="mx-auto mt-4 max-w-[560px] text-center text-sm leading-[1.7] text-neutral-600 dark:text-neutral-400">
-        필요한 기간만큼 이용하고, 프리미엄 모의고사까지 바로 풀어보세요.
-      </p>
-
-      {subscription?.active && (
-        <div className="mt-6 flex justify-center">
-          <span className="inline-flex items-center gap-2 rounded-full border border-emerald-500/40 bg-emerald-500/[0.08] px-4 py-1.5 text-xs font-medium text-emerald-700 dark:text-emerald-300">
-            <CheckIcon className="h-3 w-3" />
-            현재 {planLabel(subscription.plan!)} 이용 중
-            {subscription.expiresAt && (
-              <span className="opacity-80">
-                · {new Date(subscription.expiresAt).toLocaleDateString("ko-KR")} 만료
-              </span>
-            )}
-            {subscription.expiresAt === null && <span className="opacity-80">· 평생</span>}
+        <h1 className="mx-auto mt-5 max-w-2xl text-balance text-4xl font-bold tracking-tight text-text sm:text-5xl">
+          내 시험 일정에 맞는
+          <br />
+          <span className="bg-gradient-to-r from-amber-500 to-amber-700 bg-clip-text text-transparent dark:from-amber-300 dark:to-amber-500">
+            플랜을 선택하세요
           </span>
-        </div>
-      )}
+        </h1>
+        <p className="mx-auto mt-4 max-w-lg text-sm leading-relaxed text-text-muted sm:text-base">
+          필요한 기간만큼 이용하고, 고난이도 모의고사까지 바로 풀어보세요.
+        </p>
 
-      {/* secure rail */}
-      <div className="mt-[22px] flex flex-wrap justify-center gap-x-[18px] gap-y-2">
-        {["PortOne 안전 결제", "7일 환불 보장", "자동결제 없음"].map((txt) => (
-          <span
-            key={txt}
-            className="inline-flex items-center gap-1.5 font-mono text-[11px] tracking-wide text-neutral-500 dark:text-neutral-400"
-          >
-            <CheckIcon className="h-2.5 w-2.5 text-amber-500" />
-            {txt}
-          </span>
-        ))}
-      </div>
+        {subscription?.active && (
+          <div className="mt-6 inline-flex items-center gap-2 rounded-full border border-success/40 bg-success/[0.08] px-4 py-1.5 text-xs font-medium text-success">
+            <CheckSvg className="h-3.5 w-3.5" />
+            <span>
+              현재 {planLabel(subscription.plan!)} 이용 중
+              {subscription.expiresAt && (
+                <span className="ml-1 opacity-80">
+                  · {new Date(subscription.expiresAt).toLocaleDateString("ko-KR")} 만료
+                </span>
+              )}
+              {subscription.expiresAt === null && (
+                <span className="ml-1 opacity-80">· 평생</span>
+              )}
+            </span>
+          </div>
+        )}
+      </header>
 
-      {/* 티어 4개 — 모바일 세로, 데스크톱 가로 */}
-      <div className="mt-14 flex flex-col items-stretch gap-4 lg:flex-row">
+      <div className="mt-14 grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
         {TIERS.map((t) => (
           <PlanCard
             key={t.key}
@@ -135,39 +132,31 @@ export default function CheckoutLanding({
       </div>
 
       {/* FAQ */}
-      <div
-        className="
-          mt-14 grid grid-cols-1 gap-8 sm:grid-cols-3
-          rounded-[14px] px-7 py-[26px]
-          border border-neutral-200 dark:border-neutral-800
-          bg-gradient-to-b from-white to-neutral-50
-          dark:from-neutral-900 dark:to-neutral-950
-        "
-      >
+      <div className="mt-16 grid grid-cols-1 gap-6 rounded-2xl border border-border bg-surface/40 p-6 sm:grid-cols-3 sm:gap-8 sm:p-8">
         {[
           ["자동결제 되나요?", "아니요. 한 번 결제 = 한 번만 청구돼요."],
           ["환불은 언제까지?", "결제 후 7일 이내, 사용 이력이 없으면 100% 환불돼요."],
-          ["3일권 만료되면?", "다시 결제하거나 한달권으로 이어갈 수 있어요."],
+          ["Starter 만료되면?", "다시 결제하거나 Pro 로 이어갈 수 있어요."],
         ].map(([q, a], i) => (
           <div
             key={q}
-            className={i === 0 ? "" : "sm:border-l sm:border-neutral-200 sm:dark:border-neutral-800 sm:pl-6"}
+            className={i === 0 ? "" : "sm:border-l sm:border-border sm:pl-6"}
           >
-            <div className="font-mono text-[10.5px] uppercase tracking-[1.4px] text-amber-700 dark:text-amber-600">
+            <div className="font-mono text-[10.5px] uppercase tracking-[1.4px] text-amber-600 dark:text-amber-400">
               FAQ · {String(i + 1).padStart(2, "0")}
             </div>
-            <div className="mt-2 text-[13.5px] font-bold tracking-[-0.01em] text-neutral-900 dark:text-neutral-100">
+            <div className="mt-2 text-[13.5px] font-bold tracking-[-0.01em] text-text">
               {q}
             </div>
-            <div className="mt-1.5 text-[12.5px] leading-[1.65] text-neutral-600 dark:text-neutral-400">
+            <div className="mt-1.5 text-[12.5px] leading-[1.65] text-text-muted">
               {a}
             </div>
           </div>
         ))}
       </div>
 
-      <p className="mt-[22px] text-center font-mono text-[11px] tracking-wide text-neutral-500">
-        결제 시 이용약관 및 환불정책에 동의하는 것으로 간주됩니다.
+      <p className="mt-6 text-center text-[11px] text-text-subtle">
+        결제 시 이용약관 및 환불 정책에 동의하는 것으로 간주됩니다.
       </p>
     </div>
   );
@@ -196,73 +185,57 @@ function PlanCard({
 
   return (
     <div
-      className={`
-        relative flex flex-1 flex-col rounded-[14px] px-6 pt-[26px] pb-6
-        ${
-          highlight
-            ? `border border-amber-500/50 dark:border-amber-500/45
-               bg-gradient-to-b from-amber-500/[0.08] to-amber-500/[0.02]
-               shadow-[0_1px_0_0_rgba(255,255,255,0.5)_inset,0_24px_60px_rgba(245,181,68,0.18),0_2px_8px_rgba(0,0,0,0.06)]
-               dark:shadow-[0_1px_0_0_rgba(255,255,255,0.05)_inset,0_24px_60px_rgba(245,181,68,0.10),0_2px_8px_rgba(0,0,0,0.4)]`
-            : `border border-neutral-200 dark:border-neutral-800
-               bg-gradient-to-b from-white to-neutral-50
-               dark:from-neutral-900 dark:to-neutral-950
-               shadow-[0_1px_0_0_rgba(255,255,255,0.6)_inset,0_8px_24px_rgba(0,0,0,0.06)]
-               dark:shadow-[0_1px_0_0_rgba(255,255,255,0.03)_inset,0_8px_24px_rgba(0,0,0,0.3)]`
-        }
-      `}
+      className={`relative flex flex-col rounded-2xl p-7 transition-all duration-300 ${
+        highlight
+          ? "border-2 border-amber-500/60 bg-gradient-to-b from-amber-500/[0.10] via-surface to-surface/80 shadow-[0_0_40px_-10px_rgba(245,181,68,0.45)] hover:-translate-y-1 hover:shadow-[0_0_60px_-10px_rgba(245,181,68,0.6)] xl:-translate-y-2"
+          : "border border-border bg-surface/40 hover:-translate-y-0.5 hover:border-border-strong hover:bg-surface/70 hover:shadow-[var(--shadow-md)]"
+      }`}
     >
       {highlight && (
-        <div
-          className="
-            absolute -top-2.5 left-[22px] rounded px-2.5 py-1
-            font-mono text-[9.5px] font-extrabold uppercase tracking-[1.2px] text-amber-950
-            bg-gradient-to-b from-amber-300 to-amber-400
-            shadow-[0_4px_12px_rgba(245,181,68,0.45)]
-          "
-        >
-          MOST POPULAR
+        <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+          <span className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-amber-400 to-amber-600 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-amber-950 shadow-lg shadow-amber-500/40">
+            <StarSvg className="h-3 w-3" />
+            가장 인기
+          </span>
         </div>
       )}
 
       <span
         className={`font-mono text-[10.5px] font-medium uppercase tracking-[1.4px] ${
-          highlight ? "text-amber-700 dark:text-amber-600" : "text-neutral-500"
+          highlight ? "text-amber-600 dark:text-amber-400" : "text-text-subtle"
         }`}
       >
-        {tier.unit ? tier.unit.toUpperCase() : "FREE"}
+        {tier.unit ?? "FREE"}
       </span>
 
-      <div className="mt-2 text-[17px] font-bold tracking-[-0.018em] text-neutral-900 dark:text-neutral-100">
-        {tier.name}
-      </div>
-      <div className="mt-1 min-h-[36px] whitespace-pre-line text-xs leading-[1.55] text-neutral-500">
+      <h3 className="mt-2 text-lg font-bold tracking-tight text-text">{tier.name}</h3>
+      <p className="mt-1 min-h-[36px] text-xs leading-snug text-text-muted">
         {tier.tagline}
-      </div>
+      </p>
 
       {/* 가격 — prorate 분기 */}
-      <div className="mt-[18px]">
+      <div className="mt-5">
         {hasProrate && preview ? (
           <>
             <div className="flex items-baseline gap-2">
-              <span className="text-[30px] font-extrabold leading-none tracking-[-0.027em] text-neutral-900 dark:text-neutral-100 tabular-nums">
+              <span className="text-3xl font-bold tabular-nums tracking-tight text-text">
                 ₩{preview.finalAmount.toLocaleString()}
               </span>
-              <span className="text-xs text-neutral-400 line-through tabular-nums">
+              <span className="text-sm tabular-nums text-text-subtle line-through">
                 ₩{preview.baseAmount.toLocaleString()}
               </span>
             </div>
-            <p className="mt-1 text-[11px] text-emerald-600 dark:text-emerald-400">
+            <p className="mt-1 text-xs text-success">
               현재 구독 잔여 ₩{preview.prorateDiscount.toLocaleString()} 차감
             </p>
           </>
         ) : (
           <div className="flex items-baseline gap-1">
-            <span className="text-[30px] font-extrabold leading-none tracking-[-0.027em] text-neutral-900 dark:text-neutral-100 tabular-nums">
+            <span className="text-3xl font-bold tabular-nums tracking-tight text-text">
               {tier.price === 0 ? "무료" : `₩${tier.price.toLocaleString()}`}
             </span>
             {tier.price > 0 && tier.unit && (
-              <span className="text-xs text-neutral-500">/ {tier.unit}</span>
+              <span className="text-xs text-text-subtle">/ {tier.unit}</span>
             )}
           </div>
         )}
@@ -271,20 +244,20 @@ function PlanCard({
       <div
         className={`mt-5 h-px ${
           highlight
-            ? "bg-[linear-gradient(90deg,transparent,rgba(245,181,68,0.3)_50%,transparent)]"
-            : "bg-[linear-gradient(90deg,transparent,#e5e5e5_50%,transparent)] dark:bg-[linear-gradient(90deg,transparent,#2a2a2e_50%,transparent)]"
+            ? "bg-[linear-gradient(90deg,transparent,rgba(245,181,68,0.35)_50%,transparent)]"
+            : "bg-[linear-gradient(90deg,transparent,var(--border)_50%,transparent)]"
         }`}
       />
 
-      <ul className="mt-[18px] flex flex-1 flex-col gap-2.5">
+      <ul className="mt-5 flex flex-1 flex-col gap-2.5">
         {tier.features.map((f, i) => (
           <li
             key={i}
-            className="flex items-start gap-2.5 text-[12.5px] leading-[1.55] text-neutral-800 dark:text-neutral-100"
+            className="flex items-start gap-2.5 text-sm leading-snug text-text"
           >
-            <CheckIcon
-              className={`mt-0.5 h-3.5 w-3.5 flex-shrink-0 ${
-                highlight ? "text-amber-500 dark:text-amber-300" : "text-neutral-400"
+            <CheckSvg
+              className={`mt-0.5 h-4 w-4 flex-shrink-0 ${
+                highlight ? "text-amber-500 dark:text-amber-300" : "text-primary"
               }`}
             />
             <span>{f}</span>
@@ -293,12 +266,12 @@ function PlanCard({
       </ul>
 
       {/* 버튼 — 5가지 상태 분기 */}
-      <div className="mt-6">
+      <div className="mt-7">
         {isFree ? (
           <button
             type="button"
             disabled
-            className="w-full cursor-default rounded-lg border border-dashed border-neutral-300 bg-transparent px-3.5 py-3 text-[12.5px] font-bold tracking-[-0.005em] text-neutral-500 dark:border-neutral-700"
+            className="w-full cursor-default rounded-lg border border-dashed border-border bg-transparent px-4 py-2.5 text-sm font-medium text-text-muted"
           >
             현재 플랜
           </button>
@@ -306,7 +279,7 @@ function PlanCard({
           <button
             type="button"
             disabled
-            className="w-full cursor-default rounded-lg border border-emerald-500/40 bg-emerald-500/[0.08] px-3.5 py-3 text-[12.5px] font-bold text-emerald-700 dark:text-emerald-300"
+            className="w-full cursor-default rounded-lg border border-success/40 bg-success/[0.08] px-4 py-2.5 text-sm font-semibold text-success"
           >
             ✓ 이용 중
           </button>
@@ -315,12 +288,12 @@ function PlanCard({
             <button
               type="button"
               disabled
-              className="w-full cursor-default rounded-lg border border-neutral-300 bg-transparent px-3.5 py-3 text-[12.5px] font-medium text-neutral-500 dark:border-neutral-700"
+              className="w-full cursor-default rounded-lg border border-border bg-transparent px-4 py-2.5 text-sm font-medium text-text-subtle"
             >
               현재 구독 종료 후 가능
             </button>
             {preview?.reason && (
-              <p className="mt-2 text-[10.5px] leading-tight text-neutral-500">
+              <p className="mt-2 text-[11px] leading-tight text-text-subtle">
                 {preview.reason}
               </p>
             )}
@@ -330,21 +303,11 @@ function PlanCard({
             type="button"
             onClick={() => onPay(tier.key as SubscriptionPlan)}
             disabled={disabled}
-            className={`
-              w-full rounded-lg px-3.5 py-3
-              text-[12.5px] font-bold tracking-[-0.005em]
-              transition disabled:cursor-not-allowed disabled:opacity-60
-              ${
-                highlight
-                  ? `bg-gradient-to-b from-amber-300 to-amber-400 text-amber-950
-                     shadow-[0_1px_0_rgba(255,255,255,0.4)_inset,0_-1px_0_rgba(0,0,0,0.1)_inset,0_8px_20px_rgba(245,181,68,0.32)]
-                     dark:shadow-[0_1px_0_rgba(255,255,255,0.3)_inset,0_-1px_0_rgba(0,0,0,0.15)_inset,0_8px_20px_rgba(245,181,68,0.22)]
-                     hover:brightness-105`
-                  : `border border-neutral-300 dark:border-neutral-700 bg-transparent
-                     text-neutral-900 dark:text-neutral-100
-                     hover:bg-neutral-100 dark:hover:bg-neutral-900`
-              }
-            `}
+            className={`w-full rounded-lg px-4 py-2.5 text-sm font-semibold transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-60 ${
+              highlight
+                ? "bg-gradient-to-r from-amber-400 to-amber-500 text-amber-950 shadow-lg shadow-amber-500/30 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-amber-500/45 hover:brightness-105"
+                : "border border-border bg-surface text-text hover:-translate-y-0.5 hover:border-amber-500/40 hover:bg-surface-hover"
+            }`}
           >
             {isPaying ? (
               <span className="inline-flex items-center justify-center gap-2">
@@ -369,7 +332,7 @@ function PlanCard({
   );
 }
 
-function CheckIcon({ className = "" }: { className?: string }) {
+function CheckSvg({ className = "" }: { className?: string }) {
   return (
     <svg
       viewBox="0 0 24 24"
@@ -381,6 +344,14 @@ function CheckIcon({ className = "" }: { className?: string }) {
       className={className}
     >
       <path d="M5 13l4 4L19 7" />
+    </svg>
+  );
+}
+
+function StarSvg({ className = "" }: { className?: string }) {
+  return (
+    <svg className={className} fill="currentColor" viewBox="0 0 24 24">
+      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
     </svg>
   );
 }

@@ -294,7 +294,7 @@ function SubscriptionCard({ subscription }: { subscription: ReturnType<typeof us
       </div>
 
       <div className="mt-4 flex flex-wrap gap-1.5">
-        <FeatureChip enabled label="프리미엄 모의고사" />
+        <FeatureChip enabled label="고난이도 모의고사" />
         <FeatureChip enabled={subscription.removesAds} label="광고 제거" />
         <FeatureChip enabled={subscription.allowsPdf} label="PDF 다운로드" />
       </div>
@@ -319,7 +319,7 @@ function FreePlanCard() {
       <p className="mt-2 text-sm leading-relaxed text-muted">
         쉬움/보통 모의고사·오답 노트·대시보드 등 기본 기능을 무료로 사용 중이에요.
         <br />
-        프리미엄 모의고사·광고 제거·PDF 다운로드는 유료 이용권에서 제공됩니다.
+        고난이도 모의고사·광고 제거·PDF 다운로드는 유료 이용권에서 제공됩니다.
       </p>
       <Link
         href="/checkout"
