@@ -6,7 +6,6 @@ import { Suspense, useEffect, useMemo, useState } from "react";
 
 import Spinner from "@/components/Spinner";
 import { Card, Container } from "@/components/ui";
-import MockExamCardView from "@/components/exam/MockExamCard";
 import {
   CERT_LIST,
   CERT_TOKENS,
@@ -23,16 +22,6 @@ import { isExamNew } from "@/lib/mockExamNew";
 import { getPublicMockExams } from "@/lib/publicApi";
 
 type DifficultyFilter = "ALL" | "쉬움" | "보통" | "어려움" | "매우 어려움";
-
-/** 자격증별 권장 시간 (분). 모의고사 카드 메타에 노출. */
-const EXAM_DURATION_MIN: Record<ExamType, number> = {
-  SQLD: 90,
-  ENGINEER_PRACTICAL: 150,
-  ENGINEER_WRITTEN: 150,
-  COMPUTER_LITERACY_1: 60,
-  COMPUTER_LITERACY_2: 40,
-  ADSP: 90,
-};
 
 const DIFFICULTY_OPTIONS: { value: DifficultyFilter; label: string; activeClass: string }[] = [
   { value: "ALL", label: "전체", activeClass: "border-primary/40 bg-primary/10 text-primary" },
@@ -206,33 +195,74 @@ function MockExamCard({ exam }: { exam: MockExamSummary }) {
   const cert = certFromExamType(exam.examType);
   // PREMIUM 자동 분류 — backend 가 isPremium 을 계산해 응답 (visibility=PREMIUM 또는 난이도 ≥ 0.5).
   const isPremium = exam.isPremium ?? exam.visibility === "PREMIUM";
+  const isNew = isExamNew(exam);
+  const href = `/mock-exams/${exam.id}`;
   const certLabel = cert ? CERT_TOKENS[cert].label : "";
   const isPastExam =
     exam.kind === "PAST_EXAM" && exam.examYear != null && exam.examRound != null;
-  const examLabel = isPastExam
-    ? `${exam.examYear}년 ${exam.examRound}회`
-    : `${exam.sequence}회`;
   const title = isPastExam
     ? `기출 ${exam.examYear}년 ${exam.examRound}회`
     : exam.name;
-  const score = exam.solved ? exam.bestCorrectCount : null;
-  const scoreTotal = exam.solved ? exam.bestTotalCount : null;
 
   return (
-    <MockExamCardView
-      href={`/mock-exams/${exam.id}`}
-      cert={certLabel}
-      examLabel={examLabel}
-      title={title}
-      difficulty={exam.difficultyLabel ?? null}
-      totalQuestions={exam.totalQuestions}
-      durationMin={EXAM_DURATION_MIN[exam.examType] ?? 90}
-      tier={isPremium ? "pass+" : "free"}
-      isNew={isExamNew(exam)}
-      score={score}
-      scoreTotal={scoreTotal}
-      verified={exam.expertVerified ? "corner" : null}
-    />
+    <Link href={href} className="group relative block">
+      <Card
+        variant="interactive"
+        padding="none"
+        accent={cert ?? undefined}
+        className={
+          isPremium
+            ? "relative flex min-h-[124px] flex-col overflow-hidden rounded-md border-amber-500/55 p-4 shadow-none outline outline-1 outline-amber-500/45 outline-offset-[3px] hover:-translate-y-0 hover:border-amber-500/75 hover:shadow-none hover:outline-amber-500/70"
+            : "relative flex min-h-[124px] flex-col overflow-hidden rounded-md p-4 shadow-none hover:-translate-y-0 hover:shadow-none"
+        }
+      >
+        {exam.expertVerified && (
+          <div className="pointer-events-none absolute -left-[38px] top-[18px] z-10 -rotate-45 bg-emerald-600 px-10 py-0.5 text-center text-[9px] font-bold tracking-wide text-white shadow-sm dark:bg-emerald-500">
+            전문가 검수
+          </div>
+        )}
+
+        {exam.solved && exam.bestCorrectCount != null && exam.bestTotalCount != null && (
+          <span
+            className="pointer-events-none absolute right-4 top-4 select-none font-[family-name:var(--font-caveat)] text-2xl font-bold leading-none text-red-500/90 sm:text-3xl"
+            style={{ transform: "rotate(-12deg)" }}
+          >
+            {exam.bestCorrectCount}
+            <span className="text-xl sm:text-2xl">/</span>
+            {exam.bestTotalCount}
+          </span>
+        )}
+
+        {/* Eyebrow: "SQLD 모의고사" · PASS+ · NEW */}
+        <div className="flex items-center gap-2 text-[9px] font-medium text-text-muted">
+          <span>{certLabel} 모의고사</span>
+          {isPremium && (
+            <span className="font-semibold text-amber-600 dark:text-amber-400">
+              PASS+
+            </span>
+          )}
+          {isNew && (
+            <span className="font-semibold text-emerald-600 dark:text-emerald-400">
+              NEW
+            </span>
+          )}
+        </div>
+
+        {/* Title */}
+        <h2 className="mt-1.5 pr-16 text-base font-bold leading-tight">{title}</h2>
+
+        {/* Footer: 메타 + 액션 (한 줄, 좌우 정렬) */}
+        <div className="mt-auto flex items-end justify-between gap-3 pt-5 text-[10px] text-text-muted">
+          <span className="tabular-nums">
+            {exam.totalQuestions}문항
+            {exam.difficultyLabel && ` · ${exam.difficultyLabel}`}
+          </span>
+          <span className="font-semibold text-text transition-transform group-hover:translate-x-0.5">
+            {exam.solved ? "다시 응시 →" : "응시하기 →"}
+          </span>
+        </div>
+      </Card>
+    </Link>
   );
 }
 
