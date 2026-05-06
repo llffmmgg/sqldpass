@@ -22,13 +22,10 @@ import com.sqldpass.persistent.mockexam.ExamType;
 import com.sqldpass.persistent.mockexam.MockExamDifficulty;
 import com.sqldpass.persistent.mockexam.MockExamEntity;
 import com.sqldpass.persistent.mockexam.MockExamMapper;
-import com.sqldpass.persistent.member.MemberEntity;
-import com.sqldpass.persistent.member.MemberRepository;
 import com.sqldpass.persistent.mockexam.MockExamRepository;
 import com.sqldpass.persistent.mockexam.MockExamVisibility;
-import com.sqldpass.persistent.payment.MockExamPurchaseRepository;
 import com.sqldpass.persistent.question.QuestionEntity;
-import com.sqldpass.service.payment.PaymentProperties;
+import com.sqldpass.service.payment.SubscriptionService;
 import com.sqldpass.persistent.question.QuestionRepository;
 import com.sqldpass.persistent.question.QuestionType;
 import com.sqldpass.persistent.subject.SubjectEntity;
@@ -54,9 +51,7 @@ public class MockExamService {
     private final EngineerWrittenMockExamCreator engineerWrittenMockExamCreator;
     private final AdspMockExamCreator adspMockExamCreator;
     private final ApplicationEventPublisher eventPublisher;
-    private final MockExamPurchaseRepository mockExamPurchaseRepository;
-    private final MemberRepository memberRepository;
-    private final PaymentProperties paymentProperties;
+    private final SubscriptionService subscriptionService;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     /** 어드민용 — DRAFT 포함 전체 회차 */
@@ -166,8 +161,10 @@ public class MockExamService {
     /**
      * 사용자용 상세 조회.
      * - DRAFT 또는 검수 미완료 → 404
-     * - PREMIUM → memberId 가 해당 회차를 결제(MockExamPurchase) 했으면 통과, 아니면 403 LOCKED
-     * - PUBLISHED → 통과
+     * - PREMIUM (visibility=PREMIUM 또는 난이도 ≥ 0.5) → 활성 구독 보유 시 통과, 아니면 403 LOCKED
+     * - PUBLISHED + 무료 회차 → 통과
+     *
+     * 활성 구독 판정은 SubscriptionService 가 담당 (DB 구독 row + 화이트리스트 닉네임 가상 UNLIMITED 통합).
      */
     public MockExam getForUser(Long id, Long memberId) {
         MockExamEntity entity = mockExamRepository.findByIdWithQuestions(id)
@@ -178,30 +175,11 @@ public class MockExamService {
         if (!entity.isExpertVerified()) {
             throw new SqldpassException(ErrorCode.MOCK_EXAM_NOT_FOUND);
         }
-        if (entity.getVisibility() == MockExamVisibility.PREMIUM) {
-            boolean purchased = memberId != null
-                    && mockExamPurchaseRepository.existsByMemberIdAndMockExamId(memberId, id);
-            boolean reviewer = isReviewerNickname(memberId);
-            if (!purchased && !reviewer) {
-                throw new SqldpassException(ErrorCode.MOCK_EXAM_LOCKED);
-            }
+        MockExam domain = MockExamMapper.toDomain(entity);
+        if (domain.isPremium() && !subscriptionService.hasPremiumAccess(memberId)) {
+            throw new SqldpassException(ErrorCode.MOCK_EXAM_LOCKED);
         }
-        return MockExamMapper.toDomain(entity);
-    }
-
-    /**
-     * 화이트리스트 닉네임(심사 모드 리뷰어) 여부.
-     * 화이트리스트가 비어있으면 정식 오픈 모드 — 본 메서드는 항상 false 를 반환하여
-     * PREMIUM 풀이는 결제 검증으로만 통과시킨다.
-     */
-    private boolean isReviewerNickname(Long memberId) {
-        if (memberId == null) return false;
-        var allowed = paymentProperties.reviewerNicknameSet();
-        if (allowed.isEmpty()) return false;
-        return memberRepository.findById(memberId)
-                .map(MemberEntity::getNickname)
-                .map(allowed::contains)
-                .orElse(false);
+        return domain;
     }
 
     @Transactional

@@ -43,6 +43,8 @@ export interface MockExamSummary {
   pastExamLinkedAt: string | null;
   /** 본 회원이 PREMIUM 회차의 잠금을 결제로 해제했는지 (비로그인/PUBLISHED 등은 항상 false) */
   purchased: boolean;
+  /** PREMIUM 회차 자동 분류 — visibility=PREMIUM 또는 정규화 난이도 ≥ 0.5 (어려움/매우 어려움) */
+  isPremium: boolean;
 }
 
 export type EngineerTemplateKey =

@@ -2,6 +2,8 @@
 
 import { useEffect, useRef } from "react";
 
+import { useSubscription } from "@/hooks/useSubscription";
+
 /**
  * 반응형 배너 — 가로는 본문 폭 100% 로 자동 확장, 세로는 고정값.
  *
@@ -23,16 +25,20 @@ interface AdResponsiveProps {
 
 export default function AdResponsive({ adSlot, height, className }: AdResponsiveProps) {
   const pushed = useRef(false);
+  const { subscription } = useSubscription();
 
   useEffect(() => {
     if (pushed.current) return;
+    if (subscription.removesAds) return;
     pushed.current = true;
     try {
       (window.adsbygoogle = window.adsbygoogle ?? []).push({});
     } catch {
       // AdSense 스크립트 미로드 — 무시
     }
-  }, []);
+  }, [subscription.removesAds]);
+
+  if (subscription.removesAds) return null;
 
   return (
     <aside

@@ -30,7 +30,9 @@ public record MockExamSummaryResponse(
         LocalDate examDate,
         LocalDateTime publishedAt,
         LocalDateTime pastExamLinkedAt,
-        boolean purchased
+        boolean purchased,
+        /** 자동 분류 — visibility==PREMIUM 또는 정규화 난이도 ≥ 0.5. 프론트가 결제 유도 분기에 사용. */
+        boolean isPremium
 ) {
     public static MockExamSummaryResponse from(MockExam mockExam) {
         return from(mockExam, null, null, false);
@@ -70,7 +72,8 @@ public record MockExamSummaryResponse(
                 mockExam.getExamDate(),
                 mockExam.getPublishedAt(),
                 mockExam.getPastExamLinkedAt(),
-                purchased);
+                purchased,
+                mockExam.isPremium());
     }
 
     /**

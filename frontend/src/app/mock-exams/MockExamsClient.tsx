@@ -148,14 +148,13 @@ function MockExamsContent() {
 
 function MockExamCard({ exam }: { exam: MockExamSummary }) {
   const cert = certFromExamType(exam.examType);
-  const isPremium = exam.visibility === "PREMIUM";
+  // PREMIUM 자동 분류 — backend 가 isPremium 을 계산해 응답 (visibility=PREMIUM 또는 난이도 ≥ 0.5).
+  // visibility 단독 체크는 deprecated.
+  const isPremium = exam.isPremium ?? exam.visibility === "PREMIUM";
   const isNew = isExamNew(exam);
-  // PREMIUM 이면서 아직 결제로 잠금 해제하지 않았으면 결제 페이지로 유도.
-  // (화이트리스트 닉네임은 백엔드 가드에서 자동 통과되므로 결제 페이지를 일부러 보고 싶을 때만 진입.)
-  const href =
-    isPremium && !exam.purchased
-      ? `/checkout?examId=${exam.id}`
-      : `/mock-exams/${exam.id}`;
+  // PREMIUM 이면 구독 결제 페이지로 유도 (구독 없는 사용자는 풀이 페이지에서 LOCKED).
+  // 활성 구독이 있는 회원은 그대로 풀이 페이지로 가서 통과.
+  const href = `/mock-exams/${exam.id}`;
 
   return (
     <Link href={href} className="group relative block">

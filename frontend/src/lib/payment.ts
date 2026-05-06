@@ -1,9 +1,10 @@
 /**
- * PortOne V2 결제 흐름 — 카드사 심사용 최소 구현.
+ * PortOne V2 4티어 구독 결제 흐름.
  *
- * 1. /api/payment/prepare 로 paymentId · amount · productName 사전 등록
+ * 1. POST /api/payment/prepare {plan} → paymentId·amount·productName 사전 등록
  * 2. PortOne 브라우저 SDK 의 requestPayment 로 결제창 호출
- * 3. /api/payment/verify 로 backend 가 PortOne REST 재검증
+ * 3. POST /api/payment/verify {paymentId} → backend 가 PortOne REST 재검증 + Subscription 발급
+ * 4. GET /api/payment/subscription → 활성 구독 정보
  *
  * 환경변수:
  *   NEXT_PUBLIC_PORTONE_STORE_ID    — store-{uuid}
@@ -15,12 +16,15 @@ import { getToken } from "@/lib/auth";
 const STORE_ID = process.env.NEXT_PUBLIC_PORTONE_STORE_ID ?? "";
 const CHANNEL_KEY = process.env.NEXT_PUBLIC_PORTONE_CHANNEL_KEY ?? "";
 
+export type SubscriptionPlan = "THREE_DAY" | "ONE_MONTH" | "UNLIMITED";
+
 export type CheckoutEligibility = { eligible: boolean };
 
 export type PrepareResponse = {
   paymentId: string;
   amount: number;
   productName: string;
+  plan: SubscriptionPlan;
   storeId: string;
 };
 
@@ -28,7 +32,16 @@ export type VerifyResponse = {
   paymentId: string;
   amount: number;
   productName: string;
-  mockExamId: number | null;
+  plan: SubscriptionPlan;
+  expiresAt: string | null;
+};
+
+export type ActiveSubscription = {
+  active: boolean;
+  plan: SubscriptionPlan | null;
+  expiresAt: string | null;
+  removesAds: boolean;
+  allowsPdf: boolean;
 };
 
 async function authFetch<T>(path: string, init?: RequestInit): Promise<T> {
@@ -58,9 +71,14 @@ export async function getCheckoutEligibility(): Promise<CheckoutEligibility> {
   return authFetch<CheckoutEligibility>("/api/payment/eligibility");
 }
 
+/** 활성 구독 정보 조회. 없으면 active=false 반환. */
+export async function getActiveSubscription(): Promise<ActiveSubscription> {
+  return authFetch<ActiveSubscription>("/api/payment/subscription");
+}
+
 /**
- * PDF 다운로드 가능 여부 — 결제 화이트리스트와 같은 닉네임 가드 사용.
- * 빈 화이트리스트(정식 오픈) 시 모든 로그인 회원에게 true.
+ * PDF 다운로드 가능 여부 — Phase 4 에서 subscription.allowsPdf 로 교체될 예정.
+ * 현재는 백엔드의 옛 화이트리스트 가드를 그대로 호출.
  */
 export async function getPdfEligibility(): Promise<{ eligible: boolean }> {
   return authFetch<{ eligible: boolean }>("/api/mock-exams/pdf/eligibility");
@@ -101,19 +119,16 @@ export async function downloadMockExamPdfAsUser(id: number): Promise<void> {
  * 결제 한 번 — backend 사전 등록 → PortOne SDK 결제창 → backend 검증.
  * 성공 시 verify 응답을 반환. 사용자 취소·실패 시 throw.
  */
-export async function startPayment(opts: { mockExamId?: number | null }): Promise<VerifyResponse> {
+export async function startPayment(opts: { plan: SubscriptionPlan }): Promise<VerifyResponse> {
   if (!STORE_ID || !CHANNEL_KEY) {
     throw new Error("결제 설정이 비어있습니다 (NEXT_PUBLIC_PORTONE_STORE_ID / NEXT_PUBLIC_PORTONE_CHANNEL_KEY).");
   }
   const prepared = await authFetch<PrepareResponse>("/api/payment/prepare", {
     method: "POST",
-    body: JSON.stringify({ mockExamId: opts.mockExamId ?? null }),
+    body: JSON.stringify({ plan: opts.plan }),
   });
 
-  // 동적 import — SDK 가 SSR 단계에서 평가되지 않게 함
   const PortOne = (await import("@portone/browser-sdk/v2")).default;
-  // @portone/browser-sdk@0.1.6 의 PaymentRequestUnion 타입은 alipayPlus 가 required 로
-  // 잘못 선언되어 있어 unknown 캐스팅으로 우회한다 (실제 카드 결제에는 사용되지 않음).
   const response = await PortOne.requestPayment({
     storeId: STORE_ID,
     channelKey: CHANNEL_KEY,
@@ -125,7 +140,6 @@ export async function startPayment(opts: { mockExamId?: number | null }): Promis
   } as unknown as Parameters<typeof PortOne.requestPayment>[0]);
 
   if (response && "code" in response && response.code !== undefined) {
-    // PortOne SDK 는 사용자 취소/실패 시 code 가 채워진 응답을 반환
     throw new Error(response.message ?? "결제가 취소되었거나 실패했습니다.");
   }
 

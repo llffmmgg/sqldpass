@@ -2,23 +2,105 @@
 
 import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 
 import { Badge, Button, Card } from "@/components/ui";
 import Spinner from "@/components/Spinner";
 import { useToast } from "@/components/Toast";
 import { isLoggedIn } from "@/lib/auth";
-import { getCheckoutEligibility, startPayment } from "@/lib/payment";
+import {
+  getActiveSubscription,
+  getCheckoutEligibility,
+  startPayment,
+  type ActiveSubscription,
+  type SubscriptionPlan,
+} from "@/lib/payment";
 
 type AccessState = "loading" | "anonymous" | "denied" | "allowed";
 
+type TierKey = "FREE" | SubscriptionPlan;
+
+type Tier = {
+  key: TierKey;
+  name: string;
+  price: string;
+  priceNote: string;
+  duration: string;
+  highlights: { label: string; included: boolean }[];
+  cta: string;
+  highlight?: boolean;
+};
+
+const TIERS: Tier[] = [
+  {
+    key: "FREE",
+    name: "무료",
+    price: "₩0",
+    priceNote: "영구",
+    duration: "기본 학습 도구",
+    highlights: [
+      { label: "쉬움/보통 모의고사 풀이", included: true },
+      { label: "오답 노트·대시보드", included: true },
+      { label: "프리미엄(어려움/매우 어려움) 모의고사", included: false },
+      { label: "광고 제거", included: false },
+      { label: "PDF 다운로드", included: false },
+    ],
+    cta: "현재 플랜",
+  },
+  {
+    key: "THREE_DAY",
+    name: "3일권",
+    price: "₩3,900",
+    priceNote: "3일",
+    duration: "구매 후 72시간",
+    highlights: [
+      { label: "모든 무료 기능", included: true },
+      { label: "프리미엄 모의고사 풀이", included: true },
+      { label: "광고 제거", included: false },
+      { label: "PDF 다운로드", included: false },
+    ],
+    cta: "3일권 결제",
+  },
+  {
+    key: "ONE_MONTH",
+    name: "한달권",
+    price: "₩9,900",
+    priceNote: "30일",
+    duration: "구매 후 30일",
+    highlights: [
+      { label: "모든 무료 기능", included: true },
+      { label: "프리미엄 모의고사 풀이", included: true },
+      { label: "광고 제거", included: true },
+      { label: "PDF 다운로드", included: false },
+    ],
+    cta: "한달권 결제",
+    highlight: true,
+  },
+  {
+    key: "UNLIMITED",
+    name: "무제한권",
+    price: "₩29,900",
+    priceNote: "평생",
+    duration: "계정 종료까지",
+    highlights: [
+      { label: "모든 무료 기능", included: true },
+      { label: "프리미엄 모의고사 풀이", included: true },
+      { label: "광고 제거", included: true },
+      { label: "시험지 PDF 다운로드", included: true },
+    ],
+    cta: "무제한권 결제",
+  },
+];
+
 export default function CheckoutClient() {
   return (
-    <Suspense fallback={
-      <div className="flex min-h-[40vh] items-center justify-center">
-        <Spinner message="확인 중..." />
-      </div>
-    }>
+    <Suspense
+      fallback={
+        <div className="flex min-h-[40vh] items-center justify-center">
+          <Spinner message="확인 중..." />
+        </div>
+      }
+    >
       <CheckoutContent />
     </Suspense>
   );
@@ -26,22 +108,21 @@ export default function CheckoutClient() {
 
 function CheckoutContent() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const examIdRaw = searchParams?.get("examId");
-  const examId = examIdRaw && /^\d+$/.test(examIdRaw) ? Number(examIdRaw) : null;
-
   const toast = useToast();
   const [access, setAccess] = useState<AccessState>("loading");
-  const [paying, setPaying] = useState(false);
-  const [paid, setPaid] = useState<{ amount: number; productName: string; mockExamId: number | null } | null>(null);
+  const [subscription, setSubscription] = useState<ActiveSubscription | null>(null);
+  const [payingPlan, setPayingPlan] = useState<SubscriptionPlan | null>(null);
 
   useEffect(() => {
     if (!isLoggedIn()) {
       setAccess("anonymous");
       return;
     }
-    getCheckoutEligibility()
-      .then((r) => setAccess(r.eligible ? "allowed" : "denied"))
+    Promise.all([getCheckoutEligibility(), getActiveSubscription()])
+      .then(([elig, sub]) => {
+        setAccess(elig.eligible ? "allowed" : "denied");
+        setSubscription(sub);
+      })
       .catch(() => setAccess("denied"));
   }, []);
 
@@ -57,80 +138,63 @@ function CheckoutContent() {
     return <NotFoundView />;
   }
 
-  async function onPay() {
-    if (paying) return;
-    setPaying(true);
+  async function onPay(plan: SubscriptionPlan) {
+    if (payingPlan) return;
+    setPayingPlan(plan);
     try {
-      const result = await startPayment({ mockExamId: examId });
-      setPaid({ amount: result.amount, productName: result.productName, mockExamId: result.mockExamId });
-      toast.show("결제가 완료되었습니다.", "success");
-      // 잠금 해제 대상이 명시된 경우 자동으로 풀이 페이지로 이동
-      if (result.mockExamId != null) {
-        setTimeout(() => router.push(`/mock-exams/${result.mockExamId}`), 800);
-      }
+      const result = await startPayment({ plan });
+      toast.show(`${planLabel(result.plan)} 결제 완료`, "success");
+      // 0.8초 후 모의고사 목록으로 이동
+      setTimeout(() => router.push("/mock-exams"), 800);
     } catch (e) {
       toast.show(
         e instanceof Error ? e.message : "결제 처리 중 오류가 발생했습니다.",
         "error",
       );
     } finally {
-      setPaying(false);
+      setPayingPlan(null);
     }
   }
 
-  if (paid) {
-    return (
-      <Card padding="lg" className="text-center">
-        <Badge variant="soft" tone="success" size="sm">
-          결제 완료
+  return (
+    <div>
+      <div className="mb-8 text-center">
+        <Badge variant="soft" tone="info" size="sm">
+          요금제
         </Badge>
-        <h1 className="mt-3 text-2xl font-bold tracking-tight sm:text-3xl">
-          결제가 정상 처리되었습니다
+        <h1 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">
+          내 합격 속도에 맞게 골라보세요
         </h1>
         <p className="mt-3 text-sm text-text-muted">
-          {paid.productName} · {paid.amount.toLocaleString()}원
+          모든 결제는 PortOne(코리아포트원) 을 통해 안전하게 처리됩니다.
         </p>
-        <div className="mt-6 flex items-center justify-center gap-4 text-sm">
-          <Link
-            href={paid.mockExamId != null ? `/mock-exams/${paid.mockExamId}` : "/mock-exams"}
-            className="rounded-lg border border-border bg-surface px-4 py-2 text-text transition-colors hover:border-primary/40"
-          >
-            {paid.mockExamId != null ? "지금 풀러가기 →" : "모의고사로 →"}
-          </Link>
-        </div>
-      </Card>
-    );
-  }
-
-  return (
-    <Card padding="lg">
-      <Badge variant="soft" tone="info" size="sm">
-        프리미엄 결제
-      </Badge>
-      <h1 className="mt-3 text-2xl font-bold tracking-tight sm:text-3xl">
-        {examId != null
-          ? `프리미엄 모의고사 #${examId} 잠금 해제`
-          : "문어CBT 프리미엄 모의고사 잠금 해제"}
-      </h1>
-      <p className="mt-3 text-sm leading-relaxed text-text-muted">
-        결제 완료 시 잠금된 프리미엄 회차를 즉시 풀이할 수 있습니다.
-        결제 정보는 PortOne(주식회사 코리아포트원) PG 사를 통해 안전하게 처리되며,
-        서버에는 카드 정보가 저장되지 않습니다.
-      </p>
-
-      <dl className="mt-6 divide-y divide-border rounded-lg border border-border bg-surface">
-        <Row label="상품명" value="문어CBT 프리미엄 모의고사 1회차 잠금 해제" />
-        <Row label="결제 금액" value="3,000원" />
-        <Row label="결제 수단" value="신용/체크카드 (PortOne)" />
-      </dl>
-
-      <div className="mt-6 flex justify-end">
-        <Button variant="primary" size="lg" onClick={onPay} disabled={paying}>
-          {paying ? "결제 진행 중..." : "결제하기"}
-        </Button>
+        {subscription?.active && (
+          <p className="mt-4 inline-flex items-center gap-2 rounded-full border border-success/40 bg-success/10 px-3 py-1 text-xs text-success">
+            현재 구독: {planLabel(subscription.plan!)}
+            {subscription.expiresAt && (
+              <span className="text-success/80">
+                · 만료 {new Date(subscription.expiresAt).toLocaleDateString("ko-KR")}
+              </span>
+            )}
+            {subscription.expiresAt === null && <span className="text-success/80">· 평생</span>}
+          </p>
+        )}
       </div>
 
-      <p className="mt-6 text-[11px] text-text-subtle">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+        {TIERS.map((tier) => (
+          <TierCard
+            key={tier.key}
+            tier={tier}
+            onPay={onPay}
+            disabled={payingPlan !== null}
+            currentPlan={subscription?.active ? subscription.plan : null}
+            payingPlan={payingPlan}
+          />
+        ))}
+      </div>
+
+      <p className="mt-8 text-center text-[11px] text-text-subtle">
         결제 진행 시{" "}
         <Link href="/terms" className="underline">
           이용약관
@@ -141,26 +205,96 @@ function CheckoutContent() {
         </Link>
         에 동의하는 것으로 간주됩니다.
       </p>
-    </Card>
-  );
-}
-
-function Row({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex items-center justify-between px-5 py-3">
-      <dt className="text-xs font-medium text-text-muted">{label}</dt>
-      <dd className="text-sm font-semibold text-text">{value}</dd>
     </div>
   );
 }
 
+function TierCard({
+  tier,
+  onPay,
+  disabled,
+  currentPlan,
+  payingPlan,
+}: {
+  tier: Tier;
+  onPay: (plan: SubscriptionPlan) => void;
+  disabled: boolean;
+  currentPlan: SubscriptionPlan | null;
+  payingPlan: SubscriptionPlan | null;
+}) {
+  const isFree = tier.key === "FREE";
+  const isCurrent = !isFree && currentPlan === tier.key;
+  const isPaying = payingPlan === tier.key;
+
+  return (
+    <Card
+      padding="lg"
+      className={
+        tier.highlight
+          ? "relative border-primary/40 bg-gradient-to-b from-primary/[0.06] to-transparent"
+          : "relative"
+      }
+    >
+      {tier.highlight && (
+        <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-primary px-3 py-1 text-[10px] font-bold text-primary-fg">
+          가장 인기
+        </span>
+      )}
+      <h2 className="text-lg font-bold tracking-tight">{tier.name}</h2>
+      <p className="mt-1 text-xs text-text-muted">{tier.duration}</p>
+      <p className="mt-4 text-3xl font-bold tabular-nums">{tier.price}</p>
+      <p className="text-[11px] text-text-subtle">{tier.priceNote}</p>
+
+      <ul className="mt-5 space-y-2">
+        {tier.highlights.map((h, i) => (
+          <li key={i} className={`flex items-start gap-2 text-xs ${h.included ? "text-text" : "text-text-subtle line-through"}`}>
+            <span className={h.included ? "text-success" : "text-text-subtle"}>{h.included ? "✓" : "—"}</span>
+            <span>{h.label}</span>
+          </li>
+        ))}
+      </ul>
+
+      <div className="mt-6">
+        {isFree ? (
+          <Button variant="ghost" size="md" className="w-full" disabled>
+            {tier.cta}
+          </Button>
+        ) : isCurrent ? (
+          <Button variant="ghost" size="md" className="w-full" disabled>
+            이용 중
+          </Button>
+        ) : (
+          <Button
+            variant={tier.highlight ? "primary" : "outline"}
+            size="md"
+            className="w-full"
+            onClick={() => onPay(tier.key as SubscriptionPlan)}
+            disabled={disabled}
+          >
+            {isPaying ? "결제 진행 중..." : tier.cta}
+          </Button>
+        )}
+      </div>
+    </Card>
+  );
+}
+
+function planLabel(plan: SubscriptionPlan): string {
+  switch (plan) {
+    case "THREE_DAY":
+      return "3일권";
+    case "ONE_MONTH":
+      return "한달권";
+    case "UNLIMITED":
+      return "무제한권";
+  }
+}
+
 function NotFoundView() {
   return (
-    <Card padding="lg" className="text-center">
+    <Card padding="lg" className="mx-auto max-w-md text-center">
       <p className="text-6xl font-bold text-text-subtle">404</p>
-      <h1 className="mt-3 text-xl font-semibold tracking-tight">
-        페이지를 찾을 수 없습니다
-      </h1>
+      <h1 className="mt-3 text-xl font-semibold tracking-tight">페이지를 찾을 수 없습니다</h1>
       <p className="mt-2 text-sm text-text-muted">요청하신 주소가 잘못되었거나 삭제되었습니다.</p>
       <Link
         href="/"

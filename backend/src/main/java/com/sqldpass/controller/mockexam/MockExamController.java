@@ -18,14 +18,12 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.sqldpass.controller.mockexam.dto.MockExamDetailResponse;
 import com.sqldpass.controller.mockexam.dto.MockExamSummaryResponse;
-import com.sqldpass.persistent.member.MemberEntity;
-import com.sqldpass.persistent.member.MemberRepository;
 import com.sqldpass.persistent.payment.MockExamPurchaseRepository;
 import com.sqldpass.persistent.solve.SolveRepository;
 import com.sqldpass.service.common.ErrorCode;
 import com.sqldpass.service.common.SqldpassException;
 import com.sqldpass.service.mockexam.MockExamService;
-import com.sqldpass.service.payment.PaymentProperties;
+import com.sqldpass.service.payment.SubscriptionService;
 import com.sqldpass.service.pdf.MockExamPdfService;
 import com.sqldpass.service.pdf.MockExamPdfService.DownloadResult;
 
@@ -44,8 +42,7 @@ public class MockExamController {
     private final SolveRepository solveRepository;
     private final MockExamPurchaseRepository mockExamPurchaseRepository;
     private final MockExamPdfService mockExamPdfService;
-    private final MemberRepository memberRepository;
-    private final PaymentProperties paymentProperties;
+    private final SubscriptionService subscriptionService;
 
     @GetMapping
     @Operation(summary = "모의고사 목록", description = "로그인 사용자는 풀이 완료 마킹 + 최고 점수가 함께 응답된다.")
@@ -97,27 +94,27 @@ public class MockExamController {
      */
     @GetMapping("/pdf/eligibility")
     @Operation(
-            summary = "PDF 다운로드 가능 여부 — 화이트리스트 닉네임만 true (빈 화이트리스트 = 전체 허용)",
-            description = "프론트가 모의고사 카드/상세 화면에서 PDF 다운로드 버튼 노출 여부를 결정한다."
+            summary = "PDF 다운로드 가능 여부 — UNLIMITED 구독 회원만 true",
+            description = "프론트가 모의고사 카드/상세 화면에서 PDF 다운로드 버튼 노출 여부를 결정한다. "
+                    + "화이트리스트 닉네임 회원도 가상 UNLIMITED 로 자동 통과."
     )
     public Map<String, Boolean> pdfEligibility(HttpServletRequest request) {
         Long memberId = (Long) request.getAttribute("memberId");
-        return Map.of("eligible", isPdfEligible(memberId));
+        return Map.of("eligible", subscriptionService.allowsPdf(memberId));
     }
 
     @GetMapping("/{id}/pdf/download")
     @Operation(
-            summary = "사용자용 모의고사 PDF 다운로드 (화이트리스트 닉네임 한정)",
+            summary = "사용자용 모의고사 PDF 다운로드 (UNLIMITED 구독 회원 한정)",
             description = "백엔드 프록시 — R2 public URL 노출 없이 PDF 바이트 스트리밍. "
-                    + "Content-Disposition: attachment 로 즉시 다운로드 처리. "
-                    + "빈 화이트리스트(정식 오픈) 시 모든 로그인 회원 허용."
+                    + "Content-Disposition: attachment 로 즉시 다운로드 처리."
     )
     public ResponseEntity<byte[]> downloadPdf(@PathVariable Long id, HttpServletRequest request) {
         Long memberId = (Long) request.getAttribute("memberId");
         if (memberId == null) {
             throw new SqldpassException(ErrorCode.UNAUTHORIZED);
         }
-        if (!isPdfEligible(memberId)) {
+        if (!subscriptionService.allowsPdf(memberId)) {
             throw new SqldpassException(ErrorCode.FORBIDDEN);
         }
         DownloadResult d = mockExamPdfService.download(id);
@@ -126,19 +123,6 @@ public class MockExamController {
                 .contentType(MediaType.APPLICATION_PDF)
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename*=UTF-8''" + encoded)
                 .body(d.bytes());
-    }
-
-    /**
-     * PDF 다운로드 가시성 — payment.reviewer-nicknames 화이트리스트와 동일 시맨틱.
-     *  - 비어있으면 모든 로그인 회원 허용 (정식 오픈 모드).
-     *  - 채워있으면 해당 닉네임 회원만 허용.
-     */
-    private boolean isPdfEligible(Long memberId) {
-        if (memberId == null) return false;
-        var allowed = paymentProperties.reviewerNicknameSet();
-        if (allowed.isEmpty()) return true;
-        MemberEntity member = memberRepository.findById(memberId).orElse(null);
-        return member != null && allowed.contains(member.getNickname());
     }
 
     @GetMapping("/best-scores")

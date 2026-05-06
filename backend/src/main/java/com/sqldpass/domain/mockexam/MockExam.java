@@ -162,4 +162,18 @@ public class MockExam {
         this.publishedAt = publishedAt;
         this.pastExamLinkedAt = pastExamLinkedAt;
     }
+
+    /**
+     * 프리미엄 회차 여부 — 구독 가드 진입 판정 기준.
+     * - visibility == PREMIUM 이면 어드민이 명시적으로 잠근 회차 → true
+     * - 또는 평균 난이도 정규화 ≥ 0.5 ("어려움" / "매우 어려움" 라벨 시작점) → true
+     * 그 외엔 무료 회차로 간주.
+     */
+    public boolean isPremium() {
+        if (visibility == MockExamVisibility.PREMIUM) return true;
+        if (avgDifficulty == null) return false;
+        // normalize: (avg - 1) / 3 (1~4 스케일을 0~1 로). difficultyLabel 의 "어려움" 시작점.
+        double normalized = Math.max(0.0, Math.min(1.0, (avgDifficulty - 1.0) / 3.0));
+        return normalized >= 0.5;
+    }
 }

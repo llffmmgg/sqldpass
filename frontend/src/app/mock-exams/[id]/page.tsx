@@ -208,20 +208,36 @@ function MockExamDetailContent() {
               <div className="text-6xl">🔒</div>
               <h1 className="mt-4 text-2xl font-bold text-amber-300">프리미엄 모의고사</h1>
               <p className="mt-3 text-sm text-muted leading-relaxed">
-                이 회차는 잠금 컨텐츠입니다. 결제 후 잠금을 해제하면 풀이할 수 있습니다.
+                어려움/매우 어려움 회차는 구독 회원에게 공개됩니다.
                 <br />
-                결제 시스템은 곧 오픈됩니다.
+                3일권부터 시작 가능합니다.
               </p>
+              <div className="mt-6 flex flex-col items-center gap-2">
+                <button
+                  onClick={() => router.push("/checkout")}
+                  className="rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-primary-fg transition hover:bg-primary-hover"
+                >
+                  요금제 보러가기 →
+                </button>
+                <button
+                  onClick={() => router.push("/mock-exams")}
+                  className="rounded-lg px-4 py-2 text-xs text-muted hover:text-foreground"
+                >
+                  ← 모의고사 목록으로
+                </button>
+              </div>
             </>
           ) : (
-            <p className="text-red-400">{error}</p>
+            <>
+              <p className="text-red-400">{error}</p>
+              <button
+                onClick={() => router.push("/mock-exams")}
+                className="mt-6 rounded-lg border border-border px-4 py-2 text-sm text-muted hover:text-foreground"
+              >
+                ← 모의고사 목록으로
+              </button>
+            </>
           )}
-          <button
-            onClick={() => router.push("/mock-exams")}
-            className="mt-6 rounded-lg border border-border px-4 py-2 text-sm text-muted hover:text-foreground"
-          >
-            ← 모의고사 목록으로
-          </button>
         </div>
       </main>
     );
