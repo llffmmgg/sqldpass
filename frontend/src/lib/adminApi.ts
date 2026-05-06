@@ -838,3 +838,48 @@ export async function resetExportMark(examType: ExportExamType): Promise<number>
   );
   return data.reset;
 }
+
+/* ─────────────────────────────────────────────────────────────
+ * 구독 관리
+ * ───────────────────────────────────────────────────────────── */
+
+export type AdminSubscriptionPlan = "THREE_DAY" | "ONE_MONTH" | "UNLIMITED";
+
+export interface AdminSubscription {
+  id: number;
+  memberId: number;
+  nickname: string;
+  plan: AdminSubscriptionPlan;
+  paymentId: number | null;
+  purchasedAt: string;
+  expiresAt: string | null;
+  active: boolean;
+}
+
+export interface AdminSubscriptionPage {
+  content: AdminSubscription[];
+  totalElements: number;
+  totalPages: number;
+  number: number;
+  size: number;
+}
+
+export function listSubscriptions(opts: { nickname?: string; page?: number; size?: number } = {}) {
+  const params = new URLSearchParams();
+  if (opts.nickname) params.set("nickname", opts.nickname);
+  params.set("page", String(opts.page ?? 0));
+  params.set("size", String(opts.size ?? 30));
+  return adminFetch<AdminSubscriptionPage>(`/subscriptions?${params}`);
+}
+
+export function grantSubscription(memberId: number, plan: AdminSubscriptionPlan, reason: string) {
+  return adminFetch<AdminSubscription>(`/subscriptions`, {
+    method: "POST",
+    body: JSON.stringify({ memberId, plan, reason }),
+  });
+}
+
+export function expireSubscription(id: number, reason: string) {
+  const params = new URLSearchParams({ reason });
+  return adminFetch<void>(`/subscriptions/${id}?${params}`, { method: "DELETE" });
+}

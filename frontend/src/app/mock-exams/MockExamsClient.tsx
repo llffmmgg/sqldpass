@@ -22,6 +22,16 @@ import {
 import { isExamNew } from "@/lib/mockExamNew";
 import { getPublicMockExams } from "@/lib/publicApi";
 
+type DifficultyFilter = "ALL" | "쉬움" | "보통" | "어려움" | "매우 어려움";
+
+const DIFFICULTY_OPTIONS: { value: DifficultyFilter; label: string; activeClass: string }[] = [
+  { value: "ALL", label: "전체", activeClass: "border-primary/40 bg-primary/10 text-primary" },
+  { value: "쉬움", label: "쉬움", activeClass: "border-emerald-500/40 bg-emerald-500/10 text-emerald-500" },
+  { value: "보통", label: "보통", activeClass: "border-amber-500/40 bg-amber-500/10 text-amber-500" },
+  { value: "어려움", label: "어려움", activeClass: "border-orange-500/40 bg-orange-500/10 text-orange-500" },
+  { value: "매우 어려움", label: "매우 어려움", activeClass: "border-red-500/40 bg-red-500/10 text-red-500" },
+];
+
 export default function MockExamsClient() {
   return (
     <Suspense fallback={null}>
@@ -39,6 +49,7 @@ function MockExamsContent() {
   const [exams, setExams] = useState<MockExamSummary[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [authed, setAuthed] = useState(false);
+  const [difficulty, setDifficulty] = useState<DifficultyFilter>("ALL");
 
   useEffect(() => {
     const loggedIn = isLoggedIn();
@@ -55,8 +66,20 @@ function MockExamsContent() {
     if (!exams) return null;
     return exams
       .filter((e) => e.examType === activeCert)
+      .filter((e) => difficulty === "ALL" || e.difficultyLabel === difficulty)
       .slice()
       .sort((a, b) => b.sequence - a.sequence);
+  }, [exams, activeCert, difficulty]);
+
+  // 자격증별 난이도 카운트 — 칩에 갯수 표시용
+  const difficultyCounts = useMemo(() => {
+    if (!exams) return {} as Record<string, number>;
+    const counts: Record<string, number> = { ALL: 0, "쉬움": 0, "보통": 0, "어려움": 0, "매우 어려움": 0 };
+    exams.filter((e) => e.examType === activeCert).forEach((e) => {
+      counts.ALL++;
+      if (e.difficultyLabel) counts[e.difficultyLabel] = (counts[e.difficultyLabel] ?? 0) + 1;
+    });
+    return counts;
   }, [exams, activeCert]);
 
   return (
@@ -97,6 +120,29 @@ function MockExamsContent() {
                 </span>
               )}
             </Link>
+          );
+        })}
+      </div>
+
+      {/* 난이도 필터 칩 */}
+      <div className="mt-3 flex flex-wrap gap-1.5">
+        {DIFFICULTY_OPTIONS.map((opt) => {
+          const active = difficulty === opt.value;
+          const count = difficultyCounts[opt.value] ?? 0;
+          if (opt.value !== "ALL" && count === 0) return null;
+          return (
+            <button
+              key={opt.value}
+              onClick={() => setDifficulty(opt.value)}
+              className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium transition-colors ${
+                active
+                  ? `${opt.activeClass} ring-1 ring-current/30`
+                  : "border-border bg-surface text-text-muted hover:border-primary/40 hover:text-text"
+              }`}
+            >
+              {opt.label}
+              <span className="text-[10px] opacity-60 tabular-nums">{count}</span>
+            </button>
           );
         })}
       </div>

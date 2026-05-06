@@ -43,8 +43,8 @@ public class SubscriptionEntity extends BaseTimeEntity {
     @Column(name = "plan", nullable = false, length = 20)
     private SubscriptionPlan plan;
 
-    /** 결제 row FK. */
-    @Column(name = "payment_id", nullable = false)
+    /** 결제 row FK. 어드민 수동 발급(보상·이벤트·환불 후 재발급) 시엔 null. */
+    @Column(name = "payment_id")
     private Long paymentId;
 
     @Column(name = "purchased_at", nullable = false)

@@ -52,6 +52,11 @@ const ICON = {
       <path strokeLinecap="round" strokeLinejoin="round" d="m9.813 15.904-.75.363-.75-.363a.75.75 0 0 1 0-1.336l.75-.363.75.363a.75.75 0 0 1 0 1.336Zm3.75-3.75-.75.363-.75-.363a.75.75 0 0 1 0-1.336l.75-.363.75.363a.75.75 0 0 1 0 1.336Z M12 9l-1.91 5.818a2 2 0 0 1-1.273 1.272L3 18l5.818 1.91a2 2 0 0 1 1.272 1.273L12 27l1.91-5.818a2 2 0 0 1 1.273-1.272L21 18l-5.818-1.91a2 2 0 0 1-1.272-1.273L12 9ZM18 3v4M22 5h-4" />
     </svg>
   ),
+  subscriptions: (
+    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25v10.5A2.25 2.25 0 0 0 4.5 19.5Z" />
+    </svg>
+  ),
 } as const;
 
 const SIDEBAR_SECTIONS: NavSection[] = [
@@ -65,7 +70,12 @@ const SIDEBAR_SECTIONS: NavSection[] = [
       { href: "/admin/questions", label: "문제 관리", icon: ICON.questions },
       { href: "/admin/mock-exams", label: "모의고사", icon: ICON.exams },
       { href: "/admin/past-exams", label: "기출 복원", icon: ICON.pastExams },
-      // /admin/generate 는 모의고사 생성으로 대체. 메뉴 숨김(페이지 코드는 유지).
+    ],
+  },
+  {
+    label: "결제",
+    items: [
+      { href: "/admin/subscriptions", label: "구독 관리", icon: ICON.subscriptions },
     ],
   },
   {
