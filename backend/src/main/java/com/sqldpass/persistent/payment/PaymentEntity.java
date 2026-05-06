@@ -50,6 +50,11 @@ public class PaymentEntity extends BaseTimeEntity {
     @Column(name = "product_name", nullable = false, length = 120)
     private String productName;
 
+    /** 구독 plan — 4티어 도입 후 prepare 시 채워짐. 옛 단일 회차 결제는 null. */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "plan", length = 20)
+    private SubscriptionPlan plan;
+
     @Column(name = "amount", nullable = false)
     private int amount;
 
@@ -66,10 +71,16 @@ public class PaymentEntity extends BaseTimeEntity {
 
     public PaymentEntity(String paymentId, Long memberId, Long mockExamId,
                          String productName, int amount) {
+        this(paymentId, memberId, mockExamId, productName, null, amount);
+    }
+
+    public PaymentEntity(String paymentId, Long memberId, Long mockExamId,
+                         String productName, SubscriptionPlan plan, int amount) {
         this.paymentId = paymentId;
         this.memberId = memberId;
         this.mockExamId = mockExamId;
         this.productName = productName;
+        this.plan = plan;
         this.amount = amount;
         this.status = PaymentStatus.PENDING;
     }

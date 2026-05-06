@@ -9,31 +9,26 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.sqldpass.persistent.member.MemberEntity;
 import com.sqldpass.persistent.member.MemberRepository;
-import com.sqldpass.persistent.mockexam.ExamType;
-import com.sqldpass.persistent.mockexam.MockExamEntity;
-import com.sqldpass.persistent.mockexam.MockExamVisibility;
-import com.sqldpass.persistent.payment.MockExamPurchaseEntity;
-import com.sqldpass.persistent.payment.MockExamPurchaseRepository;
 import com.sqldpass.persistent.payment.PaymentEntity;
 import com.sqldpass.persistent.payment.PaymentRepository;
+import com.sqldpass.persistent.payment.SubscriptionEntity;
+import com.sqldpass.persistent.payment.SubscriptionPlan;
+import com.sqldpass.persistent.payment.SubscriptionRepository;
 import com.sqldpass.service.common.ErrorCode;
 import com.sqldpass.service.common.SqldpassException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.when;
-import org.mockito.ArgumentCaptor;
+import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
 class PaymentServiceTest {
@@ -43,9 +38,7 @@ class PaymentServiceTest {
     @Mock
     private PaymentRepository paymentRepository;
     @Mock
-    private MockExamPurchaseRepository purchaseRepository;
-    @Mock
-    private com.sqldpass.persistent.mockexam.MockExamRepository mockExamRepository;
+    private SubscriptionRepository subscriptionRepository;
     @Mock
     private MemberRepository memberRepository;
 
@@ -56,10 +49,11 @@ class PaymentServiceTest {
     void setUp() {
         properties = new PaymentProperties();
         properties.setReviewerNicknames("pay-rv-7f2a91");
-        properties.setDefaultAmount(3000);
-        properties.setDefaultProductName("문어CBT 프리미엄 모의고사 1회차 잠금 해제");
+        properties.setThreeDay(new PaymentProperties.PlanConfig(3900, "문어CBT 3일 이용권"));
+        properties.setOneMonth(new PaymentProperties.PlanConfig(9900, "문어CBT 한달 이용권"));
+        properties.setUnlimited(new PaymentProperties.PlanConfig(29900, "문어CBT 평생 무제한 이용권"));
         service = new PaymentService(properties, portOneClient,
-                paymentRepository, purchaseRepository, mockExamRepository, memberRepository);
+                paymentRepository, subscriptionRepository, memberRepository);
     }
 
     @Test
@@ -67,9 +61,10 @@ class PaymentServiceTest {
     void prepareAllowsEveryoneWhenWhitelistEmpty() {
         properties.setReviewerNicknames("");
 
-        var result = service.prepare(1L, null);
+        var result = service.prepare(1L, SubscriptionPlan.THREE_DAY);
 
-        assertThat(result.amount()).isEqualTo(3000);
+        assertThat(result.amount()).isEqualTo(3900);
+        assertThat(result.plan()).isEqualTo(SubscriptionPlan.THREE_DAY);
         verify(paymentRepository, times(1)).save(any(PaymentEntity.class));
     }
 
@@ -78,34 +73,32 @@ class PaymentServiceTest {
     void prepareBlocksNonReviewer() {
         MemberEntity m = newMember(1L, "normal-user");
         given(memberRepository.findById(1L)).willReturn(Optional.of(m));
-        assertThatThrownBy(() -> service.prepare(1L, null))
+        assertThatThrownBy(() -> service.prepare(1L, SubscriptionPlan.THREE_DAY))
                 .isInstanceOf(SqldpassException.class)
                 .extracting("errorCode").isEqualTo(ErrorCode.PAYMENT_REVIEWER_ONLY);
     }
 
     @Test
-    @DisplayName("화이트리스트 닉네임 + null mockExamId 이면 prepare 성공")
+    @DisplayName("화이트리스트 닉네임 + ONE_MONTH plan 이면 prepare 성공")
     void prepareSucceedsForReviewer() {
         MemberEntity m = newMember(1L, "pay-rv-7f2a91");
         given(memberRepository.findById(1L)).willReturn(Optional.of(m));
 
-        var result = service.prepare(1L, null);
+        var result = service.prepare(1L, SubscriptionPlan.ONE_MONTH);
 
-        assertThat(result.amount()).isEqualTo(3000);
-        assertThat(result.productName()).isEqualTo("문어CBT 프리미엄 모의고사 1회차 잠금 해제");
+        assertThat(result.amount()).isEqualTo(9900);
+        assertThat(result.productName()).isEqualTo("문어CBT 한달 이용권");
+        assertThat(result.plan()).isEqualTo(SubscriptionPlan.ONE_MONTH);
         assertThat(result.paymentId()).startsWith("sqldpass-");
         verify(paymentRepository, times(1)).save(any(PaymentEntity.class));
     }
 
     @Test
-    @DisplayName("PREMIUM 이 아닌 모의고사로 prepare 호출하면 INVALID_INPUT")
-    void prepareRejectsNonPremiumExam() {
-        MemberEntity m = newMember(1L, "pay-rv-7f2a91");
-        given(memberRepository.findById(1L)).willReturn(Optional.of(m));
-        MockExamEntity exam = newExam(10L, MockExamVisibility.PUBLISHED);
-        given(mockExamRepository.findById(10L)).willReturn(Optional.of(exam));
+    @DisplayName("plan = null 이면 INVALID_INPUT")
+    void prepareRejectsNullPlan() {
+        properties.setReviewerNicknames("");
 
-        assertThatThrownBy(() -> service.prepare(1L, 10L))
+        assertThatThrownBy(() -> service.prepare(1L, null))
                 .isInstanceOf(SqldpassException.class)
                 .extracting("errorCode").isEqualTo(ErrorCode.INVALID_INPUT);
     }
@@ -116,10 +109,9 @@ class PaymentServiceTest {
         MemberEntity m = newMember(1L, "pay-rv-7f2a91");
         given(memberRepository.findById(1L)).willReturn(Optional.of(m));
 
-        PaymentEntity entity = new PaymentEntity("p-1", 1L, null, "상품", 3000);
+        PaymentEntity entity = new PaymentEntity("p-1", 1L, null, "상품", SubscriptionPlan.THREE_DAY, 3900);
         given(paymentRepository.findByPaymentId("p-1")).willReturn(Optional.of(entity));
 
-        // PortOne 응답은 9999원으로 위변조됨
         var info = new PortOneClient.PortOnePaymentInfo("p-1", "PAID", 9999, "KRW",
                 OffsetDateTime.now(), Map.of("id", "p-1", "status", "PAID"));
         given(portOneClient.getPayment("p-1")).willReturn(info);
@@ -135,10 +127,10 @@ class PaymentServiceTest {
         MemberEntity m = newMember(1L, "pay-rv-7f2a91");
         given(memberRepository.findById(1L)).willReturn(Optional.of(m));
 
-        PaymentEntity entity = new PaymentEntity("p-1", 1L, null, "상품", 3000);
+        PaymentEntity entity = new PaymentEntity("p-1", 1L, null, "상품", SubscriptionPlan.THREE_DAY, 3900);
         given(paymentRepository.findByPaymentId("p-1")).willReturn(Optional.of(entity));
 
-        var info = new PortOneClient.PortOnePaymentInfo("p-1", "READY", 3000, "KRW",
+        var info = new PortOneClient.PortOnePaymentInfo("p-1", "READY", 3900, "KRW",
                 null, Map.of("id", "p-1", "status", "READY"));
         given(portOneClient.getPayment("p-1")).willReturn(info);
 
@@ -148,40 +140,61 @@ class PaymentServiceTest {
     }
 
     @Test
-    @DisplayName("verify 성공 시 결제 row 가 PAID 로 마킹되고 mockExamId 가 있으면 잠금 해제 row 가 생성된다")
-    void verifySucceedsAndCreatesUnlock() {
+    @DisplayName("THREE_DAY verify 성공 시 SubscriptionEntity 가 expiresAt = now+3d 로 발급")
+    void verifyThreeDayCreatesSubscription() {
         MemberEntity m = newMember(1L, "pay-rv-7f2a91");
         given(memberRepository.findById(1L)).willReturn(Optional.of(m));
 
-        PaymentEntity entity = new PaymentEntity("p-1", 1L, 10L, "상품", 3000);
+        PaymentEntity entity = new PaymentEntity("p-1", 1L, null, "3일 이용권",
+                SubscriptionPlan.THREE_DAY, 3900);
         given(paymentRepository.findByPaymentId("p-1")).willReturn(Optional.of(entity));
 
-        var info = new PortOneClient.PortOnePaymentInfo("p-1", "PAID", 3000, "KRW",
-                OffsetDateTime.now(), Map.of("id", "p-1", "status", "PAID"));
+        OffsetDateTime paidAt = OffsetDateTime.now();
+        var info = new PortOneClient.PortOnePaymentInfo("p-1", "PAID", 3900, "KRW",
+                paidAt, Map.of("id", "p-1", "status", "PAID"));
         given(portOneClient.getPayment("p-1")).willReturn(info);
-        given(purchaseRepository.existsByMemberIdAndMockExamId(1L, 10L)).willReturn(false);
 
         var result = service.verify(1L, "p-1");
 
-        assertThat(result.paymentId()).isEqualTo("p-1");
-        assertThat(result.mockExamId()).isEqualTo(10L);
-        ArgumentCaptor<MockExamPurchaseEntity> captor = ArgumentCaptor.forClass(MockExamPurchaseEntity.class);
-        verify(purchaseRepository, times(1)).save(captor.capture());
-        assertThat(captor.getValue().getMemberId()).isEqualTo(1L);
-        assertThat(captor.getValue().getMockExamId()).isEqualTo(10L);
+        assertThat(result.plan()).isEqualTo(SubscriptionPlan.THREE_DAY);
+        assertThat(result.expiresAt()).isNotNull();
+
+        ArgumentCaptor<SubscriptionEntity> captor = ArgumentCaptor.forClass(SubscriptionEntity.class);
+        verify(subscriptionRepository, times(1)).save(captor.capture());
+        SubscriptionEntity saved = captor.getValue();
+        assertThat(saved.getMemberId()).isEqualTo(1L);
+        assertThat(saved.getPlan()).isEqualTo(SubscriptionPlan.THREE_DAY);
+        assertThat(saved.getExpiresAt()).isEqualToIgnoringSeconds(saved.getPurchasedAt().plusDays(3));
+    }
+
+    @Test
+    @DisplayName("UNLIMITED verify 성공 시 expiresAt = null (평생)")
+    void verifyUnlimitedCreatesLifetimeSubscription() {
+        MemberEntity m = newMember(1L, "pay-rv-7f2a91");
+        given(memberRepository.findById(1L)).willReturn(Optional.of(m));
+
+        PaymentEntity entity = new PaymentEntity("p-1", 1L, null, "무제한권",
+                SubscriptionPlan.UNLIMITED, 29900);
+        given(paymentRepository.findByPaymentId("p-1")).willReturn(Optional.of(entity));
+
+        var info = new PortOneClient.PortOnePaymentInfo("p-1", "PAID", 29900, "KRW",
+                OffsetDateTime.now(), Map.of("id", "p-1", "status", "PAID"));
+        given(portOneClient.getPayment("p-1")).willReturn(info);
+
+        var result = service.verify(1L, "p-1");
+
+        assertThat(result.plan()).isEqualTo(SubscriptionPlan.UNLIMITED);
+        assertThat(result.expiresAt()).isNull();
+
+        ArgumentCaptor<SubscriptionEntity> captor = ArgumentCaptor.forClass(SubscriptionEntity.class);
+        verify(subscriptionRepository, times(1)).save(captor.capture());
+        assertThat(captor.getValue().getExpiresAt()).isNull();
     }
 
     private MemberEntity newMember(Long id, String nickname) {
         MemberEntity m = new MemberEntity("google", "g-" + id, nickname);
         setField(m, "id", id);
         return m;
-    }
-
-    private MockExamEntity newExam(Long id, MockExamVisibility visibility) {
-        MockExamEntity e = new MockExamEntity("name", ExamType.SQLD, 1, null);
-        setField(e, "id", id);
-        setField(e, "visibility", visibility);
-        return e;
     }
 
     private static void setField(Object target, String fieldName, Object value) {

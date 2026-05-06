@@ -8,12 +8,15 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.sqldpass.persistent.member.MemberEntity;
 import com.sqldpass.persistent.member.MemberRepository;
+import com.sqldpass.persistent.payment.SubscriptionPlan;
 import com.sqldpass.service.common.ErrorCode;
 import com.sqldpass.service.common.SqldpassException;
 import com.sqldpass.service.payment.PaymentProperties;
 import com.sqldpass.service.payment.PaymentService;
 import com.sqldpass.service.payment.PaymentService.PreparePaymentResult;
 import com.sqldpass.service.payment.PaymentService.VerifyPaymentResult;
+import com.sqldpass.service.payment.SubscriptionService;
+import com.sqldpass.service.payment.SubscriptionService.ActiveSubscription;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -21,15 +24,15 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 
 /**
- * PortOne 결제 흐름 — 카드사 심사용 최소 구현.
+ * 4티어 구독 결제 (PortOne).
  *
  * 흐름:
- *   1. client 가 POST /api/payment/prepare 로 결제 사전 등록 → paymentId 받기
- *   2. client 가 PortOne SDK 의 requestPayment 로 paymentId·amount·productName 사용해 결제창 띄움
- *   3. client 가 결제 성공 응답을 받으면 POST /api/payment/verify 호출
- *   4. backend 가 PortOne REST 로 status/amount 재검증 후 잠금 해제 권리 발급
+ *   1. POST /prepare {plan} → paymentId/amount/productName 발급
+ *   2. client 가 PortOne SDK 로 결제창 호출
+ *   3. POST /verify {paymentId} → PortOne 재검증 → SubscriptionEntity 발급
+ *   4. GET /subscription → 활성 구독 정보 조회
  */
-@Tag(name = "결제", description = "PortOne 결제 (카드사 심사용 화이트리스트 게이트)")
+@Tag(name = "결제", description = "PortOne 4티어 구독 결제")
 @RestController
 @RequestMapping("/api/payment")
 @RequiredArgsConstructor
@@ -38,6 +41,7 @@ public class PaymentController {
     private final PaymentService paymentService;
     private final PaymentProperties paymentProperties;
     private final MemberRepository memberRepository;
+    private final SubscriptionService subscriptionService;
 
     @GetMapping("/eligibility")
     @Operation(summary = "결제 페이지 접근 가능 여부 — 빈 화이트리스트 = 전체 허용(정식 오픈)")
@@ -48,7 +52,6 @@ public class PaymentController {
         }
         var allowed = paymentProperties.reviewerNicknameSet();
         if (allowed.isEmpty()) {
-            // 정식 오픈 모드 — 모든 로그인 회원 통과
             return new EligibilityResponse(true);
         }
         MemberEntity member = memberRepository.findById(memberId)
@@ -57,17 +60,20 @@ public class PaymentController {
     }
 
     @PostMapping("/prepare")
-    @Operation(summary = "결제 사전 등록 — paymentId·amount·productName 발급")
+    @Operation(summary = "결제 사전 등록 — plan(THREE_DAY/ONE_MONTH/UNLIMITED) 받아 paymentId 발급")
     public PreparePaymentResult prepare(@RequestBody PrepareRequest body, HttpServletRequest request) {
         Long memberId = (Long) request.getAttribute("memberId");
         if (memberId == null) {
             throw new SqldpassException(ErrorCode.UNAUTHORIZED);
         }
-        return paymentService.prepare(memberId, body == null ? null : body.mockExamId());
+        if (body == null || body.plan() == null) {
+            throw new SqldpassException(ErrorCode.INVALID_INPUT, "plan 은 필수입니다.");
+        }
+        return paymentService.prepare(memberId, body.plan());
     }
 
     @PostMapping("/verify")
-    @Operation(summary = "결제 검증 — PortOne REST 재검증 후 잠금 해제 권리 발급")
+    @Operation(summary = "결제 검증 — PortOne REST 재검증 후 SubscriptionEntity 발급")
     public VerifyPaymentResult verify(@RequestBody VerifyRequest body, HttpServletRequest request) {
         Long memberId = (Long) request.getAttribute("memberId");
         if (memberId == null) {
@@ -79,9 +85,37 @@ public class PaymentController {
         return paymentService.verify(memberId, body.paymentId());
     }
 
-    public record PrepareRequest(Long mockExamId) {}
+    @GetMapping("/subscription")
+    @Operation(summary = "내 활성 구독 조회 — 없으면 active=false")
+    public SubscriptionResponse subscription(HttpServletRequest request) {
+        Long memberId = (Long) request.getAttribute("memberId");
+        if (memberId == null) {
+            throw new SqldpassException(ErrorCode.UNAUTHORIZED);
+        }
+        return subscriptionService.getActive(memberId)
+                .map(SubscriptionResponse::from)
+                .orElseGet(SubscriptionResponse::inactive);
+    }
+
+    public record PrepareRequest(SubscriptionPlan plan) {}
 
     public record VerifyRequest(String paymentId) {}
 
     public record EligibilityResponse(boolean eligible) {}
+
+    public record SubscriptionResponse(
+            boolean active,
+            SubscriptionPlan plan,
+            java.time.LocalDateTime expiresAt,
+            boolean removesAds,
+            boolean allowsPdf
+    ) {
+        public static SubscriptionResponse from(ActiveSubscription a) {
+            return new SubscriptionResponse(true, a.plan(), a.expiresAt(), a.removesAds(), a.allowsPdf());
+        }
+
+        public static SubscriptionResponse inactive() {
+            return new SubscriptionResponse(false, null, null, false, false);
+        }
+    }
 }

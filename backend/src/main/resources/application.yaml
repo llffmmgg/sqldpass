@@ -97,13 +97,20 @@ sqldpass:
       store-id: ${PORTONE_STORE_ID:}
       api-secret: ${PORTONE_API_SECRET:}
       api-base-url: ${PORTONE_API_BASE_URL:https://api.portone.io}
-    # 카드사 심사용 게이트 — 콤마 구분 닉네임 화이트리스트.
-    # 회원의 nickname 이 본 목록에 포함되어야만 /api/payment/** 호출이 통과한다.
-    # 토큰은 외부 추측 어려운 값으로 (예: pay-rv-7f2a91). 정식 오픈 시점에 화이트리스트 비우거나 가드 제거.
+    # 화이트리스트 닉네임 — 본 목록에 포함된 회원은 가상 UNLIMITED 구독 자동 부여
+    # (PREMIUM 풀이 + 광고 제거 + PDF 다운로드 모두 해금). 카드사 심사용 운영자 검토 흐름.
+    # 정식 오픈 후 비워도 결제 흐름 자체는 정상 동작.
     reviewer-nicknames: ${PAYMENT_REVIEWER_NICKNAMES:}
-    # 단건 결제 금액·상품명 (TEST/0원 금지 — 카드사 심사 필수 조건).
-    default-amount: ${PAYMENT_DEFAULT_AMOUNT:3000}
-    default-product-name: ${PAYMENT_DEFAULT_PRODUCT_NAME:문어CBT 프리미엄 모의고사 1회차 잠금 해제}
+    # 4티어 구독 모델 — 각 plan 의 결제 금액(원)·상품명. TEST/0원 금지 (카드사 심사).
+    three-day:
+      amount: ${PAYMENT_3DAY_AMOUNT:3900}
+      product-name: ${PAYMENT_3DAY_NAME:문어CBT 3일 이용권}
+    one-month:
+      amount: ${PAYMENT_1MONTH_AMOUNT:9900}
+      product-name: ${PAYMENT_1MONTH_NAME:문어CBT 한달 이용권}
+    unlimited:
+      amount: ${PAYMENT_UNLIMITED_AMOUNT:29900}
+      product-name: ${PAYMENT_UNLIMITED_NAME:문어CBT 평생 무제한 이용권}
   pdf:
     # 모의고사 PDF 생성기 — Playwright 헤드리스 Chromium 으로 인쇄 페이지를 PDF 화.
     # print-page-base-url: 백엔드(Playwright) 가 호출할 프론트 인쇄 페이지 베이스 URL.

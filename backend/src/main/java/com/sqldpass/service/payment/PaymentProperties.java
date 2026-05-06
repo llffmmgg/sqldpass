@@ -1,20 +1,22 @@
 package com.sqldpass.service.payment;
 
-import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
+import com.sqldpass.persistent.payment.SubscriptionPlan;
+
 /**
  * sqldpass.payment.* 설정 바인딩.
  *
  *   sqldpass.payment.portone.store-id
  *   sqldpass.payment.portone.api-secret
- *   sqldpass.payment.reviewer-nicknames     (콤마 구분 닉네임)
- *   sqldpass.payment.default-amount         (원, ≥ 1)
- *   sqldpass.payment.default-product-name   (TEST 금지, 비어있지 않을 것)
+ *   sqldpass.payment.reviewer-nicknames        (콤마 구분 닉네임)
+ *   sqldpass.payment.three-day.amount/product-name
+ *   sqldpass.payment.one-month.amount/product-name
+ *   sqldpass.payment.unlimited.amount/product-name
  */
 @Configuration
 @ConfigurationProperties(prefix = "sqldpass.payment")
@@ -22,8 +24,9 @@ public class PaymentProperties {
 
     private PortOne portone = new PortOne();
     private String reviewerNicknames = "";
-    private int defaultAmount = 3000;
-    private String defaultProductName = "문어CBT 프리미엄 모의고사 1회차 잠금 해제";
+    private PlanConfig threeDay = new PlanConfig(3900, "문어CBT 3일 이용권");
+    private PlanConfig oneMonth = new PlanConfig(9900, "문어CBT 한달 이용권");
+    private PlanConfig unlimited = new PlanConfig(29900, "문어CBT 평생 무제한 이용권");
 
     public PortOne getPortone() {
         return portone;
@@ -41,20 +44,37 @@ public class PaymentProperties {
         this.reviewerNicknames = reviewerNicknames == null ? "" : reviewerNicknames;
     }
 
-    public int getDefaultAmount() {
-        return defaultAmount;
+    public PlanConfig getThreeDay() {
+        return threeDay;
     }
 
-    public void setDefaultAmount(int defaultAmount) {
-        this.defaultAmount = defaultAmount;
+    public void setThreeDay(PlanConfig threeDay) {
+        this.threeDay = threeDay;
     }
 
-    public String getDefaultProductName() {
-        return defaultProductName;
+    public PlanConfig getOneMonth() {
+        return oneMonth;
     }
 
-    public void setDefaultProductName(String defaultProductName) {
-        this.defaultProductName = defaultProductName;
+    public void setOneMonth(PlanConfig oneMonth) {
+        this.oneMonth = oneMonth;
+    }
+
+    public PlanConfig getUnlimited() {
+        return unlimited;
+    }
+
+    public void setUnlimited(PlanConfig unlimited) {
+        this.unlimited = unlimited;
+    }
+
+    /** 주어진 plan 의 가격·상품명 설정 반환. */
+    public PlanConfig configFor(SubscriptionPlan plan) {
+        return switch (plan) {
+            case THREE_DAY -> threeDay;
+            case ONE_MONTH -> oneMonth;
+            case UNLIMITED -> unlimited;
+        };
     }
 
     /** 화이트리스트 닉네임 Set. 빈 문자열·공백은 제거. 대소문자 구분 유지. */
@@ -70,6 +90,34 @@ public class PaymentProperties {
             }
         }
         return set;
+    }
+
+    public static class PlanConfig {
+        private int amount;
+        private String productName;
+
+        public PlanConfig() {}
+
+        public PlanConfig(int amount, String productName) {
+            this.amount = amount;
+            this.productName = productName;
+        }
+
+        public int getAmount() {
+            return amount;
+        }
+
+        public void setAmount(int amount) {
+            this.amount = amount;
+        }
+
+        public String getProductName() {
+            return productName;
+        }
+
+        public void setProductName(String productName) {
+            this.productName = productName;
+        }
     }
 
     public static class PortOne {

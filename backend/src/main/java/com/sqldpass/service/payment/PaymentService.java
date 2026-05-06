@@ -8,19 +8,24 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.sqldpass.persistent.member.MemberEntity;
 import com.sqldpass.persistent.member.MemberRepository;
-import com.sqldpass.persistent.mockexam.MockExamEntity;
-import com.sqldpass.persistent.mockexam.MockExamRepository;
-import com.sqldpass.persistent.mockexam.MockExamVisibility;
-import com.sqldpass.persistent.payment.MockExamPurchaseEntity;
-import com.sqldpass.persistent.payment.MockExamPurchaseRepository;
 import com.sqldpass.persistent.payment.PaymentEntity;
 import com.sqldpass.persistent.payment.PaymentRepository;
+import com.sqldpass.persistent.payment.SubscriptionEntity;
+import com.sqldpass.persistent.payment.SubscriptionPlan;
+import com.sqldpass.persistent.payment.SubscriptionRepository;
 import com.sqldpass.service.common.ErrorCode;
 import com.sqldpass.service.common.SqldpassException;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * 4티어 구독 결제 — 단발 결제 → SubscriptionEntity (expiresAt = now + plan.days) 발급.
+ * UNLIMITED 는 expiresAt = null.
+ *
+ * 화이트리스트 닉네임 회원은 결제 단계 통과만 시키고, 권한 판정은 SubscriptionService 가
+ * 가상 UNLIMITED 로 자동 부여 (DB row 안 생김).
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -30,63 +35,44 @@ public class PaymentService {
     private final PaymentProperties properties;
     private final PortOneClient portOneClient;
     private final PaymentRepository paymentRepository;
-    private final MockExamPurchaseRepository purchaseRepository;
-    private final MockExamRepository mockExamRepository;
+    private final SubscriptionRepository subscriptionRepository;
     private final MemberRepository memberRepository;
 
     /**
-     * 결제 직전 — client 가 PortOne 결제창을 띄우기 전에 paymentId 를 사전 등록해
-     * 검증 단계에서 멱등키·금액 위변조 방지에 사용한다.
-     *
-     * @param mockExamId 잠금 해제 대상. PREMIUM 인지 검증.
-     * @return 클라이언트가 PortOne.requestPayment 에 그대로 전달할 paymentId/amount/productName
+     * 결제 직전 — client 가 PortOne 결제창을 띄우기 전에 paymentId 를 사전 등록한다.
      */
     @Transactional
-    public PreparePaymentResult prepare(Long memberId, Long mockExamId) {
+    public PreparePaymentResult prepare(Long memberId, SubscriptionPlan plan) {
         ensureReviewer(memberId);
-
-        if (mockExamId != null) {
-            MockExamEntity exam = mockExamRepository.findById(mockExamId)
-                    .orElseThrow(() -> new SqldpassException(ErrorCode.MOCK_EXAM_NOT_FOUND));
-            if (exam.getVisibility() != MockExamVisibility.PREMIUM) {
-                throw new SqldpassException(ErrorCode.INVALID_INPUT,
-                        "PREMIUM 모의고사만 결제 대상입니다.");
-            }
-            if (purchaseRepository.existsByMemberIdAndMockExamId(memberId, mockExamId)) {
-                throw new SqldpassException(ErrorCode.INVALID_INPUT,
-                        "이미 잠금 해제된 모의고사입니다.");
-            }
+        if (plan == null) {
+            throw new SqldpassException(ErrorCode.INVALID_INPUT, "plan 은 필수입니다.");
         }
 
-        int amount = properties.getDefaultAmount();
+        PaymentProperties.PlanConfig cfg = properties.configFor(plan);
+        int amount = cfg.getAmount();
         if (amount < 1) {
-            // 0원/음수는 카드사 심사 불가 + 보안상 무의미
             throw new SqldpassException(ErrorCode.PAYMENT_VERIFICATION_FAILED,
                     "결제 금액 설정이 올바르지 않습니다.");
         }
-        String productName = properties.getDefaultProductName();
+        String productName = cfg.getProductName();
         if (productName == null || productName.isBlank() || productName.toUpperCase().contains("TEST")) {
-            // 카드사 심사 가이드: 상품명에 'TEST' 금지
             throw new SqldpassException(ErrorCode.PAYMENT_VERIFICATION_FAILED,
                     "결제 상품명 설정이 올바르지 않습니다.");
         }
 
         String paymentId = "sqldpass-" + System.currentTimeMillis() + "-" + memberId;
-        PaymentEntity entity = new PaymentEntity(paymentId, memberId, mockExamId, productName, amount);
+        PaymentEntity entity = new PaymentEntity(paymentId, memberId, null, productName, plan, amount);
         paymentRepository.save(entity);
 
-        log.info("결제 prepare memberId={} mockExamId={} paymentId={} amount={}",
-                memberId, mockExamId, paymentId, amount);
+        log.info("결제 prepare memberId={} plan={} paymentId={} amount={}",
+                memberId, plan, paymentId, amount);
         return new PreparePaymentResult(
-                paymentId,
-                amount,
-                productName,
+                paymentId, amount, productName, plan,
                 properties.getPortone().getStoreId());
     }
 
     /**
-     * 결제 완료 후 — client 가 PortOne 결제창에서 성공 응답을 받으면 호출.
-     * PortOne REST API 로 status/amount 재검증 후 잠금 해제 권리 발급.
+     * 결제 완료 후 — PortOne REST 로 status/amount 재검증 후 SubscriptionEntity 발급.
      */
     @Transactional
     public VerifyPaymentResult verify(Long memberId, String paymentId) {
@@ -96,6 +82,10 @@ public class PaymentService {
                 .orElseThrow(() -> new SqldpassException(ErrorCode.PAYMENT_NOT_FOUND));
         if (!entity.getMemberId().equals(memberId)) {
             throw new SqldpassException(ErrorCode.FORBIDDEN, "본인의 결제만 검증할 수 있습니다.");
+        }
+        if (entity.getPlan() == null) {
+            throw new SqldpassException(ErrorCode.PAYMENT_VERIFICATION_FAILED,
+                    "구독 plan 정보가 없는 결제입니다.");
         }
 
         PortOneClient.PortOnePaymentInfo info = portOneClient.getPayment(paymentId);
@@ -116,23 +106,22 @@ public class PaymentService {
                 : LocalDateTime.now();
         entity.markPaid(info.raw() == null ? null : info.raw().toString(), paidAt);
 
-        if (entity.getMockExamId() != null
-                && !purchaseRepository.existsByMemberIdAndMockExamId(memberId, entity.getMockExamId())) {
-            purchaseRepository.save(new MockExamPurchaseEntity(
-                    memberId, entity.getMockExamId(), entity.getId(), paidAt));
-        }
+        SubscriptionPlan plan = entity.getPlan();
+        LocalDateTime expiresAt = plan.isLifetime() ? null : paidAt.plusDays(plan.getDays());
+        SubscriptionEntity subscription = new SubscriptionEntity(
+                memberId, plan, entity.getId(), paidAt, expiresAt);
+        subscriptionRepository.save(subscription);
 
-        log.info("결제 verify 성공 memberId={} paymentId={} mockExamId={}",
-                memberId, paymentId, entity.getMockExamId());
+        log.info("결제 verify 성공 memberId={} paymentId={} plan={} expiresAt={}",
+                memberId, paymentId, plan, expiresAt);
         return new VerifyPaymentResult(paymentId, entity.getAmount(), entity.getProductName(),
-                entity.getMockExamId());
+                plan, expiresAt);
     }
 
     private void ensureReviewer(Long memberId) {
         var allowed = properties.reviewerNicknameSet();
         if (allowed.isEmpty()) {
             // 정식 오픈 모드 — 모든 로그인 회원 통과.
-            // 환경변수에 화이트리스트를 등록하면 자동으로 심사 모드로 전환된다.
             return;
         }
         MemberEntity member = memberRepository.findById(memberId)
@@ -142,7 +131,9 @@ public class PaymentService {
         }
     }
 
-    public record PreparePaymentResult(String paymentId, int amount, String productName, String storeId) {}
+    public record PreparePaymentResult(String paymentId, int amount, String productName,
+                                       SubscriptionPlan plan, String storeId) {}
 
-    public record VerifyPaymentResult(String paymentId, int amount, String productName, Long mockExamId) {}
+    public record VerifyPaymentResult(String paymentId, int amount, String productName,
+                                      SubscriptionPlan plan, LocalDateTime expiresAt) {}
 }
