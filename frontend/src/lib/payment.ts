@@ -170,7 +170,10 @@ export async function startPayment(opts: { plan: SubscriptionPlan }): Promise<Ve
     orderName: prepared.productName,
     totalAmount: prepared.amount,
     currency: "CURRENCY_KRW",
-    payMethod: "CARD",
+    payMethod: "EASY_PAY",
+    easyPay: {
+      easyPayProvider: "KAKAOPAY",
+    },
   } as unknown as Parameters<typeof PortOne.requestPayment>[0]);
 
   if (response && "code" in response && response.code !== undefined) {

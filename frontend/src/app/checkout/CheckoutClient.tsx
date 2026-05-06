@@ -264,7 +264,7 @@ function CheckoutContent() {
           <svg className="h-3.5 w-3.5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
           </svg>
-          신용·체크카드
+          카카오페이
         </span>
         <span className="inline-flex items-center gap-1.5">
           <svg className="h-3.5 w-3.5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -466,7 +466,7 @@ function ComingSoonView({ showLogin }: { showLogin: boolean }) {
           결제 페이지는 곧 오픈됩니다
         </h1>
         <p className="mt-3 text-sm leading-relaxed text-text-muted">
-          지금은 카드사 심사 단계라 일부 운영자 계정에서만 결제가 가능합니다.
+          지금은 베타 오픈 단계라 일부 운영자 계정에서만 결제가 가능합니다.
           <br />
           정식 오픈 안내는 사이트 공지사항으로 알려드릴게요.
         </p>
