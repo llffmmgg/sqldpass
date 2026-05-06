@@ -88,7 +88,9 @@ public class MockExamPdfService {
         try {
             MessageDigest md = MessageDigest.getInstance("SHA-256");
             // 버전 prefix — PDF 레이아웃이 바뀌면 v 를 올려서 강제 재생성.
-            update(md, "v1");
+            // v2 (2026-05-06): 모의고사 PDF 표지를 보라 Hero 디자인으로 교체.
+            //   표지 CSS 자체는 hash 입력에 안 들어가므로 본 prefix bump 로 강제 무효화.
+            update(md, "v2");
             update(md, String.valueOf(exam.getId()));
             update(md, nullToEmpty(exam.getName()));
             update(md, exam.getExamType() != null ? exam.getExamType().name() : "");
