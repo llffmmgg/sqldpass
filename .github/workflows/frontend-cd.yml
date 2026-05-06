@@ -83,6 +83,8 @@ jobs:
           platforms: linux/arm64
           build-args: |
             NEXT_PUBLIC_GOOGLE_CLIENT_ID=${{ secrets.NEXT_PUBLIC_GOOGLE_CLIENT_ID }}
+            NEXT_PUBLIC_PORTONE_STORE_ID=${{ secrets.NEXT_PUBLIC_PORTONE_STORE_ID }}
+            NEXT_PUBLIC_PORTONE_CHANNEL_KEY=${{ secrets.NEXT_PUBLIC_PORTONE_CHANNEL_KEY }}
           tags: |
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:prod
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
