@@ -318,12 +318,7 @@ function PlanCard({
                 결제 진행 중...
               </span>
             ) : (
-              <span className="inline-flex items-center justify-center gap-2">
-                <span className="rounded-[3px] bg-[#FEE500] px-1.5 py-0.5 text-[10px] font-extrabold leading-none text-[#3C1E1E]">
-                  pay
-                </span>
-                {hasProrate ? "카카오페이로 업그레이드" : `카카오페이로 ${tier.cta}`}
-              </span>
+              hasProrate ? "업그레이드" : tier.cta
             )}
           </button>
         )}
