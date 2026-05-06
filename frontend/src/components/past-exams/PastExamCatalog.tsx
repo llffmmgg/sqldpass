@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
-import { Badge, Card, cn } from "@/components/ui";
+import { Card } from "@/components/ui";
 import {
   CERT_LIST,
   CERT_TOKENS,
@@ -118,83 +118,60 @@ export function PastExamCard({
   best?: { correct: number; total: number };
 }) {
   const cert = certFromExamType(exam.examType);
-  const token = cert ? CERT_TOKENS[cert] : null;
+  const certLabel = cert ? CERT_TOKENS[cert].label : "";
   const isNew = isWithinDays(exam.createdAt, 3);
 
   return (
     <Link href={`/past-exams/${exam.id}`} className="group relative block">
       <Card
         variant="interactive"
-        padding="md"
+        padding="none"
         accent={cert ?? undefined}
-        className="relative overflow-hidden"
+        className="relative flex min-h-[124px] flex-col overflow-hidden rounded-md p-4 shadow-none hover:-translate-y-0 hover:shadow-none"
       >
-        {exam.expertVerified && (
-          <div className="pointer-events-none absolute -left-[38px] top-[18px] z-10 -rotate-45 bg-emerald-600 px-10 py-0.5 text-center text-[9px] font-bold tracking-wide text-white shadow-sm dark:bg-emerald-500">
-            전문가 검수
-          </div>
-        )}
-
         {best && (
           <span
-            className="pointer-events-none absolute right-2 top-1 select-none font-[family-name:var(--font-caveat)] text-3xl font-bold leading-none text-red-500/90 sm:text-4xl"
+            className="pointer-events-none absolute right-4 top-4 select-none font-[family-name:var(--font-caveat)] text-2xl font-bold leading-none text-red-500/90 sm:text-3xl"
             style={{ transform: "rotate(-12deg)" }}
           >
             {best.correct}
-            <span className="text-2xl sm:text-3xl">/</span>
+            <span className="text-xl sm:text-2xl">/</span>
             {best.total}
           </span>
         )}
 
-        <div className="flex flex-wrap items-center gap-1.5 pr-20">
-          {token && (
-            <span
-              className={cn(
-                "inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide",
-                token.tailwind.border,
-                token.tailwind.bgSoft,
-                token.tailwind.text,
-              )}
-            >
-              <span className={cn("h-1.5 w-1.5 rounded-full", token.tailwind.dot)} />
-              {token.label}
+        {/* Eyebrow: "{cert} 기출" · NEW */}
+        <div className="flex items-center gap-2 text-[9px] font-medium text-text-muted">
+          <span>{certLabel} 기출</span>
+          {isNew && (
+            <span className="font-semibold text-emerald-600 dark:text-emerald-400">
+              NEW
             </span>
           )}
-          <Badge
-            variant="soft"
-            size="xs"
-            className="border-primary/40 bg-primary/10 text-primary"
-          >
-            기출
-          </Badge>
         </div>
 
-        {isNew && (
-          /* eslint-disable-next-line @next/next/no-img-element -- 정적 배지 이미지, next/image 의 추가 최적화가 비용 대비 의미 없음 */
-          <img
-            src="/badges/new-logo.webp"
-            alt="NEW"
-            aria-label="새로 추가된 회차"
-            className="pointer-events-none absolute -bottom-1 -right-1 z-10 h-16 w-16 select-none rotate-[8deg] object-contain drop-shadow-[0_4px_10px_rgba(16,185,129,0.35)] transition-transform duration-300 ease-out group-hover:-rotate-3 group-hover:scale-110 sm:h-20 sm:w-20"
-          />
-        )}
-
-        <h3 className="mt-3 text-lg font-semibold leading-tight">
+        {/* Title */}
+        <h3 className="mt-1.5 pr-16 text-base font-bold leading-tight">
           {buildExamTitle(exam)}
         </h3>
 
-        <div className="mt-2 flex items-center gap-2 text-sm text-text-muted">
-          <span>총 {exam.totalQuestions}문항</span>
-          {exam.examDate && (
-            <>
-              <span className="text-border">·</span>
-              <span className="tabular-nums">{formatExamDate(exam.examDate)}</span>
-            </>
-          )}
-        </div>
-
-        <div className="mt-4 inline-flex items-center gap-1.5 text-xs font-semibold text-primary transition-transform group-hover:translate-x-1">
-          문제 보러가기 →
+        {/* Footer: 메타(문항·날짜·검수완료) + 액션 */}
+        <div className="mt-auto flex items-end justify-between gap-3 pt-5 text-[10px] text-text-muted">
+          <span className="tabular-nums">
+            {exam.totalQuestions}문항
+            {exam.examDate && ` · ${formatExamDate(exam.examDate)}`}
+            {exam.expertVerified && (
+              <>
+                {" · "}
+                <span className="font-semibold text-emerald-600 dark:text-emerald-400">
+                  검수 완료
+                </span>
+              </>
+            )}
+          </span>
+          <span className="font-semibold text-text transition-transform group-hover:translate-x-0.5">
+            문제 보러가기 →
+          </span>
         </div>
       </Card>
     </Link>
