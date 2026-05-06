@@ -59,6 +59,45 @@ export async function getCheckoutEligibility(): Promise<CheckoutEligibility> {
 }
 
 /**
+ * PDF 다운로드 가능 여부 — 결제 화이트리스트와 같은 닉네임 가드 사용.
+ * 빈 화이트리스트(정식 오픈) 시 모든 로그인 회원에게 true.
+ */
+export async function getPdfEligibility(): Promise<{ eligible: boolean }> {
+  return authFetch<{ eligible: boolean }>("/api/mock-exams/pdf/eligibility");
+}
+
+/**
+ * 사용자용 PDF 다운로드 — 백엔드 프록시로 받아 즉시 다운로드 트리거.
+ * R2 public URL 노출 X. 한글 파일명(예: SQLD_모의고사_18회.pdf) 자동 적용.
+ */
+export async function downloadMockExamPdfAsUser(id: number): Promise<void> {
+  const token = getToken();
+  const res = await fetch(`/api/mock-exams/${id}/pdf/download`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    throw new Error(text || `PDF 다운로드 실패 (${res.status})`);
+  }
+  const disposition = res.headers.get("Content-Disposition") ?? "";
+  const utf8Match = /filename\*=UTF-8''([^;]+)/i.exec(disposition);
+  const asciiMatch = /filename="?([^";]+)"?/i.exec(disposition);
+  const filename = utf8Match
+    ? decodeURIComponent(utf8Match[1])
+    : asciiMatch?.[1] ?? `mock-exam-${id}.pdf`;
+
+  const blob = await res.blob();
+  const objectUrl = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = objectUrl;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(objectUrl), 100);
+}
+
+/**
  * 결제 한 번 — backend 사전 등록 → PortOne SDK 결제창 → backend 검증.
  * 성공 시 verify 응답을 반환. 사용자 취소·실패 시 throw.
  */

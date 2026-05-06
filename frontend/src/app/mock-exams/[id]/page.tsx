@@ -30,6 +30,7 @@ import {
   type SolveSummaryResponse,
 } from "@/lib/api";
 import MockExamAttemptsView from "@/components/MockExamAttemptsView";
+import MockExamPdfButton from "@/components/MockExamPdfButton";
 import { ExamBadge } from "@/app/mock-exams/MockExamsClient";
 import { GradingDisclaimerModal } from "@/components/GradingDisclaimerModal";
 import AdInfeed from "@/components/AdInfeed";
@@ -237,17 +238,22 @@ function MockExamDetailContent() {
   // 시도 1개 이상 + 아직 새로 풀기 안 시작 + 결과 화면도 아닐 때 → 인터스티셜
   if (attempts.length > 0 && !started && !result) {
     return (
-      <MockExamAttemptsView
-        attempts={attempts}
-        examTitle={exam.name}
-        examType={exam.examType}
-        meta={
-          <span className="text-text-muted tabular-nums">
-            {exam.questions.length}문항
-          </span>
-        }
-        onStartNew={() => setStarted(true)}
-      />
+      <>
+        <div className="mx-auto flex max-w-3xl justify-end px-6 pt-4">
+          <MockExamPdfButton examId={exam.id} />
+        </div>
+        <MockExamAttemptsView
+          attempts={attempts}
+          examTitle={exam.name}
+          examType={exam.examType}
+          meta={
+            <span className="text-text-muted tabular-nums">
+              {exam.questions.length}문항
+            </span>
+          }
+          onStartNew={() => setStarted(true)}
+        />
+      </>
     );
   }
 
@@ -288,8 +294,13 @@ function MockExamDetailContent() {
     return (
       <main className="min-h-screen bg-background text-foreground">
         <Container size="narrow" className="py-16">
-          <ExamBadge examType={exam.examType} />
-          <h1 className="mt-3 text-2xl font-bold">{exam.name} 결과</h1>
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <ExamBadge examType={exam.examType} />
+              <h1 className="mt-3 text-2xl font-bold">{exam.name} 결과</h1>
+            </div>
+            <MockExamPdfButton examId={exam.id} />
+          </div>
 
           {/* 합격/불합격 배너 — 자격증별 공식 기준 적용 */}
           <div
