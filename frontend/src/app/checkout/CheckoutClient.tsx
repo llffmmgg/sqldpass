@@ -134,8 +134,11 @@ function CheckoutContent() {
     );
   }
 
-  if (access === "anonymous" || access === "denied") {
-    return <NotFoundView />;
+  if (access === "anonymous") {
+    return <ComingSoonView showLogin />;
+  }
+  if (access === "denied") {
+    return <ComingSoonView showLogin={false} />;
   }
 
   async function onPay(plan: SubscriptionPlan) {
@@ -290,18 +293,31 @@ function planLabel(plan: SubscriptionPlan): string {
   }
 }
 
-function NotFoundView() {
+function ComingSoonView({ showLogin }: { showLogin: boolean }) {
   return (
     <Card padding="lg" className="mx-auto max-w-md text-center">
-      <p className="text-6xl font-bold text-text-subtle">404</p>
-      <h1 className="mt-3 text-xl font-semibold tracking-tight">페이지를 찾을 수 없습니다</h1>
-      <p className="mt-2 text-sm text-text-muted">요청하신 주소가 잘못되었거나 삭제되었습니다.</p>
-      <Link
-        href="/"
-        className="mt-5 inline-block rounded-lg border border-border bg-surface px-4 py-2 text-sm text-text transition-colors hover:border-primary/40"
-      >
-        홈으로 →
-      </Link>
+      <Badge variant="soft" tone="info" size="sm">
+        준비 중
+      </Badge>
+      <h1 className="mt-3 text-2xl font-bold tracking-tight">
+        결제 페이지는 곧 오픈됩니다
+      </h1>
+      <p className="mt-3 text-sm leading-relaxed text-text-muted">
+        지금은 카드사 심사 단계라 일부 운영자 계정에서만 결제가 가능합니다.
+        <br />
+        정식 오픈 안내는 사이트 공지사항으로 알려드릴게요.
+      </p>
+      <div className="mt-6 flex flex-col items-center gap-2 text-sm">
+        {showLogin && (
+          <p className="text-xs text-text-subtle">로그인이 필요할 수도 있습니다.</p>
+        )}
+        <Link
+          href="/mock-exams"
+          className="rounded-lg border border-border bg-surface px-4 py-2 text-text transition-colors hover:border-primary/40"
+        >
+          모의고사로 →
+        </Link>
+      </div>
     </Card>
   );
 }
