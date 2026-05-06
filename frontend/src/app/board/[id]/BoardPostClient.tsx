@@ -12,6 +12,7 @@ const PostMarkdown = dynamic(() => import("@/components/PostMarkdown"), {
   ),
 });
 import { Button } from "@/components/ui";
+import { CERT_TOKENS, certFromExamType, type CertKey } from "@/lib/cert-tokens";
 import {
   addComment,
   deleteComment,
@@ -133,9 +134,38 @@ export default function BoardPostClient({ postId, initial }: Props) {
   }
 
   const isAuthor = !!myNickname && myNickname === post.authorNickname;
+  const cert: CertKey | null = certFromExamType(post.cert);
+  const token = cert ? CERT_TOKENS[cert] : null;
 
   return (
     <>
+      <div className="flex flex-wrap items-center gap-2 text-xs">
+        {token && (
+          <span
+            className={`rounded-md border px-2 py-0.5 text-[11px] font-bold ${token.tailwind.border} ${token.tailwind.bgSoft} ${token.tailwind.text}`}
+          >
+            {token.label}
+          </span>
+        )}
+        {post.status === "PENDING" && (
+          <span className="rounded-md border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[11px] font-bold text-amber-400">
+            승인 대기 중
+          </span>
+        )}
+      </div>
+
+      <h1 className="mt-3 text-2xl font-bold tracking-tight sm:text-3xl">
+        {post.title}
+      </h1>
+      <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-text-muted tabular-nums">
+        <span>{post.authorNickname}</span>
+        <span aria-hidden>·</span>
+        <span>{formatRelativeDate(post.createdAt)}</span>
+        <span aria-hidden>·</span>
+        <span>조회 {post.viewCount.toLocaleString()}</span>
+      </div>
+      <hr className="my-6 border-border" />
+
       <PostMarkdown content={post.content} />
 
       {isAuthor && (

@@ -104,16 +104,15 @@ public class PostService {
             }
         }
 
-        // 조회수 증가 — 본인 조회는 카운트 X
-        // DB 는 native UPDATE 로 atomic +1 (lost update 방지),
-        // 영속성 컨텍스트의 entity 는 incrementView() 로 in-memory 동기화해 응답값에 반영.
+        // 조회수 증가는 DB atomic update 로만 영속화하고, 응답값만 별도로 보정한다.
+        long responseViewCount = p.getViewCount();
         if (viewerMemberId == null || !viewerMemberId.equals(p.getMember().getId())) {
             postRepository.incrementViewCount(id);
-            p.incrementView();
+            responseViewCount++;
         }
 
         List<PostCommentEntity> comments = commentRepository.findByPostIdOrderByCreatedAtAsc(id);
-        return PostDetailResponse.from(p, comments);
+        return PostDetailResponse.from(p, comments, responseViewCount);
     }
 
     // ========== 사용자 — 제출/수정/삭제 ==========

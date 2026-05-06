@@ -14,7 +14,7 @@ import com.sqldpass.persistent.mockexam.ExamType;
 
 public interface PostRepository extends JpaRepository<PostEntity, Long> {
 
-    /** 게시판 목록 — 상태/카테고리/자격증 필터. cert 가 null 이면 전체 자격증. */
+    /** 게시글 목록 공개 조회. status/category/cert 필터를 적용한다. */
     @Query("SELECT p FROM PostEntity p JOIN FETCH p.member " +
             "WHERE p.status = :status AND p.category = :category " +
             "AND (:cert IS NULL OR p.certKey = :cert) " +
@@ -24,32 +24,27 @@ public interface PostRepository extends JpaRepository<PostEntity, Long> {
                                 @Param("cert") ExamType cert,
                                 Pageable pageable);
 
-    /** 어드민 승인 대기 목록 (status=PENDING, 최신 제출순). */
+    /** 어드민 승인 대기 목록. */
     @Query("SELECT p FROM PostEntity p JOIN FETCH p.member " +
             "WHERE p.status = :status " +
             "ORDER BY p.createdAt DESC")
     List<PostEntity> findByStatusOrderByCreatedAtDesc(@Param("status") PostStatus status);
 
-    /** 어드민 — 모든 status 의 게시글 (최신순). */
+    /** 어드민 전체 게시글 목록. */
     @Query("SELECT p FROM PostEntity p JOIN FETCH p.member " +
             "ORDER BY p.createdAt DESC")
     List<PostEntity> findAllForAdmin();
 
-    /** 상세 — member fetch. comments 는 별도 쿼리로 가져오는 게 안전 (페이지네이션 가능성). */
+    /** 상세 조회용 member fetch. comments 는 별도 쿼리로 가져온다. */
     @Query("SELECT p FROM PostEntity p JOIN FETCH p.member WHERE p.id = :id")
     Optional<PostEntity> findByIdWithMember(@Param("id") Long id);
 
-    /**
-     * 조회수 +1 — JPQL native UPDATE.
-     * dirty checking 대신 사용해 lost update 를 방지하고 영속성 컨텍스트 부담을 줄인다.
-     * 호출 시 영속성 컨텍스트의 entity 와 동기화되지 않으므로, 응답에 갱신값을 반영하려면
-     * 호출 측에서 entity.incrementView() 도 같이 호출해야 한다.
-     */
+    /** 조회수 +1. managed entity 를 dirty 로 만들지 않고 응답값만 별도로 보정한다. */
     @Modifying
     @Query("UPDATE PostEntity p SET p.viewCount = p.viewCount + 1 WHERE p.id = :id")
     int incrementViewCount(@Param("id") Long id);
 
-    /** sitemap 용 — PUBLISHED 게시글 ID + updatedAt (lastmod). */
+    /** sitemap 용 PUBLISHED 게시글 ID + updatedAt(lastmod). */
     @Query("SELECT p.id AS id, p.updatedAt AS updatedAt FROM PostEntity p " +
             "WHERE p.status = com.sqldpass.persistent.post.PostStatus.PUBLISHED " +
             "ORDER BY p.updatedAt DESC")

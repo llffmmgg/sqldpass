@@ -83,6 +83,10 @@ public final class PostDtos {
             List<CommentResponse> comments
     ) {
         public static PostDetailResponse from(PostEntity p, List<PostCommentEntity> comments) {
+            return from(p, comments, p.getViewCount());
+        }
+
+        public static PostDetailResponse from(PostEntity p, List<PostCommentEntity> comments, long viewCount) {
             return new PostDetailResponse(
                     p.getId(),
                     p.getCategory(),
@@ -90,7 +94,7 @@ public final class PostDtos {
                     p.getCertKey(),
                     p.getTitle(),
                     p.getContent(),
-                    p.getViewCount(),
+                    viewCount,
                     p.getMember().getNickname(),
                     p.getMember().getId(),
                     p.getCreatedAt(),

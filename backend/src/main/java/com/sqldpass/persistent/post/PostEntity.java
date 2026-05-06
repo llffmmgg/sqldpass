@@ -84,10 +84,6 @@ public class PostEntity extends BaseTimeEntity {
         this.status = PostStatus.PUBLISHED;
     }
 
-    public void incrementView() {
-        this.viewCount++;
-    }
-
     public void edit(String title, String content) {
         this.title = title;
         this.content = content;

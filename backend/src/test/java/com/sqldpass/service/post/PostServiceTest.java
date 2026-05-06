@@ -64,6 +64,7 @@ class PostServiceTest {
 
         then(postRepository).should().incrementViewCount(100L);
         assertThat(response.viewCount()).isEqualTo(1L);
+        assertThat(post.getViewCount()).isEqualTo(0L);
     }
 
     @Test
