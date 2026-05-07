@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 
 import PastExamRunnerClient from "@/components/past-exams/PastExamRunnerClient";
 import { getPublicPastExam } from "@/lib/publicApi";
-import { CERT_DISPLAY, buildRoundTitle } from "./layout";
+import { CERT_DISPLAY, buildRoundTitle } from "@/lib/pastExamRoundTitle";
 
 export default async function PastExamDetailPage({
   params,

@@ -1,25 +1,9 @@
 import type { Metadata } from "next";
 
 import { getPublicPastExam, type PublicPastExamDetail } from "@/lib/publicApi";
+import { CERT_DISPLAY, buildRoundTitle } from "@/lib/pastExamRoundTitle";
 
 const SITE_URL = "https://www.sqldpass.com";
-
-export const CERT_DISPLAY: Record<string, string> = {
-  SQLD: "SQLD",
-  ENGINEER_PRACTICAL: "정보처리기사 실기",
-  ENGINEER_WRITTEN: "정보처리기사 필기",
-  COMPUTER_LITERACY_1: "컴퓨터활용능력 1급",
-  COMPUTER_LITERACY_2: "컴퓨터활용능력 2급",
-  ADSP: "ADsP",
-};
-
-export function buildRoundTitle(exam: PublicPastExamDetail): string {
-  const cert = CERT_DISPLAY[exam.examType] ?? exam.name;
-  const parts: string[] = [cert];
-  if (exam.examYear) parts.push(`${exam.examYear}년`);
-  if (exam.examRound) parts.push(`${exam.examRound}회`);
-  return parts.join(" ");
-}
 
 export async function generateMetadata({
   params,
