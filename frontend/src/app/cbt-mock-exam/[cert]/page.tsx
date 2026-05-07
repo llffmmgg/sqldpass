@@ -11,6 +11,29 @@ import {
 } from "@/lib/cert-tokens";
 import { CBT_CERT_INFO } from "@/lib/cbtCertInfo";
 import { getPostsByCategory } from "@/lib/blog";
+import { getPublicPastExamsByCert } from "@/lib/publicApi";
+
+function formatLastUpdated(iso: string | null | undefined): string | null {
+  if (!iso) return null;
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return null;
+  return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, "0")}.${String(d.getDate()).padStart(2, "0")}`;
+}
+
+async function loadLastUpdatedForCert(slug: string): Promise<string | null> {
+  // 자격증별 회차 중 가장 최근 createdAt 을 "마지막 업데이트" 로 사용.
+  // 회차가 없거나 백엔드 호출 실패 시 null 반환 → 박스에서 "최근 회차 추가 후 표시" 로 대체.
+  try {
+    const exams = await getPublicPastExamsByCert(slug);
+    const latest = exams
+      .map((e) => e.createdAt)
+      .filter((v): v is string => Boolean(v))
+      .sort((a, b) => new Date(b).getTime() - new Date(a).getTime())[0];
+    return formatLastUpdated(latest ?? null);
+  } catch {
+    return null;
+  }
+}
 
 const SITE_URL = "https://www.sqldpass.com";
 
@@ -67,6 +90,7 @@ export default async function CertCbtLandingPage({
   const canonical = `${SITE_URL}/cbt-mock-exam/${slug}`;
 
   const relatedPosts = getPostsByCategory(token.blogCategory).slice(0, 3);
+  const lastUpdated = await loadLastUpdatedForCert(slug);
 
   const breadcrumbLd = {
     "@context": "https://schema.org",
@@ -239,6 +263,57 @@ export default async function CertCbtLandingPage({
                 </p>
               </div>
             ))}
+          </div>
+        </Container>
+      </section>
+
+      {/* 문제 검수 기준 — E-E-A-T 신뢰 시그널 */}
+      <section className="border-b border-border">
+        <Container size="narrow" className="py-16">
+          <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">
+            문제 검수 기준
+          </h2>
+          <p className="mt-3 text-sm text-text-muted">
+            신뢰할 수 있는 콘텐츠를 위해 운영자가 직접 검수합니다.
+          </p>
+          <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="rounded-xl border border-border bg-surface p-5">
+              <div className="text-xs font-semibold uppercase tracking-wider text-primary">
+                출처
+              </div>
+              <p className="mt-2 text-sm leading-relaxed text-text">
+                기출 복원 시드를 기반으로 문제를 생성한 뒤, 운영자가 정답·해설을 직접 검토합니다.
+              </p>
+            </div>
+            <div className="rounded-xl border border-border bg-surface p-5">
+              <div className="text-xs font-semibold uppercase tracking-wider text-primary">
+                신뢰성
+              </div>
+              <p className="mt-2 text-sm leading-relaxed text-text">
+                기출 회차는 실제 시험 문항을 기반으로 복원되며, 변형 문제는 동일 개념·동일 난이도로 재구성됩니다.
+              </p>
+            </div>
+            <div className="rounded-xl border border-border bg-surface p-5">
+              <div className="text-xs font-semibold uppercase tracking-wider text-primary">
+                오류 신고
+              </div>
+              <p className="mt-2 text-sm leading-relaxed text-text">
+                페이지 하단 피드백으로 보내주시면 확인 후 빠르게 반영합니다.
+              </p>
+            </div>
+            <div className="rounded-xl border border-border bg-surface p-5">
+              <div className="text-xs font-semibold uppercase tracking-wider text-primary">
+                마지막 업데이트
+              </div>
+              <p className="mt-2 text-sm leading-relaxed text-text">
+                {lastUpdated ?? "최신 회차 추가 후 표시됩니다"}
+                {lastUpdated && (
+                  <span className="ml-1 text-xs text-text-muted">
+                    (자격증 최신 회차 추가일)
+                  </span>
+                )}
+              </p>
+            </div>
           </div>
         </Container>
       </section>
