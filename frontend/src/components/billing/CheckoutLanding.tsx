@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+
 import {
   type ActiveSubscription,
   type PreviewResponse,
@@ -156,7 +158,25 @@ export default function CheckoutLanding({
       </div>
 
       <p className="mt-6 text-center text-[11px] text-text-subtle">
-        결제 시 이용약관 및 환불 정책에 동의하는 것으로 간주됩니다.
+        결제 시{" "}
+        <Link
+          href="/terms"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="underline transition-colors hover:text-text"
+        >
+          이용약관
+        </Link>
+        {" "}및{" "}
+        <Link
+          href="/refund"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="underline transition-colors hover:text-text"
+        >
+          환불 정책
+        </Link>
+        에 동의하는 것으로 간주됩니다.
       </p>
     </div>
   );
