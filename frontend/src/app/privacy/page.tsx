@@ -114,15 +114,36 @@ export default function PrivacyPage() {
         </p>
       </Section>
 
-      <Section title="6. 연락처">
+      <Section title="6. 개인정보처리책임자">
+        <p>
+          사이트는 이용자의 개인정보를 보호하고 관련 문의·요청을 처리하기 위해 다음과 같이
+          개인정보처리책임자를 지정합니다.
+        </p>
+        <ul className="mt-2 list-disc pl-5">
+          <li>책임자: 정희훈 (대표)</li>
+          <li>
+            연락처:{" "}
+            <a className="underline" href="mailto:ssomker.dev@gmail.com">
+              ssomker.dev@gmail.com
+            </a>
+          </li>
+          <li>소속: 에스큐엘디패스 (사업자등록번호 443-41-01548)</li>
+        </ul>
+        <p className="mt-2">
+          개인정보 열람·수정·삭제·처리정지 요청은 위 연락처로 보내주시면 지체 없이 처리합니다.
+        </p>
+      </Section>
+
+      <Section title="7. 연락처">
         <p>
           문의는 사이트 내 <Link href="/profile" className="text-primary underline">피드백</Link>{" "}
           기능을 통해 보내주시면 가장 빠르게 확인됩니다.
         </p>
       </Section>
 
-      <Section title="7. 개정 이력">
+      <Section title="8. 개정 이력">
         <ul className="list-disc pl-5">
+          <li>2026-05-07 — 개인정보처리책임자 항목 추가</li>
           <li>2026-05-06 — 결제 정보 수집·PortOne 연동·보관 기간 조항 추가</li>
           <li>2026-04-09 — 최초 작성</li>
         </ul>
