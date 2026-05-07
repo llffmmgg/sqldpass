@@ -134,16 +134,46 @@ export default function PrivacyPage() {
         </p>
       </Section>
 
-      <Section title="7. 연락처">
+      <Section title="7. 개인정보 처리 위탁">
+        <p>
+          사이트는 원활한 결제 서비스 제공을 위해 「개인정보 보호법」 제26조에 따라
+          아래와 같이 개인정보 처리 업무를 위탁하고 있습니다.
+        </p>
+        <div className="mt-3 overflow-hidden rounded-md border border-border">
+          <table className="w-full text-sm">
+            <thead className="bg-bg-elevated text-left text-xs font-medium text-muted">
+              <tr>
+                <th className="px-3 py-2">수탁업체</th>
+                <th className="px-3 py-2">위탁 업무 내용</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border">
+              <tr>
+                <td className="px-3 py-2 font-medium text-foreground">
+                  주식회사 코리아포트원 (PortOne)
+                </td>
+                <td className="px-3 py-2">결제 연동 서비스 제공</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p className="mt-2">
+          위탁 계약 시 「개인정보 보호법」에 따라 개인정보가 안전하게 관리될 수 있도록
+          기술적·관리적 보호조치, 재위탁 제한, 수탁업무 종료 시 개인정보의 파기 등을
+          규정하고 있습니다.
+        </p>
+      </Section>
+
+      <Section title="8. 연락처">
         <p>
           문의는 사이트 내 <Link href="/profile" className="text-primary underline">피드백</Link>{" "}
           기능을 통해 보내주시면 가장 빠르게 확인됩니다.
         </p>
       </Section>
 
-      <Section title="8. 개정 이력">
+      <Section title="9. 개정 이력">
         <ul className="list-disc pl-5">
-          <li>2026-05-07 — 개인정보처리책임자 항목 추가</li>
+          <li>2026-05-07 — 개인정보처리책임자·개인정보 처리 위탁(코리아포트원) 항목 추가</li>
           <li>2026-05-06 — 결제 정보 수집·PortOne 연동·보관 기간 조항 추가</li>
           <li>2026-04-09 — 최초 작성</li>
         </ul>
