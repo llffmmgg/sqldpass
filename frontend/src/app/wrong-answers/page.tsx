@@ -9,7 +9,6 @@ import {
   getQuestionDetail,
   retryWrongAnswer,
   getBookmarks,
-  removeBookmark,
   type WrongAnswerResponse,
   type WrongAnswerStatsResponse,
   type Subject,
@@ -20,6 +19,7 @@ import {
 import { formatRelativeDate } from "@/lib/format";
 import { parseQuestion } from "@/lib/parseQuestion";
 import QuestionContent from "@/components/QuestionContent";
+import BookmarkButton from "@/components/BookmarkButton";
 import AuthGuard from "@/components/AuthGuard";
 import Spinner from "@/components/Spinner";
 import AdResponsive from "@/components/AdResponsive";
@@ -72,7 +72,6 @@ function WrongAnswersPageContent() {
   const [stats, setStats] = useState<WrongAnswerStatsResponse[]>([]);
   const [wrongAnswers, setWrongAnswers] = useState<WrongAnswerResponse[]>([]);
   const [bookmarks, setBookmarks] = useState<BookmarkResponse[]>([]);
-  const [bookmarksLoaded, setBookmarksLoaded] = useState(false);
   const [rawSubjects, setRawSubjects] = useState<Subject[]>([]);
   const initialSubject = (() => {
     const v = searchParams?.get("subjectId");
@@ -102,14 +101,6 @@ function WrongAnswersPageContent() {
     else setSortMode("priority");
   }
 
-  // 즐겨찾기 탭 첫 진입 시 지연 로드
-  useEffect(() => {
-    if (topTab !== "bookmark" || bookmarksLoaded) return;
-    getBookmarks()
-      .then(setBookmarks)
-      .finally(() => setBookmarksLoaded(true));
-  }, [topTab, bookmarksLoaded]);
-
   function reloadList() {
     return Promise.all([
       getWrongAnswers(initialSubject ?? undefined),
@@ -120,16 +111,19 @@ function WrongAnswersPageContent() {
     });
   }
 
+  // 즐겨찾기는 오답 탭 카드의 별표 상태 표시에도 필요하므로 마운트 시 함께 로드.
   useEffect(() => {
     Promise.all([
       getWrongAnswerStats(),
       getWrongAnswers(initialSubject ?? undefined),
       getSubjects(),
+      getBookmarks(),
     ])
-      .then(([statsData, wrongData, subjectsData]) => {
+      .then(([statsData, wrongData, subjectsData, bookmarksData]) => {
         setStats(statsData);
         setWrongAnswers(wrongData);
         setRawSubjects(subjectsData);
+        setBookmarks(bookmarksData);
       })
       .finally(() => setLoading(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -215,14 +209,33 @@ function WrongAnswersPageContent() {
     }
   }
 
-  /** 즐겨찾기 탭에서만 호출. 서버 해제 + 로컬 리스트에서 즉시 제거. */
-  async function handleRemoveBookmark(questionId: number) {
-    try {
-      await removeBookmark(questionId);
+  /**
+   * BookmarkButton의 토글 결과 동기화.
+   * - 추가(next=true): bookmarks 리스트에 누락된 항목 보강 (오답 탭에서 별표 추가 케이스).
+   * - 해제(next=false): 리스트에서 제거. 즐겨찾기 탭에서 해제했고 그 카드가 펼쳐져 있으면 접음.
+   */
+  function handleBookmarkChange(questionId: number, next: boolean) {
+    if (next) {
+      setBookmarks((prev) => {
+        if (prev.some((b) => b.questionId === questionId)) return prev;
+        const wa = wrongAnswers.find((w) => w.questionId === questionId);
+        if (!wa) return prev;
+        return [
+          {
+            questionId: wa.questionId,
+            questionContent: wa.questionContent,
+            subjectId: wa.subjectId,
+            subjectName: wa.subjectName,
+            createdAt: new Date().toISOString(),
+          },
+          ...prev,
+        ];
+      });
+    } else {
       setBookmarks((prev) => prev.filter((b) => b.questionId !== questionId));
-      setExpandedId(null);
-    } catch (e) {
-      console.error("remove bookmark failed", e);
+      if (topTab === "bookmark" && expandedId === questionId) {
+        setExpandedId(null);
+      }
     }
   }
 
@@ -232,6 +245,12 @@ function WrongAnswersPageContent() {
       [questionId]: { submitting: false },
     }));
   }
+
+  // 카드별 즐겨찾기 상태 빠른 조회용. 마운트 시 1회 로드된 bookmarks 기반.
+  const bookmarkSet = useMemo(
+    () => new Set(bookmarks.map((b) => b.questionId)),
+    [bookmarks],
+  );
 
   /**
    * 탭별 데이터 소스를 WrongAnswerResponse 형태로 통일해서 하위 로직(그룹핑·렌더) 재사용.
@@ -372,20 +391,14 @@ function WrongAnswersPageContent() {
             </div>
           </div>
 
-          {/* 즐겨찾기 해제 (즐겨찾기 탭만) */}
-          {isBookmark && (
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleRemoveBookmark(wa.questionId);
-              }}
-              className="shrink-0 rounded-md border border-border px-2 py-1 text-[10px] text-muted transition-colors hover:border-red-500/40 hover:text-red-400"
-              title="즐겨찾기 해제"
-            >
-              해제
-            </button>
-          )}
+          {/* 즐겨찾기 토글 — 두 탭 공용. 카드 클릭(expand)에 영향 없도록 stopPropagation. */}
+          <div className="shrink-0" onClick={(e) => e.stopPropagation()}>
+            <BookmarkButton
+              questionId={wa.questionId}
+              initialBookmarked={bookmarkSet.has(wa.questionId)}
+              onChange={(next) => handleBookmarkChange(wa.questionId, next)}
+            />
+          </div>
 
           {/* 화살표 */}
           <svg
@@ -515,7 +528,7 @@ function WrongAnswersPageContent() {
               <path d="M12 2.5l2.9 5.88 6.48.94-4.69 4.57 1.11 6.46L12 17.3l-5.8 3.05 1.11-6.46L2.62 9.32l6.48-.94L12 2.5z" />
             </svg>
             즐겨찾기
-            {bookmarksLoaded && bookmarks.length > 0 && (
+            {!loading && bookmarks.length > 0 && (
               <span className="ml-0.5 text-xs tabular-nums opacity-70">{bookmarks.length}</span>
             )}
           </button>
@@ -565,7 +578,7 @@ function WrongAnswersPageContent() {
 
         {/* 리스트 */}
         <section className="mt-8">
-          {(loading || (topTab === "bookmark" && !bookmarksLoaded)) && <Spinner />}
+          {loading && <Spinner />}
 
           {!loading && topTab === "wrong" && sortedAnswers.length === 0 && (
             <MascotEmpty
@@ -584,7 +597,7 @@ function WrongAnswersPageContent() {
             />
           )}
 
-          {topTab === "bookmark" && bookmarksLoaded && sortedAnswers.length === 0 && (
+          {!loading && topTab === "bookmark" && sortedAnswers.length === 0 && (
             <MascotEmpty
               pose="guide"
               title="아직 즐겨찾기한 문제가 없어요"

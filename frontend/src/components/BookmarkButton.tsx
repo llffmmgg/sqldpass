@@ -9,6 +9,8 @@ interface Props {
   size?: "sm" | "md";
   /** 상위에서 이미 상태를 알고 있으면 초기 fetch 건너뜀 */
   initialBookmarked?: boolean;
+  /** 토글이 서버에 반영된 직후 호출. 부모 리스트 동기화용. */
+  onChange?: (next: boolean) => void;
 }
 
 /**
@@ -20,6 +22,7 @@ export default function BookmarkButton({
   questionId,
   size = "sm",
   initialBookmarked,
+  onChange,
 }: Props) {
   const [bookmarked, setBookmarked] = useState<boolean | null>(
     initialBookmarked ?? null,
@@ -64,6 +67,7 @@ export default function BookmarkButton({
       } else {
         await removeBookmark(questionId);
       }
+      onChange?.(next);
     } catch (e) {
       setBookmarked(!next);
       console.error("bookmark toggle failed", e);
