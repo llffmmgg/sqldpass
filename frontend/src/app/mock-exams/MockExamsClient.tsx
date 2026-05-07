@@ -112,10 +112,10 @@ function MockExamsContent() {
               <span className="text-xs opacity-60 tabular-nums">{count}</span>
               {newCount > 0 && (
                 <span
-                  className="inline-flex items-center rounded-full bg-emerald-500 px-1.5 text-[9px] font-bold leading-4 text-white"
+                  className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400"
                   aria-label={`새로운 회차 ${newCount}개`}
                 >
-                  +{newCount}
+                  NEW
                 </span>
               )}
             </Link>

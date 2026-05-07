@@ -29,8 +29,10 @@ const NAV_LINKS: NavItem[] = [
   { kind: "link", href: "/blog", label: "블로그" },
 ];
 
-// "이 드롭다운에 새 콘텐츠 신호를 붙일지" — 모의고사 응답을 공통 소스로 쓰므로 둘 다 ON
-const DROPDOWN_NEW_SIGNAL = new Set<string>(["/mock-exams", "/past-exams"]);
+// "이 드롭다운에 NEW 신호를 붙일지" — 모의고사 신호만 신뢰. /past-exams 는
+// 모의고사 추가로 잘못 NEW 가 뜨던 이슈가 있어 제외 (기출 카탈로그 페이지의
+// 카드별 NEW 가 진짜 신호를 담당).
+const DROPDOWN_NEW_SIGNAL = new Set<string>(["/mock-exams"]);
 
 export default function NavBar() {
   const pathname = usePathname();
@@ -480,7 +482,7 @@ function NavDropdown({
                     <p className="flex items-center gap-1.5 text-sm font-semibold text-text">
                       {cert.label}
                       {certHasNew && (
-                        <span className="inline-flex items-center rounded-full bg-emerald-500 px-1.5 text-[9px] font-bold leading-4 text-white">
+                        <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">
                           NEW
                         </span>
                       )}
@@ -566,7 +568,7 @@ function MobileNavAccordion({
                   <span className={`h-1.5 w-1.5 rounded-full ${cert.tailwind.dot}`} />
                   <span>{cert.label}</span>
                   {certHasNew && (
-                    <span className="ml-auto inline-flex items-center rounded-full bg-emerald-500 px-1.5 text-[9px] font-bold leading-4 text-white">
+                    <span className="ml-auto text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">
                       NEW
                     </span>
                   )}
