@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 
@@ -33,6 +34,7 @@ import MockExamAttemptsView from "@/components/MockExamAttemptsView";
 import MockExamPdfButton from "@/components/MockExamPdfButton";
 import PassPlusLockNotice from "@/components/billing/PassPlusLockNotice";
 import { ExamBadge } from "@/app/mock-exams/MockExamsClient";
+import { CERT_TOKENS, certFromExamType } from "@/lib/cert-tokens";
 import { GradingDisclaimerModal } from "@/components/GradingDisclaimerModal";
 import AdInfeed from "@/components/AdInfeed";
 import AdDisplay from "@/components/AdDisplay";
@@ -670,6 +672,23 @@ function MockExamDetailContent() {
       </div>
 
       </div>
+
+      {/* 시험 준비 더 보기 — 자격증 카테고리 블로그로 cross-link (SEO 내부 권위 + 학습 후속) */}
+      {exam && (() => {
+        const cert = certFromExamType(exam.examType);
+        const blogCategory = cert ? CERT_TOKENS[cert].blogCategory : null;
+        if (!blogCategory) return null;
+        return (
+          <div className="mt-12 border-t border-border pt-6 text-center text-sm text-text-muted">
+            <Link
+              href={`/blog/category/${encodeURIComponent(blogCategory)}`}
+              className="inline-flex items-center gap-1 underline transition-colors hover:text-text"
+            >
+              {blogCategory} 시험 준비 글 더 보기 →
+            </Link>
+          </div>
+        );
+      })()}
       </Container>
     </main>
   );

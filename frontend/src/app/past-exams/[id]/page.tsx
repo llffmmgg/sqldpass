@@ -1,8 +1,10 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import PastExamRunnerClient from "@/components/past-exams/PastExamRunnerClient";
 import { getPublicPastExam } from "@/lib/publicApi";
 import { CERT_DISPLAY, buildRoundTitle } from "@/lib/pastExamRoundTitle";
+import { CERT_TOKENS, certFromExamType } from "@/lib/cert-tokens";
 
 export default async function PastExamDetailPage({
   params,
@@ -23,6 +25,8 @@ export default async function PastExamDetailPage({
 
   const certLabel = CERT_DISPLAY[exam.examType] ?? exam.name;
   const roundTitle = buildRoundTitle(exam);
+  const cert = certFromExamType(exam.examType);
+  const blogCategory = cert ? CERT_TOKENS[cert].blogCategory : null;
 
   return (
     <>
@@ -37,6 +41,18 @@ export default async function PastExamDetailPage({
         </p>
       </div>
       <PastExamRunnerClient initialExam={exam} />
+
+      {/* 시험 준비 더 보기 — 자격증 카테고리 블로그로 cross-link (SEO 내부 권위 + 학습 후속) */}
+      {blogCategory && (
+        <div className="mx-auto mt-12 max-w-4xl border-t border-border px-4 pt-6 pb-12 text-center text-sm text-text-muted">
+          <Link
+            href={`/blog/category/${encodeURIComponent(blogCategory)}`}
+            className="inline-flex items-center gap-1 underline transition-colors hover:text-text"
+          >
+            {blogCategory} 시험 준비 글 더 보기 →
+          </Link>
+        </div>
+      )}
     </>
   );
 }

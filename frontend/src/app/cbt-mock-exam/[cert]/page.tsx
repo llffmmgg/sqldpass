@@ -336,6 +336,69 @@ export default async function CertCbtLandingPage({
         </Container>
       </section>
 
+      {/* 무료 vs 프리미엄 — 결제 페이지로 가는 SEO 친화 비교 표 */}
+      <section className="border-b border-border">
+        <Container size="narrow" className="py-16">
+          <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">
+            무료 vs 프리미엄
+          </h2>
+          <p className="mt-3 text-sm text-text-muted">
+            대부분 기능은 무료로 이용 가능합니다. 고난이도 회차와 부가 도구만 프리미엄.
+          </p>
+          <div className="mt-6 overflow-hidden rounded-xl border border-border bg-surface">
+            <table className="w-full text-sm">
+              <thead className="bg-bg-elevated text-left text-xs font-medium uppercase tracking-wider text-text-muted">
+                <tr>
+                  <th className="px-4 py-3">기능</th>
+                  <th className="px-4 py-3 text-center">Free</th>
+                  <th className="px-4 py-3 text-center">Premium</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                <tr>
+                  <td className="px-4 py-3 font-medium">기본 회차 풀이 (쉬움·보통)</td>
+                  <td className="px-4 py-3 text-center text-emerald-500">✓</td>
+                  <td className="px-4 py-3 text-center text-emerald-500">✓</td>
+                </tr>
+                <tr>
+                  <td className="px-4 py-3 font-medium">오답 노트 자동 저장</td>
+                  <td className="px-4 py-3 text-center text-emerald-500">✓</td>
+                  <td className="px-4 py-3 text-center text-emerald-500">✓</td>
+                </tr>
+                <tr>
+                  <td className="px-4 py-3 font-medium">대시보드·과목별 통계</td>
+                  <td className="px-4 py-3 text-center text-emerald-500">✓</td>
+                  <td className="px-4 py-3 text-center text-emerald-500">✓</td>
+                </tr>
+                <tr>
+                  <td className="px-4 py-3 font-medium">PASS+ 고난이도 회차</td>
+                  <td className="px-4 py-3 text-center text-text-subtle">–</td>
+                  <td className="px-4 py-3 text-center text-emerald-500">✓</td>
+                </tr>
+                <tr>
+                  <td className="px-4 py-3 font-medium">광고 제거</td>
+                  <td className="px-4 py-3 text-center text-text-subtle">–</td>
+                  <td className="px-4 py-3 text-center text-emerald-500">✓</td>
+                </tr>
+                <tr>
+                  <td className="px-4 py-3 font-medium">PDF 다운로드</td>
+                  <td className="px-4 py-3 text-center text-text-subtle">–</td>
+                  <td className="px-4 py-3 text-center text-xs text-text-muted">Lifetime 한정</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div className="mt-4 text-right text-sm">
+            <Link
+              href="/checkout"
+              className="inline-flex items-center gap-1 font-medium text-primary underline transition-colors hover:text-primary-hover"
+            >
+              요금제 자세히 보기 →
+            </Link>
+          </div>
+        </Container>
+      </section>
+
       {/* 관련 블로그 */}
       {relatedPosts.length > 0 && (
         <section className="border-b border-border">
