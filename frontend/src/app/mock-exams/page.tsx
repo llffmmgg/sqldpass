@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 import MockExamsClient from "./MockExamsClient";
 
-const TITLE = "무료 CBT 모의고사 — SQLD·정처기·컴활·ADsP";
+// 이 페이지는 "자격증 모의고사 카탈로그" 거점. "X cbt" 단독 키워드는 /cbt-mock-exam/{cert} 가 담당하므로
+// 여기서는 "CBT" 표현을 약화하고 "모의고사 모음·자격증별" 키워드를 강조한다.
+const TITLE = "자격증 모의고사 모음 — SQLD·정처기·컴활·ADsP";
 const DESCRIPTION =
-  "SQLD, 정보처리기사 필기·실기, 컴퓨터활용능력 1·2급, ADsP 모의고사를 무료로. 실전 회차와 기출 변형 + 자동 채점·해설을 가입 없이 바로 풀어보세요.";
+  "SQLD, 정보처리기사 필기·실기, 컴퓨터활용능력 1·2급, ADsP 모의고사를 자격증별로 모았습니다. 실전 회차와 기출 변형 + 자동 채점·해설을 가입 없이 바로 풀어보세요.";
 
 export const metadata: Metadata = {
   title: TITLE,
@@ -71,9 +73,9 @@ export default function MockExamsPage() {
 
       {/* SEO 전용 — 화면에는 안 보이고 크롤러·스크린리더에만 노출. */}
       <div className="sr-only">
-        <h1>무료 CBT 모의고사</h1>
+        <h1>자격증 모의고사 모음</h1>
         <p>
-          SQLD · 정보처리기사 필기/실기 · 컴퓨터활용능력 1·2급 · ADsP 모의고사를 무료로 제공합니다.
+          SQLD · 정보처리기사 필기/실기 · 컴퓨터활용능력 1·2급 · ADsP 모의고사를 자격증별로 한 곳에 모았습니다.
           실전과 동일한 타이머·자동 채점·해설로 매주 새로운 회차가 추가됩니다. 점수 기록과 오답 노트는 로그인 후 자동으로 저장됩니다.
         </p>
         <ul>

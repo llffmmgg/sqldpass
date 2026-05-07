@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
@@ -14,6 +15,29 @@ import {
   flattenPastExamLists,
   loadPastExamListsByCert,
 } from "@/lib/pastExamCatalog";
+
+const TITLE = "기출 복원 모의고사 — SQLD·정처기·컴활·ADsP";
+const DESCRIPTION =
+  "SQLD·정보처리기사·컴퓨터활용능력·ADsP 의 최신 정기 회차 기출을 복원해 실전 타이머·자동 채점·해설로 풀어볼 수 있습니다. 가입 없이 문제 미리보기, 로그인 시 채점·오답노트 자동 저장.";
+
+export const metadata: Metadata = {
+  title: TITLE,
+  description: DESCRIPTION,
+  alternates: { canonical: "/past-exams" },
+  openGraph: {
+    type: "website",
+    url: "/past-exams",
+    title: TITLE,
+    description: DESCRIPTION,
+    siteName: "문어CBT",
+    locale: "ko_KR",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: TITLE,
+    description: DESCRIPTION,
+  },
+};
 
 export default async function PastExamsPage({
   searchParams,

@@ -20,24 +20,28 @@ export const dynamic = "force-dynamic";
 const SITE_URL = "https://www.sqldpass.com";
 const BLOG_DIR = path.join(process.cwd(), "content", "blog");
 
-// 정적 페이지 마지막 수정일 (내용 변경 시 수동 업데이트)
+// force-dynamic 이라 매 요청마다 sitemap 이 재생성되므로,
+// 콘텐츠가 자주 갱신되는 페이지는 today 로 두어 구글에 신선도 신호를 정확히 전달한다.
+// 정책·변경이력처럼 거의 정지된 문서만 고정 날짜로 보수적으로 유지.
+const TODAY = new Date().toISOString().slice(0, 10);
+
 const STATIC_LAST_MOD: Record<string, string> = {
-  "/": "2026-04-23",
-  "/learn": "2026-04-22",
-  "/blog": "2026-04-25",
-  "/solve": "2026-04-16",
-  "/mock-exams": "2026-04-16",
-  "/past-exams": "2026-04-23",
-  "/cbt-mock-exam": "2026-04-22",
-  "/board": "2026-04-28",
-  "/about": "2026-04-22",
-  "/changelog": "2026-04-22",
+  "/": TODAY,
+  "/learn": TODAY,
+  "/blog": TODAY,
+  "/solve": TODAY,
+  "/mock-exams": TODAY,
+  "/past-exams": TODAY,
+  "/cbt-mock-exam": TODAY,
+  "/board": TODAY,
+  "/about": TODAY,
+  "/changelog": TODAY,
   "/privacy": "2026-04-09",
   "/terms": "2026-04-09",
 };
 
-// 동적 DB 페이지는 배포일 공통값
-const DYNAMIC_LAST_MOD = "2026-04-22";
+// 동적 DB 페이지의 폴백. DB createdAt 이 없을 때만 사용된다.
+const DYNAMIC_LAST_MOD = TODAY;
 
 function blogPostDate(slug: string): string {
   try {

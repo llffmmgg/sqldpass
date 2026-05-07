@@ -4,7 +4,7 @@ import { getPublicPastExam, type PublicPastExamDetail } from "@/lib/publicApi";
 
 const SITE_URL = "https://www.sqldpass.com";
 
-const CERT_DISPLAY: Record<string, string> = {
+export const CERT_DISPLAY: Record<string, string> = {
   SQLD: "SQLD",
   ENGINEER_PRACTICAL: "정보처리기사 실기",
   ENGINEER_WRITTEN: "정보처리기사 필기",
@@ -13,7 +13,7 @@ const CERT_DISPLAY: Record<string, string> = {
   ADSP: "ADsP",
 };
 
-function buildRoundTitle(exam: PublicPastExamDetail): string {
+export function buildRoundTitle(exam: PublicPastExamDetail): string {
   const cert = CERT_DISPLAY[exam.examType] ?? exam.name;
   const parts: string[] = [cert];
   if (exam.examYear) parts.push(`${exam.examYear}년`);
