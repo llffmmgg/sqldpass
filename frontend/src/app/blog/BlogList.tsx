@@ -34,6 +34,14 @@ function formatDate(iso: string): string {
   return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, "0")}.${String(d.getDate()).padStart(2, "0")}`;
 }
 
+// past-exams/mock-exams 의 NEW 정책과 동일한 3일 윈도우.
+function isWithinDays(iso: string | null | undefined, days: number): boolean {
+  if (!iso) return false;
+  const t = new Date(iso).getTime();
+  if (Number.isNaN(t)) return false;
+  return Date.now() - t <= days * 24 * 60 * 60 * 1000;
+}
+
 /**
  * past-exam 글은 백엔드에 `past-exam-{slug}` 키로 카운트되므로
  * 슬러그(`past-exam/{slug}`)를 그 형식으로 변환해 lookup 한다.
@@ -162,21 +170,29 @@ export default function BlogList({
 
           <SidebarSection title="최근 글" className="mt-8">
             <ul className="space-y-2.5">
-              {recentPosts.map((post) => (
-                <li key={post.slug}>
-                  <Link
-                    href={`/blog/${post.slug}`}
-                    className="group block rounded-md p-2 text-sm transition-colors hover:bg-surface-hover"
-                  >
-                    <span className="line-clamp-2 font-medium leading-snug group-hover:text-primary">
-                      {post.title}
-                    </span>
-                    <span className="mt-0.5 block text-xs text-text-subtle">
-                      {formatDate(post.date)}
-                    </span>
-                  </Link>
-                </li>
-              ))}
+              {recentPosts.map((post) => {
+                const isNew = isWithinDays(post.date, 3);
+                return (
+                  <li key={post.slug}>
+                    <Link
+                      href={`/blog/${post.slug}`}
+                      className="group block rounded-md p-2 text-sm transition-colors hover:bg-surface-hover"
+                    >
+                      <span className="line-clamp-2 font-medium leading-snug group-hover:text-primary">
+                        {post.title}
+                      </span>
+                      <span className="mt-0.5 flex items-center gap-1.5 text-xs text-text-subtle">
+                        <span>{formatDate(post.date)}</span>
+                        {isNew && (
+                          <span className="font-semibold text-emerald-600 dark:text-emerald-400">
+                            NEW
+                          </span>
+                        )}
+                      </span>
+                    </Link>
+                  </li>
+                );
+              })}
             </ul>
           </SidebarSection>
         </aside>
@@ -188,6 +204,7 @@ export default function BlogList({
 function PostListItem({ post, views }: { post: BlogPostMeta; views: number }) {
   const cert = certFromBlogCategory(post.category);
   const meta = CATEGORY_BY_NAME[post.category];
+  const isNew = isWithinDays(post.date, 3);
 
   return (
     <Link href={`/blog/${post.slug}`} className="group flex items-start gap-4 py-5 transition-colors">
@@ -210,6 +227,11 @@ function PostListItem({ post, views }: { post: BlogPostMeta; views: number }) {
             <Badge variant="soft" tone="neutral" size="xs">
               {post.category}
             </Badge>
+          )}
+          {isNew && (
+            <span className="font-semibold text-emerald-600 dark:text-emerald-400">
+              NEW
+            </span>
           )}
           <span className="text-text-muted">{formatDate(post.date)}</span>
           <span className="text-text-subtle">·</span>

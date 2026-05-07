@@ -86,6 +86,7 @@ export default async function BlogCategoryPage({
   const cert = certFromBlogCategory(decoded);
   const barClass = cert ? CERT_TOKENS[cert].tailwind.bg : "bg-primary";
   const [featured, ...rest] = posts;
+  const featuredIsNew = featured ? isWithinDays(featured.date, 3) : false;
   const groupedSections = groupPostsByMeta(decoded, rest);
   const showGroupHeaders =
     groupedSections.length > 1 || (groupedSections[0]?.label ?? "") !== "";
@@ -115,6 +116,11 @@ export default async function BlogCategoryPage({
                     <Badge variant="soft" tone="neutral" size="sm">
                       {featured.category}
                     </Badge>
+                  )}
+                  {featuredIsNew && (
+                    <span className="font-semibold text-emerald-600 dark:text-emerald-400">
+                      NEW
+                    </span>
                   )}
                   <span className="text-text-muted">
                     {new Date(featured.date).toLocaleDateString("ko-KR", {
@@ -188,14 +194,22 @@ export default async function BlogCategoryPage({
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {section.posts.map((post) => {
                 const views = viewCounts[viewKeyOf(post.slug)] ?? 0;
+                const isNew = isWithinDays(post.date, 3);
                 return (
                   <Link key={post.slug} href={`/blog/${post.slug}`} className="group block h-full">
                     <Card variant="interactive" padding="none" className="flex h-full flex-col overflow-hidden">
                       <div className={`h-0.5 w-full ${barClass}`} />
                       <div className="flex flex-1 flex-col gap-2 p-4">
-                        <h3 className="text-[15px] font-semibold leading-snug group-hover:text-primary line-clamp-2">
-                          {post.title}
-                        </h3>
+                        <div className="flex items-start justify-between gap-2">
+                          <h3 className="text-[15px] font-semibold leading-snug group-hover:text-primary line-clamp-2">
+                            {post.title}
+                          </h3>
+                          {isNew && (
+                            <span className="shrink-0 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">
+                              NEW
+                            </span>
+                          )}
+                        </div>
                         <div className="mt-auto flex items-center gap-2 text-[11px] text-text-subtle">
                           <span>
                             {new Date(post.date).toLocaleDateString("ko-KR", { month: "long", day: "numeric" })}
@@ -216,4 +230,12 @@ export default async function BlogCategoryPage({
       </div>
     </Container>
   );
+}
+
+// past-exams/mock-exams 의 NEW 정책과 동일한 3일 윈도우.
+function isWithinDays(iso: string | null | undefined, days: number): boolean {
+  if (!iso) return false;
+  const t = new Date(iso).getTime();
+  if (Number.isNaN(t)) return false;
+  return Date.now() - t <= days * 24 * 60 * 60 * 1000;
 }
