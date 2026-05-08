@@ -16,7 +16,8 @@
       "description": "Android 변경 직접 책임의 lint warning 4건 정리 (sw.js 3 + offlineStore.ts 1)",
       "status": "completed",
       "started_at": "2026-05-09T03:18:18+0900",
-      "summary": "sw.js 3건(install event 인자 제거 + catch 2건 bare로) + offlineStore.ts 1건(void syncedFlag) unused warning 제거, lint 회귀 없음 (warning 9→5, error 13→13), build 통과"
+      "summary": "sw.js 3건(install event 인자 제거 + catch 2건 bare로) + offlineStore.ts 1건(void syncedFlag) unused warning 제거, lint 회귀 없음 (warning 9→5, error 13→13), build 통과",
+      "completed_at": "2026-05-09T03:24:48+0900"
     }
   ],
   "created_at": "2026-05-09T03:18:18+0900"
