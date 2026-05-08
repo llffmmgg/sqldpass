@@ -12,11 +12,23 @@
  */
 
 import { getToken } from "@/lib/auth";
+import { isCapacitorApp } from "@/lib/platform";
 
 const STORE_ID = process.env.NEXT_PUBLIC_PORTONE_STORE_ID ?? "";
 const CHANNEL_KEY = process.env.NEXT_PUBLIC_PORTONE_CHANNEL_KEY ?? "";
 
 export type SubscriptionPlan = "THREE_DAY" | "ONE_MONTH" | "UNLIMITED";
+
+/**
+ * SubscriptionPlan ↔ Play Console 일회성 상품 SKU 매핑.
+ * 백엔드 application.yaml 의 sqldpass.play-billing.product-id-mapping 과 일치해야 한다.
+ * 환경변수 NEXT_PUBLIC_PLAY_BILLING_SKU_* 로 빌드 시 오버라이드 가능.
+ */
+const PLAY_BILLING_SKU: Record<SubscriptionPlan, string> = {
+  THREE_DAY: process.env.NEXT_PUBLIC_PLAY_BILLING_SKU_THREE_DAY ?? "iap_three_day",
+  ONE_MONTH: process.env.NEXT_PUBLIC_PLAY_BILLING_SKU_ONE_MONTH ?? "iap_one_month",
+  UNLIMITED: process.env.NEXT_PUBLIC_PLAY_BILLING_SKU_UNLIMITED ?? "iap_unlimited",
+};
 
 export type CheckoutEligibility = { eligible: boolean };
 
@@ -150,16 +162,27 @@ export async function downloadMockExamPdfAsUser(id: number): Promise<void> {
 }
 
 /**
- * 결제 한 번 — backend 사전 등록 → PortOne SDK 결제창 → backend 검증.
- * 성공 시 verify 응답을 반환. 사용자 취소·실패 시 throw.
+ * 결제 시작 — 실행 환경에 따라 PortOne(웹) 또는 Google Play Billing(안드로이드 앱) 으로 분기.
+ *
+ * 안드로이드 앱에서 PortOne 결제창을 띄우면 Play 정책 위반이라 즉시 등록 거절. 반대로 웹에서
+ * Play Billing 호출은 의미 없음. 그래서 isCapacitorApp() 으로 명확히 갈라준다.
+ *
+ * 성공 시 양쪽 모두 VerifyResponse 형태로 동일 — 결제 채널 이후 흐름은 통일.
  */
 export async function startPayment(opts: { plan: SubscriptionPlan }): Promise<VerifyResponse> {
+  if (isCapacitorApp()) {
+    return startPaymentPlayBilling(opts.plan);
+  }
+  return startPaymentPortOne(opts.plan);
+}
+
+async function startPaymentPortOne(plan: SubscriptionPlan): Promise<VerifyResponse> {
   if (!STORE_ID || !CHANNEL_KEY) {
     throw new Error("결제 설정이 비어있습니다 (NEXT_PUBLIC_PORTONE_STORE_ID / NEXT_PUBLIC_PORTONE_CHANNEL_KEY).");
   }
   const prepared = await authFetch<PrepareResponse>("/api/payment/prepare", {
     method: "POST",
-    body: JSON.stringify({ plan: opts.plan }),
+    body: JSON.stringify({ plan }),
   });
 
   const PortOne = (await import("@portone/browser-sdk/v2")).default;
@@ -183,5 +206,27 @@ export async function startPayment(opts: { plan: SubscriptionPlan }): Promise<Ve
   return authFetch<VerifyResponse>("/api/payment/verify", {
     method: "POST",
     body: JSON.stringify({ paymentId: prepared.paymentId }),
+  });
+}
+
+async function startPaymentPlayBilling(plan: SubscriptionPlan): Promise<VerifyResponse> {
+  const billing = (typeof window !== "undefined" ? window.Capacitor?.Plugins?.Billing : undefined);
+  if (!billing) {
+    throw new Error(
+      "앱 결제 플러그인이 설정되지 않았어요. 잠시 후 다시 시도해주세요.\n" +
+      "(개발: mobile/ 워크스페이스에 Play Billing Capacitor 플러그인 설치/등록 필요)",
+    );
+  }
+  const productId = PLAY_BILLING_SKU[plan];
+  if (!productId) {
+    throw new Error(`알 수 없는 상품 plan: ${plan}`);
+  }
+  const result = await billing.purchase({ productId });
+  if (!result.success || !result.purchaseToken) {
+    throw new Error(result.errorMessage ?? "결제가 취소되었거나 실패했습니다.");
+  }
+  return authFetch<VerifyResponse>("/api/payment/play-billing/verify", {
+    method: "POST",
+    body: JSON.stringify({ productId, purchaseToken: result.purchaseToken }),
   });
 }
