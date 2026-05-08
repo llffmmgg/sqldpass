@@ -7,7 +7,8 @@
       "step": 1,
       "name": "agents-md-mobile",
       "description": "루트 AGENTS.md에 mobile/ 디렉터리 추가",
-      "status": "pending"
+      "status": "completed",
+      "summary": "루트 AGENTS.md에 mobile/ 추가 (Scope·Working Directories·Ownership 3개소)"
     },
     {
       "step": 2,
