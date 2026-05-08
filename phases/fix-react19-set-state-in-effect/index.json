@@ -9,7 +9,8 @@
       "description": "react-hooks/set-state-in-effect 위반 — components/ 8건(8개 파일)",
       "status": "completed",
       "started_at": "2026-05-09T03:29:36+0900",
-      "summary": "components 8개 파일 9건 정리 — 패턴 분포 A:0, B:4(ExamCountdownStrip eslint-disable + RankingSection/TrendChart/MockExamsClient abort guard), C:4(AuthGuard/CertTerminal#36/FeedbackRail/HeroCta useSyncExternalStore), D:1(CertTerminal#43 Typewriter 서브컴포넌트+key). lint set-state-in-effect 12→3, build 통과."
+      "summary": "components 8개 파일 9건 정리 — 패턴 분포 A:0, B:4(ExamCountdownStrip eslint-disable + RankingSection/TrendChart/MockExamsClient abort guard), C:4(AuthGuard/CertTerminal#36/FeedbackRail/HeroCta useSyncExternalStore), D:1(CertTerminal#43 Typewriter 서브컴포넌트+key). lint set-state-in-effect 12→3, build 통과.",
+      "completed_at": "2026-05-09T03:40:00+0900"
     },
     {
       "step": 2,
