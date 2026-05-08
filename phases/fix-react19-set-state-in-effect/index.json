@@ -1,0 +1,31 @@
+{
+  "project": "sqldpass",
+  "phase": "fix-react19-set-state-in-effect",
+  "description": "React 19/Next.js 16에서 도입된 react-hooks/set-state-in-effect 룰에 부적합한 기존 코드를 정리한다. lint errors 12개 위치(11개 파일) + blog/page.tsx의 별개 룰(impure-function-during-render) 1건. 룰의 취지를 꺾지 않도록 표준 리팩터링 패턴을 따른다.",
+  "steps": [
+    {
+      "step": 1,
+      "name": "fix-set-state-in-effect-components",
+      "description": "react-hooks/set-state-in-effect 위반 — components/ 8건(8개 파일)",
+      "status": "pending"
+    },
+    {
+      "step": 2,
+      "name": "fix-set-state-in-effect-app-and-hook",
+      "description": "react-hooks/set-state-in-effect 위반 — app/ 3건 + hooks/ 1건 (4개 파일)",
+      "status": "pending"
+    },
+    {
+      "step": 3,
+      "name": "fix-impure-function-blog",
+      "description": "blog/page.tsx의 impure-function-during-render 위반 1건",
+      "status": "pending"
+    },
+    {
+      "step": 4,
+      "name": "lint-zero-regression",
+      "description": "frontend lint 0 errors 달성 + build 통과 검증",
+      "status": "pending"
+    }
+  ]
+}

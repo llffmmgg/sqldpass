@@ -1,0 +1,19 @@
+{
+  "project": "sqldpass",
+  "phase": "fix-android-minor",
+  "description": "Harness Review에서 발견한 Android 전환 책임의 minor 이슈 정리. 루트 AGENTS.md에 mobile/ 디렉터리를 반영하고, Android 변경 직접 도입한 lint warning 4건을 청소한다.",
+  "steps": [
+    {
+      "step": 1,
+      "name": "agents-md-mobile",
+      "description": "루트 AGENTS.md에 mobile/ 디렉터리 추가",
+      "status": "pending"
+    },
+    {
+      "step": 2,
+      "name": "android-lint-warnings",
+      "description": "Android 변경 직접 책임의 lint warning 4건 정리 (sw.js 3 + offlineStore.ts 1)",
+      "status": "pending"
+    }
+  ]
+}

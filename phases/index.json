@@ -1,0 +1,16 @@
+{
+  "phases": [
+    {
+      "dir": "fix-android-minor",
+      "name": "fix-android-minor",
+      "description": "Harness Review에서 발견한 Android 변경 책임의 minor 정리: 루트 AGENTS.md mobile/ 반영 + Android 변경 lint warning 4건",
+      "status": "pending"
+    },
+    {
+      "dir": "fix-react19-set-state-in-effect",
+      "name": "fix-react19-set-state-in-effect",
+      "description": "React 19/Next 16에서 도입된 react-hooks/set-state-in-effect 룰에 부적합한 기존 코드 12개 위치(11개 파일) 정리 + blog/page.tsx 1건의 impure-function-during-render 별도 처리",
+      "status": "pending"
+    }
+  ]
+}
