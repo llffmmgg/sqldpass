@@ -19,4 +19,7 @@ public interface SubscriptionRepository extends JpaRepository<SubscriptionEntity
            "s.expiresAt desc nulls first")
     List<SubscriptionEntity> findActiveByMemberId(@Param("memberId") Long memberId,
                                                   @Param("now") LocalDateTime now);
+
+    /** 결제 row FK 로 구독 lookup — RTDN 환불 처리 시 revoke 대상 식별용. */
+    java.util.Optional<SubscriptionEntity> findByPaymentId(Long paymentId);
 }

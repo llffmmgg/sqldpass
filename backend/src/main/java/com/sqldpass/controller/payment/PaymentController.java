@@ -97,6 +97,21 @@ public class PaymentController {
         return paymentService.verify(memberId, body.paymentId());
     }
 
+    @PostMapping("/play-billing/verify")
+    @Operation(summary = "Play Billing 영수증 검증 — 안드로이드 앱 전용. 동일 token 재요청은 idempotent.")
+    public VerifyPaymentResult verifyPlayBilling(@RequestBody PlayBillingVerifyRequest body,
+                                                 HttpServletRequest request) {
+        Long memberId = (Long) request.getAttribute("memberId");
+        if (memberId == null) {
+            throw new SqldpassException(ErrorCode.UNAUTHORIZED);
+        }
+        if (body == null || body.productId() == null || body.purchaseToken() == null) {
+            throw new SqldpassException(ErrorCode.INVALID_INPUT,
+                    "productId 와 purchaseToken 은 필수입니다.");
+        }
+        return paymentService.verifyPlayBilling(memberId, body.productId(), body.purchaseToken());
+    }
+
     @GetMapping("/subscription")
     @Operation(summary = "내 활성 구독 조회 — 없으면 active=false")
     public SubscriptionResponse subscription(HttpServletRequest request) {
@@ -112,6 +127,8 @@ public class PaymentController {
     public record PrepareRequest(SubscriptionPlan plan) {}
 
     public record VerifyRequest(String paymentId) {}
+
+    public record PlayBillingVerifyRequest(String productId, String purchaseToken) {}
 
     public record EligibilityResponse(boolean eligible) {}
 

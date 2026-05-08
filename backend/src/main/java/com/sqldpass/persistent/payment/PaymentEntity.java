@@ -28,7 +28,8 @@ import lombok.NoArgsConstructor;
         },
         indexes = {
             @Index(name = "idx_payment_member_status", columnList = "member_id,status"),
-            @Index(name = "idx_payment_mock_exam", columnList = "mock_exam_id")
+            @Index(name = "idx_payment_mock_exam", columnList = "mock_exam_id"),
+            @Index(name = "idx_payment_purchase_token", columnList = "purchase_token")
         })
 public class PaymentEntity extends BaseTimeEntity {
 
@@ -71,6 +72,15 @@ public class PaymentEntity extends BaseTimeEntity {
     @Column(name = "status", nullable = false, length = 20)
     private PaymentStatus status;
 
+    /** 결제 채널 — PORTONE(웹) | PLAY_BILLING(안드로이드). 기본값은 PortOne(레거시 호환). */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "provider", nullable = false, length = 20)
+    private PaymentProvider provider = PaymentProvider.PORTONE;
+
+    /** Google Play Billing 영수증 토큰. PORTONE 결제에선 null. RTDN webhook lookup 키. */
+    @Column(name = "purchase_token", length = 512)
+    private String purchaseToken;
+
     /** PortOne 검증 응답 원본(JSON). 디버깅·환불 분쟁 대비. */
     @Column(name = "pg_response", columnDefinition = "TEXT")
     private String pgResponse;
@@ -91,6 +101,14 @@ public class PaymentEntity extends BaseTimeEntity {
     public PaymentEntity(String paymentId, Long memberId, Long mockExamId,
                          String productName, SubscriptionPlan plan,
                          int amount, int baseAmount, int prorateDiscount) {
+        this(paymentId, memberId, mockExamId, productName, plan,
+                amount, baseAmount, prorateDiscount, PaymentProvider.PORTONE, null);
+    }
+
+    public PaymentEntity(String paymentId, Long memberId, Long mockExamId,
+                         String productName, SubscriptionPlan plan,
+                         int amount, int baseAmount, int prorateDiscount,
+                         PaymentProvider provider, String purchaseToken) {
         this.paymentId = paymentId;
         this.memberId = memberId;
         this.mockExamId = mockExamId;
@@ -100,6 +118,8 @@ public class PaymentEntity extends BaseTimeEntity {
         this.baseAmount = baseAmount;
         this.prorateDiscount = prorateDiscount;
         this.status = PaymentStatus.PENDING;
+        this.provider = provider != null ? provider : PaymentProvider.PORTONE;
+        this.purchaseToken = purchaseToken;
     }
 
     public void markPaid(String pgResponse, LocalDateTime paidAt) {

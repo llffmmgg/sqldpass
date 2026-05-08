@@ -27,6 +27,19 @@ public class SubscriptionService {
 
     private final SubscriptionRepository subscriptionRepository;
 
+    /**
+     * Play Billing RTDN(refund) 또는 운영자 환불 처리 — 결제 FK 로 구독 row 를 찾아 expiresAt=now.
+     * 매칭되는 구독이 없으면 no-op (이미 환불 처리됐거나 구독이 발급되지 않은 결제).
+     */
+    @Transactional
+    public boolean revokeByPaymentId(Long paymentId) {
+        if (paymentId == null) return false;
+        var found = subscriptionRepository.findByPaymentId(paymentId);
+        if (found.isEmpty()) return false;
+        found.get().revoke(LocalDateTime.now());
+        return true;
+    }
+
     /** 활성 구독 정보. 없으면 Optional.empty(). */
     public Optional<ActiveSubscription> getActive(Long memberId) {
         if (memberId == null) return Optional.empty();

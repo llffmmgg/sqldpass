@@ -67,4 +67,12 @@ public class SubscriptionEntity extends BaseTimeEntity {
     public boolean isActive(LocalDateTime now) {
         return expiresAt == null || expiresAt.isAfter(now);
     }
+
+    /**
+     * 환불·강제 만료 — Play Billing RTDN(REFUND) 또는 어드민 보상 회수 시 호출.
+     * UNLIMITED 도 expiresAt = now 로 강제해 즉시 비활성화한다.
+     */
+    public void revoke(LocalDateTime now) {
+        this.expiresAt = now;
+    }
 }

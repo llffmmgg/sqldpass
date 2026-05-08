@@ -40,6 +40,10 @@ dependencies {
 	implementation 'software.amazon.awssdk:s3'
 	// Playwright (헤드리스 Chromium) — 모의고사 PDF 결정론적 렌더용
 	implementation 'com.microsoft.playwright:playwright:1.48.0'
+	// Google Play Developer API — 안드로이드 앱 인앱 결제 영수증 검증/acknowledge
+	// (Capacitor 앱 → /api/payment/play-billing/verify 검증 흐름에서 사용)
+	implementation 'com.google.apis:google-api-services-androidpublisher:v3-rev20240805-2.0.0'
+	implementation 'com.google.auth:google-auth-library-oauth2-http:1.23.0'
 	compileOnly 'org.projectlombok:lombok'
 	annotationProcessor 'org.projectlombok:lombok'
 	runtimeOnly 'com.mysql:mysql-connector-j'

@@ -2,6 +2,7 @@ package com.sqldpass.service.payment;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -9,7 +10,9 @@ import org.springframework.transaction.annotation.Transactional;
 import com.sqldpass.persistent.member.MemberEntity;
 import com.sqldpass.persistent.member.MemberRepository;
 import com.sqldpass.persistent.payment.PaymentEntity;
+import com.sqldpass.persistent.payment.PaymentProvider;
 import com.sqldpass.persistent.payment.PaymentRepository;
+import com.sqldpass.persistent.payment.PaymentStatus;
 import com.sqldpass.persistent.payment.SubscriptionEntity;
 import com.sqldpass.persistent.payment.SubscriptionPlan;
 import com.sqldpass.persistent.payment.SubscriptionRepository;
@@ -37,6 +40,8 @@ public class PaymentService {
     private final PaymentRepository paymentRepository;
     private final SubscriptionRepository subscriptionRepository;
     private final MemberRepository memberRepository;
+    private final PlayBillingClient playBillingClient;
+    private final PlayBillingProperties playBillingProperties;
 
     /** 카드사 심사 가이드 + PG 정책상 최소 결제 금액. */
     private static final int MIN_CHARGE_AMOUNT = 100;
@@ -213,6 +218,103 @@ public class PaymentService {
         if (!allowed.contains(member.getNickname())) {
             throw new SqldpassException(ErrorCode.PAYMENT_REVIEWER_ONLY);
         }
+    }
+
+    /**
+     * 안드로이드 앱 Google Play Billing 결제 검증 — 클라이언트가 보낸 productId/purchaseToken 으로
+     * Google Play Developer API 에 영수증 검증 후 SubscriptionEntity 발급.
+     *
+     * <p>PortOne 흐름과 달리 prepare 단계가 없다. 결제는 디바이스 ↔ Google 사이에서 끝나고
+     * 백엔드는 사후 검증만 한다. 같은 purchaseToken 재요청은 idempotent — 첫 요청만 발급.
+     */
+    @Transactional
+    public VerifyPaymentResult verifyPlayBilling(Long memberId, String productId, String purchaseToken) {
+        ensureReviewer(memberId);
+        if (purchaseToken == null || purchaseToken.isBlank()) {
+            throw new SqldpassException(ErrorCode.INVALID_INPUT, "purchaseToken 가 비어 있습니다.");
+        }
+
+        SubscriptionPlan plan = playBillingProperties.planFor(productId);
+        if (plan == null) {
+            throw new SqldpassException(ErrorCode.PAYMENT_VERIFICATION_FAILED,
+                    "알 수 없는 상품: " + productId);
+        }
+
+        // Idempotency — 같은 토큰이 이미 처리됐으면 같은 응답을 다시 돌려준다 (재시도 무해).
+        Optional<PaymentEntity> existing = paymentRepository.findByPurchaseToken(purchaseToken);
+        if (existing.isPresent() && existing.get().getStatus() == PaymentStatus.PAID) {
+            PaymentEntity prior = existing.get();
+            LocalDateTime priorExpires = subscriptionRepository.findByPaymentId(prior.getId())
+                    .map(SubscriptionEntity::getExpiresAt).orElse(null);
+            return new VerifyPaymentResult(prior.getPaymentId(), prior.getAmount(),
+                    prior.getProductName(), prior.getPlan(), priorExpires);
+        }
+
+        PlayBillingClient.PlayPurchaseInfo info =
+                playBillingClient.verifyProduct(productId, purchaseToken);
+        if (!info.isPurchased()) {
+            log.warn("Play Billing 검증 실패 memberId={} productId={} purchaseState={}",
+                    memberId, productId, info.purchaseState());
+            throw new SqldpassException(ErrorCode.PAYMENT_VERIFICATION_FAILED);
+        }
+
+        PaymentProperties.PlanConfig planConfig = properties.configFor(plan);
+        int baseAmount = planConfig.getAmount();
+        String productName = planConfig.getProductName();
+
+        PaymentEntity payment;
+        if (existing.isPresent()) {
+            // PENDING/FAILED 상태에서 재시도 — 같은 row 의 상태만 갱신.
+            payment = existing.get();
+        } else {
+            String paymentId = "play-" + System.currentTimeMillis() + "-" + memberId;
+            payment = new PaymentEntity(paymentId, memberId, null, productName, plan,
+                    baseAmount, baseAmount, 0,
+                    PaymentProvider.PLAY_BILLING, purchaseToken);
+            paymentRepository.save(payment);
+        }
+
+        LocalDateTime paidAt = LocalDateTime.ofInstant(
+                info.purchasedAtInstant(), ZoneId.systemDefault());
+        payment.markPaid("play:orderId=" + info.orderId(), paidAt);
+
+        LocalDateTime expiresAt = plan.isLifetime() ? null : paidAt.plusDays(plan.getDays());
+        SubscriptionEntity subscription = new SubscriptionEntity(
+                memberId, plan, payment.getId(), paidAt, expiresAt);
+        subscriptionRepository.save(subscription);
+
+        // acknowledge — 3일 내 미호출 시 Google 이 자동 환불하므로 검증 직후 즉시 처리.
+        if (info.needsAcknowledge()) {
+            playBillingClient.acknowledge(productId, purchaseToken);
+        }
+
+        log.info("Play Billing verify 성공 memberId={} productId={} plan={} expiresAt={}",
+                memberId, productId, plan, expiresAt);
+        return new VerifyPaymentResult(payment.getPaymentId(), payment.getAmount(),
+                payment.getProductName(), plan, expiresAt);
+    }
+
+    /**
+     * Play RTDN(Real-time Developer Notifications) — 환불/구독 만료 통지 처리.
+     * purchaseToken 으로 결제 row 를 찾아 PaymentStatus=CANCELLED + Subscription.expiresAt=now.
+     * 매칭되는 결제가 없으면 무시 (다른 앱의 알림이거나 이미 처리됨).
+     */
+    @Transactional
+    public boolean revokePlayBillingByToken(String purchaseToken) {
+        if (purchaseToken == null || purchaseToken.isBlank()) return false;
+        Optional<PaymentEntity> found = paymentRepository.findByPurchaseToken(purchaseToken);
+        if (found.isEmpty()) return false;
+
+        PaymentEntity payment = found.get();
+        if (payment.getStatus() != PaymentStatus.CANCELLED) {
+            payment.markCancelled("play:rtdn-refund");
+        }
+        Optional<SubscriptionEntity> sub = subscriptionRepository.findByPaymentId(payment.getId());
+        if (sub.isEmpty()) return false;
+        sub.get().revoke(LocalDateTime.now());
+        log.info("Play Billing revoke memberId={} paymentId={} plan={}",
+                payment.getMemberId(), payment.getPaymentId(), payment.getPlan());
+        return true;
     }
 
     public record PreparePaymentResult(String paymentId, int amount, String productName,

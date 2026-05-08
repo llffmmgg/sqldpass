@@ -59,6 +59,19 @@ sqldpass:
       # 안드로이드 Capacitor 앱이 네이티브 Google Sign-In 으로 받는 ID 토큰의 audience.
       # Google Cloud Console 에서 Android 클라이언트 (package name + SHA-1) 를 따로 발급해 입력.
       android-client-id: ${GOOGLE_OAUTH_ANDROID_CLIENT_ID:}
+  play-billing:
+    # 앱 ID — Capacitor capacitor.config.ts 의 appId 와 동일해야 한다.
+    package-name: ${PLAY_BILLING_PACKAGE_NAME:com.sqldpass.app}
+    # Play Console > 설정 > API 액세스에서 발급한 서비스 계정 JSON 키 경로.
+    # 운영 배포 시 컨테이너에 마운트하고 환경변수로 절대경로 주입.
+    service-account-json-path: ${PLAY_BILLING_SA_PATH:}
+    # RTDN webhook URL 에 ?token=... 로 붙는 shared secret (MVP 보안). 미설정 시 검증 스킵.
+    rtdn-shared-secret: ${PLAY_BILLING_RTDN_SECRET:}
+    # Play Console 에 등록한 일회성 상품(SKU) 매핑 — 클라이언트가 보낸 productId 검증에 사용.
+    product-id-mapping:
+      THREE_DAY: ${PLAY_BILLING_SKU_THREE_DAY:iap_three_day}
+      ONE_MONTH: ${PLAY_BILLING_SKU_ONE_MONTH:iap_one_month}
+      UNLIMITED: ${PLAY_BILLING_SKU_UNLIMITED:iap_unlimited}
   admin:
     username: ${ADMIN_USERNAME:admin}
     password-hash: ${ADMIN_PASSWORD_HASH:$2a$10$zKXKfuTgKRvDGo2F00OyTe2R33XqdfRBxSaqf1VG1oc6Wdtsy.xPO}
