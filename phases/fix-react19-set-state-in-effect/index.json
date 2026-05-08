@@ -19,7 +19,7 @@
       "status": "completed",
       "started_at": "2026-05-09T03:40:00+0900",
       "summary": "app 2건 + hook 1건 정리 — admin/members(B: 핸들러로 setLoading 이동 + alive guard), auth/callback/google(A: !code render-derive + cancelled guard), useSubscription(C: useSyncExternalStore로 auth 구독, loading derive). lint set-state-in-effect 3→0 (누적 12/12), build 통과.",
-      "completed_at": "2026-05-09T04:05:00+0900"
+      "completed_at": "2026-05-09T03:45:58+0900"
     },
     {
       "step": 3,
