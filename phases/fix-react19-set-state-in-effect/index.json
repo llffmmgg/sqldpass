@@ -25,7 +25,10 @@
       "step": 3,
       "name": "fix-impure-function-blog",
       "description": "blog/page.tsx의 impure-function-during-render 위반 1건",
-      "status": "pending"
+      "status": "completed",
+      "started_at": "2026-05-09T03:45:58+0900",
+      "summary": "blog/page.tsx 78:50 impure call (Math.random() 셔플 — recommendedPosts 픽) → 패턴 NEW-A: React cache()로 감싼 pickRecommendedPosts 헬퍼로 추출, 동작 동일. lint impure-function-during-render 1→0, build 통과.",
+      "completed_at": "2026-05-09T03:49:06+0900"
     },
     {
       "step": 4,

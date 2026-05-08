@@ -1,3 +1,4 @@
+import { cache } from "react";
 import type { Metadata } from "next";
 import { getAllPosts, getAllCategories, type BlogPostMeta } from "@/lib/blog";
 import { getPublicBlogViews } from "@/lib/publicApi";
@@ -11,6 +12,10 @@ import { loadPastExamListsByCert, flattenPastExamLists } from "@/lib/pastExamCat
 import BlogList from "./BlogList";
 
 export const revalidate = 1800;
+
+const pickRecommendedPosts = cache((posts: BlogPostMeta[]): BlogPostMeta[] =>
+  [...posts].sort(() => Math.random() - 0.5).slice(0, 3),
+);
 
 export const metadata: Metadata = {
   title: "자격증 시험 준비 블로그",
@@ -75,7 +80,7 @@ export default async function BlogPage() {
     /* 백엔드 미연결 시 무시 */
   }
 
-  const recommendedPosts = [...posts].sort(() => Math.random() - 0.5).slice(0, 3);
+  const recommendedPosts = pickRecommendedPosts(posts);
 
   return (
     <BlogList
