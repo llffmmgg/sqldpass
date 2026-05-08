@@ -44,15 +44,33 @@ export type SnapshotMeta = {
   value: string;
 };
 
-export type QueuedAnswer = {
-  id?: number;
+/**
+ * 오프라인 모의고사 제출 큐 — 한 row 가 한 번의 회차 제출 시도(=서버 /api/solves POST 한 번)에 대응.
+ * synced 가 true 면 이미 서버에 동기화 완료 + serverSolveId 가 채워진 상태 (히스토리 deeplink 용으로 일정 기간 보존).
+ */
+export type PendingSolveAnswer = {
   questionId: number;
-  mockExamId: number | null;
-  selectedOption: number | null;
-  shortAnswer: string | null;
-  isCorrect: boolean | null;
-  durationMs: number;
+  selectedOption?: number;
+  answerText?: string;
+  /** 로컬 MCQ 채점 결과. SHORT/DESC 등 로컬 채점 불가 항목은 null. */
+  localCorrect: boolean | null;
+  /** 회차 정답 (MCQ 만 채워짐). 결과 화면이 SolveAnswerResponse 형태로 렌더하기 위함. */
+  correctOption: number | null;
+};
+
+export type PendingSolve = {
+  id?: number;
+  /** 합성 SolveResponse 의 음수 id — submitSolveOffline 호출 시점에 -Date.now() 부여. */
+  localId: number;
+  mockExamId: number;
+  totalCount: number;
+  /** 로컬 채점된 정답 수 (MCQ 만, 미채점 항목은 isCorrect=null 이므로 미포함). */
+  localCorrectCount: number;
+  answers: PendingSolveAnswer[];
   createdAt: number;
+  synced: boolean;
+  serverSolveId: number | null;
+  syncedAt: number | null;
 };
 
 interface SqldpassOfflineDB extends DBSchema {
@@ -70,10 +88,10 @@ interface SqldpassOfflineDB extends DBSchema {
     key: SnapshotMeta["key"];
     value: SnapshotMeta;
   };
-  solveQueue: {
+  pendingSolves: {
     key: number;
-    value: QueuedAnswer;
-    indexes: { byCreatedAt: number };
+    value: PendingSolve;
+    indexes: { byCreatedAt: number; bySynced: number; byLocalId: number };
   };
 }
 
@@ -100,12 +118,15 @@ function getDb() {
         if (!db.objectStoreNames.contains("snapshotMeta")) {
           db.createObjectStore("snapshotMeta", { keyPath: "key" });
         }
-        if (!db.objectStoreNames.contains("solveQueue")) {
-          const store = db.createObjectStore("solveQueue", {
+        if (!db.objectStoreNames.contains("pendingSolves")) {
+          const store = db.createObjectStore("pendingSolves", {
             keyPath: "id",
             autoIncrement: true,
           });
           store.createIndex("byCreatedAt", "createdAt");
+          // synced 는 boolean 인데 IndexedDB 는 boolean 인덱스를 지원 안 해 0/1 정수로 저장한다.
+          store.createIndex("bySynced", "syncedFlag");
+          store.createIndex("byLocalId", "localId", { unique: true });
         }
       },
     });
@@ -186,22 +207,60 @@ export async function getCacheStats(): Promise<{ mockExams: number; questions: n
   return { mockExams, questions };
 }
 
-// ---- Solve queue (offline answer submissions) --------------------------
+// ---- Pending solves (offline mock-exam submissions) -------------------
 
-export async function enqueueAnswer(answer: QueuedAnswer): Promise<number> {
-  const db = await getDb();
-  const id = await db.add("solveQueue", answer);
-  return id as number;
+type PendingSolveRow = PendingSolve & { syncedFlag: 0 | 1 };
+
+function withSyncedFlag(p: PendingSolve): PendingSolveRow {
+  return { ...p, syncedFlag: p.synced ? 1 : 0 };
 }
 
-export async function listQueuedAnswers(): Promise<QueuedAnswer[]> {
-  const db = await getDb();
-  return db.getAllFromIndex("solveQueue", "byCreatedAt");
+function stripSyncedFlag(row: PendingSolveRow): PendingSolve {
+  const { syncedFlag: _ignored, ...rest } = row;
+  return rest;
 }
 
-export async function removeQueuedAnswer(id: number): Promise<void> {
+export async function enqueuePendingSolve(solve: PendingSolve): Promise<number> {
   const db = await getDb();
-  await db.delete("solveQueue", id);
+  const id = (await db.add("pendingSolves", withSyncedFlag(solve) as PendingSolve)) as number;
+  return id;
+}
+
+export async function listPendingSolves(opts?: { onlyUnsynced?: boolean }): Promise<PendingSolve[]> {
+  const db = await getDb();
+  const rows = (await db.getAllFromIndex("pendingSolves", "byCreatedAt")) as PendingSolveRow[];
+  const filtered = opts?.onlyUnsynced ? rows.filter((r) => !r.synced) : rows;
+  return filtered.map(stripSyncedFlag);
+}
+
+export async function getPendingSolveByLocalId(localId: number): Promise<PendingSolve | null> {
+  const db = await getDb();
+  const row = (await db.getFromIndex("pendingSolves", "byLocalId", localId)) as
+    | PendingSolveRow
+    | undefined;
+  return row ? stripSyncedFlag(row) : null;
+}
+
+export async function markPendingSolveSynced(id: number, serverSolveId: number): Promise<void> {
+  const db = await getDb();
+  const tx = db.transaction("pendingSolves", "readwrite");
+  const row = (await tx.store.get(id)) as PendingSolveRow | undefined;
+  if (row) {
+    const updated: PendingSolveRow = {
+      ...row,
+      synced: true,
+      syncedFlag: 1,
+      serverSolveId,
+      syncedAt: Date.now(),
+    };
+    await tx.store.put(updated);
+  }
+  await tx.done;
+}
+
+export async function removePendingSolve(id: number): Promise<void> {
+  const db = await getDb();
+  await db.delete("pendingSolves", id);
 }
 
 // ---- Test / dev helpers ------------------------------------------------
@@ -209,12 +268,12 @@ export async function removeQueuedAnswer(id: number): Promise<void> {
 export async function clearAll(): Promise<void> {
   const db = await getDb();
   const tx = db.transaction(
-    ["mockExams", "questions", "snapshotMeta", "solveQueue"],
+    ["mockExams", "questions", "snapshotMeta", "pendingSolves"],
     "readwrite",
   );
   await tx.objectStore("mockExams").clear();
   await tx.objectStore("questions").clear();
   await tx.objectStore("snapshotMeta").clear();
-  await tx.objectStore("solveQueue").clear();
+  await tx.objectStore("pendingSolves").clear();
   await tx.done;
 }

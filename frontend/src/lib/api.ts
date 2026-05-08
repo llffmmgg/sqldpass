@@ -1,4 +1,5 @@
 import { getToken, clearAuth } from "@/lib/auth";
+import { isCapacitorApp } from "@/lib/platform";
 
 const BASE = "/api";
 
@@ -143,11 +144,24 @@ export function getQuestionDetail(id: number) {
   return fetchApi<QuestionDetail>(`/questions/${id}`);
 }
 
-export function submitSolve(request: SolveRequest) {
-  return fetchApi<SolveResponse>("/solves", {
-    method: "POST",
-    body: JSON.stringify(request),
-  });
+export async function submitSolve(request: SolveRequest): Promise<SolveResponse> {
+  try {
+    return await fetchApi<SolveResponse>("/solves", {
+      method: "POST",
+      body: JSON.stringify(request),
+    });
+  } catch (err) {
+    // 오프라인 + 안드로이드 앱 + 모의고사(회차) 제출이면 IndexedDB 큐로 fallback.
+    // 네트워크 단절은 fetch 가 TypeError 로 던지고, OS 가 미리 알면 navigator.onLine=false.
+    const offlineLike =
+      err instanceof TypeError ||
+      (typeof navigator !== "undefined" && navigator.onLine === false);
+    if (offlineLike && isCapacitorApp() && request.mockExamId != null) {
+      const { submitSolveOffline } = await import("@/lib/solveOffline");
+      return submitSolveOffline(request);
+    }
+    throw err;
+  }
 }
 
 export function getSolves(opts?: { mockExamId?: number }) {

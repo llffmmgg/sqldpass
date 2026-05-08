@@ -298,7 +298,17 @@ function MockExamDetailContent() {
         <Container size="narrow" className="py-16">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <ExamBadge examType={exam.examType} />
+              <div className="flex flex-wrap items-center gap-2">
+                <ExamBadge examType={exam.examType} />
+                {result.id < 0 && (
+                  <span
+                    className="rounded-full border border-amber-500/40 bg-amber-500/10 px-2 py-0.5 text-[11px] font-bold text-amber-300"
+                    title="인터넷 연결 후 자동 동기화 + 단답/서술 정식 채점"
+                  >
+                    오프라인 결과
+                  </span>
+                )}
+              </div>
               <h1 className="mt-3 text-2xl font-bold">{exam.name} 결과</h1>
             </div>
             <MockExamPdfButton examId={exam.id} />
@@ -406,12 +416,21 @@ function MockExamDetailContent() {
             >
               목록으로
             </button>
-            <button
-              onClick={() => router.push(`/history/${result.id}`)}
-              className={`flex-1 rounded-lg ${accent.bg} py-3 text-sm font-semibold text-zinc-900`}
-            >
-              상세 보기
-            </button>
+            {result.id >= 0 ? (
+              <button
+                onClick={() => router.push(`/history/${result.id}`)}
+                className={`flex-1 rounded-lg ${accent.bg} py-3 text-sm font-semibold text-zinc-900`}
+              >
+                상세 보기
+              </button>
+            ) : (
+              <div
+                className="flex-1 rounded-lg border border-amber-500/40 bg-amber-500/5 py-3 text-center text-xs font-medium text-amber-300"
+                role="status"
+              >
+                인터넷 연결 후 상세 동기화
+              </div>
+            )}
           </div>
         </Container>
       </main>

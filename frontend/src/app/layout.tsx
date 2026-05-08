@@ -12,6 +12,7 @@ import FeedbackRail from "@/components/FeedbackRail";
 import InitialContentBootstrap from "@/components/InitialContentBootstrap";
 import AppRouteGuard from "@/components/AppRouteGuard";
 import ServiceWorkerRegistrar from "@/components/ServiceWorkerRegistrar";
+import OfflineSyncManager from "@/components/OfflineSyncManager";
 import { ToastProvider } from "@/components/Toast";
 import "./globals.css";
 
@@ -212,6 +213,7 @@ export default function RootLayout({
           <InitialContentBootstrap />
           <AppRouteGuard />
           <ServiceWorkerRegistrar />
+          <OfflineSyncManager />
         </ToastProvider>
         <AdSenseLoader />
       </body>
