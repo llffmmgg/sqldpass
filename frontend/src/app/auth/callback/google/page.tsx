@@ -35,16 +35,16 @@ async function assignRandomNickname(): Promise<string> {
 function GoogleCallback() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const code = searchParams.get("code");
   const [error, setError] = useState<string | null>(null);
 
+  // code 부재는 render 단계에서 직접 분기 — effect 안 sync setState 회피.
+  // 실제 토큰 교환은 code가 있을 때만 effect로 진행 (cancelled 가드로 unmount 안전).
   useEffect(() => {
-    const code = searchParams.get("code");
-    if (!code) {
-      setError("인증 코드가 없습니다.");
-      return;
-    }
+    if (!code) return;
 
     const redirectUri = `${window.location.origin}/auth/callback/google`;
+    let cancelled = false;
 
     (async () => {
       try {
@@ -52,6 +52,7 @@ function GoogleCallback() {
           method: "POST",
           body: JSON.stringify({ code, redirectUri }),
         });
+        if (cancelled) return;
 
         // 토큰 먼저 저장 → 후속 PATCH 호출에 Authorization 헤더 사용
         setAuth(data.token, data.nickname);
@@ -67,6 +68,7 @@ function GoogleCallback() {
         if (data.isNew) {
           try {
             const finalNickname = await assignRandomNickname();
+            if (cancelled) return;
             saveNickname(finalNickname);
           } catch (e) {
             // 닉네임 생성 실패해도 일단 로그인은 완료된 상태 (placeholder 닉네임 유지)
@@ -76,15 +78,22 @@ function GoogleCallback() {
 
         router.replace("/");
       } catch (e) {
+        if (cancelled) return;
         setError(e instanceof Error ? e.message : "로그인에 실패했습니다.");
       }
     })();
-  }, [searchParams, router]);
 
-  if (error) {
+    return () => {
+      cancelled = true;
+    };
+  }, [code, router]);
+
+  const displayError = !code ? "인증 코드가 없습니다." : error;
+
+  if (displayError) {
     return (
       <div className="text-center">
-        <p className="text-red-400">{error}</p>
+        <p className="text-red-400">{displayError}</p>
         <button
           onClick={() => router.replace("/")}
           className="mt-4 rounded-lg bg-primary px-5 py-2 text-sm font-semibold text-primary-fg transition-colors hover:bg-primary-hover"

@@ -36,25 +36,37 @@ export default function AdminMembersPage() {
   const [searchInput, setSearchInput] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
 
-  // 검색어 디바운스 (300ms)
+  // 검색어 디바운스 (300ms) — 실제 검색어가 바뀔 때만 loading 리셋·refetch 트리거.
   useEffect(() => {
     const timer = setTimeout(() => {
-      setSearchQuery(searchInput.trim());
+      const next = searchInput.trim();
+      if (next === searchQuery) return;
+      setLoading(true);
+      setSearchQuery(next);
       setPage(0);
     }, 300);
     return () => clearTimeout(timer);
-  }, [searchInput]);
+  }, [searchInput, searchQuery]);
 
+  // 데이터 fetch — loading=true 리셋은 핸들러/디바운스에서, 이펙트 안 sync setState 회피.
   useEffect(() => {
-    setLoading(true);
+    let alive = true;
     getMembers(page, PAGE_SIZE, sortKey, sortOrder, searchQuery || undefined)
-      .then(setData)
-      .finally(() => setLoading(false));
+      .then((next) => {
+        if (alive) setData(next);
+      })
+      .finally(() => {
+        if (alive) setLoading(false);
+      });
+    return () => {
+      alive = false;
+    };
   }, [page, sortKey, sortOrder, searchQuery]);
 
   const totalPages = data?.totalPages ?? 1;
 
   const toggleSort = (key: Exclude<AdminMemberSort, "default">) => {
+    setLoading(true);
     if (sortKey === key) {
       setSortOrder((prev) => (prev === "desc" ? "asc" : "desc"));
     } else {
@@ -62,6 +74,11 @@ export default function AdminMembersPage() {
       setSortOrder("desc");
     }
     setPage(0); // 정렬 변경 시 1페이지로
+  };
+
+  const goToPage = (next: number) => {
+    setLoading(true);
+    setPage(next);
   };
 
   const sortableFor = (key: Exclude<AdminMemberSort, "default">) => ({
@@ -250,7 +267,7 @@ export default function AdminMembersPage() {
             </p>
             <div className="flex items-center gap-2">
               <button
-                onClick={() => setPage((p) => Math.max(0, p - 1))}
+                onClick={() => goToPage(Math.max(0, page - 1))}
                 disabled={page === 0}
                 className="inline-flex h-8 items-center gap-1 rounded-md border border-border px-3 text-xs font-medium text-muted transition-colors hover:border-foreground/30 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-30"
               >
@@ -265,7 +282,7 @@ export default function AdminMembersPage() {
                 {totalPages || 1}
               </span>
               <button
-                onClick={() => setPage((p) => p + 1)}
+                onClick={() => goToPage(page + 1)}
                 disabled={page >= totalPages - 1}
                 className="inline-flex h-8 items-center gap-1 rounded-md border border-border px-3 text-xs font-medium text-muted transition-colors hover:border-foreground/30 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-30"
               >

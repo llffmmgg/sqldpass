@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 
 import { isLoggedIn } from "@/lib/auth";
 import { getActiveSubscription, type ActiveSubscription } from "@/lib/payment";
@@ -23,6 +23,12 @@ function fetchSubscriptionCached(): Promise<ActiveSubscription> {
   return cachedPromise;
 }
 
+function subscribeAuth(callback: () => void) {
+  if (typeof window === "undefined") return () => {};
+  window.addEventListener("storage", callback);
+  return () => window.removeEventListener("storage", callback);
+}
+
 /**
  * 회원의 활성 구독 정보를 가져온다.
  * 비로그인이면 INACTIVE 즉시 반환. 네트워크 실패 시에도 INACTIVE.
@@ -30,27 +36,29 @@ function fetchSubscriptionCached(): Promise<ActiveSubscription> {
  * 광고 컴포넌트 / PDF 다운로드 버튼 등에서 가시성 분기에 사용.
  */
 export function useSubscription(): { subscription: ActiveSubscription; loading: boolean } {
-  const [subscription, setSubscription] = useState<ActiveSubscription>(INACTIVE);
-  const [loading, setLoading] = useState(true);
+  // 로그인 상태(localStorage 토큰)를 외부 store로 구독 — 비로그인 분기를 render 단계에서 derive하여
+  // effect 안 sync setState(set-state-in-effect) 회피. SSR 단계에선 null.
+  const loggedIn = useSyncExternalStore<boolean | null>(
+    subscribeAuth,
+    () => isLoggedIn(),
+    () => null,
+  );
+  const [data, setData] = useState<ActiveSubscription | null>(null);
 
   useEffect(() => {
-    if (!isLoggedIn()) {
-      setSubscription(INACTIVE);
-      setLoading(false);
-      return;
-    }
+    if (loggedIn !== true) return;
     let cancelled = false;
-    fetchSubscriptionCached()
-      .then((s) => {
-        if (!cancelled) setSubscription(s);
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
+    fetchSubscriptionCached().then((s) => {
+      if (!cancelled) setData(s);
+    });
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [loggedIn]);
 
-  return { subscription, loading };
+  if (loggedIn === false) {
+    return { subscription: INACTIVE, loading: false };
+  }
+  // SSR(null) 또는 로그인됐지만 fetch 미완료 → loading=true.
+  return { subscription: data ?? INACTIVE, loading: data === null };
 }
