@@ -30,7 +30,7 @@ import static org.mockito.Mockito.never;
 /**
  * PostService.getDetail 의 native UPDATE 흐름 검증.
  * - 비작성자 viewer → incrementViewCount 1회 호출 + entity in-memory +1 동기화
- * - 작성자 본인 viewer → increment 호출 0회
+ * - 작성자 본인 viewer → incrementViewCount 1회 호출
  * - PENDING 글에 비작성자 viewer → POST_NOT_FOUND, increment 호출 0회
  */
 @ExtendWith(MockitoExtension.class)
@@ -68,8 +68,8 @@ class PostServiceTest {
     }
 
     @Test
-    @DisplayName("getDetail PUBLISHED + 작성자 본인 viewer — increment 호출 안 함")
-    void getDetail_published_author_skipsIncrement() {
+    @DisplayName("getDetail PUBLISHED + 작성자 본인 viewer — native increment + in-memory 동기화")
+    void getDetail_published_author_incrementsBoth() {
         MemberEntity author = new MemberEntity("kakao", "k1", "글쓴이");
         setMemberId(author, 1L);
         PostEntity post = new PostEntity(author, PostCategory.PASS_REVIEW,
@@ -80,8 +80,8 @@ class PostServiceTest {
 
         PostDetailResponse response = postService.getDetail(100L, 1L); // 작성자 본인
 
-        then(postRepository).should(never()).incrementViewCount(100L);
-        assertThat(response.viewCount()).isEqualTo(0L);
+        then(postRepository).should().incrementViewCount(100L);
+        assertThat(response.viewCount()).isEqualTo(1L);
     }
 
     @Test
