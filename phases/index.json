@@ -10,7 +10,8 @@
       "dir": "fix-react19-set-state-in-effect",
       "name": "fix-react19-set-state-in-effect",
       "description": "React 19/Next 16에서 도입된 react-hooks/set-state-in-effect 룰에 부적합한 기존 코드 12개 위치(11개 파일) 정리 + blog/page.tsx 1건의 impure-function-during-render 별도 처리",
-      "status": "pending"
+      "status": "completed",
+      "completed_at": "2026-05-09T03:52:03+0900"
     }
   ]
 }
