@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Container } from "@/components/ui";
+import ExternalLink from "@/components/ExternalLink";
 
 export const metadata: Metadata = {
   title: "문어CBT 소개",
@@ -111,14 +112,12 @@ export default function AboutPage() {
         </p>
         <ul className="list-disc pl-5">
           <li>
-            <a
+            <ExternalLink
               href="https://yunamom.tistory.com/"
-              target="_blank"
-              rel="noopener noreferrer"
               className="text-primary underline underline-offset-2 transition-colors hover:text-primary-hover"
             >
               yunamom.tistory.com
-            </a>
+            </ExternalLink>
           </li>
         </ul>
       </Section>

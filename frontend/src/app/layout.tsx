@@ -9,6 +9,8 @@ import AnalyticsScripts from "@/components/AnalyticsScripts";
 import AdSidebar from "@/components/AdSidebar";
 import AdSenseLoader from "@/components/AdSenseLoader";
 import FeedbackRail from "@/components/FeedbackRail";
+import InitialContentBootstrap from "@/components/InitialContentBootstrap";
+import AppRouteGuard from "@/components/AppRouteGuard";
 import { ToastProvider } from "@/components/Toast";
 import "./globals.css";
 
@@ -206,6 +208,8 @@ export default function RootLayout({
           <AdSidebar adSlot={ADSENSE_SIDEBAR_SLOT} />
           <FeedbackRail />
           <BottomTabBar />
+          <InitialContentBootstrap />
+          <AppRouteGuard />
         </ToastProvider>
         <AdSenseLoader />
       </body>

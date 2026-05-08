@@ -2,6 +2,7 @@
 
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import ExternalLink from "@/components/ExternalLink";
 
 /**
  * 게시판 본문/댓글 markdown 렌더.
@@ -14,15 +15,13 @@ export default function PostMarkdown({ content }: { content: string }) {
         remarkPlugins={[remarkGfm]}
         components={{
           a: ({ href, children, ...props }) => (
-            <a
-              href={href}
-              target="_blank"
-              rel="noopener noreferrer"
+            <ExternalLink
+              href={href ?? "#"}
               className="text-primary underline underline-offset-2 hover:text-primary-hover"
               {...props}
             >
               {children}
-            </a>
+            </ExternalLink>
           ),
           img: ({ src, alt }) => (
             // next/image 는 R2 도메인을 remotePatterns 에 등록해야 해서 plain img 사용.

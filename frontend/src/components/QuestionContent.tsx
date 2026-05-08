@@ -4,6 +4,7 @@ import dynamic from "next/dynamic";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeRaw from "rehype-raw";
+import ExternalLink from "@/components/ExternalLink";
 
 // react-syntax-highlighter는 8개 언어 등록까지 포함해 ~200KB. 코드블록이 실제로 렌더될 때만 로드한다.
 const QuestionCodeBlock = dynamic(() => import("./QuestionCodeBlock"), {
@@ -209,14 +210,12 @@ export default function QuestionContent({
           },
           a({ children, href }) {
             return (
-              <a
-                href={href}
+              <ExternalLink
+                href={href ?? "#"}
                 className="text-amber-400 underline-offset-2 hover:underline"
-                target="_blank"
-                rel="noopener noreferrer"
               >
                 {children}
-              </a>
+              </ExternalLink>
             );
           },
           strong({ children }) {

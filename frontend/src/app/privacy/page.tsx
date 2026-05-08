@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Container } from "@/components/ui";
+import ExternalLink from "@/components/ExternalLink";
 
 export const metadata: Metadata = {
   title: "개인정보처리방침",
@@ -54,27 +55,23 @@ export default function PrivacyPage() {
           <li>
             <strong>Google Analytics 4</strong> — 익명화된 트래픽 분석. 페이지 조회·체류 시간
             측정용 쿠키를 사용합니다. 옵트아웃은{" "}
-            <a
+            <ExternalLink
               href="https://tools.google.com/dlpage/gaoptout"
               className="text-primary underline"
-              target="_blank"
-              rel="noopener noreferrer"
             >
               Google Analytics Opt-out
-            </a>
+            </ExternalLink>
             에서 가능합니다.
           </li>
           <li>
             <strong>Google AdSense</strong> (도입 예정) — 사이트 운영비 충당을 위한 광고를
             표시합니다. AdSense는 관심 기반 광고를 위해 쿠키를 사용할 수 있으며, 이용자는{" "}
-            <a
+            <ExternalLink
               href="https://adssettings.google.com"
               className="text-primary underline"
-              target="_blank"
-              rel="noopener noreferrer"
             >
               Google 광고 설정
-            </a>
+            </ExternalLink>
             에서 개인 맞춤 광고를 비활성화할 수 있습니다.
           </li>
           <li>

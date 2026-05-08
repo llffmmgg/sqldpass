@@ -1,4 +1,12 @@
 import { fetchApi } from "@/lib/api";
+import { isCapacitorApp } from "@/lib/platform";
+import {
+  getMockExam as getMockExamFromCache,
+  getQuestionsForMockExam,
+  listMockExams as listMockExamsFromCache,
+  type OfflineMockExam,
+  type OfflineQuestion,
+} from "@/lib/offlineStore";
 
 export type ExamType = "SQLD" | "ENGINEER_PRACTICAL" | "COMPUTER_LITERACY_1" | "COMPUTER_LITERACY_2" | "ENGINEER_WRITTEN" | "ADSP";
 export type QuestionType = "MCQ" | "SHORT_ANSWER" | "DESCRIPTIVE";
@@ -73,10 +81,97 @@ export interface MockExamDetail {
   questions: MockExamQuestion[];
 }
 
-export function getMockExams() {
-  return fetchApi<MockExamSummary[]>("/mock-exams");
+export async function getMockExams(): Promise<MockExamSummary[]> {
+  // 안드로이드 앱은 IndexedDB 캐시를 우선 사용해도 좋겠지만, 사용자별 best score 와
+  // purchased 플래그가 비어 보이는 게 더 나쁜 UX 라서 일단 기존 정책 유지: 온라인이면 API.
+  // 오프라인이면 (네트워크 실패 시) 캐시로 폴백.
+  try {
+    return await fetchApi<MockExamSummary[]>("/mock-exams");
+  } catch (err) {
+    if (isCapacitorApp()) {
+      const fallback = await listFromCacheAsSummaries();
+      if (fallback.length > 0) return fallback;
+    }
+    throw err;
+  }
 }
 
-export function getMockExam(id: number) {
-  return fetchApi<MockExamDetail>(`/mock-exams/${id}`);
+export async function getMockExam(id: number): Promise<MockExamDetail> {
+  // 앱 모드에선 캐시 우선 (지하철 풀이 시나리오). 캐시 hit 시 즉시 반환.
+  // 캐시에 없으면 (DRAFT 회차거나 신규 회차) API 시도. API 가 실패하면 명시적 에러.
+  if (isCapacitorApp()) {
+    const cached = await fromCacheAsDetail(id).catch(() => null);
+    if (cached) return cached;
+  }
+  try {
+    return await fetchApi<MockExamDetail>(`/mock-exams/${id}`);
+  } catch (err) {
+    if (isCapacitorApp()) {
+      const cached = await fromCacheAsDetail(id).catch(() => null);
+      if (cached) return cached;
+    }
+    throw err;
+  }
+}
+
+async function fromCacheAsDetail(id: number): Promise<MockExamDetail | null> {
+  const exam = await getMockExamFromCache(id);
+  if (!exam) return null;
+  const questions = await getQuestionsForMockExam(id);
+  return offlineToDetail(exam, questions);
+}
+
+async function listFromCacheAsSummaries(): Promise<MockExamSummary[]> {
+  const exams = await listMockExamsFromCache();
+  return exams.map(offlineToSummary);
+}
+
+function offlineToDetail(
+  exam: OfflineMockExam,
+  questions: OfflineQuestion[],
+): MockExamDetail {
+  return {
+    id: exam.id,
+    name: exam.name,
+    examType: exam.examType as ExamType,
+    sequence: exam.sequence,
+    totalQuestions: questions.length,
+    createdAt: "",
+    questions: questions.map((q) => ({
+      id: q.id,
+      displayOrder: q.displayOrder ?? 0,
+      content: q.content,
+      questionType: q.questionType as QuestionType,
+      subjectId: q.subjectId ?? 0,
+      subjectName: q.subjectName ?? "",
+    })),
+  };
+}
+
+function offlineToSummary(exam: OfflineMockExam): MockExamSummary {
+  // 사용자 단위 메타(solved, bestScore, purchased)는 캐시에 없으니 보수적인 기본값.
+  return {
+    id: exam.id,
+    name: exam.name,
+    examType: exam.examType as ExamType,
+    sequence: exam.sequence,
+    totalQuestions: exam.questionIds.length,
+    createdAt: "",
+    difficultyLabel: null,
+    solved: false,
+    bestCorrectCount: null,
+    bestTotalCount: null,
+    templateKey: null,
+    templateLabel: null,
+    visibility: exam.visibility as MockExamVisibility,
+    expertVerified: exam.expertVerified,
+    kind: exam.kind as MockExamKind,
+    examYear: exam.examYear,
+    examRound: exam.examRound,
+    examDate: exam.examDate,
+    publishedAt: null,
+    pastExamLinkedAt: null,
+    purchased: false,
+    isPremium: exam.visibility === "PREMIUM",
+  };
 }

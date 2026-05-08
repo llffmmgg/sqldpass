@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>문어CBT</title>
+    <meta name="theme-color" content="#0a0a0a" />
+    <style>
+      :root { color-scheme: dark; }
+      html, body {
+        margin: 0;
+        height: 100%;
+        background: #0a0a0a;
+        color: #f5f5f5;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Apple SD Gothic Neo",
+          "Pretendard", "Noto Sans KR", system-ui, sans-serif;
+      }
+      .wrap {
+        min-height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+        text-align: center;
+      }
+      .logo {
+        width: 64px; height: 64px;
+        border-radius: 16px;
+        background: linear-gradient(135deg, #f59e0b, #d97706);
+        display: grid; place-items: center;
+        font-size: 32px; font-weight: 800; color: #0a0a0a;
+        margin-bottom: 24px;
+      }
+      h1 { font-size: 18px; font-weight: 700; margin: 0 0 8px; }
+      p  { font-size: 14px; color: #9ca3af; margin: 4px 0; line-height: 1.6; }
+      .spinner {
+        margin-top: 24px;
+        width: 28px; height: 28px;
+        border-radius: 50%;
+        border: 3px solid #1f2937;
+        border-top-color: #f59e0b;
+        animation: spin 0.8s linear infinite;
+      }
+      @keyframes spin { to { transform: rotate(360deg); } }
+      button {
+        margin-top: 24px;
+        padding: 12px 20px;
+        font-size: 14px;
+        font-weight: 600;
+        background: #f59e0b;
+        color: #0a0a0a;
+        border: 0;
+        border-radius: 10px;
+        cursor: pointer;
+      }
+      .hidden { display: none !important; }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="logo" aria-hidden="true">문</div>
+      <h1>문어CBT</h1>
+      <p id="msg">연결을 확인하는 중...</p>
+      <div class="spinner" id="spinner"></div>
+      <button id="retry" class="hidden" onclick="tryReload()">다시 시도</button>
+    </div>
+    <script>
+      // This page only shows when Capacitor's WebView cannot reach https://www.sqldpass.com.
+      // The normal flow loads sqldpass.com directly via capacitor.config.ts -> server.url.
+      var attempts = 0;
+
+      function tryReload() {
+        attempts += 1;
+        document.getElementById("msg").textContent = "다시 연결하는 중...";
+        document.getElementById("spinner").classList.remove("hidden");
+        document.getElementById("retry").classList.add("hidden");
+        location.replace("https://www.sqldpass.com/");
+      }
+
+      function showOffline() {
+        document.getElementById("msg").innerHTML =
+          "인터넷 연결이 없는 것 같아요.<br/>이미 다운받은 회차는 풀이 후 다시 시도해주세요.";
+        document.getElementById("spinner").classList.add("hidden");
+        document.getElementById("retry").classList.remove("hidden");
+      }
+
+      // If we ever reach this fallback page, give the network 2 seconds, then offer manual retry.
+      window.addEventListener("load", function () {
+        setTimeout(showOffline, 2000);
+      });
+
+      window.addEventListener("online", function () {
+        if (attempts === 0) tryReload();
+      });
+    </script>
+  </body>
+</html>

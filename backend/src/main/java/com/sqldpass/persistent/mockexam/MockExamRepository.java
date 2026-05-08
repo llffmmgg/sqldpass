@@ -32,6 +32,25 @@ public interface MockExamRepository extends JpaRepository<MockExamEntity, Long> 
     List<Object[]> findUserVisibleWithQuestionCounts();
 
     /**
+     * 안드로이드 앱 첫 부트 prefetch 용 스냅샷 — visibility != DRAFT + expert_verified=true 인
+     * 모든 회차(AI/PAST_EXAM 모두 포함)를 문제 + 과목까지 한 번에 fetch.
+     * 결과는 단일 큰 JSON 으로 직렬화돼 IndexedDB 에 들어간다.
+     */
+    @Query("SELECT DISTINCT m FROM MockExamEntity m " +
+            "LEFT JOIN FETCH m.questions q " +
+            "LEFT JOIN FETCH q.subject s " +
+            "LEFT JOIN FETCH s.parent " +
+            "WHERE m.visibility <> com.sqldpass.persistent.mockexam.MockExamVisibility.DRAFT " +
+            "  AND m.expertVerified = true")
+    List<MockExamEntity> findAllForSnapshot();
+
+    /** 스냅샷 버전 계산용 — visibility != DRAFT + expert_verified 회차의 max(updated_at). */
+    @Query("SELECT MAX(m.updatedAt) FROM MockExamEntity m " +
+            "WHERE m.visibility <> com.sqldpass.persistent.mockexam.MockExamVisibility.DRAFT " +
+            "  AND m.expertVerified = true")
+    Optional<java.time.LocalDateTime> findSnapshotMaxUpdatedAt();
+
+    /**
      * 기출 복원 목록 — 비로그인 공개.
      * kind=PAST_EXAM 이면서 PUBLISHED(=일반 공개) + 전문가 검수 완료만 노출.
      * 회차(exam_round) 내림차순 → 없으면 sequence 내림차순으로 최신 회차가 상단.
