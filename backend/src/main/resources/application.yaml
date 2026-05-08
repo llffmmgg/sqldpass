@@ -56,6 +56,9 @@ sqldpass:
     google:
       client-id: ${GOOGLE_OAUTH_CLIENT_ID:not-set}
       client-secret: ${GOOGLE_OAUTH_CLIENT_SECRET:not-set}
+      # 안드로이드 Capacitor 앱이 네이티브 Google Sign-In 으로 받는 ID 토큰의 audience.
+      # Google Cloud Console 에서 Android 클라이언트 (package name + SHA-1) 를 따로 발급해 입력.
+      android-client-id: ${GOOGLE_OAUTH_ANDROID_CLIENT_ID:}
   admin:
     username: ${ADMIN_USERNAME:admin}
     password-hash: ${ADMIN_PASSWORD_HASH:$2a$10$zKXKfuTgKRvDGo2F00OyTe2R33XqdfRBxSaqf1VG1oc6Wdtsy.xPO}

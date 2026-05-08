@@ -11,6 +11,7 @@ import AdSenseLoader from "@/components/AdSenseLoader";
 import FeedbackRail from "@/components/FeedbackRail";
 import InitialContentBootstrap from "@/components/InitialContentBootstrap";
 import AppRouteGuard from "@/components/AppRouteGuard";
+import ServiceWorkerRegistrar from "@/components/ServiceWorkerRegistrar";
 import { ToastProvider } from "@/components/Toast";
 import "./globals.css";
 
@@ -210,6 +211,7 @@ export default function RootLayout({
           <BottomTabBar />
           <InitialContentBootstrap />
           <AppRouteGuard />
+          <ServiceWorkerRegistrar />
         </ToastProvider>
         <AdSenseLoader />
       </body>

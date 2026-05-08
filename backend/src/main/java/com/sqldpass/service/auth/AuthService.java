@@ -23,7 +23,20 @@ public class AuthService {
     public AuthResult loginWithGoogle(String code, String redirectUri) {
         String accessToken = googleOAuthClient.exchangeCode(code, redirectUri);
         GoogleOAuthClient.GoogleUserInfo userInfo = googleOAuthClient.getUserInfo(accessToken);
+        return upsertMemberAndIssueToken(userInfo);
+    }
 
+    /**
+     * 안드로이드 Capacitor 앱 — 네이티브 Google Sign-In 이 ID 토큰을 직접 반환하므로
+     * code↔access_token 교환 단계가 없다. ID 토큰 자체를 검증하고 같은 흐름으로 회원 발급.
+     */
+    @Transactional
+    public AuthResult loginWithGoogleIdToken(String idToken) {
+        GoogleOAuthClient.GoogleUserInfo userInfo = googleOAuthClient.verifyIdToken(idToken);
+        return upsertMemberAndIssueToken(userInfo);
+    }
+
+    private AuthResult upsertMemberAndIssueToken(GoogleOAuthClient.GoogleUserInfo userInfo) {
         boolean[] isNew = {false};
         MemberEntity member = memberRepository.findByProviderAndProviderId("google", userInfo.sub())
                 .orElseGet(() -> {
