@@ -216,7 +216,8 @@ function withSyncedFlag(p: PendingSolve): PendingSolveRow {
 }
 
 function stripSyncedFlag(row: PendingSolveRow): PendingSolve {
-  const { syncedFlag: _ignored, ...rest } = row;
+  const { syncedFlag, ...rest } = row;
+  void syncedFlag;
   return rest;
 }
 

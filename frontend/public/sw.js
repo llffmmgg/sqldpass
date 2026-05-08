@@ -19,7 +19,7 @@ const STATIC_PATTERNS = [
   /\.(?:png|webp|svg|jpg|jpeg|gif|ico|woff2?|ttf)$/,
 ];
 
-self.addEventListener("install", (event) => {
+self.addEventListener("install", () => {
   // 새 SW 가 즉시 활성화 — 사용자가 닫았다 다시 열 필요 없게.
   self.skipWaiting();
 });
@@ -79,7 +79,7 @@ async function cacheFirst(request, cacheName) {
       cache.put(request, fresh.clone()).catch(() => {});
     }
     return fresh;
-  } catch (e) {
+  } catch {
     return new Response("", { status: 504, statusText: "offline" });
   }
 }
@@ -92,7 +92,7 @@ async function networkFirst(request, cacheName) {
       cache.put(request, fresh.clone()).catch(() => {});
     }
     return fresh;
-  } catch (e) {
+  } catch {
     const cached = await cache.match(request);
     if (cached) return cached;
     // 현재 URL 에 캐시가 없으면 모의고사 허브로라도 보내준다.
