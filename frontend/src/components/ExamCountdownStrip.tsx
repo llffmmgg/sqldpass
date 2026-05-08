@@ -7,6 +7,9 @@ export default function ExamCountdownStrip() {
   const [now, setNow] = useState<Date | null>(null);
 
   useEffect(() => {
+    // 외부(Date) sync — SSR에서는 null, mount 직후 1회 동기화 후 60초 간격 갱신.
+    // hydration mismatch 회피를 위해 첫 mount까지는 null로 두고 여기서만 setState.
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- 외부 Date sync, mount 1회 + setInterval 콜백
     setNow(new Date());
     const t = setInterval(() => setNow(new Date()), 60_000);
     return () => clearInterval(t);

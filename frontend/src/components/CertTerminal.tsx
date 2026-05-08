@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 
 /**
  * 자격증 선택 터미널 — 히어로 하단에 배치.
@@ -25,37 +25,42 @@ function commandFor(id: Cert["id"]) {
   return `$ ./sqldpass --exam=${id} --mode=mock`;
 }
 
-export default function CertTerminal() {
-  const [active, setActive] = useState<Cert["id"]>("sqld");
+// SSR에서는 false, 클라이언트 hydration 직후 true — useSyncExternalStore가 mismatch 없이 처리.
+function useIsClient() {
+  return useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false,
+  );
+}
+
+// 타이프라이터 — `key={text}` 등으로 부모가 remount하면 typed 상태가 자연스럽게 ""로 초기화된다.
+// setState는 setTimeout 콜백 내부에서만 호출되므로 set-state-in-effect 룰에 걸리지 않는다.
+function Typewriter({ text }: { text: string }) {
   const [typed, setTyped] = useState("");
-  const [mounted, setMounted] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // 마운트 플래그 — SSR 하이드레이션 깜빡임 방지
   useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  // active 변경 시 타이프라이터 재생
-  useEffect(() => {
-    if (!mounted) return;
-    const target = commandFor(active);
-    setTyped("");
     let i = 0;
-
-    function step() {
+    function tick() {
       i += 1;
-      setTyped(target.slice(0, i));
-      if (i < target.length) {
-        timerRef.current = setTimeout(step, 38);
+      setTyped(text.slice(0, i));
+      if (i < text.length) {
+        timerRef.current = setTimeout(tick, 38);
       }
     }
-
-    timerRef.current = setTimeout(step, 120);
+    timerRef.current = setTimeout(tick, 120);
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
     };
-  }, [active, mounted]);
+  }, [text]);
+
+  return <>{typed}</>;
+}
+
+export default function CertTerminal() {
+  const [active, setActive] = useState<Cert["id"]>("sqld");
+  const isClient = useIsClient();
 
   const currentCert = CERTS.find((c) => c.id === active) ?? CERTS[0];
   const staticCmd = commandFor(active);
@@ -75,9 +80,9 @@ export default function CertTerminal() {
         </div>
         {/* Prompt line */}
         <div className="px-4 py-3 font-mono text-sm leading-relaxed">
-          {/* SSR 기본 정적 문자열, mount 후 typed로 교체 */}
+          {/* SSR/hydration: 정적 문자열, 클라이언트 mount 후 active 마다 Typewriter 재실행 */}
           <span className="text-zinc-300">
-            {mounted ? typed : staticCmd}
+            {isClient ? <Typewriter key={active} text={staticCmd} /> : staticCmd}
           </span>
           <span className="cursor-blink ml-0.5 text-amber-400">▍</span>
         </div>

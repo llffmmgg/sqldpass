@@ -1,22 +1,39 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 import { isLoggedIn, getNickname } from "@/lib/auth";
 import { trackEvent } from "@/lib/gtag";
 import { ButtonLink } from "@/components/ui";
 
+function subscribeAuth(callback: () => void) {
+  if (typeof window === "undefined") return () => {};
+  window.addEventListener("storage", callback);
+  return () => window.removeEventListener("storage", callback);
+}
+
+function subscribeNoop() {
+  return () => {};
+}
+
 export default function HeroCta() {
-  const [mounted, setMounted] = useState(false);
-  const [loggedIn, setLoggedIn] = useState(false);
-  const [nickname, setNickname] = useState<string | null>(null);
+  // SSR/hydration 시점엔 false, 클라이언트 mount 직후 true — useState + useEffect 마운트 플래그 대체.
+  const isClient = useSyncExternalStore(
+    subscribeNoop,
+    () => true,
+    () => false,
+  );
+  const loggedIn = useSyncExternalStore(
+    subscribeAuth,
+    () => isLoggedIn(),
+    () => false,
+  );
+  const nickname = useSyncExternalStore<string | null>(
+    subscribeAuth,
+    () => getNickname(),
+    () => null,
+  );
 
-  useEffect(() => {
-    setLoggedIn(isLoggedIn());
-    setNickname(getNickname());
-    setMounted(true);
-  }, []);
-
-  const authed = mounted && loggedIn;
+  const authed = isClient && loggedIn;
   const primary = authed
     ? { href: "/solve", label: "이어서 문제 풀기" }
     : { href: "/solve", label: "무료로 시작하기" };

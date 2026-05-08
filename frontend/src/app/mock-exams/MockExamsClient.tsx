@@ -47,16 +47,21 @@ function MockExamsContent() {
 
   const [exams, setExams] = useState<MockExamSummary[] | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [authed, setAuthed] = useState(false);
   const [difficulty, setDifficulty] = useState<DifficultyFilter>("ALL");
 
   useEffect(() => {
-    const loggedIn = isLoggedIn();
-    setAuthed(loggedIn);
-    const fetcher = loggedIn ? getMockExams() : getPublicMockExams();
+    let alive = true;
+    const fetcher = isLoggedIn() ? getMockExams() : getPublicMockExams();
     fetcher
-      .then(setExams)
-      .catch((e) => setError(e instanceof Error ? e.message : "목록을 불러올 수 없습니다."));
+      .then((next) => {
+        if (alive) setExams(next);
+      })
+      .catch((e) => {
+        if (alive) setError(e instanceof Error ? e.message : "목록을 불러올 수 없습니다.");
+      });
+    return () => {
+      alive = false;
+    };
   }, []);
 
   const token = CERT_TOKENS[activeCert];

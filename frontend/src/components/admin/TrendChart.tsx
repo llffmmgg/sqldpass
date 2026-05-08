@@ -17,16 +17,31 @@ export default function TrendChart() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
+  // 사용자 클릭으로 기간 변경 — loading/error 리셋은 핸들러에서, 이펙트 안에서 sync setState 회피.
+  function handleDaysChange(next: number) {
+    if (next === days) return;
     setLoading(true);
     setError(null);
+    setDays(next);
+  }
+
+  useEffect(() => {
+    let alive = true;
     getTrend(days)
-      .then((r) => setPoints(r.points))
+      .then((r) => {
+        if (!alive) return;
+        setPoints(r.points);
+        setLoading(false);
+      })
       .catch((e) => {
+        if (!alive) return;
         setPoints([]);
         setError(e instanceof Error ? e.message : "불러오기 실패");
-      })
-      .finally(() => setLoading(false));
+        setLoading(false);
+      });
+    return () => {
+      alive = false;
+    };
   }, [days]);
 
   return (
@@ -37,7 +52,7 @@ export default function TrendChart() {
           {PERIOD_OPTIONS.map((opt) => (
             <button
               key={opt.days}
-              onClick={() => setDays(opt.days)}
+              onClick={() => handleDaysChange(opt.days)}
               className={`rounded px-1.5 py-0.5 text-[10px] font-medium transition ${
                 days === opt.days
                   ? "bg-primary text-zinc-900"

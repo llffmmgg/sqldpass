@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { getNickname } from "@/lib/auth";
 
 interface RankingEntry {
@@ -14,19 +14,35 @@ interface RankingData {
   generatedAt: string;
 }
 
+function subscribeAuth(callback: () => void) {
+  if (typeof window === "undefined") return () => {};
+  window.addEventListener("storage", callback);
+  return () => window.removeEventListener("storage", callback);
+}
+
 export default function RankingSection() {
   const [data, setData] = useState<RankingData | null>(null);
-  const [myNickname, setMyNickname] = useState<string | null>(null);
+  // localStorage(외부 store) 구독 — set-state-in-effect 회피.
+  const myNickname = useSyncExternalStore<string | null>(
+    subscribeAuth,
+    () => getNickname(),
+    () => null,
+  );
 
   useEffect(() => {
-    setMyNickname(getNickname());
+    let alive = true;
     fetch("/api/public/ranking")
       .then((res) => {
         if (!res.ok) throw new Error();
         return res.json();
       })
-      .then(setData)
+      .then((next) => {
+        if (alive) setData(next);
+      })
       .catch(() => {});
+    return () => {
+      alive = false;
+    };
   }, []);
 
   if (!data || !data.entries || data.entries.length === 0) {

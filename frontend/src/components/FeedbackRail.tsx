@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { usePathname } from "next/navigation";
 import FeedbackModal from "@/components/FeedbackModal";
 import type { FeedbackType } from "@/lib/feedbackApi";
@@ -54,6 +54,7 @@ const REACTIONS: Reaction[] = [
 ];
 
 const DISMISS_KEY = "feedback_rail_dismissed_until";
+const DISMISS_EVENT = "feedback-rail-dismissed-changed";
 
 function isDismissed(): boolean {
   if (typeof window === "undefined") return false;
@@ -68,29 +69,50 @@ function isDismissed(): boolean {
   }
 }
 
-function setDismissed() {
+function persistDismissed() {
   try {
     const until = Date.now() + 1000 * 60 * 60 * 24; // 24h
     window.localStorage.setItem(DISMISS_KEY, String(until));
+    // 같은 탭에선 storage 이벤트가 안 뜨므로 커스텀 이벤트로 useSyncExternalStore 구독자에게 알림.
+    window.dispatchEvent(new Event(DISMISS_EVENT));
   } catch {
     // ignore
   }
 }
 
+function subscribeDismissed(callback: () => void) {
+  if (typeof window === "undefined") return () => {};
+  window.addEventListener("storage", callback);
+  window.addEventListener(DISMISS_EVENT, callback);
+  return () => {
+    window.removeEventListener("storage", callback);
+    window.removeEventListener(DISMISS_EVENT, callback);
+  };
+}
+
+function subscribeNoop() {
+  return () => {};
+}
+
 export default function FeedbackRail() {
   const pathname = usePathname();
-  const [mounted, setMounted] = useState(false);
-  const [dismissed, setDismissedState] = useState(false);
+  // SSR에선 false → 클라이언트 hydration 직후 true. mounted 플래그 대신 사용.
+  const isClient = useSyncExternalStore(
+    subscribeNoop,
+    () => true,
+    () => false,
+  );
+  // localStorage(외부 store) 구독 — set-state-in-effect 회피.
+  const dismissed = useSyncExternalStore(
+    subscribeDismissed,
+    () => isDismissed(),
+    () => false,
+  );
   const [modalOpen, setModalOpen] = useState(false);
   const [modalType, setModalType] = useState<FeedbackType>("OTHER");
   const [modalHint, setModalHint] = useState<string | undefined>(undefined);
 
-  useEffect(() => {
-    setMounted(true);
-    setDismissedState(isDismissed());
-  }, []);
-
-  if (!mounted) return null;
+  if (!isClient) return null;
   if (EXCLUDED_PREFIXES.some((prefix) => pathname?.startsWith(prefix))) {
     return null;
   }
@@ -113,8 +135,7 @@ export default function FeedbackRail() {
 
   function handleDismiss(e: React.MouseEvent) {
     e.stopPropagation();
-    setDismissed();
-    setDismissedState(true);
+    persistDismissed();
   }
 
   return (
