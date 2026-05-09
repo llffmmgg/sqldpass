@@ -13,6 +13,20 @@
       "description": "React 19/Next 16에서 도입된 react-hooks/set-state-in-effect 룰에 부적합한 기존 코드 12개 위치(11개 파일) 정리 + blog/page.tsx 1건의 impure-function-during-render 별도 처리",
       "status": "completed",
       "completed_at": "2026-05-09T03:52:03+0900"
+    },
+    {
+      "dir": "web-llm-mock-exam-review",
+      "name": "web-llm-mock-exam-review",
+      "description": "모의고사 상세 화면의 기존 API 기반 AI 검증 버튼을 웹 LLM 검수 워크플로우로 교체하고, Claude -> ChatGPT 최종 JSON을 diff 후 일괄 적용한다.",
+      "status": "completed",
+      "completed_at": "2026-05-09T13:58:49+0900"
+    },
+    {
+      "dir": "web-llm-review-browser-automation",
+      "name": "web-llm-review-browser-automation",
+      "description": "웹 LLM 검수 패널에 Claude/ChatGPT 프로젝트 URL 저장, Codex 인앱 브라우저 자동 실행 패키지, 실행 절차를 제공한다.",
+      "status": "completed",
+      "completed_at": "2026-05-09T15:05:00+0900"
     }
   ]
 }

@@ -1,0 +1,28 @@
+{
+  "project": "sqldpass",
+  "phase": "web-llm-mock-exam-review",
+  "description": "모의고사 상세 화면의 기존 API 기반 AI 검증 UX를 제거하고, 현재 모의고사 JSON을 Claude/ChatGPT 웹 프로젝트 검수 흐름에 넘긴 뒤 최종 JSON을 diff 후 일괄 적용하는 admin 워크벤치를 만든다.",
+  "steps": [
+    {
+      "step": 1,
+      "name": "harness-phase-scaffold",
+      "description": "Harness phase/index/step 산출물을 생성한다.",
+      "status": "completed",
+      "started_at": "2026-05-09T13:44:00+0900",
+      "completed_at": "2026-05-09T13:45:00+0900",
+      "summary": "Harness phase 디렉터리, phase index, step1/step2 문서를 생성했고 phases/index.json 및 phase index JSON 파싱을 확인했다."
+    },
+    {
+      "step": 2,
+      "name": "frontend-web-llm-review-workbench",
+      "description": "모의고사 상세 화면에서 기존 AI 검증 버튼을 제거하고 웹 LLM 검수 패널, JSON 검증, diff, 일괄 적용 흐름을 구현한다.",
+      "status": "completed",
+      "started_at": "2026-05-09T13:45:00+0900",
+      "completed_at": "2026-05-09T13:58:49+0900",
+      "summary": "모의고사 상세 화면에서 API 기반 AI 검증 버튼을 제거하고 웹 LLM 검수 패널을 추가했다. 원본 JSON 생성/복사, Claude 수정본 복사, ChatGPT 최종 JSON 검증, 차단 조건 검사, diff 요약, updateQuestion 일괄 적용 및 markMockExamVerified 처리를 구현했다. npm run lint와 npm run build를 통과했다."
+    }
+  ],
+  "created_at": "2026-05-09T13:44:00+0900",
+  "completed_at": "2026-05-09T13:58:49+0900",
+  "status": "completed"
+}

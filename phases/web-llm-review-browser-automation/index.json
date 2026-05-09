@@ -1,0 +1,37 @@
+{
+  "project": "sqldpass",
+  "phase": "web-llm-review-browser-automation",
+  "description": "웹 LLM 검수 패널에 Claude/ChatGPT 프로젝트 URL을 localStorage로 한 번 저장하고, Codex 인앱 브라우저가 admin -> Claude -> ChatGPT -> admin 흐름을 자동 수행할 수 있는 실행 패키지를 제공한다.",
+  "steps": [
+    {
+      "step": 1,
+      "name": "harness-phase-scaffold",
+      "description": "Harness phase/index/step 산출물을 생성한다.",
+      "status": "completed",
+      "started_at": "2026-05-09T14:00:00+0900",
+      "completed_at": "2026-05-09T14:01:00+0900",
+      "summary": "Codex 인앱 브라우저 자동화 후속 phase를 phases/index.json에 등록하고 phase index 및 step 문서를 생성했다."
+    },
+    {
+      "step": 2,
+      "name": "frontend-persist-project-urls-and-automation-package",
+      "description": "모의고사 상세 웹 LLM 검수 패널에 프로젝트 URL 저장, 자동 실행 패키지 복사, browser automation용 stable selector를 추가한다.",
+      "status": "completed",
+      "started_at": "2026-05-09T14:01:00+0900",
+      "completed_at": "2026-05-09T14:32:08+0900",
+      "summary": "웹 LLM 검수 패널에 Claude/ChatGPT 프로젝트 URL 입력과 localStorage 저장을 추가하고, Codex 자동 실행 패키지 복사 기능 및 주요 data-testid selector를 추가했다. npm run lint와 npm run build를 통과했다."
+    },
+    {
+      "step": 3,
+      "name": "frontend-expose-browser-run-package-and-runbook",
+      "description": "Codex 인앱 브라우저가 admin 화면에서 자동 실행 정보를 직접 읽고, Claude -> ChatGPT -> admin 검수 흐름을 수행할 수 있도록 패키지 노출 영역과 실행 지침을 추가한다.",
+      "status": "completed",
+      "started_at": "2026-05-09T14:45:00+0900",
+      "completed_at": "2026-05-09T15:05:00+0900",
+      "summary": "웹 LLM 검수 패널에 data-testid=\"web-review-automation-package\" readonly 패키지와 data-testid=\"web-review-codex-run-command\" 실행 명령을 추가했다. 패키지는 ready/blocked 상태와 오류 목록을 포함하며, blocked 상태에서는 복사 실행을 차단한다. Codex 인앱 브라우저 runbook을 추가했고 npm run lint, npm run build를 통과했다."
+    }
+  ],
+  "created_at": "2026-05-09T14:00:00+0900",
+  "completed_at": "2026-05-09T15:05:00+0900",
+  "status": "completed"
+}
