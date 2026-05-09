@@ -4,7 +4,8 @@
       "dir": "fix-android-minor",
       "name": "fix-android-minor",
       "description": "Harness Review에서 발견한 Android 변경 책임의 minor 정리: 루트 AGENTS.md mobile/ 반영 + Android 변경 lint warning 4건",
-      "status": "pending"
+      "status": "completed",
+      "completed_at": "2026-05-09T03:24:49+0900"
     },
     {
       "dir": "fix-react19-set-state-in-effect",

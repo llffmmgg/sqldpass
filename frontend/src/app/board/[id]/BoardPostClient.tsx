@@ -52,7 +52,7 @@ export default function BoardPostClient({ postId, initial }: Props) {
   }, []);
 
   // mount 시 항상 getPost 호출 — 두 가지 책임:
-  //  1) PUBLISHED 글의 조회수 +1 (PostService.getDetail 가 본인 제외 후 incrementView)
+  //  1) PUBLISHED 글의 조회수 +1 (PostService.getDetail 이 상세 진입마다 incrementView)
   //     SSR getPublicDetail 은 의도적으로 카운트를 안 올리므로 클라이언트 fetch 가 유일한 트리거.
   //  2) 작성자 본인의 PENDING 글 fallback (SSR 에서 initial=null)
   // OptionalMemberAuthInterceptor 라 비로그인도 통과 — 토큰 없으면 memberId=null 로 본인 제외 패스.

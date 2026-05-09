@@ -104,12 +104,9 @@ public class PostService {
             }
         }
 
-        // 조회수 증가는 DB atomic update 로만 영속화하고, 응답값만 별도로 보정한다.
-        long responseViewCount = p.getViewCount();
-        if (viewerMemberId == null || !viewerMemberId.equals(p.getMember().getId())) {
-            postRepository.incrementViewCount(id);
-            responseViewCount++;
-        }
+        // 공개 글 상세 진입은 작성자 여부와 무관하게 조회수로 집계한다.
+        postRepository.incrementViewCount(id);
+        long responseViewCount = p.getViewCount() + 1;
 
         List<PostCommentEntity> comments = commentRepository.findByPostIdOrderByCreatedAtAsc(id);
         return PostDetailResponse.from(p, comments, responseViewCount);
