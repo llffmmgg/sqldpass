@@ -28,7 +28,7 @@
       "status": "completed",
       "started_at": "2026-05-11T00:29:25+0900",
       "summary": "PaymentFailureRecorder REQUIRES_NEW 컴포넌트 신설, PaymentService wiring + 기존 테스트 setUp 보강 OK",
-      "completed_at": "2026-05-11T00:32:25+0900"
+      "completed_at": "2026-05-11T00:32:54+0900"
     },
     {
       "step": 4,
