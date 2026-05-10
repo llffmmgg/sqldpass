@@ -32,7 +32,8 @@
       "dir": "payment-hardening",
       "name": "payment-hardening",
       "description": "결제 모듈 리뷰에서 도출된 9개 이슈(P0 2 / P1 3 / P2 3 / doc 1) 일괄 보강 — verify idempotency, Play Billing 토큰 도용 방어, markFailed REQUIRES_NEW 분리, currency 검증, RTDN OIDC, 정책 일관화, 감사 테이블, 4티어 doc drift 정리.",
-      "status": "in_progress"
+      "status": "completed",
+      "completed_at": "2026-05-11T01:04:05+0900"
     }
   ]
 }
