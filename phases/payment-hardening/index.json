@@ -16,7 +16,10 @@
       "step": 2,
       "name": "audit-domain",
       "description": "SubscriptionHistoryEntity/Action/Repository/Service (REQUIRES_NEW) 신설",
-      "status": "pending"
+      "status": "completed",
+      "started_at": "2026-05-11T00:25:48+0900",
+      "summary": "audit Entity/Action/Repo/Service + REQUIRES_NEW 테스트 추가, gradle test OK",
+      "completed_at": "2026-05-11T00:29:00+0900"
     },
     {
       "step": 3,
