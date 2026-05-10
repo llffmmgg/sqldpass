@@ -55,7 +55,7 @@
       "status": "completed",
       "started_at": "2026-05-11T00:41:31+0900",
       "summary": "GoogleIdTokenVerifier 신설 + Webhook OIDC/sharedSecret 분기 + 테스트 6건 추가 OK",
-      "completed_at": "2026-05-11T00:51:00+0900"
+      "completed_at": "2026-05-11T00:52:24+0900"
     },
     {
       "step": 7,
