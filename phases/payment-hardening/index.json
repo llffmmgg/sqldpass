@@ -7,8 +7,9 @@
       "step": 1,
       "name": "migration-v80-v81",
       "description": "Flyway V80 (subscription.payment_id UNIQUE) + V81 (subscription_history 테이블) 마이그레이션 추가",
-      "status": "pending",
-      "started_at": "2026-05-11T00:21:13+0900"
+      "status": "completed",
+      "started_at": "2026-05-11T00:21:13+0900",
+      "summary": "V80 unique + V81 history 마이그레이션 추가, compileJava OK"
     },
     {
       "step": 2,
