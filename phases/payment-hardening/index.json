@@ -7,7 +7,8 @@
       "step": 1,
       "name": "migration-v80-v81",
       "description": "Flyway V80 (subscription.payment_id UNIQUE) + V81 (subscription_history 테이블) 마이그레이션 추가",
-      "status": "pending"
+      "status": "pending",
+      "started_at": "2026-05-11T00:21:13+0900"
     },
     {
       "step": 2,
@@ -51,5 +52,6 @@
       "description": "Java/TS 주석의 4티어 → 3-tier(혹은 구독 plan) 표현 정리. V## 마이그레이션 SQL 주석은 변경 금지(Flyway checksum)",
       "status": "pending"
     }
-  ]
+  ],
+  "created_at": "2026-05-11T00:21:13+0900"
 }

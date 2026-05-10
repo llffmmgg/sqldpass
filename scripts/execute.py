@@ -250,10 +250,12 @@ class StepExecutor:
         prompt = preamble + step_file.read_text(encoding="utf-8")
         if self._agent == "claude":
             # Windows CreateProcess 명령줄 한도(약 32K)를 피하려 prompt 를 stdin 으로 넘긴다.
+            # Windows 기본 locale(cp949)이 한글/em-dash 등 일부 유니코드를 못 인코딩하므로 utf-8 명시.
             cmd = ["claude", "-p", "--dangerously-skip-permissions", "--output-format", "json"]
             result = subprocess.run(
                 cmd,
-                cwd=self._root, input=prompt, capture_output=True, text=True, timeout=1800,
+                cwd=self._root, input=prompt, capture_output=True, text=True,
+                encoding="utf-8", errors="replace", timeout=1800,
             )
         else:
             cmd = [
@@ -267,7 +269,8 @@ class StepExecutor:
             ]
             result = subprocess.run(
                 cmd,
-                cwd=self._root, input=prompt, capture_output=True, text=True, timeout=1800,
+                cwd=self._root, input=prompt, capture_output=True, text=True,
+                encoding="utf-8", errors="replace", timeout=1800,
             )
 
         if result.returncode != 0:
