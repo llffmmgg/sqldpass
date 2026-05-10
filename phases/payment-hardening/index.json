@@ -1,0 +1,55 @@
+{
+  "project": "sqldpass",
+  "phase": "payment-hardening",
+  "description": "결제 모듈 리뷰에서 도출된 9개 이슈(P0 2 / P1 3 / P2 3 / doc 1)를 한 번에 보강한다. verify idempotency, Play Billing 토큰 도용 방어, markFailed REQUIRES_NEW 분리, currency 검증, RTDN OIDC, 정책 일관화, 감사 테이블 도입, 4티어 doc drift 정리.",
+  "steps": [
+    {
+      "step": 1,
+      "name": "migration-v80-v81",
+      "description": "Flyway V80 (subscription.payment_id UNIQUE) + V81 (subscription_history 테이블) 마이그레이션 추가",
+      "status": "pending"
+    },
+    {
+      "step": 2,
+      "name": "audit-domain",
+      "description": "SubscriptionHistoryEntity/Action/Repository/Service (REQUIRES_NEW) 신설",
+      "status": "pending"
+    },
+    {
+      "step": 3,
+      "name": "payment-failure-recorder",
+      "description": "PaymentFailureRecorder (별도 @Component, REQUIRES_NEW) 신설 — markFailed 트랜잭션 분리",
+      "status": "pending"
+    },
+    {
+      "step": 4,
+      "name": "verify-idempotency-and-currency-and-token-binding",
+      "description": "PaymentService.verify PAID 가드 + KRW currency 검증 + verifyPlayBilling memberId↔purchaseToken 바인딩",
+      "status": "pending"
+    },
+    {
+      "step": 5,
+      "name": "playbilling-policy-alignment",
+      "description": "verifyPlayBilling 에 evaluateUpgrade 적용 — UNLIMITED 활성/같은 plan/다운그레이드 차단",
+      "status": "pending"
+    },
+    {
+      "step": 6,
+      "name": "rtdn-oidc-verification",
+      "description": "GoogleIdTokenVerifier 신설 + PaymentWebhookController 의 OIDC 검증 분기 (shared-secret fallback 유지)",
+      "status": "pending"
+    },
+    {
+      "step": 7,
+      "name": "admin-audit-integration",
+      "description": "AdminSubscriptionService.expireManual 을 revoke + history insert 로 교체, grantManual·revokeByPaymentId·revokePlayBilling 모두 history 기록. 컨트롤러에서 actorAdminId 전달",
+      "status": "pending"
+    },
+    {
+      "step": 8,
+      "name": "doc-drift-cleanup",
+      "description": "Java/TS 주석의 4티어 → 3-tier(혹은 구독 plan) 표현 정리. V## 마이그레이션 SQL 주석은 변경 금지(Flyway checksum)",
+      "status": "pending"
+    }
+  ]
+}
