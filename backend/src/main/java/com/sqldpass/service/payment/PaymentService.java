@@ -42,6 +42,7 @@ public class PaymentService {
     private final MemberRepository memberRepository;
     private final PlayBillingClient playBillingClient;
     private final PlayBillingProperties playBillingProperties;
+    private final PaymentFailureRecorder failureRecorder;
 
     /** 카드사 심사 가이드 + PG 정책상 최소 결제 금액. */
     private static final int MIN_CHARGE_AMOUNT = 100;

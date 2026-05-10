@@ -46,6 +46,8 @@ class PaymentServiceTest {
     private MemberRepository memberRepository;
     @Mock
     private PlayBillingClient playBillingClient;
+    @Mock
+    private PaymentFailureRecorder failureRecorder;
 
     private PaymentProperties properties;
     private PlayBillingProperties playBillingProperties;
@@ -66,7 +68,7 @@ class PaymentServiceTest {
 
         service = new PaymentService(properties, portOneClient,
                 paymentRepository, subscriptionRepository, memberRepository,
-                playBillingClient, playBillingProperties);
+                playBillingClient, playBillingProperties, failureRecorder);
     }
 
     @Test
