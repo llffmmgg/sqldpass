@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.sqldpass.persistent.member.MemberEntity;
 import com.sqldpass.persistent.member.MemberRepository;
 import com.sqldpass.persistent.payment.SubscriptionEntity;
+import com.sqldpass.persistent.payment.SubscriptionHistoryAction;
 import com.sqldpass.persistent.payment.SubscriptionPlan;
 import com.sqldpass.persistent.payment.SubscriptionRepository;
 import com.sqldpass.service.common.ErrorCode;
@@ -38,6 +39,7 @@ public class AdminSubscriptionService {
 
     private final SubscriptionRepository subscriptionRepository;
     private final MemberRepository memberRepository;
+    private final SubscriptionHistoryService historyService;
 
     /** 활성/만료 모두 페이지 조회. nicknameSearch 가 있으면 닉네임 LIKE 검색. */
     public Page<AdminSubscriptionRow> list(String nicknameSearch, int page, int size) {
@@ -71,7 +73,7 @@ public class AdminSubscriptionService {
      * paymentId 컬럼은 nullable 가 아니므로 placeholder (-1) 저장.
      */
     @Transactional
-    public AdminSubscriptionRow grantManual(Long memberId, SubscriptionPlan plan, String reason) {
+    public AdminSubscriptionRow grantManual(Long memberId, SubscriptionPlan plan, String reason, Long actorAdminId) {
         MemberEntity member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new SqldpassException(ErrorCode.MEMBER_NOT_FOUND));
 
@@ -81,23 +83,28 @@ public class AdminSubscriptionService {
                 memberId, plan, /* paymentId */ null, now, expiresAt);
         SubscriptionEntity saved = subscriptionRepository.save(entity);
 
-        log.warn("어드민 구독 수동 발급 memberId={} nickname={} plan={} expiresAt={} reason={}",
-                memberId, member.getNickname(), plan, expiresAt, reason);
+        historyService.record(memberId, plan, SubscriptionHistoryAction.GRANTED,
+                reason, actorAdminId, /* paymentId */ null);
+
+        log.warn("어드민 구독 수동 발급 memberId={} nickname={} plan={} expiresAt={} reason={} actor={}",
+                memberId, member.getNickname(), plan, expiresAt, reason, actorAdminId);
 
         return new AdminSubscriptionRow(saved.getId(), memberId, member.getNickname(),
                 plan, saved.getPaymentId(), now, expiresAt, true);
     }
 
-    /** 수동 만료 — expires_at = now 로 강제 종료. */
+    /** 수동 만료 — expires_at = now 로 강제 종료. row 는 보존하고 history 에 EXPIRED 기록. */
     @Transactional
-    public void expireManual(Long subscriptionId, String reason) {
+    public void expireManual(Long subscriptionId, String reason, Long actorAdminId) {
         SubscriptionEntity sub = subscriptionRepository.findById(subscriptionId)
                 .orElseThrow(() -> new SqldpassException(ErrorCode.INVALID_INPUT, "구독을 찾을 수 없습니다."));
-        // reflect: SubscriptionEntity 에 setter 없음 — 새 row 추가 패턴 대신 native update.
-        subscriptionRepository.delete(sub);
-        // 단순 삭제 (UI 에서는 만료된 것처럼 보임). 이력 보존 필요 시 별도 audit 테이블 도입.
-        log.warn("어드민 구독 수동 만료 subscriptionId={} memberId={} plan={} reason={}",
-                subscriptionId, sub.getMemberId(), sub.getPlan(), reason);
+        sub.revoke(LocalDateTime.now());
+
+        historyService.record(sub.getMemberId(), sub.getPlan(),
+                SubscriptionHistoryAction.EXPIRED, reason, actorAdminId, sub.getPaymentId());
+
+        log.warn("어드민 구독 수동 만료 subscriptionId={} memberId={} plan={} reason={} actor={}",
+                subscriptionId, sub.getMemberId(), sub.getPlan(), reason, actorAdminId);
     }
 
     public record AdminSubscriptionRow(

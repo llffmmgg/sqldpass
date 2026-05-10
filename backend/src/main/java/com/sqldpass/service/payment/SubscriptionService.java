@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.sqldpass.persistent.payment.SubscriptionEntity;
+import com.sqldpass.persistent.payment.SubscriptionHistoryAction;
 import com.sqldpass.persistent.payment.SubscriptionPlan;
 import com.sqldpass.persistent.payment.SubscriptionRepository;
 
@@ -26,6 +27,7 @@ import lombok.RequiredArgsConstructor;
 public class SubscriptionService {
 
     private final SubscriptionRepository subscriptionRepository;
+    private final SubscriptionHistoryService historyService;
 
     /**
      * Play Billing RTDN(refund) 또는 운영자 환불 처리 — 결제 FK 로 구독 row 를 찾아 expiresAt=now.
@@ -36,7 +38,11 @@ public class SubscriptionService {
         if (paymentId == null) return false;
         var found = subscriptionRepository.findByPaymentId(paymentId);
         if (found.isEmpty()) return false;
-        found.get().revoke(LocalDateTime.now());
+        SubscriptionEntity sub = found.get();
+        sub.revoke(LocalDateTime.now());
+        historyService.record(sub.getMemberId(), sub.getPlan(),
+                SubscriptionHistoryAction.REVOKED, "revokeByPaymentId",
+                /* actorAdminId */ null, paymentId);
         return true;
     }
 

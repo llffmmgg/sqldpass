@@ -50,6 +50,8 @@ class PaymentServiceTest {
     private PlayBillingClient playBillingClient;
     @Mock
     private PaymentFailureRecorder failureRecorder;
+    @Mock
+    private SubscriptionHistoryService historyService;
 
     private PaymentProperties properties;
     private PlayBillingProperties playBillingProperties;
@@ -70,7 +72,7 @@ class PaymentServiceTest {
 
         service = new PaymentService(properties, portOneClient,
                 paymentRepository, subscriptionRepository, memberRepository,
-                playBillingClient, playBillingProperties, failureRecorder);
+                playBillingClient, playBillingProperties, failureRecorder, historyService);
     }
 
     @Test
@@ -592,6 +594,9 @@ class PaymentServiceTest {
 
         assertThat(revoked).isTrue();
         assertThat(sub.getExpiresAt()).isBeforeOrEqualTo(LocalDateTime.now().plusSeconds(1));
+        verify(historyService, times(1)).record(eq(1L), eq(SubscriptionPlan.THREE_DAY),
+                eq(com.sqldpass.persistent.payment.SubscriptionHistoryAction.REFUNDED),
+                anyString(), eq(null), eq(77L));
     }
 
     @Test

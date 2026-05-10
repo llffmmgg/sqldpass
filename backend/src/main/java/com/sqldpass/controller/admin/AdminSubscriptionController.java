@@ -16,6 +16,7 @@ import com.sqldpass.service.payment.AdminSubscriptionService.AdminSubscriptionRo
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 
 /**
@@ -41,14 +42,18 @@ public class AdminSubscriptionController {
 
     @PostMapping
     @Operation(summary = "구독 수동 발급 (보상·이벤트·환불 재발급 등)")
-    public AdminSubscriptionRow grant(@RequestBody GrantRequest body) {
-        return service.grantManual(body.memberId(), body.plan(), body.reason());
+    public AdminSubscriptionRow grant(@RequestBody GrantRequest body, HttpServletRequest request) {
+        Long actorAdminId = (Long) request.getAttribute("memberId");
+        return service.grantManual(body.memberId(), body.plan(), body.reason(), actorAdminId);
     }
 
     @DeleteMapping("/{id}")
     @Operation(summary = "구독 수동 만료 (강제 종료)")
-    public void expire(@PathVariable Long id, @RequestParam(required = false) String reason) {
-        service.expireManual(id, reason);
+    public void expire(@PathVariable Long id,
+                       @RequestParam(required = false) String reason,
+                       HttpServletRequest request) {
+        Long actorAdminId = (Long) request.getAttribute("memberId");
+        service.expireManual(id, reason, actorAdminId);
     }
 
     public record GrantRequest(Long memberId, SubscriptionPlan plan, String reason) {}

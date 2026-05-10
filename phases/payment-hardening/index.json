@@ -61,7 +61,10 @@
       "step": 7,
       "name": "admin-audit-integration",
       "description": "AdminSubscriptionService.expireManual 을 revoke + history insert 로 교체, grantManual·revokeByPaymentId·revokePlayBilling 모두 history 기록. 컨트롤러에서 actorAdminId 전달",
-      "status": "pending"
+      "status": "completed",
+      "started_at": "2026-05-11T00:52:24+0900",
+      "summary": "expireManual revoke+history, grant/refund/revoke 4 시점 audit, 어드민 컨트롤러 actorAdminId 전달, 테스트 보강 OK",
+      "completed_at": "2026-05-11T01:00:30+0900"
     },
     {
       "step": 8,

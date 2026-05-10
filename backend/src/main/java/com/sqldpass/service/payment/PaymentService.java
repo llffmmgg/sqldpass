@@ -14,6 +14,7 @@ import com.sqldpass.persistent.payment.PaymentProvider;
 import com.sqldpass.persistent.payment.PaymentRepository;
 import com.sqldpass.persistent.payment.PaymentStatus;
 import com.sqldpass.persistent.payment.SubscriptionEntity;
+import com.sqldpass.persistent.payment.SubscriptionHistoryAction;
 import com.sqldpass.persistent.payment.SubscriptionPlan;
 import com.sqldpass.persistent.payment.SubscriptionRepository;
 import com.sqldpass.service.common.ErrorCode;
@@ -43,6 +44,7 @@ public class PaymentService {
     private final PlayBillingClient playBillingClient;
     private final PlayBillingProperties playBillingProperties;
     private final PaymentFailureRecorder failureRecorder;
+    private final SubscriptionHistoryService historyService;
 
     /** 카드사 심사 가이드 + PG 정책상 최소 결제 금액. */
     private static final int MIN_CHARGE_AMOUNT = 100;
@@ -348,6 +350,9 @@ public class PaymentService {
         Optional<SubscriptionEntity> sub = subscriptionRepository.findByPaymentId(payment.getId());
         if (sub.isEmpty()) return false;
         sub.get().revoke(LocalDateTime.now());
+        historyService.record(payment.getMemberId(), payment.getPlan(),
+                SubscriptionHistoryAction.REFUNDED, "play:rtdn-refund",
+                /* actorAdminId */ null, payment.getId());
         log.info("Play Billing revoke memberId={} paymentId={} plan={}",
                 payment.getMemberId(), payment.getPaymentId(), payment.getPlan());
         return true;

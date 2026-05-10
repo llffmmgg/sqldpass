@@ -24,12 +24,14 @@ class SubscriptionServiceTest {
 
     @Mock
     private SubscriptionRepository subscriptionRepository;
+    @Mock
+    private SubscriptionHistoryService historyService;
 
     private SubscriptionService service;
 
     @BeforeEach
     void setUp() {
-        service = new SubscriptionService(subscriptionRepository);
+        service = new SubscriptionService(subscriptionRepository, historyService);
     }
 
     @Test
