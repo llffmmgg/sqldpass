@@ -37,7 +37,7 @@
       "status": "completed",
       "started_at": "2026-05-11T00:32:54+0900",
       "summary": "verify PAID idempotent + KRW currency + Play Billing 토큰 바인딩 + markFailedInNewTx 통합. 새 테스트 5건 추가, 전체 test OK",
-      "completed_at": "2026-05-11T00:38:30+0900"
+      "completed_at": "2026-05-11T00:38:40+0900"
     },
     {
       "step": 5,
