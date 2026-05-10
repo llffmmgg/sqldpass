@@ -286,6 +286,18 @@ public class PaymentService {
         int baseAmount = planConfig.getAmount();
         String productName = planConfig.getProductName();
 
+        // 정책 검증 — UNLIMITED 활성/같은 plan/다운그레이드 차단. PortOne 흐름과 동일 규칙.
+        // Play Billing 은 백엔드가 차단해도 Google 결제는 이미 완료된 상태 — 운영자 수동 환불 필요.
+        SubscriptionEntity active = subscriptionRepository
+                .findActiveByMemberId(memberId, LocalDateTime.now())
+                .stream().findFirst().orElse(null);
+        UpgradeEvaluation eval = evaluateUpgrade(active, plan, baseAmount);
+        if (!eval.allowed()) {
+            log.warn("Play Billing 정책 차단 memberId={} productId={} reason={}",
+                    memberId, productId, eval.reason());
+            throw new SqldpassException(ErrorCode.INVALID_INPUT, eval.reason());
+        }
+
         PaymentEntity payment;
         if (existing.isPresent()) {
             // PENDING/FAILED 상태에서 재시도 — 같은 row 의 상태만 갱신.

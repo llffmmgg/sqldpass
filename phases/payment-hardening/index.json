@@ -43,7 +43,10 @@
       "step": 5,
       "name": "playbilling-policy-alignment",
       "description": "verifyPlayBilling 에 evaluateUpgrade 적용 — UNLIMITED 활성/같은 plan/다운그레이드 차단",
-      "status": "pending"
+      "status": "completed",
+      "started_at": "2026-05-11T00:38:41+0900",
+      "summary": "verifyPlayBilling 에 evaluateUpgrade 적용 (UNLIMITED/같은plan/다운그레이드 차단), 테스트 3건 추가, 전체 test OK",
+      "completed_at": "2026-05-11T00:41:00+0900"
     },
     {
       "step": 6,

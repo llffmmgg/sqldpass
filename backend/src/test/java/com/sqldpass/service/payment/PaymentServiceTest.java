@@ -499,6 +499,80 @@ class PaymentServiceTest {
     }
 
     @Test
+    @DisplayName("verifyPlayBilling: UNLIMITED 활성 회원이 ONE_MONTH 추가 결제 시도 → INVALID_INPUT, 결제/구독/ack 0회")
+    void verifyPlayBilling_UNLIMITED_활성에서_재구매_INVALID_INPUT() {
+        properties.setReviewerNicknames("");
+        given(paymentRepository.findByPurchaseToken("tok-new")).willReturn(Optional.empty());
+        var info = new PlayBillingClient.PlayPurchaseInfo(0, 0, System.currentTimeMillis(),
+                "GPA-test", "KR");
+        given(playBillingClient.verifyProduct("iap_one_month", "tok-new")).willReturn(info);
+
+        SubscriptionEntity active = new SubscriptionEntity(
+                1L, SubscriptionPlan.UNLIMITED, 100L, LocalDateTime.now(), null);
+        given(subscriptionRepository.findActiveByMemberId(any(), any()))
+                .willReturn(java.util.List.of(active));
+
+        assertThatThrownBy(() ->
+                service.verifyPlayBilling(1L, "iap_one_month", "tok-new"))
+                .isInstanceOf(SqldpassException.class)
+                .extracting("errorCode").isEqualTo(ErrorCode.INVALID_INPUT);
+
+        verify(paymentRepository, times(0)).save(any(PaymentEntity.class));
+        verify(subscriptionRepository, times(0)).save(any(SubscriptionEntity.class));
+        verify(playBillingClient, times(0)).acknowledge(any(), any());
+    }
+
+    @Test
+    @DisplayName("verifyPlayBilling: 같은 plan(ONE_MONTH) 재결제 → INVALID_INPUT")
+    void verifyPlayBilling_같은_plan_재구매_INVALID_INPUT() {
+        properties.setReviewerNicknames("");
+        given(paymentRepository.findByPurchaseToken("tok-same")).willReturn(Optional.empty());
+        var info = new PlayBillingClient.PlayPurchaseInfo(0, 0, System.currentTimeMillis(),
+                "GPA-test", "KR");
+        given(playBillingClient.verifyProduct("iap_one_month", "tok-same")).willReturn(info);
+
+        SubscriptionEntity active = new SubscriptionEntity(
+                1L, SubscriptionPlan.ONE_MONTH, 100L,
+                LocalDateTime.now().minusDays(5), LocalDateTime.now().plusDays(25));
+        given(subscriptionRepository.findActiveByMemberId(any(), any()))
+                .willReturn(java.util.List.of(active));
+
+        assertThatThrownBy(() ->
+                service.verifyPlayBilling(1L, "iap_one_month", "tok-same"))
+                .isInstanceOf(SqldpassException.class)
+                .extracting("errorCode").isEqualTo(ErrorCode.INVALID_INPUT);
+
+        verify(paymentRepository, times(0)).save(any(PaymentEntity.class));
+        verify(subscriptionRepository, times(0)).save(any(SubscriptionEntity.class));
+        verify(playBillingClient, times(0)).acknowledge(any(), any());
+    }
+
+    @Test
+    @DisplayName("verifyPlayBilling: ONE_MONTH 활성에서 THREE_DAY 다운그레이드 시도 → INVALID_INPUT")
+    void verifyPlayBilling_다운그레이드_INVALID_INPUT() {
+        properties.setReviewerNicknames("");
+        given(paymentRepository.findByPurchaseToken("tok-down")).willReturn(Optional.empty());
+        var info = new PlayBillingClient.PlayPurchaseInfo(0, 0, System.currentTimeMillis(),
+                "GPA-test", "KR");
+        given(playBillingClient.verifyProduct("iap_three_day", "tok-down")).willReturn(info);
+
+        SubscriptionEntity active = new SubscriptionEntity(
+                1L, SubscriptionPlan.ONE_MONTH, 100L,
+                LocalDateTime.now().minusDays(5), LocalDateTime.now().plusDays(25));
+        given(subscriptionRepository.findActiveByMemberId(any(), any()))
+                .willReturn(java.util.List.of(active));
+
+        assertThatThrownBy(() ->
+                service.verifyPlayBilling(1L, "iap_three_day", "tok-down"))
+                .isInstanceOf(SqldpassException.class)
+                .extracting("errorCode").isEqualTo(ErrorCode.INVALID_INPUT);
+
+        verify(paymentRepository, times(0)).save(any(PaymentEntity.class));
+        verify(subscriptionRepository, times(0)).save(any(SubscriptionEntity.class));
+        verify(playBillingClient, times(0)).acknowledge(any(), any());
+    }
+
+    @Test
     @DisplayName("revokePlayBillingByToken: 결제 + 구독 모두 찾아 expiresAt=now 로 강제 만료")
     void revokePlayBillingByTokenExpiresSubscription() {
         PaymentEntity payment = new PaymentEntity(
