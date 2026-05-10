@@ -7,10 +7,13 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.sqldpass.service.auth.GoogleIdTokenVerifier;
+import com.sqldpass.service.common.SqldpassException;
 import com.sqldpass.service.payment.PaymentService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -27,8 +30,9 @@ import tools.jackson.databind.ObjectMapper;
  * 들어온다. payload 는 {@code message.data} 를 base64 디코드하면 packageName + oneTimeProductNotification
  * 또는 subscriptionNotification 이 들어 있다. 우리는 일회성 상품만 쓰니 oneTime 만 처리.
  *
- * <p>보안: 운영용 인증은 OIDC token verification 이 정석이지만 MVP 에선 URL shared secret 로 시작.
- * Pub/Sub subscription 의 push endpoint 에 {@code ?token=...} 를 붙여 등록하고 백엔드에서 일치 확인.
+ * <p>보안: Pub/Sub push subscription 의 OIDC ID token (Authorization Bearer) 을 우선 검증하고,
+ * 미설정·미발급 환경에서는 URL {@code ?token=...} shared secret 로 fallback. 둘 다 미설정 시
+ * dev 모드로 검증 스킵.
  */
 @Slf4j
 @Tag(name = "결제 webhook", description = "Play Billing RTDN 등 외부 결제 통지 처리")
@@ -38,21 +42,22 @@ import tools.jackson.databind.ObjectMapper;
 public class PaymentWebhookController {
 
     private final PaymentService paymentService;
+    private final GoogleIdTokenVerifier idTokenVerifier;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Value("${sqldpass.play-billing.rtdn-shared-secret:}")
     private String rtdnSharedSecret;
 
+    @Value("${sqldpass.play-billing.rtdn-oidc-audience:}")
+    private String rtdnOidcAudience;
+
     @PostMapping("/play-billing/rtdn")
     @Operation(summary = "Play Billing RTDN — 환불/재구매 통지를 받아 구독 상태 동기화")
     public ResponseEntity<Void> handleRtdn(@RequestBody RtdnEnvelope envelope,
+                                           @RequestHeader(value = "Authorization", required = false) String authHeader,
                                            @RequestParam(value = "token", required = false) String token) {
-        // shared-secret 검증 — 미설정 시(dev 환경) 검증 스킵.
-        if (rtdnSharedSecret != null && !rtdnSharedSecret.isBlank()) {
-            if (token == null || !rtdnSharedSecret.equals(token)) {
-                log.warn("RTDN shared-secret 불일치 — 무시");
-                return ResponseEntity.status(401).build();
-            }
+        if (!authenticateRtdn(authHeader, token)) {
+            return ResponseEntity.status(401).build();
         }
         if (envelope == null || envelope.message() == null || envelope.message().data() == null) {
             // Pub/Sub 가 ack 받기 위해 200 을 기대 — 형식 오류여도 200 으로 끝낸다.
@@ -83,6 +88,34 @@ public class PaymentWebhookController {
         }
         // Pub/Sub 는 200 외 응답을 받으면 retry 하므로 우리 처리 실패와 무관하게 200 으로 ack.
         return ResponseEntity.ok().build();
+    }
+
+    private boolean authenticateRtdn(String authHeader, String token) {
+        boolean oidcConfigured = rtdnOidcAudience != null && !rtdnOidcAudience.isBlank();
+        boolean secretConfigured = rtdnSharedSecret != null && !rtdnSharedSecret.isBlank();
+
+        // Authorization 헤더가 들어오면 OIDC 검증 우선.
+        if (authHeader != null && oidcConfigured) {
+            try {
+                idTokenVerifier.verify(authHeader, rtdnOidcAudience);
+                return true;
+            } catch (SqldpassException e) {
+                log.warn("RTDN OIDC 검증 실패");
+                return false;
+            }
+        }
+
+        // OIDC 미사용·헤더 없음 → shared-secret fallback.
+        if (secretConfigured) {
+            if (token != null && rtdnSharedSecret.equals(token)) {
+                return true;
+            }
+            log.warn("RTDN shared-secret 불일치 — 무시");
+            return false;
+        }
+
+        // dev 환경 — 둘 다 미설정 시 검증 스킵 (기존 동작 유지).
+        return true;
     }
 
     private static String mask(String token) {

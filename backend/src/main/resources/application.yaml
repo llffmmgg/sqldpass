@@ -67,6 +67,10 @@ sqldpass:
     service-account-json-path: ${PLAY_BILLING_SA_PATH:}
     # RTDN webhook URL 에 ?token=... 로 붙는 shared secret (MVP 보안). 미설정 시 검증 스킵.
     rtdn-shared-secret: ${PLAY_BILLING_RTDN_SECRET:}
+    # Pub/Sub push subscription 의 OIDC ID token audience.
+    # 운영자가 Pub/Sub 등록 시 입력한 audience (보통 endpoint URL) 와 동일해야 함.
+    # 미설정 시 OIDC 검증 비활성 → shared-secret fallback.
+    rtdn-oidc-audience: ${PLAY_BILLING_RTDN_AUDIENCE:}
     # Play Console 에 등록한 일회성 상품(SKU) 매핑 — 클라이언트가 보낸 productId 검증에 사용.
     product-id-mapping:
       THREE_DAY: ${PLAY_BILLING_SKU_THREE_DAY:iap_three_day}
