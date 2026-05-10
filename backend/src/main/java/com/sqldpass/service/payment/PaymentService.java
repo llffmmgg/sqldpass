@@ -175,16 +175,33 @@ public class PaymentService {
                     "구독 plan 정보가 없는 결제입니다.");
         }
 
+        // PAID 재검증 — PortOne 재호출/구독 재발급 없이 기존 결과 그대로 반환 (idempotent).
+        if (entity.getStatus() == PaymentStatus.PAID) {
+            LocalDateTime cachedExpiresAt = subscriptionRepository.findByPaymentId(entity.getId())
+                    .map(SubscriptionEntity::getExpiresAt).orElse(null);
+            return new VerifyPaymentResult(entity.getPaymentId(), entity.getAmount(),
+                    entity.getProductName(), entity.getPlan(), cachedExpiresAt);
+        }
+
         PortOneClient.PortOnePaymentInfo info = portOneClient.getPayment(paymentId);
         if (!info.isPaid()) {
-            entity.markFailed("status=" + info.status());
+            failureRecorder.markFailedInNewTx(entity.getId(), "status=" + info.status());
             // 사용자 노출 메시지는 ErrorCode 기본값만 — raw status 는 log 로
             log.warn("결제 verify status mismatch memberId={} paymentId={} status={}",
                     memberId, paymentId, info.status());
             throw new SqldpassException(ErrorCode.PAYMENT_VERIFICATION_FAILED);
         }
+        if (!"KRW".equalsIgnoreCase(info.currency())) {
+            // currency 누락(null) 도 KRW 와 다름으로 간주 — 응답 누락이 무조건 통과되면 안 된다.
+            failureRecorder.markFailedInNewTx(entity.getId(),
+                    "currency=" + info.currency() + " expected=KRW");
+            log.warn("결제 currency mismatch memberId={} paymentId={} currency={}",
+                    memberId, paymentId, info.currency());
+            throw new SqldpassException(ErrorCode.PAYMENT_AMOUNT_MISMATCH);
+        }
         if (info.amountTotal() != entity.getAmount()) {
-            entity.markFailed("expected=" + entity.getAmount() + " actual=" + info.amountTotal());
+            failureRecorder.markFailedInNewTx(entity.getId(),
+                    "expected=" + entity.getAmount() + " actual=" + info.amountTotal());
             // 금액 노출은 디버깅에는 유용하지만 사용자에겐 노출 X
             log.warn("결제 금액 mismatch memberId={} paymentId={} expected={} actual={}",
                     memberId, paymentId, entity.getAmount(), info.amountTotal());
@@ -243,6 +260,12 @@ public class PaymentService {
 
         // Idempotency — 같은 토큰이 이미 처리됐으면 같은 응답을 다시 돌려준다 (재시도 무해).
         Optional<PaymentEntity> existing = paymentRepository.findByPurchaseToken(purchaseToken);
+        if (existing.isPresent() && !existing.get().getMemberId().equals(memberId)) {
+            // 다른 회원의 purchaseToken 재사용 시도 — 토큰 도용 차단.
+            log.warn("Play Billing 토큰 도용 시도 memberId={} expected={} token={}",
+                    memberId, existing.get().getMemberId(), maskToken(purchaseToken));
+            throw new SqldpassException(ErrorCode.FORBIDDEN, "다른 회원의 결제 토큰입니다.");
+        }
         if (existing.isPresent() && existing.get().getStatus() == PaymentStatus.PAID) {
             PaymentEntity prior = existing.get();
             LocalDateTime priorExpires = subscriptionRepository.findByPaymentId(prior.getId())
@@ -316,6 +339,11 @@ public class PaymentService {
         log.info("Play Billing revoke memberId={} paymentId={} plan={}",
                 payment.getMemberId(), payment.getPaymentId(), payment.getPlan());
         return true;
+    }
+
+    private static String maskToken(String token) {
+        if (token == null) return "null";
+        return token.length() <= 8 ? "***" : token.substring(0, 4) + "..." + token.substring(token.length() - 4);
     }
 
     public record PreparePaymentResult(String paymentId, int amount, String productName,

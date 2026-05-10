@@ -29,6 +29,8 @@ import com.sqldpass.service.common.SqldpassException;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -271,6 +273,80 @@ class PaymentServiceTest {
     }
 
     @Test
+    @DisplayName("verify: 이미 PAID 상태 재호출 시 PortOne·subscription save 없이 기존 결과 반환 (idempotent)")
+    void verifyIsIdempotentWhenAlreadyPaid() {
+        MemberEntity m = newMember(1L, "pay-rv-7f2a91");
+        given(memberRepository.findById(1L)).willReturn(Optional.of(m));
+
+        PaymentEntity entity = new PaymentEntity("p-1", 1L, null, "3일 이용권",
+                SubscriptionPlan.THREE_DAY, 3900);
+        LocalDateTime paidAt = LocalDateTime.now().minusMinutes(1);
+        entity.markPaid("{...}", paidAt);
+        setField(entity, "id", 42L);
+        given(paymentRepository.findByPaymentId("p-1")).willReturn(Optional.of(entity));
+
+        SubscriptionEntity prior = new SubscriptionEntity(
+                1L, SubscriptionPlan.THREE_DAY, 42L, paidAt, paidAt.plusDays(3));
+        given(subscriptionRepository.findByPaymentId(42L)).willReturn(Optional.of(prior));
+
+        var result = service.verify(1L, "p-1");
+
+        assertThat(result.paymentId()).isEqualTo("p-1");
+        assertThat(result.plan()).isEqualTo(SubscriptionPlan.THREE_DAY);
+        assertThat(result.expiresAt()).isEqualTo(prior.getExpiresAt());
+
+        verify(portOneClient, times(0)).getPayment(any());
+        verify(subscriptionRepository, times(0)).save(any(SubscriptionEntity.class));
+        verify(failureRecorder, times(0)).markFailedInNewTx(any(), any());
+    }
+
+    @Test
+    @DisplayName("verify: currency 가 KRW 아니면 PAYMENT_AMOUNT_MISMATCH + markFailedInNewTx 호출")
+    void verifyDetectsNonKrwCurrency() {
+        MemberEntity m = newMember(1L, "pay-rv-7f2a91");
+        given(memberRepository.findById(1L)).willReturn(Optional.of(m));
+
+        PaymentEntity entity = new PaymentEntity("p-1", 1L, null, "상품",
+                SubscriptionPlan.THREE_DAY, 3900);
+        setField(entity, "id", 42L);
+        given(paymentRepository.findByPaymentId("p-1")).willReturn(Optional.of(entity));
+
+        var info = new PortOneClient.PortOnePaymentInfo("p-1", "PAID", 3900, "USD",
+                OffsetDateTime.now(), Map.of("id", "p-1", "status", "PAID"));
+        given(portOneClient.getPayment("p-1")).willReturn(info);
+
+        assertThatThrownBy(() -> service.verify(1L, "p-1"))
+                .isInstanceOf(SqldpassException.class)
+                .extracting("errorCode").isEqualTo(ErrorCode.PAYMENT_AMOUNT_MISMATCH);
+
+        verify(failureRecorder, times(1)).markFailedInNewTx(eq(42L), anyString());
+        verify(subscriptionRepository, times(0)).save(any(SubscriptionEntity.class));
+    }
+
+    @Test
+    @DisplayName("verify: status mismatch 시 markFailedInNewTx 호출 — REQUIRES_NEW 경로 검증")
+    void verifyStatusMismatchInvokesFailureRecorder() {
+        MemberEntity m = newMember(1L, "pay-rv-7f2a91");
+        given(memberRepository.findById(1L)).willReturn(Optional.of(m));
+
+        PaymentEntity entity = new PaymentEntity("p-1", 1L, null, "상품",
+                SubscriptionPlan.THREE_DAY, 3900);
+        setField(entity, "id", 42L);
+        given(paymentRepository.findByPaymentId("p-1")).willReturn(Optional.of(entity));
+
+        var info = new PortOneClient.PortOnePaymentInfo("p-1", "READY", 3900, "KRW",
+                null, Map.of("id", "p-1", "status", "READY"));
+        given(portOneClient.getPayment("p-1")).willReturn(info);
+
+        assertThatThrownBy(() -> service.verify(1L, "p-1"))
+                .isInstanceOf(SqldpassException.class)
+                .extracting("errorCode").isEqualTo(ErrorCode.PAYMENT_VERIFICATION_FAILED);
+
+        verify(failureRecorder, times(1)).markFailedInNewTx(eq(42L), anyString());
+        verify(subscriptionRepository, times(0)).save(any(SubscriptionEntity.class));
+    }
+
+    @Test
     @DisplayName("UNLIMITED verify 성공 시 expiresAt = null (평생)")
     void verifyUnlimitedCreatesLifetimeSubscription() {
         MemberEntity m = newMember(1L, "pay-rv-7f2a91");
@@ -378,6 +454,48 @@ class PaymentServiceTest {
         verify(paymentRepository, times(0)).save(any(PaymentEntity.class));
         verify(subscriptionRepository, times(0)).save(any(SubscriptionEntity.class));
         verify(playBillingClient, times(0)).acknowledge(any(), any());
+    }
+
+    @Test
+    @DisplayName("verifyPlayBilling: 다른 memberId 가 같은 PAID purchaseToken 재사용 시 FORBIDDEN — 토큰 도용 차단")
+    void verifyPlayBillingRejectsTokenStealingFromDifferentMember() {
+        properties.setReviewerNicknames("");
+        PaymentEntity prior = new PaymentEntity(
+                "play-prior", 99L, null, "문어CBT 3일 이용권",
+                SubscriptionPlan.THREE_DAY, 3900, 3900, 0,
+                com.sqldpass.persistent.payment.PaymentProvider.PLAY_BILLING, "tok-stolen");
+        prior.markPaid("play:orderId=GPA-prior", LocalDateTime.now());
+        given(paymentRepository.findByPurchaseToken("tok-stolen")).willReturn(Optional.of(prior));
+
+        assertThatThrownBy(() ->
+                service.verifyPlayBilling(1L, "iap_three_day", "tok-stolen"))
+                .isInstanceOf(SqldpassException.class)
+                .extracting("errorCode").isEqualTo(ErrorCode.FORBIDDEN);
+
+        verify(playBillingClient, times(0)).verifyProduct(any(), any());
+        verify(paymentRepository, times(0)).save(any(PaymentEntity.class));
+        verify(subscriptionRepository, times(0)).save(any(SubscriptionEntity.class));
+        verify(playBillingClient, times(0)).acknowledge(any(), any());
+    }
+
+    @Test
+    @DisplayName("verifyPlayBilling: PENDING 상태의 타 회원 토큰 재사용도 FORBIDDEN — PAID 분기 진입 전 차단")
+    void verifyPlayBillingRejectsPendingTokenStealing() {
+        properties.setReviewerNicknames("");
+        PaymentEntity prior = new PaymentEntity(
+                "play-prior-pending", 99L, null, "문어CBT 3일 이용권",
+                SubscriptionPlan.THREE_DAY, 3900, 3900, 0,
+                com.sqldpass.persistent.payment.PaymentProvider.PLAY_BILLING, "tok-pending");
+        // markPaid 미호출 — status=PENDING.
+        given(paymentRepository.findByPurchaseToken("tok-pending")).willReturn(Optional.of(prior));
+
+        assertThatThrownBy(() ->
+                service.verifyPlayBilling(1L, "iap_three_day", "tok-pending"))
+                .isInstanceOf(SqldpassException.class)
+                .extracting("errorCode").isEqualTo(ErrorCode.FORBIDDEN);
+
+        verify(playBillingClient, times(0)).verifyProduct(any(), any());
+        verify(paymentRepository, times(0)).save(any(PaymentEntity.class));
     }
 
     @Test
