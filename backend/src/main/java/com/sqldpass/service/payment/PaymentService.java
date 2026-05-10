@@ -24,7 +24,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * 4티어 구독 결제 — 단발 결제 → SubscriptionEntity (expiresAt = now + plan.days) 발급.
+ * 구독 결제 — 단발 결제 → SubscriptionEntity (expiresAt = now + plan.days) 발급.
  * UNLIMITED 는 expiresAt = null.
  *
  * 화이트리스트 닉네임 회원은 결제 단계 통과만 시키고, 권한 판정은 SubscriptionService 가

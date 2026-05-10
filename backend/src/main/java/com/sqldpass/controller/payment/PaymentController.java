@@ -26,7 +26,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 
 /**
- * 4티어 구독 결제 (PortOne).
+ * 구독 결제 (PortOne).
  *
  * 흐름:
  *   1. POST /prepare {plan} → paymentId/amount/productName 발급
@@ -34,7 +34,7 @@ import lombok.RequiredArgsConstructor;
  *   3. POST /verify {paymentId} → PortOne 재검증 → SubscriptionEntity 발급
  *   4. GET /subscription → 활성 구독 정보 조회
  */
-@Tag(name = "결제", description = "PortOne 4티어 구독 결제")
+@Tag(name = "결제", description = "PortOne 구독 결제")
 @RestController
 @RequestMapping("/api/payment")
 @RequiredArgsConstructor

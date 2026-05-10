@@ -70,7 +70,10 @@
       "step": 8,
       "name": "doc-drift-cleanup",
       "description": "Java/TS 주석의 4티어 → 3-tier(혹은 구독 plan) 표현 정리. V## 마이그레이션 SQL 주석은 변경 금지(Flyway checksum)",
-      "status": "pending"
+      "status": "completed",
+      "started_at": "2026-05-11T01:01:15+0900",
+      "summary": "주석 4건 4티어 표현 제거, 마이그레이션 SQL 무변경, build OK",
+      "completed_at": "2026-05-11T01:08:00+0900"
     }
   ],
   "created_at": "2026-05-11T00:21:13+0900"

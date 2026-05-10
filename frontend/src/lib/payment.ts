@@ -1,5 +1,5 @@
 /**
- * PortOne V2 4티어 구독 결제 흐름.
+ * PortOne V2 구독 결제 흐름.
  *
  * 1. POST /api/payment/prepare {plan} → paymentId·amount·productName 사전 등록
  * 2. PortOne 브라우저 SDK 의 requestPayment 로 결제창 호출

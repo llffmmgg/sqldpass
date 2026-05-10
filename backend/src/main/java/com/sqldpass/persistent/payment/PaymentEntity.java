@@ -51,7 +51,7 @@ public class PaymentEntity extends BaseTimeEntity {
     @Column(name = "product_name", nullable = false, length = 120)
     private String productName;
 
-    /** 구독 plan — 4티어 도입 후 prepare 시 채워짐. 옛 단일 회차 결제는 null. */
+    /** 구독 plan — prepare 시 채워짐. 옛 단일 회차 결제는 null. */
     @Enumerated(EnumType.STRING)
     @Column(name = "plan", length = 20)
     private SubscriptionPlan plan;
