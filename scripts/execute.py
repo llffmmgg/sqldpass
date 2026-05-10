@@ -20,6 +20,13 @@ from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from typing import Optional
 
+# Windows Bash 의 background pipe 등 stdout 이 파일로 연결될 때 Python 이 locale 인코딩
+# (cp949) 을 쓰는 바람에 ✓◐ 등 진행 표시 문자가 UnicodeEncodeError 로 죽는 사례가 있다.
+# 진입 시 utf-8 로 강제.
+for _stream in (sys.stdout, sys.stderr):
+    if hasattr(_stream, "reconfigure"):
+        _stream.reconfigure(encoding="utf-8", errors="replace")
+
 ROOT = Path(__file__).resolve().parent.parent
 
 
