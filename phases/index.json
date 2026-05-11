@@ -46,7 +46,8 @@
       "dir": "code-block-overflow-fix",
       "name": "code-block-overflow-fix",
       "description": "/mock-exams/112 의 본문 코드 블록이 좁은 뷰포트에서 컨테이너 밖으로 잘리는 시각 버그 수정 — QuestionCodeBlock customStyle 에 overflow-x: auto + white-space: pre 추가.",
-      "status": "in_progress"
+      "status": "completed",
+      "completed_at": "2026-05-11T15:51:49+0900"
     }
   ]
 }
