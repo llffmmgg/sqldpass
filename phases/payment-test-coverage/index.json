@@ -46,7 +46,7 @@
       "status": "completed",
       "started_at": "2026-05-11T12:16:23+0900",
       "summary": "RTDN 중복 수신 + 정보성 type=1 + payload 오류 케이스 추가, 전체 test OK",
-      "completed_at": "2026-05-11T12:18:30+0900"
+      "completed_at": "2026-05-11T12:18:54+0900"
     },
     {
       "step": 6,
