@@ -28,11 +28,11 @@ export default function PassPlusLockNotice({
         <span className="text-text-muted">{examNumber}</span>
       </div>
 
-      {/* amber radial glow */}
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(245,181,68,0.08),transparent_60%)]" />
+      {/* primary radial glow — 옅게 */}
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(62,207,142,0.07),transparent_60%)]" />
 
       <div className="relative w-full max-w-[540px]">
-        <div className="relative overflow-hidden rounded-2xl border border-border bg-surface px-7 pt-7 pb-8 shadow-[var(--shadow-lg)] transition-shadow duration-300 hover:shadow-[var(--shadow-xl)] sm:px-9">
+        <div className="relative overflow-hidden rounded-2xl border border-border bg-surface px-7 pt-7 pb-8 shadow-xl sm:px-9">
           {/* 메타 라인 */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -41,7 +41,7 @@ export default function PassPlusLockNotice({
                 SQLD · {examNumber}회
               </span>
             </div>
-            <span className="font-mono text-[10.5px] uppercase tracking-[1.4px] text-amber-600 dark:text-amber-400">
+            <span className="font-mono text-[10.5px] uppercase tracking-[1.4px] text-text-subtle">
               HARD
             </span>
           </div>
@@ -75,8 +75,8 @@ export default function PassPlusLockNotice({
           {/* 안내 영역 */}
           <div className="mt-6">
             <div className="flex items-start gap-4">
-              <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-[10px] border border-amber-500/40 bg-gradient-to-b from-amber-500/15 to-amber-500/5 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06),0_8px_16px_rgba(245,181,68,0.10)]">
-                <LockIcon className="h-[17px] w-[17px] text-amber-600 dark:text-amber-300" />
+              <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-[10px] border border-primary/40 bg-primary/10">
+                <LockIcon className="h-[17px] w-[17px] text-primary" />
               </div>
               <div className="flex-1 pt-0.5">
                 <div className="text-[15px] font-bold tracking-[-0.01em] text-text">
@@ -92,7 +92,7 @@ export default function PassPlusLockNotice({
             <div className="mt-5 flex gap-2.5">
               <Link
                 href={pricingHref}
-                className="flex-1 rounded-lg bg-gradient-to-b from-amber-300 to-amber-500 px-[18px] py-3 text-center text-[13.5px] font-bold tracking-[-0.005em] text-amber-950 shadow-[inset_0_1px_0_rgba(255,255,255,0.4),inset_0_-1px_0_rgba(0,0,0,0.1),0_8px_20px_rgba(245,181,68,0.30)] transition-all duration-200 hover:-translate-y-0.5 hover:brightness-105 hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.4),inset_0_-1px_0_rgba(0,0,0,0.1),0_12px_24px_rgba(245,181,68,0.45)]"
+                className="flex-1 rounded-lg bg-primary px-[18px] py-3 text-center text-[13.5px] font-bold tracking-[-0.005em] text-primary-fg shadow-sm transition-colors duration-200 hover:bg-primary-hover"
               >
                 요금제 보기 →
               </Link>
@@ -133,8 +133,8 @@ export default function PassPlusLockNotice({
 
 function PassPlusLabel() {
   return (
-    <span className="inline-flex items-center gap-1.5 rounded border border-amber-500/40 bg-amber-500/10 px-2 py-0.5 text-[10.5px] font-bold tracking-wide text-amber-700 dark:text-amber-300">
-      <span className="h-1 w-1 rounded-full bg-amber-500 shadow-[0_0_8px_rgba(251,207,106,0.8)] dark:bg-amber-300" />
+    <span className="inline-flex items-center gap-1.5 rounded border border-primary/40 bg-primary/10 px-2 py-0.5 text-[10.5px] font-bold tracking-wide text-primary">
+      <span className="h-1 w-1 rounded-full bg-primary" />
       PASS+
     </span>
   );
