@@ -62,6 +62,13 @@
       "description": "PortOne 통합 점검 잔여 갭 2건 보강 — (1) 모바일 웹 redirectUrl 미설정 → payment.ts baseArgs 에 redirectUrl 추가 + CheckoutClient 가 paymentId 쿼리로 복귀해 verify. (2) PG 콘솔 직접 취소 사고 예방 → payment-manual-test-checklist.md 에 환불 그라운드 룰 섹션 추가.",
       "status": "completed",
       "completed_at": "2026-05-11T17:00:00+0900"
+    },
+    {
+      "dir": "member-email-for-payment",
+      "name": "member-email-for-payment",
+      "description": "KG이니시스 신용카드 결제 customer.email 수집 — V82 마이그레이션으로 member.email 재추가(V10 DROP 복구), OAuth scope email 추가, email_verified=true 만 저장, 기존 회원 자연 백필 + CARD 결제 NULL 시 재로그인 유도, 개인정보처리방침 업데이트.",
+      "status": "completed",
+      "completed_at": "2026-05-11T18:00:00+0900"
     }
   ]
 }
