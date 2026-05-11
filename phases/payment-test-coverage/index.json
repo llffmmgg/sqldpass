@@ -9,7 +9,8 @@
       "description": "PaymentService.verify 의 PortOne 실패 status (FAILED/CANCELLED/VIRTUAL_ACCOUNT_ISSUED) + 게이트웨이 5xx 테스트 케이스 확장",
       "status": "completed",
       "started_at": "2026-05-11T11:57:10+0900",
-      "summary": "verify 실패 status 4종 테스트 추가 (FAILED/CANCELLED/VIRTUAL_ACCOUNT_ISSUED/5xx), 전체 test OK"
+      "summary": "verify 실패 status 4종 테스트 추가 (FAILED/CANCELLED/VIRTUAL_ACCOUNT_ISSUED/5xx), 전체 test OK",
+      "completed_at": "2026-05-11T12:01:55+0900"
     },
     {
       "step": 2,
