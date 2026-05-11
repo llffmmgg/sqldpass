@@ -122,7 +122,7 @@ export default function BuyerInfoModal({ open, plan, onClose, onSubmit }: Props)
           </div>
 
           {/* 안내 박스 — 회원정보 미저장 정책 + 왜 결제 시점에만 받는지 + 어디 쓰는지 */}
-          <div className="mt-5 rounded-lg border border-amber-500/30 bg-amber-500/[0.08] p-4 text-[12.5px] leading-relaxed text-text">
+          <div className="mt-5 rounded-lg border border-primary/30 bg-primary/10 p-4 text-[12.5px] leading-relaxed text-text">
             <p>
               문어 CBT 는 <span className="font-semibold">회원가입 시 닉네임 외에는 어떤 개인정보도 저장하지 않습니다</span>.
             </p>
