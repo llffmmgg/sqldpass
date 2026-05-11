@@ -1,0 +1,27 @@
+{
+  "project": "sqldpass",
+  "phase": "payment-mobile-redirect-doc",
+  "description": "PortOne 통합 점검에서 도출된 잔여 갭 2건 보강 — (1) 모바일 웹 redirectUrl 미설정으로 카카오페이/카드사 ISP 외부 앱 전환 후 복귀가 깨질 위험 → payment.ts baseArgs 에 redirectUrl 추가 + CheckoutClient 가 paymentId 쿼리로 복귀해 verify 호출. (2) PG 콘솔 직접 취소 시 DB 불일치 사고를 막기 위한 환불 그라운드 룰 운영 문서화. 갭 #3(PENDING 자동 정리 스케줄러)은 별도 phase로 보류.",
+  "steps": [
+    {
+      "step": 1,
+      "name": "mobile-redirect-url",
+      "description": "payment.ts baseArgs 에 redirectUrl 추가(KAKAOPAY/CARD 양쪽 모두), verifyPaymentById export, CheckoutClient 가 useSearchParams 로 ?paymentId=... 감지해 verify 호출 후 라우터.replace 로 쿼리 정리. 데스크탑 흐름 변경 0, verify 멱등 보증으로 중복 호출 안전.",
+      "status": "completed",
+      "started_at": "2026-05-11T17:00:00+0900",
+      "summary": "payment.ts redirectUrl + verifyPaymentById export, CheckoutClient 복귀 useEffect 추가, lint/build OK",
+      "completed_at": "2026-05-11T17:00:00+0900"
+    },
+    {
+      "step": 2,
+      "name": "refund-ground-rule-doc",
+      "description": "docs/payment-manual-test-checklist.md 섹션 1(사전 숙지) 안에 '1-5. 환불 그라운드 룰' 추가 — 어드민 환불 endpoint 만 사용, PG 콘솔 직접 취소 금지, 사고 발생 시 수동 복구 절차 명시.",
+      "status": "completed",
+      "started_at": "2026-05-11T17:00:00+0900",
+      "summary": "환불 그라운드 룰 1-5 섹션 추가 (올바른/금지 경로, 사고 복구 SQL)",
+      "completed_at": "2026-05-11T17:00:00+0900"
+    }
+  ],
+  "created_at": "2026-05-11T17:00:00+0900",
+  "completed_at": "2026-05-11T17:00:00+0900"
+}
