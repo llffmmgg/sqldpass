@@ -142,6 +142,57 @@ class PaymentServiceTest {
     }
 
     @Test
+    @DisplayName("prepare: client 입력 amount 를 무시하고 properties 정가만 PaymentEntity 에 저장")
+    void prepareUsesPropertiesAmountForSavedEntity() {
+        properties.setReviewerNicknames("");
+        // 활성 구독 없음 — default mock 이 빈 리스트 반환.
+
+        service.prepare(1L, SubscriptionPlan.THREE_DAY);
+
+        ArgumentCaptor<PaymentEntity> captor = ArgumentCaptor.forClass(PaymentEntity.class);
+        verify(paymentRepository, times(1)).save(captor.capture());
+        PaymentEntity saved = captor.getValue();
+        // client 가 어떤 값을 보내든 prepare 는 plan 만 받으므로 amount 는 properties 의 정가.
+        assertThat(saved.getAmount()).isEqualTo(3900);
+        assertThat(saved.getBaseAmount()).isEqualTo(3900);
+        assertThat(saved.getProrateDiscount()).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("prepare: 업그레이드 시 PaymentEntity.amount 는 baseAmount - prorateDiscount, baseAmount 는 정가 유지")
+    void prepareUpgradeSavesProratedAmountButKeepsBaseAtListPrice() {
+        properties.setReviewerNicknames("");
+        SubscriptionEntity active = new SubscriptionEntity(
+                1L, SubscriptionPlan.ONE_MONTH, 100L,
+                LocalDateTime.now().minusDays(15), LocalDateTime.now().plusDays(15));
+        given(subscriptionRepository.findActiveByMemberId(any(), any()))
+                .willReturn(java.util.List.of(active));
+
+        service.prepare(1L, SubscriptionPlan.UNLIMITED);
+
+        ArgumentCaptor<PaymentEntity> captor = ArgumentCaptor.forClass(PaymentEntity.class);
+        verify(paymentRepository, times(1)).save(captor.capture());
+        PaymentEntity saved = captor.getValue();
+        // baseAmount 는 UNLIMITED 정가 그대로 — client 가 못 줄임.
+        assertThat(saved.getBaseAmount()).isEqualTo(29900);
+        // prorateDiscount 는 서버가 계산 (잔여 15일 / 30일 × ₩9,900 = ₩4,950).
+        assertThat(saved.getProrateDiscount()).isGreaterThan(0);
+        // amount = baseAmount - prorateDiscount 등식 유지.
+        assertThat(saved.getAmount()).isEqualTo(saved.getBaseAmount() - saved.getProrateDiscount());
+        assertThat(saved.getAmount()).isLessThan(saved.getBaseAmount());
+    }
+
+    @Test
+    @DisplayName("PrepareRequest record: plan 외 다른 필드(amount, productName 등) 추가 시 컴파일 시점에 즉시 실패")
+    void prepareRequestRecordHasOnlyPlanField() {
+        var components = com.sqldpass.controller.payment.PaymentController.PrepareRequest.class
+                .getRecordComponents();
+        assertThat(components).hasSize(1);
+        assertThat(components[0].getName()).isEqualTo("plan");
+        assertThat(components[0].getType()).isEqualTo(SubscriptionPlan.class);
+    }
+
+    @Test
     @DisplayName("UNLIMITED 활성 + 어떤 plan 결제 시도 → INVALID_INPUT")
     void prepareBlockedWhenUnlimitedActive() {
         properties.setReviewerNicknames("");
