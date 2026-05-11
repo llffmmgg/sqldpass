@@ -39,7 +39,8 @@
       "dir": "payment-test-coverage",
       "name": "payment-test-coverage",
       "description": "결제 9 시나리오 테스트 커버리지 + PortOne 환불 endpoint + 결제 후 권한 미부여 재발급 endpoint + 수동 회귀 체크리스트. payment-hardening 직후 잔여 갭 보강.",
-      "status": "in_progress"
+      "status": "completed",
+      "completed_at": "2026-05-11T12:28:27+0900"
     }
   ]
 }
