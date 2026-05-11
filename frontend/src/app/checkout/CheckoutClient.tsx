@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui";
 import Spinner from "@/components/Spinner";
 import { useToast } from "@/components/Toast";
 import CheckoutLanding, { planLabel } from "@/components/billing/CheckoutLanding";
-import { clearAuth, isLoggedIn } from "@/lib/auth";
+import { isLoggedIn } from "@/lib/auth";
 import { isCapacitorApp } from "@/lib/platform";
 import {
   getActiveSubscription,
@@ -17,10 +17,12 @@ import {
   startPayment,
   verifyPaymentById,
   type ActiveSubscription,
+  type BuyerInfo,
   type PaymentMethod,
   type PreviewResponse,
   type SubscriptionPlan,
 } from "@/lib/payment";
+import BuyerInfoModal from "@/components/billing/BuyerInfoModal";
 
 type AccessState = "loading" | "anonymous" | "denied" | "allowed";
 
@@ -49,6 +51,8 @@ function CheckoutContent() {
   const [subscription, setSubscription] = useState<ActiveSubscription | null>(null);
   const [payingPlan, setPayingPlan] = useState<SubscriptionPlan | null>(null);
   const [method, setMethod] = useState<PaymentMethod>("KAKAOPAY");
+  // 결제 모달 — onPay 클릭 시 plan 을 세팅하면 모달 열림. onBuyerSubmit 에서 실제 결제 호출.
+  const [pendingPlan, setPendingPlan] = useState<SubscriptionPlan | null>(null);
   // Capacitor 앱은 Play Billing 전용 — 외부 PG 노출 시 Google Play 정책 위반.
   const showMethodToggle = !isCapacitorApp();
   // plan 별 미리보기 — 활성 구독 prorate 차감 적용된 finalAmount 표시용
@@ -120,30 +124,23 @@ function CheckoutContent() {
     return <ComingSoonView showLogin={false} />;
   }
 
-  async function onPay(plan: SubscriptionPlan) {
+  // 결제 버튼 클릭 — BuyerInfoModal 을 열고, 실제 결제는 onBuyerSubmit 에서 진행.
+  function onPay(plan: SubscriptionPlan) {
     if (payingPlan) return;
+    setPendingPlan(plan);
+  }
+
+  async function onBuyerSubmit(buyer: BuyerInfo) {
+    if (!pendingPlan) return;
+    const plan = pendingPlan;
+    setPendingPlan(null);
     setPayingPlan(plan);
     try {
-      const result = await startPayment({ plan, method });
+      const result = await startPayment({ plan, method, buyer });
       toast.show(`${planLabel(result.plan)} 결제 완료`, "success");
       setTimeout(() => router.push("/mock-exams"), 800);
     } catch (e) {
       const message = e instanceof Error ? e.message : "";
-
-      // KG이니시스 결제용 email 누락 — 재로그인 유도 후 자동 로그아웃.
-      // Google 동의 화면에서 이메일 권한을 받아 백엔드에 verified email 이 채워지면
-      // 다음 결제 시 정상 진행.
-      if (message.startsWith("REAUTH_REQUIRED:")) {
-        const userMsg = message.substring("REAUTH_REQUIRED:".length);
-        toast.show(userMsg, "info");
-        setTimeout(() => {
-          clearAuth();
-          router.push("/");
-        }, 2000);
-        if (e instanceof Error) console.error("[checkout:reauth]", e);
-        return;
-      }
-
       // PortOne SDK 의 사용자 취소는 message 안에 "취소" / "cancel" 키워드 포함 — info 톤
       const cancelled = /취소|cancel/i.test(message);
       if (cancelled) {
@@ -155,7 +152,6 @@ function CheckoutContent() {
           "error",
         );
       }
-      // 디버깅용 — 콘솔에는 원문 남김
       if (e instanceof Error) console.error("[checkout]", e);
     } finally {
       setPayingPlan(null);
@@ -163,16 +159,26 @@ function CheckoutContent() {
   }
 
   return (
-    <CheckoutLanding
-      currentPlan={subscription?.active ? subscription.plan : null}
-      previews={previews}
-      payingPlan={payingPlan}
-      subscription={subscription}
-      method={method}
-      onChangeMethod={setMethod}
-      showMethodToggle={showMethodToggle}
-      onPay={onPay}
-    />
+    <>
+      <CheckoutLanding
+        currentPlan={subscription?.active ? subscription.plan : null}
+        previews={previews}
+        payingPlan={payingPlan}
+        subscription={subscription}
+        method={method}
+        onChangeMethod={setMethod}
+        showMethodToggle={showMethodToggle}
+        onPay={onPay}
+      />
+      {pendingPlan !== null && (
+        <BuyerInfoModal
+          open
+          plan={pendingPlan}
+          onClose={() => setPendingPlan(null)}
+          onSubmit={onBuyerSubmit}
+        />
+      )}
+    </>
   );
 }
 
