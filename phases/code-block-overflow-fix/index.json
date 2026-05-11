@@ -7,7 +7,10 @@
       "step": 1,
       "name": "code-block-overflow-x-auto",
       "description": "QuestionCodeBlock.tsx 의 SyntaxHighlighter customStyle 에 overflowX: auto + whiteSpace: pre 추가",
-      "status": "pending"
+      "status": "completed",
+      "started_at": "2026-05-11T15:49:34+0900",
+      "summary": "QuestionCodeBlock customStyle 에 overflow-x auto + white-space pre 추가, lint/build OK"
     }
-  ]
+  ],
+  "created_at": "2026-05-11T15:49:34+0900"
 }

@@ -71,6 +71,8 @@ export default function QuestionCodeBlock({ language, value }: QuestionCodeBlock
           background: "transparent",
           fontSize: "0.875rem",
           lineHeight: 1.6,
+          overflowX: "auto",
+          whiteSpace: "pre",
         }}
         codeTagProps={{
           style: { fontFamily: "var(--font-jetbrains-mono), monospace" },
