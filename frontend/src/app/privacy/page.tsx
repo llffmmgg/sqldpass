@@ -14,14 +14,16 @@ export default function PrivacyPage() {
     <main className="py-12 text-foreground">
       <Container size="narrow">
       <h1 className="text-3xl font-bold">개인정보처리방침</h1>
-      <p className="mt-2 text-sm text-muted">최종 개정일: 2026년 5월 6일</p>
+      <p className="mt-2 text-sm text-muted">최종 개정일: 2026년 5월 11일</p>
 
       <Section title="1. 수집하는 정보">
         <p>문어CBT(이하 &quot;사이트&quot;)는 다음 정보를 수집합니다.</p>
         <ul className="mt-2 list-disc pl-5">
           <li>
             <strong>회원가입 정보</strong> — Google OAuth 로그인을 통해 제공받는 닉네임, 프로필
-            식별자(provider ID). 비밀번호는 저장하지 않습니다.
+            식별자(provider ID), 이메일 주소. 비밀번호는 저장하지 않습니다. 이메일은 사용자가
+            Google 동의 화면에서 권한을 허용하고 Google 측에서 인증한(email_verified) 경우에만
+            수집·저장됩니다.
           </li>
           <li>
             <strong>학습 기록</strong> — 풀이한 문제 ID, 선택한 답, 정·오답 결과, 풀이 시각.
@@ -36,7 +38,8 @@ export default function PrivacyPage() {
           <li>
             <strong>결제 정보</strong> — 유료 모의고사 결제 시 PortOne 으로부터 전달받은 결제
             식별자(paymentId), 결제 상태, 결제 금액, 결제 시각, 잠금 해제 대상 회차 ID. 카드 번호·
-            CVC·유효기간 등 카드 정보는 사이트가 직접 수집·저장하지 않습니다.
+            CVC·유효기간 등 카드 정보는 사이트가 직접 수집·저장하지 않습니다. 결제 처리 및
+            전자영수증 발송을 위해 회원 이메일이 PortOne 및 PG사(KG이니시스 등)에 전달됩니다.
           </li>
         </ul>
       </Section>
@@ -46,6 +49,7 @@ export default function PrivacyPage() {
           <li>학습 진척 추적, 오답노트, 모의고사 채점 및 통계 제공</li>
           <li>서비스 개선과 문제 품질 관리</li>
           <li>이용자 문의·피드백 응대</li>
+          <li>결제 처리, 전자영수증·결제 관련 알림 발송</li>
         </ul>
       </Section>
 
@@ -170,6 +174,7 @@ export default function PrivacyPage() {
 
       <Section title="9. 개정 이력">
         <ul className="list-disc pl-5">
+          <li>2026-05-11 — Google OAuth 이메일 수집 항목 추가 (KG이니시스 신용카드 결제 customer.email 대응)</li>
           <li>2026-05-07 — 개인정보처리책임자·개인정보 처리 위탁(코리아포트원) 항목 추가</li>
           <li>2026-05-06 — 결제 정보 수집·PortOne 연동·보관 기간 조항 추가</li>
           <li>2026-04-09 — 최초 작성</li>
