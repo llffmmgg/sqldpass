@@ -55,6 +55,13 @@
       "description": "PortOne V2 에 KG이니시스(INIpay) 채널을 추가해 신용카드 일반결제를 지원한다. 카카오페이 채널 병행 유지. 백엔드 변경 없음 — 프론트에서 환경변수 분리 + 채널/payMethod 분기 + 결제수단 토글 UI 추가.",
       "status": "completed",
       "completed_at": "2026-05-11T16:00:00+0900"
+    },
+    {
+      "dir": "payment-mobile-redirect-doc",
+      "name": "payment-mobile-redirect-doc",
+      "description": "PortOne 통합 점검 잔여 갭 2건 보강 — (1) 모바일 웹 redirectUrl 미설정 → payment.ts baseArgs 에 redirectUrl 추가 + CheckoutClient 가 paymentId 쿼리로 복귀해 verify. (2) PG 콘솔 직접 취소 사고 예방 → payment-manual-test-checklist.md 에 환불 그라운드 룰 섹션 추가.",
+      "status": "completed",
+      "completed_at": "2026-05-11T17:00:00+0900"
     }
   ]
 }
