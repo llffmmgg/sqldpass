@@ -66,9 +66,16 @@
     {
       "dir": "member-email-for-payment",
       "name": "member-email-for-payment",
-      "description": "KG이니시스 신용카드 결제 customer.email 수집 — V82 마이그레이션으로 member.email 재추가(V10 DROP 복구), OAuth scope email 추가, email_verified=true 만 저장, 기존 회원 자연 백필 + CARD 결제 NULL 시 재로그인 유도, 개인정보처리방침 업데이트.",
+      "description": "KG이니시스 신용카드 결제 customer.email 수집 — V82 마이그레이션으로 member.email 재추가(V10 DROP 복구), OAuth scope email 추가, email_verified=true 만 저장, 기존 회원 자연 백필 + CARD 결제 NULL 시 재로그인 유도, 개인정보처리방침 업데이트. (2026-05-12 정책 전환으로 payment-buyer-info-modal phase 에서 정리됨)",
       "status": "completed",
       "completed_at": "2026-05-11T18:00:00+0900"
+    },
+    {
+      "dir": "payment-buyer-info-modal",
+      "name": "payment-buyer-info-modal",
+      "description": "KG이니시스 PortOne V2 PC 일반결제 customer 필수 필드(fullName/email/phoneNumber) 를 결제 시점 모달로 수집해 payment 테이블에 저장. 직전 phase 의 member.email 정책 정리(V83 DROP) + OAuth scope 원복. 모달은 회원정보 미저장 정책 명시 안내.",
+      "status": "completed",
+      "completed_at": "2026-05-12T15:30:00+0900"
     }
   ]
 }
