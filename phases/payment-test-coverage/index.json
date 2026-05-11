@@ -43,7 +43,10 @@
       "step": 5,
       "name": "rtdn-duplicate-webhook-integration",
       "description": "PaymentWebhookControllerTest 에 같은 RTDN envelope 중복 수신 시 idempotent 검증 케이스 추가 (history REFUNDED 1개만 + PaymentEntity status 변경 1회만)",
-      "status": "pending"
+      "status": "completed",
+      "started_at": "2026-05-11T12:16:23+0900",
+      "summary": "RTDN 중복 수신 + 정보성 type=1 + payload 오류 케이스 추가, 전체 test OK",
+      "completed_at": "2026-05-11T12:18:30+0900"
     },
     {
       "step": 6,

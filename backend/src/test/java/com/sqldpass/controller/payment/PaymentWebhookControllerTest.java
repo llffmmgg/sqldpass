@@ -27,6 +27,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -175,5 +176,58 @@ class PaymentWebhookControllerTest {
                 .andExpect(status().isOk());
 
         verify(paymentService).revokePlayBillingByToken("token-abcdef1234");
+    }
+
+    @Test
+    @DisplayName("RTDN 같은 purchaseToken 중복 수신 시 두 번 모두 200 + controller 는 매번 service 호출 (idempotency 는 service 레벨)")
+    void rtdn_duplicate_envelope_both_200_controller_calls_each_time() throws Exception {
+        given(paymentService.revokePlayBillingByToken("tok-x")).willReturn(true);
+        String body = envelopeJson(2, "tok-x");
+
+        mockMvc.perform(post("/api/webhook/play-billing/rtdn")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(post("/api/webhook/play-billing/rtdn")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isOk());
+
+        verify(paymentService, times(2)).revokePlayBillingByToken("tok-x");
+    }
+
+    @Test
+    @DisplayName("RTDN oneTimeProductNotification type=1 (PURCHASED) 정보성 알림은 revoke 호출 0회 + 200")
+    void rtdn_oneTime_type_1_purchased_no_revoke() throws Exception {
+        mockMvc.perform(post("/api/webhook/play-billing/rtdn")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(envelopeJson(1, "token-abcdef1234")))
+                .andExpect(status().isOk());
+
+        verify(paymentService, never()).revokePlayBillingByToken(any());
+    }
+
+    @Test
+    @DisplayName("RTDN payload base64/JSON 파싱 실패해도 Pub/Sub retry 회피를 위해 200 반환 + revoke 0회")
+    void rtdn_invalid_payload_still_200_no_revoke() throws Exception {
+        // 유효한 base64 지만 디코드 결과가 JSON 이 아님 → objectMapper.readTree 가 throw.
+        String invalidDataB64 = Base64.getEncoder().encodeToString(
+                "not-a-json {{".getBytes(StandardCharsets.UTF_8));
+        ObjectMapper mapper = new ObjectMapper();
+        ObjectNode message = mapper.createObjectNode();
+        message.put("data", invalidDataB64);
+        message.put("messageId", "msg-broken");
+        message.put("publishTime", "2026-05-11T00:00:00Z");
+        ObjectNode envelope = mapper.createObjectNode();
+        envelope.set("message", message);
+        envelope.put("subscription", "projects/sqldpass/subscriptions/play-billing-rtdn");
+
+        mockMvc.perform(post("/api/webhook/play-billing/rtdn")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(mapper.writeValueAsString(envelope)))
+                .andExpect(status().isOk());
+
+        verify(paymentService, never()).revokePlayBillingByToken(any());
     }
 }
