@@ -186,6 +186,32 @@ class PaymentServiceTest {
     }
 
     @Test
+    @DisplayName("prepare: 회원에게 verified email 있으면 PreparePaymentResult.customerEmail 채워짐")
+    void prepareReturnsCustomerEmailWhenMemberHasEmail() {
+        properties.setReviewerNicknames("");
+        MemberEntity m = newMember(1L, "any-nick");
+        m.updateEmail("verified@example.com");
+        given(memberRepository.findById(1L)).willReturn(Optional.of(m));
+
+        var result = service.prepare(1L, SubscriptionPlan.THREE_DAY);
+
+        assertThat(result.customerEmail()).isEqualTo("verified@example.com");
+    }
+
+    @Test
+    @DisplayName("prepare: 회원 email NULL 이면 customerEmail null — 프론트가 CARD 결제 차단 신호로 사용")
+    void prepareReturnsNullCustomerEmailWhenMemberHasNoEmail() {
+        properties.setReviewerNicknames("");
+        MemberEntity m = newMember(1L, "any-nick");
+        // email 미설정 (legacy 회원)
+        given(memberRepository.findById(1L)).willReturn(Optional.of(m));
+
+        var result = service.prepare(1L, SubscriptionPlan.THREE_DAY);
+
+        assertThat(result.customerEmail()).isNull();
+    }
+
+    @Test
     @DisplayName("PrepareRequest record: plan 외 다른 필드(amount, productName 등) 추가 시 컴파일 시점에 즉시 실패")
     void prepareRequestRecordHasOnlyPlanField() {
         var components = com.sqldpass.controller.payment.PaymentController.PrepareRequest.class

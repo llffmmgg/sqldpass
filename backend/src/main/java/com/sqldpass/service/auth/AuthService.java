@@ -44,13 +44,20 @@ public class AuthService {
                     // 신규 가입 시 임시 닉네임 (providerId 일부 사용 → 유니크 보장)
                     // 프론트엔드가 즉시 korean-random-words로 생성한 닉네임으로 PATCH할 예정
                     String placeholder = "user_" + userInfo.sub().substring(0, Math.min(12, userInfo.sub().length()));
+                    // email 은 email_verified=true 인 경우에만 GoogleOAuthClient 가 채워 보냄.
+                    // null 이면 다음 로그인 시 재시도 (점진적 백필).
                     return memberRepository.save(
-                            new MemberEntity("google", userInfo.sub(), placeholder));
+                            new MemberEntity("google", userInfo.sub(), placeholder, userInfo.email()));
                 });
 
         // Discord 알림 — 신규 가입 시점에만
         if (isNew[0]) {
             discordNotifier.notifyNewMember(member);
+        } else if (userInfo.email() != null) {
+            // 기존 회원 — verified email 받았고 DB 와 다르면 갱신.
+            // @Transactional + JPA dirty checking 으로 트랜잭션 종료 시 자동 UPDATE.
+            // null/blank/동일 케이스는 updateEmail 안에서 단락.
+            member.updateEmail(userInfo.email());
         }
 
         String token = jwtProvider.createUserToken(member.getId());

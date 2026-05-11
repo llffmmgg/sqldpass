@@ -108,12 +108,19 @@ public class PaymentService {
                 productName, plan, finalAmount, baseAmount, eval.discount());
         paymentRepository.save(entity);
 
-        log.info("결제 prepare memberId={} plan={} paymentId={} base={} discount={} final={}",
-                memberId, plan, paymentId, baseAmount, eval.discount(), finalAmount);
+        // KG이니시스 신용카드 결제 customer.email 용. email_verified 통과한 회원만 채워짐.
+        // null 이면 프론트가 CARD 결제 차단 + 재로그인 유도 (KAKAOPAY 는 그대로 진행).
+        String customerEmail = memberRepository.findById(memberId)
+                .map(MemberEntity::getEmail)
+                .orElse(null);
+
+        log.info("결제 prepare memberId={} plan={} paymentId={} base={} discount={} final={} emailPresent={}",
+                memberId, plan, paymentId, baseAmount, eval.discount(), finalAmount, customerEmail != null);
         return new PreparePaymentResult(
                 paymentId, finalAmount, productName, plan,
                 properties.getPortone().getStoreId(),
-                baseAmount, eval.discount());
+                baseAmount, eval.discount(),
+                customerEmail);
     }
 
     /**
@@ -444,7 +451,8 @@ public class PaymentService {
 
     public record PreparePaymentResult(String paymentId, int amount, String productName,
                                        SubscriptionPlan plan, String storeId,
-                                       int baseAmount, int prorateDiscount) {}
+                                       int baseAmount, int prorateDiscount,
+                                       String customerEmail) {}
 
     public record VerifyPaymentResult(String paymentId, int amount, String productName,
                                       SubscriptionPlan plan, LocalDateTime expiresAt) {}
