@@ -1,0 +1,36 @@
+{
+  "project": "sqldpass",
+  "phase": "member-email-for-payment",
+  "description": "KG이니시스 신용카드 결제용 customer.email 수집 — MemberEntity 에 email 컬럼 재추가(V10 에서 DROP 됐던 컬럼), OAuth scope 에 email 추가, Google email_verified=true 시에만 저장, 기존 회원은 다음 로그인 자연 백필 + CARD 결제 시 NULL 이면 재로그인 유도. KAKAOPAY 는 차단하지 않음. 개인정보처리방침 업데이트는 법적 의무.",
+  "steps": [
+    {
+      "step": 1,
+      "name": "backend-email-collection",
+      "description": "Flyway V82 마이그레이션으로 member.email 컬럼 추가, MemberEntity 에 email + updateEmail 메서드 + 4-인자 생성자, GoogleOAuthClient 가 email + email_verified 추출 (verified=true 만 신뢰), AuthService.upsertMemberAndIssueToken 가 신규는 email 같이 저장 + 기존은 updateEmail 로 갱신, PaymentService.PreparePaymentResult 에 customerEmail 추가. 테스트 4종.",
+      "status": "completed",
+      "started_at": "2026-05-11T18:00:00+0900",
+      "summary": "V82 + MemberEntity.email + GoogleOAuthClient email_verified + AuthService 분기 + PreparePaymentResult customerEmail, MemberEntityEmailTest 7건/AuthServiceEmailTest 5건/PaymentServiceTest 2건 추가, test+compile OK",
+      "completed_at": "2026-05-11T18:00:00+0900"
+    },
+    {
+      "step": 2,
+      "name": "frontend-scope-and-reauth",
+      "description": "frontend/src/lib/oauth.ts scope 에 email 추가, payment.ts 가 prepared.customerEmail 을 PortOne customer.email 로 전달 + CARD 결제인데 customerEmail 이 null 이면 REAUTH_REQUIRED 에러 throw, CheckoutClient 가 해당 에러를 catch 해서 토스트 + 자동 로그아웃 + 로그인 페이지로 라우팅. KAKAOPAY 는 차단하지 않음.",
+      "status": "completed",
+      "started_at": "2026-05-11T18:00:00+0900",
+      "summary": "oauth scope email 추가, payment.ts customer + REAUTH_REQUIRED, CheckoutClient 재로그인 유도 분기, lint/build OK",
+      "completed_at": "2026-05-11T18:00:00+0900"
+    },
+    {
+      "step": 3,
+      "name": "privacy-policy-update",
+      "description": "frontend/src/app/privacy/page.tsx 의 섹션 1 회원가입 정보에 email 명시, 섹션 1 결제 정보에 email 전달 명시, 섹션 2 이용 목적에 전자영수증/결제 알림 추가, 섹션 9 개정 이력에 2026-05-11 라인 추가, 페이지 최상단 최종 개정일 갱신. 법적 의무사항.",
+      "status": "completed",
+      "started_at": "2026-05-11T18:00:00+0900",
+      "summary": "privacy/page.tsx 에 email 수집/이용 목적/개정일 추가, lint OK",
+      "completed_at": "2026-05-11T18:00:00+0900"
+    }
+  ],
+  "created_at": "2026-05-11T18:00:00+0900",
+  "completed_at": "2026-05-11T18:00:00+0900"
+}
