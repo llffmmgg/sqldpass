@@ -30,6 +30,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.contains;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.times;
@@ -345,6 +346,98 @@ class PaymentServiceTest {
                 .extracting("errorCode").isEqualTo(ErrorCode.PAYMENT_VERIFICATION_FAILED);
 
         verify(failureRecorder, times(1)).markFailedInNewTx(eq(42L), anyString());
+        verify(subscriptionRepository, times(0)).save(any(SubscriptionEntity.class));
+    }
+
+    @Test
+    @DisplayName("verify: status=FAILED 면 PAYMENT_VERIFICATION_FAILED + markFailedInNewTx 호출")
+    void verifyStatusFailedInvokesFailureRecorder() {
+        MemberEntity m = newMember(1L, "pay-rv-7f2a91");
+        given(memberRepository.findById(1L)).willReturn(Optional.of(m));
+
+        PaymentEntity entity = new PaymentEntity("p-1", 1L, null, "상품",
+                SubscriptionPlan.THREE_DAY, 3900);
+        setField(entity, "id", 42L);
+        given(paymentRepository.findByPaymentId("p-1")).willReturn(Optional.of(entity));
+
+        var info = new PortOneClient.PortOnePaymentInfo("p-1", "FAILED", 3900, "KRW",
+                null, Map.of("id", "p-1", "status", "FAILED"));
+        given(portOneClient.getPayment("p-1")).willReturn(info);
+
+        assertThatThrownBy(() -> service.verify(1L, "p-1"))
+                .isInstanceOf(SqldpassException.class)
+                .extracting("errorCode").isEqualTo(ErrorCode.PAYMENT_VERIFICATION_FAILED);
+
+        verify(failureRecorder, times(1)).markFailedInNewTx(eq(42L), contains("FAILED"));
+        verify(subscriptionRepository, times(0)).save(any(SubscriptionEntity.class));
+    }
+
+    @Test
+    @DisplayName("verify: status=CANCELLED 면 PAYMENT_VERIFICATION_FAILED + markFailedInNewTx 호출")
+    void verifyStatusCancelledInvokesFailureRecorder() {
+        MemberEntity m = newMember(1L, "pay-rv-7f2a91");
+        given(memberRepository.findById(1L)).willReturn(Optional.of(m));
+
+        PaymentEntity entity = new PaymentEntity("p-1", 1L, null, "상품",
+                SubscriptionPlan.THREE_DAY, 3900);
+        setField(entity, "id", 42L);
+        given(paymentRepository.findByPaymentId("p-1")).willReturn(Optional.of(entity));
+
+        var info = new PortOneClient.PortOnePaymentInfo("p-1", "CANCELLED", 3900, "KRW",
+                null, Map.of("id", "p-1", "status", "CANCELLED"));
+        given(portOneClient.getPayment("p-1")).willReturn(info);
+
+        assertThatThrownBy(() -> service.verify(1L, "p-1"))
+                .isInstanceOf(SqldpassException.class)
+                .extracting("errorCode").isEqualTo(ErrorCode.PAYMENT_VERIFICATION_FAILED);
+
+        verify(failureRecorder, times(1)).markFailedInNewTx(eq(42L), contains("CANCELLED"));
+        verify(subscriptionRepository, times(0)).save(any(SubscriptionEntity.class));
+    }
+
+    @Test
+    @DisplayName("verify: status=VIRTUAL_ACCOUNT_ISSUED (미입금) 면 PAYMENT_VERIFICATION_FAILED — 별도 PENDING 처리 없음")
+    void verifyStatusVirtualAccountIssuedFails() {
+        MemberEntity m = newMember(1L, "pay-rv-7f2a91");
+        given(memberRepository.findById(1L)).willReturn(Optional.of(m));
+
+        PaymentEntity entity = new PaymentEntity("p-1", 1L, null, "상품",
+                SubscriptionPlan.THREE_DAY, 3900);
+        setField(entity, "id", 42L);
+        given(paymentRepository.findByPaymentId("p-1")).willReturn(Optional.of(entity));
+
+        var info = new PortOneClient.PortOnePaymentInfo("p-1", "VIRTUAL_ACCOUNT_ISSUED", 3900, "KRW",
+                null, Map.of("id", "p-1", "status", "VIRTUAL_ACCOUNT_ISSUED"));
+        given(portOneClient.getPayment("p-1")).willReturn(info);
+
+        assertThatThrownBy(() -> service.verify(1L, "p-1"))
+                .isInstanceOf(SqldpassException.class)
+                .extracting("errorCode").isEqualTo(ErrorCode.PAYMENT_VERIFICATION_FAILED);
+
+        verify(failureRecorder, times(1)).markFailedInNewTx(eq(42L), contains("VIRTUAL_ACCOUNT_ISSUED"));
+        verify(subscriptionRepository, times(0)).save(any(SubscriptionEntity.class));
+    }
+
+    @Test
+    @DisplayName("verify: PortOne 게이트웨이 5xx → PAYMENT_GATEWAY_ERROR 전파 + markFailedInNewTx 0회")
+    void verifyPortOneGatewayErrorPropagates() {
+        MemberEntity m = newMember(1L, "pay-rv-7f2a91");
+        given(memberRepository.findById(1L)).willReturn(Optional.of(m));
+
+        PaymentEntity entity = new PaymentEntity("p-1", 1L, null, "상품",
+                SubscriptionPlan.THREE_DAY, 3900);
+        setField(entity, "id", 42L);
+        given(paymentRepository.findByPaymentId("p-1")).willReturn(Optional.of(entity));
+
+        given(portOneClient.getPayment("p-1"))
+                .willThrow(new SqldpassException(ErrorCode.PAYMENT_GATEWAY_ERROR));
+
+        assertThatThrownBy(() -> service.verify(1L, "p-1"))
+                .isInstanceOf(SqldpassException.class)
+                .extracting("errorCode").isEqualTo(ErrorCode.PAYMENT_GATEWAY_ERROR);
+
+        // 게이트웨이 자체 오류 — 응답 정보가 없어 markFailedInNewTx 호출 없음.
+        verify(failureRecorder, times(0)).markFailedInNewTx(any(), any());
         verify(subscriptionRepository, times(0)).save(any(SubscriptionEntity.class));
     }
 
