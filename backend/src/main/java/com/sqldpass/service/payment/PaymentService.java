@@ -45,6 +45,7 @@ public class PaymentService {
     private final PlayBillingProperties playBillingProperties;
     private final PaymentFailureRecorder failureRecorder;
     private final SubscriptionHistoryService historyService;
+    private final SubscriptionService subscriptionService;
 
     /** 카드사 심사 가이드 + PG 정책상 최소 결제 금액. */
     private static final int MIN_CHARGE_AMOUNT = 100;
@@ -330,6 +331,41 @@ public class PaymentService {
                 memberId, productId, plan, expiresAt);
         return new VerifyPaymentResult(payment.getPaymentId(), payment.getAmount(),
                 payment.getProductName(), plan, expiresAt);
+    }
+
+    /**
+     * 관리자 환불 — PortOne PG cancel + PaymentEntity CANCELLED + 구독 회수 + history REFUNDED.
+     *
+     * <p>본 메서드는 PortOne 채널 전용. Play Billing 환불은 RTDN 으로 자동 처리되므로
+     * {@link #revokePlayBillingByToken(String)} 가 별도 담당.
+     *
+     * <p>이미 CANCELLED 상태면 idempotent — 호출 0회.
+     *
+     * @param paymentEntityId PaymentEntity 의 PK (paymentId 문자열이 아니라 DB id)
+     * @param reason          환불 사유 (Discord/audit 에 기록)
+     * @param actorAdminId    환불 실행 관리자 memberId (history audit)
+     */
+    @Transactional
+    public void revokePortOnePayment(Long paymentEntityId, String reason, Long actorAdminId) {
+        PaymentEntity entity = paymentRepository.findById(paymentEntityId)
+                .orElseThrow(() -> new SqldpassException(ErrorCode.PAYMENT_NOT_FOUND));
+        if (entity.getProvider() != PaymentProvider.PORTONE) {
+            throw new SqldpassException(ErrorCode.INVALID_INPUT,
+                    "PortOne 결제만 본 메서드로 환불 가능합니다.");
+        }
+        if (entity.getStatus() == PaymentStatus.CANCELLED) {
+            return; // idempotent — 중복 호출 무해
+        }
+        // PG 측 환불 — 실패 시 SqldpassException(PAYMENT_GATEWAY_ERROR) throw → 트랜잭션 롤백.
+        portOneClient.cancel(entity.getPaymentId(), reason);
+        entity.markCancelled("admin-refund:" + (reason == null ? "" : reason));
+        // 구독 회수 + history REVOKED 자동 기록.
+        subscriptionService.revokeByPaymentId(entity.getId());
+        // REFUNDED action 명시 기록 — REVOKED 와 별도 한 줄.
+        historyService.record(entity.getMemberId(), entity.getPlan(),
+                SubscriptionHistoryAction.REFUNDED, reason, actorAdminId, entity.getId());
+        log.info("PortOne 환불 paymentId={} memberId={} actorAdminId={} reason={}",
+                entity.getPaymentId(), entity.getMemberId(), actorAdminId, reason);
     }
 
     /**

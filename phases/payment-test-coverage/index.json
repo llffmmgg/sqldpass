@@ -34,7 +34,10 @@
       "step": 4,
       "name": "portone-refund-service-and-endpoint",
       "description": "PaymentService.revokePortOnePayment + AdminPaymentController.refund endpoint (POST /api/admin/payments/{paymentId}/refund) 신설 + history REFUNDED 기록 + 단위·컨트롤러 테스트",
-      "status": "pending"
+      "status": "completed",
+      "started_at": "2026-05-11T12:09:45+0900",
+      "summary": "revokePortOnePayment 서비스 + 어드민 환불 endpoint + 단위/컨트롤러 테스트 7건 추가, 전체 test OK",
+      "completed_at": "2026-05-11T12:15:30+0900"
     },
     {
       "step": 5,

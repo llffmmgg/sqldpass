@@ -53,6 +53,8 @@ class PaymentServiceTest {
     private PaymentFailureRecorder failureRecorder;
     @Mock
     private SubscriptionHistoryService historyService;
+    @Mock
+    private SubscriptionService subscriptionService;
 
     private PaymentProperties properties;
     private PlayBillingProperties playBillingProperties;
@@ -73,7 +75,8 @@ class PaymentServiceTest {
 
         service = new PaymentService(properties, portOneClient,
                 paymentRepository, subscriptionRepository, memberRepository,
-                playBillingClient, playBillingProperties, failureRecorder, historyService);
+                playBillingClient, playBillingProperties, failureRecorder, historyService,
+                subscriptionService);
     }
 
     @Test
@@ -840,6 +843,92 @@ class PaymentServiceTest {
         assertThatThrownBy(() -> subscriptionRepository.save(duplicate))
                 .isInstanceOf(org.springframework.dao.DataIntegrityViolationException.class)
                 .hasMessageContaining("uk_subscription_payment_id");
+    }
+
+    // ============================================================
+    // revokePortOnePayment (Step 4) — 관리자 환불 서비스
+    // ============================================================
+
+    @Test
+    @DisplayName("revokePortOnePayment: 정상 PG cancel 호출 + PaymentEntity CANCELLED + revokeByPaymentId + history REFUNDED")
+    void revokePortOnePayment_정상_PG_cancel_호출_PaymentEntity_CANCELLED_revokeByPaymentId_history_REFUNDED() {
+        PaymentEntity entity = new PaymentEntity("p-1", 1L, null, "3일 이용권",
+                SubscriptionPlan.THREE_DAY, 3900);
+        entity.markPaid("{...}", LocalDateTime.now().minusMinutes(5));
+        setField(entity, "id", 42L);
+        given(paymentRepository.findById(42L)).willReturn(Optional.of(entity));
+
+        service.revokePortOnePayment(42L, "고객 요청", 7L);
+
+        // 1) PG cancel 호출.
+        verify(portOneClient, times(1)).cancel("p-1", "고객 요청");
+        // 2) PaymentEntity 상태 CANCELLED 로 전이.
+        assertThat(entity.getStatus())
+                .isEqualTo(com.sqldpass.persistent.payment.PaymentStatus.CANCELLED);
+        // 3) 구독 회수.
+        verify(subscriptionService, times(1)).revokeByPaymentId(42L);
+        // 4) history REFUNDED 1회 — actorAdminId·paymentId·reason 정확 전달.
+        verify(historyService, times(1)).record(eq(1L), eq(SubscriptionPlan.THREE_DAY),
+                eq(com.sqldpass.persistent.payment.SubscriptionHistoryAction.REFUNDED),
+                eq("고객 요청"), eq(7L), eq(42L));
+    }
+
+    @Test
+    @DisplayName("revokePortOnePayment: PG 5xx 시 PAYMENT_GATEWAY_ERROR 그대로 throw + markCancelled/revoke/history 미호출")
+    void revokePortOnePayment_PG_5xx_시_PAYMENT_GATEWAY_ERROR_그대로_throw_상태_미변경() {
+        PaymentEntity entity = new PaymentEntity("p-1", 1L, null, "3일 이용권",
+                SubscriptionPlan.THREE_DAY, 3900);
+        entity.markPaid("{...}", LocalDateTime.now().minusMinutes(5));
+        setField(entity, "id", 42L);
+        given(paymentRepository.findById(42L)).willReturn(Optional.of(entity));
+        org.mockito.BDDMockito.willThrow(new SqldpassException(ErrorCode.PAYMENT_GATEWAY_ERROR))
+                .given(portOneClient).cancel("p-1", "재시도");
+
+        assertThatThrownBy(() -> service.revokePortOnePayment(42L, "재시도", 7L))
+                .isInstanceOf(SqldpassException.class)
+                .extracting("errorCode").isEqualTo(ErrorCode.PAYMENT_GATEWAY_ERROR);
+
+        // PG 실패 → 트랜잭션 롤백 — markCancelled 호출 안 됨 (PaymentEntity 상태는 PAID 유지).
+        assertThat(entity.getStatus())
+                .isEqualTo(com.sqldpass.persistent.payment.PaymentStatus.PAID);
+        verify(subscriptionService, times(0)).revokeByPaymentId(any());
+        verify(historyService, times(0)).record(any(), any(), any(), any(), any(), any());
+    }
+
+    @Test
+    @DisplayName("revokePortOnePayment: 이미 CANCELLED 면 idempotent — cancel/revoke/history 호출 0회")
+    void revokePortOnePayment_이미_CANCELLED_면_idempotent_no_op() {
+        PaymentEntity entity = new PaymentEntity("p-1", 1L, null, "3일 이용권",
+                SubscriptionPlan.THREE_DAY, 3900);
+        entity.markCancelled("prior-cancel");
+        setField(entity, "id", 42L);
+        given(paymentRepository.findById(42L)).willReturn(Optional.of(entity));
+
+        service.revokePortOnePayment(42L, "재요청", 7L);
+
+        verify(portOneClient, times(0)).cancel(any(), any());
+        verify(subscriptionService, times(0)).revokeByPaymentId(any());
+        verify(historyService, times(0)).record(any(), any(), any(), any(), any(), any());
+    }
+
+    @Test
+    @DisplayName("revokePortOnePayment: PLAY_BILLING provider 면 INVALID_INPUT — cancel 호출 0회")
+    void revokePortOnePayment_PLAY_BILLING_provider_면_INVALID_INPUT_throw() {
+        PaymentEntity entity = new PaymentEntity(
+                "play-x", 1L, null, "3일 이용권",
+                SubscriptionPlan.THREE_DAY, 3900, 3900, 0,
+                com.sqldpass.persistent.payment.PaymentProvider.PLAY_BILLING, "tok-x");
+        entity.markPaid("play:orderId=GPA-x", LocalDateTime.now().minusDays(1));
+        setField(entity, "id", 99L);
+        given(paymentRepository.findById(99L)).willReturn(Optional.of(entity));
+
+        assertThatThrownBy(() -> service.revokePortOnePayment(99L, "잘못된 경로", 7L))
+                .isInstanceOf(SqldpassException.class)
+                .extracting("errorCode").isEqualTo(ErrorCode.INVALID_INPUT);
+
+        verify(portOneClient, times(0)).cancel(any(), any());
+        verify(subscriptionService, times(0)).revokeByPaymentId(any());
+        verify(historyService, times(0)).record(any(), any(), any(), any(), any(), any());
     }
 
     private MemberEntity newMember(Long id, String nickname) {
