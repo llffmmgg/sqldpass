@@ -169,6 +169,11 @@ export default function CheckoutLanding({
         ))}
       </div>
 
+      <p className="mt-6 text-center text-xs text-text-muted">
+        PASS+ 모의고사는 주기적으로 새 회차가 추가되며, 유료 플랜 이용 기간 동안 새로 추가되는 회차도
+        그대로 이용할 수 있어요.
+      </p>
+
       {/* FAQ */}
       <div className="mt-16 grid grid-cols-1 gap-6 rounded-2xl border border-border bg-surface/40 p-6 sm:grid-cols-3 sm:gap-8 sm:p-8">
         {[
