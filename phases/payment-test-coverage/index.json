@@ -1,0 +1,49 @@
+{
+  "project": "sqldpass",
+  "phase": "payment-test-coverage",
+  "description": "결제 9 시나리오 (성공·실패·이탈·중복콜백·웹훅중복·금액변조·환불·권한부여·복구) 테스트 커버리지 + PortOne 환불 service/endpoint + 결제 후 권한 미부여 재발급 endpoint + 수동 회귀 체크리스트. payment-hardening 직후 잔여 갭 보강.",
+  "steps": [
+    {
+      "step": 1,
+      "name": "verify-failure-status-tests",
+      "description": "PaymentService.verify 의 PortOne 실패 status (FAILED/CANCELLED/VIRTUAL_ACCOUNT_ISSUED) + 게이트웨이 5xx 테스트 케이스 확장",
+      "status": "pending"
+    },
+    {
+      "step": 2,
+      "name": "prepare-amount-tamper-guard-tests",
+      "description": "prepare 가 client 입력 amount 를 무시하고 properties 정가/prorate 만 사용함을 명시적으로 회귀 방지하는 테스트",
+      "status": "pending"
+    },
+    {
+      "step": 3,
+      "name": "verify-idempotency-boost-tests",
+      "description": "verifyIsIdempotentWhenAlreadyPaid 보강 (PortOne 호출 0회, save 0회, expiresAt 일치) + subscription.payment_id UNIQUE (V80) 동작 검증 테스트",
+      "status": "pending"
+    },
+    {
+      "step": 4,
+      "name": "portone-refund-service-and-endpoint",
+      "description": "PaymentService.revokePortOnePayment + AdminPaymentController.refund endpoint (POST /api/admin/payments/{paymentId}/refund) 신설 + history REFUNDED 기록 + 단위·컨트롤러 테스트",
+      "status": "pending"
+    },
+    {
+      "step": 5,
+      "name": "rtdn-duplicate-webhook-integration",
+      "description": "PaymentWebhookControllerTest 에 같은 RTDN envelope 중복 수신 시 idempotent 검증 케이스 추가 (history REFUNDED 1개만 + PaymentEntity status 변경 1회만)",
+      "status": "pending"
+    },
+    {
+      "step": 6,
+      "name": "subscription-reissue-endpoint",
+      "description": "결제 후 권한 미부여 복구용 어드민 endpoint POST /api/admin/payments/{paymentId}/reissue-subscription + PaymentService.reissueSubscription(paymentId, actorAdminId) + history GRANTED 기록 + 테스트",
+      "status": "pending"
+    },
+    {
+      "step": 7,
+      "name": "manual-test-checklist",
+      "description": "docs/payment-manual-test-checklist.md 작성 — 9 시나리오 + 카카오페이 테스트 모드 제약(KB국민카드 테스트 불가 등) 정리한 QA 운용 세부 체크리스트",
+      "status": "pending"
+    }
+  ]
+}
