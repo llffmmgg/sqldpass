@@ -48,6 +48,13 @@
       "description": "/mock-exams/112 의 본문 코드 블록이 좁은 뷰포트에서 컨테이너 밖으로 잘리는 시각 버그 수정 — QuestionCodeBlock customStyle 에 overflow-x: auto + white-space: pre 추가.",
       "status": "completed",
       "completed_at": "2026-05-11T15:51:49+0900"
+    },
+    {
+      "dir": "kg-inicis-card-channel",
+      "name": "kg-inicis-card-channel",
+      "description": "PortOne V2 에 KG이니시스(INIpay) 채널을 추가해 신용카드 일반결제를 지원한다. 카카오페이 채널 병행 유지. 백엔드 변경 없음 — 프론트에서 환경변수 분리 + 채널/payMethod 분기 + 결제수단 토글 UI 추가.",
+      "status": "completed",
+      "completed_at": "2026-05-11T16:00:00+0900"
     }
   ]
 }
