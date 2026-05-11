@@ -41,6 +41,12 @@
       "description": "결제 9 시나리오 테스트 커버리지 + PortOne 환불 endpoint + 결제 후 권한 미부여 재발급 endpoint + 수동 회귀 체크리스트. payment-hardening 직후 잔여 갭 보강.",
       "status": "completed",
       "completed_at": "2026-05-11T12:28:27+0900"
+    },
+    {
+      "dir": "code-block-overflow-fix",
+      "name": "code-block-overflow-fix",
+      "description": "/mock-exams/112 의 본문 코드 블록이 좁은 뷰포트에서 컨테이너 밖으로 잘리는 시각 버그 수정 — QuestionCodeBlock customStyle 에 overflow-x: auto + white-space: pre 추가.",
+      "status": "in_progress"
     }
   ]
 }
