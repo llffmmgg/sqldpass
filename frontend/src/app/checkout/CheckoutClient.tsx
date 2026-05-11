@@ -9,12 +9,14 @@ import Spinner from "@/components/Spinner";
 import { useToast } from "@/components/Toast";
 import CheckoutLanding, { planLabel } from "@/components/billing/CheckoutLanding";
 import { isLoggedIn } from "@/lib/auth";
+import { isCapacitorApp } from "@/lib/platform";
 import {
   getActiveSubscription,
   getCheckoutEligibility,
   previewPayment,
   startPayment,
   type ActiveSubscription,
+  type PaymentMethod,
   type PreviewResponse,
   type SubscriptionPlan,
 } from "@/lib/payment";
@@ -41,6 +43,9 @@ function CheckoutContent() {
   const [access, setAccess] = useState<AccessState>("loading");
   const [subscription, setSubscription] = useState<ActiveSubscription | null>(null);
   const [payingPlan, setPayingPlan] = useState<SubscriptionPlan | null>(null);
+  const [method, setMethod] = useState<PaymentMethod>("KAKAOPAY");
+  // Capacitor 앱은 Play Billing 전용 — 외부 PG 노출 시 Google Play 정책 위반.
+  const showMethodToggle = !isCapacitorApp();
   // plan 별 미리보기 — 활성 구독 prorate 차감 적용된 finalAmount 표시용
   const [previews, setPreviews] = useState<Record<SubscriptionPlan, PreviewResponse | null>>({
     THREE_DAY: null,
@@ -92,7 +97,7 @@ function CheckoutContent() {
     if (payingPlan) return;
     setPayingPlan(plan);
     try {
-      const result = await startPayment({ plan });
+      const result = await startPayment({ plan, method });
       toast.show(`${planLabel(result.plan)} 결제 완료`, "success");
       setTimeout(() => router.push("/mock-exams"), 800);
     } catch (e) {
@@ -121,6 +126,9 @@ function CheckoutContent() {
       previews={previews}
       payingPlan={payingPlan}
       subscription={subscription}
+      method={method}
+      onChangeMethod={setMethod}
+      showMethodToggle={showMethodToggle}
       onPay={onPay}
     />
   );

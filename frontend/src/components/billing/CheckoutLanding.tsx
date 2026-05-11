@@ -4,6 +4,7 @@ import Link from "next/link";
 
 import {
   type ActiveSubscription,
+  type PaymentMethod,
   type PreviewResponse,
   type SubscriptionPlan,
 } from "@/lib/payment";
@@ -65,6 +66,9 @@ type Props = {
   previews: Record<SubscriptionPlan, PreviewResponse | null>;
   payingPlan: SubscriptionPlan | null;
   subscription: ActiveSubscription | null;
+  method: PaymentMethod;
+  onChangeMethod: (m: PaymentMethod) => void;
+  showMethodToggle: boolean;
   onPay: (plan: SubscriptionPlan) => void;
 };
 
@@ -73,6 +77,9 @@ export default function CheckoutLanding({
   previews,
   payingPlan,
   subscription,
+  method,
+  onChangeMethod,
+  showMethodToggle,
   onPay,
 }: Props) {
   return (
@@ -120,7 +127,31 @@ export default function CheckoutLanding({
         )}
       </header>
 
-      <div className="mt-14 grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
+      {showMethodToggle && (
+        <div className="mt-10 flex flex-col items-center gap-2">
+          <span className="text-[11px] font-medium uppercase tracking-[1.4px] text-text-subtle">
+            결제 수단
+          </span>
+          <div
+            role="radiogroup"
+            aria-label="결제 수단 선택"
+            className="inline-flex items-center gap-1 rounded-full border border-border bg-surface/40 p-1"
+          >
+            <MethodButton
+              active={method === "KAKAOPAY"}
+              onClick={() => onChangeMethod("KAKAOPAY")}
+              label="카카오페이"
+            />
+            <MethodButton
+              active={method === "CARD"}
+              onClick={() => onChangeMethod("CARD")}
+              label="신용카드"
+            />
+          </div>
+        </div>
+      )}
+
+      <div className="mt-10 grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
         {TIERS.map((t) => (
           <PlanCard
             key={t.key}
@@ -344,6 +375,32 @@ function PlanCard({
         )}
       </div>
     </div>
+  );
+}
+
+function MethodButton({
+  active,
+  onClick,
+  label,
+}: {
+  active: boolean;
+  onClick: () => void;
+  label: string;
+}) {
+  return (
+    <button
+      type="button"
+      role="radio"
+      aria-checked={active}
+      onClick={onClick}
+      className={`rounded-full px-4 py-1.5 text-xs font-semibold transition-all ${
+        active
+          ? "bg-amber-500 text-amber-950 shadow-[0_0_18px_-4px_rgba(245,181,68,0.6)]"
+          : "text-text-muted hover:text-text"
+      }`}
+    >
+      {label}
+    </button>
   );
 }
 
