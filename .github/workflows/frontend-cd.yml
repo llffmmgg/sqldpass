@@ -14,6 +14,10 @@
 #   - SSH_HOST, SSH_PORT, SSH_USERNAME, SSH_PRIVATE_KEY (백엔드와 공유)
 #   - NEXT_PUBLIC_GOOGLE_CLIENT_ID — OAuth 로그인용 클라이언트 ID (공개값이지만
 #     secret으로 관리해서 값 변경·회전 편의성 확보). 빌드 시 --build-arg로 주입.
+#   - NEXT_PUBLIC_PORTONE_STORE_ID — PortOne store-{uuid}
+#   - NEXT_PUBLIC_PORTONE_CHANNEL_KEY_KAKAOPAY — 카카오페이 채널 키
+#   - NEXT_PUBLIC_PORTONE_CHANNEL_KEY_INICIS — KG이니시스(INIpay) 채널 키 (신용카드)
+#   - NEXT_PUBLIC_PORTONE_CHANNEL_KEY — (deprecated) 단일 키, 새 변수 누락 시 fallback
 #   - 런타임 env(INTERNAL_API_URL 등)는 compose에 하드코딩
 #
 # 트리거:
@@ -84,6 +88,8 @@ jobs:
           build-args: |
             NEXT_PUBLIC_GOOGLE_CLIENT_ID=${{ secrets.NEXT_PUBLIC_GOOGLE_CLIENT_ID }}
             NEXT_PUBLIC_PORTONE_STORE_ID=${{ secrets.NEXT_PUBLIC_PORTONE_STORE_ID }}
+            NEXT_PUBLIC_PORTONE_CHANNEL_KEY_KAKAOPAY=${{ secrets.NEXT_PUBLIC_PORTONE_CHANNEL_KEY_KAKAOPAY }}
+            NEXT_PUBLIC_PORTONE_CHANNEL_KEY_INICIS=${{ secrets.NEXT_PUBLIC_PORTONE_CHANNEL_KEY_INICIS }}
             NEXT_PUBLIC_PORTONE_CHANNEL_KEY=${{ secrets.NEXT_PUBLIC_PORTONE_CHANNEL_KEY }}
           tags: |
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:prod
