@@ -1,0 +1,36 @@
+{
+  "project": "sqldpass",
+  "phase": "payment-buyer-info-modal",
+  "description": "KG이니시스 PortOne V2 PC 일반결제 customer 필수 필드(fullName/email/phoneNumber) 를 결제 시점 모달로 수집해 payment 테이블에 저장한다. 직전 phase(member-email-for-payment)의 회원 테이블 email 정책을 새 phase 안에서 정리(V83 DROP) 하고, OAuth scope 원복으로 회원가입 거부감 회피. payment 테이블에 buyer_name/email/phone_number 신규(V84). 모달은 회원정보 미저장 정책을 명시 안내.",
+  "steps": [
+    {
+      "step": 1,
+      "name": "backend-cleanup-and-buyer-columns",
+      "description": "이전 phase 코드 정리(MemberEntity.email + 4-인자 생성자 + updateEmail 제거, GoogleUserInfo (sub,name) 회귀, AuthService email 분기 제거, PreparePaymentResult.customerEmail 제거, MemberEntityEmailTest/AuthServiceEmailTest 삭제, PaymentServiceTest customerEmail 케이스 정리) + V83__drop_member_email.sql + V84__add_payment_buyer_info.sql + PaymentEntity buyer 3필드 + setBuyer 도메인 메서드 + PaymentController.PrepareRequest 확장(Bean Validation) + PaymentService.prepare 시그니처 확장(buyer 받아 저장, normalizePhone) + 신규 buyer 테스트 2건.",
+      "status": "completed",
+      "started_at": "2026-05-12T15:30:00+0900",
+      "summary": "V83/V84 + PaymentEntity buyer + PrepareRequest Validation + prepare 시그니처 확장 + 정리(테스트 14건 삭제 + buyer 2건 추가), gradle test+compile OK",
+      "completed_at": "2026-05-12T15:30:00+0900"
+    },
+    {
+      "step": 2,
+      "name": "frontend-modal-and-cleanup",
+      "description": "oauth.ts scope 원복('openid profile'), payment.ts REAUTH_REQUIRED + customerEmail 참조 제거, startPayment 시그니처에 buyer 추가 + PortOne customer.fullName/email/phoneNumber 전달, buyerStorage.ts 신규(localStorage email/phone 자동 채움), BuyerInfoModal.tsx 신규(안내 박스 + 3개 input + 정규식 검증 + ESC/overlay close + scroll lock), CheckoutClient 가 onPay 에서 모달 열고 onSubmit 에서 실제 결제 호출.",
+      "status": "completed",
+      "started_at": "2026-05-12T15:30:00+0900",
+      "summary": "oauth scope 원복, payment.ts buyer 전달 + REAUTH 분기 제거, BuyerInfoModal/buyerStorage 신규, CheckoutClient 모달 조건부 마운트, lint/build OK",
+      "completed_at": "2026-05-12T15:30:00+0900"
+    },
+    {
+      "step": 3,
+      "name": "privacy-policy-correction",
+      "description": "frontend/src/app/privacy/page.tsx 의 직전 phase 변경 정정 — 섹션 1 회원가입 정보 email 언급 제거(회원 테이블 미저장 정책 회복), 섹션 1 결제 정보에 결제 시점 buyer 3종(이름/이메일/휴대폰) 수집 명시, 섹션 9 개정 이력에 2026-05-12 라인 + 2026-05-11 정정 표기, 최종 개정일 2026-05-12.",
+      "status": "completed",
+      "started_at": "2026-05-12T15:30:00+0900",
+      "summary": "privacy/page.tsx 회원가입 email 제거 + 결제 buyer 명시 + 개정 이력 정정 + 최종 개정일 2026-05-12",
+      "completed_at": "2026-05-12T15:30:00+0900"
+    }
+  ],
+  "created_at": "2026-05-12T15:30:00+0900",
+  "completed_at": "2026-05-12T15:30:00+0900"
+}
