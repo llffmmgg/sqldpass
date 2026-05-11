@@ -750,6 +750,98 @@ class PaymentServiceTest {
         assertThat(service.revokePlayBillingByToken("tok-missing")).isFalse();
     }
 
+    // ============================================================
+    // verify idempotency 보강 (Step 3) — 호출 횟수/expiresAt 정확성/UNIQUE 방어선
+    // ============================================================
+
+    @Test
+    @DisplayName("verify: PAID 재호출 시 PortOne 호출 0회 + save 0회 + expiresAt 은 기존 SubscriptionEntity 와 정확히 일치 (Equals)")
+    void verify_PAID_재호출_PortOne_0_save_0_expiresAt_정확일치() {
+        MemberEntity m = newMember(1L, "pay-rv-7f2a91");
+        given(memberRepository.findById(1L)).willReturn(Optional.of(m));
+
+        PaymentEntity entity = new PaymentEntity("p-1", 1L, null, "3일 이용권",
+                SubscriptionPlan.THREE_DAY, 3900);
+        // 고정 시간 — 정확한 Equals 검증을 위해 now() 같은 흐름 시간 회피.
+        LocalDateTime fixedPaidAt = LocalDateTime.of(2026, 5, 1, 10, 0, 0);
+        LocalDateTime fixedExpiresAt = LocalDateTime.of(2026, 5, 4, 10, 0, 0);
+        entity.markPaid("{...}", fixedPaidAt);
+        setField(entity, "id", 42L);
+        given(paymentRepository.findByPaymentId("p-1")).willReturn(Optional.of(entity));
+
+        SubscriptionEntity prior = new SubscriptionEntity(
+                1L, SubscriptionPlan.THREE_DAY, 42L, fixedPaidAt, fixedExpiresAt);
+        given(subscriptionRepository.findByPaymentId(42L)).willReturn(Optional.of(prior));
+
+        var result = service.verify(1L, "p-1");
+
+        // expiresAt 정확 일치 (isEqualToIgnoringSeconds 가 아닌 isEqualTo) — 캐시된 값 그대로.
+        assertThat(result.expiresAt()).isEqualTo(fixedExpiresAt);
+        assertThat(result.paymentId()).isEqualTo("p-1");
+        assertThat(result.plan()).isEqualTo(SubscriptionPlan.THREE_DAY);
+        assertThat(result.amount()).isEqualTo(3900);
+
+        // 재호출 비용/할당량 방어 — PortOne 0회.
+        verify(portOneClient, times(0)).getPayment(any());
+        // 중복 row 방어 — subscription save 0회.
+        verify(subscriptionRepository, times(0)).save(any(SubscriptionEntity.class));
+        // PAID 분기는 failure 경로를 아예 타지 않는다.
+        verify(failureRecorder, times(0)).markFailedInNewTx(any(), any());
+        // PAID 분기는 markPaid 도 재호출하지 않음 — 기존 entity 의 paidAt 그대로.
+        assertThat(entity.getStatus()).isEqualTo(com.sqldpass.persistent.payment.PaymentStatus.PAID);
+    }
+
+    @Test
+    @DisplayName("verify: PAID 재호출인데 SubscriptionEntity 가 없으면 expiresAt=null 로 반환 — Step 6 복구 대상 회귀 방지")
+    void verify_PAID_재호출_subscription_없으면_expiresAt_null() {
+        MemberEntity m = newMember(1L, "pay-rv-7f2a91");
+        given(memberRepository.findById(1L)).willReturn(Optional.of(m));
+
+        PaymentEntity entity = new PaymentEntity("p-1", 1L, null, "3일 이용권",
+                SubscriptionPlan.THREE_DAY, 3900);
+        entity.markPaid("{...}", LocalDateTime.now().minusMinutes(1));
+        setField(entity, "id", 42L);
+        given(paymentRepository.findByPaymentId("p-1")).willReturn(Optional.of(entity));
+
+        // 결제는 PAID 인데 SubscriptionEntity 가 누락된 비정상 상태.
+        given(subscriptionRepository.findByPaymentId(42L)).willReturn(Optional.empty());
+
+        var result = service.verify(1L, "p-1");
+
+        // 현재 동작: expiresAt 은 null 로 반환 (운영 복구는 Step 6 의 reissue endpoint 가 담당).
+        assertThat(result.expiresAt()).isNull();
+        assertThat(result.paymentId()).isEqualTo("p-1");
+        assertThat(result.plan()).isEqualTo(SubscriptionPlan.THREE_DAY);
+        // PAID 분기이므로 PortOne 재호출/신규 save 없음.
+        verify(portOneClient, times(0)).getPayment(any());
+        verify(subscriptionRepository, times(0)).save(any(SubscriptionEntity.class));
+    }
+
+    @Test
+    @DisplayName("subscription_payment_id UNIQUE 제약(V80): 같은 paymentId 두 번째 save 시 DataIntegrityViolationException — 코드 가드 실패 시 마지막 방어선")
+    void subscription_payment_id_unique_제약_두번째_save_위반() {
+        // 운영 시나리오: 코드 PAID 가드가 어떤 이유로 우회되어 SubscriptionEntity 가 두 번 save 시도되는 경우,
+        // V80 의 UNIQUE 제약이 DB 단에서 막아준다는 것을 mock 으로 못박는다.
+        SubscriptionEntity first = new SubscriptionEntity(
+                1L, SubscriptionPlan.THREE_DAY, 42L,
+                LocalDateTime.now(), LocalDateTime.now().plusDays(3));
+        SubscriptionEntity duplicate = new SubscriptionEntity(
+                1L, SubscriptionPlan.THREE_DAY, 42L,
+                LocalDateTime.now(), LocalDateTime.now().plusDays(3));
+
+        given(subscriptionRepository.save(first)).willReturn(first);
+        given(subscriptionRepository.save(duplicate))
+                .willThrow(new org.springframework.dao.DataIntegrityViolationException(
+                        "Duplicate entry '42' for key 'subscription.uk_subscription_payment_id'"));
+
+        // 첫 save 는 성공.
+        assertThat(subscriptionRepository.save(first)).isSameAs(first);
+        // 같은 paymentId 두 번째 save 시도 → DB UNIQUE 위반.
+        assertThatThrownBy(() -> subscriptionRepository.save(duplicate))
+                .isInstanceOf(org.springframework.dao.DataIntegrityViolationException.class)
+                .hasMessageContaining("uk_subscription_payment_id");
+    }
+
     private MemberEntity newMember(Long id, String nickname) {
         MemberEntity m = new MemberEntity("google", "g-" + id, nickname);
         setField(m, "id", id);

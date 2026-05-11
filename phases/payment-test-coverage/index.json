@@ -25,7 +25,10 @@
       "step": 3,
       "name": "verify-idempotency-boost-tests",
       "description": "verifyIsIdempotentWhenAlreadyPaid 보강 (PortOne 호출 0회, save 0회, expiresAt 일치) + subscription.payment_id UNIQUE (V80) 동작 검증 테스트",
-      "status": "pending"
+      "status": "completed",
+      "started_at": "2026-05-11T12:05:44+0900",
+      "summary": "verify idempotency 보강 케이스 3건 추가 (PortOne 0회/save 0회/expiresAt 정확 일치, subscription 누락 시 expiresAt=null 회귀 방지, UNIQUE 제약 마지막 방어선), 전체 test OK",
+      "completed_at": "2026-05-11T12:09:30+0900"
     },
     {
       "step": 4,
