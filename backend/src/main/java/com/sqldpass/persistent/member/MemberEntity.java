@@ -41,14 +41,6 @@ public class MemberEntity extends BaseTimeEntity {
     @Column(nullable = false, length = 50)
     private String nickname;
 
-    /**
-     * Google OAuth email_verified=true 인 경우에만 저장.
-     * V10 에서 한 번 DROP 됐다가 V82 (2026-05-11) 에 KG이니시스 customer.email 용으로 재추가.
-     * UNIQUE 제약 없음 — provider/provider_id 가 유일 식별자, email 은 결제 식별 보조 용도.
-     */
-    @Column(name = "email", length = 255)
-    private String email;
-
     @Column(name = "current_streak", nullable = false)
     private int currentStreak = 0;
 
@@ -64,23 +56,8 @@ public class MemberEntity extends BaseTimeEntity {
         this.nickname = nickname;
     }
 
-    public MemberEntity(String provider, String providerId, String nickname, String email) {
-        this(provider, providerId, nickname);
-        this.email = email;
-    }
-
     public void changeNickname(String nickname) {
         this.nickname = nickname;
-    }
-
-    /**
-     * email_verified=true 통과한 값만 호출 전제. null/blank/동일 시 무동작 →
-     * JPA dirty checking 에 의한 불필요 UPDATE 쿼리 생략.
-     */
-    public void updateEmail(String email) {
-        if (email == null || email.isBlank()) return;
-        if (email.equals(this.email)) return;
-        this.email = email;
     }
 
     /**

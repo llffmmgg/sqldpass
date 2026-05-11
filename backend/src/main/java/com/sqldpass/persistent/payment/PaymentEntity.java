@@ -44,6 +44,22 @@ public class PaymentEntity extends BaseTimeEntity {
     @Column(name = "member_id", nullable = false)
     private Long memberId;
 
+    /**
+     * KG이니시스 PortOne V2 PC 일반결제 customer.fullName.
+     * 결제 시점 모달에서 사용자가 입력 → 영수증·환불·CS 식별용.
+     * V84 (2026-05-12) 신규. 그 이전 결제 row 는 NULL.
+     */
+    @Column(name = "buyer_name", length = 50)
+    private String buyerName;
+
+    /** KG이니시스 customer.email — V84 신규, 결제 시점 수집. */
+    @Column(name = "buyer_email", length = 255)
+    private String buyerEmail;
+
+    /** KG이니시스 customer.phoneNumber — V84 신규. 하이픈 제거형(01012345678) 저장. */
+    @Column(name = "buyer_phone_number", length = 20)
+    private String buyerPhoneNumber;
+
     /** 잠금 해제 대상 모의고사. 단건 결제 흐름에서만 사용. 향후 패스 도입 시 nullable 유지. */
     @Column(name = "mock_exam_id")
     private Long mockExamId;
@@ -120,6 +136,16 @@ public class PaymentEntity extends BaseTimeEntity {
         this.status = PaymentStatus.PENDING;
         this.provider = provider != null ? provider : PaymentProvider.PORTONE;
         this.purchaseToken = purchaseToken;
+    }
+
+    /**
+     * 결제 시점 모달에서 수집한 구매자 정보를 동봉 저장.
+     * phoneNumber 는 호출 측에서 하이픈 제거형으로 정규화한 값을 전달한다.
+     */
+    public void setBuyer(String buyerName, String buyerEmail, String buyerPhoneNumber) {
+        this.buyerName = buyerName;
+        this.buyerEmail = buyerEmail;
+        this.buyerPhoneNumber = buyerPhoneNumber;
     }
 
     public void markPaid(String pgResponse, LocalDateTime paidAt) {

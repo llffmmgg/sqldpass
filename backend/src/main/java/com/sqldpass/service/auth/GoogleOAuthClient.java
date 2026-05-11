@@ -68,24 +68,11 @@ public class GoogleOAuthClient {
 
             String sub = response.get("sub").asText();
             String name = response.has("name") ? response.get("name").asText() : "사용자";
-            String email = extractVerifiedEmail(response);
-            return new GoogleUserInfo(sub, name, email);
+            return new GoogleUserInfo(sub, name);
         } catch (Exception e) {
             log.error("Google OAuth user info fetch failed", e);
             throw new SqldpassException(ErrorCode.OAUTH_LOGIN_FAILED);
         }
-    }
-
-    /**
-     * email_verified=true 일 때만 email 반환. 미인증 email 은 NULL — 영수증 오발송 리스크 차단.
-     * tokeninfo 응답에서 email_verified 는 boolean 또는 문자열 "true"/"false" 로 옴.
-     * JsonNode.asBoolean() 은 문자열 "true" 도 정상 해석.
-     */
-    private String extractVerifiedEmail(JsonNode response) {
-        if (response == null) return null;
-        if (!response.has("email") || !response.has("email_verified")) return null;
-        if (!response.get("email_verified").asBoolean()) return null;
-        return response.get("email").asText();
     }
 
     /**
@@ -122,8 +109,7 @@ public class GoogleOAuthClient {
 
             String sub = response.get("sub").asText();
             String name = response.has("name") ? response.get("name").asText() : "사용자";
-            String email = extractVerifiedEmail(response);
-            return new GoogleUserInfo(sub, name, email);
+            return new GoogleUserInfo(sub, name);
         } catch (SqldpassException e) {
             throw e;
         } catch (Exception e) {
@@ -132,6 +118,6 @@ public class GoogleOAuthClient {
         }
     }
 
-    public record GoogleUserInfo(String sub, String name, String email) {
+    public record GoogleUserInfo(String sub, String name) {
     }
 }

@@ -7,6 +7,13 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
+
 import com.sqldpass.persistent.member.MemberEntity;
 import com.sqldpass.persistent.member.MemberRepository;
 import com.sqldpass.persistent.payment.SubscriptionPlan;
@@ -72,8 +79,8 @@ public class PaymentController {
     }
 
     @PostMapping("/prepare")
-    @Operation(summary = "결제 사전 등록 — plan(THREE_DAY/ONE_MONTH/UNLIMITED) 받아 paymentId 발급")
-    public PreparePaymentResult prepare(@RequestBody PrepareRequest body, HttpServletRequest request) {
+    @Operation(summary = "결제 사전 등록 — plan + buyer 정보(이름/이메일/휴대폰) 받아 paymentId 발급")
+    public PreparePaymentResult prepare(@Valid @RequestBody PrepareRequest body, HttpServletRequest request) {
         Long memberId = (Long) request.getAttribute("memberId");
         if (memberId == null) {
             throw new SqldpassException(ErrorCode.UNAUTHORIZED);
@@ -81,7 +88,8 @@ public class PaymentController {
         if (body == null || body.plan() == null) {
             throw new SqldpassException(ErrorCode.INVALID_INPUT, "plan 은 필수입니다.");
         }
-        return paymentService.prepare(memberId, body.plan());
+        return paymentService.prepare(memberId, body.plan(),
+                body.buyerName(), body.buyerEmail(), body.buyerPhoneNumber());
     }
 
     @PostMapping("/verify")
@@ -124,7 +132,15 @@ public class PaymentController {
                 .orElseGet(SubscriptionResponse::inactive);
     }
 
-    public record PrepareRequest(SubscriptionPlan plan) {}
+    public record PrepareRequest(
+            @NotNull SubscriptionPlan plan,
+            @NotBlank @Size(max = 50) String buyerName,
+            @NotBlank @Email @Size(max = 255) String buyerEmail,
+            @NotBlank
+            @Pattern(regexp = "^01[0-9][-\\s]?\\d{3,4}[-\\s]?\\d{4}$",
+                     message = "휴대폰 번호 형식이 올바르지 않습니다.")
+            String buyerPhoneNumber
+    ) {}
 
     public record VerifyRequest(String paymentId) {}
 

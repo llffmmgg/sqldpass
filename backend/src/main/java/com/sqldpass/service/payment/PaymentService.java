@@ -76,7 +76,8 @@ public class PaymentService {
      * 활성 구독이 있으면 prorate 차감 / 다운그레이드·동등 plan 차단 적용.
      */
     @Transactional
-    public PreparePaymentResult prepare(Long memberId, SubscriptionPlan plan) {
+    public PreparePaymentResult prepare(Long memberId, SubscriptionPlan plan,
+                                         String buyerName, String buyerEmail, String buyerPhoneNumber) {
         ensureReviewer(memberId);
         if (plan == null) {
             throw new SqldpassException(ErrorCode.INVALID_INPUT, "plan 은 필수입니다.");
@@ -106,21 +107,21 @@ public class PaymentService {
         String paymentId = "sqldpass-" + System.currentTimeMillis() + "-" + memberId;
         PaymentEntity entity = new PaymentEntity(paymentId, memberId, null,
                 productName, plan, finalAmount, baseAmount, eval.discount());
+        // KG이니시스 PortOne V2 PC 일반결제 customer 정보 동봉 저장 (영수증·CS 식별).
+        entity.setBuyer(buyerName, buyerEmail, normalizePhone(buyerPhoneNumber));
         paymentRepository.save(entity);
 
-        // KG이니시스 신용카드 결제 customer.email 용. email_verified 통과한 회원만 채워짐.
-        // null 이면 프론트가 CARD 결제 차단 + 재로그인 유도 (KAKAOPAY 는 그대로 진행).
-        String customerEmail = memberRepository.findById(memberId)
-                .map(MemberEntity::getEmail)
-                .orElse(null);
-
-        log.info("결제 prepare memberId={} plan={} paymentId={} base={} discount={} final={} emailPresent={}",
-                memberId, plan, paymentId, baseAmount, eval.discount(), finalAmount, customerEmail != null);
+        log.info("결제 prepare memberId={} plan={} paymentId={} base={} discount={} final={}",
+                memberId, plan, paymentId, baseAmount, eval.discount(), finalAmount);
         return new PreparePaymentResult(
                 paymentId, finalAmount, productName, plan,
                 properties.getPortone().getStoreId(),
-                baseAmount, eval.discount(),
-                customerEmail);
+                baseAmount, eval.discount());
+    }
+
+    /** 결제 customer.phoneNumber 정규화 — 하이픈·공백 제거. PG 호환성 ↑. */
+    private static String normalizePhone(String raw) {
+        return raw == null ? null : raw.replaceAll("[-\\s]", "");
     }
 
     /**
@@ -451,8 +452,7 @@ public class PaymentService {
 
     public record PreparePaymentResult(String paymentId, int amount, String productName,
                                        SubscriptionPlan plan, String storeId,
-                                       int baseAmount, int prorateDiscount,
-                                       String customerEmail) {}
+                                       int baseAmount, int prorateDiscount) {}
 
     public record VerifyPaymentResult(String paymentId, int amount, String productName,
                                       SubscriptionPlan plan, LocalDateTime expiresAt) {}

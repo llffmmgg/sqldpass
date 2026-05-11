@@ -84,7 +84,7 @@ class PaymentServiceTest {
     void prepareAllowsEveryoneWhenWhitelistEmpty() {
         properties.setReviewerNicknames("");
 
-        var result = service.prepare(1L, SubscriptionPlan.THREE_DAY);
+        var result = service.prepare(1L, SubscriptionPlan.THREE_DAY, "홍길동", "buyer@example.com", "01012345678");
 
         assertThat(result.amount()).isEqualTo(3900);
         assertThat(result.plan()).isEqualTo(SubscriptionPlan.THREE_DAY);
@@ -96,7 +96,7 @@ class PaymentServiceTest {
     void prepareBlocksNonReviewer() {
         MemberEntity m = newMember(1L, "normal-user");
         given(memberRepository.findById(1L)).willReturn(Optional.of(m));
-        assertThatThrownBy(() -> service.prepare(1L, SubscriptionPlan.THREE_DAY))
+        assertThatThrownBy(() -> service.prepare(1L, SubscriptionPlan.THREE_DAY, "홍길동", "buyer@example.com", "01012345678"))
                 .isInstanceOf(SqldpassException.class)
                 .extracting("errorCode").isEqualTo(ErrorCode.PAYMENT_REVIEWER_ONLY);
     }
@@ -107,7 +107,7 @@ class PaymentServiceTest {
         MemberEntity m = newMember(1L, "pay-rv-7f2a91");
         given(memberRepository.findById(1L)).willReturn(Optional.of(m));
 
-        var result = service.prepare(1L, SubscriptionPlan.ONE_MONTH);
+        var result = service.prepare(1L, SubscriptionPlan.ONE_MONTH, "홍길동", "buyer@example.com", "01012345678");
 
         assertThat(result.amount()).isEqualTo(9900);
         assertThat(result.productName()).isEqualTo("문어CBT 한달 이용권");
@@ -121,7 +121,7 @@ class PaymentServiceTest {
     void prepareRejectsNullPlan() {
         properties.setReviewerNicknames("");
 
-        assertThatThrownBy(() -> service.prepare(1L, null))
+        assertThatThrownBy(() -> service.prepare(1L, null, "홍길동", "buyer@example.com", "01012345678"))
                 .isInstanceOf(SqldpassException.class)
                 .extracting("errorCode").isEqualTo(ErrorCode.INVALID_INPUT);
     }
@@ -136,7 +136,7 @@ class PaymentServiceTest {
         given(subscriptionRepository.findActiveByMemberId(any(), any()))
                 .willReturn(java.util.List.of(active));
 
-        var result = service.prepare(1L, SubscriptionPlan.UNLIMITED);
+        var result = service.prepare(1L, SubscriptionPlan.UNLIMITED, "홍길동", "buyer@example.com", "01012345678");
 
         // 잔여 15일 / 30일 × ₩9,900 = ₩4,950 차감 → ₩29,900 - ₩4,950 = ₩24,950
         assertThat(result.baseAmount()).isEqualTo(29900);
@@ -150,7 +150,7 @@ class PaymentServiceTest {
         properties.setReviewerNicknames("");
         // 활성 구독 없음 — default mock 이 빈 리스트 반환.
 
-        service.prepare(1L, SubscriptionPlan.THREE_DAY);
+        service.prepare(1L, SubscriptionPlan.THREE_DAY, "홍길동", "buyer@example.com", "01012345678");
 
         ArgumentCaptor<PaymentEntity> captor = ArgumentCaptor.forClass(PaymentEntity.class);
         verify(paymentRepository, times(1)).save(captor.capture());
@@ -171,7 +171,7 @@ class PaymentServiceTest {
         given(subscriptionRepository.findActiveByMemberId(any(), any()))
                 .willReturn(java.util.List.of(active));
 
-        service.prepare(1L, SubscriptionPlan.UNLIMITED);
+        service.prepare(1L, SubscriptionPlan.UNLIMITED, "홍길동", "buyer@example.com", "01012345678");
 
         ArgumentCaptor<PaymentEntity> captor = ArgumentCaptor.forClass(PaymentEntity.class);
         verify(paymentRepository, times(1)).save(captor.capture());
@@ -186,39 +186,43 @@ class PaymentServiceTest {
     }
 
     @Test
-    @DisplayName("prepare: 회원에게 verified email 있으면 PreparePaymentResult.customerEmail 채워짐")
-    void prepareReturnsCustomerEmailWhenMemberHasEmail() {
+    @DisplayName("prepare: buyer 정보(이름/이메일/휴대폰) 가 PaymentEntity 에 저장됨")
+    void prepareSavesBuyerInfo() {
         properties.setReviewerNicknames("");
-        MemberEntity m = newMember(1L, "any-nick");
-        m.updateEmail("verified@example.com");
-        given(memberRepository.findById(1L)).willReturn(Optional.of(m));
 
-        var result = service.prepare(1L, SubscriptionPlan.THREE_DAY);
+        service.prepare(1L, SubscriptionPlan.THREE_DAY, "홍길동", "buyer@example.com", "01012345678");
 
-        assertThat(result.customerEmail()).isEqualTo("verified@example.com");
+        ArgumentCaptor<PaymentEntity> captor = ArgumentCaptor.forClass(PaymentEntity.class);
+        verify(paymentRepository, times(1)).save(captor.capture());
+        PaymentEntity saved = captor.getValue();
+        assertThat(saved.getBuyerName()).isEqualTo("홍길동");
+        assertThat(saved.getBuyerEmail()).isEqualTo("buyer@example.com");
+        assertThat(saved.getBuyerPhoneNumber()).isEqualTo("01012345678");
     }
 
     @Test
-    @DisplayName("prepare: 회원 email NULL 이면 customerEmail null — 프론트가 CARD 결제 차단 신호로 사용")
-    void prepareReturnsNullCustomerEmailWhenMemberHasNoEmail() {
+    @DisplayName("prepare: 휴대폰 번호 하이픈/공백 제거 후 저장")
+    void prepareNormalizesPhone() {
         properties.setReviewerNicknames("");
-        MemberEntity m = newMember(1L, "any-nick");
-        // email 미설정 (legacy 회원)
-        given(memberRepository.findById(1L)).willReturn(Optional.of(m));
 
-        var result = service.prepare(1L, SubscriptionPlan.THREE_DAY);
+        service.prepare(1L, SubscriptionPlan.THREE_DAY, "홍길동", "buyer@example.com", "010-1234-5678");
 
-        assertThat(result.customerEmail()).isNull();
+        ArgumentCaptor<PaymentEntity> captor = ArgumentCaptor.forClass(PaymentEntity.class);
+        verify(paymentRepository, times(1)).save(captor.capture());
+        assertThat(captor.getValue().getBuyerPhoneNumber()).isEqualTo("01012345678");
     }
 
     @Test
-    @DisplayName("PrepareRequest record: plan 외 다른 필드(amount, productName 등) 추가 시 컴파일 시점에 즉시 실패")
-    void prepareRequestRecordHasOnlyPlanField() {
+    @DisplayName("PrepareRequest record: plan + buyer 3종 필드 — 추가/제거 시 컴파일 시점에 즉시 실패")
+    void prepareRequestRecordHasPlanAndBuyerFields() {
         var components = com.sqldpass.controller.payment.PaymentController.PrepareRequest.class
                 .getRecordComponents();
-        assertThat(components).hasSize(1);
+        assertThat(components).hasSize(4);
         assertThat(components[0].getName()).isEqualTo("plan");
         assertThat(components[0].getType()).isEqualTo(SubscriptionPlan.class);
+        assertThat(components[1].getName()).isEqualTo("buyerName");
+        assertThat(components[2].getName()).isEqualTo("buyerEmail");
+        assertThat(components[3].getName()).isEqualTo("buyerPhoneNumber");
     }
 
     @Test
@@ -230,7 +234,7 @@ class PaymentServiceTest {
         given(subscriptionRepository.findActiveByMemberId(any(), any()))
                 .willReturn(java.util.List.of(active));
 
-        assertThatThrownBy(() -> service.prepare(1L, SubscriptionPlan.ONE_MONTH))
+        assertThatThrownBy(() -> service.prepare(1L, SubscriptionPlan.ONE_MONTH, "홍길동", "buyer@example.com", "01012345678"))
                 .isInstanceOf(SqldpassException.class)
                 .extracting("errorCode").isEqualTo(ErrorCode.INVALID_INPUT);
     }
@@ -245,7 +249,7 @@ class PaymentServiceTest {
         given(subscriptionRepository.findActiveByMemberId(any(), any()))
                 .willReturn(java.util.List.of(active));
 
-        assertThatThrownBy(() -> service.prepare(1L, SubscriptionPlan.ONE_MONTH))
+        assertThatThrownBy(() -> service.prepare(1L, SubscriptionPlan.ONE_MONTH, "홍길동", "buyer@example.com", "01012345678"))
                 .isInstanceOf(SqldpassException.class)
                 .extracting("errorCode").isEqualTo(ErrorCode.INVALID_INPUT);
     }
@@ -260,7 +264,7 @@ class PaymentServiceTest {
         given(subscriptionRepository.findActiveByMemberId(any(), any()))
                 .willReturn(java.util.List.of(active));
 
-        assertThatThrownBy(() -> service.prepare(1L, SubscriptionPlan.THREE_DAY))
+        assertThatThrownBy(() -> service.prepare(1L, SubscriptionPlan.THREE_DAY, "홍길동", "buyer@example.com", "01012345678"))
                 .isInstanceOf(SqldpassException.class)
                 .extracting("errorCode").isEqualTo(ErrorCode.INVALID_INPUT);
     }
