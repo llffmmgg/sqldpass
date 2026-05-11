@@ -234,90 +234,76 @@ function PlanCard({
   const hasProrate = preview ? preview.allowed && preview.prorateDiscount > 0 : false;
   const disabled = payingPlan !== null;
 
+  const inlineBadge: { label: string; tone: "neutral" | "amber" } | null = isFree
+    ? { label: "현재 플랜", tone: "neutral" }
+    : highlight
+    ? { label: "가장 인기", tone: "amber" }
+    : null;
+
   return (
     <div
-      className={`relative flex flex-col rounded-2xl p-7 transition-all duration-300 ${
+      className={`relative flex flex-col rounded-2xl p-7 transition-colors duration-200 ${
         highlight
-          ? "border-2 border-amber-500/60 bg-gradient-to-b from-amber-500/[0.10] via-surface to-surface/80 shadow-[0_0_40px_-10px_rgba(245,181,68,0.45)] hover:-translate-y-1 hover:shadow-[0_0_60px_-10px_rgba(245,181,68,0.6)] xl:-translate-y-2"
-          : "border border-border bg-surface/40 hover:-translate-y-0.5 hover:border-border-strong hover:bg-surface/70 hover:shadow-[var(--shadow-md)]"
+          ? "border-2 border-amber-500/60 bg-gradient-to-b from-amber-500/[0.08] via-surface to-surface/80 shadow-[0_0_24px_-12px_rgba(245,181,68,0.35)]"
+          : "border border-border bg-surface/40 hover:border-border-strong hover:bg-surface/70"
       }`}
     >
-      {highlight && (
-        <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-          <span className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-amber-400 to-amber-600 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-amber-950 shadow-lg shadow-amber-500/40">
-            <StarSvg className="h-3 w-3" />
-            가장 인기
+      {/* 헤더 — 플랜명 + 인라인 뱃지 */}
+      <div className="flex items-center justify-between gap-3">
+        <h3
+          className={`text-2xl font-bold tracking-tight ${
+            highlight ? "text-amber-600 dark:text-amber-400" : "text-text"
+          }`}
+        >
+          {tier.name}
+        </h3>
+        {inlineBadge && (
+          <span
+            className={`inline-flex items-center rounded-full px-2.5 py-1 text-[10.5px] font-semibold uppercase tracking-wider ${
+              inlineBadge.tone === "amber"
+                ? "bg-amber-500/15 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300"
+                : "border border-border bg-bg-elevated text-text-muted"
+            }`}
+          >
+            {inlineBadge.tone === "amber" && <StarSvg className="mr-1 h-3 w-3" />}
+            {inlineBadge.label}
           </span>
-        </div>
-      )}
-
-      <span
-        className={`font-mono text-[10.5px] font-medium uppercase tracking-[1.4px] ${
-          highlight ? "text-amber-600 dark:text-amber-400" : "text-text-subtle"
-        }`}
-      >
-        {tier.unit ?? "FREE"}
-      </span>
-
-      <h3 className="mt-2 text-lg font-bold tracking-tight text-text">{tier.name}</h3>
-      <p className="mt-1 min-h-[36px] text-xs leading-snug text-text-muted">
-        {tier.tagline}
-      </p>
+        )}
+      </div>
 
       {/* 가격 — prorate 분기 */}
       <div className="mt-5">
         {hasProrate && preview ? (
           <>
-            <div className="flex items-baseline gap-2">
+            <div className="flex items-baseline gap-1.5">
               <span className="text-3xl font-bold tabular-nums tracking-tight text-text">
                 ₩{preview.finalAmount.toLocaleString()}
               </span>
-              <span className="text-sm tabular-nums text-text-subtle line-through">
-                ₩{preview.baseAmount.toLocaleString()}
-              </span>
+              {tier.unit && (
+                <span className="text-sm text-text-subtle">/ {tier.unit}</span>
+              )}
             </div>
+            <p className="mt-1 text-xs tabular-nums text-text-subtle line-through">
+              ₩{preview.baseAmount.toLocaleString()}
+            </p>
             <p className="mt-1 text-xs text-success">
               현재 구독 잔여 ₩{preview.prorateDiscount.toLocaleString()} 차감
             </p>
           </>
         ) : (
-          <div className="flex items-baseline gap-1">
+          <div className="flex items-baseline gap-1.5">
             <span className="text-3xl font-bold tabular-nums tracking-tight text-text">
               {tier.price === 0 ? "무료" : `₩${tier.price.toLocaleString()}`}
             </span>
             {tier.price > 0 && tier.unit && (
-              <span className="text-xs text-text-subtle">/ {tier.unit}</span>
+              <span className="text-sm text-text-subtle">/ {tier.unit}</span>
             )}
           </div>
         )}
       </div>
 
-      <div
-        className={`mt-5 h-px ${
-          highlight
-            ? "bg-[linear-gradient(90deg,transparent,rgba(245,181,68,0.35)_50%,transparent)]"
-            : "bg-[linear-gradient(90deg,transparent,var(--border)_50%,transparent)]"
-        }`}
-      />
-
-      <ul className="mt-5 flex flex-1 flex-col gap-2.5">
-        {tier.features.map((f, i) => (
-          <li
-            key={i}
-            className="flex items-start gap-2.5 text-sm leading-snug text-text"
-          >
-            <CheckSvg
-              className={`mt-0.5 h-4 w-4 flex-shrink-0 ${
-                highlight ? "text-amber-500 dark:text-amber-300" : "text-primary"
-              }`}
-            />
-            <span>{f}</span>
-          </li>
-        ))}
-      </ul>
-
-      {/* 버튼 — 5가지 상태 분기 */}
-      <div className="mt-7">
+      {/* CTA 버튼 — 5가지 상태 분기 (가격 바로 아래) */}
+      <div className="mt-5">
         {isFree ? (
           <button
             type="button"
@@ -354,10 +340,10 @@ function PlanCard({
             type="button"
             onClick={() => onPay(tier.key as SubscriptionPlan)}
             disabled={disabled}
-            className={`w-full rounded-lg px-4 py-2.5 text-sm font-semibold transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-60 ${
+            className={`w-full rounded-lg px-4 py-2.5 text-sm font-semibold transition-colors duration-200 disabled:cursor-not-allowed disabled:opacity-60 ${
               highlight
-                ? "bg-gradient-to-r from-amber-400 to-amber-500 text-amber-950 shadow-lg shadow-amber-500/30 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-amber-500/45 hover:brightness-105"
-                : "border border-border bg-surface text-text hover:-translate-y-0.5 hover:border-amber-500/40 hover:bg-surface-hover"
+                ? "bg-gradient-to-r from-amber-400 to-amber-500 text-amber-950 shadow-sm shadow-amber-500/20 hover:brightness-105"
+                : "border border-border bg-surface text-text hover:border-amber-500/40 hover:bg-surface-hover"
             }`}
           >
             {isPaying ? (
@@ -374,6 +360,32 @@ function PlanCard({
           </button>
         )}
       </div>
+
+      {/* 구분선 */}
+      <div
+        className={`mt-6 h-px ${
+          highlight
+            ? "bg-[linear-gradient(90deg,transparent,rgba(245,181,68,0.35)_50%,transparent)]"
+            : "bg-[linear-gradient(90deg,transparent,var(--border)_50%,transparent)]"
+        }`}
+      />
+
+      {/* features */}
+      <ul className="mt-5 flex flex-col gap-2.5">
+        {tier.features.map((f, i) => (
+          <li
+            key={i}
+            className="flex items-start gap-2.5 text-sm leading-snug text-text"
+          >
+            <CheckSvg
+              className={`mt-0.5 h-4 w-4 flex-shrink-0 ${
+                highlight ? "text-amber-500 dark:text-amber-300" : "text-primary"
+              }`}
+            />
+            <span>{f}</span>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }

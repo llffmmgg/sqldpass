@@ -104,7 +104,7 @@ export default function BuyerInfoModal({ open, plan, onClose, onSubmit }: Props)
           {/* 헤더 */}
           <div className="flex items-start justify-between gap-4">
             <div>
-              <h2 className="text-lg font-bold tracking-tight">결제 정보 입력</h2>
+              <h2 className="text-xl font-bold tracking-tight text-text">결제 정보 입력</h2>
               {plan && (
                 <p className="mt-0.5 text-xs text-text-muted">
                   {planLabel(plan)} 결제를 진행합니다.
@@ -114,7 +114,7 @@ export default function BuyerInfoModal({ open, plan, onClose, onSubmit }: Props)
             <button
               type="button"
               onClick={onClose}
-              className="text-muted transition-colors hover:text-foreground"
+              className="text-text-subtle transition-colors hover:text-text"
               aria-label="닫기"
             >
               ✕
@@ -135,8 +135,8 @@ export default function BuyerInfoModal({ open, plan, onClose, onSubmit }: Props)
 
           {/* 이름 */}
           <div className="mt-5">
-            <label htmlFor="buyer-name" className="block text-xs font-medium text-muted">
-              이름 <span className="text-error">*</span>
+            <label htmlFor="buyer-name" className="block text-xs font-medium text-text-muted">
+              이름 <span className="text-danger">*</span>
             </label>
             <input
               id="buyer-name"
@@ -145,19 +145,19 @@ export default function BuyerInfoModal({ open, plan, onClose, onSubmit }: Props)
               onChange={(e) => setName(e.target.value)}
               onBlur={() => setTouched((t) => ({ ...t, name: true }))}
               placeholder="홍길동"
-              className="mt-1.5 w-full rounded-lg border border-border bg-bg px-3 py-2 text-sm text-foreground placeholder:text-text-subtle focus:border-primary focus:outline-none"
+              className="mt-1.5 w-full rounded-lg border border-border bg-bg px-3 py-2 text-sm text-text placeholder:text-text-subtle transition-colors focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/30"
               maxLength={50}
             />
             <p className="mt-1 text-[11px] text-text-subtle">결제 영수증과 환불·CS 식별에 사용</p>
             {touched.name && nameError && (
-              <p className="mt-1 text-[11px] text-error">{nameError}</p>
+              <p className="mt-1 text-[11px] text-danger">{nameError}</p>
             )}
           </div>
 
           {/* 이메일 */}
           <div className="mt-4">
-            <label htmlFor="buyer-email" className="block text-xs font-medium text-muted">
-              이메일 <span className="text-error">*</span>
+            <label htmlFor="buyer-email" className="block text-xs font-medium text-text-muted">
+              이메일 <span className="text-danger">*</span>
             </label>
             <input
               id="buyer-email"
@@ -167,19 +167,19 @@ export default function BuyerInfoModal({ open, plan, onClose, onSubmit }: Props)
               onBlur={() => setTouched((t) => ({ ...t, email: true }))}
               placeholder="example@email.com"
               autoComplete="email"
-              className="mt-1.5 w-full rounded-lg border border-border bg-bg px-3 py-2 text-sm text-foreground placeholder:text-text-subtle focus:border-primary focus:outline-none"
+              className="mt-1.5 w-full rounded-lg border border-border bg-bg px-3 py-2 text-sm text-text placeholder:text-text-subtle transition-colors focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/30"
               maxLength={255}
             />
             <p className="mt-1 text-[11px] text-text-subtle">결제 영수증·결제 알림 발송용. 다음 결제 시 자동 채움</p>
             {touched.email && emailError && (
-              <p className="mt-1 text-[11px] text-error">{emailError}</p>
+              <p className="mt-1 text-[11px] text-danger">{emailError}</p>
             )}
           </div>
 
           {/* 휴대폰 */}
           <div className="mt-4">
-            <label htmlFor="buyer-phone" className="block text-xs font-medium text-muted">
-              휴대폰 번호 <span className="text-error">*</span>
+            <label htmlFor="buyer-phone" className="block text-xs font-medium text-text-muted">
+              휴대폰 번호 <span className="text-danger">*</span>
             </label>
             <input
               id="buyer-phone"
@@ -190,12 +190,12 @@ export default function BuyerInfoModal({ open, plan, onClose, onSubmit }: Props)
               placeholder="010-1234-5678"
               autoComplete="tel"
               inputMode="numeric"
-              className="mt-1.5 w-full rounded-lg border border-border bg-bg px-3 py-2 text-sm text-foreground placeholder:text-text-subtle focus:border-primary focus:outline-none"
+              className="mt-1.5 w-full rounded-lg border border-border bg-bg px-3 py-2 text-sm text-text placeholder:text-text-subtle transition-colors focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/30"
               maxLength={20}
             />
             <p className="mt-1 text-[11px] text-text-subtle">결제 오류 대응 시 연락용. 다음 결제 시 자동 채움</p>
             {touched.phone && phoneError && (
-              <p className="mt-1 text-[11px] text-error">{phoneError}</p>
+              <p className="mt-1 text-[11px] text-danger">{phoneError}</p>
             )}
           </div>
 
