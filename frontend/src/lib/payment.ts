@@ -107,6 +107,18 @@ export async function getActiveSubscription(): Promise<ActiveSubscription> {
   return authFetch<ActiveSubscription>("/api/payment/subscription");
 }
 
+/**
+ * 모바일 redirectUrl 복귀 흐름에서 호출 — paymentId 만으로 서버 verify.
+ * verify 는 PaymentService 에서 멱등(PAID 캐시 시 PortOne 호출 0회) 보증되므로
+ * SDK Promise resolve 경로와 동시에 들어와도 안전.
+ */
+export async function verifyPaymentById(paymentId: string): Promise<VerifyResponse> {
+  return authFetch<VerifyResponse>("/api/payment/verify", {
+    method: "POST",
+    body: JSON.stringify({ paymentId }),
+  });
+}
+
 /** plan 별 결제 미리보기 — 활성 구독의 prorate 차감 적용된 실 결제 금액 반환. */
 export async function previewPayment(plan: SubscriptionPlan): Promise<PreviewResponse> {
   return authFetch<PreviewResponse>(`/api/payment/preview?plan=${encodeURIComponent(plan)}`);
@@ -210,6 +222,13 @@ async function startPaymentPortOne(
   });
 
   const PortOne = (await import("@portone/browser-sdk/v2")).default;
+  // 모바일 브라우저는 카카오페이/카드 ISP 가 외부 앱으로 전환된 뒤 복귀해야 한다.
+  // redirectUrl 미설정 시 PortOne 기본 결과 페이지에 멈출 수 있다 — 우리 /checkout 으로
+  // 돌려 받고, paymentId 쿼리로 복귀 verify 를 호출한다 (verify 는 멱등).
+  const redirectUrl =
+    typeof window !== "undefined"
+      ? `${window.location.origin}/checkout?paymentId=${encodeURIComponent(prepared.paymentId)}`
+      : undefined;
   const baseArgs = {
     storeId: STORE_ID,
     channelKey,
@@ -217,6 +236,7 @@ async function startPaymentPortOne(
     orderName: prepared.productName,
     totalAmount: prepared.amount,
     currency: "CURRENCY_KRW" as const,
+    redirectUrl,
   };
   const requestArg =
     method === "CARD"

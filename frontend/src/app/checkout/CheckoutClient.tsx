@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 import { Badge } from "@/components/ui";
 import Spinner from "@/components/Spinner";
@@ -15,6 +15,7 @@ import {
   getCheckoutEligibility,
   previewPayment,
   startPayment,
+  verifyPaymentById,
   type ActiveSubscription,
   type PaymentMethod,
   type PreviewResponse,
@@ -40,6 +41,10 @@ export default function CheckoutClient() {
 function CheckoutContent() {
   const router = useRouter();
   const toast = useToast();
+  const searchParams = useSearchParams();
+  // 모바일 redirectUrl 복귀 케이스 — payment.ts 가 ?paymentId=... 로 돌려보냄.
+  // 데스크탑은 SDK Promise resolve 로 onPay 안에서 verify 함 → 이 쿼리는 비어있음.
+  const returnedPaymentId = searchParams.get("paymentId");
   const [access, setAccess] = useState<AccessState>("loading");
   const [subscription, setSubscription] = useState<ActiveSubscription | null>(null);
   const [payingPlan, setPayingPlan] = useState<SubscriptionPlan | null>(null);
@@ -77,6 +82,28 @@ function CheckoutContent() {
       })
       .catch(() => setAccess("denied"));
   }, []);
+
+  // 모바일 PG 외부 앱 복귀 시 redirectUrl 로 들어온 paymentId 를 즉시 검증.
+  // verify 멱등 보증이라 SDK Promise 경로와 동시에 와도 안전.
+  useEffect(() => {
+    if (!returnedPaymentId) return;
+    verifyPaymentById(returnedPaymentId)
+      .then((result) => {
+        toast.show(`${planLabel(result.plan)} 결제 완료`, "success");
+        router.replace("/checkout");
+        setTimeout(() => router.push("/mock-exams"), 800);
+      })
+      .catch((e) => {
+        const message = e instanceof Error ? e.message : "";
+        const cancelled = /취소|cancel/i.test(message);
+        toast.show(
+          cancelled ? "결제를 취소하셨습니다." : message || "결제 검증에 실패했습니다.",
+          cancelled ? "info" : "error",
+        );
+        router.replace("/checkout");
+        if (e instanceof Error) console.error("[checkout:return]", e);
+      });
+  }, [returnedPaymentId, router, toast]);
 
   if (access === "loading") {
     return (
