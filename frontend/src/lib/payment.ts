@@ -3,21 +3,31 @@
  *
  * 1. POST /api/payment/prepare {plan} → paymentId·amount·productName 사전 등록
  * 2. PortOne 브라우저 SDK 의 requestPayment 로 결제창 호출
+ *    - method=KAKAOPAY → 카카오페이 채널 + payMethod=EASY_PAY
+ *    - method=CARD     → KG이니시스(INIpay) 채널 + payMethod=CARD
  * 3. POST /api/payment/verify {paymentId} → backend 가 PortOne REST 재검증 + Subscription 발급
  * 4. GET /api/payment/subscription → 활성 구독 정보
  *
  * 환경변수:
- *   NEXT_PUBLIC_PORTONE_STORE_ID    — store-{uuid}
- *   NEXT_PUBLIC_PORTONE_CHANNEL_KEY — 채널 키 (PG 사 한 곳)
+ *   NEXT_PUBLIC_PORTONE_STORE_ID                 — store-{uuid}
+ *   NEXT_PUBLIC_PORTONE_CHANNEL_KEY_KAKAOPAY     — 카카오페이 채널 키
+ *   NEXT_PUBLIC_PORTONE_CHANNEL_KEY_INICIS       — KG이니시스(INIpay) 채널 키 (테스트: INIpayTest)
+ *   NEXT_PUBLIC_PORTONE_CHANNEL_KEY              — (deprecated) 단일 키 — KAKAOPAY 누락 시 fallback
  */
 
 import { getToken } from "@/lib/auth";
 import { isCapacitorApp } from "@/lib/platform";
 
 const STORE_ID = process.env.NEXT_PUBLIC_PORTONE_STORE_ID ?? "";
-const CHANNEL_KEY = process.env.NEXT_PUBLIC_PORTONE_CHANNEL_KEY ?? "";
+const CHANNEL_KEY_KAKAOPAY =
+  process.env.NEXT_PUBLIC_PORTONE_CHANNEL_KEY_KAKAOPAY ??
+  process.env.NEXT_PUBLIC_PORTONE_CHANNEL_KEY ??
+  "";
+const CHANNEL_KEY_INICIS = process.env.NEXT_PUBLIC_PORTONE_CHANNEL_KEY_INICIS ?? "";
 
 export type SubscriptionPlan = "THREE_DAY" | "ONE_MONTH" | "UNLIMITED";
+
+export type PaymentMethod = "KAKAOPAY" | "CARD";
 
 /**
  * SubscriptionPlan ↔ Play Console 일회성 상품 SKU 매핑.
@@ -169,16 +179,30 @@ export async function downloadMockExamPdfAsUser(id: number): Promise<void> {
  *
  * 성공 시 양쪽 모두 VerifyResponse 형태로 동일 — 결제 채널 이후 흐름은 통일.
  */
-export async function startPayment(opts: { plan: SubscriptionPlan }): Promise<VerifyResponse> {
+export async function startPayment(opts: {
+  plan: SubscriptionPlan;
+  method?: PaymentMethod;
+}): Promise<VerifyResponse> {
   if (isCapacitorApp()) {
     return startPaymentPlayBilling(opts.plan);
   }
-  return startPaymentPortOne(opts.plan);
+  return startPaymentPortOne(opts.plan, opts.method ?? "KAKAOPAY");
 }
 
-async function startPaymentPortOne(plan: SubscriptionPlan): Promise<VerifyResponse> {
-  if (!STORE_ID || !CHANNEL_KEY) {
-    throw new Error("결제 설정이 비어있습니다 (NEXT_PUBLIC_PORTONE_STORE_ID / NEXT_PUBLIC_PORTONE_CHANNEL_KEY).");
+async function startPaymentPortOne(
+  plan: SubscriptionPlan,
+  method: PaymentMethod,
+): Promise<VerifyResponse> {
+  if (!STORE_ID) {
+    throw new Error("결제 설정이 비어있습니다 (NEXT_PUBLIC_PORTONE_STORE_ID).");
+  }
+  const channelKey = method === "CARD" ? CHANNEL_KEY_INICIS : CHANNEL_KEY_KAKAOPAY;
+  if (!channelKey) {
+    throw new Error(
+      method === "CARD"
+        ? "신용카드 결제 설정이 비어있습니다 (NEXT_PUBLIC_PORTONE_CHANNEL_KEY_INICIS)."
+        : "카카오페이 결제 설정이 비어있습니다 (NEXT_PUBLIC_PORTONE_CHANNEL_KEY_KAKAOPAY).",
+    );
   }
   const prepared = await authFetch<PrepareResponse>("/api/payment/prepare", {
     method: "POST",
@@ -186,18 +210,26 @@ async function startPaymentPortOne(plan: SubscriptionPlan): Promise<VerifyRespon
   });
 
   const PortOne = (await import("@portone/browser-sdk/v2")).default;
-  const response = await PortOne.requestPayment({
+  const baseArgs = {
     storeId: STORE_ID,
-    channelKey: CHANNEL_KEY,
+    channelKey,
     paymentId: prepared.paymentId,
     orderName: prepared.productName,
     totalAmount: prepared.amount,
-    currency: "CURRENCY_KRW",
-    payMethod: "EASY_PAY",
-    easyPay: {
-      easyPayProvider: "KAKAOPAY",
-    },
-  } as unknown as Parameters<typeof PortOne.requestPayment>[0]);
+    currency: "CURRENCY_KRW" as const,
+  };
+  const requestArg =
+    method === "CARD"
+      ? { ...baseArgs, payMethod: "CARD" as const }
+      : {
+          ...baseArgs,
+          payMethod: "EASY_PAY" as const,
+          easyPay: { easyPayProvider: "KAKAOPAY" as const },
+        };
+
+  const response = await PortOne.requestPayment(
+    requestArg as unknown as Parameters<typeof PortOne.requestPayment>[0],
+  );
 
   if (response && "code" in response && response.code !== undefined) {
     throw new Error(response.message ?? "결제가 취소되었거나 실패했습니다.");
