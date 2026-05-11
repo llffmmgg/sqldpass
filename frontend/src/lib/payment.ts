@@ -48,6 +48,11 @@ export type PrepareResponse = {
   productName: string;
   plan: SubscriptionPlan;
   storeId: string;
+  /**
+   * KG이니시스 신용카드 결제용 customer.email. email_verified=true 통과한 회원만 채워짐.
+   * null 이면 프론트가 CARD 결제 시 재로그인 유도 (KAKAOPAY 는 그대로 진행).
+   */
+  customerEmail: string | null;
 };
 
 export type VerifyResponse = {
@@ -221,6 +226,14 @@ async function startPaymentPortOne(
     body: JSON.stringify({ plan }),
   });
 
+  // KG이니시스(신용카드)는 customer.email 필수 — null 이면 재로그인 유도.
+  // KAKAOPAY 는 email 없이도 진행 (기존 사용자 경험 보호).
+  if (method === "CARD" && !prepared.customerEmail) {
+    throw new Error(
+      "REAUTH_REQUIRED:신용카드 결제를 위해 이메일 정보가 필요합니다. Google 동의 화면에서 이메일 주소 권한을 허용하고 다시 로그인해주세요.",
+    );
+  }
+
   const PortOne = (await import("@portone/browser-sdk/v2")).default;
   // 모바일 브라우저는 카카오페이/카드 ISP 가 외부 앱으로 전환된 뒤 복귀해야 한다.
   // redirectUrl 미설정 시 PortOne 기본 결과 페이지에 멈출 수 있다 — 우리 /checkout 으로
@@ -229,7 +242,7 @@ async function startPaymentPortOne(
     typeof window !== "undefined"
       ? `${window.location.origin}/checkout?paymentId=${encodeURIComponent(prepared.paymentId)}`
       : undefined;
-  const baseArgs = {
+  const baseArgs: Record<string, unknown> = {
     storeId: STORE_ID,
     channelKey,
     paymentId: prepared.paymentId,
@@ -238,6 +251,11 @@ async function startPaymentPortOne(
     currency: "CURRENCY_KRW" as const,
     redirectUrl,
   };
+  // customer.email 은 KG이니시스/카카오페이 양쪽 결제 식별·영수증 발송에 활용.
+  // null 이면 필드 자체 생략 (SDK 가 빈 객체 거절하는 경우 대비).
+  if (prepared.customerEmail) {
+    baseArgs.customer = { email: prepared.customerEmail };
+  }
   const requestArg =
     method === "CARD"
       ? { ...baseArgs, payMethod: "CARD" as const }

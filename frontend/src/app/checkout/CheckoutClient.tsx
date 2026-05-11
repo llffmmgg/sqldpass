@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui";
 import Spinner from "@/components/Spinner";
 import { useToast } from "@/components/Toast";
 import CheckoutLanding, { planLabel } from "@/components/billing/CheckoutLanding";
-import { isLoggedIn } from "@/lib/auth";
+import { clearAuth, isLoggedIn } from "@/lib/auth";
 import { isCapacitorApp } from "@/lib/platform";
 import {
   getActiveSubscription,
@@ -129,6 +129,21 @@ function CheckoutContent() {
       setTimeout(() => router.push("/mock-exams"), 800);
     } catch (e) {
       const message = e instanceof Error ? e.message : "";
+
+      // KG이니시스 결제용 email 누락 — 재로그인 유도 후 자동 로그아웃.
+      // Google 동의 화면에서 이메일 권한을 받아 백엔드에 verified email 이 채워지면
+      // 다음 결제 시 정상 진행.
+      if (message.startsWith("REAUTH_REQUIRED:")) {
+        const userMsg = message.substring("REAUTH_REQUIRED:".length);
+        toast.show(userMsg, "info");
+        setTimeout(() => {
+          clearAuth();
+          router.push("/");
+        }, 2000);
+        if (e instanceof Error) console.error("[checkout:reauth]", e);
+        return;
+      }
+
       // PortOne SDK 의 사용자 취소는 message 안에 "취소" / "cancel" 키워드 포함 — info 톤
       const cancelled = /취소|cancel/i.test(message);
       if (cancelled) {

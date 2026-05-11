@@ -6,7 +6,7 @@ export function getGoogleLoginUrl(): string {
     client_id: GOOGLE_CLIENT_ID,
     redirect_uri: redirectUri,
     response_type: "code",
-    scope: "openid profile",
+    scope: "openid profile email",
     access_type: "offline",
     prompt: "consent",
   });
