@@ -931,6 +931,160 @@ class PaymentServiceTest {
         verify(historyService, times(0)).record(any(), any(), any(), any(), any(), any());
     }
 
+    // ============================================================
+    // reissueSubscription (Step 6) — 결제 후 권한 미부여 복구
+    // ============================================================
+
+    @Test
+    @DisplayName("reissueSubscription: PAID 결제에 subscription 없으면 새로 발급 + history GRANTED 1회")
+    void reissueSubscription_PAID_결제에_subscription_없으면_새로_발급_history_GRANTED() {
+        PaymentEntity entity = new PaymentEntity("p-1", 1L, null, "3일 이용권",
+                SubscriptionPlan.THREE_DAY, 3900);
+        LocalDateTime paidAt = LocalDateTime.of(2026, 5, 1, 10, 0, 0);
+        entity.markPaid("{...}", paidAt);
+        setField(entity, "id", 42L);
+        given(paymentRepository.findById(42L)).willReturn(Optional.of(entity));
+        given(subscriptionRepository.findByPaymentId(42L)).willReturn(Optional.empty());
+
+        var result = service.reissueSubscription(42L, 7L);
+
+        assertThat(result.issued()).isTrue();
+        // THREE_DAY → expiresAt = paidAt + 3d 정확 일치.
+        assertThat(result.expiresAt()).isEqualTo(paidAt.plusDays(3));
+
+        ArgumentCaptor<SubscriptionEntity> subCaptor = ArgumentCaptor.forClass(SubscriptionEntity.class);
+        verify(subscriptionRepository, times(1)).save(subCaptor.capture());
+        SubscriptionEntity saved = subCaptor.getValue();
+        assertThat(saved.getMemberId()).isEqualTo(1L);
+        assertThat(saved.getPlan()).isEqualTo(SubscriptionPlan.THREE_DAY);
+        assertThat(saved.getPaymentId()).isEqualTo(42L);
+        assertThat(saved.getPurchasedAt()).isEqualTo(paidAt);
+        assertThat(saved.getExpiresAt()).isEqualTo(paidAt.plusDays(3));
+
+        verify(historyService, times(1)).record(eq(1L), eq(SubscriptionPlan.THREE_DAY),
+                eq(com.sqldpass.persistent.payment.SubscriptionHistoryAction.GRANTED),
+                contains("admin-reissue:paymentId=p-1"), eq(7L), eq(42L));
+    }
+
+    @Test
+    @DisplayName("reissueSubscription: 이미 활성 subscription 있으면 idempotent — save 0회 + history 0회 + issued=false")
+    void reissueSubscription_이미_활성_subscription_있으면_idempotent_save_0() {
+        PaymentEntity entity = new PaymentEntity("p-1", 1L, null, "3일 이용권",
+                SubscriptionPlan.THREE_DAY, 3900);
+        entity.markPaid("{...}", LocalDateTime.now().minusMinutes(5));
+        setField(entity, "id", 42L);
+        given(paymentRepository.findById(42L)).willReturn(Optional.of(entity));
+
+        LocalDateTime existingExpiresAt = LocalDateTime.now().plusDays(2);
+        SubscriptionEntity existing = new SubscriptionEntity(
+                1L, SubscriptionPlan.THREE_DAY, 42L,
+                LocalDateTime.now().minusDays(1), existingExpiresAt);
+        given(subscriptionRepository.findByPaymentId(42L)).willReturn(Optional.of(existing));
+
+        var result = service.reissueSubscription(42L, 7L);
+
+        assertThat(result.issued()).isFalse();
+        assertThat(result.expiresAt()).isEqualTo(existingExpiresAt);
+
+        verify(subscriptionRepository, times(0)).save(any(SubscriptionEntity.class));
+        verify(historyService, times(0)).record(any(), any(), any(), any(), any(), any());
+    }
+
+    @Test
+    @DisplayName("reissueSubscription: PAID 아닌 결제(PENDING/FAILED 등) 는 INVALID_INPUT")
+    void reissueSubscription_PAID_아닌_결제는_INVALID_INPUT() {
+        PaymentEntity entity = new PaymentEntity("p-pending", 1L, null, "3일 이용권",
+                SubscriptionPlan.THREE_DAY, 3900);
+        // markPaid 미호출 — status=PENDING.
+        setField(entity, "id", 42L);
+        given(paymentRepository.findById(42L)).willReturn(Optional.of(entity));
+
+        assertThatThrownBy(() -> service.reissueSubscription(42L, 7L))
+                .isInstanceOf(SqldpassException.class)
+                .extracting("errorCode").isEqualTo(ErrorCode.INVALID_INPUT);
+
+        verify(subscriptionRepository, times(0)).save(any(SubscriptionEntity.class));
+        verify(historyService, times(0)).record(any(), any(), any(), any(), any(), any());
+    }
+
+    @Test
+    @DisplayName("reissueSubscription: plan 정보 없는 옛 단건 결제는 INVALID_INPUT")
+    void reissueSubscription_plan_null_결제는_INVALID_INPUT() {
+        // 옛 mock-exam 결제 등 plan 없는 row.
+        PaymentEntity entity = new PaymentEntity("p-legacy", 1L, 100L, "옛 모의고사 단건", 3900);
+        entity.markPaid("{...}", LocalDateTime.now().minusMinutes(5));
+        setField(entity, "id", 42L);
+        given(paymentRepository.findById(42L)).willReturn(Optional.of(entity));
+
+        assertThatThrownBy(() -> service.reissueSubscription(42L, 7L))
+                .isInstanceOf(SqldpassException.class)
+                .extracting("errorCode").isEqualTo(ErrorCode.INVALID_INPUT);
+
+        verify(subscriptionRepository, times(0)).save(any(SubscriptionEntity.class));
+        verify(historyService, times(0)).record(any(), any(), any(), any(), any(), any());
+    }
+
+    @Test
+    @DisplayName("reissueSubscription: paidAt 이 null 이면 now 기준으로 expiresAt 계산")
+    void reissueSubscription_paidAt_null_이면_now_사용() {
+        PaymentEntity entity = new PaymentEntity("p-1", 1L, null, "3일 이용권",
+                SubscriptionPlan.THREE_DAY, 3900);
+        // markPaid 호출 안 함 — paidAt = null 상태에서 status 만 PAID 로 강제.
+        setField(entity, "status", com.sqldpass.persistent.payment.PaymentStatus.PAID);
+        setField(entity, "id", 42L);
+        given(paymentRepository.findById(42L)).willReturn(Optional.of(entity));
+        given(subscriptionRepository.findByPaymentId(42L)).willReturn(Optional.empty());
+
+        LocalDateTime before = LocalDateTime.now();
+        var result = service.reissueSubscription(42L, 7L);
+        LocalDateTime after = LocalDateTime.now();
+
+        assertThat(result.issued()).isTrue();
+        // expiresAt 은 (now ~ now+slight) + 3d 사이에 위치.
+        assertThat(result.expiresAt()).isAfterOrEqualTo(before.plusDays(3).minusSeconds(1));
+        assertThat(result.expiresAt()).isBeforeOrEqualTo(after.plusDays(3).plusSeconds(1));
+
+        verify(subscriptionRepository, times(1)).save(any(SubscriptionEntity.class));
+        verify(historyService, times(1)).record(eq(1L), eq(SubscriptionPlan.THREE_DAY),
+                eq(com.sqldpass.persistent.payment.SubscriptionHistoryAction.GRANTED),
+                contains("admin-reissue:paymentId=p-1"), eq(7L), eq(42L));
+    }
+
+    @Test
+    @DisplayName("reissueSubscription: PaymentEntity 자체가 없으면 PAYMENT_NOT_FOUND")
+    void reissueSubscription_payment_없으면_PAYMENT_NOT_FOUND() {
+        given(paymentRepository.findById(999L)).willReturn(Optional.empty());
+
+        assertThatThrownBy(() -> service.reissueSubscription(999L, 7L))
+                .isInstanceOf(SqldpassException.class)
+                .extracting("errorCode").isEqualTo(ErrorCode.PAYMENT_NOT_FOUND);
+
+        verify(subscriptionRepository, times(0)).save(any(SubscriptionEntity.class));
+        verify(historyService, times(0)).record(any(), any(), any(), any(), any(), any());
+    }
+
+    @Test
+    @DisplayName("reissueSubscription: UNLIMITED 결제는 expiresAt=null 로 재발급")
+    void reissueSubscription_UNLIMITED_은_expiresAt_null() {
+        PaymentEntity entity = new PaymentEntity("p-life", 1L, null, "무제한권",
+                SubscriptionPlan.UNLIMITED, 29900);
+        LocalDateTime paidAt = LocalDateTime.of(2026, 5, 1, 10, 0, 0);
+        entity.markPaid("{...}", paidAt);
+        setField(entity, "id", 88L);
+        given(paymentRepository.findById(88L)).willReturn(Optional.of(entity));
+        given(subscriptionRepository.findByPaymentId(88L)).willReturn(Optional.empty());
+
+        var result = service.reissueSubscription(88L, 7L);
+
+        assertThat(result.issued()).isTrue();
+        assertThat(result.expiresAt()).isNull();
+
+        ArgumentCaptor<SubscriptionEntity> subCaptor = ArgumentCaptor.forClass(SubscriptionEntity.class);
+        verify(subscriptionRepository, times(1)).save(subCaptor.capture());
+        assertThat(subCaptor.getValue().getExpiresAt()).isNull();
+        assertThat(subCaptor.getValue().getPlan()).isEqualTo(SubscriptionPlan.UNLIMITED);
+    }
+
     private MemberEntity newMember(Long id, String nickname) {
         MemberEntity m = new MemberEntity("google", "g-" + id, nickname);
         setField(m, "id", id);

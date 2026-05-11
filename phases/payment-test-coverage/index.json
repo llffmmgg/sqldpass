@@ -52,7 +52,10 @@
       "step": 6,
       "name": "subscription-reissue-endpoint",
       "description": "결제 후 권한 미부여 복구용 어드민 endpoint POST /api/admin/payments/{paymentId}/reissue-subscription + PaymentService.reissueSubscription(paymentId, actorAdminId) + history GRANTED 기록 + 테스트",
-      "status": "pending"
+      "status": "completed",
+      "started_at": "2026-05-11T12:18:55+0900",
+      "summary": "reissueSubscription 서비스 + 어드민 endpoint + 단위/컨트롤러 테스트 10건 추가, 전체 test OK",
+      "completed_at": "2026-05-11T12:24:00+0900"
     },
     {
       "step": 7,

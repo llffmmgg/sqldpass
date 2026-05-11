@@ -1,5 +1,7 @@
 package com.sqldpass.controller.admin;
 
+import java.time.LocalDateTime;
+
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -42,6 +44,23 @@ public class AdminPaymentController {
         return new RefundResponse(paymentId, "refunded");
     }
 
+    @PostMapping("/{paymentId}/reissue-subscription")
+    @Operation(summary = "결제 후 구독 미발급 복구 — PAID 결제로 SubscriptionEntity 강제 재발급")
+    public ReissueResponse reissue(@PathVariable Long paymentId,
+                                   @RequestBody(required = false) ReissueRequest body,
+                                   HttpServletRequest request) {
+        Long actorAdminId = (Long) request.getAttribute("memberId");
+        if (actorAdminId == null) {
+            throw new SqldpassException(ErrorCode.UNAUTHORIZED);
+        }
+        // body 의 reason 은 운영 편의용 — actorAdminId + 자동 생성 reason 으로 audit 충분.
+        PaymentService.ReissueResult result =
+                paymentService.reissueSubscription(paymentId, actorAdminId);
+        return new ReissueResponse(paymentId, result.issued(), result.expiresAt());
+    }
+
     public record RefundRequest(String reason) {}
     public record RefundResponse(Long paymentId, String status) {}
+    public record ReissueRequest(String reason) {}
+    public record ReissueResponse(Long paymentId, boolean issued, LocalDateTime expiresAt) {}
 }

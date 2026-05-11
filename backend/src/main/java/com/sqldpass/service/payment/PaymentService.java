@@ -369,6 +369,49 @@ public class PaymentService {
     }
 
     /**
+     * 결제 후 권한 미부여 복구 — PAID 결제인데 SubscriptionEntity 가 없는 비정상 상태를
+     * 운영자가 명시적으로 재발급. verify 의 PAID 가드 분기는 자동 보완하지 않고
+     * 본 메서드만 SubscriptionEntity 를 생성한다.
+     *
+     * <p>이미 활성 구독이 존재하면 idempotent — save 없이 기존 expiresAt 반환.
+     * existing 이 expired 상태라면 V80 UNIQUE 제약 충돌을 피하기 위해 새 row 를 만들지 않는다
+     * (별 정책 결정 필요 — 운영자가 새 결제 또는 expireManual 후 재시도).
+     */
+    @Transactional
+    public ReissueResult reissueSubscription(Long paymentEntityId, Long actorAdminId) {
+        PaymentEntity entity = paymentRepository.findById(paymentEntityId)
+                .orElseThrow(() -> new SqldpassException(ErrorCode.PAYMENT_NOT_FOUND));
+        if (entity.getStatus() != PaymentStatus.PAID) {
+            throw new SqldpassException(ErrorCode.INVALID_INPUT, "PAID 상태인 결제만 재발급 대상입니다.");
+        }
+        SubscriptionPlan plan = entity.getPlan();
+        if (plan == null) {
+            throw new SqldpassException(ErrorCode.INVALID_INPUT, "plan 정보 없는 결제는 재발급 불가합니다.");
+        }
+        Optional<SubscriptionEntity> existing =
+                subscriptionRepository.findByPaymentId(entity.getId());
+        if (existing.isPresent() && existing.get().isActive(LocalDateTime.now())) {
+            return new ReissueResult(false, existing.get().getExpiresAt());
+        }
+
+        LocalDateTime paidAt = entity.getPaidAt() != null ? entity.getPaidAt() : LocalDateTime.now();
+        LocalDateTime expiresAt = plan.isLifetime() ? null : paidAt.plusDays(plan.getDays());
+        SubscriptionEntity subscription = new SubscriptionEntity(
+                entity.getMemberId(), plan, entity.getId(), paidAt, expiresAt);
+        subscriptionRepository.save(subscription);
+
+        historyService.record(entity.getMemberId(), plan,
+                SubscriptionHistoryAction.GRANTED,
+                "admin-reissue:paymentId=" + entity.getPaymentId(),
+                actorAdminId, entity.getId());
+        log.info("결제 후 구독 재발급 paymentId={} memberId={} actorAdminId={} plan={} expiresAt={}",
+                entity.getPaymentId(), entity.getMemberId(), actorAdminId, plan, expiresAt);
+        return new ReissueResult(true, expiresAt);
+    }
+
+    public record ReissueResult(boolean issued, LocalDateTime expiresAt) {}
+
+    /**
      * Play RTDN(Real-time Developer Notifications) — 환불/구독 만료 통지 처리.
      * purchaseToken 으로 결제 row 를 찾아 PaymentStatus=CANCELLED + Subscription.expiresAt=now.
      * 매칭되는 결제가 없으면 무시 (다른 앱의 알림이거나 이미 처리됨).
