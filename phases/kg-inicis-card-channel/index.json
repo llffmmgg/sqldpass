@@ -1,0 +1,27 @@
+{
+  "project": "sqldpass",
+  "phase": "kg-inicis-card-channel",
+  "description": "PortOne V2 에 KG이니시스(INIpay) 채널을 추가해 신용카드(일반결제)를 지원한다. 카카오페이 간편결제는 그대로 유지(병행). 백엔드는 PortOne 검증 API 그대로 사용 → 변경 없음. 프론트엔드에서 환경변수 분리 + 결제수단 분기 + UI 토글만 추가.",
+  "steps": [
+    {
+      "step": 1,
+      "name": "payment-channel-split",
+      "description": "frontend/.env.example 의 PortOne 채널 키를 KAKAOPAY/INICIS 두 개로 분리, payment.ts 에 PaymentMethod 타입과 startPayment opts.method 분기 추가 (CARD → KG이니시스 채널 + payMethod=CARD, KAKAOPAY → 기존 카카오페이 그대로). 기존 NEXT_PUBLIC_PORTONE_CHANNEL_KEY 는 한 PR 한정 fallback.",
+      "status": "completed",
+      "started_at": "2026-05-11T16:00:00+0900",
+      "summary": "payment.ts 채널/결제수단 분기 추가 (KAKAOPAY/CARD), .env.example 변수 분리, lint/build OK",
+      "completed_at": "2026-05-11T16:00:00+0900"
+    },
+    {
+      "step": 2,
+      "name": "checkout-method-selector",
+      "description": "CheckoutLanding/CheckoutClient 에 결제수단 토글(카카오페이/신용카드) UI 추가, onPay 에 method 전달. Capacitor 앱(isCapacitorApp) 환경에서는 토글 숨김 — Play Billing 전용 분기 유지.",
+      "status": "completed",
+      "started_at": "2026-05-11T16:00:00+0900",
+      "summary": "결제수단 토글 UI 추가 (Capacitor 앱 숨김), lint/build OK",
+      "completed_at": "2026-05-11T16:00:00+0900"
+    }
+  ],
+  "created_at": "2026-05-11T16:00:00+0900",
+  "completed_at": "2026-05-11T16:00:00+0900"
+}
