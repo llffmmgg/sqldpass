@@ -40,6 +40,35 @@
   - 활성 구독이 없는 계정 (없거나 만료된 상태)
   - 활성 구독이 있는 계정 (업그레이드/prorate 검증용)
 
+### 1-5. 환불 그라운드 룰 (필독)
+
+환불은 반드시 sqldpass 어드민 환불 endpoint 로만 처리한다.
+
+- 올바른 경로: 어드민 화면의 환불 버튼 (`POST /api/admin/payments/{paymentId}/refund`)
+  - 백엔드가 PortOne `cancel` API 호출 → `PaymentEntity.status = CANCELLED` → 구독 회수 → `subscription_history.action = REFUNDED` 기록을 **단일 트랜잭션**으로 수행한다.
+  - 실패 시 전체 롤백 → DB 와 PG 상태가 항상 동기.
+
+- 금지된 경로:
+  - **PortOne 콘솔에서 직접 "취소" 버튼**: 결제는 환불되지만 sqldpass DB 는 PAID 그대로. 구독이 회수되지 않아 사용자가 환불 + 서비스 이용 동시 가능.
+  - **카카오페이 어드민 / KG이니시스 어드민 직접 취소**: 동일한 사고. 추가로 PortOne 상태와도 불일치할 수 있다.
+
+#### 사고 발생 시 복구 절차
+
+PG 콘솔에서 이미 취소된 결제를 뒤늦게 발견한 경우:
+
+1. DB 에서 결제 조회 → 현재 status 확인.
+   ```sql
+   SELECT id, payment_id, member_id, status, amount FROM payment WHERE payment_id = ?;
+   ```
+2. 어드민 환불 endpoint 재호출 시 PortOne 이 "이미 취소" 응답을 주면 백엔드 동기화가 안 될 수 있으므로, 운영자가 SQL 로 직접 보정:
+   ```sql
+   UPDATE payment SET status = 'CANCELLED' WHERE payment_id = ?;
+   UPDATE subscription SET expires_at = NOW() WHERE payment_id = ?;
+   INSERT INTO subscription_history (member_id, action, payment_id, reason, actor_admin_id, created_at)
+   VALUES (?, 'REFUNDED', ?, 'PG 콘솔 직접 취소 수동 동기화', ?, NOW());
+   ```
+3. 사고 원인(누가/언제/왜 PG 콘솔에서 직접 취소했는지) 기록 후 재발 방지 — 본 그라운드 룰을 어드민 인원에게 재공지.
+
 ---
 
 ## 2. 9 시나리오 체크리스트
