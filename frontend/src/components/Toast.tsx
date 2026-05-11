@@ -60,20 +60,75 @@ function ToastBubble({ message, kind }: { message: string; kind: ToastKind }) {
     return () => cancelAnimationFrame(t);
   }, []);
 
-  const color =
+  const iconTone =
     kind === "success"
-      ? "border-success/40 bg-success/10 text-success"
+      ? "bg-success/15 text-success"
       : kind === "error"
-      ? "border-danger/40 bg-danger/10 text-danger"
-      : "border-primary/40 bg-primary/10 text-primary";
+      ? "bg-danger/15 text-danger"
+      : "bg-primary/15 text-primary";
 
   return (
     <div
-      className={`pointer-events-auto max-w-md rounded-lg border px-4 py-2.5 text-sm font-medium shadow-lg backdrop-blur transition-all duration-300 ${color} ${
+      className={`pointer-events-auto flex max-w-md items-start gap-3 rounded-lg border border-border bg-surface px-4 py-3 text-sm font-medium text-text shadow-xl transition-all duration-300 ${
         visible ? "translate-y-0 opacity-100" : "-translate-y-2 opacity-0"
       }`}
+      role="status"
     >
-      {message}
+      <span
+        className={`mt-px flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full ${iconTone}`}
+        aria-hidden
+      >
+        <ToastIcon kind={kind} />
+      </span>
+      <span className="flex-1 leading-snug">{message}</span>
     </div>
+  );
+}
+
+function ToastIcon({ kind }: { kind: ToastKind }) {
+  if (kind === "success") {
+    return (
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={2.5}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className="h-3.5 w-3.5"
+      >
+        <path d="M5 13l4 4L19 7" />
+      </svg>
+    );
+  }
+  if (kind === "error") {
+    return (
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={2.5}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className="h-3.5 w-3.5"
+      >
+        <line x1="12" y1="8" x2="12" y2="13" />
+        <circle cx="12" cy="16.5" r="0.5" fill="currentColor" stroke="none" />
+      </svg>
+    );
+  }
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2.5}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="h-3.5 w-3.5"
+    >
+      <line x1="12" y1="11" x2="12" y2="16" />
+      <circle cx="12" cy="8" r="0.5" fill="currentColor" stroke="none" />
+    </svg>
   );
 }

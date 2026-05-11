@@ -17,8 +17,6 @@ type Tier = {
   tagline: string;
   price: number;
   unit?: string;
-  /** features 위에 작은 회색으로 표시되는 incremental 헤딩 — "+ X의 모든 기능". baseline 티어(Free)는 생략. */
-  incrementLabel?: string;
   features: string[];
   cta: string;
   highlight?: boolean;
@@ -39,8 +37,13 @@ const TIERS: Tier[] = [
     tagline: "시험 직전 단기 점검",
     price: 3900,
     unit: "3일",
-    incrementLabel: "+ Free의 모든 기능",
-    features: ["PASS+ 회차 풀이", "72시간 풀 액세스"],
+    features: [
+      "PASS+ 회차 풀이",
+      "72시간 풀 액세스",
+      "쉬움/보통 회차",
+      "오답 노트",
+      "대시보드",
+    ],
     cta: "Starter 시작",
   },
   {
@@ -49,8 +52,14 @@ const TIERS: Tier[] = [
     tagline: "한 달 집중 합격 코스",
     price: 9900,
     unit: "30일",
-    incrementLabel: "+ Starter의 모든 기능",
-    features: ["PASS+ 회차 무제한", "30일 풀 액세스", "광고 제거"],
+    features: [
+      "PASS+ 회차 무제한",
+      "30일 풀 액세스",
+      "광고 제거",
+      "쉬움/보통 회차",
+      "오답 노트",
+      "대시보드",
+    ],
     cta: "Pro 시작",
     highlight: true,
   },
@@ -60,8 +69,16 @@ const TIERS: Tier[] = [
     tagline: "한 번 결제로 계속 이용",
     price: 29900,
     unit: "평생",
-    incrementLabel: "+ Pro의 모든 기능",
-    features: ["앞으로 추가될 회차까지 모두 무제한", "기간 제한 없음", "PDF 다운로드"],
+    features: [
+      "PASS+ 회차 무제한",
+      "앞으로 추가될 회차까지 무제한",
+      "기간 제한 없음",
+      "광고 제거",
+      "PDF 다운로드",
+      "쉬움/보통 회차",
+      "오답 노트",
+      "대시보드",
+    ],
     cta: "Lifetime 시작",
   },
 ];
@@ -380,19 +397,8 @@ function PlanCard({
         }`}
       />
 
-      {/* incremental 위계 — "+ X의 모든 기능" */}
-      {tier.incrementLabel && (
-        <p className="mt-5 text-xs font-medium text-text-subtle">
-          {tier.incrementLabel}
-        </p>
-      )}
-
       {/* features */}
-      <ul
-        className={`${
-          tier.incrementLabel ? "mt-3" : "mt-5"
-        } flex flex-col gap-2.5`}
-      >
+      <ul className="mt-5 flex flex-col gap-2.5">
         {tier.features.map((f, i) => (
           <li
             key={i}
