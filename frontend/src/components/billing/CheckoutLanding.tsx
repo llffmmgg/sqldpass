@@ -11,16 +11,26 @@ import {
 
 type TierKey = "FREE" | SubscriptionPlan;
 
+type Feature = { text: string; muted?: boolean };
+
 type Tier = {
   key: TierKey;
   name: string;
   tagline: string;
   price: number;
+  /** 정가 (할인 어필용) — 있으면 가격 위에 line-through 로 표시. 실제 결제 금액은 price 가 아닌 백엔드 baseAmount. */
+  originalPrice?: number;
   unit?: string;
-  features: string[];
+  features: Feature[];
   cta: string;
   highlight?: boolean;
 };
+
+const FREE_BASELINE: Feature[] = [
+  { text: "쉬움/보통 회차", muted: true },
+  { text: "오답 노트", muted: true },
+  { text: "대시보드", muted: true },
+];
 
 const TIERS: Tier[] = [
   {
@@ -28,7 +38,11 @@ const TIERS: Tier[] = [
     name: "Free",
     tagline: "기본 문제 풀이 제공",
     price: 0,
-    features: ["쉬움/보통 회차", "오답 노트", "대시보드"],
+    features: [
+      { text: "쉬움/보통 회차" },
+      { text: "오답 노트" },
+      { text: "대시보드" },
+    ],
     cta: "현재 플랜",
   },
   {
@@ -38,11 +52,9 @@ const TIERS: Tier[] = [
     price: 3900,
     unit: "3일",
     features: [
-      "PASS+ 회차 풀이",
-      "72시간 풀 액세스",
-      "쉬움/보통 회차",
-      "오답 노트",
-      "대시보드",
+      { text: "PASS+ 회차 풀이" },
+      { text: "72시간 풀 액세스" },
+      ...FREE_BASELINE,
     ],
     cta: "Starter 시작",
   },
@@ -51,14 +63,13 @@ const TIERS: Tier[] = [
     name: "Pro",
     tagline: "한 달 집중 합격 코스",
     price: 9900,
+    originalPrice: 12900,
     unit: "30일",
     features: [
-      "PASS+ 회차 무제한",
-      "30일 풀 액세스",
-      "광고 제거",
-      "쉬움/보통 회차",
-      "오답 노트",
-      "대시보드",
+      { text: "PASS+ 회차 무제한" },
+      { text: "30일 풀 액세스" },
+      { text: "광고 제거" },
+      ...FREE_BASELINE,
     ],
     cta: "Pro 시작",
     highlight: true,
@@ -70,14 +81,12 @@ const TIERS: Tier[] = [
     price: 29900,
     unit: "평생",
     features: [
-      "PASS+ 회차 무제한",
-      "앞으로 추가될 회차까지 무제한",
-      "기간 제한 없음",
-      "광고 제거",
-      "PDF 다운로드",
-      "쉬움/보통 회차",
-      "오답 노트",
-      "대시보드",
+      { text: "PASS+ 회차 무제한" },
+      { text: "앞으로 추가될 회차까지 무제한" },
+      { text: "기간 제한 없음" },
+      { text: "광고 제거" },
+      { text: "PDF 다운로드" },
+      ...FREE_BASELINE,
     ],
     cta: "Lifetime 시작",
   },
@@ -335,14 +344,21 @@ function PlanCard({
             </p>
           </>
         ) : (
-          <div className="flex items-baseline gap-1.5">
-            <span className="text-3xl font-bold tabular-nums tracking-tight text-text">
-              {tier.price === 0 ? "무료" : `₩${tier.price.toLocaleString()}`}
-            </span>
-            {tier.price > 0 && tier.unit && (
-              <span className="text-sm text-text-subtle">/ {tier.unit}</span>
+          <>
+            <div className="flex items-baseline gap-1.5">
+              <span className="text-3xl font-bold tabular-nums tracking-tight text-text">
+                {tier.price === 0 ? "무료" : `₩${tier.price.toLocaleString()}`}
+              </span>
+              {tier.price > 0 && tier.unit && (
+                <span className="text-sm text-text-subtle">/ {tier.unit}</span>
+              )}
+            </div>
+            {tier.originalPrice && tier.originalPrice > tier.price && (
+              <p className="mt-1 text-xs tabular-nums text-text-subtle line-through">
+                ₩{tier.originalPrice.toLocaleString()}
+              </p>
             )}
-          </div>
+          </>
         )}
       </div>
 
@@ -419,10 +435,16 @@ function PlanCard({
         {tier.features.map((f, i) => (
           <li
             key={i}
-            className="flex items-start gap-2.5 text-sm leading-snug text-text"
+            className={`flex items-start gap-2.5 text-sm leading-snug ${
+              f.muted ? "text-text-muted" : "text-text"
+            }`}
           >
-            <CheckSvg className="mt-0.5 h-4 w-4 flex-shrink-0 text-primary" />
-            <span>{f}</span>
+            <CheckSvg
+              className={`mt-0.5 h-4 w-4 flex-shrink-0 ${
+                f.muted ? "text-text-subtle" : "text-primary"
+              }`}
+            />
+            <span>{f.text}</span>
           </li>
         ))}
       </ul>
