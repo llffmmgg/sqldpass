@@ -191,6 +191,23 @@ export default function CheckoutLanding({
         그대로 이용할 수 있어요.
       </p>
 
+      {/* 구매 유도 — 시험 난이도 변화 (실제 합격률 데이터 기반) */}
+      <div className="mx-auto mt-16 max-w-2xl text-center">
+        <h2 className="text-2xl font-bold tracking-tight text-text sm:text-3xl">
+          최근 자격증 시험이 점점 어려워지고 있어요
+        </h2>
+        <p className="mx-auto mt-3 max-w-xl text-sm leading-relaxed text-text-muted sm:text-base">
+          컴퓨터활용능력 1급 실기는 2024년 개정 이후 합격률{" "}
+          <span className="font-semibold text-text">6.9%</span>로 이전 평균 대비 절반 아래로
+          떨어졌고, 정보처리기사 실기도 2025년 1회{" "}
+          <span className="font-semibold text-text">15.1%</span>로 최근 회차 중 낮은 편이에요.
+          기출만으로는 채우기 어려운 신유형, PASS+ 회차로 미리 풀어보세요.
+        </p>
+        <p className="mx-auto mt-3 text-[11px] text-text-subtle">
+          자료: 큐넷·대한상공회의소 공개 자격 통계
+        </p>
+      </div>
+
       {/* FAQ */}
       <div className="mt-16 grid grid-cols-1 gap-6 rounded-2xl border border-border bg-surface/40 p-6 sm:grid-cols-3 sm:gap-8 sm:p-8">
         {[
