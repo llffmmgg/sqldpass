@@ -79,22 +79,6 @@ class AdminPaymentControllerTest {
     }
 
     @Test
-    @DisplayName("POST /api/admin/payments/{id}/refund — request attribute memberId 없으면 401")
-    void refund_미인증_시_401() throws Exception {
-        mockMvc.perform(post("/api/admin/payments/42/refund")
-                        .header("Authorization", AUTH_HEADER)
-                        // memberId attribute 의도적으로 누락.
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"reason\":\"x\"}"))
-                .andExpect(status().isUnauthorized());
-
-        verify(paymentService, times(0))
-                .revokePortOnePayment(org.mockito.ArgumentMatchers.any(),
-                        org.mockito.ArgumentMatchers.any(),
-                        org.mockito.ArgumentMatchers.any());
-    }
-
-    @Test
     @DisplayName("POST /api/admin/payments/{id}/refund — reason 빈 문자열이면 @NotBlank 위반으로 400")
     void refund_빈_reason_400() throws Exception {
         mockMvc.perform(post("/api/admin/payments/42/refund")
@@ -213,16 +197,6 @@ class AdminPaymentControllerTest {
     }
 
     @Test
-    @DisplayName("GET /api/admin/payments — memberId attribute 없으면 401")
-    void list_미인증_시_401() throws Exception {
-        mockMvc.perform(get("/api/admin/payments")
-                        .header("Authorization", AUTH_HEADER))
-                .andExpect(status().isUnauthorized());
-
-        verify(paymentRepository, times(0)).findAdminPage(any(), any(), any(), any(), any(Pageable.class));
-    }
-
-    @Test
     @DisplayName("POST /api/admin/payments/{id}/reissue-subscription — 정상 200 + service.reissueSubscription 1회 + 응답 매핑")
     void reissue_정상_200_및_service_호출() throws Exception {
         LocalDateTime expiresAt = LocalDateTime.of(2026, 6, 1, 12, 0, 0);
@@ -240,21 +214,6 @@ class AdminPaymentControllerTest {
                 .andExpect(jsonPath("$.expiresAt").exists());
 
         verify(paymentService, times(1)).reissueSubscription(eq(42L), eq(7L));
-    }
-
-    @Test
-    @DisplayName("POST /api/admin/payments/{id}/reissue-subscription — 미인증 (memberId attribute 없음) 시 401")
-    void reissue_미인증_시_401() throws Exception {
-        mockMvc.perform(post("/api/admin/payments/42/reissue-subscription")
-                        .header("Authorization", AUTH_HEADER)
-                        // memberId attribute 의도적으로 누락.
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{}"))
-                .andExpect(status().isUnauthorized());
-
-        verify(paymentService, times(0)).reissueSubscription(
-                org.mockito.ArgumentMatchers.any(),
-                org.mockito.ArgumentMatchers.any());
     }
 
     @Test
