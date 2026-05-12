@@ -19,6 +19,7 @@ import com.sqldpass.persistent.payment.SubscriptionPlan;
 import com.sqldpass.persistent.payment.SubscriptionRepository;
 import com.sqldpass.service.common.ErrorCode;
 import com.sqldpass.service.common.SqldpassException;
+import com.sqldpass.service.setting.AppSettingService;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -46,6 +47,7 @@ public class PaymentService {
     private final PaymentFailureRecorder failureRecorder;
     private final SubscriptionHistoryService historyService;
     private final SubscriptionService subscriptionService;
+    private final AppSettingService appSettingService;
 
     /** 카드사 심사 가이드 + PG 정책상 최소 결제 금액. */
     private static final int MIN_CHARGE_AMOUNT = 100;
@@ -242,6 +244,10 @@ public class PaymentService {
     }
 
     private void ensureReviewer(Long memberId) {
+        if (appSettingService.isCheckoutOpenToAll()) {
+            // 어드민 토글 ON — 전 회원 결제 허용 (PaymentController.eligibility 와 동일 정책).
+            return;
+        }
         var allowed = properties.reviewerNicknameSet();
         if (allowed.isEmpty()) {
             // 정식 오픈 모드 — 모든 로그인 회원 통과.

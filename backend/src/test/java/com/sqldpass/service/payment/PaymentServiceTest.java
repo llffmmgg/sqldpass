@@ -25,6 +25,7 @@ import com.sqldpass.persistent.payment.SubscriptionPlan;
 import com.sqldpass.persistent.payment.SubscriptionRepository;
 import com.sqldpass.service.common.ErrorCode;
 import com.sqldpass.service.common.SqldpassException;
+import com.sqldpass.service.setting.AppSettingService;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -33,6 +34,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.contains;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
@@ -55,6 +57,8 @@ class PaymentServiceTest {
     private SubscriptionHistoryService historyService;
     @Mock
     private SubscriptionService subscriptionService;
+    @Mock
+    private AppSettingService appSettingService;
 
     private PaymentProperties properties;
     private PlayBillingProperties playBillingProperties;
@@ -76,7 +80,11 @@ class PaymentServiceTest {
         service = new PaymentService(properties, portOneClient,
                 paymentRepository, subscriptionRepository, memberRepository,
                 playBillingClient, playBillingProperties, failureRecorder, historyService,
-                subscriptionService);
+                subscriptionService, appSettingService);
+
+        // 기존 테스트는 화이트리스트(베타) 모드 동작을 검증하므로 토글 OFF 가정.
+        // 토글 ON 동작은 별도 테스트로 검증.
+        lenient().when(appSettingService.isCheckoutOpenToAll()).thenReturn(false);
     }
 
     @Test
@@ -99,6 +107,18 @@ class PaymentServiceTest {
         assertThatThrownBy(() -> service.prepare(1L, SubscriptionPlan.THREE_DAY, "홍길동", "buyer@example.com", "01012345678"))
                 .isInstanceOf(SqldpassException.class)
                 .extracting("errorCode").isEqualTo(ErrorCode.PAYMENT_REVIEWER_ONLY);
+    }
+
+    @Test
+    @DisplayName("어드민 토글 ON 이면 화이트리스트 외 닉네임도 prepare 통과")
+    void prepareAllowsAnyoneWhenToggleOpen() {
+        given(appSettingService.isCheckoutOpenToAll()).willReturn(true);
+        // memberRepository 는 호출되지 않아야 함 (토글 ON 이면 닉네임 조회 자체 스킵).
+
+        var result = service.prepare(1L, SubscriptionPlan.THREE_DAY, "홍길동", "buyer@example.com", "01012345678");
+
+        assertThat(result.amount()).isEqualTo(3900);
+        verify(paymentRepository, times(1)).save(any(PaymentEntity.class));
     }
 
     @Test
