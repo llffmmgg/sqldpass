@@ -9,7 +9,6 @@ import Spinner from "@/components/Spinner";
 import { useToast } from "@/components/Toast";
 import CheckoutLanding, { planLabel } from "@/components/billing/CheckoutLanding";
 import { isLoggedIn } from "@/lib/auth";
-import { isCapacitorApp } from "@/lib/platform";
 import {
   getActiveSubscription,
   getCheckoutEligibility,
@@ -50,11 +49,12 @@ function CheckoutContent() {
   const [access, setAccess] = useState<AccessState>("loading");
   const [subscription, setSubscription] = useState<ActiveSubscription | null>(null);
   const [payingPlan, setPayingPlan] = useState<SubscriptionPlan | null>(null);
-  const [method, setMethod] = useState<PaymentMethod>("KAKAOPAY");
+  const [method, setMethod] = useState<PaymentMethod>("CARD");
   // 결제 모달 — onPay 클릭 시 plan 을 세팅하면 모달 열림. onBuyerSubmit 에서 실제 결제 호출.
   const [pendingPlan, setPendingPlan] = useState<SubscriptionPlan | null>(null);
-  // Capacitor 앱은 Play Billing 전용 — 외부 PG 노출 시 Google Play 정책 위반.
-  const showMethodToggle = !isCapacitorApp();
+  // 결제수단 토글 임시 숨김 — 카카오페이 채널 운영 보류, CARD 단일 흐름.
+  // 재오픈 시: `!isCapacitorApp()` 로 되돌리고 BuyerInfoModal/PG 분기 검토.
+  const showMethodToggle = false;
   // plan 별 미리보기 — 활성 구독 prorate 차감 적용된 finalAmount 표시용
   const [previews, setPreviews] = useState<Record<SubscriptionPlan, PreviewResponse | null>>({
     THREE_DAY: null,

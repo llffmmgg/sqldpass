@@ -301,7 +301,7 @@ function PlanCard({
           : "border border-border bg-surface/40 hover:border-border-strong hover:bg-surface/70"
       }`}
     >
-      {/* 헤더 — 플랜명 + 인라인 뱃지 */}
+      {/* 헤더 — 플랜명 + (Pro 만) line-through 정가 + 인라인 뱃지 */}
       <div className="flex items-center justify-between gap-3">
         <h3
           className={`text-2xl font-bold tracking-tight ${
@@ -310,18 +310,30 @@ function PlanCard({
         >
           {tier.name}
         </h3>
-        {inlineBadge && (
-          <span
-            className={`inline-flex items-center rounded-full px-2.5 py-1 text-[10.5px] font-semibold uppercase tracking-wider ${
-              inlineBadge.tone === "primary"
-                ? "bg-primary/15 text-primary"
-                : "border border-border bg-bg-elevated text-text-muted"
-            }`}
-          >
-            {inlineBadge.tone === "primary" && <StarSvg className="mr-1 h-3 w-3" />}
-            {inlineBadge.label}
-          </span>
-        )}
+        <div className="flex items-center gap-2">
+          {/*
+           * line-through 정가를 헤더 우측에 작게 두어 모든 카드의 가격 줄을 1줄로 통일.
+           * Pro 만 originalPrice 있고 다른 카드(Starter/Lifetime/Free) 는 표시 없음 —
+           * 헤더 줄 안의 inline 이라 줄 수 차이 발생 안 함, CTA 가 양 옆 카드와 동일 높이.
+           */}
+          {tier.originalPrice && tier.originalPrice > tier.price && (
+            <span className="text-[11px] tabular-nums text-text-subtle line-through">
+              ₩{tier.originalPrice.toLocaleString()}
+            </span>
+          )}
+          {inlineBadge && (
+            <span
+              className={`inline-flex items-center rounded-full px-2.5 py-1 text-[10.5px] font-semibold uppercase tracking-wider ${
+                inlineBadge.tone === "primary"
+                  ? "bg-primary/15 text-primary"
+                  : "border border-border bg-bg-elevated text-text-muted"
+              }`}
+            >
+              {inlineBadge.tone === "primary" && <StarSvg className="mr-1 h-3 w-3" />}
+              {inlineBadge.label}
+            </span>
+          )}
+        </div>
       </div>
 
       {/* 가격 — prorate 분기 */}
@@ -353,11 +365,7 @@ function PlanCard({
                 <span className="text-sm text-text-subtle">/ {tier.unit}</span>
               )}
             </div>
-            {tier.originalPrice && tier.originalPrice > tier.price && (
-              <p className="mt-1 text-xs tabular-nums text-text-subtle line-through">
-                ₩{tier.originalPrice.toLocaleString()}
-              </p>
-            )}
+            {/* line-through 정가는 헤더 줄로 이동 — 모든 카드의 가격 줄을 1줄로 통일 */}
           </>
         )}
       </div>
