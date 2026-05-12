@@ -72,25 +72,26 @@ export default function PassPlusLockNotice({
             </span>
           </div>
 
-          {/* 가려진 제목 — 실제 회차 이름이 있으면 그것을 blur, 없으면 placeholder */}
+          {/* 가려진 제목 — blur 강도를 낮춰 형체는 어렴풋이 인식되되 글자 내용은 못 읽게.
+              하단 fade overlay 도 약하게 (via-surface/15) 로 — 블러만으로 가림 효과 충분. */}
           <div className="relative mt-5">
             <h2
               className="select-none text-[26px] font-bold leading-[1.3] tracking-[-0.01em] text-text"
-              style={{ filter: "blur(7px)" }}
+              style={{ filter: "blur(4px)" }}
               aria-hidden
             >
               {realTitle ?? `SQLD 실전 모의고사 ${examNumber}회`}
             </h2>
-            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-surface/40 to-surface" />
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-transparent via-surface/15 to-surface/60" />
           </div>
 
-          {/* 흐려진 본문 */}
+          {/* 흐려진 본문 — 본문 bar 는 그대로 (글자 모양 placeholder) */}
           <div className="mt-4 flex flex-col gap-2.5" aria-hidden>
             {[100, 88, 92, 70].map((w, i) => (
               <div
                 key={i}
-                className="h-[7px] rounded-sm bg-text-muted/15"
-                style={{ width: `${w}%`, filter: "blur(2px)" }}
+                className="h-[7px] rounded-sm bg-text-muted/25"
+                style={{ width: `${w}%`, filter: "blur(1.5px)" }}
               />
             ))}
           </div>
