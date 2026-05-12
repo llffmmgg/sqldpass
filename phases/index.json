@@ -83,6 +83,13 @@
       "description": "/checkout 페이지의 PlanCard 를 Supabase pricing 스타일로 재정비 — 카드 상단 단위 라벨 + 태그라인 제거, 헤더 인라인 뱃지, 가격→CTA→체크리스트 순서, hover 글로우/translate 톤다운. BuyerInfoModal 토큰 정합 및 포커스 링 통일로 카드와 미세 일관성 확보. amber 액센트와 결제 로직 모두 보존.",
       "status": "completed",
       "completed_at": "2026-05-11T17:17:24+0900"
+    },
+    {
+      "dir": "checkout-mobile-return-bugfix",
+      "name": "checkout-mobile-return-bugfix",
+      "description": "모바일 PortOne 결제창 외부 앱 전환 후 /checkout?paymentId=... 복귀 시 토스트가 수십 번 표시되고 페이지가 흔들리는 버그 수정. Toast Provider value useMemo + useToast fallback 모듈 상수 + CheckoutClient verifiedRef 가드 + deps 축소. 백엔드 verify CANCELLED 분기를 PAYMENT_CANCELLED 로 별도화해 토스트 톤/문구 정확화.",
+      "status": "completed",
+      "completed_at": "2026-05-12T16:00:00+0900"
     }
   ]
 }
