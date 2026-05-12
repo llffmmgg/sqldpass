@@ -213,6 +213,22 @@ class PaymentServiceTest {
     }
 
     @Test
+    @DisplayName("prepare: buyer 3필드 모두 null(카카오페이 흐름) 도 정상 저장 — PaymentEntity buyer 모두 null")
+    void prepareWithoutBuyerInfo() {
+        properties.setReviewerNicknames("");
+
+        var result = service.prepare(1L, SubscriptionPlan.THREE_DAY, null, null, null);
+
+        ArgumentCaptor<PaymentEntity> captor = ArgumentCaptor.forClass(PaymentEntity.class);
+        verify(paymentRepository, times(1)).save(captor.capture());
+        PaymentEntity saved = captor.getValue();
+        assertThat(saved.getBuyerName()).isNull();
+        assertThat(saved.getBuyerEmail()).isNull();
+        assertThat(saved.getBuyerPhoneNumber()).isNull();
+        assertThat(result.plan()).isEqualTo(SubscriptionPlan.THREE_DAY);
+    }
+
+    @Test
     @DisplayName("PrepareRequest record: plan + buyer 3종 필드 — 추가/제거 시 컴파일 시점에 즉시 실패")
     void prepareRequestRecordHasPlanAndBuyerFields() {
         var components = com.sqldpass.controller.payment.PaymentController.PrepareRequest.class
@@ -457,7 +473,7 @@ class PaymentServiceTest {
     }
 
     @Test
-    @DisplayName("verify: status=CANCELLED 면 PAYMENT_VERIFICATION_FAILED + markFailedInNewTx 호출")
+    @DisplayName("verify: status=CANCELLED 면 PAYMENT_CANCELLED + markFailedInNewTx 호출")
     void verifyStatusCancelledInvokesFailureRecorder() {
         MemberEntity m = newMember(1L, "pay-rv-7f2a91");
         given(memberRepository.findById(1L)).willReturn(Optional.of(m));
@@ -471,9 +487,10 @@ class PaymentServiceTest {
                 null, Map.of("id", "p-1", "status", "CANCELLED"));
         given(portOneClient.getPayment("p-1")).willReturn(info);
 
+        // 사용자 취소는 일반 실패와 구분 — 프론트가 "취소되었습니다" info 톤으로 표시.
         assertThatThrownBy(() -> service.verify(1L, "p-1"))
                 .isInstanceOf(SqldpassException.class)
-                .extracting("errorCode").isEqualTo(ErrorCode.PAYMENT_VERIFICATION_FAILED);
+                .extracting("errorCode").isEqualTo(ErrorCode.PAYMENT_CANCELLED);
 
         verify(failureRecorder, times(1)).markFailedInNewTx(eq(42L), contains("CANCELLED"));
         verify(subscriptionRepository, times(0)).save(any(SubscriptionEntity.class));

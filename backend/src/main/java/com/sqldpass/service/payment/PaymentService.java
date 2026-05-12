@@ -200,6 +200,11 @@ public class PaymentService {
             // 사용자 노출 메시지는 ErrorCode 기본값만 — raw status 는 log 로
             log.warn("결제 verify status mismatch memberId={} paymentId={} status={}",
                     memberId, paymentId, info.status());
+            // 사용자 취소(CANCELLED)는 일반 실패와 구분 — 프론트가 "취소되었습니다" info 톤으로 표시.
+            // FAILED / VIRTUAL_ACCOUNT_ISSUED / 기타는 기존 PAYMENT_VERIFICATION_FAILED 유지.
+            if ("CANCELLED".equalsIgnoreCase(info.status())) {
+                throw new SqldpassException(ErrorCode.PAYMENT_CANCELLED);
+            }
             throw new SqldpassException(ErrorCode.PAYMENT_VERIFICATION_FAILED);
         }
         if (!"KRW".equalsIgnoreCase(info.currency())) {
