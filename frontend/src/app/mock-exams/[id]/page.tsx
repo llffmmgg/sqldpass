@@ -557,13 +557,17 @@ function MockExamDetailContent() {
               </span>
             </p>
           </div>
-          <button
-            onClick={handleSubmit}
-            disabled={submitting || answeredCount === 0}
-            className={`shrink-0 rounded-lg ${accent.bg} px-5 py-2.5 text-sm font-semibold text-zinc-900 shadow-sm transition disabled:opacity-40`}
-          >
-            {submitting ? "제출 중..." : `제출하기 (${answeredCount}/${total})`}
-          </button>
+          <div className="flex items-center gap-3">
+            {/* 풀이 중에도 PDF 다운로드 가능 — 결제 회원만 실제 동작, 비회원은 결제 유도 */}
+            <MockExamPdfButton examId={exam.id} />
+            <button
+              onClick={handleSubmit}
+              disabled={submitting || answeredCount === 0}
+              className={`shrink-0 rounded-lg ${accent.bg} px-5 py-2.5 text-sm font-semibold text-zinc-900 shadow-sm transition disabled:opacity-40`}
+            >
+              {submitting ? "제출 중..." : `제출하기 (${answeredCount}/${total})`}
+            </button>
+          </div>
         </div>
         <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-border">
           <div
