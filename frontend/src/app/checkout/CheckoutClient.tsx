@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 
@@ -87,10 +87,16 @@ function CheckoutContent() {
       .catch(() => setAccess("denied"));
   }, []);
 
+  // 같은 paymentId 에 대해 verify 가 두 번 이상 안 돌아가게 한다.
+  // 모바일 redirectUrl 복귀 후 Toast/router 등 deps 가 흔들려도 1회만 처리.
+  const verifiedRef = useRef<string | null>(null);
+
   // 모바일 PG 외부 앱 복귀 시 redirectUrl 로 들어온 paymentId 를 즉시 검증.
   // verify 멱등 보증이라 SDK Promise 경로와 동시에 와도 안전.
   useEffect(() => {
     if (!returnedPaymentId) return;
+    if (verifiedRef.current === returnedPaymentId) return;
+    verifiedRef.current = returnedPaymentId;
     verifyPaymentById(returnedPaymentId)
       .then((result) => {
         toast.show(`${planLabel(result.plan)} 결제 완료`, "success");
@@ -107,7 +113,10 @@ function CheckoutContent() {
         router.replace("/checkout");
         if (e instanceof Error) console.error("[checkout:return]", e);
       });
-  }, [returnedPaymentId, router, toast]);
+    // router/toast 는 stable hook 결과로 다뤄야 한다. deps 에 추가하면 매 렌더 effect 재실행
+    // → verify 중복 호출 사고 재발. verifiedRef 가드도 함께 2중 방어.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [returnedPaymentId]);
 
   if (access === "loading") {
     return (

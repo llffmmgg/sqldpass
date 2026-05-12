@@ -5,6 +5,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useMemo,
   useState,
   type ReactNode,
 } from "react";
@@ -18,13 +19,13 @@ type ToastContextValue = {
 
 const ToastContext = createContext<ToastContextValue | null>(null);
 
+// Provider 미존재 시 useToast() 가 반환할 no-op — 모듈 단위 상수라 매 호출 같은 reference.
+// (전엔 매 호출 새 객체였어서 useToast 결과를 useEffect deps 에 넣은 곳이 무한 재실행됨.)
+const NOOP_TOAST: ToastContextValue = { show: () => {} };
+
 export function useToast(): ToastContextValue {
   const ctx = useContext(ToastContext);
-  if (!ctx) {
-    // Provider 없이 호출된 경우에도 크래시 없이 no-op
-    return { show: () => {} };
-  }
-  return ctx;
+  return ctx ?? NOOP_TOAST;
 }
 
 export function ToastProvider({ children }: { children: ReactNode }) {
@@ -38,8 +39,13 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     }, 3000);
   }, []);
 
+  // Provider value 를 매 렌더 새 객체 리터럴로 만들면 useToast 결과가 unstable.
+  // useEffect deps 에 toast 가 들어간 곳(예: CheckoutClient redirectUrl 복귀 처리)이
+  // 무한 재실행되는 사고를 피하기 위해 memoize.
+  const value = useMemo<ToastContextValue>(() => ({ show }), [show]);
+
   return (
-    <ToastContext.Provider value={{ show }}>
+    <ToastContext.Provider value={value}>
       {children}
       <div
         aria-live="polite"
