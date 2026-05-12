@@ -68,11 +68,17 @@ function MockExamsContent() {
 
   const filtered = useMemo(() => {
     if (!exams) return null;
+    const premiumRank = (e: MockExamSummary) =>
+      (e.isPremium ?? e.visibility === "PREMIUM") ? 0 : 1;
     return exams
       .filter((e) => e.examType === activeCert)
       .filter((e) => difficulty === "ALL" || e.difficultyLabel === difficulty)
       .slice()
-      .sort((a, b) => b.sequence - a.sequence);
+      .sort((a, b) => {
+        const r = premiumRank(a) - premiumRank(b);
+        if (r !== 0) return r;
+        return b.sequence - a.sequence;
+      });
   }, [exams, activeCert, difficulty]);
 
   // 자격증별 난이도 카운트 — 칩에 갯수 표시용

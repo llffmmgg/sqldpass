@@ -295,7 +295,7 @@ function PlanCard({
 
   return (
     <div
-      className={`relative flex flex-col rounded-2xl p-7 transition-colors duration-200 ${
+      className={`relative flex flex-col rounded-2xl p-5 sm:p-6 transition-colors duration-200 ${
         highlight
           ? "border-2 border-primary/60 bg-gradient-to-b from-primary/[0.06] via-surface to-surface/80 shadow-[0_0_24px_-12px_rgba(62,207,142,0.30)]"
           : "border border-border bg-surface/40 hover:border-border-strong hover:bg-surface/70"
@@ -345,17 +345,13 @@ function PlanCard({
           </>
         ) : (
           <>
-            {/*
-             * line-through 정가를 ₩9,900 옆 + 위쪽 정렬(self-start) 로 '대각선 위' 효과.
-             * Pro 만 표시, 다른 카드는 line-through 없이 가격 + unit 만 — 가격 줄이 1줄이라
-             * 모든 카드 가격 영역 동일 height, CTA 동일 위치 유지.
-             */}
-            <div className="flex items-baseline gap-2">
+            {/* 가격 + 정가 + unit 을 한 줄 baseline 정렬 (정가는 ₩9,900 바로 옆) */}
+            <div className="flex items-baseline gap-1.5">
               <span className="text-3xl font-bold tabular-nums tracking-tight text-text">
                 {tier.price === 0 ? "무료" : `₩${tier.price.toLocaleString()}`}
               </span>
               {tier.originalPrice && tier.originalPrice > tier.price && (
-                <span className="self-start text-xs tabular-nums text-text-subtle line-through">
+                <span className="text-xs tabular-nums text-text-subtle line-through">
                   ₩{tier.originalPrice.toLocaleString()}
                 </span>
               )}
