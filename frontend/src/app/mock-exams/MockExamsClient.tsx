@@ -223,7 +223,7 @@ function MockExamCard({ exam }: { exam: MockExamSummary }) {
         accent={cert ?? undefined}
         className={
           isPremium
-            ? "relative flex min-h-[124px] flex-col overflow-hidden rounded-md border-amber-800/60 p-4 shadow-none outline outline-1 outline-amber-800/80 outline-offset-[-8px] hover:-translate-y-0 hover:border-amber-800/80 hover:shadow-none hover:outline-amber-800"
+            ? "relative flex min-h-[124px] flex-col overflow-hidden rounded-md border-amber-500/30 p-4 shadow-none outline outline-1 outline-amber-500/55 outline-offset-[-8px] hover:-translate-y-0 hover:border-amber-500/45 hover:shadow-none hover:outline-amber-500/80"
             : "relative flex min-h-[124px] flex-col overflow-hidden rounded-md p-4 shadow-none hover:-translate-y-0 hover:shadow-none"
         }
       >
