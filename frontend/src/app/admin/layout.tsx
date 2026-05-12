@@ -76,6 +76,7 @@ const SIDEBAR_SECTIONS: NavSection[] = [
     label: "결제",
     items: [
       { href: "/admin/subscriptions", label: "구독 관리", icon: ICON.subscriptions },
+      { href: "/admin/refunds", label: "환불 관리", icon: ICON.subscriptions },
     ],
   },
   {

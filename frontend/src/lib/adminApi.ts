@@ -893,3 +893,70 @@ export function expireSubscription(id: number, reason: string) {
   const params = new URLSearchParams({ reason });
   return adminFetch<void>(`/subscriptions/${id}?${params}`, { method: "DELETE" });
 }
+
+// ============================================================
+// 결제 / 환불 관리 (어드민 전용)
+// ============================================================
+
+export type AdminPaymentStatus = "PENDING" | "PAID" | "FAILED" | "CANCELLED";
+export type AdminPaymentProvider = "PORTONE" | "PLAY_BILLING";
+
+export interface AdminPaymentRow {
+  id: number;
+  paymentId: string;
+  memberId: number;
+  nickname: string | null;
+  plan: AdminSubscriptionPlan | null;
+  amount: number;
+  baseAmount: number;
+  prorateDiscount: number;
+  status: AdminPaymentStatus;
+  provider: AdminPaymentProvider;
+  buyerName: string | null;
+  buyerEmail: string | null;
+  buyerPhoneNumber: string | null;
+  paidAt: string | null;
+  createdAt: string;
+}
+
+export interface AdminPaymentPage {
+  content: AdminPaymentRow[];
+  totalElements: number;
+  totalPages: number;
+  number: number;
+  size: number;
+}
+
+/**
+ * 어드민 결제 목록 — 필터(status/provider/nickname/paymentId LIKE) + 페이지네이션.
+ * 검색 input 의 paymentId/nickname 자동 분기는 호출 측이 담당.
+ */
+export function listAdminPayments(opts: {
+  page?: number;
+  size?: number;
+  status?: AdminPaymentStatus;
+  provider?: AdminPaymentProvider;
+  nickname?: string;
+  paymentId?: string;
+} = {}) {
+  const params = new URLSearchParams();
+  if (opts.status) params.set("status", opts.status);
+  if (opts.provider) params.set("provider", opts.provider);
+  if (opts.nickname) params.set("nickname", opts.nickname);
+  if (opts.paymentId) params.set("paymentId", opts.paymentId);
+  params.set("page", String(opts.page ?? 0));
+  params.set("size", String(opts.size ?? 20));
+  return adminFetch<AdminPaymentPage>(`/payments?${params}`);
+}
+
+/**
+ * 어드민 환불 — PortOne PG cancel + 구독 회수 + history REFUNDED 한 트랜잭션.
+ * signal 로 30초 timeout 가능. backend 가 idempotent 라 중복 호출도 안전하지만 호출 자체는 1회 가드.
+ */
+export function refundAdminPayment(id: number, reason: string, signal?: AbortSignal) {
+  return adminFetch<void>(`/payments/${id}/refund`, {
+    method: "POST",
+    body: JSON.stringify({ reason }),
+    signal,
+  });
+}
