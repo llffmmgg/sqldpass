@@ -90,6 +90,13 @@
       "description": "모바일 PortOne 결제창 외부 앱 전환 후 /checkout?paymentId=... 복귀 시 토스트가 수십 번 표시되고 페이지가 흔들리는 버그 수정. Toast Provider value useMemo + useToast fallback 모듈 상수 + CheckoutClient verifiedRef 가드 + deps 축소. 백엔드 verify CANCELLED 분기를 PAYMENT_CANCELLED 로 별도화해 토스트 톤/문구 정확화.",
       "status": "completed",
       "completed_at": "2026-05-12T16:00:00+0900"
+    },
+    {
+      "dir": "admin-refunds-ui",
+      "name": "admin-refunds-ui",
+      "description": "어드민 환불 UI 신설 — /admin/refunds 페이지 + 결제 목록 endpoint(GET /api/admin/payments) + RefundReasonModal + sidebar 등록. PaymentService.revokePortOnePayment 재사용. PaymentId 자동 분기 검색, CANCELLED 행 시각 처리, buyer null/탈퇴회원 placeholder, 모달 busy 가드 + 30초 timeout. 부분 실패 sync/race 보강은 후속 phase 로.",
+      "status": "completed",
+      "completed_at": "2026-05-12T17:00:00+0900"
     }
   ]
 }
