@@ -45,6 +45,12 @@ type WebReviewAutomationPackage = {
   version: 1;
   status: "ready" | "blocked";
   errors: string[];
+  codexInstruction: string;
+  executionContract: {
+    pasteOnly: true;
+    sendOnlyJsonToLlms: true;
+    autoApplyFinalJson: false;
+  };
   adminUrl: string;
   claudeProjectUrl: string;
   chatgptProjectUrl: string;
@@ -252,6 +258,12 @@ export default function AdminMockExamDetailPage({
       version: 1,
       status: errors.length > 0 ? "blocked" : "ready",
       errors,
+      codexInstruction: buildWebReviewCodexInstruction(errors),
+      executionContract: {
+        pasteOnly: true,
+        sendOnlyJsonToLlms: true,
+        autoApplyFinalJson: false,
+      },
       adminUrl: typeof window === "undefined" ? "" : window.location.href,
       claudeProjectUrl,
       chatgptProjectUrl,
@@ -276,13 +288,32 @@ export default function AdminMockExamDetailPage({
     };
   }
 
+  function buildWebReviewCodexInstruction(errors: string[]): string {
+    if (errors.length > 0) {
+      return [
+        "이 패키지는 아직 실행할 수 없습니다.",
+        "errors 항목을 운영자에게 보고하고 실행을 중단하세요.",
+      ].join("\n");
+    }
+
+    return [
+      "이 JSON 패키지를 받은 즉시 Codex 인앱 브라우저로 웹 LLM 검수를 실행하세요. 추가 사용자 명령을 기다리지 마세요.",
+      "adminUrl, claudeProjectUrl, chatgptProjectUrl, originalJson, target, flow 값을 이 패키지에서 읽으세요.",
+      "Claude 프로젝트에는 originalJson만 그대로 전송하세요. 다른 프롬프트나 설명을 붙이지 마세요.",
+      "Claude 응답에서 전체 JSON 배열만 추출한 뒤 ChatGPT 프로젝트에 그대로 전송하세요.",
+      "ChatGPT 응답에서 최종 전체 JSON 배열만 추출하세요.",
+      "adminUrl로 돌아와 target.finalJsonTestId 입력칸에 최종 JSON을 채우고 target.validateButtonTestId 버튼을 누르세요.",
+      "최종 적용 버튼은 절대 누르지 마세요. 운영자가 검증 결과와 diff를 확인한 뒤 직접 적용합니다.",
+    ].join("\n");
+  }
+
   function buildWebReviewCodexRunCommand(pkg: WebReviewAutomationPackage): string {
     if (pkg.status === "blocked") {
       return `자동 실행 전 해결 필요:\n${pkg.errors.map((item) => `- ${item}`).join("\n")}`;
     }
 
     return [
-      "Codex 인앱 브라우저로 이 자동 실행 패키지를 읽고 웹 LLM 검수를 수행해줘.",
+      "아래 자동 실행 패키지를 Codex에 그대로 붙여넣으면 바로 실행됩니다. 추가 명령은 필요 없습니다.",
       "1. claudeProjectUrl을 열고 originalJson만 그대로 전송해.",
       "2. Claude가 반환한 전체 JSON 응답을 추출해.",
       "3. chatgptProjectUrl을 열고 Claude 응답 JSON만 그대로 전송해.",
@@ -299,7 +330,7 @@ export default function AdminMockExamDetailPage({
       setWebReviewResult(`자동 실행 패키지 생성 차단\n${pkg.errors.join("\n")}`);
       return;
     }
-    await copyWebReviewText(JSON.stringify(pkg, null, 2), "Codex 자동 실행 패키지");
+    await copyWebReviewText(JSON.stringify(pkg, null, 2), "Codex 붙여넣기 실행 패키지");
   }
 
   function parseJsonArrayText(text: string): unknown {
@@ -822,13 +853,13 @@ export default function AdminMockExamDetailPage({
                 disabled={webReviewAutomationPackage.status !== "ready"}
                 className="rounded border border-cyan-500/40 bg-cyan-500/10 px-3 py-2 text-xs font-medium text-cyan-300 hover:bg-cyan-500/20 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                Codex 자동 실행 패키지 복사
+                Codex 붙여넣기 실행 패키지 복사
               </button>
             </div>
           </div>
 
           <div className="mt-4 grid gap-4 lg:grid-cols-2">
-            <Field label="Codex 자동 실행 명령">
+            <Field label="Codex 붙여넣기 실행 안내">
               <textarea
                 data-testid="web-review-codex-run-command"
                 value={webReviewCodexRunCommand}
@@ -840,14 +871,14 @@ export default function AdminMockExamDetailPage({
               <button
                 type="button"
                 data-testid="web-review-copy-codex-run-command"
-                onClick={() => copyWebReviewText(webReviewCodexRunCommand, "Codex 자동 실행 명령")}
+                onClick={() => copyWebReviewText(webReviewCodexRunCommand, "Codex 붙여넣기 실행 안내")}
                 className="mt-2 rounded border border-cyan-500/40 bg-cyan-500/10 px-3 py-1.5 text-xs font-medium text-cyan-300 hover:bg-cyan-500/20"
               >
-                실행 명령 복사
+                안내 복사
               </button>
             </Field>
 
-            <Field label="Codex 자동 실행 패키지">
+            <Field label="Codex 붙여넣기 실행 패키지">
               <textarea
                 data-testid="web-review-automation-package"
                 value={webReviewAutomationPackageText}
