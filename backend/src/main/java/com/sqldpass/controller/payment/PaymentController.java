@@ -25,6 +25,7 @@ import com.sqldpass.service.payment.PaymentService.PreviewResult;
 import com.sqldpass.service.payment.PaymentService.VerifyPaymentResult;
 import com.sqldpass.service.payment.SubscriptionService;
 import com.sqldpass.service.payment.SubscriptionService.ActiveSubscription;
+import com.sqldpass.service.setting.AppSettingService;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -50,13 +51,17 @@ public class PaymentController {
     private final PaymentProperties paymentProperties;
     private final MemberRepository memberRepository;
     private final SubscriptionService subscriptionService;
+    private final AppSettingService appSettingService;
 
     @GetMapping("/eligibility")
-    @Operation(summary = "결제 페이지 접근 가능 여부 — 빈 화이트리스트 = 전체 허용(정식 오픈)")
+    @Operation(summary = "결제 페이지 접근 가능 여부 — admin 토글 ON 시 전원 허용, OFF 시 화이트리스트 폴백")
     public EligibilityResponse eligibility(HttpServletRequest request) {
         Long memberId = (Long) request.getAttribute("memberId");
         if (memberId == null) {
             throw new SqldpassException(ErrorCode.UNAUTHORIZED);
+        }
+        if (appSettingService.isCheckoutOpenToAll()) {
+            return new EligibilityResponse(true);
         }
         var allowed = paymentProperties.reviewerNicknameSet();
         if (allowed.isEmpty()) {

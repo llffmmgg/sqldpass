@@ -966,3 +966,24 @@ export function refundAdminPayment(id: number, reason: string, signal?: AbortSig
     signal,
   });
 }
+
+// ============================================================
+// 어드민 — 런타임 설정 토글
+// ============================================================
+
+export interface CheckoutOpenSetting {
+  openToAll: boolean;
+}
+
+/** 결제창 전체 공개 여부 조회. */
+export function getCheckoutOpenSetting() {
+  return adminFetch<CheckoutOpenSetting>("/settings/payment/checkout-open");
+}
+
+/** 결제창 전체 공개 여부 변경. */
+export function updateCheckoutOpenSetting(openToAll: boolean) {
+  return adminFetch<CheckoutOpenSetting>("/settings/payment/checkout-open", {
+    method: "PUT",
+    body: JSON.stringify({ openToAll }),
+  });
+}
