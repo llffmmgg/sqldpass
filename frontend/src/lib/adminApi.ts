@@ -917,6 +917,12 @@ export interface AdminPaymentRow {
   buyerPhoneNumber: string | null;
   paidAt: string | null;
   createdAt: string;
+  /**
+   * 같은 회원의 더 최신 PAID + 활성 subscription 결제가 있으면 true.
+   * 운영자가 옛 결제를 환불해도 활성 구독은 최신 결제에 묶여있어 사고 발생 →
+   * UI 에서 환불 버튼 disable. 백엔드도 동일 판별로 차단.
+   */
+  supersededByNewerPayment: boolean;
 }
 
 export interface AdminPaymentPage {

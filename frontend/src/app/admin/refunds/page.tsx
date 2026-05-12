@@ -231,7 +231,10 @@ function PaymentRow({
   onRefund: () => void;
 }) {
   const cancelled = row.status === "CANCELLED";
-  const refundable = row.status === "PAID" && row.provider === "PORTONE";
+  const refundable =
+    row.status === "PAID" &&
+    row.provider === "PORTONE" &&
+    !row.supersededByNewerPayment;
   const disabledReason = !refundable ? getDisabledReason(row) : null;
   const nickname = row.nickname ?? `(탈퇴 회원 #${row.memberId})`;
   const planLabel = row.plan ? PLAN_LABEL[row.plan] : "–";
@@ -259,6 +262,14 @@ function PaymentRow({
         >
           {STATUS_LABEL[row.status]}
         </span>
+        {row.supersededByNewerPayment && (
+          <span
+            title="이후 업그레이드 결제로 대체됨"
+            className="ml-1.5 inline-flex rounded-full border border-zinc-500/40 bg-zinc-500/10 px-2 py-0.5 text-[10px] text-zinc-400"
+          >
+            업그레이드 대체
+          </span>
+        )}
       </DataTable.Cell>
       <DataTable.Cell align="right">
         <span className="text-text-muted">{PROVIDER_LABEL[row.provider]}</span>
@@ -284,6 +295,9 @@ function getDisabledReason(row: AdminPaymentRow): string {
   if (row.status === "PENDING") return "결제 미완료 — 환불 대상 아님";
   if (row.provider === "PLAY_BILLING") {
     return "Play Billing 은 Google RTDN 으로 자동 환불 처리 — 어드민 수동 환불 금지";
+  }
+  if (row.supersededByNewerPayment) {
+    return "이 결제는 이후 업그레이드 결제로 대체됨 — 현재 활성 결제부터 환불해주세요";
   }
   return "환불 불가";
 }
