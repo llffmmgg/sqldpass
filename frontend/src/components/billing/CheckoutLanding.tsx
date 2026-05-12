@@ -324,8 +324,8 @@ function PlanCard({
         )}
       </div>
 
-      {/* 가격 — prorate 분기 */}
-      <div className="mt-5">
+      {/* 가격 — prorate 분기. 가격 영역 높이를 고정해 모든 카드의 버튼 정렬을 맞춤 */}
+      <div className="mt-5 flex min-h-[68px] flex-col justify-start">
         {hasProrate && preview ? (
           <>
             <div className="flex items-baseline gap-1.5">
@@ -336,7 +336,7 @@ function PlanCard({
                 <span className="text-sm text-text-subtle">/ {tier.unit}</span>
               )}
             </div>
-            <p className="mt-1 text-xs tabular-nums text-text-subtle line-through">
+            <p className="mt-1.5 text-xs tabular-nums text-text-subtle line-through">
               ₩{preview.baseAmount.toLocaleString()}
             </p>
             <p className="mt-1 text-xs text-success">
@@ -345,25 +345,28 @@ function PlanCard({
           </>
         ) : (
           <>
-            {/* 가격 + 정가 + unit 을 한 줄 baseline 정렬 (정가는 ₩9,900 바로 옆) */}
             <div className="flex items-baseline gap-1.5">
               <span className="text-3xl font-bold tabular-nums tracking-tight text-text">
                 {tier.price === 0 ? "무료" : `₩${tier.price.toLocaleString()}`}
               </span>
-              {tier.originalPrice && tier.originalPrice > tier.price && (
-                <span className="text-xs tabular-nums text-text-subtle line-through">
-                  ₩{tier.originalPrice.toLocaleString()}
-                </span>
-              )}
               {tier.price > 0 && tier.unit && (
                 <span className="text-sm text-text-subtle">/ {tier.unit}</span>
               )}
             </div>
+            {tier.originalPrice && tier.originalPrice > tier.price ? (
+              <p className="mt-1.5 text-xs tabular-nums text-text-subtle">
+                정가 <span className="line-through">₩{tier.originalPrice.toLocaleString()}</span>
+              </p>
+            ) : (
+              <p className="mt-1.5 text-xs select-none" aria-hidden>
+                &nbsp;
+              </p>
+            )}
           </>
         )}
       </div>
 
-      {/* CTA 버튼 — 5가지 상태 분기 (가격 바로 아래) */}
+      {/* CTA 버튼 — 5가지 상태 분기 (가격 바로 아래, 모든 카드 동일 위치) */}
       <div className="mt-5">
         {isFree ? (
           <button
