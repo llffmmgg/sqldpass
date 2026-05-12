@@ -24,9 +24,9 @@ public class PaymentProperties {
 
     private PortOne portone = new PortOne();
     private String reviewerNicknames = "";
-    private PlanConfig threeDay = new PlanConfig(3900, "문어CBT 3일 이용권");
-    private PlanConfig oneMonth = new PlanConfig(9900, "문어CBT 한달 이용권");
-    private PlanConfig unlimited = new PlanConfig(29900, "문어CBT 평생 무제한 이용권");
+    private PlanConfig threeDay = new PlanConfig(3900, "문어CBT Starter");
+    private PlanConfig oneMonth = new PlanConfig(9900, "문어CBT Pro");
+    private PlanConfig unlimited = new PlanConfig(29900, "문어CBT Lifetime");
 
     public PortOne getPortone() {
         return portone;
