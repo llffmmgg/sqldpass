@@ -1,0 +1,27 @@
+{
+  "project": "sqldpass",
+  "phase": "admin-refund-supersede-guard",
+  "description": "업그레이드(THREE_DAY → ONE_MONTH → UNLIMITED) 회원의 payment 행이 admin 환불 화면에서 모두 PAID + PORTONE 으로 보여 환불 사고 가능. 옛 결제 환불 시 활성 구독은 최신 결제에 묶여있어 사용자가 환불 + 서비스 이용 동시 발생. 백엔드 가드(같은 회원의 더 최신 PAID + 활성 subscription 결제 존재 시 거절) + AdminPaymentRow.supersededByNewerPayment 필드 + 프론트 환불 버튼 disable + 사유 툴팁. subscription 정책 변경(업그레이드 시 기존 자동 만료)은 별도 phase.",
+  "steps": [
+    {
+      "step": 1,
+      "name": "backend-superseded-guard",
+      "description": "ErrorCode.PAYMENT_SUPERSEDED_BY_NEWER 신규('이 결제는 이후 업그레이드 결제로 대체됐어요'). PaymentRepository.existsNewerActivePaidPaymentForMember boolean 메서드 신규(같은 회원의 더 최신 PAID + 활성 subscription 결제 존재). findAdminPage JPQL 의 SELECT 절에 같은 EXISTS 식을 boolean 으로 매핑하여 AdminPaymentRow.supersededByNewerPayment 필드 채움. PaymentService.revokePortOnePayment 에 가드(CANCELLED idempotent 가드 다음, PG cancel 호출 전) — true 면 PAYMENT_SUPERSEDED_BY_NEWER throw. 테스트 2건 추가(superseded 거절 / 최신 결제 정상 환불) + 기존 list 테스트 어설션 보정.",
+      "status": "completed",
+      "started_at": "2026-05-12T19:00:00+0900",
+      "summary": "PAYMENT_SUPERSEDED_BY_NEWER + existsNewerActivePaidPaymentForMember + findAdminPage projection(CASE WHEN EXISTS) + revokePortOnePayment 가드 + 테스트 1건 추가/list 테스트 보정, JPQL EXISTS 매핑 정상 동작, test+compile OK",
+      "completed_at": "2026-05-12T19:00:00+0900"
+    },
+    {
+      "step": 2,
+      "name": "frontend-superseded-disable",
+      "description": "adminApi.ts AdminPaymentRow 타입에 supersededByNewerPayment: boolean 추가. /admin/refunds/page.tsx PaymentRow 의 refundable 조건 확장(PAID + PORTONE + !supersededByNewerPayment). getDisabledReason 분기 추가('이 결제는 이후 업그레이드 결제로 대체됨 — 현재 활성 결제부터 환불해주세요'). superseded 행에 작은 회색 '업그레이드 대체' 배지 표시.",
+      "status": "completed",
+      "started_at": "2026-05-12T19:00:00+0900",
+      "summary": "AdminPaymentRow.supersededByNewerPayment 타입 추가 + PaymentRow refundable 조건 + getDisabledReason 분기 + '업그레이드 대체' 배지 (title 툴팁 포함), lint/build OK",
+      "completed_at": "2026-05-12T19:00:00+0900"
+    }
+  ],
+  "created_at": "2026-05-12T19:00:00+0900",
+  "completed_at": "2026-05-12T19:00:00+0900"
+}
