@@ -111,6 +111,13 @@
       "description": "업그레이드 회원의 옛 결제가 admin/refunds 에서 환불 가능으로 표시되어 환불 사고 위험. 백엔드 가드(같은 회원의 더 최신 PAID + 활성 subscription 결제 존재 시 PAYMENT_SUPERSEDED_BY_NEWER throw) + AdminPaymentRow.supersededByNewerPayment 필드 + 프론트 환불 버튼 disable + 사유 툴팁 + '업그레이드 대체' 배지. subscription 정책 변경(업그레이드 시 기존 자동 만료)은 별도 phase.",
       "status": "completed",
       "completed_at": "2026-05-12T19:00:00+0900"
+    },
+    {
+      "dir": "payment-product-name-rebrand",
+      "name": "payment-product-name-rebrand",
+      "description": "PortOne/KG이니시스 영수증 이메일의 상품명을 /checkout 요금제 카드 표기(Starter/Pro/Lifetime) 와 일치시킨다. application.yaml three-day/one-month/unlimited product-name → '문어CBT Starter/Pro/Lifetime' + PaymentServiceTest 하드코딩 보정.",
+      "status": "completed",
+      "completed_at": "2026-05-12T20:00:00+0900"
     }
   ]
 }
