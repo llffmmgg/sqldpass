@@ -930,7 +930,20 @@ function SolvePageContent() {
                     ? `오답 — 정답은 ${detail.correctOption}번입니다.`
                     : `오답 — 모범답안: ${detail.answer ?? "(없음)"}`}
               </div>
-              <div className="hidden lg:block">
+              <div className="hidden items-center gap-2 lg:flex">
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={goPrevious}
+                  disabled={pastEntries.length === 0}
+                  leftIcon={
+                    <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M11 17l-5-5m0 0l5-5m-5 5h12" />
+                    </svg>
+                  }
+                >
+                  이전
+                </Button>
                 <Button
                   variant="primary"
                   size="sm"
@@ -988,29 +1001,55 @@ function SolvePageContent() {
         style={{ bottom: "calc(3rem + env(safe-area-inset-bottom))" }}
       >
         {!revealed ? (
-          <Button
-            variant="primary"
-            size="lg"
-            className="w-full"
-            onClick={handleSubmit}
-            disabled={!hasAnswer()}
-          >
-            정답 제출
-          </Button>
-        ) : detail ? (
-          <Button
-            variant="primary"
-            size="lg"
-            className="w-full"
-            onClick={handleNext}
-            rightIcon={
+          <div className="grid grid-cols-[auto_1fr] gap-2">
+            <Button
+              variant="secondary"
+              size="lg"
+              onClick={goPrevious}
+              disabled={pastEntries.length === 0}
+              aria-label="이전 문제"
+            >
               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M11 17l-5-5m0 0l5-5m-5 5h12" />
               </svg>
-            }
-          >
-            {solvedCount >= SET_SIZE ? "결과 보기" : "다음 문제"}
-          </Button>
+            </Button>
+            <Button
+              variant="primary"
+              size="lg"
+              className="w-full"
+              onClick={handleSubmit}
+              disabled={!hasAnswer()}
+            >
+              정답 제출
+            </Button>
+          </div>
+        ) : detail ? (
+          <div className="grid grid-cols-[auto_1fr] gap-2">
+            <Button
+              variant="secondary"
+              size="lg"
+              onClick={goPrevious}
+              disabled={pastEntries.length === 0}
+              aria-label="이전 문제"
+            >
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M11 17l-5-5m0 0l5-5m-5 5h12" />
+              </svg>
+            </Button>
+            <Button
+              variant="primary"
+              size="lg"
+              className="w-full"
+              onClick={handleNext}
+              rightIcon={
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                </svg>
+              }
+            >
+              {solvedCount >= SET_SIZE ? "결과 보기" : "다음 문제"}
+            </Button>
+          </div>
         ) : null}
       </div>
     </section>
