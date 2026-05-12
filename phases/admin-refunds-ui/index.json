@@ -1,0 +1,27 @@
+{
+  "project": "sqldpass",
+  "phase": "admin-refunds-ui",
+  "description": "어드민 환불 UI 신설 — /admin/refunds 페이지 + 결제 목록 endpoint + RefundReasonModal. 현재 환불은 백엔드 endpoint(POST /api/admin/payments/{id}/refund) 만 있고 어드민이 curl 로 직접 호출해야 하는 상태. 결제 목록 조회 endpoint 신설 + 사유 입력 모달 + 사이드바 등록으로 운영자가 안전하게 환불 처리 가능. PaymentService.revokePortOnePayment 재사용. Play Billing 행은 disable + 안내. 갭 분석 결과 반영: paymentId 자동 분기 검색, CANCELLED 행 시각 처리, buyer null/탈퇴회원 placeholder, 모달 busy 가드, 30초 timeout, 에러 안내 강화. 부분 실패 sync/race 보강은 후속 phase 로 미룸.",
+  "steps": [
+    {
+      "step": 1,
+      "name": "backend-admin-payment-list",
+      "description": "AdminPaymentRow record 신규(id/paymentId/memberId/nickname/plan/amount/baseAmount/prorateDiscount/status/provider/buyer3/paidAt/createdAt) + PaymentRepository.findAdminPage 커스텀 쿼리(member LEFT JOIN, status/provider/nickname/paymentId 필터, paidAt DESC) + AdminPaymentController.list endpoint(GET /api/admin/payments, page/size/필터 파라미터, size Math.min(100)) + RefundRequest.reason @NotBlank @Size(max=200) + @Valid 적용 + 신규 테스트 5건(list 기본/필터 3종/reason blank 검증).",
+      "status": "completed",
+      "started_at": "2026-05-12T17:00:00+0900",
+      "summary": "AdminPaymentRow + findAdminPage + GET /api/admin/payments + RefundRequest @NotBlank @Size + 테스트 7건 추가(list 5건 + refund reason 2건), gradle test+compile OK",
+      "completed_at": "2026-05-12T17:00:00+0900"
+    },
+    {
+      "step": 2,
+      "name": "frontend-admin-refunds-page",
+      "description": "adminApi.ts 에 AdminPaymentRow 타입 + listAdminPayments/refundAdminPayment 함수 + RefundReasonModal 컴포넌트(사유 5~200자 검증, busy 가드, 30초 AbortController timeout, 에러 안내 강화) + /admin/refunds 페이지(필터 검색/status/provider, paymentId 자동 분기 검색, CANCELLED 행 opacity-60 + 환불됨 라벨, buyer null '–' / 탈퇴회원 '(탈퇴 회원 #N)' placeholder, PAID+PORTONE 만 환불 버튼 활성) + admin/layout.tsx 사이드바 '환불 관리' 메뉴 등록.",
+      "status": "completed",
+      "started_at": "2026-05-12T17:00:00+0900",
+      "summary": "adminApi 결제/환불 함수 + RefundReasonModal(사유 5~200자 + busy 가드 + 30s AbortController) + /admin/refunds 페이지(필터 + paymentId 자동 분기 + CANCELLED 시각 + 탈퇴회원 placeholder + PAID+PORTONE 만 환불 활성) + sidebar 등록, lint/build OK",
+      "completed_at": "2026-05-12T17:00:00+0900"
+    }
+  ],
+  "created_at": "2026-05-12T17:00:00+0900",
+  "completed_at": "2026-05-12T17:00:00+0900"
+}
