@@ -10,21 +10,29 @@ interface Props {
 
 export default function ReportQuestionButton({ questionId, size = "sm" }: Props) {
   const [open, setOpen] = useState(false);
-  const cls =
-    size === "sm"
-      ? "text-[11px] text-muted/70 hover:text-amber-300"
-      : "text-xs text-muted hover:text-amber-300";
+  const iconSize = size === "sm" ? "h-4 w-4" : "h-4 w-4";
   return (
     <>
       <button
+        type="button"
         onClick={() => setOpen(true)}
-        className={`inline-flex items-center gap-1 transition-colors ${cls}`}
+        aria-label="이 문제 오류 신고"
         title="이 문제 오류 신고"
+        className={`inline-flex h-7 w-7 items-center justify-center rounded-md text-text-subtle transition-colors hover:bg-surface-hover hover:text-primary`}
       >
-        <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M3 21v-4a4 4 0 014-4h14M3 21l4-4M21 3l-4 4M21 3v4a4 4 0 01-4 4H3" />
+        {/* 깃발(report) 아이콘 — 컴팩트 + 테마 톤 */}
+        <svg
+          className={iconSize}
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={1.8}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden
+        >
+          <path d="M4 21V4h11l1 2h5v9h-7l-1-2H6v8" />
         </svg>
-        🐞 이 문제 오류 신고
       </button>
       <FeedbackModal
         open={open}

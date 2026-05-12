@@ -77,11 +77,9 @@ export default function BookmarkButton({
   }
 
   const isActive = bookmarked === true;
-  const baseCls =
-    size === "sm"
-      ? "text-[11px] text-muted/70 hover:text-amber-400"
-      : "text-xs text-muted hover:text-amber-400";
-  const activeCls = "text-amber-400 hover:text-amber-500";
+  const iconSize = size === "sm" ? "h-4 w-4" : "h-4 w-4";
+  const baseCls = "text-text-subtle hover:text-primary";
+  const activeCls = "text-primary hover:text-primary-hover";
 
   return (
     <button
@@ -89,19 +87,20 @@ export default function BookmarkButton({
       onClick={onToggle}
       disabled={loading || bookmarked === null}
       aria-pressed={isActive}
-      className={`inline-flex items-center gap-1 transition-colors disabled:opacity-60 ${
+      aria-label={isActive ? "즐겨찾기 해제" : "즐겨찾기"}
+      className={`inline-flex h-7 w-7 items-center justify-center rounded-md transition-colors hover:bg-surface-hover disabled:opacity-60 ${
         isActive ? activeCls : baseCls
       }`}
       title={isActive ? "즐겨찾기 해제" : "즐겨찾기"}
     >
       {/* Star icon: filled when active, outline when not */}
       {isActive ? (
-        <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+        <svg className={iconSize} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
           <path d="M12 2.5l2.9 5.88 6.48.94-4.69 4.57 1.11 6.46L12 17.3l-5.8 3.05 1.11-6.46L2.62 9.32l6.48-.94L12 2.5z" />
         </svg>
       ) : (
         <svg
-          className="h-3.5 w-3.5"
+          className={iconSize}
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
@@ -112,7 +111,6 @@ export default function BookmarkButton({
           <path d="M12 2.5l2.9 5.88 6.48.94-4.69 4.57 1.11 6.46L12 17.3l-5.8 3.05 1.11-6.46L2.62 9.32l6.48-.94L12 2.5z" />
         </svg>
       )}
-      {isActive ? "즐겨찾기" : "즐겨찾기"}
     </button>
   );
 }
