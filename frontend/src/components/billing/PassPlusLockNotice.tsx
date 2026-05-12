@@ -1,6 +1,9 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
+
+import { getPublicMockExams } from "@/lib/publicApi";
 
 type Props = {
   examNumber?: string | number;
@@ -19,6 +22,29 @@ export default function PassPlusLockNotice({
   pricingHref = "/checkout",
   backHref = "/mock-exams",
 }: Props) {
+  // 회차 실제 제목 fetch — getPublicMockExams 는 비로그인 공개 endpoint 라
+  // 잠금 상태 사용자도 접근 가능. fetch 성공 시 blur 처리된 placeholder 제목
+  // 자리에 실제 회차 이름 표시. 보안: blur 는 클라이언트 CSS 라 DevTools 로
+  // 풀 수 있지만, 회차 제목 자체는 결제 동기 유발용으로 공개 허용 범위.
+  const [realTitle, setRealTitle] = useState<string | null>(null);
+  useEffect(() => {
+    const numericId = Number(examNumber);
+    if (!Number.isFinite(numericId)) return;
+    let cancelled = false;
+    getPublicMockExams()
+      .then((rows) => {
+        if (cancelled) return;
+        const match = rows.find((r) => r.id === numericId);
+        if (match) setRealTitle(match.name);
+      })
+      .catch(() => {
+        // fallback — placeholder 제목 유지
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [examNumber]);
+
   return (
     <div className="relative flex min-h-[80vh] items-center justify-center px-6 py-16">
       {/* 상단 미니 breadcrumb */}
@@ -46,14 +72,14 @@ export default function PassPlusLockNotice({
             </span>
           </div>
 
-          {/* 가려진 제목 */}
+          {/* 가려진 제목 — 실제 회차 이름이 있으면 그것을 blur, 없으면 placeholder */}
           <div className="relative mt-5">
             <h2
               className="select-none text-[26px] font-bold leading-[1.3] tracking-[-0.01em] text-text"
               style={{ filter: "blur(7px)" }}
               aria-hidden
             >
-              SQLD 실전 모의고사 {examNumber}회
+              {realTitle ?? `SQLD 실전 모의고사 ${examNumber}회`}
             </h2>
             <div className="absolute inset-0 bg-gradient-to-b from-transparent via-surface/40 to-surface" />
           </div>
