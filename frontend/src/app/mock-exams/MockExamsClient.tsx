@@ -23,6 +23,57 @@ import { getPublicMockExams } from "@/lib/publicApi";
 
 type DifficultyFilter = "ALL" | "쉬움" | "보통" | "어려움" | "매우 어려움";
 
+const DEV_FIXTURE_EXAMS: MockExamSummary[] = [
+  {
+    id: -1,
+    name: "10회차 모의고사",
+    examType: "SQLD",
+    sequence: 10,
+    totalQuestions: 50,
+    createdAt: new Date().toISOString(),
+    difficultyLabel: "어려움",
+    solved: false,
+    bestCorrectCount: null,
+    bestTotalCount: null,
+    templateKey: null,
+    templateLabel: null,
+    visibility: "PREMIUM",
+    expertVerified: true,
+    kind: "AI",
+    examYear: null,
+    examRound: null,
+    examDate: null,
+    publishedAt: new Date().toISOString(),
+    pastExamLinkedAt: null,
+    purchased: false,
+    isPremium: true,
+  },
+  {
+    id: -2,
+    name: "9회차 모의고사",
+    examType: "SQLD",
+    sequence: 9,
+    totalQuestions: 50,
+    createdAt: new Date().toISOString(),
+    difficultyLabel: "보통",
+    solved: false,
+    bestCorrectCount: null,
+    bestTotalCount: null,
+    templateKey: null,
+    templateLabel: null,
+    visibility: "PUBLISHED",
+    expertVerified: true,
+    kind: "AI",
+    examYear: null,
+    examRound: null,
+    examDate: null,
+    publishedAt: new Date().toISOString(),
+    pastExamLinkedAt: null,
+    purchased: false,
+    isPremium: false,
+  },
+];
+
 const DIFFICULTY_OPTIONS: { value: DifficultyFilter; label: string; activeClass: string }[] = [
   { value: "ALL", label: "전체", activeClass: "border-primary/40 bg-primary/10 text-primary" },
   { value: "쉬움", label: "쉬움", activeClass: "border-emerald-500/40 bg-emerald-500/10 text-emerald-500" },
@@ -57,7 +108,13 @@ function MockExamsContent() {
         if (alive) setExams(next);
       })
       .catch((e) => {
-        if (alive) setError(e instanceof Error ? e.message : "목록을 불러올 수 없습니다.");
+        if (!alive) return;
+        if (process.env.NODE_ENV === "development") {
+          console.warn("[dev] mock-exams API 실패 → fixture 표시", e);
+          setExams(DEV_FIXTURE_EXAMS);
+          return;
+        }
+        setError(e instanceof Error ? e.message : "목록을 불러올 수 없습니다.");
       });
     return () => {
       alive = false;
@@ -223,7 +280,7 @@ function MockExamCard({ exam }: { exam: MockExamSummary }) {
         accent={cert ?? undefined}
         className={
           isPremium
-            ? "relative flex min-h-[124px] flex-col overflow-hidden rounded-md border-amber-500/30 p-4 shadow-none outline outline-1 outline-amber-500/55 outline-offset-[-8px] hover:-translate-y-0 hover:border-amber-500/45 hover:shadow-none hover:outline-amber-500/80"
+            ? "relative flex min-h-[124px] flex-col overflow-hidden rounded-md !border-[#9b7022]/65 p-4 shadow-[0_0_20px_-12px_rgba(184,134,11,0.45)] outline outline-1 outline-[#b8860b]/80 outline-offset-[-8px] transition-shadow hover:-translate-y-0 hover:!border-[#9b7022]/85 hover:shadow-[0_0_24px_-8px_rgba(184,134,11,0.6)] hover:outline-[#b8860b]/95 dark:!border-[#a8854f]/45 dark:shadow-[0_0_24px_-14px_rgba(232,196,108,0.35)] dark:outline-[#e8c46c]/70 dark:hover:!border-[#a8854f]/65 dark:hover:shadow-[0_0_28px_-10px_rgba(232,196,108,0.55)] dark:hover:outline-[#e8c46c]/90"
             : "relative flex min-h-[124px] flex-col overflow-hidden rounded-md p-4 shadow-none hover:-translate-y-0 hover:shadow-none"
         }
       >
