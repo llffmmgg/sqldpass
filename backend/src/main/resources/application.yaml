@@ -124,13 +124,13 @@ sqldpass:
     # 4티어 구독 모델 — 각 plan 의 결제 금액(원)·상품명. TEST/0원 금지 (카드사 심사).
     three-day:
       amount: ${PAYMENT_3DAY_AMOUNT:3900}
-      product-name: ${PAYMENT_3DAY_NAME:문어CBT 3일 이용권}
+      product-name: ${PAYMENT_3DAY_NAME:문어CBT Starter}
     one-month:
       amount: ${PAYMENT_1MONTH_AMOUNT:9900}
-      product-name: ${PAYMENT_1MONTH_NAME:문어CBT 한달 이용권}
+      product-name: ${PAYMENT_1MONTH_NAME:문어CBT Pro}
     unlimited:
       amount: ${PAYMENT_UNLIMITED_AMOUNT:29900}
-      product-name: ${PAYMENT_UNLIMITED_NAME:문어CBT 평생 무제한 이용권}
+      product-name: ${PAYMENT_UNLIMITED_NAME:문어CBT Lifetime}
   pdf:
     # 모의고사 PDF 생성기 — Playwright 헤드리스 Chromium 으로 인쇄 페이지를 PDF 화.
     # print-page-base-url: 백엔드(Playwright) 가 호출할 프론트 인쇄 페이지 베이스 URL.

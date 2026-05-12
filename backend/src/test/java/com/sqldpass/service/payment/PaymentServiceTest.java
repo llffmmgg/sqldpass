@@ -64,9 +64,9 @@ class PaymentServiceTest {
     void setUp() {
         properties = new PaymentProperties();
         properties.setReviewerNicknames("pay-rv-7f2a91");
-        properties.setThreeDay(new PaymentProperties.PlanConfig(3900, "문어CBT 3일 이용권"));
-        properties.setOneMonth(new PaymentProperties.PlanConfig(9900, "문어CBT 한달 이용권"));
-        properties.setUnlimited(new PaymentProperties.PlanConfig(29900, "문어CBT 평생 무제한 이용권"));
+        properties.setThreeDay(new PaymentProperties.PlanConfig(3900, "문어CBT Starter"));
+        properties.setOneMonth(new PaymentProperties.PlanConfig(9900, "문어CBT Pro"));
+        properties.setUnlimited(new PaymentProperties.PlanConfig(29900, "문어CBT Lifetime"));
 
         playBillingProperties = new PlayBillingProperties();
         playBillingProperties.getProductIdMapping().put(SubscriptionPlan.THREE_DAY, "iap_three_day");
@@ -110,7 +110,7 @@ class PaymentServiceTest {
         var result = service.prepare(1L, SubscriptionPlan.ONE_MONTH, "홍길동", "buyer@example.com", "01012345678");
 
         assertThat(result.amount()).isEqualTo(9900);
-        assertThat(result.productName()).isEqualTo("문어CBT 한달 이용권");
+        assertThat(result.productName()).isEqualTo("문어CBT Pro");
         assertThat(result.plan()).isEqualTo(SubscriptionPlan.ONE_MONTH);
         assertThat(result.paymentId()).startsWith("sqldpass-");
         verify(paymentRepository, times(1)).save(any(PaymentEntity.class));
