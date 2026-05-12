@@ -1,0 +1,27 @@
+{
+  "project": "sqldpass",
+  "phase": "checkout-mobile-return-bugfix",
+  "description": "모바일 PortOne 결제창 외부 앱 전환 후 /checkout?paymentId=... 복귀 시 토스트가 수십 번 표시되고 페이지가 흔들리는 버그 수정. 주범은 ToastContext.Provider value 가 매 렌더 새 객체로 생성돼 CheckoutClient 의 returnedPaymentId useEffect deps([..., toast]) 가 매 렌더 변경 감지 → verifyPaymentById 중복 호출. Toast value useMemo + CheckoutClient useRef 가드 + deps 축소로 해결. 추가로 백엔드 verify 의 CANCELLED 상태가 별도 ErrorCode 로 분기되도록 보강해 '취소' 키워드 매칭이 정확해지도록 한다.",
+  "steps": [
+    {
+      "step": 1,
+      "name": "toast-stable-and-checkout-guard",
+      "description": "Toast.tsx 의 Provider value 를 useMemo 로 memoize, useToast() 의 Provider 미존재 fallback 을 모듈 상수로 추출. CheckoutClient.tsx 의 returnedPaymentId useEffect 에 useRef<string|null> 처리 플래그 추가 + deps 를 [returnedPaymentId] 만으로 축소(이유 주석 + eslint-disable-next-line). 데스크탑/Capacitor 흐름 영향 없음.",
+      "status": "completed",
+      "started_at": "2026-05-12T16:00:00+0900",
+      "summary": "Toast Provider value useMemo + useToast fallback 모듈 상수 + CheckoutClient verifiedRef + deps 축소(eslint-disable-next-line + 사유 주석), lint/build OK",
+      "completed_at": "2026-05-12T16:00:00+0900"
+    },
+    {
+      "step": 2,
+      "name": "backend-payment-cancelled-errorcode",
+      "description": "ErrorCode.PAYMENT_CANCELLED 신규(메시지 '결제가 취소되었습니다.'). PaymentService.verify 의 PortOne status 분기에서 CANCELLED 시 PAYMENT_CANCELLED throw, FAILED 는 기존 PAYMENT_VERIFICATION_FAILED 유지. failureRecorder.markFailed 호출은 양쪽 모두 유지. PaymentServiceTest 의 verify CANCELLED 케이스 어설션 보정.",
+      "status": "completed",
+      "started_at": "2026-05-12T16:00:00+0900",
+      "summary": "PAYMENT_CANCELLED ErrorCode 신규 + verify CANCELLED 분기 + 테스트 어설션 보정, test+compile OK",
+      "completed_at": "2026-05-12T16:00:00+0900"
+    }
+  ],
+  "created_at": "2026-05-12T16:00:00+0900",
+  "completed_at": "2026-05-12T16:00:00+0900"
+}
