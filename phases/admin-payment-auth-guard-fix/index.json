@@ -1,0 +1,18 @@
+{
+  "project": "sqldpass",
+  "phase": "admin-payment-auth-guard-fix",
+  "description": "/admin/refunds 진입 시 401 → 재로그인 무한 루프 버그 수정. AdminPaymentController 의 list/refund/reissue 가 `if (memberId == null) throw UNAUTHORIZED` 가드를 갖고 있으나, AdminAuthInterceptor 는 admin 토큰 subject 가 username 문자열이라 memberId attribute 를 set 하지 않음(의도된 동작). 결과적으로 admin 인증 통과 후에도 controller 단 가드가 항상 401 → 재로그인. AdminSubscriptionController 가 이미 가드 없이 동작 중이라 패턴 통일 차원에서 가드 3개 제거. actor_admin_id BIGINT NULL (V81) 이라 null 저장 안전, 운영 추적은 history.reason 텍스트로.",
+  "steps": [
+    {
+      "step": 1,
+      "name": "remove-admin-payment-memberid-guard",
+      "description": "AdminPaymentController.list/refund/reissue 3개 메서드의 `if (request.getAttribute(\"memberId\") == null) throw UNAUTHORIZED` 가드 제거. 클래스 주석에 인증 보호는 AdminAuthInterceptor 가 담당하고 actorAdminId 는 null 일 수 있음을 명시. AdminPaymentControllerTest 의 list/refund/reissue 미인증 401 케이스 3건 삭제 (WebMvcTest 는 인터셉터 미로드라 controller 단 가드 없이는 미인증 검증 불가).",
+      "status": "completed",
+      "started_at": "2026-05-12T18:00:00+0900",
+      "summary": "AdminPaymentController list/refund/reissue 의 memberId null 가드 3개 제거 + 클래스 javadoc 추가(AdminAuthInterceptor 보호 + actorAdminId null 가능) + 미사용 ErrorCode/SqldpassException import 제거 + 테스트 미인증 401 케이스 3건 삭제, gradle test+compile OK",
+      "completed_at": "2026-05-12T18:00:00+0900"
+    }
+  ],
+  "created_at": "2026-05-12T18:00:00+0900",
+  "completed_at": "2026-05-12T18:00:00+0900"
+}
