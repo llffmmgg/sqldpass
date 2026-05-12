@@ -97,6 +97,13 @@
       "description": "어드민 환불 UI 신설 — /admin/refunds 페이지 + 결제 목록 endpoint(GET /api/admin/payments) + RefundReasonModal + sidebar 등록. PaymentService.revokePortOnePayment 재사용. PaymentId 자동 분기 검색, CANCELLED 행 시각 처리, buyer null/탈퇴회원 placeholder, 모달 busy 가드 + 30초 timeout. 부분 실패 sync/race 보강은 후속 phase 로.",
       "status": "completed",
       "completed_at": "2026-05-12T17:00:00+0900"
+    },
+    {
+      "dir": "admin-payment-auth-guard-fix",
+      "name": "admin-payment-auth-guard-fix",
+      "description": "/admin/refunds 진입 시 401 → 재로그인 무한 루프 버그 수정. AdminPaymentController list/refund/reissue 의 memberId null 가드 3개 제거 — admin 토큰 subject 는 username 문자열이라 AdminAuthInterceptor 가 의도적으로 memberId attribute set 안 함. 인증 보호는 인터셉터가 담당, actorAdminId null 통과는 V81 nullable 컬럼 덕분에 안전. AdminSubscriptionController 와 패턴 통일.",
+      "status": "completed",
+      "completed_at": "2026-05-12T18:00:00+0900"
     }
   ]
 }
