@@ -30,5 +30,11 @@ public record AdminPaymentRow(
         String buyerEmail,
         String buyerPhoneNumber,
         LocalDateTime paidAt,
-        LocalDateTime createdAt
+        LocalDateTime createdAt,
+        /**
+         * 같은 회원의 더 최신(paid_at 기준) PAID 결제 중 subscription 이 활성인 것이 존재하면 true.
+         * UI 는 이 결제의 환불 버튼을 disable 처리해 운영 사고(옛 결제 환불 + 활성 구독 그대로) 차단.
+         * 백엔드도 동일 판별로 revokePortOnePayment 에서 PAYMENT_SUPERSEDED_BY_NEWER throw.
+         */
+        Boolean supersededByNewerPayment
 ) {}

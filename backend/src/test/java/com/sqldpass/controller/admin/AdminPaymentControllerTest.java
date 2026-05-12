@@ -113,7 +113,8 @@ class AdminPaymentControllerTest {
                 SubscriptionPlan.THREE_DAY, 3900, 3900, 0,
                 PaymentStatus.PAID, PaymentProvider.PORTONE,
                 "홍길동", "buyer@example.com", "01012345678",
-                LocalDateTime.of(2026, 5, 12, 10, 0), LocalDateTime.of(2026, 5, 12, 9, 59));
+                LocalDateTime.of(2026, 5, 12, 10, 0), LocalDateTime.of(2026, 5, 12, 9, 59),
+                false);
         Page<AdminPaymentRow> page = new PageImpl<>(List.of(row), PageRequest.of(0, 20), 1);
         given(paymentRepository.findAdminPage(isNull(), isNull(), isNull(), isNull(), any(Pageable.class)))
                 .willReturn(page);
@@ -125,6 +126,7 @@ class AdminPaymentControllerTest {
                 .andExpect(jsonPath("$.content[0].id").value(42))
                 .andExpect(jsonPath("$.content[0].nickname").value("닉네임"))
                 .andExpect(jsonPath("$.content[0].status").value("PAID"))
+                .andExpect(jsonPath("$.content[0].supersededByNewerPayment").value(false))
                 .andExpect(jsonPath("$.totalElements").value(1));
     }
 

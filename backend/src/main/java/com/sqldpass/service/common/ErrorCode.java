@@ -45,6 +45,8 @@ public enum ErrorCode {
     PAYMENT_VERIFICATION_FAILED(HttpStatus.BAD_REQUEST, "PAYMENT_VERIFICATION_FAILED", "결제 검증에 실패했습니다."),
     PAYMENT_CANCELLED(HttpStatus.BAD_REQUEST, "PAYMENT_CANCELLED", "결제가 취소되었습니다."),
     PAYMENT_AMOUNT_MISMATCH(HttpStatus.BAD_REQUEST, "PAYMENT_AMOUNT_MISMATCH", "결제 금액이 일치하지 않습니다."),
+    PAYMENT_SUPERSEDED_BY_NEWER(HttpStatus.BAD_REQUEST, "PAYMENT_SUPERSEDED_BY_NEWER",
+            "이 결제는 이후 업그레이드 결제로 대체됐어요. 현재 활성 결제부터 환불해주세요."),
 
     // 500
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "INTERNAL_SERVER_ERROR", "서버 오류가 발생했습니다."),

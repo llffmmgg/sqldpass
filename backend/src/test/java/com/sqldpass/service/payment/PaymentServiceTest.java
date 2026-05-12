@@ -959,6 +959,32 @@ class PaymentServiceTest {
     }
 
     @Test
+    @DisplayName("revokePortOnePayment: 같은 회원의 더 최신 활성 PAID 결제 있으면 PAYMENT_SUPERSEDED_BY_NEWER + PG cancel 호출 0회")
+    void revokePortOnePayment_superseded_시_PAYMENT_SUPERSEDED_BY_NEWER_throw_cancel_미호출() {
+        LocalDateTime paidAt = LocalDateTime.now().minusDays(2);
+        PaymentEntity entity = new PaymentEntity("p-old", 1L, null, "3일 이용권",
+                SubscriptionPlan.THREE_DAY, 3900);
+        entity.markPaid("{...}", paidAt);
+        setField(entity, "id", 42L);
+        given(paymentRepository.findById(42L)).willReturn(Optional.of(entity));
+        // 같은 회원의 더 최신 활성 PAID 결제 존재 — 업그레이드된 상태.
+        given(paymentRepository.existsNewerActivePaidPaymentForMember(1L, 42L, paidAt))
+                .willReturn(true);
+
+        assertThatThrownBy(() -> service.revokePortOnePayment(42L, "고객 요청", 7L))
+                .isInstanceOf(SqldpassException.class)
+                .extracting("errorCode").isEqualTo(ErrorCode.PAYMENT_SUPERSEDED_BY_NEWER);
+
+        // PG cancel / 구독 회수 / history 모두 호출 안 됨 — PG 환불 사고 차단.
+        verify(portOneClient, times(0)).cancel(any(), any());
+        verify(subscriptionService, times(0)).revokeByPaymentId(any());
+        verify(historyService, times(0)).record(any(), any(), any(), any(), any(), any());
+        // 결제 상태는 PAID 유지 — 운영자에게 옛 결제임을 알려 최신 결제부터 환불하도록.
+        assertThat(entity.getStatus())
+                .isEqualTo(com.sqldpass.persistent.payment.PaymentStatus.PAID);
+    }
+
+    @Test
     @DisplayName("revokePortOnePayment: PLAY_BILLING provider 면 INVALID_INPUT — cancel 호출 0회")
     void revokePortOnePayment_PLAY_BILLING_provider_면_INVALID_INPUT_throw() {
         PaymentEntity entity = new PaymentEntity(

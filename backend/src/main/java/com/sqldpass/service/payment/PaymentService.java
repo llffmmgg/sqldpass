@@ -369,6 +369,15 @@ public class PaymentService {
         if (entity.getStatus() == PaymentStatus.CANCELLED) {
             return; // idempotent — 중복 호출 무해
         }
+        // 업그레이드로 superseded 된 결제 환불 차단 — 옛 결제 환불 시 활성 구독은 최신 결제에
+        // 묶여있어 사용자가 환불 + 서비스 이용 동시 발생. paidAt null 인 결제는 아직 PAID 가
+        // 아니라 다른 분기에서 처리됨.
+        if (entity.getPaidAt() != null && paymentRepository.existsNewerActivePaidPaymentForMember(
+                entity.getMemberId(), entity.getId(), entity.getPaidAt())) {
+            log.warn("superseded payment 환불 거절 paymentId={} memberId={} actorAdminId={}",
+                    entity.getPaymentId(), entity.getMemberId(), actorAdminId);
+            throw new SqldpassException(ErrorCode.PAYMENT_SUPERSEDED_BY_NEWER);
+        }
         // PG 측 환불 — 실패 시 SqldpassException(PAYMENT_GATEWAY_ERROR) throw → 트랜잭션 롤백.
         portOneClient.cancel(entity.getPaymentId(), reason);
         entity.markCancelled("admin-refund:" + (reason == null ? "" : reason));
