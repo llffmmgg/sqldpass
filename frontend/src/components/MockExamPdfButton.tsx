@@ -1,6 +1,5 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { useToast } from "@/components/Toast";
@@ -24,7 +23,6 @@ export default function MockExamPdfButton({
   className?: string;
 }) {
   const toast = useToast();
-  const router = useRouter();
   const [eligible, setEligible] = useState<boolean | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -49,8 +47,10 @@ export default function MockExamPdfButton({
           await downloadMockExamPdfAsUser(examId);
         } catch (e) {
           if (e instanceof PdfDownloadError && e.code === "PDF_REQUIRES_SUBSCRIPTION") {
-            toast.show("무제한 구독 후 이용 가능합니다. 구독 페이지로 이동합니다.", "info");
-            setTimeout(() => router.push("/checkout"), 600);
+            toast.show(
+              "PDF 다운로드는 Lifetime 플랜 전용입니다. 우측 상단 프로필에서 업그레이드할 수 있어요.",
+              "info",
+            );
           } else {
             toast.show(
               e instanceof Error ? e.message : "PDF 다운로드에 실패했습니다.",
