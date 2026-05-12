@@ -9,7 +9,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
@@ -132,11 +131,18 @@ public class PaymentController {
                 .orElseGet(SubscriptionResponse::inactive);
     }
 
+    /**
+     * 결제 사전 등록 요청.
+     *
+     * <p>buyer 3필드(이름/이메일/휴대폰)는 KG이니시스(신용카드) 결제에 필수이지만 카카오페이는
+     * customer 정보를 PG 자체에서 가져오므로 클라이언트가 null/생략 가능하다. 그래서 record
+     * 자체에는 @NotBlank 를 두지 않고, 값이 들어왔을 때만 형식 검증(@Email/@Pattern/@Size)을
+     * 수행한다. 결제 method 분기는 클라이언트가 담당.
+     */
     public record PrepareRequest(
             @NotNull SubscriptionPlan plan,
-            @NotBlank @Size(max = 50) String buyerName,
-            @NotBlank @Email @Size(max = 255) String buyerEmail,
-            @NotBlank
+            @Size(max = 50) String buyerName,
+            @Email @Size(max = 255) String buyerEmail,
             @Pattern(regexp = "^01[0-9][-\\s]?\\d{3,4}[-\\s]?\\d{4}$",
                      message = "휴대폰 번호 형식이 올바르지 않습니다.")
             String buyerPhoneNumber
