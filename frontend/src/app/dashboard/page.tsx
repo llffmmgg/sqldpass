@@ -383,19 +383,17 @@ function DashboardPageContent() {
                   ) : (
                     <>
                       <h2 className="mt-3 text-xl font-bold sm:text-2xl">
-                        오답 노트로 약점만 골라 복습하세요
+                        오늘도 한 세트 풀어볼까요?
                       </h2>
-                      <p className="mt-1.5 text-sm text-text-muted">
-                        틀린 문제를 다시 풀어 실력을 다지세요. 모두 마스터했다면 새 문제도 풀어볼 수 있어요.
-                      </p>
+                      <p className="mt-1.5 text-sm text-text-muted">오답이 모두 정리됐습니다. 새 문제로 실력을 더 다져보세요.</p>
                     </>
                   )}
                 </div>
                 <Link
-                  href={focus ? `/wrong-answers?subjectId=${focus.id}` : "/wrong-answers"}
+                  href={focus ? `/wrong-answers?subjectId=${focus.id}` : "/solve"}
                   className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-primary-fg transition-colors hover:bg-primary-hover"
                 >
-                  {focus ? "복습 시작" : "오답 풀러가기"}
+                  {focus ? "복습 시작" : "문제 풀기"}
                   <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
                   </svg>

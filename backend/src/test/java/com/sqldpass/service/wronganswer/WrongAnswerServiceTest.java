@@ -88,9 +88,8 @@ class WrongAnswerServiceTest {
     }
 
     @Test
-    @DisplayName("getStats maps repository projections")
+    @DisplayName("getStats maps repository projections (권한 가드 없음 — 대시보드 통계 노출용)")
     void getStats() {
-        given(subscriptionService.hasLibraryAccess(1L)).willReturn(true);
         WrongAnswerStatsProjection projection = mock(WrongAnswerStatsProjection.class);
         given(projection.getSubjectId()).willReturn(5L);
         given(projection.getSubjectName()).willReturn("SQL Basics");

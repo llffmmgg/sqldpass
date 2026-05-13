@@ -47,7 +47,8 @@ public class WrongAnswerService {
     }
 
     public List<WrongAnswerStatsResponse> getStats(Long memberId) {
-        requireLibraryAccess(memberId);
+        // 통계는 무료 회원의 대시보드에도 필요 — 권한 가드 없음.
+        // 실제 오답 리스트 조회(getWrongAnswers)와 다시 풀기 후 잠금 화면(getPreview)은 별도 정책.
         return solveAnswerRepository.findWrongAnswerStats(memberId).stream()
                 .map(WrongAnswerStatsResponse::from)
                 .toList();
