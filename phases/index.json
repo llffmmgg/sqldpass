@@ -125,6 +125,12 @@
       "description": "모의고사 PDF 다운로드 버튼의 eligibility 게이트(/api/mock-exams/pdf/eligibility 조회 후 null 리턴) 를 제거 — 비로그인/미구독 사용자에게도 버튼 노출해 결제 유도 동선 복원. 비로그인 클릭은 BookmarkButton 과 동일한 alert('로그인 후 이용 가능합니다.') 로 차단, 미구독은 기존 PDF_REQUIRES_SUBSCRIPTION 토스트 그대로. 백엔드 권한 체크 무변경.",
       "status": "completed",
       "completed_at": "2026-05-13T13:16:38+0900"
+    },
+    {
+      "dir": "android-launch-prep",
+      "name": "android-launch-prep",
+      "description": "안드로이드 앱 출시를 위한 mobile/ 워크스페이스 인프라 준비 — (1) npm install + cap add android 로 mobile/android/ 네이티브 프로젝트 생성, (2) build.gradle 에 환경변수 기반 release signingConfig + versionCode/versionName 설정. docs/ANDROID_LAUNCH.md 의 Step 5 ('키스토어 + 첫 빌드 검증') 직전까지의 코드 작업을 완료해, 사용자가 키스토어만 생성하면 즉시 release AAB 빌드 가능한 상태로 만든다. Billing Plugin/Auth Plugin/자산 디자인은 별도 phase.",
+      "status": "in_progress"
     }
   ]
 }

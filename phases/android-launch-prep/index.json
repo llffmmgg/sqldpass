@@ -1,0 +1,20 @@
+{
+  "project": "sqldpass",
+  "phase": "android-launch-prep",
+  "description": "안드로이드 앱 출시를 위한 mobile/ 워크스페이스 인프라 준비. mobile/android/ 네이티브 프로젝트 생성 + Gradle release 서명/버전 설정까지의 코드 작업만 처리한다. Billing Plugin/Auth Plugin/그래픽 자산/Play Console 등록은 별도 phase 또는 사용자 외부 작업.",
+  "steps": [
+    {
+      "step": 1,
+      "name": "mobile-workspace-bootstrap",
+      "description": "mobile/ 에서 npm install + npx cap add android + npx cap sync android. mobile/android/ 네이티브 프로젝트 트리 생성. .gitignore 가 build 산출물·키스토어·google-services.json 을 제대로 제외하는지 검증.",
+      "status": "pending"
+    },
+    {
+      "step": 2,
+      "name": "android-gradle-release-config",
+      "description": "mobile/android/app/build.gradle 에 환경변수 기반 release signingConfig 추가 + versionCode/versionName 초기값 설정. docs/ANDROID_LAUNCH.md Step 5-2 가이드와 정합. 키스토어 비밀번호 환경변수 4종(SQLDPASS_KEYSTORE_PATH/PASS, SQLDPASS_KEY_ALIAS/PASS) 사용.",
+      "status": "pending"
+    }
+  ],
+  "created_at": "2026-05-13T00:00:00+0900"
+}
