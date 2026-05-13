@@ -232,9 +232,11 @@ export default function AdminNoticesPage() {
                   </span>
                 </div>
               ) : (
-                <div className="bg-background p-5">
-                  {form.title && <p className="text-base font-semibold text-amber-300">{form.title}</p>}
-                  <p className="mt-2 whitespace-pre-wrap break-words text-sm leading-relaxed">
+                <div className="flex max-h-[480px] flex-col bg-background p-5">
+                  {form.title && (
+                    <p className="shrink-0 text-base font-semibold text-amber-300">{form.title}</p>
+                  )}
+                  <p className="mt-2 flex-1 overflow-y-auto whitespace-pre-wrap break-words pr-1 text-sm leading-relaxed">
                     {form.body || "본문을 입력하면 여기 표시됩니다"}
                   </p>
                 </div>

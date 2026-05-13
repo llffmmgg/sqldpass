@@ -1,7 +1,5 @@
 package com.sqldpass.controller.bookmark;
 
-import java.util.List;
-
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -10,7 +8,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.sqldpass.controller.bookmark.dto.BookmarkExistsResponse;
-import com.sqldpass.controller.bookmark.dto.BookmarkResponse;
+import com.sqldpass.controller.bookmark.dto.BookmarkListResponse;
 import com.sqldpass.service.bookmark.BookmarkService;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -27,8 +25,11 @@ public class BookmarkController {
     private final BookmarkService bookmarkService;
 
     @GetMapping("/api/bookmarks")
-    @Operation(summary = "내 즐겨찾기 목록 (최신순)")
-    public List<BookmarkResponse> list(HttpServletRequest request) {
+    @Operation(summary = "내 즐겨찾기 목록 (최신순)",
+            description = "Thunder/Focus/Pro/Lifetime 회원은 전체 반환. "
+                    + "그 외 사용자는 최근 30개만 반환되며 limited=true 로 표시. "
+                    + "31번째 이상 즐겨찾기 데이터는 백엔드에 보존되며 결제 후 즉시 복원됨.")
+    public BookmarkListResponse list(HttpServletRequest request) {
         Long memberId = (Long) request.getAttribute("memberId");
         return bookmarkService.list(memberId);
     }

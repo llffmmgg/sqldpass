@@ -21,6 +21,8 @@ type Tier = {
   /** 정가 (할인 어필용) — 있으면 가격 위에 line-through 로 표시. 실제 결제 금액은 price 가 아닌 백엔드 baseAmount. */
   originalPrice?: number;
   unit?: string;
+  /** 가격 바로 아래 한 줄 가치 제안. 각 플랜의 핵심 사용 시나리오를 짧게 어필. */
+  pitch: string;
   features: Feature[];
   cta: string;
   highlight?: boolean;
@@ -28,7 +30,6 @@ type Tier = {
 
 const FREE_BASELINE: Feature[] = [
   { text: "쉬움/보통 회차", muted: true },
-  { text: "오답 노트", muted: true },
   { text: "대시보드", muted: true },
 ];
 
@@ -38,25 +39,45 @@ const TIERS: Tier[] = [
     name: "Free",
     tagline: "기본 문제 풀이 제공",
     price: 0,
+    pitch: "쉬움·보통 회차를 무료로 풀며 가볍게 시작해보세요.",
     features: [
       { text: "쉬움/보통 회차" },
-      { text: "오답 노트" },
+      { text: "즐겨찾기 30개" },
       { text: "대시보드" },
     ],
     cta: "현재 플랜",
   },
   {
+    key: "FOCUS",
+    name: "Focus",
+    tagline: "일상 학습 30일 집중",
+    price: 2900,
+    unit: "30일",
+    pitch: "광고를 제거하고 오답노트로 한 달 동안 집중 공부하세요.",
+    features: [
+      { text: "광고 제거" },
+      { text: "오답노트 사용" },
+      { text: "즐겨찾기 무제한" },
+      ...FREE_BASELINE,
+    ],
+    cta: "Focus 시작",
+  },
+  {
     key: "THREE_DAY",
-    name: "Starter",
-    tagline: "시험 직전 단기 점검",
+    name: "Thunder",
+    tagline: "벼락치기 3일 풀파워",
     price: 3900,
     unit: "3일",
+    pitch: "시험 임박 3일, PASS+ 회차까지 벼락치기로 마무리하세요.",
     features: [
       { text: "PASS+ 회차 풀이" },
       { text: "72시간 풀 액세스" },
+      { text: "광고 제거" },
+      { text: "오답노트 사용" },
+      { text: "즐겨찾기 무제한" },
       ...FREE_BASELINE,
     ],
-    cta: "Starter 시작",
+    cta: "Thunder 시작",
   },
   {
     key: "ONE_MONTH",
@@ -65,10 +86,13 @@ const TIERS: Tier[] = [
     price: 9900,
     originalPrice: 12900,
     unit: "30일",
+    pitch: "한 달 동안 PASS+ 회차와 모든 학습 도구를 무제한으로 사용해보세요.",
     features: [
       { text: "PASS+ 회차 무제한" },
       { text: "30일 풀 액세스" },
       { text: "광고 제거" },
+      { text: "오답노트 사용" },
+      { text: "즐겨찾기 무제한" },
       ...FREE_BASELINE,
     ],
     cta: "Pro 시작",
@@ -76,19 +100,20 @@ const TIERS: Tier[] = [
   },
   {
     key: "UNLIMITED",
-    name: "Lifetime",
+    name: "All Pass",
     tagline: "한 번 결제로 계속 이용",
     price: 29900,
-    unit: "평생",
+    pitch: "한 번 결제로 새 회차와 모의고사 PDF 다운로드까지 평생 사용하세요.",
     features: [
       { text: "PASS+ 회차 무제한" },
-      { text: "앞으로 추가될 회차까지 무제한" },
-      { text: "기간 제한 없음" },
+      { text: "무제한 풀 엑세스" },
       { text: "광고 제거" },
+      { text: "오답노트 사용" },
+      { text: "즐겨찾기 무제한" },
       { text: "PDF 다운로드" },
       ...FREE_BASELINE,
     ],
-    cta: "Lifetime 시작",
+    cta: "All Pass 시작",
   },
 ];
 
@@ -115,26 +140,14 @@ export default function CheckoutLanding({
 }: Props) {
   return (
     <div className="relative">
-      {/* 배경 primary radial glow — Supabase 톤 */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-x-0 -top-24 -z-10 h-[420px] bg-[radial-gradient(ellipse_60%_50%_at_50%_0%,rgba(62,207,142,0.10),transparent_70%)]"
-      />
-
       <header className="text-center">
-        <span className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
-          <span className="relative flex h-1.5 w-1.5">
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-60" />
-            <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-primary" />
-          </span>
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-primary px-3 py-1 text-xs font-semibold text-primary-fg">
           요금제
         </span>
         <h1 className="mx-auto mt-5 max-w-2xl text-balance text-4xl font-bold tracking-tight text-text sm:text-5xl">
           내 시험 일정에 맞는
           <br />
-          <span className="bg-gradient-to-r from-[var(--primary)] to-[var(--primary-hover)] bg-clip-text text-transparent">
-            플랜을 선택하세요
-          </span>
+          <span className="text-primary">플랜을 선택하세요</span>
         </h1>
         <p className="mx-auto mt-4 max-w-lg text-sm leading-relaxed text-text-muted sm:text-base">
           필요한 기간만큼 이용하고, 고난이도 모의고사까지 바로 풀어보세요.
@@ -151,7 +164,7 @@ export default function CheckoutLanding({
                 </span>
               )}
               {subscription.expiresAt === null && (
-                <span className="ml-1 opacity-80">· 평생</span>
+                <span className="ml-1 opacity-80">· 무기한</span>
               )}
             </span>
           </div>
@@ -182,7 +195,7 @@ export default function CheckoutLanding({
         </div>
       )}
 
-      <div className="mt-10 grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
+      <div className="mt-10 grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-5">
         {TIERS.map((t) => (
           <PlanCard
             key={t.key}
@@ -222,7 +235,7 @@ export default function CheckoutLanding({
         {[
           ["자동결제 되나요?", "아니요. 한 번 결제 = 한 번만 청구돼요."],
           ["환불은 언제까지?", "결제 후 7일 이내, 사용 이력이 없으면 100% 환불돼요."],
-          ["Starter 만료되면?", "다시 결제하거나 Pro 로 이어갈 수 있어요."],
+          ["Thunder 만료되면?", "다시 결제하거나 Focus·Pro 로 이어갈 수 있어요."],
         ].map(([q, a], i) => (
           <div
             key={q}
@@ -295,10 +308,10 @@ function PlanCard({
 
   return (
     <div
-      className={`relative flex flex-col rounded-2xl p-5 sm:p-6 transition-colors duration-200 ${
+      className={`group relative flex flex-col rounded-2xl p-5 sm:p-6 transition-all duration-300 ease-out will-change-transform ${
         highlight
-          ? "border-2 border-primary/60 bg-gradient-to-b from-primary/[0.06] via-surface to-surface/80 shadow-[0_0_24px_-12px_rgba(62,207,142,0.30)]"
-          : "border border-border bg-surface/40 hover:border-border-strong hover:bg-surface/70"
+          ? "border-2 border-primary/60 bg-gradient-to-b from-primary/[0.06] via-surface to-surface/80 shadow-[0_0_24px_-12px_rgba(62,207,142,0.30)] hover:-translate-y-1 hover:border-primary/80 hover:shadow-[0_0_40px_-8px_rgba(62,207,142,0.45)]"
+          : "border border-border bg-surface/40 hover:-translate-y-1 hover:border-primary/40 hover:bg-surface/70 hover:shadow-[0_0_28px_-10px_rgba(62,207,142,0.18)]"
       }`}
     >
       {/* 헤더 — 플랜명 + 인라인 뱃지 */}
@@ -366,6 +379,15 @@ function PlanCard({
         )}
       </div>
 
+      {/* 가치 제안 — 가격 아래, CTA 위. 카드 폭에서 한국어가 2~4줄 wrap 되므로 min-h 충분히 잡아 CTA 라인 정렬 */}
+      <p
+        className={`mt-3 min-h-[88px] text-[13px] leading-relaxed ${
+          highlight ? "text-text" : "text-text-muted"
+        }`}
+      >
+        {tier.pitch}
+      </p>
+
       {/* CTA 버튼 — 5가지 상태 분기 (가격 바로 아래, 모든 카드 동일 위치) */}
       <div className="mt-5">
         {isFree ? (
@@ -425,7 +447,7 @@ function PlanCard({
         )}
       </div>
 
-      {/* 구분선 */}
+      {/* 구분선 — CTA 와 features 사이 자연스러운 분리 */}
       <div
         className={`mt-6 h-px ${
           highlight
@@ -509,10 +531,12 @@ function StarSvg({ className = "" }: { className?: string }) {
 export function planLabel(plan: SubscriptionPlan): string {
   switch (plan) {
     case "THREE_DAY":
-      return "Starter";
+      return "Thunder";
+    case "FOCUS":
+      return "Focus";
     case "ONE_MONTH":
       return "Pro";
     case "UNLIMITED":
-      return "Lifetime";
+      return "All Pass";
   }
 }

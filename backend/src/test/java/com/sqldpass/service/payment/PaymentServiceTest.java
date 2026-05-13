@@ -68,12 +68,14 @@ class PaymentServiceTest {
     void setUp() {
         properties = new PaymentProperties();
         properties.setReviewerNicknames("pay-rv-7f2a91");
-        properties.setThreeDay(new PaymentProperties.PlanConfig(3900, "문어CBT Starter"));
+        properties.setThreeDay(new PaymentProperties.PlanConfig(3900, "문어CBT Thunder"));
+        properties.setFocus(new PaymentProperties.PlanConfig(2900, "문어CBT Focus"));
         properties.setOneMonth(new PaymentProperties.PlanConfig(9900, "문어CBT Pro"));
-        properties.setUnlimited(new PaymentProperties.PlanConfig(29900, "문어CBT Lifetime"));
+        properties.setUnlimited(new PaymentProperties.PlanConfig(29900, "문어CBT All Pass"));
 
         playBillingProperties = new PlayBillingProperties();
         playBillingProperties.getProductIdMapping().put(SubscriptionPlan.THREE_DAY, "iap_three_day");
+        playBillingProperties.getProductIdMapping().put(SubscriptionPlan.FOCUS, "iap_focus");
         playBillingProperties.getProductIdMapping().put(SubscriptionPlan.ONE_MONTH, "iap_one_month");
         playBillingProperties.getProductIdMapping().put(SubscriptionPlan.UNLIMITED, "iap_unlimited");
 

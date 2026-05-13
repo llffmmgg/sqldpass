@@ -853,7 +853,7 @@ export async function resetExportMark(examType: ExportExamType): Promise<number>
  * 구독 관리
  * ───────────────────────────────────────────────────────────── */
 
-export type AdminSubscriptionPlan = "THREE_DAY" | "ONE_MONTH" | "UNLIMITED";
+export type AdminSubscriptionPlan = "THREE_DAY" | "FOCUS" | "ONE_MONTH" | "UNLIMITED";
 
 export interface AdminSubscription {
   id: number;

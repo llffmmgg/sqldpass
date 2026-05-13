@@ -47,18 +47,18 @@ export function SiteNoticeModal() {
       onClick={closeOnce}
     >
       <div
-        className="w-full max-w-md rounded-2xl border border-primary/30 bg-surface p-6 text-sm leading-relaxed text-text shadow-2xl"
+        className="flex max-h-[85dvh] w-full max-w-md flex-col rounded-2xl border border-primary/30 bg-surface p-6 text-sm leading-relaxed text-text shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         {notice.title && (
-          <p className="text-base font-bold text-primary">{notice.title}</p>
+          <p className="shrink-0 text-base font-bold text-primary">{notice.title}</p>
         )}
 
-        <div className="mt-3 space-y-3 whitespace-pre-wrap break-words text-text">
+        <div className="mt-3 flex-1 space-y-3 overflow-y-auto whitespace-pre-wrap break-words pr-1 text-text">
           {notice.body}
         </div>
 
-        <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row">
+        <div className="mt-6 flex shrink-0 flex-col-reverse gap-2 sm:flex-row">
           <Button variant="secondary" size="md" onClick={dismissForWeek} className="flex-1">
             7일간 보지 않기
           </Button>

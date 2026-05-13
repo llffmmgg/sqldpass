@@ -16,13 +16,15 @@ import DataTable, { TableSkeleton } from "@/components/admin/DataTable";
 import EmptyState from "@/components/admin/EmptyState";
 
 const PLAN_LABEL: Record<AdminSubscriptionPlan, string> = {
-  THREE_DAY: "3일권",
-  ONE_MONTH: "한달권",
-  UNLIMITED: "무제한",
+  THREE_DAY: "Thunder",
+  FOCUS: "Focus",
+  ONE_MONTH: "Pro",
+  UNLIMITED: "All Pass",
 };
 
 const PLAN_CHIP: Record<AdminSubscriptionPlan, string> = {
   THREE_DAY: "border-amber-500/40 bg-amber-500/10 text-amber-300",
+  FOCUS: "border-sky-500/40 bg-sky-500/10 text-sky-300",
   ONE_MONTH: "border-violet-500/40 bg-violet-500/10 text-violet-300",
   UNLIMITED: "border-emerald-500/40 bg-emerald-500/10 text-emerald-300",
 };
@@ -167,7 +169,7 @@ function SubscriptionRow({ sub, onChanged }: { sub: AdminSubscription; onChanged
         {new Date(sub.purchasedAt).toLocaleDateString("ko-KR")}
       </DataTable.Cell>
       <DataTable.Cell align="right" mono className="text-muted">
-        {sub.expiresAt ? new Date(sub.expiresAt).toLocaleDateString("ko-KR") : "평생"}
+        {sub.expiresAt ? new Date(sub.expiresAt).toLocaleDateString("ko-KR") : "무기한"}
       </DataTable.Cell>
       <DataTable.Cell align="right">
         {sub.active ? (
@@ -248,8 +250,8 @@ function GrantModal({ onClose, onDone }: { onClose: () => void; onDone: () => vo
 
           <div>
             <label className="block text-xs font-medium">Plan</label>
-            <div className="mt-1 grid grid-cols-3 gap-2">
-              {(["THREE_DAY", "ONE_MONTH", "UNLIMITED"] as const).map((p) => (
+            <div className="mt-1 grid grid-cols-2 gap-2">
+              {(["THREE_DAY", "FOCUS", "ONE_MONTH", "UNLIMITED"] as const).map((p) => (
                 <button
                   key={p}
                   onClick={() => setPlan(p)}

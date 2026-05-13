@@ -1,20 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 import { useToast } from "@/components/Toast";
 import { isLoggedIn } from "@/lib/auth";
-import {
-  downloadMockExamPdfAsUser,
-  getPdfEligibility,
-  PdfDownloadError,
-} from "@/lib/payment";
+import { downloadMockExamPdfAsUser, PdfDownloadError } from "@/lib/payment";
 
-/**
- * 모의고사 PDF 다운로드 버튼.
- * 백엔드의 payment.reviewer-nicknames 화이트리스트에 포함된 회원에게만 노출된다.
- * 빈 화이트리스트(정식 오픈) 시 모든 로그인 회원에게 노출.
- */
 export default function MockExamPdfButton({
   examId,
   className = "",
@@ -23,24 +14,15 @@ export default function MockExamPdfButton({
   className?: string;
 }) {
   const toast = useToast();
-  const [eligible, setEligible] = useState<boolean | null>(null);
   const [busy, setBusy] = useState(false);
-
-  useEffect(() => {
-    if (!isLoggedIn()) {
-      setEligible(false);
-      return;
-    }
-    getPdfEligibility()
-      .then((r) => setEligible(r.eligible))
-      .catch(() => setEligible(false));
-  }, []);
-
-  if (!eligible) return null;
 
   return (
     <button
       onClick={async () => {
+        if (!isLoggedIn()) {
+          alert("로그인 후 이용 가능합니다.");
+          return;
+        }
         if (busy) return;
         setBusy(true);
         try {
@@ -48,7 +30,7 @@ export default function MockExamPdfButton({
         } catch (e) {
           if (e instanceof PdfDownloadError && e.code === "PDF_REQUIRES_SUBSCRIPTION") {
             toast.show(
-              "PDF 다운로드는 Lifetime 플랜 전용입니다. 우측 상단 프로필에서 업그레이드할 수 있어요.",
+              "PDF 다운로드는 All Pass 플랜 전용입니다. 우측 상단 프로필에서 업그레이드할 수 있어요.",
               "info",
             );
           } else {

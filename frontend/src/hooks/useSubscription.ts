@@ -11,6 +11,7 @@ const INACTIVE: ActiveSubscription = {
   expiresAt: null,
   removesAds: false,
   allowsPdf: false,
+  hasLibraryAccess: false,
 };
 
 // 페이지에 광고가 여러 개 마운트되어도 API 한 번만 호출하도록 모듈 캐시.
@@ -21,6 +22,14 @@ function fetchSubscriptionCached(): Promise<ActiveSubscription> {
   if (cachedPromise) return cachedPromise;
   cachedPromise = getActiveSubscription().catch(() => INACTIVE);
   return cachedPromise;
+}
+
+/**
+ * 결제 성공 / 로그인 / 로그아웃 등 구독 상태가 변할 수 있는 지점에서 호출.
+ * 다음 useSubscription 마운트 시 백엔드에서 새 데이터를 다시 받는다.
+ */
+export function invalidateSubscriptionCache(): void {
+  cachedPromise = null;
 }
 
 function subscribeAuth(callback: () => void) {

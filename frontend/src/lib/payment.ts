@@ -25,7 +25,7 @@ const CHANNEL_KEY_KAKAOPAY =
   "";
 const CHANNEL_KEY_INICIS = process.env.NEXT_PUBLIC_PORTONE_CHANNEL_KEY_INICIS ?? "";
 
-export type SubscriptionPlan = "THREE_DAY" | "ONE_MONTH" | "UNLIMITED";
+export type SubscriptionPlan = "THREE_DAY" | "FOCUS" | "ONE_MONTH" | "UNLIMITED";
 
 export type PaymentMethod = "KAKAOPAY" | "CARD";
 
@@ -36,6 +36,7 @@ export type PaymentMethod = "KAKAOPAY" | "CARD";
  */
 const PLAY_BILLING_SKU: Record<SubscriptionPlan, string> = {
   THREE_DAY: process.env.NEXT_PUBLIC_PLAY_BILLING_SKU_THREE_DAY ?? "iap_three_day",
+  FOCUS: process.env.NEXT_PUBLIC_PLAY_BILLING_SKU_FOCUS ?? "iap_focus",
   ONE_MONTH: process.env.NEXT_PUBLIC_PLAY_BILLING_SKU_ONE_MONTH ?? "iap_one_month",
   UNLIMITED: process.env.NEXT_PUBLIC_PLAY_BILLING_SKU_UNLIMITED ?? "iap_unlimited",
 };
@@ -74,6 +75,7 @@ export type ActiveSubscription = {
   expiresAt: string | null;
   removesAds: boolean;
   allowsPdf: boolean;
+  hasLibraryAccess: boolean;
 };
 
 export type PreviewResponse = {

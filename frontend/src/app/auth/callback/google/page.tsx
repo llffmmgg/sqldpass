@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { setAuth, setNickname as saveNickname } from "@/lib/auth";
+import { invalidateSubscriptionCache } from "@/hooks/useSubscription";
 import { fetchApi } from "@/lib/api";
 import { updateNickname } from "@/lib/memberApi";
 import { generateNickname } from "@/lib/nickname";
@@ -56,6 +57,8 @@ function GoogleCallback() {
 
         // 토큰 먼저 저장 → 후속 PATCH 호출에 Authorization 헤더 사용
         setAuth(data.token, data.nickname);
+        // 이전 계정의 구독 캐시가 새 계정에 새지 않도록 초기화
+        invalidateSubscriptionCache();
 
         // GA4 — 회원가입/로그인 이벤트 + 사용자 속성
         setUserProperties({ plan_type: "free" });

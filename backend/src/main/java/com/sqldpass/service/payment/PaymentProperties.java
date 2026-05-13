@@ -24,9 +24,10 @@ public class PaymentProperties {
 
     private PortOne portone = new PortOne();
     private String reviewerNicknames = "";
-    private PlanConfig threeDay = new PlanConfig(3900, "문어CBT Starter");
+    private PlanConfig threeDay = new PlanConfig(3900, "문어CBT Thunder");
+    private PlanConfig focus = new PlanConfig(2900, "문어CBT Focus");
     private PlanConfig oneMonth = new PlanConfig(9900, "문어CBT Pro");
-    private PlanConfig unlimited = new PlanConfig(29900, "문어CBT Lifetime");
+    private PlanConfig unlimited = new PlanConfig(29900, "문어CBT All Pass");
 
     public PortOne getPortone() {
         return portone;
@@ -52,6 +53,14 @@ public class PaymentProperties {
         this.threeDay = threeDay;
     }
 
+    public PlanConfig getFocus() {
+        return focus;
+    }
+
+    public void setFocus(PlanConfig focus) {
+        this.focus = focus;
+    }
+
     public PlanConfig getOneMonth() {
         return oneMonth;
     }
@@ -72,6 +81,7 @@ public class PaymentProperties {
     public PlanConfig configFor(SubscriptionPlan plan) {
         return switch (plan) {
             case THREE_DAY -> threeDay;
+            case FOCUS -> focus;
             case ONE_MONTH -> oneMonth;
             case UNLIMITED -> unlimited;
         };

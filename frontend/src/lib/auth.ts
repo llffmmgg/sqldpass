@@ -1,3 +1,5 @@
+import { invalidateSubscriptionCache } from "@/hooks/useSubscription";
+
 const TOKEN_KEY = "user_token";
 const NICKNAME_KEY = "user_nickname";
 
@@ -18,6 +20,7 @@ export function setNickname(nickname: string) {
 export function clearAuth() {
   localStorage.removeItem(TOKEN_KEY);
   localStorage.removeItem(NICKNAME_KEY);
+  invalidateSubscriptionCache();
 }
 
 export function isLoggedIn(): boolean {
@@ -50,5 +53,6 @@ export async function loginWithGoogleIdToken(idToken: string): Promise<{
   }
   const body = (await res.json()) as { token: string; nickname: string; isNew: boolean };
   setAuth(body.token, body.nickname);
+  invalidateSubscriptionCache();
   return body;
 }

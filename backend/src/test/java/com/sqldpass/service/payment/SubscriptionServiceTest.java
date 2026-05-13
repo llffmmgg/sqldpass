@@ -50,10 +50,11 @@ class SubscriptionServiceTest {
         assertThat(service.hasPremiumAccess(1L)).isFalse();
         assertThat(service.removesAds(1L)).isFalse();
         assertThat(service.allowsPdf(1L)).isFalse();
+        assertThat(service.hasLibraryAccess(1L)).isFalse();
     }
 
     @Test
-    @DisplayName("THREE_DAY 활성 → premium=true, removesAds=false, allowsPdf=false")
+    @DisplayName("THREE_DAY(Thunder) 활성 → premium=true, removesAds=true, allowsPdf=false, hasLibraryAccess=true")
     void threeDayActive() {
         SubscriptionEntity sub = new SubscriptionEntity(
                 1L, SubscriptionPlan.THREE_DAY, 100L,
@@ -63,13 +64,29 @@ class SubscriptionServiceTest {
         var active = service.getActive(1L);
         assertThat(active).isPresent();
         assertThat(active.get().plan()).isEqualTo(SubscriptionPlan.THREE_DAY);
-        assertThat(active.get().removesAds()).isFalse();
+        assertThat(active.get().removesAds()).isTrue();
         assertThat(active.get().allowsPdf()).isFalse();
+        assertThat(active.get().hasLibraryAccess()).isTrue();
         assertThat(service.hasPremiumAccess(1L)).isTrue();
     }
 
     @Test
-    @DisplayName("ONE_MONTH 활성 → removesAds=true, allowsPdf=false")
+    @DisplayName("FOCUS 활성 → removesAds=true, allowsPdf=false, hasLibraryAccess=true")
+    void focusActive() {
+        SubscriptionEntity sub = new SubscriptionEntity(
+                1L, SubscriptionPlan.FOCUS, 100L,
+                LocalDateTime.now().minusDays(1), LocalDateTime.now().plusDays(29));
+        given(subscriptionRepository.findActiveByMemberId(eq(1L), any())).willReturn(List.of(sub));
+
+        var active = service.getActive(1L);
+        assertThat(active.get().plan()).isEqualTo(SubscriptionPlan.FOCUS);
+        assertThat(active.get().removesAds()).isTrue();
+        assertThat(active.get().allowsPdf()).isFalse();
+        assertThat(active.get().hasLibraryAccess()).isTrue();
+    }
+
+    @Test
+    @DisplayName("ONE_MONTH 활성 → removesAds=true, allowsPdf=false, hasLibraryAccess=true")
     void oneMonthActive() {
         SubscriptionEntity sub = new SubscriptionEntity(
                 1L, SubscriptionPlan.ONE_MONTH, 100L,
@@ -79,10 +96,11 @@ class SubscriptionServiceTest {
         var active = service.getActive(1L);
         assertThat(active.get().removesAds()).isTrue();
         assertThat(active.get().allowsPdf()).isFalse();
+        assertThat(active.get().hasLibraryAccess()).isTrue();
     }
 
     @Test
-    @DisplayName("UNLIMITED 활성 → expiresAt=null, allowsPdf=true")
+    @DisplayName("UNLIMITED 활성 → expiresAt=null, allowsPdf=true, hasLibraryAccess=true")
     void unlimitedActive() {
         SubscriptionEntity sub = new SubscriptionEntity(
                 1L, SubscriptionPlan.UNLIMITED, 100L,
@@ -94,5 +112,6 @@ class SubscriptionServiceTest {
         assertThat(active.get().expiresAt()).isNull();
         assertThat(active.get().removesAds()).isTrue();
         assertThat(active.get().allowsPdf()).isTrue();
+        assertThat(active.get().hasLibraryAccess()).isTrue();
     }
 }

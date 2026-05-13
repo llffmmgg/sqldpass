@@ -30,6 +30,8 @@ public enum ErrorCode {
     // 403
     FORBIDDEN(HttpStatus.FORBIDDEN, "FORBIDDEN", "접근 권한이 없습니다."),
     PDF_REQUIRES_SUBSCRIPTION(HttpStatus.FORBIDDEN, "PDF_REQUIRES_SUBSCRIPTION", "PDF 다운로드는 무제한 구독 회원만 이용할 수 있습니다."),
+    WRONG_ANSWER_REQUIRES_SUBSCRIPTION(HttpStatus.FORBIDDEN, "WRONG_ANSWER_REQUIRES_SUBSCRIPTION",
+            "오답노트는 Thunder · Focus · Pro · Lifetime 에서 사용할 수 있어요."),
 
     // 409
     GENERATION_ALREADY_RUNNING(HttpStatus.CONFLICT, "GENERATION_ALREADY_RUNNING", "이미 문제 생성이 진행 중입니다."),

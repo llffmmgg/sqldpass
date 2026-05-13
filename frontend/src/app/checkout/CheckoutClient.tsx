@@ -22,6 +22,7 @@ import {
   type SubscriptionPlan,
 } from "@/lib/payment";
 import BuyerInfoModal from "@/components/billing/BuyerInfoModal";
+import { invalidateSubscriptionCache } from "@/hooks/useSubscription";
 
 type AccessState = "loading" | "anonymous" | "denied" | "allowed";
 
@@ -58,12 +59,23 @@ function CheckoutContent() {
   // plan 별 미리보기 — 활성 구독 prorate 차감 적용된 finalAmount 표시용
   const [previews, setPreviews] = useState<Record<SubscriptionPlan, PreviewResponse | null>>({
     THREE_DAY: null,
+    FOCUS: null,
     ONE_MONTH: null,
     UNLIMITED: null,
   });
 
   useEffect(() => {
+    // dev UI preview — 백엔드 없이 화면만 보고 싶을 때 NEXT_PUBLIC_DEV_UI_PREVIEW=true 면
+    // 비로그인 + 백엔드 호출 실패해도 결제 카드들을 그대로 렌더. 운영 빌드는 미적용.
+    const devPreview =
+      process.env.NODE_ENV !== "production" &&
+      process.env.NEXT_PUBLIC_DEV_UI_PREVIEW === "true";
+
     if (!isLoggedIn()) {
+      if (devPreview) {
+        setAccess("allowed");
+        return;
+      }
       setAccess("anonymous");
       return;
     }
@@ -75,7 +87,7 @@ function CheckoutContent() {
         // 활성 구독이 있으면 plan 별 미리보기 호출 (prorate 표시용).
         // 비활성이면 baseAmount 그대로 표시되니 호출 생략 (네트워크 절약).
         if (elig.eligible && sub.active) {
-          (["THREE_DAY", "ONE_MONTH", "UNLIMITED"] as const).forEach((plan) => {
+          (["THREE_DAY", "FOCUS", "ONE_MONTH", "UNLIMITED"] as const).forEach((plan) => {
             previewPayment(plan)
               .then((p) => setPreviews((prev) => ({ ...prev, [plan]: p })))
               .catch(() => {
@@ -84,7 +96,11 @@ function CheckoutContent() {
           });
         }
       })
-      .catch(() => setAccess("denied"));
+      .catch(() => {
+        // dev preview 모드면 백엔드 다운 상황에서도 카드를 보여준다.
+        if (devPreview) setAccess("allowed");
+        else setAccess("denied");
+      });
   }, []);
 
   // 같은 paymentId 에 대해 verify 가 두 번 이상 안 돌아가게 한다.
@@ -100,6 +116,8 @@ function CheckoutContent() {
     verifyPaymentById(returnedPaymentId)
       .then((result) => {
         toast.show(`${planLabel(result.plan)} 결제 완료`, "success");
+        // 결제 직후 광고 제거/PDF 권한이 다음 페이지에서 즉시 반영되도록 캐시 무효화
+        invalidateSubscriptionCache();
         router.replace("/checkout");
         setTimeout(() => router.push("/mock-exams"), 800);
       })
@@ -147,6 +165,8 @@ function CheckoutContent() {
     try {
       const result = await startPayment({ plan, method, buyer });
       toast.show(`${planLabel(result.plan)} 결제 완료`, "success");
+      // 결제 직후 광고 제거/PDF 권한이 다음 페이지에서 즉시 반영되도록 캐시 무효화
+      invalidateSubscriptionCache();
       setTimeout(() => router.push("/mock-exams"), 800);
     } catch (e) {
       const message = e instanceof Error ? e.message : "";

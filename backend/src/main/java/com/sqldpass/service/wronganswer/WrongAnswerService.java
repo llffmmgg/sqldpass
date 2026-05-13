@@ -7,6 +7,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.sqldpass.controller.solve.dto.SolveAnswerRequest;
 import com.sqldpass.controller.solve.dto.SolveRequest;
+import com.sqldpass.controller.wronganswer.dto.WrongAnswerPreviewResponse;
 import com.sqldpass.controller.wronganswer.dto.WrongAnswerResponse;
 import com.sqldpass.controller.wronganswer.dto.WrongAnswerRetryResponse;
 import com.sqldpass.controller.wronganswer.dto.WrongAnswerStatsResponse;
@@ -16,6 +17,7 @@ import com.sqldpass.persistent.question.QuestionRepository;
 import com.sqldpass.persistent.solve.SolveAnswerRepository;
 import com.sqldpass.service.common.ErrorCode;
 import com.sqldpass.service.common.SqldpassException;
+import com.sqldpass.service.payment.SubscriptionService;
 import com.sqldpass.service.solve.SolveService;
 
 @Service
@@ -25,24 +27,43 @@ public class WrongAnswerService {
     private final SolveAnswerRepository solveAnswerRepository;
     private final QuestionRepository questionRepository;
     private final SolveService solveService;
+    private final SubscriptionService subscriptionService;
 
     public WrongAnswerService(SolveAnswerRepository solveAnswerRepository,
                               QuestionRepository questionRepository,
-                              SolveService solveService) {
+                              SolveService solveService,
+                              SubscriptionService subscriptionService) {
         this.solveAnswerRepository = solveAnswerRepository;
         this.questionRepository = questionRepository;
         this.solveService = solveService;
+        this.subscriptionService = subscriptionService;
     }
 
     public List<WrongAnswerResponse> getWrongAnswers(Long memberId, Long subjectId) {
+        requireLibraryAccess(memberId);
         return solveAnswerRepository.findWrongAnswers(memberId, subjectId).stream()
                 .map(WrongAnswerResponse::from)
                 .toList();
     }
 
     public List<WrongAnswerStatsResponse> getStats(Long memberId) {
+        // 통계는 무료 회원의 대시보드에도 필요 — 권한 가드 없음.
+        // 실제 오답 리스트 조회(getWrongAnswers)와 다시 풀기 후 잠금 화면(getPreview)은 별도 정책.
         return solveAnswerRepository.findWrongAnswerStats(memberId).stream()
                 .map(WrongAnswerStatsResponse::from)
+                .toList();
+    }
+
+    /**
+     * 오답노트 잠금 화면 미리보기 — 권한 가드 없이 본인 오답 상위 limit 개를 제목·과목만 반환.
+     * 정답/해설은 응답에서 제외. memberId == null (비로그인) 이면 빈 리스트.
+     */
+    public List<WrongAnswerPreviewResponse> getPreview(Long memberId, int limit) {
+        if (memberId == null) return List.of();
+        int safeLimit = Math.max(1, Math.min(limit, 10));
+        return solveAnswerRepository.findWrongAnswers(memberId, null).stream()
+                .limit(safeLimit)
+                .map(WrongAnswerPreviewResponse::from)
                 .toList();
     }
 
@@ -56,6 +77,9 @@ public class WrongAnswerService {
      * 4. 결과(정답 여부 + 정답/해설) 반환
      *
      * 정답이면 다음 오답노트 조회 시 자동으로 목록에서 사라짐 (마스터 완료).
+     *
+     * 권한 가드 없음 — 즐겨찾기 탭(/wrong-answers 의 bookmark 탭)에서도 호출되므로
+     * 무료 사용자도 다시 풀기는 가능. 오답 리스트 조회만 hasLibraryAccess 가드.
      */
     @Transactional
     public WrongAnswerRetryResponse retry(Long memberId, Long questionId, Integer selectedOption, String answerText) {
@@ -73,5 +97,11 @@ public class WrongAnswerService {
                 question.getAnswer(),
                 question.getExplanation()
         );
+    }
+
+    private void requireLibraryAccess(Long memberId) {
+        if (!subscriptionService.hasLibraryAccess(memberId)) {
+            throw new SqldpassException(ErrorCode.WRONG_ANSWER_REQUIRES_SUBSCRIPTION);
+        }
     }
 }

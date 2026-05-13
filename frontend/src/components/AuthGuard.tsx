@@ -19,6 +19,16 @@ export default function AuthGuard({ children }: { children: ReactNode }) {
   );
 
   if (loggedIn === null) return null;
-  if (!loggedIn) return <LoginRequired />;
+  // dev UI preview — 백엔드 없이 화면만 확인할 때 NEXT_PUBLIC_DEV_UI_PREVIEW=true 면 가드 우회.
+  // 운영 빌드(NODE_ENV=production) 에서는 환경변수 무시. 절대 활성 안 됨.
+  if (!loggedIn) {
+    if (
+      process.env.NODE_ENV !== "production" &&
+      process.env.NEXT_PUBLIC_DEV_UI_PREVIEW === "true"
+    ) {
+      return <>{children}</>;
+    }
+    return <LoginRequired />;
+  }
   return <>{children}</>;
 }
