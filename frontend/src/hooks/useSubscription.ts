@@ -23,6 +23,14 @@ function fetchSubscriptionCached(): Promise<ActiveSubscription> {
   return cachedPromise;
 }
 
+/**
+ * 결제 성공 / 로그인 / 로그아웃 등 구독 상태가 변할 수 있는 지점에서 호출.
+ * 다음 useSubscription 마운트 시 백엔드에서 새 데이터를 다시 받는다.
+ */
+export function invalidateSubscriptionCache(): void {
+  cachedPromise = null;
+}
+
 function subscribeAuth(callback: () => void) {
   if (typeof window === "undefined") return () => {};
   window.addEventListener("storage", callback);

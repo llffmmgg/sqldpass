@@ -22,6 +22,7 @@ import {
   type SubscriptionPlan,
 } from "@/lib/payment";
 import BuyerInfoModal from "@/components/billing/BuyerInfoModal";
+import { invalidateSubscriptionCache } from "@/hooks/useSubscription";
 
 type AccessState = "loading" | "anonymous" | "denied" | "allowed";
 
@@ -100,6 +101,8 @@ function CheckoutContent() {
     verifyPaymentById(returnedPaymentId)
       .then((result) => {
         toast.show(`${planLabel(result.plan)} 결제 완료`, "success");
+        // 결제 직후 광고 제거/PDF 권한이 다음 페이지에서 즉시 반영되도록 캐시 무효화
+        invalidateSubscriptionCache();
         router.replace("/checkout");
         setTimeout(() => router.push("/mock-exams"), 800);
       })
@@ -147,6 +150,8 @@ function CheckoutContent() {
     try {
       const result = await startPayment({ plan, method, buyer });
       toast.show(`${planLabel(result.plan)} 결제 완료`, "success");
+      // 결제 직후 광고 제거/PDF 권한이 다음 페이지에서 즉시 반영되도록 캐시 무효화
+      invalidateSubscriptionCache();
       setTimeout(() => router.push("/mock-exams"), 800);
     } catch (e) {
       const message = e instanceof Error ? e.message : "";
