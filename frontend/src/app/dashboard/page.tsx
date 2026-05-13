@@ -288,15 +288,24 @@ function DashboardPageContent() {
 
   useEffect(() => {
     setNickname(getNickname());
-    Promise.all([getSolves(), getSubjects(), getWrongAnswerStats(), getOverallStats()])
-      .then(([solvesData, subjects, stats, overall]) => {
-        setSolves(solvesData);
-        setSubjectMap(buildSubjectMap(subjects));
-        setSubjectCertMap(buildSubjectCertMap(subjects));
-        setWeakStats(stats);
-        setOverallAvg(overall.avgDailyCount);
-      })
-      .finally(() => setLoading(false));
+    // 라이브러리 권한 없는 회원에게 getWrongAnswerStats 만 403 — 다른 데이터까지 막히지 않도록
+    // allSettled 로 독립 처리. 권한 없는 응답은 빈 배열로 폴백해 약점 과목 섹션만 비움.
+    Promise.allSettled([
+      getSolves(),
+      getSubjects(),
+      getWrongAnswerStats(),
+      getOverallStats(),
+    ]).then(([solvesRes, subjectsRes, statsRes, overallRes]) => {
+      if (solvesRes.status === "fulfilled") setSolves(solvesRes.value);
+      if (subjectsRes.status === "fulfilled") {
+        setSubjectMap(buildSubjectMap(subjectsRes.value));
+        setSubjectCertMap(buildSubjectCertMap(subjectsRes.value));
+      }
+      setWeakStats(statsRes.status === "fulfilled" ? statsRes.value : []);
+      if (overallRes.status === "fulfilled") {
+        setOverallAvg(overallRes.value.avgDailyCount);
+      }
+    }).finally(() => setLoading(false));
   }, []);
 
   if (loading)
