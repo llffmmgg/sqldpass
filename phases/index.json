@@ -118,6 +118,12 @@
       "description": "PortOne/KG이니시스 영수증 이메일의 상품명을 /checkout 요금제 카드 표기(Starter/Pro/Lifetime) 와 일치시킨다. application.yaml three-day/one-month/unlimited product-name → '문어CBT Starter/Pro/Lifetime' + PaymentServiceTest 하드코딩 보정.",
       "status": "completed",
       "completed_at": "2026-05-12T20:00:00+0900"
+    },
+    {
+      "dir": "exam-result-ux-unify",
+      "name": "exam-result-ux-unify",
+      "description": "모의고사(/mock-exams/[id])와 기출복원(/past-exams/[id]) 제출 후 결과 화면 UX 통일. 기출복원 결과 화면을 모의고사 frame(마스코트+격려멘트+PDF+광고+GA4 complete_exam+마일스톤 토스트)으로 맞추고, 결과 화면의 인라인 아코디언은 로그인 사용자에서 제거해 '상세 보기'로 유도(비로그인은 fallback 유지). /history/{id} 상세 페이지는 카드 클릭으로 문제+선택지 펼치고 해설은 그 안에서 또 한 번 접히는 2단계 접힘 구조로 변경. 백엔드는 PastExam grade 응답에 milestoneReached 필드 추가.",
+      "status": "pending"
     }
   ]
 }
