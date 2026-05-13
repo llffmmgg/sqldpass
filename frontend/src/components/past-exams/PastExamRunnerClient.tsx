@@ -307,14 +307,11 @@ export default function PastExamRunnerClient({
       <GradingDisclaimerModal />
       <Container size="default" className="py-10">
         <div className="mb-6 rounded-2xl border border-border bg-surface/70 p-5">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <div className="flex flex-wrap items-center gap-2">
-              <Badge cert={cert} variant="soft" size="xs" dot>
-                {token.label}
-              </Badge>
-              <span className="text-xs text-text-muted">{roundLabel}</span>
-            </div>
-            <MockExamPdfButton examId={exam.id} />
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge cert={cert} variant="soft" size="xs" dot>
+              {token.label}
+            </Badge>
+            <span className="text-xs text-text-muted">{roundLabel}</span>
           </div>
           <h1 className="mt-3 text-2xl font-bold tracking-tight sm:text-3xl">
             {exam.name}
@@ -357,14 +354,18 @@ export default function PastExamRunnerClient({
                   </span>
                 </p>
               </div>
-              <Button
-                variant="primary"
-                size="md"
-                onClick={handleSubmit}
-                disabled={submitting || answeredCount === 0}
-              >
-                {submitting ? "제출 중..." : `제출하기 (${answeredCount}/${total})`}
-              </Button>
+              <div className="flex items-center gap-3">
+                {/* 풀이 중에도 PDF 다운로드 가능 — 결제 회원만 실제 동작, 비회원은 결제 유도 */}
+                <MockExamPdfButton examId={exam.id} />
+                <Button
+                  variant="primary"
+                  size="md"
+                  onClick={handleSubmit}
+                  disabled={submitting || answeredCount === 0}
+                >
+                  {submitting ? "제출 중..." : `제출하기 (${answeredCount}/${total})`}
+                </Button>
+              </div>
             </div>
             <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-border">
               <div
