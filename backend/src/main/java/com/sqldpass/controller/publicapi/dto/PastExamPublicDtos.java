@@ -120,7 +120,9 @@ public final class PastExamPublicDtos {
             /** 자격증별 공식 합격 기준 적용한 최종 합격 여부 */
             boolean passed,
             /** 합격/불합격 한 줄 요약 (UI 배너) */
-            String passReason
+            String passReason,
+            /** 학습 연속일 마일스톤 도달 일수 — 도달 안 했으면 null, 비로그인이면 null */
+            Integer milestoneReached
     ) {
     }
 

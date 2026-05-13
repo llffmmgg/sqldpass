@@ -28,6 +28,12 @@ import { getSolves, type SolveSummaryResponse } from "@/lib/api";
 import { getToken } from "@/lib/auth";
 import MockExamAttemptsView from "@/components/MockExamAttemptsView";
 import MockExamPdfButton from "@/components/MockExamPdfButton";
+import MascotImage from "@/components/mascot/MascotImage";
+import { poseFromScore } from "@/components/mascot";
+import AdInfeed from "@/components/AdInfeed";
+import AdDisplay from "@/components/AdDisplay";
+import { trackEvent } from "@/lib/gtag";
+import { useToast } from "@/components/Toast";
 import { hapticError, hapticLight, hapticSuccess } from "@/lib/haptic";
 import QuestionJumpPanel, {
   type QuestionJumpGroup,
@@ -65,6 +71,7 @@ export default function PastExamRunnerClient({
   initialExam: PastExamDetail;
 }) {
   const exam = initialExam;
+  const toast = useToast();
 
   const [currentIdx, setCurrentIdx] = useState(0);
   const [answers, setAnswers] = useState<Map<number, AnswerState>>(new Map());
@@ -295,6 +302,18 @@ export default function PastExamRunnerClient({
       } else {
         hapticError();
       }
+
+      if (graded.milestoneReached) {
+        toast.show(`🎉 ${graded.milestoneReached}일 연속 학습! 잘하고 있어요`, "success");
+      }
+
+      trackEvent("complete_exam", {
+        exam_id: exam.id,
+        exam_type: exam.examType,
+        score: graded.score,
+        correct_count: graded.correctCount,
+        total_count: graded.totalCount,
+      });
     } catch (error) {
       alert(error instanceof Error ? error.message : "채점에 실패했습니다.");
     } finally {
@@ -521,15 +540,20 @@ function PastExamResultView({
   return (
     <main className="min-h-screen bg-bg text-text">
       <Container size="narrow" className="py-14">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <Badge cert={cert} variant="soft" size="sm" dot>
-            기출 복원 결과
-          </Badge>
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge cert={cert} variant="soft" size="sm" dot>
+                {token.label}
+              </Badge>
+              <span className="text-xs text-text-muted">{roundLabel}</span>
+            </div>
+            <h1 className="mt-3 text-2xl font-bold tracking-tight sm:text-3xl">
+              {exam.name} 결과
+            </h1>
+          </div>
           <MockExamPdfButton examId={exam.id} />
         </div>
-        <h1 className="mt-3 text-2xl font-bold tracking-tight sm:text-3xl">
-          {roundLabel} <span className="text-text-subtle">· 채점 완료</span>
-        </h1>
 
         {/* 합격/불합격 배너 — 자격증별 공식 기준 (백엔드 PassFailCriteria 적용) */}
         <div
@@ -552,20 +576,36 @@ function PastExamResultView({
           </div>
         </div>
 
-        <div className="mt-6 rounded-2xl border border-border bg-gradient-to-br from-surface via-surface to-transparent p-8 text-center">
-          <p className="text-xs font-semibold uppercase tracking-wider text-text-muted">
-            점수
-          </p>
-          <p
-            className={`mt-2 inline-block text-6xl font-bold tabular-nums animate-score-pop ${rateTone}`}
-          >
-            {result.score}
-            <span className="text-3xl text-text-subtle">점</span>
-          </p>
-          <p className="mt-3 text-sm text-text-muted">
-            {result.correctCount} / {result.totalCount} 정답 ·{" "}
-            <span className={rateTone}>{correctRate}%</span>
-          </p>
+        <div className="mt-6 rounded-xl border border-border bg-surface p-6 sm:p-8">
+          <div className="flex items-center gap-4 sm:gap-6">
+            <MascotImage
+              pose={poseFromScore(result.score)}
+              size={120}
+              className="shrink-0"
+            />
+            <div className="min-w-0 flex-1 text-left">
+              <p className="text-sm text-text-muted">점수</p>
+              <p
+                className={`mt-1 text-5xl font-bold tabular-nums leading-none animate-score-pop ${token.tailwind.text}`}
+              >
+                {result.score}
+                <span className="ml-1 align-middle text-2xl text-text-subtle">
+                  /100
+                </span>
+              </p>
+              <p className="mt-3 text-sm text-text-muted">
+                {result.correctCount} / {result.totalCount} 정답 ·{" "}
+                <span className={rateTone}>{correctRate}%</span>
+              </p>
+              <p className="mt-3 text-sm leading-relaxed text-text-muted">
+                {result.score >= 90
+                  ? "거의 다 맞히셨어요. 남은 한두 문항만 정리해볼까요?"
+                  : result.score >= 60
+                    ? "합격선을 넘었어요. 이 페이스를 유지해볼까요?"
+                    : "한 발자국 더 가볼까요? 오답을 함께 정리해보세요."}
+              </p>
+            </div>
+          </div>
         </div>
 
         {/* 과목별 점수 — 단일 과목 자격증(정처기 실기 등)도 학습 진단으로 표시 */}
@@ -604,7 +644,30 @@ function PastExamResultView({
           </div>
         )}
 
-        <PastExamReviewList exam={exam} items={result.items} />
+        <div className="mt-6 md:hidden">
+          <AdInfeed adSlot="5227022543" adLayoutKey="-h4-h+1c-4h+8p" />
+        </div>
+        <div className="mt-6 hidden md:block">
+          <AdDisplay adSlot="3622084801" />
+        </div>
+
+        {result.solveId == null && (
+          <>
+            <div className="mt-8 rounded-lg border border-primary/20 bg-primary/[0.04] p-4 text-sm">
+              <p className="text-text">
+                <Link
+                  href="/login"
+                  className="font-semibold text-primary underline"
+                >
+                  로그인
+                </Link>{" "}
+                하면 풀이 기록이 자동 저장되고, &quot;상세 보기&quot; 페이지에서
+                같은 채점 결과를 언제든 다시 볼 수 있어요.
+              </p>
+            </div>
+            <PastExamReviewList exam={exam} items={result.items} />
+          </>
+        )}
 
         <div className="mt-8 flex flex-wrap gap-3">
           <button

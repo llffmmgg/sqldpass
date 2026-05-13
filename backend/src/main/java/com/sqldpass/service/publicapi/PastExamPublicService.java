@@ -217,6 +217,7 @@ public class PastExamPublicService {
 
         // 로그인 사용자면 solve 테이블에도 기록 — 최고 점수 스탬프 + history 상세 페이지 진입용
         Long solveId = null;
+        Integer milestoneReached = null;
         if (memberId != null && !items.isEmpty()) {
             try {
                 List<SolveAnswerRequest> solveAnswers = items.stream()
@@ -227,6 +228,9 @@ public class PastExamPublicService {
                         .toList();
                 var saved = solveService.solve(memberId, new SolveRequest(null, entity.getId(), solveAnswers));
                 solveId = saved.solve().getId();
+                if (saved.streakUpdate() != null) {
+                    milestoneReached = saved.streakUpdate().milestoneReached();
+                }
             } catch (Exception ignored) {
                 // solve 저장 실패해도 채점 결과는 반환 (공개 API 의 견고성 우선)
             }
@@ -247,7 +251,8 @@ public class PastExamPublicService {
                 solveId,
                 outcome.subjectScores(),
                 outcome.passed(),
-                outcome.passReason());
+                outcome.passReason(),
+                milestoneReached);
     }
 
     private MockExamEntity loadPublishedPastExam(Long id) {

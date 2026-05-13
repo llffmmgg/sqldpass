@@ -1,0 +1,36 @@
+{
+  "project": "sqldpass",
+  "phase": "exam-result-ux-unify",
+  "description": "모의고사(/mock-exams/[id])와 기출복원(/past-exams/[id]) 제출 후 결과 화면 UX 통일. 기출복원 결과 화면을 모의고사 frame(마스코트+격려멘트+PDF+광고+GA4 complete_exam+마일스톤 토스트)으로 맞추고, 결과 화면의 인라인 아코디언은 로그인 사용자에서 제거해 '상세 보기'로 유도(비로그인은 fallback 유지). /history/{id} 상세 페이지는 카드 클릭으로 문제+선택지 펼치고 해설은 그 안에서 또 한 번 접히는 2단계 접힘 구조로 변경. 백엔드는 PastExam grade 응답에 milestoneReached 필드 추가.",
+  "steps": [
+    {
+      "step": 1,
+      "name": "past-exam-grade-milestone-response",
+      "description": "PastExamPublicService.grade 가 SolveService.solve() 결과의 streakUpdate.milestoneReached 를 캡처해 PastExamGradeResponse 에 추가 필드로 노출. 비로그인/저장 실패 시 null.",
+      "status": "completed",
+      "started_at": "2026-05-14T01:33:57+0900",
+      "summary": "PastExamGradeResponse 에 milestoneReached(Integer) 추가 + grade() 가 SolveWithStreak.streakUpdate().milestoneReached() 캡처해 전달, compileJava/test OK",
+      "completed_at": "2026-05-14T01:37:55+0900"
+    },
+    {
+      "step": 2,
+      "name": "past-exam-result-frame-unify",
+      "description": "PastExamRunnerClient 의 PastExamResultView 를 모의고사 결과 frame 으로 재구성(마스코트+격려멘트+MockExamPdfButton+AdInfeed/AdDisplay+complete_exam trackEvent+마일스톤 토스트). 로그인 사용자는 인라인 아코디언 제거하고 '상세 보기'(/history/{solveId}) 로 유도, 비로그인은 인라인 PastExamReviewList fallback 유지하되 로그인 유도 CTA 추가. pastExamApi.ts 타입에 milestoneReached 필드 추가.",
+      "status": "completed",
+      "started_at": "2026-05-14T01:37:56+0900",
+      "summary": "기출복원 결과 화면 모의고사 frame 통일(마스코트+격려+PDF+광고+상세보기) + 마일스톤 토스트/complete_exam GA4 추가, 로그인 사용자 인라인 아코디언 제거+비로그인은 fallback+로그인 CTA, lint/build OK",
+      "completed_at": "2026-05-14T01:42:23+0900"
+    },
+    {
+      "step": 3,
+      "name": "history-detail-two-stage-accordion",
+      "description": "/history/{id} 페이지(HistoryDetailContent) 의 문제 리스트(158~232줄)를 2단계 접힘 구조로 변경. 1단계: 카드 클릭 시 문제 본문+선택지(정오 강조 포함) 펼침. 2단계: 펼친 카드 안에 기존 <details> 해설 보기 패턴 유지(추가 클릭 필요). 점수 카드/광고/회차 라벨/대시보드 링크는 그대로.",
+      "status": "completed",
+      "started_at": "2026-05-14T01:42:24+0900",
+      "summary": "history 페이지 2단계 접힘 적용 — 카드 토글 + 해설 details, lint/build OK",
+      "completed_at": "2026-05-14T01:46:57+0900"
+    }
+  ],
+  "created_at": "2026-05-14T00:00:00+0900",
+  "completed_at": "2026-05-14T01:46:57+0900"
+}

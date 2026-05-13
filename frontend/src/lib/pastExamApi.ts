@@ -87,6 +87,8 @@ export interface PastExamGradeResponse {
   passed: boolean;
   /** 합격/불합격 한 줄 요약 (UI 배너) */
   passReason: string;
+  /** 학습 연속일 마일스톤 도달 일수 — 도달 안 했으면 null, 비로그인이면 null */
+  milestoneReached?: number | null;
 }
 
 async function publicFetch<T>(path: string, init?: RequestInit): Promise<T> {
