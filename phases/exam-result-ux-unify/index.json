@@ -9,7 +9,8 @@
       "description": "PastExamPublicService.grade 가 SolveService.solve() 결과의 streakUpdate.milestoneReached 를 캡처해 PastExamGradeResponse 에 추가 필드로 노출. 비로그인/저장 실패 시 null.",
       "status": "completed",
       "started_at": "2026-05-14T01:33:57+0900",
-      "summary": "PastExamGradeResponse 에 milestoneReached(Integer) 추가 + grade() 가 SolveWithStreak.streakUpdate().milestoneReached() 캡처해 전달, compileJava/test OK"
+      "summary": "PastExamGradeResponse 에 milestoneReached(Integer) 추가 + grade() 가 SolveWithStreak.streakUpdate().milestoneReached() 캡처해 전달, compileJava/test OK",
+      "completed_at": "2026-05-14T01:37:55+0900"
     },
     {
       "step": 2,
