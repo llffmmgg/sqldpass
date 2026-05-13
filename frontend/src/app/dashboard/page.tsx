@@ -16,6 +16,7 @@ import {
   type WrongAnswerStatsResponse,
 } from "@/lib/api";
 import { getNickname } from "@/lib/auth";
+import { useSubscription } from "@/hooks/useSubscription";
 import AuthGuard from "@/components/AuthGuard";
 import Spinner from "@/components/Spinner";
 import StudyActivityChart from "@/components/StudyActivityChart";
@@ -285,6 +286,8 @@ function DashboardPageContent() {
   const [overallAvg, setOverallAvg] = useState<number | undefined>(undefined);
   const [loading, setLoading] = useState(true);
   const [nickname, setNickname] = useState<string | null>(null);
+  const { subscription } = useSubscription();
+  const hasLibraryAccess = subscription.hasLibraryAccess;
 
   useEffect(() => {
     setNickname(getNickname());
@@ -380,6 +383,15 @@ function DashboardPageContent() {
                         오답 {focus.wrongCount}개 · 오답률 {Math.round(focus.wrongRate)}%
                       </p>
                     </>
+                  ) : !hasLibraryAccess ? (
+                    <>
+                      <h2 className="mt-3 text-xl font-bold sm:text-2xl">
+                        오답 노트로 약점만 골라 복습하세요
+                      </h2>
+                      <p className="mt-1.5 text-sm text-text-muted">
+                        Thunder · Focus · Pro · All Pass 플랜에서 오답 분석을 이용할 수 있어요.
+                      </p>
+                    </>
                   ) : (
                     <>
                       <h2 className="mt-3 text-xl font-bold sm:text-2xl">
@@ -390,10 +402,16 @@ function DashboardPageContent() {
                   )}
                 </div>
                 <Link
-                  href={focus ? `/wrong-answers?subjectId=${focus.id}` : "/solve"}
+                  href={
+                    focus
+                      ? `/wrong-answers?subjectId=${focus.id}`
+                      : !hasLibraryAccess
+                        ? "/wrong-answers"
+                        : "/solve"
+                  }
                   className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-primary-fg transition-colors hover:bg-primary-hover"
                 >
-                  {focus ? "복습 시작" : "문제 풀기"}
+                  {focus ? "복습 시작" : !hasLibraryAccess ? "오답 풀러가기" : "문제 풀기"}
                   <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
                   </svg>
