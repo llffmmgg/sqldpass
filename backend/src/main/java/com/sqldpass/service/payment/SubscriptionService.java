@@ -50,6 +50,13 @@ public class SubscriptionService {
     public Optional<ActiveSubscription> getActive(Long memberId) {
         if (memberId == null) return Optional.empty();
 
+        // dev 우회 — 환경변수 DEV_BYPASS_SUBSCRIPTION=true 시 가상 UNLIMITED 부여.
+        // 운영에서는 환경변수 미설정으로 false → 일반 흐름. 백엔드 재시작 시 적용.
+        if ("true".equalsIgnoreCase(System.getenv("DEV_BYPASS_SUBSCRIPTION"))) {
+            return Optional.of(new ActiveSubscription(
+                    SubscriptionPlan.UNLIMITED, null, true, true, true));
+        }
+
         List<SubscriptionEntity> rows =
                 subscriptionRepository.findActiveByMemberId(memberId, LocalDateTime.now());
         if (rows.isEmpty()) return Optional.empty();
