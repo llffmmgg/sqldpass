@@ -1,0 +1,16 @@
+{
+  "project": "sqldpass",
+  "phase": "mock-exam-pdf-button-unlock",
+  "description": "모의고사 PDF 다운로드 버튼이 비로그인/미구독 사용자에게 숨어 결제 유도 동선이 끊긴 문제 해결. MockExamPdfButton 의 eligibility 게이트(`/api/mock-exams/pdf/eligibility` 조회 후 null 리턴) 를 제거하고, 클릭 핸들러에서 비로그인 alert(BookmarkButton 과 동일 패턴) 만 추가. 미구독 처리는 기존 PDF_REQUIRES_SUBSCRIPTION 토스트 그대로 유지. 백엔드 권한 체크 무변경.",
+  "steps": [
+    {
+      "step": 1,
+      "name": "remove-eligibility-gate",
+      "description": "MockExamPdfButton 에서 getPdfEligibility 호출과 `if (!eligible) return null` 제거 → 버튼 항상 렌더링. 클릭 핸들러 최상단에 `if (!isLoggedIn()) { alert('로그인 후 이용 가능합니다.'); return; }` 추가 (BookmarkButton.tsx:56 와 동일 문구). 기존 PDF_REQUIRES_SUBSCRIPTION 토스트와 일반 에러 토스트는 무변경. payment.ts 의 getPdfEligibility 함수와 백엔드 엔드포인트는 보존(미래 재사용 여지).",
+      "status": "completed",
+      "started_at": "2026-05-13T13:08:58+0900",
+      "summary": "MockExamPdfButton eligibility 게이트 제거 + 비로그인 클릭 alert 가드 추가, lint/build OK"
+    }
+  ],
+  "created_at": "2026-05-13T00:00:00+0900"
+}
