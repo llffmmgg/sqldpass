@@ -7,7 +7,10 @@
       "step": 1,
       "name": "gradle-kotlin-billing-dependencies",
       "description": "mobile/android/variables.gradle 에 kotlinVersion + playBillingVersion 상수 추가. mobile/android/build.gradle buildscript dependencies 에 kotlin-gradle-plugin classpath 추가. mobile/android/app/build.gradle 에 kotlin-android plugin + kotlin-stdlib + com.android.billingclient:billing-ktx 의존성 추가.",
-      "status": "pending"
+      "status": "completed",
+      "started_at": "2026-05-13T14:35:00+0900",
+      "summary": "Kotlin 1.9.25 + Google Play Billing Library 6.2.1 의존성 추가. root build.gradle 의 buildscript classpath 는 리터럴(평가 순서 문제), app/build.gradle 의 dependencies 는 variables.gradle 의 $kotlinVersion/$playBillingVersion 으로 보간. Gradle 빌드 검증은 사용자 환경에 Android SDK 미설치라 미진행 — Step 2 와 함께 사용자가 환경 셋업 후 일괄 검증.",
+      "completed_at": "2026-05-13T14:40:00+0900"
     },
     {
       "step": 2,
