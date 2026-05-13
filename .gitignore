@@ -36,3 +36,7 @@ observability/README.md
 # Harness phase execution outputs
 phases/**/phase*-output.json
 phases/**/step*-output.json
+
+# Claude Code local artifacts (per-user)
+.claude/projects/
+.claude/settings.local.json
