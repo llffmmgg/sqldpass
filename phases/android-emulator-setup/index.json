@@ -1,0 +1,26 @@
+{
+  "project": "sqldpass",
+  "phase": "android-emulator-setup",
+  "description": "안드로이드 에뮬레이터(cmdline-tools 자동화) 셋업 + BillingPlugin Layer 1 검증. SDK + AVD 자동 설치 → debug build WebView 디버깅 활성화(NODE_ENV 분기) → emulator 띄우고 DevTools console 에서 plugin native 호출 응답까지 확인. 실제 결제창/토큰/backend verify e2e (Layer 2) 는 Play Console 외부 작업 선행 필요라 별도 phase.",
+  "steps": [
+    {
+      "step": 1,
+      "name": "sdk-and-avd-bootstrap",
+      "description": "Google cmdline-tools 다운로드 + 압축 해제 → ANDROID_HOME / Path User 환경변수 영구 설정 → sdkmanager 라이선스 수락 → platform-tools + platforms;android-34 + build-tools;34.0.0 + emulator + system-images;android-34;google_apis_playstore;x86_64 설치 → avdmanager 로 sqldpass_test AVD 생성. 사용자 사전 준비: WHPX 활성화(admin PowerShell), 디스크 ~5GB 여유.",
+      "status": "pending"
+    },
+    {
+      "step": 2,
+      "name": "capacitor-debug-webview-inspect",
+      "description": "mobile/capacitor.config.ts 의 `webContentsDebuggingEnabled: false` 를 `process.env.NODE_ENV !== 'production'` 분기로 변경해 debug 빌드에서만 Chrome `chrome://inspect` 접근 허용. release 빌드는 그대로 false 유지(보안). 변경 후 npx cap sync android 로 mobile/android/ 에 반영.",
+      "status": "pending"
+    },
+    {
+      "step": 3,
+      "name": "emulator-build-install-verify",
+      "description": "emulator -avd sqldpass_test 실행 → mobile/android 에서 .\\gradlew.bat assembleDebug → adb install -r app-debug.apk → Chrome chrome://inspect 으로 emulator WebView 연결 후 DevTools console 에서 직접 `Capacitor.Plugins.Billing.purchase({productId:'iap_one_month'})` 호출 → `{success:false, errorCode:'BILLING_UNAVAILABLE'|'ITEM_UNAVAILABLE'}` 응답 확인. Layer 1 검증(plugin 등록 + native 응답) 완료.",
+      "status": "pending"
+    }
+  ],
+  "created_at": "2026-05-13T15:00:00+0900"
+}

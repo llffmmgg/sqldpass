@@ -139,6 +139,12 @@
       "description": "Google Play Billing 을 위한 Capacitor 커스텀 Kotlin 플러그인 (`@CapacitorPlugin(name=\"Billing\")`) 구현. frontend `payment.ts:startPaymentPlayBilling` 이 호출하는 `window.Capacitor.Plugins.Billing.purchase(productId)` 의 native 구현체. Google Play Billing Library v6.2.1 사용. backend 의 `verifyPlayBilling` 5단계 검증과 RTDN webhook 은 이미 구현됨 (payment-hardening phase) — 이 phase 는 mobile/android/ 네이티브 코드만 추가.",
       "status": "completed",
       "completed_at": "2026-05-13T14:45:00+0900"
+    },
+    {
+      "dir": "android-emulator-setup",
+      "name": "android-emulator-setup",
+      "description": "안드로이드 에뮬레이터(cmdline-tools 자동화) 셋업 + BillingPlugin Layer 1 검증. Android SDK + AVD 자동 설치, `mobile/capacitor.config.ts` 의 `webContentsDebuggingEnabled` 를 NODE_ENV 분기로 변경해 debug 빌드에서 Chrome `chrome://inspect` 접근 허용, emulator 띄우고 debug APK 설치 후 DevTools console 에서 `Capacitor.Plugins.Billing.purchase` 를 직접 호출해 plugin 등록·native 응답까지 검증. 실제 결제창/토큰/backend verify e2e (Layer 2) 는 Play Console 인앱 상품 등록 + 라이선스 테스트 셋업이 선행되어야 하므로 별도 phase.",
+      "status": "in_progress"
     }
   ]
 }
