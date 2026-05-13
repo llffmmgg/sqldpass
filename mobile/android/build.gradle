@@ -9,9 +9,12 @@ buildscript {
     dependencies {
         classpath 'com.android.tools.build:gradle:8.7.2'
         classpath 'com.google.gms:google-services:4.4.2'
+        classpath 'org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.25'
 
         // NOTE: Do not place your application dependencies here; they belong
         // in the individual module build.gradle files
+        // Kotlin classpath 는 variables.gradle 평가 전에 buildscript 가 먼저 실행되므로 리터럴 사용.
+        // 동일 버전을 variables.gradle 의 kotlinVersion 에 유지해 app/build.gradle 에서 보간.
     }
 }
 
