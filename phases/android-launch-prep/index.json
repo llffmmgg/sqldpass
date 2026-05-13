@@ -7,7 +7,10 @@
       "step": 1,
       "name": "mobile-workspace-bootstrap",
       "description": "mobile/ 에서 npm install + npx cap add android + npx cap sync android. mobile/android/ 네이티브 프로젝트 트리 생성. .gitignore 가 build 산출물·키스토어·google-services.json 을 제대로 제외하는지 검증.",
-      "status": "pending"
+      "status": "completed",
+      "started_at": "2026-05-13T13:50:00+0900",
+      "summary": "mobile/ npm install (418 packages) + cap add android + cap sync android 완료. android 네이티브 트리 53개 파일 commit. mobile/.gitignore 에 !android/gradle/wrapper/gradle-wrapper.jar negate 추가 (루트 *.jar 룰 차단 해제).",
+      "completed_at": "2026-05-13T13:55:00+0900"
     },
     {
       "step": 2,
