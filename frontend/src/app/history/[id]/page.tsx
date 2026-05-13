@@ -55,6 +55,7 @@ function HistoryDetailContent({ params }: { params: Promise<{ id: string }> }) {
   const [pastExam, setPastExam] = useState<PublicPastExamDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [openIdx, setOpenIdx] = useState<number | null>(null);
 
   useEffect(() => {
     setError(null);
@@ -155,76 +156,99 @@ function HistoryDetailContent({ params }: { params: Promise<{ id: string }> }) {
         </div>
 
         {/* Answers */}
-        <div className="mt-8 space-y-4">
+        <div className="mt-8 space-y-3">
           {solve.answers.map((answer, idx) => {
             const detail = details[answer.questionId];
             const parsed = detail ? parseQuestion(detail.content) : null;
+            const answered = answer.selectedOption != null;
+            const status: "correct" | "wrong" | "unanswered" = !answered
+              ? "unanswered"
+              : answer.correct
+              ? "correct"
+              : "wrong";
+            const isOpen = openIdx === idx;
 
             return (
               <div
                 key={answer.questionId}
-                className={`rounded-lg border px-5 py-4 ${
-                  answer.correct
+                className={`overflow-hidden rounded-lg border ${
+                  status === "correct"
                     ? "border-green-500/30 bg-green-500/5"
-                    : "border-red-500/30 bg-red-500/5"
+                    : status === "wrong"
+                    ? "border-red-500/30 bg-red-500/5"
+                    : "border-border bg-bg"
                 }`}
               >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-muted">문제 {idx + 1}</p>
-                    {parsed && (
-                      <QuestionContent content={parsed.body} className="mt-1" />
-                    )}
-                  </div>
+                <button
+                  type="button"
+                  onClick={() => setOpenIdx(isOpen ? null : idx)}
+                  className="flex w-full items-center gap-3 px-5 py-4 text-left transition-colors hover:bg-surface-hover"
+                >
                   <span
-                    className={`shrink-0 rounded px-2 py-0.5 text-xs font-semibold ${
-                      answer.correct
-                        ? "bg-green-500/20 text-green-400"
-                        : "bg-red-500/20 text-red-400"
+                    className={`inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-bold ${
+                      status === "correct"
+                        ? "bg-success/15 text-success"
+                        : status === "wrong"
+                        ? "bg-danger/15 text-danger"
+                        : "bg-surface-hover text-text-subtle"
                     }`}
                   >
-                    {answer.correct ? "\u2713 정답" : "\u2717 오답"}
+                    {status === "correct" ? "✓" : status === "wrong" ? "✗" : "–"}
                   </span>
-                </div>
+                  <span className="flex-1 text-sm font-medium text-text">문제 {idx + 1}</span>
+                  <span
+                    className={`text-xs text-text-subtle transition-transform ${
+                      isOpen ? "rotate-180" : ""
+                    }`}
+                  >
+                    {"▾"}
+                  </span>
+                </button>
 
-                {parsed && parsed.options.length > 0 && (
-                  <div className="mt-3 space-y-1">
-                    {parsed.options.map((opt, optIdx) => {
-                      const optNum = optIdx + 1;
-                      const isSelected = optNum === answer.selectedOption;
-                      const isCorrect = optNum === answer.correctOption;
-                      return (
-                        <div
-                          key={optIdx}
-                          className={`flex items-start gap-2 rounded px-2 py-1 text-sm ${
-                            isCorrect
-                              ? "bg-green-500/10 text-green-400 font-medium"
-                              : isSelected && !answer.correct
-                              ? "bg-red-500/10 text-red-400"
-                              : "text-muted"
-                          }`}
-                        >
-                          <span className="shrink-0">{OPTION_MARKERS[optIdx]}</span>
-                          <span className="min-w-0 flex-1">
-                            <QuestionContent content={opt} className="mcq-option" />
-                          </span>
-                          {isCorrect && <span className="shrink-0">✓</span>}
-                          {isSelected && !isCorrect && <span className="shrink-0">(선택)</span>}
+                {isOpen && (
+                  <div className="border-t border-border px-5 py-4">
+                    {parsed && <QuestionContent content={parsed.body} />}
+
+                    {parsed && parsed.options.length > 0 && (
+                      <div className="mt-3 space-y-1">
+                        {parsed.options.map((opt, optIdx) => {
+                          const optNum = optIdx + 1;
+                          const isSelected = optNum === answer.selectedOption;
+                          const isCorrect = optNum === answer.correctOption;
+                          return (
+                            <div
+                              key={optIdx}
+                              className={`flex items-start gap-2 rounded px-2 py-1 text-sm ${
+                                isCorrect
+                                  ? "bg-green-500/10 text-green-400 font-medium"
+                                  : isSelected && !answer.correct
+                                  ? "bg-red-500/10 text-red-400"
+                                  : "text-muted"
+                              }`}
+                            >
+                              <span className="shrink-0">{OPTION_MARKERS[optIdx]}</span>
+                              <span className="min-w-0 flex-1">
+                                <QuestionContent content={opt} className="mcq-option" />
+                              </span>
+                              {isCorrect && <span className="shrink-0">✓</span>}
+                              {isSelected && !isCorrect && <span className="shrink-0">(선택)</span>}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+
+                    {detail && detail.explanation && (
+                      <details className="mt-3 rounded-lg border border-border px-3 py-2 text-sm">
+                        <summary className="cursor-pointer font-medium text-amber-400">
+                          해설 보기
+                        </summary>
+                        <div className="mt-2 leading-relaxed text-muted">
+                          <QuestionContent content={detail.explanation} />
                         </div>
-                      );
-                    })}
+                      </details>
+                    )}
                   </div>
-                )}
-
-                {detail && detail.explanation && (
-                  <details className="mt-3 rounded-lg border border-border px-3 py-2 text-sm">
-                    <summary className="cursor-pointer font-medium text-amber-400">
-                      해설 보기
-                    </summary>
-                    <div className="mt-2 leading-relaxed text-muted">
-                      <QuestionContent content={detail.explanation} />
-                    </div>
-                  </details>
                 )}
               </div>
             );
