@@ -137,7 +137,8 @@
       "dir": "android-billing-plugin",
       "name": "android-billing-plugin",
       "description": "Google Play Billing 을 위한 Capacitor 커스텀 Kotlin 플러그인 (`@CapacitorPlugin(name=\"Billing\")`) 구현. frontend `payment.ts:startPaymentPlayBilling` 이 호출하는 `window.Capacitor.Plugins.Billing.purchase(productId)` 의 native 구현체. Google Play Billing Library v6.2.1 사용. backend 의 `verifyPlayBilling` 5단계 검증과 RTDN webhook 은 이미 구현됨 (payment-hardening phase) — 이 phase 는 mobile/android/ 네이티브 코드만 추가.",
-      "status": "in_progress"
+      "status": "completed",
+      "completed_at": "2026-05-13T14:45:00+0900"
     }
   ]
 }

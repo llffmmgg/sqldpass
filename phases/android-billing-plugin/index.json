@@ -16,8 +16,12 @@
       "step": 2,
       "name": "billing-plugin-kotlin",
       "description": "mobile/android/app/src/main/java/com/sqldpass/app/BillingPlugin.kt 작성 — @CapacitorPlugin(name=\"Billing\") + BillingClient + PurchasesUpdatedListener. purchase(productId) → queryProductDetailsAsync → launchBillingFlow → JSObject(success, purchaseToken, orderId) 응답. MainActivity.java 의 onCreate 에 registerPlugin(BillingPlugin.class) 1줄 추가.",
-      "status": "pending"
+      "status": "completed",
+      "started_at": "2026-05-13T14:40:00+0900",
+      "summary": "BillingPlugin.kt(~180줄) 작성 + MainActivity.java 에 registerPlugin 추가. frontend `CapacitorBillingPlugin` 시그니처 충족 (success/purchaseToken/orderId/errorCode/errorMessage). 에러 코드 매핑: USER_CANCELED, ITEM_UNAVAILABLE, ITEM_ALREADY_OWNED, LAUNCH_FAILED, BILLING_UNAVAILABLE, BILLING_ERROR_<code>. acknowledge/consume 은 backend 가 처리하므로 plugin 은 호출 안 함. 컴파일 검증은 Android SDK 미설치라 사용자 환경 셋업 후 일괄 진행.",
+      "completed_at": "2026-05-13T14:45:00+0900"
     }
   ],
-  "created_at": "2026-05-13T14:30:00+0900"
+  "created_at": "2026-05-13T14:30:00+0900",
+  "completed_at": "2026-05-13T14:45:00+0900"
 }
