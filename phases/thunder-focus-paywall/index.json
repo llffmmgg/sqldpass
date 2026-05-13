@@ -7,14 +7,19 @@
       "step": 1,
       "name": "backend-focus-plan-and-library-gate",
       "description": "SubscriptionPlan enum 에 FOCUS 추가 + THREE_DAY 의 removesAds/hasLibraryAccess 강화 + 새 권한 필드 hasLibraryAccess 도입. PaymentProperties.focus + application.yaml product-name Thunder/Focus 갱신. SubscriptionService.hasLibraryAccess() + ActiveSubscription 응답 새 필드. ErrorCode.WRONG_ANSWER_REQUIRES_SUBSCRIPTION. WrongAnswerService/Controller 권한 가드 + /api/wrong-answers/preview 신설. Bookmark 30 limit + limited 메타. PaymentService FOCUS 분기 점검 + PaymentServiceTest 어설션 보정.",
-      "status": "pending"
+      "status": "completed",
+      "summary": "FOCUS 플랜 신설 + Thunder 리브랜드 + 라이브러리 권한 게이트 + 오답노트 preview 엔드포인트, gradlew test 통과",
+      "completed_at": "2026-05-13T17:50:00+0900"
     },
     {
       "step": 2,
       "name": "frontend-thunder-focus-ui",
-      "description": "payment.ts 타입 확장 (FOCUS 유니온 + hasLibraryAccess 필드 + planLabel Thunder/Focus). CheckoutLanding TIERS Thunder 리브랜드 + Focus 카드 추가 + 4 카드 그리드. CheckoutClient previews 확장. wrong-answers 페이지 hasLibraryAccess false 시 잠금 뷰 (preview API 호출 + 본인 오답 5개 블러 + Focus/Thunder CTA). 즐겨찾기 모음 화면 30개 + 배너. planLabel 'Starter' 하드코딩 grep.",
-      "status": "pending"
+      "description": "payment.ts 타입 확장 (FOCUS 유니온 + hasLibraryAccess 필드 + planLabel Thunder/Focus). CheckoutLanding TIERS Thunder 리브랜드 + Focus 카드 추가 + 5 카드 그리드. CheckoutClient previews 확장. wrong-answers 페이지 hasLibraryAccess false 시 잠금 뷰 (preview API 호출 + 본인 오답 5개 블러 + Focus/Thunder CTA). 즐겨찾기 30개 도달 배너. retry 백엔드 가드 풀어 즐찾 탭 호환.",
+      "status": "completed",
+      "summary": "Thunder 리브랜드 + Focus 카드 + 오답노트 블러 잠금 뷰 + 즐겨찾기 30개 배너, lint/build OK",
+      "completed_at": "2026-05-13T18:00:00+0900"
     }
   ],
-  "created_at": "2026-05-13T00:00:00+0900"
+  "created_at": "2026-05-13T00:00:00+0900",
+  "completed_at": "2026-05-13T18:00:00+0900"
 }
