@@ -16,8 +16,12 @@
       "step": 2,
       "name": "android-gradle-release-config",
       "description": "mobile/android/app/build.gradle 에 환경변수 기반 release signingConfig 추가 + versionCode/versionName 초기값 설정. docs/ANDROID_LAUNCH.md Step 5-2 가이드와 정합. 키스토어 비밀번호 환경변수 4종(SQLDPASS_KEYSTORE_PATH/PASS, SQLDPASS_KEY_ALIAS/PASS) 사용.",
-      "status": "pending"
+      "status": "completed",
+      "started_at": "2026-05-13T13:56:00+0900",
+      "summary": "build.gradle 변경 완료 — versionName 0.1.0, signingConfigs.release (env 4종, PATH 미설정 시 release 빌드만 fail), buildTypes.release.signingConfig 적용. JDK 21 확인. 사용자 환경에 Android SDK 미설치(`~/AppData/Local/Android/Sdk` 비어 있음)라 Gradle 빌드 검증은 docs/ANDROID_LAUNCH.md Step 2-2 (Android Studio 설치) 후 사용자가 진행해야 함. build.gradle syntax 자체는 표준 그루비/Gradle 문법 시각 검토 통과.",
+      "completed_at": "2026-05-13T14:00:00+0900"
     }
   ],
-  "created_at": "2026-05-13T00:00:00+0900"
+  "created_at": "2026-05-13T00:00:00+0900",
+  "completed_at": "2026-05-13T14:00:00+0900"
 }

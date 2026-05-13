@@ -130,7 +130,8 @@
       "dir": "android-launch-prep",
       "name": "android-launch-prep",
       "description": "안드로이드 앱 출시를 위한 mobile/ 워크스페이스 인프라 준비 — (1) npm install + cap add android 로 mobile/android/ 네이티브 프로젝트 생성, (2) build.gradle 에 환경변수 기반 release signingConfig + versionCode/versionName 설정. docs/ANDROID_LAUNCH.md 의 Step 5 ('키스토어 + 첫 빌드 검증') 직전까지의 코드 작업을 완료해, 사용자가 키스토어만 생성하면 즉시 release AAB 빌드 가능한 상태로 만든다. Billing Plugin/Auth Plugin/자산 디자인은 별도 phase.",
-      "status": "in_progress"
+      "status": "completed",
+      "completed_at": "2026-05-13T14:00:00+0900"
     }
   ]
 }
