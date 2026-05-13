@@ -1,0 +1,1 @@
+- [커밋 메시지 한국어](feedback_commit_korean.md) — 커밋 본문 한국어, 접두어(feat, fix 등)만 영어
