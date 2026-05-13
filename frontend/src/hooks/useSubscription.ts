@@ -11,6 +11,7 @@ const INACTIVE: ActiveSubscription = {
   expiresAt: null,
   removesAds: false,
   allowsPdf: false,
+  hasLibraryAccess: false,
 };
 
 // 페이지에 광고가 여러 개 마운트되어도 API 한 번만 호출하도록 모듈 캐시.

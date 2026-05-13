@@ -228,6 +228,18 @@ export interface BookmarkResponse {
   createdAt: string;
 }
 
+/**
+ * 즐겨찾기 목록 응답 — 권한 별 표시 제한 메타 포함.
+ * - hasLibraryAccess 권한이 있으면 items 전체 반환, limited=false
+ * - 무료/Starter 등 권한 없으면 items 최근 30개만, totalCount 가 30 초과면 limited=true
+ */
+export interface BookmarkListResponse {
+  items: BookmarkResponse[];
+  totalCount: number;
+  limited: boolean;
+  freeLimit: number;
+}
+
 /** 204/200 No-body API 호출 (JSON 파싱하지 않음) */
 async function fetchApiVoid(path: string, options?: RequestInit): Promise<void> {
   const token = getToken();
@@ -262,9 +274,26 @@ export function removeBookmark(questionId: number): Promise<void> {
   return fetchApiVoid(`/bookmarks/${questionId}`, { method: "DELETE" });
 }
 
-/** 내 즐겨찾기 목록 (최신순) */
-export function getBookmarks(): Promise<BookmarkResponse[]> {
-  return fetchApi<BookmarkResponse[]>(`/bookmarks`);
+/**
+ * 내 즐겨찾기 목록 (최신순). 무료/Starter 사용자는 응답에서 자동으로 최근 30개로 잘림.
+ * 31번째 이상은 백엔드에 보존되며 결제 후 즉시 복원.
+ */
+export function getBookmarks(): Promise<BookmarkListResponse> {
+  return fetchApi<BookmarkListResponse>(`/bookmarks`);
+}
+
+/**
+ * 오답노트 잠금 화면 미리보기 — 권한이 없는 사용자가 본인 오답 상위 N개를 블러 처리해 보기 위한 응답.
+ * 제목·과목만 반환. 정답/해설은 응답에서 제외.
+ */
+export interface WrongAnswerPreviewResponse {
+  questionId: number;
+  questionContent: string;
+  subjectName: string;
+}
+
+export function getWrongAnswersPreview(limit: number = 5): Promise<WrongAnswerPreviewResponse[]> {
+  return fetchApi<WrongAnswerPreviewResponse[]>(`/wrong-answers/preview?limit=${limit}`);
 }
 
 /** 특정 문제 즐겨찾기 여부 (버튼 상태 동기화) */

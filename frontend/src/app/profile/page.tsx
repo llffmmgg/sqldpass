@@ -14,11 +14,13 @@ import type { SubscriptionPlan } from "@/lib/payment";
 function planLabel(plan: SubscriptionPlan): string {
   switch (plan) {
     case "THREE_DAY":
-      return "3일권";
+      return "Thunder";
+    case "FOCUS":
+      return "Focus";
     case "ONE_MONTH":
-      return "한달권";
+      return "Pro";
     case "UNLIMITED":
-      return "무제한";
+      return "Lifetime";
   }
 }
 

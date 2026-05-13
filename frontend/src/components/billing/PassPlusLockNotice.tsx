@@ -110,7 +110,7 @@ export default function PassPlusLockNotice({
                   PASS+ 회차예요
                 </div>
                 <div className="mt-1.5 text-[13px] leading-[1.65] text-text-muted">
-                  고난이도 회차는 PASS+에서 풀 수 있어요. Starter 3,900원부터, Pro 9,900원.
+                  고난이도 회차는 PASS+에서 풀 수 있어요. Thunder 3,900원부터, Pro 9,900원.
                 </div>
               </div>
             </div>

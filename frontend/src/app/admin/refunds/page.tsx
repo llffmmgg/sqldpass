@@ -19,9 +19,10 @@ import EmptyState from "@/components/admin/EmptyState";
 import RefundReasonModal from "./RefundReasonModal";
 
 const PLAN_LABEL: Record<AdminSubscriptionPlan, string> = {
-  THREE_DAY: "3일권",
-  ONE_MONTH: "한달권",
-  UNLIMITED: "무제한",
+  THREE_DAY: "Thunder",
+  FOCUS: "Focus",
+  ONE_MONTH: "Pro",
+  UNLIMITED: "Lifetime",
 };
 
 const STATUS_LABEL: Record<AdminPaymentStatus, string> = {

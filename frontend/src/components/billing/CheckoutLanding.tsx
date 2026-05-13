@@ -28,7 +28,6 @@ type Tier = {
 
 const FREE_BASELINE: Feature[] = [
   { text: "쉬움/보통 회차", muted: true },
-  { text: "오답 노트", muted: true },
   { text: "대시보드", muted: true },
 ];
 
@@ -40,23 +39,41 @@ const TIERS: Tier[] = [
     price: 0,
     features: [
       { text: "쉬움/보통 회차" },
-      { text: "오답 노트" },
+      { text: "즐겨찾기 30개" },
       { text: "대시보드" },
     ],
     cta: "현재 플랜",
   },
   {
     key: "THREE_DAY",
-    name: "Starter",
-    tagline: "시험 직전 단기 점검",
+    name: "Thunder",
+    tagline: "벼락치기 3일 풀파워",
     price: 3900,
     unit: "3일",
     features: [
       { text: "PASS+ 회차 풀이" },
       { text: "72시간 풀 액세스" },
+      { text: "광고 제거" },
+      { text: "오답노트 사용" },
+      { text: "즐겨찾기 무제한" },
       ...FREE_BASELINE,
     ],
-    cta: "Starter 시작",
+    cta: "Thunder 시작",
+  },
+  {
+    key: "FOCUS",
+    name: "Focus",
+    tagline: "일상 학습 30일 집중",
+    price: 2900,
+    unit: "30일",
+    features: [
+      { text: "광고 제거" },
+      { text: "오답노트 사용" },
+      { text: "즐겨찾기 무제한" },
+      { text: "PASS+ 모의고사는 Pro 이상", muted: true },
+      ...FREE_BASELINE,
+    ],
+    cta: "Focus 시작",
   },
   {
     key: "ONE_MONTH",
@@ -69,6 +86,8 @@ const TIERS: Tier[] = [
       { text: "PASS+ 회차 무제한" },
       { text: "30일 풀 액세스" },
       { text: "광고 제거" },
+      { text: "오답노트 사용" },
+      { text: "즐겨찾기 무제한" },
       ...FREE_BASELINE,
     ],
     cta: "Pro 시작",
@@ -85,6 +104,8 @@ const TIERS: Tier[] = [
       { text: "앞으로 추가될 회차까지 무제한" },
       { text: "기간 제한 없음" },
       { text: "광고 제거" },
+      { text: "오답노트 사용" },
+      { text: "즐겨찾기 무제한" },
       { text: "PDF 다운로드" },
       ...FREE_BASELINE,
     ],
@@ -182,7 +203,7 @@ export default function CheckoutLanding({
         </div>
       )}
 
-      <div className="mt-10 grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
+      <div className="mt-10 grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-5">
         {TIERS.map((t) => (
           <PlanCard
             key={t.key}
@@ -222,7 +243,7 @@ export default function CheckoutLanding({
         {[
           ["자동결제 되나요?", "아니요. 한 번 결제 = 한 번만 청구돼요."],
           ["환불은 언제까지?", "결제 후 7일 이내, 사용 이력이 없으면 100% 환불돼요."],
-          ["Starter 만료되면?", "다시 결제하거나 Pro 로 이어갈 수 있어요."],
+          ["Thunder 만료되면?", "다시 결제하거나 Focus·Pro 로 이어갈 수 있어요."],
         ].map(([q, a], i) => (
           <div
             key={q}
@@ -509,7 +530,9 @@ function StarSvg({ className = "" }: { className?: string }) {
 export function planLabel(plan: SubscriptionPlan): string {
   switch (plan) {
     case "THREE_DAY":
-      return "Starter";
+      return "Thunder";
+    case "FOCUS":
+      return "Focus";
     case "ONE_MONTH":
       return "Pro";
     case "UNLIMITED":

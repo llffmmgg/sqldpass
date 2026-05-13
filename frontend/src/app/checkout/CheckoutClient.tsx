@@ -59,6 +59,7 @@ function CheckoutContent() {
   // plan 별 미리보기 — 활성 구독 prorate 차감 적용된 finalAmount 표시용
   const [previews, setPreviews] = useState<Record<SubscriptionPlan, PreviewResponse | null>>({
     THREE_DAY: null,
+    FOCUS: null,
     ONE_MONTH: null,
     UNLIMITED: null,
   });
@@ -76,7 +77,7 @@ function CheckoutContent() {
         // 활성 구독이 있으면 plan 별 미리보기 호출 (prorate 표시용).
         // 비활성이면 baseAmount 그대로 표시되니 호출 생략 (네트워크 절약).
         if (elig.eligible && sub.active) {
-          (["THREE_DAY", "ONE_MONTH", "UNLIMITED"] as const).forEach((plan) => {
+          (["THREE_DAY", "FOCUS", "ONE_MONTH", "UNLIMITED"] as const).forEach((plan) => {
             previewPayment(plan)
               .then((p) => setPreviews((prev) => ({ ...prev, [plan]: p })))
               .catch(() => {

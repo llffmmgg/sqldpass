@@ -76,10 +76,12 @@ public class WrongAnswerService {
      * 4. 결과(정답 여부 + 정답/해설) 반환
      *
      * 정답이면 다음 오답노트 조회 시 자동으로 목록에서 사라짐 (마스터 완료).
+     *
+     * 권한 가드 없음 — 즐겨찾기 탭(/wrong-answers 의 bookmark 탭)에서도 호출되므로
+     * 무료 사용자도 다시 풀기는 가능. 오답 리스트 조회만 hasLibraryAccess 가드.
      */
     @Transactional
     public WrongAnswerRetryResponse retry(Long memberId, Long questionId, Integer selectedOption, String answerText) {
-        requireLibraryAccess(memberId);
         QuestionEntity question = questionRepository.findById(questionId)
                 .orElseThrow(() -> new SqldpassException(ErrorCode.QUESTION_NOT_FOUND));
 

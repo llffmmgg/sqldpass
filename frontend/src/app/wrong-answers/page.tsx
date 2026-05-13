@@ -2,6 +2,7 @@
 
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import Link from "next/link";
 import {
   getWrongAnswers,
   getWrongAnswerStats,
@@ -9,13 +10,16 @@ import {
   getQuestionDetail,
   retryWrongAnswer,
   getBookmarks,
+  getWrongAnswersPreview,
   type WrongAnswerResponse,
   type WrongAnswerStatsResponse,
   type Subject,
   type QuestionDetail,
   type WrongAnswerRetryResponse,
   type BookmarkResponse,
+  type WrongAnswerPreviewResponse,
 } from "@/lib/api";
+import { useSubscription } from "@/hooks/useSubscription";
 import { formatRelativeDate } from "@/lib/format";
 import { parseQuestion } from "@/lib/parseQuestion";
 import QuestionContent from "@/components/QuestionContent";
@@ -64,6 +68,8 @@ export default function WrongAnswersPage() {
 
 function WrongAnswersPageContent() {
   const searchParams = useSearchParams();
+  const { subscription, loading: subscriptionLoading } = useSubscription();
+  const hasLibraryAccess = subscription.hasLibraryAccess;
 
   useEffect(() => {
     trackEvent("review_wrong");
@@ -72,6 +78,8 @@ function WrongAnswersPageContent() {
   const [stats, setStats] = useState<WrongAnswerStatsResponse[]>([]);
   const [wrongAnswers, setWrongAnswers] = useState<WrongAnswerResponse[]>([]);
   const [bookmarks, setBookmarks] = useState<BookmarkResponse[]>([]);
+  const [bookmarksLimited, setBookmarksLimited] = useState(false);
+  const [bookmarksTotalCount, setBookmarksTotalCount] = useState(0);
   const [rawSubjects, setRawSubjects] = useState<Subject[]>([]);
   const initialSubject = (() => {
     const v = searchParams?.get("subjectId");
@@ -102,6 +110,7 @@ function WrongAnswersPageContent() {
   }
 
   function reloadList() {
+    if (!hasLibraryAccess) return Promise.resolve();
     return Promise.all([
       getWrongAnswers(initialSubject ?? undefined),
       getWrongAnswerStats(),
@@ -112,22 +121,41 @@ function WrongAnswersPageContent() {
   }
 
   // 즐겨찾기는 오답 탭 카드의 별표 상태 표시에도 필요하므로 마운트 시 함께 로드.
+  // 권한 로딩 중이면 대기. 권한 없으면 오답 API 는 건너뛰고 즐겨찾기만 (백엔드가 30개로 자름).
   useEffect(() => {
-    Promise.all([
-      getWrongAnswerStats(),
-      getWrongAnswers(initialSubject ?? undefined),
-      getSubjects(),
-      getBookmarks(),
-    ])
-      .then(([statsData, wrongData, subjectsData, bookmarksData]) => {
-        setStats(statsData);
-        setWrongAnswers(wrongData);
-        setRawSubjects(subjectsData);
-        setBookmarks(bookmarksData);
-      })
-      .finally(() => setLoading(false));
+    if (subscriptionLoading) return;
+
+    const subjectsPromise = getSubjects();
+    const bookmarksPromise = getBookmarks();
+
+    if (hasLibraryAccess) {
+      Promise.all([
+        getWrongAnswerStats(),
+        getWrongAnswers(initialSubject ?? undefined),
+        subjectsPromise,
+        bookmarksPromise,
+      ])
+        .then(([statsData, wrongData, subjectsData, bookmarksData]) => {
+          setStats(statsData);
+          setWrongAnswers(wrongData);
+          setRawSubjects(subjectsData);
+          setBookmarks(bookmarksData.items);
+          setBookmarksLimited(bookmarksData.limited);
+          setBookmarksTotalCount(bookmarksData.totalCount);
+        })
+        .finally(() => setLoading(false));
+    } else {
+      Promise.all([subjectsPromise, bookmarksPromise])
+        .then(([subjectsData, bookmarksData]) => {
+          setRawSubjects(subjectsData);
+          setBookmarks(bookmarksData.items);
+          setBookmarksLimited(bookmarksData.limited);
+          setBookmarksTotalCount(bookmarksData.totalCount);
+        })
+        .finally(() => setLoading(false));
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [subscriptionLoading, hasLibraryAccess]);
 
   function handleExpand(questionId: number) {
     if (expandedId === questionId) {
@@ -484,6 +512,10 @@ function WrongAnswersPageContent() {
     );
   }
 
+  // 무료/Starter 등 라이브러리 권한 없는 사용자가 "오답" 탭에 있으면 잠금 뷰 노출.
+  // 즐겨찾기 탭은 백엔드가 30개로 잘라서 응답하므로 그대로 표시 + 하단 배너.
+  const showWrongAnswerLock = !subscriptionLoading && !hasLibraryAccess && topTab === "wrong";
+
   return (
     <main className="min-h-screen bg-bg text-text">
       <Container size="default" className="py-16">
@@ -534,8 +566,11 @@ function WrongAnswersPageContent() {
           </button>
         </div>
 
-        {/* 요약 카드 (오답 탭 전용) */}
-        {topTab === "wrong" && totalUnresolved > 0 && (() => {
+        {/* 오답 탭 잠금 뷰 — 무료/Starter 회원에게 본인 오답 5개 블러 미리보기 + Focus/Thunder CTA */}
+        {showWrongAnswerLock && <WrongAnswerLockView />}
+
+        {/* 요약 카드 (오답 탭 전용, 권한 있는 회원만) */}
+        {topTab === "wrong" && hasLibraryAccess && totalUnresolved > 0 && (() => {
           const highCount = wrongAnswers.filter((w) => w.wrongCount >= 3).length;
           const midCount = wrongAnswers.filter((w) => w.wrongCount === 2).length;
           const lowCount = wrongAnswers.filter((w) => w.wrongCount === 1).length;
@@ -576,7 +611,8 @@ function WrongAnswersPageContent() {
 
         <AdResponsive adSlot="2769801046" height={280} />
 
-        {/* 리스트 */}
+        {/* 리스트 — 잠금 뷰가 떠있으면 오답 탭 리스트 자체는 숨김 */}
+        {!showWrongAnswerLock && (
         <section className="mt-8">
           {loading && <Spinner />}
 
@@ -738,8 +774,134 @@ function WrongAnswersPageContent() {
             );
           })()}
         </section>
+        )}
+
+        {/* 즐겨찾기 30개 도달 시 결제 유도 배너 — 권한 없는 사용자, 즐찾 탭일 때만 */}
+        {!subscriptionLoading && !hasLibraryAccess && topTab === "bookmark" && bookmarksLimited && (
+          <div className="mt-6 rounded-xl border border-primary/30 bg-surface/70 p-4 text-sm">
+            <p className="text-text">
+              즐겨찾기는 무료로 최근 <span className="font-semibold">{bookmarksTotalCount > 30 ? "30개" : `${bookmarksTotalCount}개`}</span>까지 보여요. 전체{" "}
+              <span className="font-semibold tabular-nums">{bookmarksTotalCount}개</span>를 한꺼번에 보려면 결제 후 이어가요.
+            </p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <Link
+                href="/checkout"
+                className="inline-flex items-center gap-1 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-fg transition-colors hover:bg-primary-hover"
+              >
+                Focus 2,900원으로 30일 풀기 →
+              </Link>
+              <Link
+                href="/checkout"
+                className="inline-flex items-center gap-1 rounded-lg border border-border bg-surface px-3 py-1.5 text-xs font-medium text-text-muted transition-colors hover:border-primary/40 hover:text-text"
+              >
+                Thunder 3,900원으로 3일 풀파워 →
+              </Link>
+            </div>
+          </div>
+        )}
       </Container>
     </main>
+  );
+}
+
+// ----------------------------------------------------------
+// 오답노트 잠금 뷰 — 무료/Starter 사용자에게 본인 오답 5개를 블러 처리해 노출 + Focus/Thunder CTA
+// ----------------------------------------------------------
+function WrongAnswerLockView() {
+  const [preview, setPreview] = useState<WrongAnswerPreviewResponse[] | null>(null);
+  const [previewError, setPreviewError] = useState(false);
+
+  useEffect(() => {
+    getWrongAnswersPreview(5)
+      .then((data) => setPreview(data))
+      .catch(() => {
+        setPreviewError(true);
+        setPreview([]);
+      });
+  }, []);
+
+  return (
+    <div className="mt-6 overflow-hidden rounded-2xl border border-primary/30 bg-surface/40">
+      <div className="bg-gradient-to-br from-primary/10 via-transparent to-transparent px-6 py-6 sm:px-8">
+        <div className="flex items-center gap-3">
+          <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-primary/15 text-primary">
+            <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m6-9V7a6 6 0 10-12 0v1m-2 4h16v9H4v-9z" />
+            </svg>
+          </span>
+          <div>
+            <h2 className="text-base font-bold text-text">
+              오답 노트는 Thunder · Focus · Pro · Lifetime 에서 사용해요
+            </h2>
+            <p className="mt-1 text-xs leading-relaxed text-text-muted">
+              틀린 문제만 모아 약점만 골라 복습할 수 있어요. 다시 맞히면 자동으로 목록에서 사라집니다.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* 본인 오답 미리보기 — 블러 처리, 상호작용 차단 */}
+      <div className="relative px-6 pb-2 sm:px-8">
+        {preview && preview.length > 0 ? (
+          <div
+            aria-hidden
+            className="select-none space-y-2"
+            style={{
+              filter: "blur(6px) saturate(0.65)",
+              pointerEvents: "none",
+              WebkitUserSelect: "none",
+              userSelect: "none",
+            }}
+          >
+            {preview.map((item) => (
+              <div key={item.questionId} className="rounded-lg border border-border bg-bg px-4 py-3">
+                <p className="text-xs font-medium text-text-muted">{item.subjectName}</p>
+                <p className="mt-1 text-sm text-text line-clamp-1">{item.questionContent}</p>
+              </div>
+            ))}
+          </div>
+        ) : preview && preview.length === 0 ? (
+          <div className="rounded-lg border border-border bg-bg/60 px-4 py-6 text-center text-sm text-text-muted">
+            아직 풀이 기록이 없어요. 시험 한 회차 풀고 다시 오면 약점이 모입니다.
+          </div>
+        ) : (
+          <div className="h-32 animate-pulse rounded-lg bg-border/30" />
+        )}
+
+        {/* 잠금 오버레이 — 미리보기 영역 위에 살짝 어두운 그라데이션 */}
+        {preview && preview.length > 0 && (
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-x-6 inset-y-0 sm:inset-x-8"
+            style={{
+              background: "linear-gradient(to bottom, transparent 0%, var(--bg) 95%)",
+            }}
+          />
+        )}
+      </div>
+
+      <div className="px-6 pb-6 pt-4 sm:px-8">
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <Link
+            href="/checkout"
+            className="flex-1 rounded-lg bg-primary px-5 py-3 text-center text-sm font-semibold text-primary-fg shadow-sm transition-colors hover:bg-primary-hover"
+          >
+            Focus 2,900원으로 30일 시작
+          </Link>
+          <Link
+            href="/checkout"
+            className="flex-1 rounded-lg border border-border bg-surface px-5 py-3 text-center text-sm font-semibold text-text transition-colors hover:border-primary/40"
+          >
+            Thunder 3,900원으로 3일 풀파워
+          </Link>
+        </div>
+        {previewError && (
+          <p className="mt-3 text-center text-[11px] text-text-subtle">
+            * 일부 정보는 권한 보호로 표시할 수 없습니다.
+          </p>
+        )}
+      </div>
+    </div>
   );
 }
 

@@ -132,7 +132,6 @@ class WrongAnswerServiceTest {
     @Test
     @DisplayName("retry delegates to SolveService and returns answer details")
     void retry() {
-        given(subscriptionService.hasLibraryAccess(1L)).willReturn(true);
         SubjectEntity subject = mock(SubjectEntity.class);
         QuestionEntity question = mock(QuestionEntity.class);
         Solve solve = new Solve(1L, 1L, 99L, null, 1, 1, 100, LocalDateTime.now(), List.of());
@@ -164,7 +163,6 @@ class WrongAnswerServiceTest {
     @Test
     @DisplayName("retry throws when the question does not exist")
     void retry_questionNotFound() {
-        given(subscriptionService.hasLibraryAccess(1L)).willReturn(true);
         given(questionRepository.findById(10L)).willReturn(Optional.empty());
 
         assertThatThrownBy(() -> wrongAnswerService.retry(1L, 10L, 2, null))

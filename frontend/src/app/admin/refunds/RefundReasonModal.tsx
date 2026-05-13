@@ -10,9 +10,10 @@ import {
 import { useToast } from "@/components/Toast";
 
 const PLAN_LABEL: Record<AdminSubscriptionPlan, string> = {
-  THREE_DAY: "3일권",
-  ONE_MONTH: "한달권",
-  UNLIMITED: "무제한",
+  THREE_DAY: "Thunder",
+  FOCUS: "Focus",
+  ONE_MONTH: "Pro",
+  UNLIMITED: "Lifetime",
 };
 
 const REFUND_TIMEOUT_MS = 30_000;
