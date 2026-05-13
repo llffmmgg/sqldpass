@@ -27,6 +27,7 @@ import {
 import { getSolves, type SolveSummaryResponse } from "@/lib/api";
 import { getToken } from "@/lib/auth";
 import MockExamAttemptsView from "@/components/MockExamAttemptsView";
+import MockExamPdfButton from "@/components/MockExamPdfButton";
 import { hapticError, hapticLight, hapticSuccess } from "@/lib/haptic";
 import QuestionJumpPanel, {
   type QuestionJumpGroup,
@@ -306,11 +307,14 @@ export default function PastExamRunnerClient({
       <GradingDisclaimerModal />
       <Container size="default" className="py-10">
         <div className="mb-6 rounded-2xl border border-border bg-surface/70 p-5">
-          <div className="flex flex-wrap items-center gap-2">
-            <Badge cert={cert} variant="soft" size="xs" dot>
-              {token.label}
-            </Badge>
-            <span className="text-xs text-text-muted">{roundLabel}</span>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge cert={cert} variant="soft" size="xs" dot>
+                {token.label}
+              </Badge>
+              <span className="text-xs text-text-muted">{roundLabel}</span>
+            </div>
+            <MockExamPdfButton examId={exam.id} />
           </div>
           <h1 className="mt-3 text-2xl font-bold tracking-tight sm:text-3xl">
             {exam.name}
@@ -516,9 +520,12 @@ function PastExamResultView({
   return (
     <main className="min-h-screen bg-bg text-text">
       <Container size="narrow" className="py-14">
-        <Badge cert={cert} variant="soft" size="sm" dot>
-          기출 복원 결과
-        </Badge>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <Badge cert={cert} variant="soft" size="sm" dot>
+            기출 복원 결과
+          </Badge>
+          <MockExamPdfButton examId={exam.id} />
+        </div>
         <h1 className="mt-3 text-2xl font-bold tracking-tight sm:text-3xl">
           {roundLabel} <span className="text-text-subtle">· 채점 완료</span>
         </h1>

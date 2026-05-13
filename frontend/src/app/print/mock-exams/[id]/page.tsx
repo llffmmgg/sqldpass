@@ -55,6 +55,7 @@ interface PrintMockExam {
   examType: string;
   sequence: number;
   totalQuestions: number;
+  kind?: "AI" | "PAST_EXAM";
   examYear: number | null;
   examRound: number | null;
   examDate: string | null;
@@ -79,6 +80,16 @@ const COVER_META: Record<string, { kor: string; eng: string; questions: number; 
   COMPUTER_LITERACY_1: { kor: "컴활 1급", eng: "COMPUTER LITERACY 1", questions: 60, minutes: 60, subjects: 3 },
   COMPUTER_LITERACY_2: { kor: "컴활 2급", eng: "COMPUTER LITERACY 2", questions: 40, minutes: 40, subjects: 2 },
   ADSP: { kor: "ADsP", eng: "ADSP MOCK EXAM", questions: 50, minutes: 90, subjects: 3 },
+};
+
+/** kind=PAST_EXAM 일 때 사용되는 영문 라벨. 자격증 종류별로 'PAST EXAM' 변형을 가진다. */
+const COVER_META_PAST_ENG: Record<string, string> = {
+  SQLD: "SQLD PAST EXAM",
+  ENGINEER_WRITTEN: "ENGINEER WRITTEN PAST EXAM",
+  ENGINEER_PRACTICAL: "ENGINEER PRACTICAL PAST EXAM",
+  COMPUTER_LITERACY_1: "COMPUTER LITERACY 1 PAST EXAM",
+  COMPUTER_LITERACY_2: "COMPUTER LITERACY 2 PAST EXAM",
+  ADSP: "ADSP PAST EXAM",
 };
 
 /* ---------- 평문 SQL → ```sql 자동 펜싱 (QuestionContent 와 동일 로직) ---------- */
@@ -295,15 +306,23 @@ export default function PrintMockExamPage({
       <div className="print-root">
         {/* 표지 — 보라 Hero 디자인 */}
         {(() => {
-          const meta = COVER_META[data.examType] ?? {
+          const baseMeta = COVER_META[data.examType] ?? {
             kor: EXAM_TYPE_LABEL[data.examType] ?? data.examType,
             eng: data.examType,
             questions: data.totalQuestions,
             minutes: 90,
             subjects: 1,
           };
+          const isPast = data.kind === "PAST_EXAM";
+          const engLabel = isPast
+            ? COVER_META_PAST_ENG[data.examType] ?? `${baseMeta.eng} PAST EXAM`
+            : baseMeta.eng;
+          const meta = { ...baseMeta, eng: engLabel };
           const totalQ = data.totalQuestions || meta.questions;
-          const volume = `VOL.${data.sequence}`;
+          const volume =
+            isPast && data.examYear && data.examRound
+              ? `${data.examYear}.${data.examRound}회`
+              : `VOL.${data.sequence}`;
           return (
             <section className="print-cover">
               <div className="cover-block" />
@@ -319,7 +338,7 @@ export default function PrintMockExamPage({
 
               <div className="cover-headline">
                 <div className="cover-big">{meta.kor}</div>
-                <div className="cover-sub">모의고사<b>.</b></div>
+                <div className="cover-sub">{isPast ? "기출" : "모의고사"}<b>.</b></div>
               </div>
 
               <div className="cover-stats">

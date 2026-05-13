@@ -1,0 +1,17 @@
+{
+  "project": "sqldpass",
+  "phase": "past-exam-pdf-button",
+  "description": "기출(past-exam) 풀이 화면에 PDF 다운로드 버튼이 없는 문제 해결. mock_exam 테이블에 kind=PAST_EXAM 으로 통합 저장되고 백엔드 PDF 인프라(MockExamPdfService.buildFilename, /api/mock-exams/{id}/pdf/download)는 이미 기출 ID 를 그대로 수용하므로, 백엔드 변경 없이 프론트엔드 두 곳만 수정한다 — (1) PastExamRunnerClient 풀이 진행 화면 헤더와 결과 화면에 MockExamPdfButton 배치, (2) 인쇄 페이지(print/mock-exams/[id]) 표지에 PAST_EXAM 분기 추가 ('모의고사.' → '기출.', MOCK EXAM → PAST EXAM, VOL.X → 년도.회차회). 권한 정책은 모의고사와 동일(Lifetime 구독), 비로그인/미구독 분기는 직전 phase 의 MockExamPdfButton 그대로 재사용.",
+  "steps": [
+    {
+      "step": 1,
+      "name": "add-past-exam-pdf-button",
+      "description": "frontend/src/components/past-exams/PastExamRunnerClient.tsx 에 MockExamPdfButton import + 풀이 진행 화면 헤더 박스(L308-321) 와 결과 화면(PastExamResultView) 두 곳에 examId={exam.id} 로 버튼 배치. frontend/src/app/print/mock-exams/[id]/page.tsx 의 PrintMockExam 인터페이스에 kind 필드 추가 + 표지 렌더 블록에 isPast = data.kind === 'PAST_EXAM' 분기 도입 — cover-sub '모의고사' → '기출', meta.eng 영문 라벨 PAST 변형 매핑 추가, volume VOL.{sequence} → {examYear}.{examRound}회 (year/round 모두 truthy 일 때만). 모의고사 표지 출력 회귀 없음.",
+      "status": "completed",
+      "started_at": "2026-05-13T14:56:30+0900",
+      "completed_at": "2026-05-13T15:00:35+0900",
+      "summary": "기출 풀이 화면 헤더+결과 화면에 MockExamPdfButton 배치 + print 페이지 PAST_EXAM 표지 분기 (kind/영문라벨/cover-sub/volume), lint/build OK"
+    }
+  ],
+  "created_at": "2026-05-13T00:00:00+0900"
+}

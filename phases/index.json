@@ -125,6 +125,12 @@
       "description": "모의고사 PDF 다운로드 버튼의 eligibility 게이트(/api/mock-exams/pdf/eligibility 조회 후 null 리턴) 를 제거 — 비로그인/미구독 사용자에게도 버튼 노출해 결제 유도 동선 복원. 비로그인 클릭은 BookmarkButton 과 동일한 alert('로그인 후 이용 가능합니다.') 로 차단, 미구독은 기존 PDF_REQUIRES_SUBSCRIPTION 토스트 그대로. 백엔드 권한 체크 무변경.",
       "status": "completed",
       "completed_at": "2026-05-13T13:16:38+0900"
+    },
+    {
+      "dir": "past-exam-pdf-button",
+      "name": "past-exam-pdf-button",
+      "description": "기출(past-exam) 풀이 화면에 PDF 다운로드 버튼이 없는 문제 해결. mock_exam 테이블에 kind=PAST_EXAM 으로 통합 저장되고 백엔드 PDF 인프라가 이미 기출을 그대로 수용하므로, 프론트엔드만 수정 — PastExamRunnerClient 풀이 진행 화면 헤더와 결과 화면에 MockExamPdfButton 배치 + 인쇄 페이지 표지에 PAST_EXAM 분기 추가 ('모의고사.' → '기출.', MOCK EXAM → PAST EXAM, VOL.X → 년도.회차회).",
+      "status": "pending"
     }
   ]
 }
