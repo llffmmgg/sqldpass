@@ -13,6 +13,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.sqldpass.controller.solve.dto.SolveRequest;
+import com.sqldpass.controller.wronganswer.dto.WrongAnswerPreviewResponse;
 import com.sqldpass.controller.wronganswer.dto.WrongAnswerResponse;
 import com.sqldpass.controller.wronganswer.dto.WrongAnswerRetryResponse;
 import com.sqldpass.controller.wronganswer.dto.WrongAnswerStatsResponse;
@@ -26,6 +27,7 @@ import com.sqldpass.persistent.solve.WrongAnswerStatsProjection;
 import com.sqldpass.persistent.subject.SubjectEntity;
 import com.sqldpass.service.common.ErrorCode;
 import com.sqldpass.service.common.SqldpassException;
+import com.sqldpass.service.payment.SubscriptionService;
 import com.sqldpass.service.solve.SolveService;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -48,12 +50,16 @@ class WrongAnswerServiceTest {
     @Mock
     private SolveService solveService;
 
+    @Mock
+    private SubscriptionService subscriptionService;
+
     @InjectMocks
     private WrongAnswerService wrongAnswerService;
 
     @Test
     @DisplayName("getWrongAnswers maps repository projections")
     void getWrongAnswers() {
+        given(subscriptionService.hasLibraryAccess(1L)).willReturn(true);
         WrongAnswerProjection projection = mock(WrongAnswerProjection.class);
         given(projection.getQuestionId()).willReturn(10L);
         given(projection.getQuestionContent()).willReturn("Question content");
@@ -71,8 +77,20 @@ class WrongAnswerServiceTest {
     }
 
     @Test
+    @DisplayName("getWrongAnswers throws when member has no library access")
+    void getWrongAnswers_forbidden() {
+        given(subscriptionService.hasLibraryAccess(1L)).willReturn(false);
+
+        assertThatThrownBy(() -> wrongAnswerService.getWrongAnswers(1L, null))
+                .isInstanceOf(SqldpassException.class)
+                .extracting(ex -> ((SqldpassException) ex).getErrorCode())
+                .isEqualTo(ErrorCode.WRONG_ANSWER_REQUIRES_SUBSCRIPTION);
+    }
+
+    @Test
     @DisplayName("getStats maps repository projections")
     void getStats() {
+        given(subscriptionService.hasLibraryAccess(1L)).willReturn(true);
         WrongAnswerStatsProjection projection = mock(WrongAnswerStatsProjection.class);
         given(projection.getSubjectId()).willReturn(5L);
         given(projection.getSubjectName()).willReturn("SQL Basics");
@@ -89,8 +107,32 @@ class WrongAnswerServiceTest {
     }
 
     @Test
+    @DisplayName("getPreview returns top N items without subscription check")
+    void getPreview_noAccessCheck() {
+        WrongAnswerProjection projection = mock(WrongAnswerProjection.class);
+        given(projection.getQuestionId()).willReturn(10L);
+        given(projection.getQuestionContent()).willReturn("Preview content");
+        given(projection.getSubjectName()).willReturn("SQL Basics");
+        given(solveAnswerRepository.findWrongAnswers(1L, null)).willReturn(List.of(projection));
+
+        List<WrongAnswerPreviewResponse> preview = wrongAnswerService.getPreview(1L, 5);
+
+        assertThat(preview).hasSize(1);
+        assertThat(preview.get(0).questionId()).isEqualTo(10L);
+        assertThat(preview.get(0).questionContent()).isEqualTo("Preview content");
+    }
+
+    @Test
+    @DisplayName("getPreview returns empty list for anonymous user")
+    void getPreview_anonymous() {
+        List<WrongAnswerPreviewResponse> preview = wrongAnswerService.getPreview(null, 5);
+        assertThat(preview).isEmpty();
+    }
+
+    @Test
     @DisplayName("retry delegates to SolveService and returns answer details")
     void retry() {
+        given(subscriptionService.hasLibraryAccess(1L)).willReturn(true);
         SubjectEntity subject = mock(SubjectEntity.class);
         QuestionEntity question = mock(QuestionEntity.class);
         Solve solve = new Solve(1L, 1L, 99L, null, 1, 1, 100, LocalDateTime.now(), List.of());
@@ -122,6 +164,7 @@ class WrongAnswerServiceTest {
     @Test
     @DisplayName("retry throws when the question does not exist")
     void retry_questionNotFound() {
+        given(subscriptionService.hasLibraryAccess(1L)).willReturn(true);
         given(questionRepository.findById(10L)).willReturn(Optional.empty());
 
         assertThatThrownBy(() -> wrongAnswerService.retry(1L, 10L, 2, null))

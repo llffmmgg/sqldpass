@@ -74,6 +74,7 @@ sqldpass:
     # Play Console 에 등록한 일회성 상품(SKU) 매핑 — 클라이언트가 보낸 productId 검증에 사용.
     product-id-mapping:
       THREE_DAY: ${PLAY_BILLING_SKU_THREE_DAY:iap_three_day}
+      FOCUS: ${PLAY_BILLING_SKU_FOCUS:iap_focus}
       ONE_MONTH: ${PLAY_BILLING_SKU_ONE_MONTH:iap_one_month}
       UNLIMITED: ${PLAY_BILLING_SKU_UNLIMITED:iap_unlimited}
   admin:
@@ -124,7 +125,10 @@ sqldpass:
     # 4티어 구독 모델 — 각 plan 의 결제 금액(원)·상품명. TEST/0원 금지 (카드사 심사).
     three-day:
       amount: ${PAYMENT_3DAY_AMOUNT:3900}
-      product-name: ${PAYMENT_3DAY_NAME:문어CBT Starter}
+      product-name: ${PAYMENT_3DAY_NAME:문어CBT Thunder}
+    focus:
+      amount: ${PAYMENT_FOCUS_AMOUNT:2900}
+      product-name: ${PAYMENT_FOCUS_NAME:문어CBT Focus}
     one-month:
       amount: ${PAYMENT_1MONTH_AMOUNT:9900}
       product-name: ${PAYMENT_1MONTH_NAME:문어CBT Pro}

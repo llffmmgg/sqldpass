@@ -56,7 +56,8 @@ public class SubscriptionService {
         SubscriptionEntity top = rows.get(0);
         return Optional.of(new ActiveSubscription(
                 top.getPlan(), top.getExpiresAt(),
-                top.getPlan().isRemovesAds(), top.getPlan().isAllowsPdf()));
+                top.getPlan().isRemovesAds(), top.getPlan().isAllowsPdf(),
+                top.getPlan().isHasLibraryAccess()));
     }
 
     public boolean hasPremiumAccess(Long memberId) {
@@ -71,11 +72,17 @@ public class SubscriptionService {
         return getActive(memberId).map(ActiveSubscription::allowsPdf).orElse(false);
     }
 
+    /** 오답노트 사용 + 즐겨찾기 무제한 권한. Thunder/Focus/Pro/Lifetime 에서 true. */
+    public boolean hasLibraryAccess(Long memberId) {
+        return getActive(memberId).map(ActiveSubscription::hasLibraryAccess).orElse(false);
+    }
+
     /** 활성 구독의 외부 노출 형태. UNLIMITED 면 expiresAt = null. */
     public record ActiveSubscription(
             SubscriptionPlan plan,
             LocalDateTime expiresAt,
             boolean removesAds,
-            boolean allowsPdf
+            boolean allowsPdf,
+            boolean hasLibraryAccess
     ) {}
 }

@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.sqldpass.controller.wronganswer.dto.WrongAnswerPreviewResponse;
 import com.sqldpass.controller.wronganswer.dto.WrongAnswerResponse;
 import com.sqldpass.controller.wronganswer.dto.WrongAnswerRetryRequest;
 import com.sqldpass.controller.wronganswer.dto.WrongAnswerRetryResponse;
@@ -42,6 +43,17 @@ public class WrongAnswerController {
     public List<WrongAnswerStatsResponse> getStats(HttpServletRequest request) {
         Long memberId = (Long) request.getAttribute("memberId");
         return wrongAnswerService.getStats(memberId);
+    }
+
+    @GetMapping("/api/wrong-answers/preview")
+    @Operation(summary = "오답노트 잠금 화면 미리보기 (권한 무관, 제목·과목만)",
+            description = "Thunder/Focus/Pro/Lifetime 미가입 사용자의 잠금 뷰에서 블러 처리되어 노출. "
+                    + "본인 오답 상위 limit 개 (최대 10) 의 제목·과목만 반환하고 정답/해설은 제외.")
+    public List<WrongAnswerPreviewResponse> getPreview(
+            HttpServletRequest request,
+            @RequestParam(defaultValue = "5") int limit) {
+        Long memberId = (Long) request.getAttribute("memberId");
+        return wrongAnswerService.getPreview(memberId, limit);
     }
 
     @PostMapping("/api/wrong-answers/{questionId}/retry")

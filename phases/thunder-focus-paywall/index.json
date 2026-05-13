@@ -1,0 +1,20 @@
+{
+  "project": "sqldpass",
+  "phase": "thunder-focus-paywall",
+  "description": "구매 유도 강화 — (1) 기존 Starter(3,900/3일)를 Thunder(벼락치기)로 리브랜드 + 광고제거/오답노트/즐겨찾기 무제한 권한 추가, (2) 새 플랜 Focus(2,900/30일) 신설 (광고+오답+즐겨찾기 무제한, PASS+ 없음), (3) 오답노트 페이지 무료 사용자에게 잠금 + 본인 오답 5개 블러 미리보기 + 결제 CTA, (4) 즐겨찾기 무료 30개 제한 + 30개 도달 시 배너. 단일 권한 hasLibraryAccess 로 묶음. SubscriptionPlan enum 키 THREE_DAY 자체는 유지 — DB 호환성. 31번째 즐겨찾기 추가/오답 row 데이터 자체는 보존 — 결제 후 그대로 복원.",
+  "steps": [
+    {
+      "step": 1,
+      "name": "backend-focus-plan-and-library-gate",
+      "description": "SubscriptionPlan enum 에 FOCUS 추가 + THREE_DAY 의 removesAds/hasLibraryAccess 강화 + 새 권한 필드 hasLibraryAccess 도입. PaymentProperties.focus + application.yaml product-name Thunder/Focus 갱신. SubscriptionService.hasLibraryAccess() + ActiveSubscription 응답 새 필드. ErrorCode.WRONG_ANSWER_REQUIRES_SUBSCRIPTION. WrongAnswerService/Controller 권한 가드 + /api/wrong-answers/preview 신설. Bookmark 30 limit + limited 메타. PaymentService FOCUS 분기 점검 + PaymentServiceTest 어설션 보정.",
+      "status": "pending"
+    },
+    {
+      "step": 2,
+      "name": "frontend-thunder-focus-ui",
+      "description": "payment.ts 타입 확장 (FOCUS 유니온 + hasLibraryAccess 필드 + planLabel Thunder/Focus). CheckoutLanding TIERS Thunder 리브랜드 + Focus 카드 추가 + 4 카드 그리드. CheckoutClient previews 확장. wrong-answers 페이지 hasLibraryAccess false 시 잠금 뷰 (preview API 호출 + 본인 오답 5개 블러 + Focus/Thunder CTA). 즐겨찾기 모음 화면 30개 + 배너. planLabel 'Starter' 하드코딩 grep.",
+      "status": "pending"
+    }
+  ],
+  "created_at": "2026-05-13T00:00:00+0900"
+}
