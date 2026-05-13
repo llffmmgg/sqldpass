@@ -9,7 +9,7 @@
       "description": "frontend/src/components/past-exams/PastExamRunnerClient.tsx 에 MockExamPdfButton import + 풀이 진행 화면 헤더 박스(L308-321) 와 결과 화면(PastExamResultView) 두 곳에 examId={exam.id} 로 버튼 배치. frontend/src/app/print/mock-exams/[id]/page.tsx 의 PrintMockExam 인터페이스에 kind 필드 추가 + 표지 렌더 블록에 isPast = data.kind === 'PAST_EXAM' 분기 도입 — cover-sub '모의고사' → '기출', meta.eng 영문 라벨 PAST 변형 매핑 추가, volume VOL.{sequence} → {examYear}.{examRound}회 (year/round 모두 truthy 일 때만). 모의고사 표지 출력 회귀 없음.",
       "status": "completed",
       "started_at": "2026-05-13T14:56:30+0900",
-      "completed_at": "2026-05-13T15:00:35+0900",
+      "completed_at": "2026-05-13T15:01:42+0900",
       "summary": "기출 풀이 화면 헤더+결과 화면에 MockExamPdfButton 배치 + print 페이지 PAST_EXAM 표지 분기 (kind/영문라벨/cover-sub/volume), lint/build OK"
     }
   ],
