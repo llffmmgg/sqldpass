@@ -1,0 +1,20 @@
+{
+  "project": "sqldpass",
+  "phase": "android-billing-plugin",
+  "description": "Google Play Billing 을 위한 Capacitor 커스텀 Kotlin 플러그인 구현. frontend `payment.ts:startPaymentPlayBilling` 이 호출하는 `window.Capacitor.Plugins.Billing.purchase({productId})` 의 native 구현체. backend `verifyPlayBilling` 5단계 검증과 RTDN webhook 은 이미 구현됨. mobile/android/ 네이티브 코드만 추가.",
+  "steps": [
+    {
+      "step": 1,
+      "name": "gradle-kotlin-billing-dependencies",
+      "description": "mobile/android/variables.gradle 에 kotlinVersion + playBillingVersion 상수 추가. mobile/android/build.gradle buildscript dependencies 에 kotlin-gradle-plugin classpath 추가. mobile/android/app/build.gradle 에 kotlin-android plugin + kotlin-stdlib + com.android.billingclient:billing-ktx 의존성 추가.",
+      "status": "pending"
+    },
+    {
+      "step": 2,
+      "name": "billing-plugin-kotlin",
+      "description": "mobile/android/app/src/main/java/com/sqldpass/app/BillingPlugin.kt 작성 — @CapacitorPlugin(name=\"Billing\") + BillingClient + PurchasesUpdatedListener. purchase(productId) → queryProductDetailsAsync → launchBillingFlow → JSObject(success, purchaseToken, orderId) 응답. MainActivity.java 의 onCreate 에 registerPlugin(BillingPlugin.class) 1줄 추가.",
+      "status": "pending"
+    }
+  ],
+  "created_at": "2026-05-13T14:30:00+0900"
+}
