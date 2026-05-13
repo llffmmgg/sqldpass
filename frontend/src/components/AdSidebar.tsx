@@ -12,6 +12,8 @@ const EXCLUDED_PREFIXES = [
   "/profile",
   "/mypage/feedback",
   "/auth/callback",
+  // 결제 결정 흐름 — 광고로 시선 분산 방지
+  "/checkout",
 ];
 
 interface AdSidebarProps {
