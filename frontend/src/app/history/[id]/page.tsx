@@ -154,74 +154,119 @@ function HistoryDetailContent({ params }: { params: Promise<{ id: string }> }) {
           <AdDisplay adSlot="3622084801" />
         </div>
 
-        {/* Answers */}
-        <div className="mt-8 space-y-4">
+        {/* Answers — Supabase 스타일: 일관 카드 + 헤더 분리, 상태는 칩/시맨틱 컬러로 */}
+        <div className="mt-8 space-y-3">
           {solve.answers.map((answer, idx) => {
             const detail = details[answer.questionId];
             const parsed = detail ? parseQuestion(detail.content) : null;
+            const myMarker =
+              answer.selectedOption != null
+                ? OPTION_MARKERS[answer.selectedOption - 1]
+                : null;
+            const correctMarker =
+              answer.correctOption != null
+                ? OPTION_MARKERS[answer.correctOption - 1]
+                : null;
 
             return (
               <div
                 key={answer.questionId}
-                className={`rounded-lg border px-5 py-4 ${
-                  answer.correct
-                    ? "border-green-500/30 bg-green-500/5"
-                    : "border-red-500/30 bg-red-500/5"
-                }`}
+                className="overflow-hidden rounded-lg border border-border bg-surface transition-colors hover:border-border-strong"
               >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-muted">문제 {idx + 1}</p>
-                    {parsed && (
-                      <QuestionContent content={parsed.body} className="mt-1" />
-                    )}
+                {/* 헤더 */}
+                <div className="flex items-center justify-between gap-3 border-b border-border bg-bg-elevated px-5 py-2.5">
+                  <div className="flex items-center gap-2.5">
+                    <span
+                      className={`inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
+                        answer.correct
+                          ? "bg-success/15 text-success"
+                          : "bg-danger/15 text-danger"
+                      }`}
+                    >
+                      {answer.correct ? "정답" : "오답"}
+                    </span>
+                    <span className="font-mono text-xs text-text-muted tabular-nums">
+                      Q{String(idx + 1).padStart(2, "0")}
+                    </span>
                   </div>
-                  <span
-                    className={`shrink-0 rounded px-2 py-0.5 text-xs font-semibold ${
-                      answer.correct
-                        ? "bg-green-500/20 text-green-400"
-                        : "bg-red-500/20 text-red-400"
-                    }`}
-                  >
-                    {answer.correct ? "\u2713 정답" : "\u2717 오답"}
-                  </span>
+                  {!answer.correct && myMarker && correctMarker && (
+                    <span className="font-mono text-[11px] tabular-nums">
+                      <span className="text-danger">{myMarker}</span>
+                      <span className="mx-1 text-text-subtle">{"→"}</span>
+                      <span className="text-success">{correctMarker}</span>
+                    </span>
+                  )}
                 </div>
 
-                {parsed && parsed.options.length > 0 && (
-                  <div className="mt-3 space-y-1">
-                    {parsed.options.map((opt, optIdx) => {
-                      const optNum = optIdx + 1;
-                      const isSelected = optNum === answer.selectedOption;
-                      const isCorrect = optNum === answer.correctOption;
-                      return (
-                        <div
-                          key={optIdx}
-                          className={`flex items-start gap-2 rounded px-2 py-1 text-sm ${
-                            isCorrect
-                              ? "bg-green-500/10 text-green-400 font-medium"
-                              : isSelected && !answer.correct
-                              ? "bg-red-500/10 text-red-400"
-                              : "text-muted"
-                          }`}
-                        >
-                          <span className="shrink-0">{OPTION_MARKERS[optIdx]}</span>
-                          <span className="min-w-0 flex-1">
-                            <QuestionContent content={opt} className="mcq-option" />
-                          </span>
-                          {isCorrect && <span className="shrink-0">✓</span>}
-                          {isSelected && !isCorrect && <span className="shrink-0">(선택)</span>}
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
+                {/* 본문 */}
+                <div className="px-5 py-4">
+                  {parsed && <QuestionContent content={parsed.body} />}
 
+                  {parsed && parsed.options.length > 0 && (
+                    <ul className="mt-4 space-y-1.5">
+                      {parsed.options.map((opt, optIdx) => {
+                        const optNum = optIdx + 1;
+                        const isSelected = optNum === answer.selectedOption;
+                        const isCorrect = optNum === answer.correctOption;
+                        const tone = isCorrect
+                          ? "border-success/40 bg-success/[0.06] text-text"
+                          : isSelected
+                            ? "border-danger/40 bg-danger/[0.06] text-text"
+                            : "border-border bg-bg text-text-muted";
+                        const markerTone = isCorrect
+                          ? "text-success"
+                          : isSelected
+                            ? "text-danger"
+                            : "text-text-subtle";
+                        return (
+                          <li
+                            key={optIdx}
+                            className={`flex items-start gap-3 rounded-md border px-3 py-2 text-sm ${tone}`}
+                          >
+                            <span
+                              className={`shrink-0 font-mono text-xs tabular-nums ${markerTone}`}
+                            >
+                              {OPTION_MARKERS[optIdx]}
+                            </span>
+                            <span className="min-w-0 flex-1">
+                              <QuestionContent
+                                content={opt}
+                                className="mcq-option"
+                              />
+                            </span>
+                            {isCorrect && (
+                              <span className="shrink-0 rounded bg-success/15 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-success">
+                                정답
+                              </span>
+                            )}
+                            {isSelected && !isCorrect && (
+                              <span className="shrink-0 rounded bg-danger/15 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-danger">
+                                내 답
+                              </span>
+                            )}
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )}
+                </div>
+
+                {/* 해설 */}
                 {detail && detail.explanation && (
-                  <details className="mt-3 rounded-lg border border-border px-3 py-2 text-sm">
-                    <summary className="cursor-pointer font-medium text-amber-400">
-                      해설 보기
+                  <details className="group border-t border-border">
+                    <summary className="flex cursor-pointer list-none items-center justify-between gap-2 px-5 py-2.5 text-xs font-semibold text-text-muted transition-colors hover:bg-surface-hover">
+                      <span className="flex items-center gap-2">
+                        <span className="font-mono text-primary transition-transform duration-150 group-open:rotate-90">
+                          {"▸"}
+                        </span>
+                        해설 보기
+                      </span>
+                      <span className="text-[10px] font-medium uppercase tracking-wider text-text-subtle">
+                        <span className="group-open:hidden">펼치기</span>
+                        <span className="hidden group-open:inline">접기</span>
+                      </span>
                     </summary>
-                    <div className="mt-2 leading-relaxed text-muted">
+                    <div className="border-t border-border bg-bg-elevated px-5 py-4 text-sm leading-relaxed text-text">
                       <QuestionContent content={detail.explanation} />
                     </div>
                   </details>
