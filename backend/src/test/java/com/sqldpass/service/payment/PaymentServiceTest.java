@@ -71,7 +71,7 @@ class PaymentServiceTest {
         properties.setThreeDay(new PaymentProperties.PlanConfig(3900, "문어CBT Thunder"));
         properties.setFocus(new PaymentProperties.PlanConfig(2900, "문어CBT Focus"));
         properties.setOneMonth(new PaymentProperties.PlanConfig(9900, "문어CBT Pro"));
-        properties.setUnlimited(new PaymentProperties.PlanConfig(29900, "문어CBT Lifetime"));
+        properties.setUnlimited(new PaymentProperties.PlanConfig(29900, "문어CBT All Pass"));
 
         playBillingProperties = new PlayBillingProperties();
         playBillingProperties.getProductIdMapping().put(SubscriptionPlan.THREE_DAY, "iap_three_day");

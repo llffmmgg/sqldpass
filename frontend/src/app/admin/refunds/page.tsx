@@ -22,7 +22,7 @@ const PLAN_LABEL: Record<AdminSubscriptionPlan, string> = {
   THREE_DAY: "Thunder",
   FOCUS: "Focus",
   ONE_MONTH: "Pro",
-  UNLIMITED: "Lifetime",
+  UNLIMITED: "All Pass",
 };
 
 const STATUS_LABEL: Record<AdminPaymentStatus, string> = {

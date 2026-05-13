@@ -30,7 +30,7 @@ export default function MockExamPdfButton({
         } catch (e) {
           if (e instanceof PdfDownloadError && e.code === "PDF_REQUIRES_SUBSCRIPTION") {
             toast.show(
-              "PDF 다운로드는 Lifetime 플랜 전용입니다. 우측 상단 프로필에서 업그레이드할 수 있어요.",
+              "PDF 다운로드는 All Pass 플랜 전용입니다. 우측 상단 프로필에서 업그레이드할 수 있어요.",
               "info",
             );
           } else {

@@ -783,18 +783,12 @@ function WrongAnswersPageContent() {
               즐겨찾기는 무료로 최근 <span className="font-semibold">{bookmarksTotalCount > 30 ? "30개" : `${bookmarksTotalCount}개`}</span>까지 보여요. 전체{" "}
               <span className="font-semibold tabular-nums">{bookmarksTotalCount}개</span>를 한꺼번에 보려면 결제 후 이어가요.
             </p>
-            <div className="mt-3 flex flex-wrap gap-2">
+            <div className="mt-3">
               <Link
                 href="/checkout"
                 className="inline-flex items-center gap-1 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-fg transition-colors hover:bg-primary-hover"
               >
-                Focus 2,900원으로 30일 풀기 →
-              </Link>
-              <Link
-                href="/checkout"
-                className="inline-flex items-center gap-1 rounded-lg border border-border bg-surface px-3 py-1.5 text-xs font-medium text-text-muted transition-colors hover:border-primary/40 hover:text-text"
-              >
-                Thunder 3,900원으로 3일 풀파워 →
+                플랜 보러가기 →
               </Link>
             </div>
           </div>
@@ -821,17 +815,17 @@ function WrongAnswerLockView() {
   }, []);
 
   return (
-    <div className="mt-6 overflow-hidden rounded-2xl border border-primary/30 bg-surface/40">
-      <div className="bg-gradient-to-br from-primary/10 via-transparent to-transparent px-6 py-6 sm:px-8">
+    <div className="mt-6 overflow-hidden rounded-xl border border-border bg-surface">
+      <div className="border-b border-border px-6 py-5 sm:px-8">
         <div className="flex items-center gap-3">
-          <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-primary/15 text-primary">
+          <span className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-primary-fg">
             <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m6-9V7a6 6 0 10-12 0v1m-2 4h16v9H4v-9z" />
             </svg>
           </span>
           <div>
             <h2 className="text-base font-bold text-text">
-              오답 노트는 Thunder · Focus · Pro · Lifetime 에서 사용해요
+              오답 노트는 Free 플랜 이상에서 사용 가능해요
             </h2>
             <p className="mt-1 text-xs leading-relaxed text-text-muted">
               틀린 문제만 모아 약점만 골라 복습할 수 있어요. 다시 맞히면 자동으로 목록에서 사라집니다.
@@ -841,60 +835,41 @@ function WrongAnswerLockView() {
       </div>
 
       {/* 본인 오답 미리보기 — 블러 처리, 상호작용 차단 */}
-      <div className="relative px-6 pb-2 sm:px-8">
+      <div className="px-6 pt-5 pb-2 sm:px-8">
         {preview && preview.length > 0 ? (
           <div
             aria-hidden
             className="select-none space-y-2"
             style={{
-              filter: "blur(6px) saturate(0.65)",
+              filter: "blur(6px)",
               pointerEvents: "none",
               WebkitUserSelect: "none",
               userSelect: "none",
             }}
           >
             {preview.map((item) => (
-              <div key={item.questionId} className="rounded-lg border border-border bg-bg px-4 py-3">
+              <div key={item.questionId} className="rounded-lg border border-border bg-bg-elevated px-4 py-3">
                 <p className="text-xs font-medium text-text-muted">{item.subjectName}</p>
                 <p className="mt-1 text-sm text-text line-clamp-1">{item.questionContent}</p>
               </div>
             ))}
           </div>
         ) : preview && preview.length === 0 ? (
-          <div className="rounded-lg border border-border bg-bg/60 px-4 py-6 text-center text-sm text-text-muted">
+          <div className="rounded-lg border border-border bg-bg-elevated px-4 py-6 text-center text-sm text-text-muted">
             아직 풀이 기록이 없어요. 시험 한 회차 풀고 다시 오면 약점이 모입니다.
           </div>
         ) : (
           <div className="h-32 animate-pulse rounded-lg bg-border/30" />
         )}
-
-        {/* 잠금 오버레이 — 미리보기 영역 위에 살짝 어두운 그라데이션 */}
-        {preview && preview.length > 0 && (
-          <div
-            aria-hidden
-            className="pointer-events-none absolute inset-x-6 inset-y-0 sm:inset-x-8"
-            style={{
-              background: "linear-gradient(to bottom, transparent 0%, var(--bg) 95%)",
-            }}
-          />
-        )}
       </div>
 
       <div className="px-6 pb-6 pt-4 sm:px-8">
-        <div className="flex flex-col gap-2 sm:flex-row">
-          <Link
-            href="/checkout"
-            className="flex-1 rounded-lg bg-primary px-5 py-3 text-center text-sm font-semibold text-primary-fg shadow-sm transition-colors hover:bg-primary-hover"
-          >
-            Focus 2,900원으로 30일 시작
-          </Link>
-          <Link
-            href="/checkout"
-            className="flex-1 rounded-lg border border-border bg-surface px-5 py-3 text-center text-sm font-semibold text-text transition-colors hover:border-primary/40"
-          >
-            Thunder 3,900원으로 3일 풀파워
-          </Link>
-        </div>
+        <Link
+          href="/checkout"
+          className="block w-full rounded-lg bg-primary px-5 py-3 text-center text-sm font-semibold text-primary-fg transition-colors hover:bg-primary-hover"
+        >
+          플랜 보러가기 →
+        </Link>
         {previewError && (
           <p className="mt-3 text-center text-[11px] text-text-subtle">
             * 일부 정보는 권한 보호로 표시할 수 없습니다.

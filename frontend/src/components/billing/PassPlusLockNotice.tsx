@@ -121,7 +121,7 @@ export default function PassPlusLockNotice({
                 href={pricingHref}
                 className="flex-1 rounded-lg bg-primary px-[18px] py-3 text-center text-[13.5px] font-bold tracking-[-0.005em] text-primary-fg shadow-sm transition-colors duration-200 hover:bg-primary-hover"
               >
-                요금제 보기 →
+                플랜 보러가기 →
               </Link>
               <Link
                 href={backHref}

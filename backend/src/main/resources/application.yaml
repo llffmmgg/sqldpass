@@ -134,7 +134,7 @@ sqldpass:
       product-name: ${PAYMENT_1MONTH_NAME:문어CBT Pro}
     unlimited:
       amount: ${PAYMENT_UNLIMITED_AMOUNT:29900}
-      product-name: ${PAYMENT_UNLIMITED_NAME:문어CBT Lifetime}
+      product-name: ${PAYMENT_UNLIMITED_NAME:문어CBT All Pass}
   pdf:
     # 모의고사 PDF 생성기 — Playwright 헤드리스 Chromium 으로 인쇄 페이지를 PDF 화.
     # print-page-base-url: 백엔드(Playwright) 가 호출할 프론트 인쇄 페이지 베이스 URL.

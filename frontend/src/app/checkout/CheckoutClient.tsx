@@ -65,7 +65,17 @@ function CheckoutContent() {
   });
 
   useEffect(() => {
+    // dev UI preview — 백엔드 없이 화면만 보고 싶을 때 NEXT_PUBLIC_DEV_UI_PREVIEW=true 면
+    // 비로그인 + 백엔드 호출 실패해도 결제 카드들을 그대로 렌더. 운영 빌드는 미적용.
+    const devPreview =
+      process.env.NODE_ENV !== "production" &&
+      process.env.NEXT_PUBLIC_DEV_UI_PREVIEW === "true";
+
     if (!isLoggedIn()) {
+      if (devPreview) {
+        setAccess("allowed");
+        return;
+      }
       setAccess("anonymous");
       return;
     }
@@ -86,7 +96,11 @@ function CheckoutContent() {
           });
         }
       })
-      .catch(() => setAccess("denied"));
+      .catch(() => {
+        // dev preview 모드면 백엔드 다운 상황에서도 카드를 보여준다.
+        if (devPreview) setAccess("allowed");
+        else setAccess("denied");
+      });
   }, []);
 
   // 같은 paymentId 에 대해 verify 가 두 번 이상 안 돌아가게 한다.

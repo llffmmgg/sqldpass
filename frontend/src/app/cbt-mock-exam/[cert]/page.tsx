@@ -383,7 +383,7 @@ export default async function CertCbtLandingPage({
                 <tr>
                   <td className="px-4 py-3 font-medium">PDF 다운로드</td>
                   <td className="px-4 py-3 text-center text-text-subtle">–</td>
-                  <td className="px-4 py-3 text-center text-xs text-text-muted">Lifetime 한정</td>
+                  <td className="px-4 py-3 text-center text-xs text-text-muted">All Pass 한정</td>
                 </tr>
               </tbody>
             </table>

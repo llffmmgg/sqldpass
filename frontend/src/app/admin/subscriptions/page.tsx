@@ -19,7 +19,7 @@ const PLAN_LABEL: Record<AdminSubscriptionPlan, string> = {
   THREE_DAY: "Thunder",
   FOCUS: "Focus",
   ONE_MONTH: "Pro",
-  UNLIMITED: "Lifetime",
+  UNLIMITED: "All Pass",
 };
 
 const PLAN_CHIP: Record<AdminSubscriptionPlan, string> = {
@@ -169,7 +169,7 @@ function SubscriptionRow({ sub, onChanged }: { sub: AdminSubscription; onChanged
         {new Date(sub.purchasedAt).toLocaleDateString("ko-KR")}
       </DataTable.Cell>
       <DataTable.Cell align="right" mono className="text-muted">
-        {sub.expiresAt ? new Date(sub.expiresAt).toLocaleDateString("ko-KR") : "평생"}
+        {sub.expiresAt ? new Date(sub.expiresAt).toLocaleDateString("ko-KR") : "무기한"}
       </DataTable.Cell>
       <DataTable.Cell align="right">
         {sub.active ? (

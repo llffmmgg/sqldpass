@@ -27,7 +27,7 @@ public class PaymentProperties {
     private PlanConfig threeDay = new PlanConfig(3900, "문어CBT Thunder");
     private PlanConfig focus = new PlanConfig(2900, "문어CBT Focus");
     private PlanConfig oneMonth = new PlanConfig(9900, "문어CBT Pro");
-    private PlanConfig unlimited = new PlanConfig(29900, "문어CBT Lifetime");
+    private PlanConfig unlimited = new PlanConfig(29900, "문어CBT All Pass");
 
     public PortOne getPortone() {
         return portone;

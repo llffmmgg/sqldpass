@@ -13,7 +13,7 @@ const PLAN_LABEL: Record<AdminSubscriptionPlan, string> = {
   THREE_DAY: "Thunder",
   FOCUS: "Focus",
   ONE_MONTH: "Pro",
-  UNLIMITED: "Lifetime",
+  UNLIMITED: "All Pass",
 };
 
 const REFUND_TIMEOUT_MS = 30_000;

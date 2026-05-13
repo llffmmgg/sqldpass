@@ -20,7 +20,7 @@ function planLabel(plan: SubscriptionPlan): string {
     case "ONE_MONTH":
       return "Pro";
     case "UNLIMITED":
-      return "Lifetime";
+      return "All Pass";
   }
 }
 
@@ -284,7 +284,7 @@ function SubscriptionCard({ subscription }: { subscription: ReturnType<typeof us
           </h2>
           <p className="mt-1 text-xs text-muted">
             {isLifetime
-              ? "평생 이용 가능"
+              ? "무기한 이용 가능"
               : `만료까지 ${remaining}일 남음 · ${new Date(subscription.expiresAt!).toLocaleDateString("ko-KR")}`}
           </p>
           {isExpiringSoon && !isLifetime && (
@@ -305,7 +305,7 @@ function SubscriptionCard({ subscription }: { subscription: ReturnType<typeof us
         href="/checkout"
         className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-primary/40 bg-primary/[0.08] px-4 py-2.5 text-sm font-semibold text-primary transition-all hover:border-primary/60 hover:bg-primary/[0.12]"
       >
-        다른 요금제 보기 / 업그레이드 →
+        플랜 보러가기 →
       </Link>
     </div>
   );
