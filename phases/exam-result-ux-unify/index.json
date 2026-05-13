@@ -19,7 +19,7 @@
       "status": "completed",
       "started_at": "2026-05-14T01:37:56+0900",
       "summary": "기출복원 결과 화면 모의고사 frame 통일(마스코트+격려+PDF+광고+상세보기) + 마일스톤 토스트/complete_exam GA4 추가, 로그인 사용자 인라인 아코디언 제거+비로그인은 fallback+로그인 CTA, lint/build OK",
-      "completed_at": "2026-05-14T01:55:00+0900"
+      "completed_at": "2026-05-14T01:42:23+0900"
     },
     {
       "step": 3,
