@@ -188,10 +188,10 @@ function SubscriptionRow({ sub, onChanged }: { sub: AdminSubscription; onChanged
         </span>
       </DataTable.Cell>
       <DataTable.Cell align="right" mono className="text-muted">
-        {new Date(sub.purchasedAt).toLocaleDateString("ko-KR")}
+        {formatKstDateTime(sub.purchasedAt)}
       </DataTable.Cell>
       <DataTable.Cell align="right" mono className="text-muted">
-        {sub.expiresAt ? new Date(sub.expiresAt).toLocaleDateString("ko-KR") : "무기한"}
+        {sub.expiresAt ? formatKstDateTime(sub.expiresAt) : "무기한"}
       </DataTable.Cell>
       <DataTable.Cell align="right">
         {sub.active ? (
@@ -331,4 +331,20 @@ function GrantModal({ onClose, onDone }: { onClose: () => void; onDone: () => vo
       </div>
     </div>
   );
+}
+
+// 백엔드 LocalDateTime 문자열을 "YYYY-MM-DD HH:mm" 으로 표시.
+// 브라우저 Date 파싱이 TZ 없는 ISO 를 로컬 TZ 가정으로 해석하므로,
+// 백엔드 컨테이너 JVM TZ=Asia/Seoul 일치 + 한국 브라우저 환경에서 정확.
+function formatKstDateTime(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  return d.toLocaleString("ko-KR", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
 }
