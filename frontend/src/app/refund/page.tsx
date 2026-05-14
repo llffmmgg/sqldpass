@@ -25,8 +25,8 @@ export default function RefundPage() {
         <Section title="2. 환불 가능 조건">
           <ul className="list-disc pl-5">
             <li>
-              결제 후 7일 이내, <strong>해당 모의고사를 단 한 문제도 풀지 않은 경우</strong> 전액
-              환불 가능합니다.
+              결제 후 7일 이내, <strong>해당 모의고사를 단 한 문제도 풀지 않고 PDF 도 하나도 다운로드하지 않은 경우</strong>{" "}
+              전액 환불 가능합니다.
             </li>
             <li>
               사이트 측 귀책(서비스 장애·결제 오작동·컨텐츠 미제공 등) 으로 정상 이용이 불가했던
