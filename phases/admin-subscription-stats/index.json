@@ -38,9 +38,12 @@
     {
       "step": 5,
       "name": "frontend-subscription-stats-panel",
-      "description": "frontend/src/lib/plan-tokens.ts 신규(SubscriptionPlan 별 색·라벨) + adminApi.ts 에 fetchRevenueStats(days)/fetchRevenueByPlan(days) + components/admin/SubscriptionStatsPanel.tsx 신규(기간 토글 7/30/90 + StatCard 3개 + 라인 차트(매출 primary, 환불 danger 톤, TrendChart 패턴 복제) + 막대 차트(플랜별 분포)) + admin/subscriptions/page.tsx 상단에 패널 삽입. 단단한 톤 유지, animate-pulse·drop-shadow glow 금지.",
-      "status": "pending"
+      "description": "plan-tokens + adminApi 매출 함수 + SubscriptionStatsPanel + page 삽입.",
+      "status": "completed",
+      "summary": "plan-tokens.ts(SubscriptionPlanKey 별 label/short/bar/dot/text 토큰, page.tsx PLAN_CHIP 와 색 정렬) + adminApi RevenuePoint/RevenueByPlan 타입 + fetchRevenueStats/fetchRevenueByPlan + SubscriptionStatsPanel(기간 토글 7/30/90 + StatCard 3개[매출/환불/건수] + SVG 라인 차트[매출 primary + 환불 rose 단색 stroke, y축 4단 grid, 빈 데이터 안내] + 막대 차트[plan 별 bar token, count·revenue 라벨]) + page.tsx 상단 삽입. 단단한 톤 유지(animate-pulse·drop-shadow glow·옅은 배경 금지). lint 0 error.",
+      "completed_at": "2026-05-14T14:25:00+0900"
     }
   ],
-  "created_at": "2026-05-14T13:00:00+0900"
+  "created_at": "2026-05-14T13:00:00+0900",
+  "completed_at": "2026-05-14T14:25:00+0900"
 }

@@ -158,7 +158,8 @@
       "dir": "admin-subscription-stats",
       "name": "admin-subscription-stats",
       "description": "어드민 구독 관리 고도화 + 결제 Discord 알림. (1) subscription.archived_at(V86) + 만료된 구독에 '삭제' 액션 — admin 본인 테스트 결제를 통계에서 분리. (2) 매출/환불 추이 + 플랜별 분포 통계 API + SubscriptionStatsPanel(SVG 인하우스 라인·막대 차트, archived 제외 집계). (3) DiscordNotifier 에 payment 채널 추가, PaymentService.verify() 결제 성공 후 비동기 알림(트랜잭션 커밋 후, 실패 격리). 카카오톡은 인프라 부재로 본 phase 제외.",
-      "status": "in_progress"
+      "status": "completed",
+      "completed_at": "2026-05-14T14:25:00+0900"
     }
   ]
 }

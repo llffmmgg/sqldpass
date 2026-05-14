@@ -905,6 +905,28 @@ export function archiveSubscription(id: number, reason: string) {
   return adminFetch<void>(`/subscriptions/${id}/archive?${params}`, { method: "DELETE" });
 }
 
+// 매출 통계 — archived 구독 연결 결제는 백엔드에서 제외.
+export interface RevenuePoint {
+  date: string;          // "YYYY-MM-DD"
+  revenue: number;
+  refundAmount: number;
+  count: number;
+}
+
+export interface RevenueByPlan {
+  plan: AdminSubscriptionPlan;
+  count: number;
+  revenue: number;
+}
+
+export function fetchRevenueStats(days: number) {
+  return adminFetch<RevenuePoint[]>(`/stats/revenue?days=${days}`);
+}
+
+export function fetchRevenueByPlan(days: number) {
+  return adminFetch<RevenueByPlan[]>(`/stats/revenue/by-plan?days=${days}`);
+}
+
 // ============================================================
 // 결제 / 환불 관리 (어드민 전용)
 // ============================================================

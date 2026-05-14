@@ -15,6 +15,7 @@ import {
 import PageHeader from "@/components/admin/PageHeader";
 import DataTable, { TableSkeleton } from "@/components/admin/DataTable";
 import EmptyState from "@/components/admin/EmptyState";
+import SubscriptionStatsPanel from "@/components/admin/SubscriptionStatsPanel";
 
 const PLAN_LABEL: Record<AdminSubscriptionPlan, string> = {
   THREE_DAY: "Thunder",
@@ -61,6 +62,8 @@ export default function AdminSubscriptionsPage() {
           </button>
         }
       />
+
+      <SubscriptionStatsPanel />
 
       <div className="mb-4 flex items-center gap-2">
         <input
