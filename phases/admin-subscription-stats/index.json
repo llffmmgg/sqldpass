@@ -22,8 +22,10 @@
     {
       "step": 3,
       "name": "backend-discord-payment-notify",
-      "description": "application.yaml 에 sqldpass.discord.webhook.payment 추가 + DiscordNotifier.notifyPaymentComplete(member, payment, sub) 메서드 추가(초록 embed, 회원/플랜/금액/결제수단/만료일 필드) + PaymentService.verify() / verifyPaymentById() 결제 성공 후 TransactionSynchronizationManager.registerSynchronization 으로 커밋 후 호출 + 환경변수 미설정 시 자동 스킵 + 알림 실패는 비즈니스 격리(try/catch) + 테스트(notifier blank URL 스킵, payment 분기 인보크 1회).",
-      "status": "pending"
+      "description": "application.yaml payment webhook + DiscordNotifier.notifyPaymentComplete + PaymentService.verify/verifyPlayBilling afterCommit 훅 + 테스트.",
+      "status": "completed",
+      "summary": "application.yaml sqldpass.discord.webhook.payment 추가 + DiscordNotifier.notifyPaymentComplete(member, payment, sub) 초록 embed(회원·플랜·금액·결제수단·만료일·paymentId, paymentWebhook blank 자동 스킵) + PaymentService.scheduleDiscordPaymentNotify(afterCommit 분기 + 즉시 발송 fallback, 실패 격리) + verify/verifyPlayBilling 두 분기에 훅 + PaymentServiceTest 알림 호출 1회/idempotent 0회 검증 추가. compileJava/test OK.",
+      "completed_at": "2026-05-14T14:00:00+0900"
     },
     {
       "step": 4,

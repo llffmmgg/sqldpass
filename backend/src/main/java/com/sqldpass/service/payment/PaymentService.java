@@ -6,6 +6,8 @@ import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import com.sqldpass.persistent.member.MemberEntity;
 import com.sqldpass.persistent.member.MemberRepository;
@@ -19,6 +21,7 @@ import com.sqldpass.persistent.payment.SubscriptionPlan;
 import com.sqldpass.persistent.payment.SubscriptionRepository;
 import com.sqldpass.service.common.ErrorCode;
 import com.sqldpass.service.common.SqldpassException;
+import com.sqldpass.service.notification.DiscordNotifier;
 import com.sqldpass.service.setting.AppSettingService;
 
 import lombok.RequiredArgsConstructor;
@@ -48,6 +51,7 @@ public class PaymentService {
     private final SubscriptionHistoryService historyService;
     private final SubscriptionService subscriptionService;
     private final AppSettingService appSettingService;
+    private final DiscordNotifier discordNotifier;
 
     /** 카드사 심사 가이드 + PG 정책상 최소 결제 금액. */
     private static final int MIN_CHARGE_AMOUNT = 100;
@@ -237,10 +241,44 @@ public class PaymentService {
                 memberId, plan, entity.getId(), paidAt, expiresAt);
         subscriptionRepository.save(subscription);
 
+        scheduleDiscordPaymentNotify(memberId, entity, subscription);
+
         log.info("결제 verify 성공 memberId={} paymentId={} plan={} expiresAt={}",
                 memberId, paymentId, plan, expiresAt);
         return new VerifyPaymentResult(paymentId, entity.getAmount(), entity.getProductName(),
                 plan, expiresAt);
+    }
+
+    /**
+     * Discord 결제 알림 등록 — 트랜잭션 커밋 후 비동기 발송.
+     *
+     * <p>커밋 전 발송 시 rollback 케이스에서 "유령 결제 알림" 발생하므로 afterCommit 필수.
+     * 알림 발송 실패는 결제 결과/응답에 영향 없게 try/catch 격리.
+     * 트랜잭션 외부 호출은 즉시 발송(드문 케이스).
+     */
+    private void scheduleDiscordPaymentNotify(Long memberId, PaymentEntity payment, SubscriptionEntity subscription) {
+        final Long memberIdSnapshot = memberId;
+        final PaymentEntity paymentSnapshot = payment;
+        final SubscriptionEntity subSnapshot = subscription;
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    sendPaymentNotifySafely(memberIdSnapshot, paymentSnapshot, subSnapshot);
+                }
+            });
+        } else {
+            sendPaymentNotifySafely(memberIdSnapshot, paymentSnapshot, subSnapshot);
+        }
+    }
+
+    private void sendPaymentNotifySafely(Long memberId, PaymentEntity payment, SubscriptionEntity subscription) {
+        try {
+            MemberEntity member = memberRepository.findById(memberId).orElse(null);
+            discordNotifier.notifyPaymentComplete(member, payment, subscription);
+        } catch (Exception e) {
+            log.warn("결제 Discord 알림 실패 paymentId={}", payment != null ? payment.getPaymentId() : null, e);
+        }
     }
 
     private void ensureReviewer(Long memberId) {
@@ -345,6 +383,8 @@ public class PaymentService {
         if (info.needsAcknowledge()) {
             playBillingClient.acknowledge(productId, purchaseToken);
         }
+
+        scheduleDiscordPaymentNotify(memberId, payment, subscription);
 
         log.info("Play Billing verify 성공 memberId={} productId={} plan={} expiresAt={}",
                 memberId, productId, plan, expiresAt);

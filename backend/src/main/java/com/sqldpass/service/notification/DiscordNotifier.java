@@ -1,6 +1,8 @@
 package com.sqldpass.service.notification;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -16,6 +18,8 @@ import org.springframework.web.servlet.resource.NoResourceFoundException;
 import com.sqldpass.persistent.feedback.FeedbackEntity;
 import com.sqldpass.persistent.member.MemberEntity;
 import com.sqldpass.persistent.mockexam.MockExamEntity;
+import com.sqldpass.persistent.payment.PaymentEntity;
+import com.sqldpass.persistent.payment.SubscriptionEntity;
 import com.sqldpass.service.generation.dto.GeneratedQuestion;
 import com.sqldpass.service.generation.dto.GenerationResult;
 
@@ -44,17 +48,20 @@ public class DiscordNotifier {
     private final String signupWebhook;
     private final String errorWebhook;
     private final String feedbackWebhook;
+    private final String paymentWebhook;
 
     public DiscordNotifier(
             @Value("${sqldpass.discord.webhook.generation:}") String generationWebhook,
             @Value("${sqldpass.discord.webhook.signup:}") String signupWebhook,
             @Value("${sqldpass.discord.webhook.error:}") String errorWebhook,
-            @Value("${sqldpass.discord.webhook.feedback:}") String feedbackWebhook) {
+            @Value("${sqldpass.discord.webhook.feedback:}") String feedbackWebhook,
+            @Value("${sqldpass.discord.webhook.payment:}") String paymentWebhook) {
         this.restClient = RestClient.create();
         this.generationWebhook = generationWebhook;
         this.signupWebhook = signupWebhook;
         this.errorWebhook = errorWebhook;
         this.feedbackWebhook = feedbackWebhook;
+        this.paymentWebhook = paymentWebhook;
     }
 
     // ----------------------------------------------------------
@@ -171,6 +178,70 @@ public class DiscordNotifier {
             case "OTHER" -> "💬 기타";
             default -> type;
         };
+    }
+
+    // ----------------------------------------------------------
+    // 결제 완료 알림
+    // ----------------------------------------------------------
+    private static final DateTimeFormatter EXPIRES_FMT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+
+    public void notifyPaymentComplete(MemberEntity member, PaymentEntity payment, SubscriptionEntity sub) {
+        if (paymentWebhook == null || paymentWebhook.isBlank()) return;
+
+        String nickname = member != null && member.getNickname() != null ? member.getNickname() : "(이름 없음)";
+        String planLabel = payment.getPlan() != null ? payment.getPlan().name() : "-";
+        String expiresLabel = sub == null || sub.getExpiresAt() == null
+                ? "무기한"
+                : sub.getExpiresAt().format(EXPIRES_FMT);
+
+        List<DiscordEmbed.Field> fields = new ArrayList<>();
+        fields.add(new DiscordEmbed.Field("회원", nickname, true));
+        fields.add(new DiscordEmbed.Field("플랜", planLabel, true));
+        fields.add(new DiscordEmbed.Field("금액", "₩" + String.format("%,d", payment.getAmount()), true));
+        fields.add(new DiscordEmbed.Field("결제수단",
+                payment.getProvider() != null ? payment.getProvider().name() : "-", true));
+        fields.add(new DiscordEmbed.Field("만료일", expiresLabel, true));
+        if (payment.getPaymentId() != null) {
+            fields.add(new DiscordEmbed.Field("paymentId", payment.getPaymentId(), false));
+        }
+
+        DiscordEmbed embed = new DiscordEmbed(
+                "💳 결제 완료",
+                "새 결제가 완료되었습니다.",
+                COLOR_SUCCESS,
+                fields,
+                Instant.now().toString());
+        sendAsync(paymentWebhook, embed);
+    }
+
+    /** PaymentService 의 afterCommit 훅에서 expiresAt 만 갖고 알림이 필요한 케이스용 — sub 없이 호출. */
+    public void notifyPaymentComplete(MemberEntity member, PaymentEntity payment, LocalDateTime expiresAt) {
+        // 어차피 SubscriptionEntity 참조가 어려운 경로(트랜잭션 외부)에서도 동일 포맷 사용.
+        // 간단히 sub=null 로 위임하고 expiresAt 만 빈 SubscriptionEntity 처럼 다룬다.
+        if (paymentWebhook == null || paymentWebhook.isBlank()) return;
+
+        String nickname = member != null && member.getNickname() != null ? member.getNickname() : "(이름 없음)";
+        String planLabel = payment.getPlan() != null ? payment.getPlan().name() : "-";
+        String expiresLabel = expiresAt == null ? "무기한" : expiresAt.format(EXPIRES_FMT);
+
+        List<DiscordEmbed.Field> fields = new ArrayList<>();
+        fields.add(new DiscordEmbed.Field("회원", nickname, true));
+        fields.add(new DiscordEmbed.Field("플랜", planLabel, true));
+        fields.add(new DiscordEmbed.Field("금액", "₩" + String.format("%,d", payment.getAmount()), true));
+        fields.add(new DiscordEmbed.Field("결제수단",
+                payment.getProvider() != null ? payment.getProvider().name() : "-", true));
+        fields.add(new DiscordEmbed.Field("만료일", expiresLabel, true));
+        if (payment.getPaymentId() != null) {
+            fields.add(new DiscordEmbed.Field("paymentId", payment.getPaymentId(), false));
+        }
+
+        DiscordEmbed embed = new DiscordEmbed(
+                "💳 결제 완료",
+                "새 결제가 완료되었습니다.",
+                COLOR_SUCCESS,
+                fields,
+                Instant.now().toString());
+        sendAsync(paymentWebhook, embed);
     }
 
     // ----------------------------------------------------------

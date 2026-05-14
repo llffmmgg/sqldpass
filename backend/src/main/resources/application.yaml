@@ -101,6 +101,7 @@ sqldpass:
       signup: ${DISCORD_WEBHOOK_SIGNUP:}
       error: ${DISCORD_WEBHOOK_ERROR:}
       feedback: ${DISCORD_WEBHOOK_FEEDBACK:}
+      payment: ${DISCORD_WEBHOOK_PAYMENT:}
   r2:
     # Cloudflare R2 — 게시판 이미지 업로드용 (presigned PUT URL 발급).
     # 미설정이면 /api/uploads/image-url 이 503 반환.

@@ -25,6 +25,7 @@ import com.sqldpass.persistent.payment.SubscriptionPlan;
 import com.sqldpass.persistent.payment.SubscriptionRepository;
 import com.sqldpass.service.common.ErrorCode;
 import com.sqldpass.service.common.SqldpassException;
+import com.sqldpass.service.notification.DiscordNotifier;
 import com.sqldpass.service.setting.AppSettingService;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -35,6 +36,7 @@ import static org.mockito.ArgumentMatchers.contains;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
@@ -59,6 +61,8 @@ class PaymentServiceTest {
     private SubscriptionService subscriptionService;
     @Mock
     private AppSettingService appSettingService;
+    @Mock
+    private DiscordNotifier discordNotifier;
 
     private PaymentProperties properties;
     private PlayBillingProperties playBillingProperties;
@@ -82,7 +86,7 @@ class PaymentServiceTest {
         service = new PaymentService(properties, portOneClient,
                 paymentRepository, subscriptionRepository, memberRepository,
                 playBillingClient, playBillingProperties, failureRecorder, historyService,
-                subscriptionService, appSettingService);
+                subscriptionService, appSettingService, discordNotifier);
 
         // 기존 테스트는 화이트리스트(베타) 모드 동작을 검증하므로 토글 OFF 가정.
         // 토글 ON 동작은 별도 테스트로 검증.
@@ -395,6 +399,10 @@ class PaymentServiceTest {
         assertThat(saved.getMemberId()).isEqualTo(1L);
         assertThat(saved.getPlan()).isEqualTo(SubscriptionPlan.THREE_DAY);
         assertThat(saved.getExpiresAt()).isEqualToIgnoringSeconds(saved.getPurchasedAt().plusDays(3));
+
+        // 결제 성공 → Discord 알림 1회 호출 (트랜잭션 외부 단위 테스트라 즉시 발송 분기).
+        verify(discordNotifier, times(1))
+                .notifyPaymentComplete(any(MemberEntity.class), any(PaymentEntity.class), any(SubscriptionEntity.class));
     }
 
     @Test
@@ -423,6 +431,10 @@ class PaymentServiceTest {
         verify(portOneClient, times(0)).getPayment(any());
         verify(subscriptionRepository, times(0)).save(any(SubscriptionEntity.class));
         verify(failureRecorder, times(0)).markFailedInNewTx(any(), any());
+
+        // idempotent 재검증 시 Discord 알림 보내지 않음 (이미 첫 결제 시 보냈음).
+        verify(discordNotifier, never())
+                .notifyPaymentComplete(any(MemberEntity.class), any(PaymentEntity.class), any(SubscriptionEntity.class));
     }
 
     @Test
