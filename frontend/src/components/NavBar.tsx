@@ -14,9 +14,12 @@ import NotificationBell from "@/components/NotificationBell";
 import { CERT_LIST, slugFromCert, type CertKey } from "@/lib/cert-tokens";
 import { useMockExamNewSignal } from "@/lib/hooks/useMockExamNewSignal";
 
+type MenuItem = { href: string; label: string; description?: string };
+
 type NavItem =
-  | { kind: "link"; href: string; label: string }
-  | { kind: "dropdown"; label: string; basePath: string; build: (cert: CertKey) => string };
+  | { kind: "link"; href: string; label: string; accent?: "gold" }
+  | { kind: "dropdown"; label: string; basePath: string; build: (cert: CertKey) => string }
+  | { kind: "menu"; label: string; basePath: string; activePaths: string[]; items: MenuItem[] };
 
 const NAV_LINKS: NavItem[] = [
   { kind: "link", href: "/", label: "홈" },
@@ -25,9 +28,27 @@ const NAV_LINKS: NavItem[] = [
   { kind: "dropdown", label: "기출", basePath: "/past-exams", build: (cert) => `/past-exams/${slugFromCert(cert)}` },
   { kind: "link", href: "/dashboard", label: "대시보드" },
   { kind: "link", href: "/wrong-answers", label: "오답 노트" },
-  { kind: "link", href: "/board", label: "합격 후기" },
-  { kind: "link", href: "/blog", label: "블로그" },
+  {
+    kind: "menu",
+    label: "게시판",
+    basePath: "/board",
+    activePaths: ["/board", "/blog"],
+    items: [
+      { href: "/board", label: "합격 후기", description: "선배들의 합격 노트와 팁" },
+      { href: "/blog", label: "시험 준비 팁", description: "출제 경향·공부법·합격 노하우" },
+    ],
+  },
+  { kind: "link", href: "/plan", label: "플랜", accent: "gold" },
 ];
+
+// 골드 sparkle — accent: "gold" 탭(현재 /plan)에만 붙는 4점 별빛 아이콘.
+function GoldSparkle({ className = "" }: { className?: string }) {
+  return (
+    <svg aria-hidden viewBox="0 0 24 24" fill="currentColor" className={className}>
+      <path d="M12 0 L14 10 L24 12 L14 14 L12 24 L10 14 L0 12 L10 10 Z" />
+    </svg>
+  );
+}
 
 // "이 드롭다운에 NEW 신호를 붙일지" — 모의고사 신호만 신뢰. /past-exams 는
 // 모의고사 추가로 잘못 NEW 가 뜨던 이슈가 있어 제외 (기출 카탈로그 페이지의
@@ -67,10 +88,14 @@ export default function NavBar() {
       setOpenMobileDropdown(null);
       return;
     }
-    const match = NAV_LINKS.find(
-      (item) => item.kind === "dropdown" && pathname?.startsWith(item.basePath),
+    const match = NAV_LINKS.find((item) => {
+      if (item.kind === "dropdown") return pathname?.startsWith(item.basePath);
+      if (item.kind === "menu") return item.activePaths.some((p) => pathname?.startsWith(p));
+      return false;
+    });
+    setOpenMobileDropdown(
+      match && (match.kind === "dropdown" || match.kind === "menu") ? match.basePath : null,
     );
-    setOpenMobileDropdown(match && match.kind === "dropdown" ? match.basePath : null);
   }, [menuOpen, pathname]);
 
   function toggleTheme() {
@@ -99,7 +124,7 @@ export default function NavBar() {
   if (pathname.startsWith("/admin")) return null;
 
   return (
-    <header className="sticky top-0 z-50 border-b border-border bg-bg/80 backdrop-blur-md">
+    <header className="sticky top-0 z-50 border-b border-border bg-bg">
       <nav className="mx-auto flex h-14 max-w-7xl flex-nowrap items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">
         <Link
           href="/"
@@ -125,19 +150,33 @@ export default function NavBar() {
           <ul className="flex items-center gap-0.5">
             {NAV_LINKS.map((item) => {
               if (item.kind === "link") {
+                const gold = item.accent === "gold";
                 return (
                   <li key={item.href}>
                     <Link
                       href={item.href}
-                      className={`flex h-9 items-center whitespace-nowrap rounded-md px-3 text-sm font-medium transition-colors ${
-                        isActive(item.href)
-                          ? "bg-primary/10 text-primary"
-                          : "text-text-muted hover:text-text hover:bg-surface-hover"
+                      className={`flex h-9 items-center gap-1.5 whitespace-nowrap rounded-md px-3 text-sm font-medium transition-colors ${
+                        gold
+                          ? "text-amber-500 hover:bg-surface-hover dark:text-amber-300"
+                          : isActive(item.href)
+                            ? "bg-primary/10 text-primary"
+                            : "text-text-muted hover:text-text hover:bg-surface-hover"
                       }`}
                     >
                       {item.label}
+                      {gold && <GoldSparkle className="h-3 w-3 text-amber-500 dark:text-amber-300" />}
                     </Link>
                   </li>
+                );
+              }
+              if (item.kind === "menu") {
+                return (
+                  <NavMenuDropdown
+                    key={item.basePath}
+                    label={item.label}
+                    active={item.activePaths.some((p) => isActive(p))}
+                    items={item.items}
+                  />
                 );
               }
               return (
@@ -274,20 +313,41 @@ export default function NavBar() {
           <ul className="space-y-0.5">
             {NAV_LINKS.map((item) => {
               if (item.kind === "link") {
+                const gold = item.accent === "gold";
                 return (
                   <li key={item.href}>
                     <Link
                       href={item.href}
                       onClick={() => setMenuOpen(false)}
-                      className={`block rounded-md px-3 py-2.5 text-sm font-medium transition-colors ${
-                        isActive(item.href)
-                          ? "bg-primary/10 text-primary"
-                          : "text-text-muted hover:bg-surface-hover hover:text-text"
+                      className={`flex items-center gap-1.5 rounded-md px-3 py-2.5 text-sm font-medium transition-colors ${
+                        gold
+                          ? "text-amber-500 hover:bg-surface-hover dark:text-amber-300"
+                          : isActive(item.href)
+                            ? "bg-primary/10 text-primary"
+                            : "text-text-muted hover:bg-surface-hover hover:text-text"
                       }`}
                     >
                       {item.label}
+                      {gold && <GoldSparkle className="h-3 w-3 text-amber-500 dark:text-amber-300" />}
                     </Link>
                   </li>
+                );
+              }
+              if (item.kind === "menu") {
+                return (
+                  <MobileMenuAccordion
+                    key={item.basePath}
+                    label={item.label}
+                    isActive={item.activePaths.some((p) => isActive(p))}
+                    isOpen={openMobileDropdown === item.basePath}
+                    onToggle={() =>
+                      setOpenMobileDropdown((prev) =>
+                        prev === item.basePath ? null : item.basePath,
+                      )
+                    }
+                    items={item.items}
+                    onItemClick={() => setMenuOpen(false)}
+                  />
                 );
               }
               return (
@@ -495,6 +555,180 @@ function NavDropdown({
           </div>
         </div>
       )}
+    </li>
+  );
+}
+
+function NavMenuDropdown({
+  label,
+  active,
+  items,
+}: {
+  label: string;
+  active: boolean;
+  items: MenuItem[];
+}) {
+  const [open, setOpen] = useState(false);
+  const triggerRef = useRef<HTMLButtonElement | null>(null);
+  const menuRef = useRef<HTMLDivElement | null>(null);
+
+  function focusFirstItem() {
+    requestAnimationFrame(() => {
+      const firstLink = menuRef.current?.querySelector<HTMLAnchorElement>("a[href]");
+      firstLink?.focus();
+    });
+  }
+
+  function handleTriggerKeyDown(e: React.KeyboardEvent<HTMLButtonElement>) {
+    if (e.key === "ArrowDown" || e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      setOpen(true);
+      focusFirstItem();
+      return;
+    }
+    if (e.key === "Escape") {
+      setOpen(false);
+      triggerRef.current?.focus();
+    }
+  }
+
+  function handleMenuKeyDown(e: React.KeyboardEvent<HTMLDivElement>) {
+    if (e.key === "Escape") {
+      e.preventDefault();
+      setOpen(false);
+      triggerRef.current?.focus();
+    }
+  }
+
+  return (
+    <li
+      className="relative"
+      onMouseEnter={() => setOpen(true)}
+      onMouseLeave={() => setOpen(false)}
+      onBlur={(e) => {
+        if (!e.currentTarget.contains(e.relatedTarget as Node | null)) {
+          setOpen(false);
+        }
+      }}
+    >
+      <button
+        ref={triggerRef}
+        onClick={() => setOpen((v) => !v)}
+        onFocus={() => setOpen(true)}
+        onKeyDown={handleTriggerKeyDown}
+        className={`inline-flex h-9 items-center gap-1 whitespace-nowrap rounded-md px-3 text-sm font-medium transition-colors ${
+          active
+            ? "bg-primary/10 text-primary"
+            : "text-text-muted hover:text-text hover:bg-surface-hover"
+        }`}
+        aria-expanded={open}
+        aria-haspopup="menu"
+      >
+        {label}
+        <svg
+          className={`h-3 w-3 transition-transform ${open ? "rotate-180" : ""}`}
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={2.5}
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+      {open && (
+        <div
+          ref={menuRef}
+          className="absolute left-0 top-full z-50 min-w-[260px] pt-2"
+          onMouseEnter={() => setOpen(true)}
+          onMouseLeave={() => setOpen(false)}
+          onKeyDown={handleMenuKeyDown}
+          role="menu"
+        >
+          <div className="animate-[dropdown-enter_0.15s_ease-out] overflow-hidden rounded-xl border border-border bg-bg-elevated shadow-[var(--shadow-lg)]">
+            {items.map((it, idx) => (
+              <Link
+                key={it.href}
+                href={it.href}
+                onClick={() => setOpen(false)}
+                role="menuitem"
+                className={`block px-4 py-2.5 transition-colors hover:bg-surface-hover ${
+                  idx !== 0 ? "border-t border-border/50" : ""
+                }`}
+              >
+                <p className="text-sm font-semibold text-text">{it.label}</p>
+                {it.description && (
+                  <p className="mt-0.5 text-xs text-text-muted">{it.description}</p>
+                )}
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
+    </li>
+  );
+}
+
+function MobileMenuAccordion({
+  label,
+  isActive,
+  isOpen,
+  onToggle,
+  items,
+  onItemClick,
+}: {
+  label: string;
+  isActive: boolean;
+  isOpen: boolean;
+  onToggle: () => void;
+  items: MenuItem[];
+  onItemClick: () => void;
+}) {
+  return (
+    <li>
+      <button
+        onClick={onToggle}
+        aria-expanded={isOpen}
+        className={`flex w-full items-center justify-between rounded-md px-3 py-2.5 text-sm font-medium transition-colors ${
+          isActive
+            ? "bg-primary/10 text-primary"
+            : "text-text-muted hover:bg-surface-hover hover:text-text"
+        }`}
+      >
+        <span>{label}</span>
+        <svg
+          className={`h-3.5 w-3.5 transition-transform ${isOpen ? "rotate-180" : ""}`}
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={2.5}
+          aria-hidden="true"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+      <div
+        className={`grid transition-all duration-200 ease-out ${
+          isOpen ? "mt-0.5 grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
+        }`}
+      >
+        <div className="overflow-hidden">
+          <div className="ml-2 border-l border-border/60 pl-2">
+            {items.map((it) => (
+              <Link
+                key={it.href}
+                href={it.href}
+                onClick={onItemClick}
+                className="block rounded-md px-3 py-2.5 text-sm text-text-muted hover:bg-surface-hover hover:text-text"
+              >
+                <span className="font-medium text-text">{it.label}</span>
+                {it.description && (
+                  <span className="ml-2 text-xs text-text-subtle">{it.description}</span>
+                )}
+              </Link>
+            ))}
+          </div>
+        </div>
+      </div>
     </li>
   );
 }

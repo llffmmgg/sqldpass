@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 
 import {
@@ -195,7 +196,17 @@ export default function CheckoutLanding({
         </div>
       )}
 
-      <div className="mt-10 grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-5">
+      {/* 모바일 (< md): 가로 snap-scroll 캐러셀 */}
+      <MobilePlanCarousel
+        tiers={TIERS}
+        currentPlan={currentPlan}
+        previews={previews}
+        payingPlan={payingPlan}
+        onPay={onPay}
+      />
+
+      {/* 데스크탑 (md+): 기존 2/5 열 그리드 */}
+      <div className="mt-10 hidden gap-6 md:grid md:grid-cols-2 xl:grid-cols-5">
         {TIERS.map((t) => (
           <PlanCard
             key={t.key}
@@ -308,7 +319,7 @@ function PlanCard({
 
   return (
     <div
-      className={`group relative flex flex-col rounded-2xl p-5 sm:p-6 transition-all duration-300 ease-out will-change-transform ${
+      className={`group relative flex h-full flex-col rounded-2xl p-5 sm:p-6 transition-all duration-300 ease-out will-change-transform ${
         highlight
           ? "border-2 border-primary/60 bg-gradient-to-b from-primary/[0.06] via-surface to-surface/80 shadow-[0_0_24px_-12px_rgba(62,207,142,0.30)] hover:-translate-y-1 hover:border-primary/80 hover:shadow-[0_0_40px_-8px_rgba(62,207,142,0.45)]"
           : "border border-border bg-surface/40 hover:-translate-y-1 hover:border-primary/40 hover:bg-surface/70 hover:shadow-[0_0_28px_-10px_rgba(62,207,142,0.18)]"
@@ -474,6 +485,115 @@ function PlanCard({
           </li>
         ))}
       </ul>
+    </div>
+  );
+}
+
+// 모바일(< md) 전용 — 5장 카드를 가로로 snap-scroll. 초기 위치는 highlight 플랜(Pro).
+// 데스크탑은 hidden md:grid 분기로 별도 그리드 사용.
+function MobilePlanCarousel({
+  tiers,
+  currentPlan,
+  previews,
+  payingPlan,
+  onPay,
+}: {
+  tiers: Tier[];
+  currentPlan: SubscriptionPlan | null;
+  previews: Record<SubscriptionPlan, PreviewResponse | null>;
+  payingPlan: SubscriptionPlan | null;
+  onPay: (plan: SubscriptionPlan) => void;
+}) {
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+  const itemRefs = useRef<Array<HTMLDivElement | null>>([]);
+  // highlight 플랜(Pro)을 기본 활성 dot 으로. tiers 는 정적 상수라 lazy 평가로 충분.
+  const [activeIndex, setActiveIndex] = useState(() => {
+    const i = tiers.findIndex((t) => t.highlight);
+    return i > 0 ? i : 0;
+  });
+
+  // 초기 스크롤 — highlight 카드로 즉시 점프(애니메이션 없이). first paint 직후라 jump 자연스러움.
+  useEffect(() => {
+    const initial = tiers.findIndex((t) => t.highlight);
+    if (initial > 0) {
+      itemRefs.current[initial]?.scrollIntoView({ inline: "center", block: "nearest" });
+    }
+  }, [tiers]);
+
+  // 중앙에 가장 많이 보이는 카드 추적 — dot 동기화용. snap 후 안착된 카드를 잡음.
+  useEffect(() => {
+    const root = scrollRef.current;
+    if (!root) return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        const visible = entries
+          .filter((e) => e.isIntersecting)
+          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+        if (visible) {
+          const idx = itemRefs.current.findIndex((el) => el === visible.target);
+          if (idx >= 0) setActiveIndex(idx);
+        }
+      },
+      { root, threshold: [0.5, 0.75, 1] },
+    );
+    itemRefs.current.forEach((el) => el && io.observe(el));
+    return () => io.disconnect();
+  }, [tiers]);
+
+  function scrollToIndex(i: number) {
+    itemRefs.current[i]?.scrollIntoView({
+      inline: "center",
+      block: "nearest",
+      behavior: "smooth",
+    });
+  }
+
+  return (
+    <div className="mt-10 md:hidden">
+      <div
+        ref={scrollRef}
+        className="-mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      >
+        {tiers.map((t, i) => (
+          <div
+            key={t.key}
+            ref={(el) => {
+              itemRefs.current[i] = el;
+            }}
+            className="w-[85%] flex-shrink-0 snap-center first:ml-2 last:mr-2"
+          >
+            <PlanCard
+              tier={t}
+              currentPlan={currentPlan}
+              preview={t.key === "FREE" ? null : previews[t.key]}
+              payingPlan={payingPlan}
+              onPay={onPay}
+            />
+          </div>
+        ))}
+      </div>
+
+      <div
+        className="mt-4 flex justify-center gap-1.5"
+        role="tablist"
+        aria-label="플랜 인디케이터"
+      >
+        {tiers.map((t, i) => (
+          <button
+            key={t.key}
+            type="button"
+            role="tab"
+            aria-selected={activeIndex === i}
+            aria-label={`${t.name} 보기`}
+            onClick={() => scrollToIndex(i)}
+            className={`h-1.5 rounded-full transition-all ${
+              activeIndex === i
+                ? "w-6 bg-primary"
+                : "w-1.5 bg-border hover:bg-border-strong"
+            }`}
+          />
+        ))}
+      </div>
     </div>
   );
 }
