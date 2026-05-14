@@ -165,15 +165,16 @@ public class PaymentController {
             java.time.LocalDateTime expiresAt,
             boolean removesAds,
             boolean allowsPdf,
-            boolean hasLibraryAccess
+            boolean hasLibraryAccess,
+            boolean allowsPremium
     ) {
         public static SubscriptionResponse from(ActiveSubscription a) {
             return new SubscriptionResponse(true, a.plan(), a.expiresAt(),
-                    a.removesAds(), a.allowsPdf(), a.hasLibraryAccess());
+                    a.removesAds(), a.allowsPdf(), a.hasLibraryAccess(), a.allowsPremium());
         }
 
         public static SubscriptionResponse inactive() {
-            return new SubscriptionResponse(false, null, null, false, false, false);
+            return new SubscriptionResponse(false, null, null, false, false, false, false);
         }
     }
 }

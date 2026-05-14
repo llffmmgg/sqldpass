@@ -54,7 +54,7 @@ public class SubscriptionService {
         // 운영에서는 환경변수 미설정으로 false → 일반 흐름. 백엔드 재시작 시 적용.
         if ("true".equalsIgnoreCase(System.getenv("DEV_BYPASS_SUBSCRIPTION"))) {
             return Optional.of(new ActiveSubscription(
-                    SubscriptionPlan.UNLIMITED, null, true, true, true));
+                    SubscriptionPlan.UNLIMITED, null, true, true, true, true));
         }
 
         List<SubscriptionEntity> rows =
@@ -64,11 +64,13 @@ public class SubscriptionService {
         return Optional.of(new ActiveSubscription(
                 top.getPlan(), top.getExpiresAt(),
                 top.getPlan().isRemovesAds(), top.getPlan().isAllowsPdf(),
-                top.getPlan().isHasLibraryAccess()));
+                top.getPlan().isHasLibraryAccess(),
+                top.getPlan().isAllowsPremium()));
     }
 
+    /** PASS+ 회차 풀이 권한. Focus 는 활성 구독이어도 false — paywall 정책. */
     public boolean hasPremiumAccess(Long memberId) {
-        return getActive(memberId).isPresent();
+        return getActive(memberId).map(ActiveSubscription::allowsPremium).orElse(false);
     }
 
     public boolean removesAds(Long memberId) {
@@ -90,6 +92,7 @@ public class SubscriptionService {
             LocalDateTime expiresAt,
             boolean removesAds,
             boolean allowsPdf,
-            boolean hasLibraryAccess
+            boolean hasLibraryAccess,
+            boolean allowsPremium
     ) {}
 }

@@ -1,0 +1,22 @@
+{
+  "project": "sqldpass",
+  "phase": "focus-passplus-fix",
+  "description": "Focus 플랜의 PASS+ 회차 권한 누수 수정. thunder-focus-paywall phase 매트릭스(Focus → PASS+ ❌)가 enum/서비스에 미반영. SubscriptionPlan.allowsPremium 필드 도입(FOCUS=false 나머지 true) + SubscriptionService.hasPremiumAccess plan 분기 + ActiveSubscription record 필드 + 프론트 타입 동기화.",
+  "steps": [
+    {
+      "step": 1,
+      "name": "backend-allows-premium",
+      "description": "SubscriptionPlan.allowsPremium + hasPremiumAccess 분기 + ActiveSubscription record/SubscriptionResponse DTO 필드 + 테스트.",
+      "status": "completed",
+      "summary": "SubscriptionPlan.allowsPremium(THREE_DAY/ONE_MONTH/UNLIMITED=true, FOCUS=false) + isAllowsPremium getter + SubscriptionService.hasPremiumAccess 가 ActiveSubscription.allowsPremium 보도록 수정 + ActiveSubscription record 6번째 필드 + DEV_BYPASS 분기에도 true + PaymentController.SubscriptionResponse DTO 에 allowsPremium 노출 + SubscriptionServiceTest 4개 플랜에 allowsPremium/hasPremiumAccess 검증 추가(Focus → false, 나머지 true). compileJava/test OK.",
+      "completed_at": "2026-05-14T14:50:00+0900"
+    },
+    {
+      "step": 2,
+      "name": "frontend-allows-premium-type",
+      "description": "frontend/src/lib/payment.ts 의 ActiveSubscription 타입에 allowsPremium 필드 추가(백엔드 record 와 매칭). 자물쇠 UI 는 기존 백엔드 403 응답 기반 그대로 — 본 step 에선 타입 정합만.",
+      "status": "pending"
+    }
+  ],
+  "created_at": "2026-05-14T14:40:00+0900"
+}

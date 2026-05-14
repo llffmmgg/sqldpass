@@ -67,11 +67,12 @@ class SubscriptionServiceTest {
         assertThat(active.get().removesAds()).isTrue();
         assertThat(active.get().allowsPdf()).isFalse();
         assertThat(active.get().hasLibraryAccess()).isTrue();
+        assertThat(active.get().allowsPremium()).isTrue();
         assertThat(service.hasPremiumAccess(1L)).isTrue();
     }
 
     @Test
-    @DisplayName("FOCUS 활성 → removesAds=true, allowsPdf=false, hasLibraryAccess=true")
+    @DisplayName("FOCUS 활성 → PASS+ 차단 (premium=false), 광고제거·라이브러리는 true")
     void focusActive() {
         SubscriptionEntity sub = new SubscriptionEntity(
                 1L, SubscriptionPlan.FOCUS, 100L,
@@ -83,10 +84,13 @@ class SubscriptionServiceTest {
         assertThat(active.get().removesAds()).isTrue();
         assertThat(active.get().allowsPdf()).isFalse();
         assertThat(active.get().hasLibraryAccess()).isTrue();
+        // paywall 정책 — Focus 는 PASS+ 회차 접근 불가.
+        assertThat(active.get().allowsPremium()).isFalse();
+        assertThat(service.hasPremiumAccess(1L)).isFalse();
     }
 
     @Test
-    @DisplayName("ONE_MONTH 활성 → removesAds=true, allowsPdf=false, hasLibraryAccess=true")
+    @DisplayName("ONE_MONTH(Pro) 활성 → premium=true, removesAds=true, allowsPdf=false, hasLibraryAccess=true")
     void oneMonthActive() {
         SubscriptionEntity sub = new SubscriptionEntity(
                 1L, SubscriptionPlan.ONE_MONTH, 100L,
@@ -97,10 +101,12 @@ class SubscriptionServiceTest {
         assertThat(active.get().removesAds()).isTrue();
         assertThat(active.get().allowsPdf()).isFalse();
         assertThat(active.get().hasLibraryAccess()).isTrue();
+        assertThat(active.get().allowsPremium()).isTrue();
+        assertThat(service.hasPremiumAccess(1L)).isTrue();
     }
 
     @Test
-    @DisplayName("UNLIMITED 활성 → expiresAt=null, allowsPdf=true, hasLibraryAccess=true")
+    @DisplayName("UNLIMITED(All Pass) 활성 → expiresAt=null, allowsPdf=true, premium=true")
     void unlimitedActive() {
         SubscriptionEntity sub = new SubscriptionEntity(
                 1L, SubscriptionPlan.UNLIMITED, 100L,
@@ -113,5 +119,7 @@ class SubscriptionServiceTest {
         assertThat(active.get().removesAds()).isTrue();
         assertThat(active.get().allowsPdf()).isTrue();
         assertThat(active.get().hasLibraryAccess()).isTrue();
+        assertThat(active.get().allowsPremium()).isTrue();
+        assertThat(service.hasPremiumAccess(1L)).isTrue();
     }
 }
