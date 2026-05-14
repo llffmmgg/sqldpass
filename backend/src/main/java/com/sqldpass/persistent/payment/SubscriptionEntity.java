@@ -54,6 +54,14 @@ public class SubscriptionEntity extends BaseTimeEntity {
     @Column(name = "expires_at")
     private LocalDateTime expiresAt;
 
+    /**
+     * 운영자가 통계 집계에서 분리한 시점. NULL = 정상.
+     * 활성 구독은 archive 거부 — 만료된 row 만 archived 상태가 됨(테스트 결제 정리 용도).
+     * 권한 판정(isActive)에는 영향 없음 — 통계 분리 전용 마커.
+     */
+    @Column(name = "archived_at")
+    private LocalDateTime archivedAt;
+
     public SubscriptionEntity(Long memberId, SubscriptionPlan plan, Long paymentId,
                               LocalDateTime purchasedAt, LocalDateTime expiresAt) {
         this.memberId = memberId;
@@ -68,11 +76,20 @@ public class SubscriptionEntity extends BaseTimeEntity {
         return expiresAt == null || expiresAt.isAfter(now);
     }
 
+    public boolean isArchived() {
+        return archivedAt != null;
+    }
+
     /**
      * 환불·강제 만료 — Play Billing RTDN(REFUND) 또는 어드민 보상 회수 시 호출.
      * UNLIMITED 도 expiresAt = now 로 강제해 즉시 비활성화한다.
      */
     public void revoke(LocalDateTime now) {
         this.expiresAt = now;
+    }
+
+    /** 만료된 구독을 통계 집계에서 분리. 호출 측에서 isActive 거부 확인 필수. */
+    public void archive(LocalDateTime now) {
+        this.archivedAt = now;
     }
 }

@@ -153,6 +153,12 @@
       "description": "/profile 페이지 고도화 + UI/UX 개선. history 카드와 동일한 Supabase 톤(rounded-lg border bg-surface + bg-bg-elevated 헤더 + 시맨틱 토큰)으로 통일, 정체성 헤더 + 닉네임 인라인 편집 + 학습 스냅샷 KPI 3열(총 풀이/정답률/연속일수, dashboard 와 동일 계산식) + 빠른 링크 카드(오답 노트/대시보드/결제·청구) + 위험구역 details 디스클로저로 정보 위계 재정렬. 색상은 rose-*/red-400/green-400 등 직접 Tailwind 토큰을 danger/success/text-text-muted 등 CSS 토큰으로 1:1 치환만(색 계열 무변경). 백엔드 무변경, 새 API 추가 없음.",
       "status": "completed",
       "completed_at": "2026-05-14T12:35:00+0900"
+    },
+    {
+      "dir": "admin-subscription-stats",
+      "name": "admin-subscription-stats",
+      "description": "어드민 구독 관리 고도화 + 결제 Discord 알림. (1) subscription.archived_at(V86) + 만료된 구독에 '삭제' 액션 — admin 본인 테스트 결제를 통계에서 분리. (2) 매출/환불 추이 + 플랜별 분포 통계 API + SubscriptionStatsPanel(SVG 인하우스 라인·막대 차트, archived 제외 집계). (3) DiscordNotifier 에 payment 채널 추가, PaymentService.verify() 결제 성공 후 비동기 알림(트랜잭션 커밋 후, 실패 격리). 카카오톡은 인프라 부재로 본 phase 제외.",
+      "status": "in_progress"
     }
   ]
 }

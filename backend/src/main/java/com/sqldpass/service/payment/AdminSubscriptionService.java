@@ -41,13 +41,17 @@ public class AdminSubscriptionService {
     private final MemberRepository memberRepository;
     private final SubscriptionHistoryService historyService;
 
-    /** 활성/만료 모두 페이지 조회. nicknameSearch 가 있으면 닉네임 LIKE 검색. */
+    /**
+     * 활성/만료 모두 페이지 조회 (archived 는 기본 제외).
+     * archived row 는 운영자가 통계 집계에서 분리(테스트 결제 정리 등)한 것이므로
+     * 어드민 화면에서도 보이지 않게 한다. nicknameSearch 가 있으면 닉네임 LIKE 검색.
+     */
     public Page<AdminSubscriptionRow> list(String nicknameSearch, int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "id"));
 
         // 닉네임 검색이 있으면 회원 → memberId 로 필터 후 조회.
-        // 단순 구현: 전체 페이지 조회 후 닉네임 mapping (회원 수 적은 운영 단계 가정).
-        Page<SubscriptionEntity> rows = subscriptionRepository.findAll(pageable);
+        // 단순 구현: archived 제외 페이지 조회 후 닉네임 mapping (회원 수 적은 운영 단계 가정).
+        Page<SubscriptionEntity> rows = subscriptionRepository.findByArchivedAtIsNull(pageable);
         List<Long> memberIds = rows.getContent().stream().map(SubscriptionEntity::getMemberId).distinct().toList();
         Map<Long, String> nicknames = memberRepository.findAllById(memberIds).stream()
                 .collect(Collectors.toMap(MemberEntity::getId, MemberEntity::getNickname));
@@ -104,6 +108,36 @@ public class AdminSubscriptionService {
                 SubscriptionHistoryAction.EXPIRED, reason, actorAdminId, sub.getPaymentId());
 
         log.warn("어드민 구독 수동 만료 subscriptionId={} memberId={} plan={} reason={} actor={}",
+                subscriptionId, sub.getMemberId(), sub.getPlan(), reason, actorAdminId);
+    }
+
+    /**
+     * 만료된 구독을 통계 집계에서 분리(archive). row 는 보존하고 history 에 ARCHIVED 기록.
+     *
+     * 활성 구독은 거부 — 권한이 살아있는 row 가 통계에서 사라지면 운영 혼란.
+     * 멱등 — 이미 archived 면 조용히 통과.
+     *
+     * 주 용도: 어드민 본인 테스트 결제를 매출 통계에서 빼는 것.
+     */
+    @Transactional
+    public void archive(Long subscriptionId, String reason, Long actorAdminId) {
+        SubscriptionEntity sub = subscriptionRepository.findById(subscriptionId)
+                .orElseThrow(() -> new SqldpassException(ErrorCode.INVALID_INPUT, "구독을 찾을 수 없습니다."));
+
+        LocalDateTime now = LocalDateTime.now();
+        if (sub.isActive(now)) {
+            throw new SqldpassException(ErrorCode.INVALID_INPUT,
+                    "활성 구독은 삭제할 수 없습니다. 먼저 만료 처리하세요.");
+        }
+        if (sub.isArchived()) {
+            return; // 멱등
+        }
+        sub.archive(now);
+
+        historyService.record(sub.getMemberId(), sub.getPlan(),
+                SubscriptionHistoryAction.ARCHIVED, reason, actorAdminId, sub.getPaymentId());
+
+        log.warn("어드민 구독 삭제(archive) subscriptionId={} memberId={} plan={} reason={} actor={}",
                 subscriptionId, sub.getMemberId(), sub.getPlan(), reason, actorAdminId);
     }
 

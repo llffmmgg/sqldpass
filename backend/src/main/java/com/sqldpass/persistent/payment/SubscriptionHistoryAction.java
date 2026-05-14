@@ -7,10 +7,12 @@ package com.sqldpass.persistent.payment;
  * - REVOKED: 운영자 수동 회수(환불 외).
  * - EXPIRED: 어드민 수동 만료.
  * - REFUNDED: Play Billing RTDN 환불.
+ * - ARCHIVED: 만료 후 어드민이 통계 집계에서 분리(테스트 결제 정리 용도). row 보존, 권한엔 영향 없음.
  */
 public enum SubscriptionHistoryAction {
     GRANTED,
     REVOKED,
     EXPIRED,
-    REFUNDED
+    REFUNDED,
+    ARCHIVED
 }

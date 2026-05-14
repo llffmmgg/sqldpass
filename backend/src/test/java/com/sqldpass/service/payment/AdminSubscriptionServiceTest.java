@@ -17,8 +17,10 @@ import com.sqldpass.persistent.payment.SubscriptionEntity;
 import com.sqldpass.persistent.payment.SubscriptionHistoryAction;
 import com.sqldpass.persistent.payment.SubscriptionPlan;
 import com.sqldpass.persistent.payment.SubscriptionRepository;
+import com.sqldpass.service.common.SqldpassException;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -26,6 +28,7 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 
 @ExtendWith(MockitoExtension.class)
 class AdminSubscriptionServiceTest {
@@ -87,6 +90,61 @@ class AdminSubscriptionServiceTest {
                 eq(7L), eq(SubscriptionPlan.ONE_MONTH),
                 eq(SubscriptionHistoryAction.EXPIRED), anyString(),
                 eq(42L), eq(100L));
+    }
+
+    @Test
+    @DisplayName("archive: 활성 구독은 거부 — INVALID_INPUT 예외 + history 미기록")
+    void archive_활성_거부() {
+        SubscriptionEntity active = new SubscriptionEntity(
+                7L, SubscriptionPlan.ONE_MONTH, 100L,
+                LocalDateTime.now().minusDays(1), LocalDateTime.now().plusDays(29));
+        setField(active, "id", 50L);
+        given(subscriptionRepository.findById(50L)).willReturn(Optional.of(active));
+
+        assertThatThrownBy(() -> service.archive(50L, "테스트 정리", 42L))
+                .isInstanceOf(SqldpassException.class)
+                .hasMessageContaining("활성 구독");
+
+        // 활성 구독 거부 — entity 변경 없음, history 미기록.
+        assertThat(active.isArchived()).isFalse();
+        verifyNoInteractions(historyService);
+    }
+
+    @Test
+    @DisplayName("archive: 만료된 구독은 archivedAt 세팅 + history ARCHIVED 기록")
+    void archive_만료된_구독_archived_및_history_기록() {
+        SubscriptionEntity expired = new SubscriptionEntity(
+                7L, SubscriptionPlan.THREE_DAY, 200L,
+                LocalDateTime.now().minusDays(10), LocalDateTime.now().minusDays(7));
+        setField(expired, "id", 60L);
+        given(subscriptionRepository.findById(60L)).willReturn(Optional.of(expired));
+
+        service.archive(60L, "admin 테스트 정리", 42L);
+
+        LocalDateTime now = LocalDateTime.now();
+        assertThat(expired.isArchived()).isTrue();
+        assertThat(expired.getArchivedAt()).isBetween(now.minusSeconds(2), now.plusSeconds(2));
+
+        verify(historyService, times(1)).record(
+                eq(7L), eq(SubscriptionPlan.THREE_DAY),
+                eq(SubscriptionHistoryAction.ARCHIVED), eq("admin 테스트 정리"),
+                eq(42L), eq(200L));
+    }
+
+    @Test
+    @DisplayName("archive: 이미 archived 인 구독은 멱등 — 추가 history 미기록")
+    void archive_멱등() {
+        SubscriptionEntity already = new SubscriptionEntity(
+                7L, SubscriptionPlan.THREE_DAY, 300L,
+                LocalDateTime.now().minusDays(10), LocalDateTime.now().minusDays(7));
+        setField(already, "id", 70L);
+        already.archive(LocalDateTime.now().minusHours(1));
+        given(subscriptionRepository.findById(70L)).willReturn(Optional.of(already));
+
+        service.archive(70L, "중복 호출", 42L);
+
+        // 멱등: 이미 archived 상태라 history 미기록.
+        verifyNoInteractions(historyService);
     }
 
     private MemberEntity newMember(Long id, String nickname) {

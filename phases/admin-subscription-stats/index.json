@@ -1,0 +1,40 @@
+{
+  "project": "sqldpass",
+  "phase": "admin-subscription-stats",
+  "description": "어드민 구독 관리 고도화 + 결제 Discord 알림. (1) subscription.archived_at 컬럼(V86) + 만료된 구독에 '삭제' 액션 — admin 본인 테스트 결제를 통계 집계에서 분리. (2) 매출/환불 추이 + 플랜별 분포 통계 API + 프론트 SubscriptionStatsPanel(SVG 인하우스 라인·막대 차트, archived 제외). (3) DiscordNotifier 에 payment 채널 추가, PaymentService.verify() 결제 성공 후 비동기 알림(트랜잭션 커밋 후, 실패 격리). 카카오톡은 인프라 부재로 본 phase 제외.",
+  "steps": [
+    {
+      "step": 1,
+      "name": "backend-subscription-archive",
+      "description": "subscription.archived_at(V86) + SubscriptionEntity.archivedAt/isArchived/archive + AdminSubscriptionService.archive(활성 거부, 멱등) + DELETE /api/admin/subscriptions/{id}/archive endpoint + 목록 쿼리 archived_at IS NULL 필터(기본) + SubscriptionHistory ARCHIVED action + 테스트(활성거부/멱등/history 기록).",
+      "status": "completed",
+      "summary": "V86 archived_at + SubscriptionEntity.archivedAt/isArchived/archive + SubscriptionHistoryAction.ARCHIVED + SubscriptionRepository.findByArchivedAtIsNull + AdminSubscriptionService.archive(활성 거부 SqldpassException, 멱등) + DELETE /api/admin/subscriptions/{id}/archive endpoint + list 가 archived 제외 + 테스트 3건(활성거부/archived 기록/멱등) 추가. compileJava/test OK.",
+      "completed_at": "2026-05-14T13:30:00+0900"
+    },
+    {
+      "step": 2,
+      "name": "backend-revenue-stats-api",
+      "description": "AdminStatsController 에 GET /api/admin/stats/revenue?days=N (일자별 revenue/refundAmount/count) + GET /api/admin/stats/revenue/by-plan?days=N (plan 별 count/revenue) 추가. 집계 쿼리는 payment 와 subscription LEFT JOIN, subscription.archived_at IS NULL 필터. 응답 record + Repository 커스텀 쿼리 + 테스트(일별 합산/환불 분리/archived 제외/by-plan 정렬).",
+      "status": "pending"
+    },
+    {
+      "step": 3,
+      "name": "backend-discord-payment-notify",
+      "description": "application.yaml 에 sqldpass.discord.webhook.payment 추가 + DiscordNotifier.notifyPaymentComplete(member, payment, sub) 메서드 추가(초록 embed, 회원/플랜/금액/결제수단/만료일 필드) + PaymentService.verify() / verifyPaymentById() 결제 성공 후 TransactionSynchronizationManager.registerSynchronization 으로 커밋 후 호출 + 환경변수 미설정 시 자동 스킵 + 알림 실패는 비즈니스 격리(try/catch) + 테스트(notifier blank URL 스킵, payment 분기 인보크 1회).",
+      "status": "pending"
+    },
+    {
+      "step": 4,
+      "name": "frontend-subscription-archive-action",
+      "description": "adminApi.ts 에 archiveSubscription(id, reason) 함수 추가 + admin/subscriptions/page.tsx SubscriptionRow 액션 분기 — 활성이면 '만료'(기존), 만료된 구독이면 '삭제'(빨강) 버튼 노출 + 클릭 시 prompt 사유 + confirm + archive 호출 + onChanged() 새로고침 + ARIA. 단단한 톤 유지(글로우/펄스 금지).",
+      "status": "pending"
+    },
+    {
+      "step": 5,
+      "name": "frontend-subscription-stats-panel",
+      "description": "frontend/src/lib/plan-tokens.ts 신규(SubscriptionPlan 별 색·라벨) + adminApi.ts 에 fetchRevenueStats(days)/fetchRevenueByPlan(days) + components/admin/SubscriptionStatsPanel.tsx 신규(기간 토글 7/30/90 + StatCard 3개 + 라인 차트(매출 primary, 환불 danger 톤, TrendChart 패턴 복제) + 막대 차트(플랜별 분포)) + admin/subscriptions/page.tsx 상단에 패널 삽입. 단단한 톤 유지, animate-pulse·drop-shadow glow 금지.",
+      "status": "pending"
+    }
+  ],
+  "created_at": "2026-05-14T13:00:00+0900"
+}

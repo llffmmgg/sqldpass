@@ -56,5 +56,16 @@ public class AdminSubscriptionController {
         service.expireManual(id, reason, actorAdminId);
     }
 
+    @DeleteMapping("/{id}/archive")
+    @Operation(summary = "구독 삭제(archive) — 만료된 구독을 통계 집계에서 분리",
+            description = "활성 구독은 거부. row 는 보존되고 history 에 ARCHIVED 기록. 테스트 결제 정리용.")
+    public void archive(@PathVariable Long id,
+                        @RequestParam(required = false) String reason,
+                        HttpServletRequest request) {
+        Long actorAdminId = (Long) request.getAttribute("memberId");
+        String effectiveReason = (reason == null || reason.isBlank()) ? "(사유 미입력)" : reason;
+        service.archive(id, effectiveReason, actorAdminId);
+    }
+
     public record GrantRequest(Long memberId, SubscriptionPlan plan, String reason) {}
 }
