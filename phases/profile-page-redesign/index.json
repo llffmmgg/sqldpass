@@ -1,0 +1,27 @@
+{
+  "project": "sqldpass",
+  "phase": "profile-page-redesign",
+  "description": "/profile 페이지 고도화 + UI/UX 개선 — history 카드와 동일한 Supabase 톤(rounded-lg border bg-surface + bg-bg-elevated 헤더 + 시맨틱 토큰)으로 통일하고, 정보 위계(정체성 헤더 + 닉네임 인라인 편집 + 학습 스냅샷 + 구독 + 빠른 링크 + 위험구역 details)를 재정렬한다. 색상은 rose-*/red-400/green-400 등 직접 Tailwind 토큰을 danger/success/text-text-muted 등 CSS 토큰으로 1:1 치환만 하며 색 계열 자체는 바꾸지 않는다. 백엔드 무변경, 새 API 추가 없음.",
+  "steps": [
+    {
+      "step": 1,
+      "name": "profile-tone-and-structure",
+      "description": "profile/page.tsx 시각 톤 통일 + 정체성 헤더 + 닉네임 인라인 편집 + 위험구역 details + Container/너비 확장. 색상 토큰 1:1 치환(bg-background→bg-bg, text-foreground→text-text, text-muted→text-text-muted, rose-*/red-400/green-400→danger/success). SubscriptionCard/FreePlanCard/FeatureChip 의 직접 Tailwind 색상도 토큰화. 새 데이터 페치 없음 — 기존 me/subscription/streak 만 사용.",
+      "status": "completed",
+      "started_at": "2026-05-14T12:00:00+0900",
+      "summary": "profile/page.tsx 정체성 헤더(닉네임/제공자 칩/가입일) + 닉네임 인라인 편집(editing 토글, 보기/편집 분리) + 위험구역 <details> 디스클로저(open 시 danger 보더 강조) + Container size=narrow 너비 확장 + 색상 토큰 1:1 치환(bg-background→bg-bg, text-foreground→text-text, text-muted→text-text-muted, rose-*/red-400/green-400→danger/success). SubscriptionCard/FreePlanCard/FeatureChip 의 text-muted 도 text-text-muted 로 정리. 하단 router.back() 버튼을 Link href=/dashboard 로 교체. lint 0 errors(기존 warning 외 회귀 없음), build ✓ Compiled successfully in 4.2s.",
+      "completed_at": "2026-05-14T12:15:00+0900"
+    },
+    {
+      "step": 2,
+      "name": "learning-snapshot-and-quick-links",
+      "description": "프로필에 학습 스냅샷 카드(총 풀이 · 정답률 · 연속일수 KPI 3열) + 빠른 링크 카드(오답 노트 + 대시보드 + 결제·청구) 추가. getSolves()/getWrongAnswerStats() 를 dashboard 와 동일 패턴으로 호출해 totalSolved/totalCorrect/오답합계 계산. 오답 노트 row 우측에 미해결 오답 개수 배지. 백엔드 무변경.",
+      "status": "completed",
+      "started_at": "2026-05-14T12:15:00+0900",
+      "summary": "StreakBox 박스 제거 + 학습 스냅샷 카드(KPI 3열 — 총 풀이/정답률/연속일수, dashboard 와 동일 계산식) 도입. getSolves/getWrongAnswerStats/getMyStreak Promise.all 병렬 페치 + cancel 가드 + try/catch 로 통계 실패가 회원정보 로드에 영향 주지 않게 격리. 정답률 색상 분기(>=80 success / >=60 warning / <60 danger). 빠른 링크 카드(오답 노트/대시보드/결제·청구) 추가, 오답 노트 row 에 wrongCount 가 0 보다 클 때만 danger 톤 배지. KpiCell/QuickLinkRow/rateTone 헬퍼는 page.tsx 내 로컬 함수. lint 0 errors(기존 warning 외 회귀 없음), build ✓ Compiled successfully in 4.6s.",
+      "completed_at": "2026-05-14T12:35:00+0900"
+    }
+  ],
+  "created_at": "2026-05-14T12:00:00+0900",
+  "completed_at": "2026-05-14T12:35:00+0900"
+}

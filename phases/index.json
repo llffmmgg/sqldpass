@@ -146,6 +146,13 @@
       "description": "모의고사(/mock-exams/[id])와 기출복원(/past-exams/[id]) 제출 후 결과 화면 UX 통일. 기출복원 결과 화면을 모의고사 frame(마스코트+격려멘트+PDF+광고+GA4 complete_exam+마일스톤 토스트)으로 맞추고, 결과 화면의 인라인 아코디언은 로그인 사용자에서 제거해 '상세 보기'로 유도(비로그인은 fallback 유지). /history/{id} 상세 페이지는 카드 클릭으로 문제+선택지 펼치고 해설은 그 안에서 또 한 번 접히는 2단계 접힘 구조로 변경. 백엔드는 PastExam grade 응답에 milestoneReached 필드 추가.",
       "status": "completed",
       "completed_at": "2026-05-14T01:46:57+0900"
+    },
+    {
+      "dir": "profile-page-redesign",
+      "name": "profile-page-redesign",
+      "description": "/profile 페이지 고도화 + UI/UX 개선. history 카드와 동일한 Supabase 톤(rounded-lg border bg-surface + bg-bg-elevated 헤더 + 시맨틱 토큰)으로 통일, 정체성 헤더 + 닉네임 인라인 편집 + 학습 스냅샷 KPI 3열(총 풀이/정답률/연속일수, dashboard 와 동일 계산식) + 빠른 링크 카드(오답 노트/대시보드/결제·청구) + 위험구역 details 디스클로저로 정보 위계 재정렬. 색상은 rose-*/red-400/green-400 등 직접 Tailwind 토큰을 danger/success/text-text-muted 등 CSS 토큰으로 1:1 치환만(색 계열 무변경). 백엔드 무변경, 새 API 추가 없음.",
+      "status": "completed",
+      "completed_at": "2026-05-14T12:35:00+0900"
     }
   ]
 }
