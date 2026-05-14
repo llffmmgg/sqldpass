@@ -42,6 +42,7 @@ FROM eclipse-temurin:21-jre-jammy
 # - fonts-noto-cjk: PDF 본문 한글 렌더 (없으면 자모 분리)
 # - libnss3 외 다수: Chromium headless 실행 필수 라이브러리
 RUN apt-get update && apt-get install -y --no-install-recommends \
+        tzdata \
         fonts-noto-cjk fonts-noto-color-emoji \
         ca-certificates curl \
         libnss3 libatk1.0-0 libatk-bridge2.0-0 libcups2 \
@@ -49,6 +50,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         libgbm1 libpango-1.0-0 libcairo2 libasound2 \
         libxshmfence1 libdrm2 \
     && rm -rf /var/lib/apt/lists/*
+
+# JVM/시스템 시간대를 KR 으로 고정 — LocalDateTime.now() / LocalDate.now() /
+# ZoneId.systemDefault() 가 모두 Asia/Seoul 기준이 되어 만료·통계·일자 그룹이 정합.
+ENV TZ=Asia/Seoul
 
 # Playwright Chromium 캐시 위치 — appuser 가 쓸 수 있는 공유 경로.
 # (HOME 이 /root 가 아닌 사용자라도 동일 경로에서 찾도록 명시.)

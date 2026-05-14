@@ -167,6 +167,12 @@
       "description": "Focus 플랜의 PASS+ 회차 권한 누수 수정. thunder-focus-paywall phase 매트릭스(Focus → PASS+ ❌)가 enum/서비스에 미반영 — SubscriptionService.hasPremiumAccess 가 plan 무관하게 활성 구독만 보고 통과시킴. SubscriptionPlan 에 allowsPremium 필드 추가(FOCUS=false 나머지 true) + hasPremiumAccess 분기 + ActiveSubscription record 필드 + 프론트 타입 동기화.",
       "status": "completed",
       "completed_at": "2026-05-14T14:55:00+0900"
+    },
+    {
+      "dir": "subscription-midnight-policy",
+      "name": "subscription-midnight-policy",
+      "description": "구독 만료 정책을 시각 단위 → 일자 단위 자정(KR)로 변경. paidDate.plusDays(plan.days+1).atStartOfDay() 공식 — 결제일 포함 +1일 보너스. JVM TZ=Asia/Seoul 컨테이너 환경(Dockerfile ENV + cd.yml -e + application.yaml jackson). 기존 데이터 V87 마이그레이션으로 일괄 보정(paid_at+9h 기준 KR 일자 + 자정 정렬, 기존 정책 흔적 row 만 안전 조건).",
+      "status": "in_progress"
     }
   ]
 }

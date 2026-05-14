@@ -1,0 +1,28 @@
+{
+  "project": "sqldpass",
+  "phase": "subscription-midnight-policy",
+  "description": "구독 만료 정책을 시각 단위 → 일자 단위 자정(KR)로 변경. paidDate(KR).plusDays(plan.days+1).atStartOfDay() — 결제일 포함 +1일 보너스. 컨테이너 JVM TZ=Asia/Seoul 일원화 + expiresAt 계산식 변경 + V87 마이그레이션으로 기존 데이터 일괄 보정.",
+  "steps": [
+    {
+      "step": 1,
+      "name": "container-tz-asia-seoul",
+      "description": "Dockerfile tzdata + ENV TZ + cd.yml -e TZ + application.yaml jackson time-zone.",
+      "status": "completed",
+      "summary": "backend/Dockerfile runtime stage apt-get 에 tzdata 추가 + ENV TZ=Asia/Seoul + cd.yml docker run -e TZ=Asia/Seoul + application.yaml spring.jackson.time-zone: Asia/Seoul. compileJava OK.",
+      "completed_at": "2026-05-15T00:30:00+0900"
+    },
+    {
+      "step": 2,
+      "name": "expires-at-midnight-policy",
+      "description": "PaymentService.verify / verifyPlayBilling / AdminSubscriptionService.grantManual 의 expiresAt 계산을 paidAt.toLocalDate().plusDays(plan.getDays()+1).atStartOfDay() 로 변경. 사용자 정책: 5/14 결제 Thunder → 5/18 00:00 만료(5/14·15·16·17 4일치). PaymentServiceTest 기존 expiresAt 단언 갱신 + 신규 케이스(시각 무시 / 날짜 경계).",
+      "status": "pending"
+    },
+    {
+      "step": 3,
+      "name": "v87-existing-rows-recalc",
+      "description": "V87__subscription_expires_at_kst_midnight.sql 신규. payment.paid_at 연결 구독 / 어드민 수동 발급(paymentId=null) 두 분기로 UPDATE. 안전 조건: TIMESTAMPDIFF(HOUR, paid_at/purchased_at, expires_at) = plan.days*24h 인 row 만(=기존 시각 단위 정책 흔적). UNLIMITED 제외. 다른 환경에서 멱등.",
+      "status": "pending"
+    }
+  ],
+  "created_at": "2026-05-15T00:00:00+0900"
+}

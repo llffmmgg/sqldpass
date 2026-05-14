@@ -3,6 +3,9 @@ spring:
     name: sqldpass
   profiles:
     default: local
+  jackson:
+    # Instant/OffsetDateTime 직렬화 시 KR offset 명시 — JVM TZ(Asia/Seoul)와 일관.
+    time-zone: Asia/Seoul
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
