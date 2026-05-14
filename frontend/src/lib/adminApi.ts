@@ -894,6 +894,17 @@ export function expireSubscription(id: number, reason: string) {
   return adminFetch<void>(`/subscriptions/${id}?${params}`, { method: "DELETE" });
 }
 
+/**
+ * 만료된 구독을 통계 집계에서 분리(archive).
+ * 활성 구독은 백엔드에서 거부 — 먼저 만료 처리해야 한다.
+ * row 는 보존되고 subscription_history 에 ARCHIVED 기록.
+ * 주 용도: 어드민 본인 테스트 결제를 매출 통계에서 빼는 것.
+ */
+export function archiveSubscription(id: number, reason: string) {
+  const params = new URLSearchParams({ reason });
+  return adminFetch<void>(`/subscriptions/${id}/archive?${params}`, { method: "DELETE" });
+}
+
 // ============================================================
 // 결제 / 환불 관리 (어드민 전용)
 // ============================================================

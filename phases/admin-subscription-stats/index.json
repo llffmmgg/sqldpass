@@ -30,8 +30,10 @@
     {
       "step": 4,
       "name": "frontend-subscription-archive-action",
-      "description": "adminApi.ts 에 archiveSubscription(id, reason) 함수 추가 + admin/subscriptions/page.tsx SubscriptionRow 액션 분기 — 활성이면 '만료'(기존), 만료된 구독이면 '삭제'(빨강) 버튼 노출 + 클릭 시 prompt 사유 + confirm + archive 호출 + onChanged() 새로고침 + ARIA. 단단한 톤 유지(글로우/펄스 금지).",
-      "status": "pending"
+      "description": "adminApi.archiveSubscription + SubscriptionRow 활성/만료 분기 + 삭제 버튼.",
+      "status": "completed",
+      "summary": "adminApi.archiveSubscription(id, reason) 추가 + admin/subscriptions/page.tsx SubscriptionRow 활성→'만료'(기존), 만료→'삭제'(빨강 outline) 액션 분기 + handleArchive(prompt+confirm+archive+reload) + 단단한 rose 톤(border-rose-500/40, 글로우 없음). lint 0 error.",
+      "completed_at": "2026-05-14T14:10:00+0900"
     },
     {
       "step": 5,

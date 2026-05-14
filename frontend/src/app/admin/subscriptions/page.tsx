@@ -4,6 +4,7 @@
 
 import { useEffect, useState } from "react";
 import {
+  archiveSubscription,
   expireSubscription,
   grantSubscription,
   listSubscriptions,
@@ -157,6 +158,24 @@ function SubscriptionRow({ sub, onChanged }: { sub: AdminSubscription; onChanged
     }
   }
 
+  async function handleArchive() {
+    const reason = prompt(
+      `구독 #${sub.id} (${sub.nickname}) 을 삭제합니다.\n통계 집계에서 빠지며 복구는 SQL 필요.\n사유를 입력하세요:`
+    );
+    if (!reason || !reason.trim()) return;
+    if (!confirm("정말 삭제하시겠습니까? 매출 통계에서 제외됩니다 (row 자체는 남음).")) return;
+
+    setBusy(true);
+    try {
+      await archiveSubscription(sub.id, reason.trim());
+      onChanged();
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "삭제 처리 실패");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <DataTable.Row>
       <DataTable.Cell className="font-medium">{sub.nickname}</DataTable.Cell>
@@ -183,13 +202,22 @@ function SubscriptionRow({ sub, onChanged }: { sub: AdminSubscription; onChanged
         )}
       </DataTable.Cell>
       <DataTable.Cell align="right">
-        {sub.active && (
+        {sub.active ? (
           <button
             onClick={handleExpire}
             disabled={busy}
             className="rounded border border-rose-500/40 bg-rose-500/10 px-2.5 py-1 text-[11px] font-medium text-rose-300 transition hover:bg-rose-500/20 disabled:opacity-50"
           >
             만료
+          </button>
+        ) : (
+          <button
+            onClick={handleArchive}
+            disabled={busy}
+            title="통계 집계에서 제외 (테스트 결제 정리용)"
+            className="rounded border border-rose-500/40 px-2.5 py-1 text-[11px] font-medium text-rose-300 transition hover:bg-rose-500/10 disabled:opacity-50"
+          >
+            삭제
           </button>
         )}
       </DataTable.Cell>
