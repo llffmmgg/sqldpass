@@ -374,7 +374,7 @@ class PaymentServiceTest {
     }
 
     @Test
-    @DisplayName("THREE_DAY verify 성공 시 SubscriptionEntity 가 expiresAt = now+3d 로 발급")
+    @DisplayName("THREE_DAY verify: 만료가 결제일+4일의 00:00 (자정 정렬, +1일 보너스 포함)")
     void verifyThreeDayCreatesSubscription() {
         MemberEntity m = newMember(1L, "pay-rv-7f2a91");
         given(memberRepository.findById(1L)).willReturn(Optional.of(m));
@@ -398,11 +398,41 @@ class PaymentServiceTest {
         SubscriptionEntity saved = captor.getValue();
         assertThat(saved.getMemberId()).isEqualTo(1L);
         assertThat(saved.getPlan()).isEqualTo(SubscriptionPlan.THREE_DAY);
-        assertThat(saved.getExpiresAt()).isEqualToIgnoringSeconds(saved.getPurchasedAt().plusDays(3));
+        // 새 정책: 자정 정렬 + 결제일 + (plan.days + 1) 일
+        assertThat(saved.getExpiresAt().toLocalTime()).isEqualTo(java.time.LocalTime.MIDNIGHT);
+        assertThat(saved.getExpiresAt().toLocalDate())
+                .isEqualTo(saved.getPurchasedAt().toLocalDate().plusDays(4));
 
         // 결제 성공 → Discord 알림 1회 호출 (트랜잭션 외부 단위 테스트라 즉시 발송 분기).
         verify(discordNotifier, times(1))
                 .notifyPaymentComplete(any(MemberEntity.class), any(PaymentEntity.class), any(SubscriptionEntity.class));
+    }
+
+    @Test
+    @DisplayName("FOCUS verify: 만료가 결제일+31일의 00:00 (30일 plan + 1일 보너스)")
+    void verifyFocusCreatesSubscription() {
+        MemberEntity m = newMember(1L, "pay-rv-7f2a91");
+        given(memberRepository.findById(1L)).willReturn(Optional.of(m));
+
+        PaymentEntity entity = new PaymentEntity("p-focus", 1L, null, "Focus 30일",
+                SubscriptionPlan.FOCUS, 2900);
+        given(paymentRepository.findByPaymentId("p-focus")).willReturn(Optional.of(entity));
+
+        OffsetDateTime paidAt = OffsetDateTime.now();
+        var info = new PortOneClient.PortOnePaymentInfo("p-focus", "PAID", 2900, "KRW",
+                paidAt, Map.of("id", "p-focus", "status", "PAID"));
+        given(portOneClient.getPayment("p-focus")).willReturn(info);
+
+        service.verify(1L, "p-focus");
+
+        ArgumentCaptor<SubscriptionEntity> captor = ArgumentCaptor.forClass(SubscriptionEntity.class);
+        verify(subscriptionRepository, times(1)).save(captor.capture());
+        SubscriptionEntity saved = captor.getValue();
+        assertThat(saved.getPlan()).isEqualTo(SubscriptionPlan.FOCUS);
+        // 자정 정렬 + 결제일 + (30 + 1) 일
+        assertThat(saved.getExpiresAt().toLocalTime()).isEqualTo(java.time.LocalTime.MIDNIGHT);
+        assertThat(saved.getExpiresAt().toLocalDate())
+                .isEqualTo(saved.getPurchasedAt().toLocalDate().plusDays(31));
     }
 
     @Test

@@ -14,8 +14,10 @@
     {
       "step": 2,
       "name": "expires-at-midnight-policy",
-      "description": "PaymentService.verify / verifyPlayBilling / AdminSubscriptionService.grantManual 의 expiresAt 계산을 paidAt.toLocalDate().plusDays(plan.getDays()+1).atStartOfDay() 로 변경. 사용자 정책: 5/14 결제 Thunder → 5/18 00:00 만료(5/14·15·16·17 4일치). PaymentServiceTest 기존 expiresAt 단언 갱신 + 신규 케이스(시각 무시 / 날짜 경계).",
-      "status": "pending"
+      "description": "expiresAt 정책 변경 — paidDate +N+1일 자정.",
+      "status": "completed",
+      "summary": "PaymentService.verify / verifyPlayBilling / AdminSubscriptionService.grantManual 의 expiresAt 계산을 paidAt.toLocalDate().plusDays(plan.getDays()+1).atStartOfDay() 로 변경. SubscriptionPlan javadoc 갱신(days+1 일치 정책 명시). PaymentServiceTest 기존 단언 갱신(자정 정렬 + 결제일 + 4) + FOCUS 31일 신규 케이스. 전체 gradle test 통과.",
+      "completed_at": "2026-05-15T01:00:00+0900"
     },
     {
       "step": 3,

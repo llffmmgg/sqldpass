@@ -236,7 +236,12 @@ public class PaymentService {
         entity.markPaid(info.raw() == null ? null : info.raw().toString(), paidAt);
 
         SubscriptionPlan plan = entity.getPlan();
-        LocalDateTime expiresAt = plan.isLifetime() ? null : paidAt.plusDays(plan.getDays());
+        // 사용자 정책: 결제 시각의 시·분·초 무시, paidAt 의 KR 일자 + (plan.days + 1)일의 00:00 KR 에 만료.
+        // 결제일 자체가 사용 가능 일자에 포함되므로 사실상 +1일 보너스.
+        // 예: KR 5/14 02:00 Thunder → 5/14·5/15·5/16·5/17 사용 → 5/18 00:00 만료.
+        LocalDateTime expiresAt = plan.isLifetime()
+                ? null
+                : paidAt.toLocalDate().plusDays(plan.getDays() + 1L).atStartOfDay();
         SubscriptionEntity subscription = new SubscriptionEntity(
                 memberId, plan, entity.getId(), paidAt, expiresAt);
         subscriptionRepository.save(subscription);
@@ -374,7 +379,10 @@ public class PaymentService {
                 info.purchasedAtInstant(), ZoneId.systemDefault());
         payment.markPaid("play:orderId=" + info.orderId(), paidAt);
 
-        LocalDateTime expiresAt = plan.isLifetime() ? null : paidAt.plusDays(plan.getDays());
+        // 사용자 정책 일관 — paidAt 의 KR 일자 + (plan.days + 1)일 00:00 KR.
+        LocalDateTime expiresAt = plan.isLifetime()
+                ? null
+                : paidAt.toLocalDate().plusDays(plan.getDays() + 1L).atStartOfDay();
         SubscriptionEntity subscription = new SubscriptionEntity(
                 memberId, plan, payment.getId(), paidAt, expiresAt);
         subscriptionRepository.save(subscription);

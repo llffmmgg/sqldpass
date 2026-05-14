@@ -82,7 +82,10 @@ public class AdminSubscriptionService {
                 .orElseThrow(() -> new SqldpassException(ErrorCode.MEMBER_NOT_FOUND));
 
         LocalDateTime now = LocalDateTime.now();
-        LocalDateTime expiresAt = plan.isLifetime() ? null : now.plusDays(plan.getDays());
+        // 사용자 정책 일관 — now 의 KR 일자 + (plan.days + 1)일 00:00 KR. 결제 verify 와 동일 공식.
+        LocalDateTime expiresAt = plan.isLifetime()
+                ? null
+                : now.toLocalDate().plusDays(plan.getDays() + 1L).atStartOfDay();
         SubscriptionEntity entity = new SubscriptionEntity(
                 memberId, plan, /* paymentId */ null, now, expiresAt);
         SubscriptionEntity saved = subscriptionRepository.save(entity);

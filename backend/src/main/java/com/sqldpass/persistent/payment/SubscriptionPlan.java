@@ -3,6 +3,8 @@ package com.sqldpass.persistent.payment;
 /**
  * 구독 플랜.
  *
+ * - days = "결제일 이후 추가로 받는 일수". 실제 사용 가능 일수는 결제일 포함 (days + 1).
+ *   예: THREE_DAY(3) → 결제일 + 3일 = 4일치 사용. 만료는 결제일 + (days+1)일의 00:00 KR.
  * - days = null 이면 평생 (UNLIMITED).
  * - removesAds / allowsPdf / hasLibraryAccess / allowsPremium 은 plan 별 차등 (thunder-focus-paywall 매트릭스).
  * - allowsPremium 은 PASS+(난이도 ≥ 0.5 또는 visibility=PREMIUM) 회차 풀이 허용 여부.
