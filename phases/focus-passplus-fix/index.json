@@ -14,9 +14,12 @@
     {
       "step": 2,
       "name": "frontend-allows-premium-type",
-      "description": "frontend/src/lib/payment.ts 의 ActiveSubscription 타입에 allowsPremium 필드 추가(백엔드 record 와 매칭). 자물쇠 UI 는 기존 백엔드 403 응답 기반 그대로 — 본 step 에선 타입 정합만.",
-      "status": "pending"
+      "description": "ActiveSubscription 타입에 allowsPremium 필드 추가.",
+      "status": "completed",
+      "summary": "frontend/src/lib/payment.ts 의 ActiveSubscription 타입에 allowsPremium: boolean 필드 추가(주석 포함). UI 동작 변경 없음 — 백엔드 record/DTO 와 정합 확보만. lint 0 error.",
+      "completed_at": "2026-05-14T14:55:00+0900"
     }
   ],
-  "created_at": "2026-05-14T14:40:00+0900"
+  "created_at": "2026-05-14T14:40:00+0900",
+  "completed_at": "2026-05-14T14:55:00+0900"
 }

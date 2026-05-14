@@ -76,6 +76,8 @@ export type ActiveSubscription = {
   removesAds: boolean;
   allowsPdf: boolean;
   hasLibraryAccess: boolean;
+  /** PASS+ 회차 풀이 허용. Focus 는 활성이어도 false — paywall 정책. */
+  allowsPremium: boolean;
 };
 
 export type PreviewResponse = {

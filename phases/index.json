@@ -165,7 +165,8 @@
       "dir": "focus-passplus-fix",
       "name": "focus-passplus-fix",
       "description": "Focus 플랜의 PASS+ 회차 권한 누수 수정. thunder-focus-paywall phase 매트릭스(Focus → PASS+ ❌)가 enum/서비스에 미반영 — SubscriptionService.hasPremiumAccess 가 plan 무관하게 활성 구독만 보고 통과시킴. SubscriptionPlan 에 allowsPremium 필드 추가(FOCUS=false 나머지 true) + hasPremiumAccess 분기 + ActiveSubscription record 필드 + 프론트 타입 동기화.",
-      "status": "in_progress"
+      "status": "completed",
+      "completed_at": "2026-05-14T14:55:00+0900"
     }
   ]
 }
