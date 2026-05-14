@@ -172,7 +172,8 @@
       "dir": "subscription-midnight-policy",
       "name": "subscription-midnight-policy",
       "description": "구독 만료 정책을 시각 단위 → 일자 단위 자정(KR)로 변경. paidDate.plusDays(plan.days+1).atStartOfDay() 공식 — 결제일 포함 +1일 보너스. JVM TZ=Asia/Seoul 컨테이너 환경(Dockerfile ENV + cd.yml -e + application.yaml jackson). 기존 데이터 V87 마이그레이션으로 일괄 보정(paid_at+9h 기준 KR 일자 + 자정 정렬, 기존 정책 흔적 row 만 안전 조건).",
-      "status": "in_progress"
+      "status": "completed",
+      "completed_at": "2026-05-15T01:10:00+0900"
     }
   ]
 }

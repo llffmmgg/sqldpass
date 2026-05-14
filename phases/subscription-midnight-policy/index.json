@@ -22,9 +22,12 @@
     {
       "step": 3,
       "name": "v87-existing-rows-recalc",
-      "description": "V87__subscription_expires_at_kst_midnight.sql 신규. payment.paid_at 연결 구독 / 어드민 수동 발급(paymentId=null) 두 분기로 UPDATE. 안전 조건: TIMESTAMPDIFF(HOUR, paid_at/purchased_at, expires_at) = plan.days*24h 인 row 만(=기존 시각 단위 정책 흔적). UNLIMITED 제외. 다른 환경에서 멱등.",
-      "status": "pending"
+      "description": "V87 마이그레이션 — 기존 active 구독 expires_at 일괄 재계산.",
+      "status": "completed",
+      "summary": "V87__subscription_expires_at_kst_midnight.sql 신규. paid_at+9h(또는 purchased_at+9h) 기준 KR 일자 + (plan.days+1)일 00:00 으로 재계산. 안전 조건 TIMESTAMPDIFF(HOUR, ..., expires_at) = plan.days*24h 인 row 만 — 기존 정책 흔적 보존. UNLIMITED·archived 제외. 멱등(재실행 시 안전 조건 미매치로 no-op). 전체 gradle test 통과(Flyway 부팅 OK).",
+      "completed_at": "2026-05-15T01:10:00+0900"
     }
   ],
-  "created_at": "2026-05-15T00:00:00+0900"
+  "created_at": "2026-05-15T00:00:00+0900",
+  "completed_at": "2026-05-15T01:10:00+0900"
 }
