@@ -14,8 +14,10 @@
     {
       "step": 2,
       "name": "backend-revenue-stats-api",
-      "description": "AdminStatsController 에 GET /api/admin/stats/revenue?days=N (일자별 revenue/refundAmount/count) + GET /api/admin/stats/revenue/by-plan?days=N (plan 별 count/revenue) 추가. 집계 쿼리는 payment 와 subscription LEFT JOIN, subscription.archived_at IS NULL 필터. 응답 record + Repository 커스텀 쿼리 + 테스트(일별 합산/환불 분리/archived 제외/by-plan 정렬).",
-      "status": "pending"
+      "description": "AdminStatsController 에 GET /api/admin/stats/revenue?days=N + GET /api/admin/stats/revenue/by-plan?days=N 추가. payment LEFT JOIN subscription, archived_at IS NULL 필터. record + native 쿼리 + 테스트.",
+      "status": "completed",
+      "summary": "AdminRevenuePoint/AdminRevenueByPlan record + PaymentRepository.findDailyRevenue/findRevenueByPlan native 쿼리(LEFT JOIN subscription + archived_at IS NULL) + AdminStatsService.revenueTrend/revenueByPlan(7~365 clamp) + GET /api/admin/stats/revenue & /revenue/by-plan endpoint + 매핑/clamp 3건 신규 테스트. compileJava/test OK.",
+      "completed_at": "2026-05-14T13:45:00+0900"
     },
     {
       "step": 3,

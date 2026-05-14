@@ -1,6 +1,7 @@
 package com.sqldpass.persistent.payment;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.domain.Page;
@@ -83,4 +84,52 @@ public interface PaymentRepository extends JpaRepository<PaymentEntity, Long> {
     boolean existsNewerActivePaidPaymentForMember(@Param("memberId") Long memberId,
                                                   @Param("paymentId") Long paymentId,
                                                   @Param("paidAt") LocalDateTime paidAt);
+
+    /**
+     * 일별 매출 / 환불 / 건수 — 어드민 통계 라인 차트용.
+     *
+     * <p>archived 구독에 연결된 결제는 제외. payment LEFT JOIN subscription 으로 묶고
+     * (s.id IS NULL OR s.archived_at IS NULL) 필터 — 구독 row 없는 결제는 통과,
+     * archived 구독에 연결된 결제만 제외.
+     *
+     * <p>환불은 status=CANCELLED 로 집계(PaymentService.revokePortOnePayment 가 환불 시 CANCELLED 마킹).
+     *
+     * <p>반환 Object[] 컬럼: [date(java.sql.Date), revenue(BigDecimal), refundAmount(BigDecimal), count(BigInteger)].
+     */
+    @Query(value = """
+            SELECT
+                DATE(p.paid_at)                                                          AS d,
+                COALESCE(SUM(CASE WHEN p.status = 'PAID'      THEN p.amount ELSE 0 END), 0) AS revenue,
+                COALESCE(SUM(CASE WHEN p.status = 'CANCELLED' THEN p.amount ELSE 0 END), 0) AS refund_amount,
+                SUM(CASE WHEN p.status = 'PAID' THEN 1 ELSE 0 END)                       AS paid_count
+            FROM payment p
+            LEFT JOIN subscription s ON s.payment_id = p.id
+            WHERE p.paid_at >= :since
+              AND (s.id IS NULL OR s.archived_at IS NULL)
+            GROUP BY DATE(p.paid_at)
+            ORDER BY DATE(p.paid_at) ASC
+            """, nativeQuery = true)
+    List<Object[]> findDailyRevenue(@Param("since") LocalDateTime since);
+
+    /**
+     * 플랜별 PAID 분포 — 어드민 통계 막대 차트용.
+     * archived 구독 연결 결제 제외. revenue DESC.
+     *
+     * <p>반환 Object[] 컬럼: [plan(String), count(BigInteger), revenue(BigDecimal)].
+     */
+    @Query(value = """
+            SELECT
+                p.plan                       AS plan,
+                COUNT(*)                     AS paid_count,
+                COALESCE(SUM(p.amount), 0)   AS revenue
+            FROM payment p
+            LEFT JOIN subscription s ON s.payment_id = p.id
+            WHERE p.status = 'PAID'
+              AND p.paid_at >= :since
+              AND p.plan IS NOT NULL
+              AND (s.id IS NULL OR s.archived_at IS NULL)
+            GROUP BY p.plan
+            ORDER BY revenue DESC
+            """, nativeQuery = true)
+    List<Object[]> findRevenueByPlan(@Param("since") LocalDateTime since);
 }

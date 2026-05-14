@@ -9,6 +9,8 @@ import java.util.Map;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.sqldpass.controller.admin.AdminRevenueByPlan;
+import com.sqldpass.controller.admin.AdminRevenuePoint;
 import com.sqldpass.controller.admin.dto.AdminStatsResponse;
 import com.sqldpass.controller.admin.dto.AdminStatsResponse.ActivityBucket;
 import com.sqldpass.controller.admin.dto.AdminStatsResponse.CertActivity;
@@ -18,6 +20,7 @@ import com.sqldpass.controller.admin.dto.AdminTrendResponse.DailyPoint;
 import com.sqldpass.persistent.member.MemberRepository;
 import com.sqldpass.persistent.mockexam.ExamType;
 import com.sqldpass.persistent.mockexam.MockExamKind;
+import com.sqldpass.persistent.payment.PaymentRepository;
 import com.sqldpass.persistent.solve.AnonymousSolveCountRepository;
 import com.sqldpass.persistent.solve.SolveRepository;
 
@@ -29,15 +32,18 @@ public class AdminStatsService {
     private final MemberRepository memberRepository;
     private final SolveRepository solveRepository;
     private final AnonymousSolveCountRepository anonymousSolveCountRepository;
+    private final PaymentRepository paymentRepository;
 
     public AdminStatsService(AdminQuestionService adminQuestionService,
                              MemberRepository memberRepository,
                              SolveRepository solveRepository,
-                             AnonymousSolveCountRepository anonymousSolveCountRepository) {
+                             AnonymousSolveCountRepository anonymousSolveCountRepository,
+                             PaymentRepository paymentRepository) {
         this.adminQuestionService = adminQuestionService;
         this.memberRepository = memberRepository;
         this.solveRepository = solveRepository;
         this.anonymousSolveCountRepository = anonymousSolveCountRepository;
+        this.paymentRepository = paymentRepository;
     }
 
     public AdminStatsResponse getStats() {
@@ -165,5 +171,34 @@ public class AdminStatsService {
             return ld;
         }
         return LocalDate.parse(raw.toString());
+    }
+
+    /**
+     * 일별 매출/환불/건수 추이 — 어드민 라인 차트용.
+     * archived 구독 연결 결제는 제외(PaymentRepository.findDailyRevenue 가 처리).
+     * 비어있는 날(결제 없음) 은 응답에서 빠짐 — 프론트가 누락 일자 0 으로 보간.
+     */
+    public List<AdminRevenuePoint> revenueTrend(int days) {
+        int safe = Math.max(7, Math.min(days, 365));
+        LocalDateTime since = LocalDate.now().minusDays(safe - 1L).atStartOfDay();
+        return paymentRepository.findDailyRevenue(since).stream()
+                .map(row -> new AdminRevenuePoint(
+                        toLocalDate(row[0]),
+                        ((Number) row[1]).longValue(),
+                        ((Number) row[2]).longValue(),
+                        ((Number) row[3]).intValue()))
+                .toList();
+    }
+
+    /** 플랜별 PAID 분포 — 어드민 막대 차트용. revenue DESC 정렬. archived 제외. */
+    public List<AdminRevenueByPlan> revenueByPlan(int days) {
+        int safe = Math.max(7, Math.min(days, 365));
+        LocalDateTime since = LocalDate.now().minusDays(safe - 1L).atStartOfDay();
+        return paymentRepository.findRevenueByPlan(since).stream()
+                .map(row -> new AdminRevenueByPlan(
+                        (String) row[0],
+                        ((Number) row[1]).intValue(),
+                        ((Number) row[2]).longValue()))
+                .toList();
     }
 }
