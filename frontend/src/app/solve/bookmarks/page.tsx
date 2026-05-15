@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 
 import Spinner from "@/components/Spinner";
-import { Container } from "@/components/ui";
 import BookmarksSolveClient from "./BookmarksSolveClient";
 
 export const metadata: Metadata = {
@@ -12,7 +11,7 @@ export const metadata: Metadata = {
 
 export default function Page() {
   return (
-    <Container className="py-10">
+    <main className="min-h-screen bg-bg text-text">
       <Suspense
         fallback={
           <div className="flex min-h-[40vh] items-center justify-center">
@@ -22,6 +21,6 @@ export default function Page() {
       >
         <BookmarksSolveClient />
       </Suspense>
-    </Container>
+    </main>
   );
 }

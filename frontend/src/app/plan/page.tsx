@@ -1,19 +1,8 @@
-import type { Metadata } from "next";
-import { Container } from "@/components/ui";
-import PlanClient from "./PlanClient";
+import { redirect } from "next/navigation";
 
-export const metadata: Metadata = {
-  title: "요금제",
-  description: "문어CBT 자격증 학습 플랜 — Focus·Thunder·Pro·All Pass 가격 안내.",
-  alternates: { canonical: "/plan" },
-};
-
-export default function PlanPage() {
-  return (
-    <main className="min-h-screen bg-bg text-text">
-      <Container size="wide" className="py-20">
-        <PlanClient />
-      </Container>
-    </main>
-  );
+// /plan 은 과거 가격 카탈로그 페이지였으나, /checkout 이 동일한 카드 UI 와 결제 흐름을
+// 모두 갖고 있어 사용자에게 같은 카드를 두 번 보여주는 중복 흐름이었다. 라우트는 유지하되
+// 외부 SEO/공유 링크가 들어오면 즉시 /checkout 으로 보낸다.
+export default function PlanPage(): never {
+  redirect("/checkout");
 }
