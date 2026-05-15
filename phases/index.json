@@ -3,7 +3,7 @@
     {
       "dir": "fix-android-minor",
       "name": "fix-android-minor",
-      "description": "Harness Review에서 발견한 Android 변경 책임의 minor 정리: 루트 AGENTS.md mobile/ 반영 + Android 변경 lint warning 4건",
+      "description": "Harness Review Android 변경 책임 minor 정리: 루트 AGENTS.md mobile 반영 + Android lint warning 4건.",
       "status": "completed",
       "completed_at": "2026-05-09T03:24:49+0900"
     },
@@ -174,6 +174,14 @@
       "description": "구독 만료 정책을 시각 단위 → 일자 단위 자정(KR)로 변경. paidDate.plusDays(plan.days+1).atStartOfDay() 공식 — 결제일 포함 +1일 보너스. JVM TZ=Asia/Seoul 컨테이너 환경(Dockerfile ENV + cd.yml -e + application.yaml jackson). 기존 데이터 V87 마이그레이션으로 일괄 보정(paid_at+9h 기준 KR 일자 + 자정 정렬, 기존 정책 흔적 row 만 안전 조건).",
       "status": "completed",
       "completed_at": "2026-05-15T01:10:00+0900"
+    },
+    {
+      "dir": "og-image-seo",
+      "name": "og-image-seo",
+      "description": "GPT 이미지 배경 기반 OG 이미지와 핵심 SEO 공유 메타를 보강한다. 화면 UI 변경 없이 /, /mock-exams, /cbt-mock-exam, /cbt-mock-exam/[cert] 공유 카드를 개선한다.",
+      "status": "completed",
+      "created_at": "2026-05-15T09:00:00+0900",
+      "completed_at": "2026-05-15T10:00:00+0900"
     }
   ]
 }

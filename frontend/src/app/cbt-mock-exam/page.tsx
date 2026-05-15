@@ -4,6 +4,12 @@ import { Container } from "@/components/ui";
 import { CERT_LIST, slugFromCert } from "@/lib/cert-tokens";
 
 const SITE_URL = "https://www.sqldpass.com";
+const OG_IMAGE = {
+  url: `${SITE_URL}/opengraph-image`,
+  width: 1200,
+  height: 630,
+  alt: "문어CBT 무료 CBT 모의고사",
+};
 
 export const metadata: Metadata = {
   title: "무료 CBT 모의고사 | SQLD·정처기·컴활·ADsP | 문어CBT",
@@ -16,12 +22,14 @@ export const metadata: Metadata = {
       "SQLD·정처기·컴활·ADsP CBT 모의고사 무료. 실전 타이머·오답 복습·회차별 실력 추적.",
     url: `${SITE_URL}/cbt-mock-exam`,
     type: "website",
+    images: [OG_IMAGE],
   },
   twitter: {
     card: "summary_large_image",
     title: "무료 CBT 모의고사 — 자격증 | 문어CBT",
     description:
       "SQLD·정처기·컴활·ADsP CBT 모의고사 무료. 실전 타이머 제공.",
+    images: [OG_IMAGE.url],
   },
 };
 

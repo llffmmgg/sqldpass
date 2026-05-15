@@ -1,6 +1,12 @@
 import type { Metadata } from "next";
 
 const SITE_URL = "https://www.sqldpass.com";
+const OG_IMAGE = {
+  url: `${SITE_URL}/opengraph-image`,
+  width: 1200,
+  height: 630,
+  alt: "문어CBT 무료 CBT 모의고사",
+};
 
 export const metadata: Metadata = {
   title: "무료 CBT 모의고사 | SQLD·정처기·컴활·ADsP 실전 타이머",
@@ -38,12 +44,14 @@ export const metadata: Metadata = {
     type: "website",
     siteName: "문어CBT",
     locale: "ko_KR",
+    images: [OG_IMAGE],
   },
   twitter: {
     card: "summary_large_image",
     title: "무료 CBT 모의고사 | SQLD·정처기·컴활·ADsP",
     description:
       "SQLD CBT, 정처기 CBT, 컴활 CBT, ADsP CBT 모의고사 무료 · 실전 타이머 · 자동 채점.",
+    images: [OG_IMAGE.url],
   },
 };
 

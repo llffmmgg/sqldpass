@@ -1,0 +1,36 @@
+{
+  "project": "sqldpass",
+  "phase": "og-image-seo",
+  "description": "GPT 이미지 배경 기반 OG 이미지와 핵심 SEO 공유 메타를 보강한다. 화면 UI 변경 없이 공유 카드만 개선한다.",
+  "steps": [
+    {
+      "step": 1,
+      "name": "og-background-asset",
+      "description": "GPT 이미지로 텍스트 없는 CBT 학습 배경을 생성하고 frontend/public/og/og-bg-cbt.png 에 저장한다.",
+      "status": "completed",
+      "started_at": "2026-05-15T09:00:00+0900",
+      "summary": "텍스트 없는 CBT 학습 배경을 built-in image generation 으로 생성한 뒤 1200x630 PNG 로 크롭/리사이즈하여 frontend/public/og/og-bg-cbt.png 에 저장.",
+      "completed_at": "2026-05-15T09:20:00+0900"
+    },
+    {
+      "step": 2,
+      "name": "og-template-and-route-metadata",
+      "description": "Next OG 이미지 템플릿과 /, /mock-exams, /cbt-mock-exam, /cbt-mock-exam/[cert] 메타데이터를 연결한다.",
+      "status": "completed",
+      "started_at": "2026-05-15T09:20:00+0900",
+      "summary": "shared OG 템플릿(frontend/src/lib/ogImageTemplate.tsx), root OG route, 자격증별 /cbt-mock-exam/[cert]/opengraph-image.tsx 를 추가하고 핵심 랜딩 메타데이터에 openGraph.images/twitter.images 를 연결.",
+      "completed_at": "2026-05-15T09:45:00+0900"
+    },
+    {
+      "step": 3,
+      "name": "frontend-validation",
+      "description": "frontend 에서 lint/build 로 OG 이미지와 메타데이터 변경을 검증한다.",
+      "status": "completed",
+      "started_at": "2026-05-15T09:45:00+0900",
+      "summary": "npm run lint 통과(기존 warning 4개), npm run build 통과. 최초 build 는 sandbox EPERM 으로 실패했으나 승인 후 동일 명령이 성공.",
+      "completed_at": "2026-05-15T10:00:00+0900"
+    }
+  ],
+  "created_at": "2026-05-15T09:00:00+0900",
+  "completed_at": "2026-05-15T10:00:00+0900"
+}

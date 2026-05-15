@@ -54,6 +54,12 @@ export async function generateMetadata({
 
   const info = CBT_CERT_INFO[certKey];
   const canonical = `${SITE_URL}/cbt-mock-exam/${slug}`;
+  const ogImage = {
+    url: `${canonical}/opengraph-image`,
+    width: 1200,
+    height: 630,
+    alt: info.oneLiner,
+  };
 
   return {
     title: info.title,
@@ -67,11 +73,13 @@ export async function generateMetadata({
       description: info.description,
       siteName: "문어CBT",
       locale: "ko_KR",
+      images: [ogImage],
     },
     twitter: {
       card: "summary_large_image",
       title: info.title,
       description: info.description,
+      images: [ogImage.url],
     },
   };
 }

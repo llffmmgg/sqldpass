@@ -16,6 +16,13 @@ const HOME_TITLE = "SQLD·정처기·컴활·ADsP 무료 CBT 모의고사";
 const HOME_DESCRIPTION =
   "SQLD·정처기 필기/실기·컴활 1·2급·ADsP 무료 CBT 모의고사. 기출 변형 문제, 자동 채점, 회차별 실력 추적까지 가입 없이 바로 풀어보세요.";
 
+const HOME_OG_IMAGE = {
+  url: "/opengraph-image",
+  width: 1200,
+  height: 630,
+  alt: "문어CBT 무료 CBT 모의고사",
+};
+
 export const metadata: Metadata = {
   title: { absolute: `${HOME_TITLE} | 문어CBT` },
   description: HOME_DESCRIPTION,
@@ -27,11 +34,13 @@ export const metadata: Metadata = {
     description: HOME_DESCRIPTION,
     siteName: "문어CBT",
     locale: "ko_KR",
+    images: [HOME_OG_IMAGE],
   },
   twitter: {
     card: "summary_large_image",
     title: HOME_TITLE,
     description: HOME_DESCRIPTION,
+    images: [HOME_OG_IMAGE.url],
   },
 };
 
