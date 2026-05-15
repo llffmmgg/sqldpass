@@ -1,0 +1,36 @@
+{
+  "project": "sqldpass",
+  "phase": "solve-doubleclick-mascot-tutorial",
+  "description": "풀이 옵션 더블클릭 단축(단일 채점형은 선택+채점, 일괄 채점형은 선택+다음 문제) + 풀이 첫 진입 시 문어 마스코트 듀오링고풍 튜토리얼 모달 1회 노출. localStorage 단일 키로 모든 풀이 화면 통합 관리, Tailwind keyframe만 사용 (의존성 추가 없음).",
+  "steps": [
+    {
+      "step": 1,
+      "name": "tutorial-infra-and-modal",
+      "description": "tutorialStorage 헬퍼, SolveTutorialModal 컴포넌트, globals.css 마스코트 keyframe 추가.",
+      "status": "completed",
+      "started_at": "2026-05-16T01:18:00+0900",
+      "summary": "frontend/src/lib/tutorialStorage.ts(seen_solve_tutorial_v1 헬퍼), frontend/src/components/SolveTutorialModal.tsx(MascotImage guide pose + 단단한 토큰 모달, ESC/배경 클릭/버튼 모두 markSolveTutorialSeen 호출), frontend/src/app/globals.css 끝에 mascot-bob-in + mascot-bounce-soft keyframe 및 animate-mascot-in / animate-mascot-bounce 유틸 추가.",
+      "completed_at": "2026-05-16T01:22:00+0900"
+    },
+    {
+      "step": 2,
+      "name": "wire-doubleclick-and-mount-modal",
+      "description": "단일 채점형 2화면(SolveClient/BookmarksSolveClient)에 옵션 더블클릭(handleSelect+handleSubmit) + 일괄 채점형 2화면(PastExamRunnerClient/mock-exams[id])에 옵션 더블클릭(select+goNext) 추가, 네 화면 모두 첫 진입 시 SolveTutorialModal 마운트.",
+      "status": "completed",
+      "started_at": "2026-05-16T01:22:00+0900",
+      "summary": "SolveClient/BookmarksSolveClient: handleSubmit(forcedOption?: number) 시그니처 확장, 옵션 button onDoubleClick에 handleSelect+handleSubmit(num) + select-none touch-manipulation. onClick={handleSubmit} 직접 전달 4곳을 () => handleSubmit()로 래핑. phase==='solve' 진입 시 모달 노출. PastExamRunnerClient/mock-exams[id]: MCQOptions에 onAdvance?: () => void prop 추가, 옵션 button onDoubleClick에 select(num)+onAdvance, 호출부에서 onAdvance={goNext}. 마운트 직후 모달 노출. 네 화면 공통 localStorage 키 seen_solve_tutorial_v1.",
+      "completed_at": "2026-05-16T01:35:00+0900"
+    },
+    {
+      "step": 3,
+      "name": "frontend-validation",
+      "description": "frontend에서 npm run lint + npm run build 통과 검증.",
+      "status": "completed",
+      "started_at": "2026-05-16T01:35:00+0900",
+      "summary": "npm run lint: 0 errors, 4 baseline warnings(timerColor unused / print eslint-disable / img element / DataTable aria-sort) — 기존 baseline 동일. npm run build: Next.js 16.2.2 Turbopack 컴파일 4.1s, 타입 체크 통과(handleSubmit 시그니처 변경에 따른 onClick={handleSubmit} 4곳을 () => handleSubmit() 으로 수정 후 통과), 라우트 생성 정상.",
+      "completed_at": "2026-05-16T01:40:00+0900"
+    }
+  ],
+  "created_at": "2026-05-16T01:15:00+0900",
+  "completed_at": "2026-05-16T01:40:00+0900"
+}

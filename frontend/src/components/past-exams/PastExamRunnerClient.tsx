@@ -8,6 +8,8 @@ import { useRouter } from "next/navigation";
 import Spinner from "@/components/Spinner";
 import QuestionContent from "@/components/QuestionContent";
 import { GradingDisclaimerModal } from "@/components/GradingDisclaimerModal";
+import SolveTutorialModal from "@/components/SolveTutorialModal";
+import { hasSeenSolveTutorial } from "@/lib/tutorialStorage";
 import { Badge, Button, Card, Container } from "@/components/ui";
 import {
   CERT_TOKENS,
@@ -83,6 +85,11 @@ export default function PastExamRunnerClient({
   const [attempts, setAttempts] = useState<SolveSummaryResponse[]>([]);
   const [attemptsLoaded, setAttemptsLoaded] = useState(false);
   const [started, setStarted] = useState(false);
+  const [showTutorial, setShowTutorial] = useState(false);
+
+  useEffect(() => {
+    if (!hasSeenSolveTutorial()) setShowTutorial(true);
+  }, []);
 
   const timerLimit = useMemo(
     () => (EXAM_TIME_MINUTES[exam.examType] ?? 90) * 60,
@@ -324,6 +331,7 @@ export default function PastExamRunnerClient({
   return (
     <main className="min-h-screen bg-bg text-text">
       <GradingDisclaimerModal />
+      <SolveTutorialModal open={showTutorial} onClose={() => setShowTutorial(false)} />
       <Container size="default" className="py-10">
         <div className="mb-6 rounded-2xl border border-border bg-surface/70 p-5">
           <div className="flex flex-wrap items-center gap-2">
@@ -411,6 +419,7 @@ export default function PastExamRunnerClient({
                     options={parsed.options}
                     selected={currentAnswer?.option ?? null}
                     onSelect={selectOption}
+                    onAdvance={goNext}
                     cert={cert}
                   />
                 )}
@@ -732,11 +741,13 @@ function MCQOptions({
   options,
   selected,
   onSelect,
+  onAdvance,
   cert,
 }: {
   options: string[];
   selected: number | null;
   onSelect: (value: number) => void;
+  onAdvance?: () => void;
   cert: CertKey;
 }) {
   const token = CERT_TOKENS[cert];
@@ -751,7 +762,11 @@ function MCQOptions({
           <li key={num}>
             <button
               onClick={() => onSelect(num)}
-              className={`flex w-full items-start gap-3 rounded-lg border px-4 py-3 text-left text-base transition-all duration-150 ease-out ${
+              onDoubleClick={() => {
+                onSelect(num);
+                onAdvance?.();
+              }}
+              className={`flex w-full items-start gap-3 select-none touch-manipulation rounded-lg border px-4 py-3 text-left text-base transition-all duration-150 ease-out ${
                 isSelected
                   ? `${token.tailwind.border} ${token.tailwind.bgSoft} text-text animate-tap-bounce`
                   : `border-border text-text ${token.tailwind.borderHover} hover:-translate-y-[1px] hover:shadow-sm hover:scale-[1.01]`

@@ -22,6 +22,8 @@ import {
   type QuestionType,
 } from "@/lib/api";
 import { hapticError, hapticLight, hapticSuccess } from "@/lib/haptic";
+import SolveTutorialModal from "@/components/SolveTutorialModal";
+import { hasSeenSolveTutorial } from "@/lib/tutorialStorage";
 
 type Phase = "pre" | "solve" | "session-complete";
 
@@ -96,6 +98,13 @@ export default function BookmarksSolveClient() {
   const [solvedCount, setSolvedCount] = useState(0);
   const [correctCount, setCorrectCount] = useState(0);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [showTutorial, setShowTutorial] = useState(false);
+
+  useEffect(() => {
+    if (phase === "solve" && !hasSeenSolveTutorial()) {
+      setShowTutorial(true);
+    }
+  }, [phase]);
 
   useEffect(() => {
     if (!isLoggedIn()) {
@@ -205,14 +214,20 @@ export default function BookmarksSolveClient() {
     });
   }
 
-  async function handleSubmit() {
-    if (!current || revealed || !hasAnswer()) return;
+  async function handleSubmit(forcedOption?: number) {
+    if (!current || revealed) return;
+    const effectiveOption = forcedOption ?? selectedOption;
+    const hasAns =
+      current.questionType === "MCQ"
+        ? effectiveOption !== null
+        : answerText.trim().length > 0;
+    if (!hasAns) return;
     try {
       const d = await getQuestionDetail(current.questionId);
       setDetail(d);
       setRevealed(true);
       setSolvedCount((c) => c + 1);
-      const ok = isClientSideCorrectStatic(d, selectedOption, answerText);
+      const ok = isClientSideCorrectStatic(d, effectiveOption, answerText);
       if (ok) {
         setCorrectCount((c) => c + 1);
         hapticSuccess();
@@ -499,6 +514,7 @@ export default function BookmarksSolveClient() {
 
   return (
     <section className="bg-bg pb-40 text-text lg:pb-24">
+      <SolveTutorialModal open={showTutorial} onClose={() => setShowTutorial(false)} />
       <Container size="narrow" className="py-10">
         <div className="flex items-center justify-between gap-3">
           <Link
@@ -577,8 +593,13 @@ export default function BookmarksSolveClient() {
                   <li key={num}>
                     <button
                       onClick={() => handleSelect(num)}
+                      onDoubleClick={() => {
+                        if (revealed) return;
+                        handleSelect(num);
+                        handleSubmit(num);
+                      }}
                       disabled={revealed}
-                      className={`flex min-h-[52px] w-full items-start gap-3 rounded-lg border px-4 py-3 text-left text-base leading-relaxed transition-all duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 ${style} ${motion} disabled:cursor-default`}
+                      className={`flex min-h-[52px] w-full items-start gap-3 select-none touch-manipulation rounded-lg border px-4 py-3 text-left text-base leading-relaxed transition-all duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 ${style} ${motion} disabled:cursor-default`}
                     >
                       <span
                         className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
@@ -655,7 +676,7 @@ export default function BookmarksSolveClient() {
 
         {!revealed && (
           <div className="mt-5 hidden justify-center lg:flex">
-            <Button variant="primary" size="lg" onClick={handleSubmit} disabled={!hasAnswer()}>
+            <Button variant="primary" size="lg" onClick={() => handleSubmit()} disabled={!hasAnswer()}>
               정답 제출
             </Button>
           </div>
@@ -799,7 +820,7 @@ export default function BookmarksSolveClient() {
               variant="primary"
               size="lg"
               className="w-full"
-              onClick={handleSubmit}
+              onClick={() => handleSubmit()}
               disabled={!hasAnswer()}
             >
               정답 제출

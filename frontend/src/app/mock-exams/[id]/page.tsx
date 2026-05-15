@@ -36,6 +36,8 @@ import PassPlusLockNotice from "@/components/billing/PassPlusLockNotice";
 import { ExamBadge } from "@/app/mock-exams/MockExamsClient";
 import { CERT_TOKENS, certFromExamType } from "@/lib/cert-tokens";
 import { GradingDisclaimerModal } from "@/components/GradingDisclaimerModal";
+import SolveTutorialModal from "@/components/SolveTutorialModal";
+import { hasSeenSolveTutorial } from "@/lib/tutorialStorage";
 import AdInfeed from "@/components/AdInfeed";
 import AdDisplay from "@/components/AdDisplay";
 import QuestionJumpPanel, {
@@ -90,6 +92,11 @@ function MockExamDetailContent() {
   const [result, setResult] = useState<SolveResponse | null>(null);
   const [attempts, setAttempts] = useState<SolveSummaryResponse[] | null>(null);
   const [started, setStarted] = useState(false);
+  const [showTutorial, setShowTutorial] = useState(false);
+
+  useEffect(() => {
+    if (!hasSeenSolveTutorial()) setShowTutorial(true);
+  }, []);
 
   // ── 타이머 ──
   const [timerRunning, setTimerRunning] = useState(false);
@@ -522,6 +529,7 @@ function MockExamDetailContent() {
   return (
     <main className="min-h-screen bg-background text-foreground">
       <GradingDisclaimerModal />
+      <SolveTutorialModal open={showTutorial} onClose={() => setShowTutorial(false)} />
       <Container size="default" className="py-12">
       <div className="flex gap-4 items-stretch">
       {/* 타이머 패널 — 데스크톱에서 왼쪽 sticky, 모바일에서 하단 fixed */}
@@ -602,6 +610,7 @@ function MockExamDetailContent() {
                 options={parsed.options}
                 selected={currentAnswer?.option ?? null}
                 onSelect={selectOption}
+                onAdvance={goNext}
                 accent={accent}
               />
             )}
@@ -745,11 +754,13 @@ function MCQOptions({
   options,
   selected,
   onSelect,
+  onAdvance,
   accent,
 }: {
   options: string[];
   selected: number | null;
   onSelect: (n: number) => void;
+  onAdvance?: () => void;
   accent: Accent;
 }) {
   return (
@@ -761,7 +772,11 @@ function MCQOptions({
           <li key={num}>
             <button
               onClick={() => onSelect(num)}
-              className={`flex w-full items-start gap-3 rounded-lg border px-4 py-3 text-left text-base transition-all duration-150 ease-out ${
+              onDoubleClick={() => {
+                onSelect(num);
+                onAdvance?.();
+              }}
+              className={`flex w-full items-start gap-3 select-none touch-manipulation rounded-lg border px-4 py-3 text-left text-base transition-all duration-150 ease-out ${
                 isSelected
                   ? `${accent.border} bg-amber-500/10 text-foreground animate-tap-bounce`
                   : `border-border ${accent.hoverBorder} hover:bg-amber-500/5 hover:-translate-y-[1px] hover:shadow-sm hover:scale-[1.01]`

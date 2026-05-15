@@ -25,6 +25,8 @@ import Spinner from "@/components/Spinner";
 import ReportQuestionButton from "@/components/ReportQuestionButton";
 import BookmarkButton from "@/components/BookmarkButton";
 import { GradingDisclaimerModal } from "@/components/GradingDisclaimerModal";
+import SolveTutorialModal from "@/components/SolveTutorialModal";
+import { hasSeenSolveTutorial } from "@/lib/tutorialStorage";
 import AdInfeed from "@/components/AdInfeed";
 import AdDisplay from "@/components/AdDisplay";
 import { useToast } from "@/components/Toast";
@@ -108,8 +110,15 @@ function SolvePageContent() {
   const [authChecked, setAuthChecked] = useState(false);
   const [anonQuota, setAnonQuota] = useState<PublicSolveQuota | null>(null);
   const [quotaExhausted, setQuotaExhausted] = useState(false);
+  const [showTutorial, setShowTutorial] = useState(false);
   const activeCert: CertKey =
     (certParam && certParam in CERT_TOKENS ? (certParam as CertKey) : null) ?? "SQLD";
+
+  useEffect(() => {
+    if (phase === "solve" && !hasSeenSolveTutorial()) {
+      setShowTutorial(true);
+    }
+  }, [phase]);
 
   useEffect(() => {
     const logged = isLoggedIn();
@@ -293,9 +302,9 @@ function SolvePageContent() {
     return answerText.trim().length > 0;
   }
 
-  function isClientSideCorrect(d: QuestionDetail): boolean {
+  function isClientSideCorrect(d: QuestionDetail, option: number | null): boolean {
     if (d.questionType === "MCQ") {
-      return selectedOption === d.correctOption;
+      return option === d.correctOption;
     }
     const norm = (s: string) => s.trim().toLowerCase().replace(/\s+/g, " ");
     const submitted = norm(answerText);
@@ -304,14 +313,20 @@ function SolvePageContent() {
     return d.keywords.some((k) => norm(k) === submitted);
   }
 
-  async function handleSubmit() {
-    if (revealed || !current || !hasAnswer()) return;
+  async function handleSubmit(forcedOption?: number) {
+    if (revealed || !current) return;
+    const effectiveOption = forcedOption ?? selectedOption;
+    const hasAns =
+      current.questionType === "MCQ"
+        ? effectiveOption !== null
+        : answerText.trim().length > 0;
+    if (!hasAns) return;
     setRevealed(true);
 
     const d = await fetchDetail(current.id);
     setDetail(d);
     setSolvedCount((c) => c + 1);
-    const correct = isClientSideCorrect(d);
+    const correct = isClientSideCorrect(d, effectiveOption);
     if (correct) {
       setCorrectCount((c) => c + 1);
       hapticSuccess();
@@ -338,7 +353,7 @@ function SolvePageContent() {
         answers: [
           {
             questionId: current.id,
-            selectedOption: current.questionType === "MCQ" ? selectedOption ?? undefined : undefined,
+            selectedOption: current.questionType === "MCQ" ? effectiveOption ?? undefined : undefined,
             answerText: current.questionType !== "MCQ" ? answerText : undefined,
           },
         ],
@@ -711,7 +726,7 @@ function SolvePageContent() {
   const isCorrect = detail
     ? detail.questionType === "MCQ"
       ? selectedOption === detail.correctOption
-      : isClientSideCorrect(detail)
+      : isClientSideCorrect(detail, selectedOption)
     : null;
 
   const currentNumber = Math.min(solvedCount + 1, SET_SIZE);
@@ -719,6 +734,7 @@ function SolvePageContent() {
 
   return (
     <section className="bg-bg pb-40 text-text lg:pb-24">
+      <SolveTutorialModal open={showTutorial} onClose={() => setShowTutorial(false)} />
       <Container size="narrow" className="py-10">
         <div className="flex items-center justify-between gap-3">
           <button
@@ -819,8 +835,13 @@ function SolvePageContent() {
                   <li key={num}>
                     <button
                       onClick={() => handleSelect(num)}
+                      onDoubleClick={() => {
+                        if (revealed) return;
+                        handleSelect(num);
+                        handleSubmit(num);
+                      }}
                       disabled={revealed}
-                      className={`flex min-h-[52px] w-full items-start gap-3 rounded-lg border px-4 py-3 text-left text-base leading-relaxed transition-all duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 ${style} ${motion} disabled:cursor-default`}
+                      className={`flex min-h-[52px] w-full items-start gap-3 select-none touch-manipulation rounded-lg border px-4 py-3 text-left text-base leading-relaxed transition-all duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 ${style} ${motion} disabled:cursor-default`}
                     >
                       <span
                         className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
@@ -894,7 +915,7 @@ function SolvePageContent() {
             <Button
               variant="primary"
               size="lg"
-              onClick={handleSubmit}
+              onClick={() => handleSubmit()}
               disabled={!hasAnswer()}
             >
               정답 제출
@@ -1017,7 +1038,7 @@ function SolvePageContent() {
               variant="primary"
               size="lg"
               className="w-full"
-              onClick={handleSubmit}
+              onClick={() => handleSubmit()}
               disabled={!hasAnswer()}
             >
               정답 제출
