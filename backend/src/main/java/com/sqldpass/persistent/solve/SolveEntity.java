@@ -77,6 +77,17 @@ public class SolveEntity extends BaseTimeEntity {
         this.score = score;
     }
 
+    /**
+     * 즐겨찾기 모아 풀기 등 subject/mockExam 어느 쪽에도 속하지 않는 풀이용 생성자.
+     * subject_id / mock_exam_id 컬럼 둘 다 NULL 로 저장된다.
+     */
+    public SolveEntity(MemberEntity member, int totalCount, int correctCount, int score) {
+        this.member = member;
+        this.totalCount = totalCount;
+        this.correctCount = correctCount;
+        this.score = score;
+    }
+
     public void addAnswer(SolveAnswerEntity answer) {
         this.answers.add(answer);
     }

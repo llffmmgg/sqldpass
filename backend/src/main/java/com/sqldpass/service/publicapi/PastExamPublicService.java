@@ -226,7 +226,7 @@ public class PastExamPublicService {
                                 it.selectedOption(),
                                 it.submittedAnswerText()))
                         .toList();
-                var saved = solveService.solve(memberId, new SolveRequest(null, entity.getId(), solveAnswers));
+                var saved = solveService.solve(memberId, new SolveRequest(null, entity.getId(), null, solveAnswers));
                 solveId = saved.solve().getId();
                 if (saved.streakUpdate() != null) {
                     milestoneReached = saved.streakUpdate().milestoneReached();

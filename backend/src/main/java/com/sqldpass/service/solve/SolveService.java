@@ -62,10 +62,19 @@ public class SolveService {
 
     @Transactional
     public SolveWithStreak solve(Long memberId, SolveRequest request) {
-        // subjectId 또는 mockExamId 중 정확히 하나는 있어야 함
-        if ((request.subjectId() == null) == (request.mockExamId() == null)) {
-            throw new SqldpassException(ErrorCode.INVALID_INPUT,
-                    "subjectId 또는 mockExamId 중 하나만 지정해야 합니다.");
+        com.sqldpass.controller.solve.dto.SolveSource source = request.effectiveSource();
+        if (source == com.sqldpass.controller.solve.dto.SolveSource.BOOKMARK) {
+            // 즐겨찾기 모아 풀기 — subject/mockExam 둘 다 비어 있어야 함
+            if (request.subjectId() != null || request.mockExamId() != null) {
+                throw new SqldpassException(ErrorCode.INVALID_INPUT,
+                        "BOOKMARK source 에는 subjectId/mockExamId 가 들어가지 않습니다.");
+            }
+        } else {
+            // 일반 풀이 — subjectId 또는 mockExamId 중 정확히 하나
+            if ((request.subjectId() == null) == (request.mockExamId() == null)) {
+                throw new SqldpassException(ErrorCode.INVALID_INPUT,
+                        "subjectId 또는 mockExamId 중 하나만 지정해야 합니다.");
+            }
         }
 
         MemberEntity member = memberRepository.findById(memberId)
@@ -102,7 +111,9 @@ public class SolveService {
 
         // 풀이 종류에 따라 SolveEntity 생성
         SolveEntity solveEntity;
-        if (request.subjectId() != null) {
+        if (source == com.sqldpass.controller.solve.dto.SolveSource.BOOKMARK) {
+            solveEntity = new SolveEntity(member, totalCount, correctCount, score);
+        } else if (request.subjectId() != null) {
             SubjectEntity subject = subjectRepository.findById(request.subjectId())
                     .orElseThrow(() -> new SqldpassException(ErrorCode.SUBJECT_NOT_FOUND));
             solveEntity = new SolveEntity(member, subject, totalCount, correctCount, score);

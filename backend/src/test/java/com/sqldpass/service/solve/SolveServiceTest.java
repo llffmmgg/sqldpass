@@ -88,7 +88,7 @@ class SolveServiceTest {
     @Test
     @DisplayName("답안을 제출하면 채점 결과가 반환된다")
     void solve() {
-        SolveRequest request = new SolveRequest(subject.getId(), null, List.of(
+        SolveRequest request = new SolveRequest(subject.getId(), null, null, List.of(
                 new SolveAnswerRequest(q1.getId(), 1, null),  // 정답
                 new SolveAnswerRequest(q2.getId(), 1, null),  // 오답 (정답: 2)
                 new SolveAnswerRequest(q3.getId(), 3, null)   // 정답
@@ -107,7 +107,7 @@ class SolveServiceTest {
     @Test
     @DisplayName("내 풀이 기록을 조회하면 최신순으로 반환된다")
     void getMySolves() {
-        SolveRequest request = new SolveRequest(subject.getId(), null, List.of(
+        SolveRequest request = new SolveRequest(subject.getId(), null, null, List.of(
                 new SolveAnswerRequest(q1.getId(), 1, null)
         ));
         solveService.solve(member.getId(), request);
@@ -124,7 +124,7 @@ class SolveServiceTest {
     @DisplayName("mockExamId 가 null 이면 전체 시도, 값이 있으면 해당 시험 시도만 반환된다")
     void getMySolvesByMockExam() {
         // subject 풀이 1건 (mockExamId 없음)
-        SolveRequest subjectReq = new SolveRequest(subject.getId(), null, List.of(
+        SolveRequest subjectReq = new SolveRequest(subject.getId(), null, null, List.of(
                 new SolveAnswerRequest(q1.getId(), 1, null)
         ));
         solveService.solve(member.getId(), subjectReq);
@@ -147,7 +147,7 @@ class SolveServiceTest {
         entityManager.flush();
 
         // 동일 모의고사를 4번 풀이
-        SolveRequest req = new SolveRequest(null, mockExam.getId(), List.of(
+        SolveRequest req = new SolveRequest(null, mockExam.getId(), null, List.of(
                 new SolveAnswerRequest(q1.getId(), 1, null)
         ));
         for (int i = 0; i < 4; i++) {
@@ -163,7 +163,7 @@ class SolveServiceTest {
     @Test
     @DisplayName("subject(자유 풀이) 시도는 캡 정책 영향을 받지 않는다")
     void subjectAttemptsNotCapped() {
-        SolveRequest req = new SolveRequest(subject.getId(), null, List.of(
+        SolveRequest req = new SolveRequest(subject.getId(), null, null, List.of(
                 new SolveAnswerRequest(q1.getId(), 1, null)
         ));
         for (int i = 0; i < 5; i++) {

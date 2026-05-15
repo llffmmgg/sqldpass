@@ -252,6 +252,9 @@ function WrongAnswersPageContent() {
           {
             questionId: wa.questionId,
             questionContent: wa.questionContent,
+            // WrongAnswerResponse 에 questionType 이 없어 임시로 MCQ 가정.
+            // 이 항목은 즐겨찾기 탭 표시용이고, 다음 마운트 시 백엔드 응답으로 정확한 값으로 갱신됨.
+            questionType: "MCQ",
             subjectId: wa.subjectId,
             subjectName: wa.subjectName,
             createdAt: new Date().toISOString(),
@@ -608,6 +611,24 @@ function WrongAnswersPageContent() {
             </div>
           );
         })()}
+
+        {/* 즐겨찾기 탭 — 모아 풀기 진입 CTA. 즐겨찾기 1개 이상일 때만 노출 */}
+        {topTab === "bookmark" && !loading && bookmarks.length > 0 && (
+          <div className="mt-4 flex flex-wrap items-center gap-3 rounded-xl border border-border bg-surface/60 px-5 py-3.5">
+            <div className="flex flex-col gap-0.5">
+              <span className="text-sm font-semibold">즐겨찾기 모아 풀기</span>
+              <span className="text-xs text-text-muted">
+                {Math.min(bookmarks.length, 10)}문제를 랜덤 순서로 풀고 오답은 자동으로 오답노트에 누적됩니다.
+              </span>
+            </div>
+            <Link
+              href="/solve/bookmarks"
+              className="ml-auto inline-flex items-center gap-1 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-fg transition-colors hover:bg-primary-hover"
+            >
+              모아 풀기 시작 →
+            </Link>
+          </div>
+        )}
 
         <AdResponsive adSlot="2769801046" height={280} />
 

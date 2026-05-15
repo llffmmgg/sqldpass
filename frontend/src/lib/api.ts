@@ -71,9 +71,13 @@ export interface SolveAnswerRequest {
   answerText?: string;
 }
 
+export type SolveSource = "NORMAL" | "BOOKMARK";
+
 export interface SolveRequest {
   subjectId?: number;
   mockExamId?: number;
+  /** 즐겨찾기 모아 풀기는 "BOOKMARK" — subjectId/mockExamId 모두 비움. 미지정 시 백엔드는 NORMAL. */
+  source?: SolveSource;
   answers: SolveAnswerRequest[];
 }
 
@@ -223,6 +227,7 @@ export function retryWrongAnswer(questionId: number, body: WrongAnswerRetryReque
 export interface BookmarkResponse {
   questionId: number;
   questionContent: string;
+  questionType: QuestionType;
   subjectId: number;
   subjectName: string;
   createdAt: string;

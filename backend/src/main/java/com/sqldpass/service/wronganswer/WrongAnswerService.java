@@ -87,7 +87,7 @@ public class WrongAnswerService {
                 .orElseThrow(() -> new SqldpassException(ErrorCode.QUESTION_NOT_FOUND));
 
         SolveAnswerRequest answerReq = new SolveAnswerRequest(questionId, selectedOption, answerText);
-        SolveRequest solveReq = new SolveRequest(question.getSubject().getId(), null, List.of(answerReq));
+        SolveRequest solveReq = new SolveRequest(question.getSubject().getId(), null, null, List.of(answerReq));
         Solve solve = solveService.solve(memberId, solveReq).solve();
 
         boolean correct = solve.getCorrectCount() > 0;
