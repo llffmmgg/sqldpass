@@ -1,9 +1,5 @@
-import PastExamCertPage from "@/components/past-exams/PastExamCertPage";
-import { buildPastExamCertMetadata } from "@/lib/pastExamSeo";
+import { redirect } from "next/navigation";
 
-export const dynamic = "force-dynamic";
-export const metadata = buildPastExamCertMetadata("computer-literacy-2");
-
-export default function ComputerLiteracyTwoPastExamsPage() {
-  return <PastExamCertPage certSlug="computer-literacy-2" />;
+export default function ComputerLiteracy2PastExamsRedirect(): never {
+  redirect("/past-exams?cert=COMPUTER_LITERACY_2");
 }

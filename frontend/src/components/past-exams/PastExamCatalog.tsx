@@ -8,7 +8,6 @@ import {
   CERT_LIST,
   CERT_TOKENS,
   certFromExamType,
-  slugFromCert,
   type CertKey,
 } from "@/lib/cert-tokens";
 import type {
@@ -38,7 +37,8 @@ export function PastExamTabs({
         return (
           <Link
             key={cert.key}
-            href={`/past-exams/${slugFromCert(cert.key)}`}
+            href={`/past-exams?cert=${cert.key}`}
+            scroll={false}
             className={cn(
               "flex shrink-0 items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
               active

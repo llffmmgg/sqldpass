@@ -1,9 +1,5 @@
-import PastExamCertPage from "@/components/past-exams/PastExamCertPage";
-import { buildPastExamCertMetadata } from "@/lib/pastExamSeo";
+import { redirect } from "next/navigation";
 
-export const dynamic = "force-dynamic";
-export const metadata = buildPastExamCertMetadata("engineer-written");
-
-export default function EngineerWrittenPastExamsPage() {
-  return <PastExamCertPage certSlug="engineer-written" />;
+export default function EngineerWrittenPastExamsRedirect(): never {
+  redirect("/past-exams?cert=ENGINEER_WRITTEN");
 }

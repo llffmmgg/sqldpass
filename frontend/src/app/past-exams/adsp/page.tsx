@@ -1,9 +1,5 @@
-import PastExamCertPage from "@/components/past-exams/PastExamCertPage";
-import { buildPastExamCertMetadata } from "@/lib/pastExamSeo";
+import { redirect } from "next/navigation";
 
-export const dynamic = "force-dynamic";
-export const metadata = buildPastExamCertMetadata("adsp");
-
-export default function AdspPastExamsPage() {
-  return <PastExamCertPage certSlug="adsp" />;
+export default function AdspPastExamsRedirect(): never {
+  redirect("/past-exams?cert=ADSP");
 }

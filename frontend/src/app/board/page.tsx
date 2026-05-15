@@ -49,7 +49,7 @@ function BoardContent() {
     const params = new URLSearchParams(searchParams.toString());
     if (cert) params.set("cert", cert);
     else params.delete("cert");
-    router.push(`/board${params.toString() ? `?${params.toString()}` : ""}`);
+    router.push(`/board${params.toString() ? `?${params.toString()}` : ""}`, { scroll: false });
   }
 
   return (

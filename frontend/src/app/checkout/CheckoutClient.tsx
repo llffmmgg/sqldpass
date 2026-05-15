@@ -101,7 +101,8 @@ function CheckoutContent() {
         // 결제 직후 광고 제거/PDF 권한이 다음 페이지에서 즉시 반영되도록 캐시 무효화
         invalidateSubscriptionCache();
         // ?paymentId 쿼리 제거 — 새로고침/뒤로가기 시 verify 재실행 방지
-        router.replace("/checkout");
+        // scroll: false — 결제 완료 토스트/버튼 위치 유지
+        router.replace("/checkout", { scroll: false });
         // 같은 페이지에 머무는 동안 버튼이 즉시 "이용 중"으로 바뀌도록 로컬 state 도 갱신
         try {
           const fresh = await getActiveSubscription();
@@ -117,7 +118,7 @@ function CheckoutContent() {
           cancelled ? "결제를 취소하셨습니다." : message || "결제 검증에 실패했습니다.",
           cancelled ? "info" : "error",
         );
-        router.replace("/checkout");
+        router.replace("/checkout", { scroll: false });
         if (e instanceof Error) console.error("[checkout:return]", e);
       });
     // router/toast 는 stable hook 결과로 다뤄야 한다. deps 에 추가하면 매 렌더 effect 재실행
