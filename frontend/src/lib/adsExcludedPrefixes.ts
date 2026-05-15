@@ -10,6 +10,7 @@ export const EXCLUDED_PREFIXES = [
   "/mypage/feedback",
   "/auth/callback",
   // 결제 결정 흐름 — 광고로 시선 분산 방지
+  "/plan",
   "/checkout",
 ];
 

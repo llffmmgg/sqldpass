@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 
+import NoAdsGuard from "@/components/NoAdsGuard";
 import CheckoutLanding from "@/components/billing/CheckoutLanding";
 
 // /plan 은 가격 카탈로그 — 실제 결제 흐름(eligibility, prorate, PG SDK)은 /checkout 이 소유.
@@ -11,15 +12,18 @@ export default function PlanClient() {
   const router = useRouter();
 
   return (
-    <CheckoutLanding
-      currentPlan={null}
-      previews={{ THREE_DAY: null, FOCUS: null, ONE_MONTH: null, UNLIMITED: null }}
-      payingPlan={null}
-      subscription={null}
-      method="CARD"
-      onChangeMethod={() => {}}
-      showMethodToggle={false}
-      onPay={() => router.push("/checkout")}
-    />
+    <>
+      <NoAdsGuard />
+      <CheckoutLanding
+        currentPlan={null}
+        previews={{ THREE_DAY: null, FOCUS: null, ONE_MONTH: null, UNLIMITED: null }}
+        payingPlan={null}
+        subscription={null}
+        method="CARD"
+        onChangeMethod={() => {}}
+        showMethodToggle={false}
+        onPay={() => router.push("/checkout")}
+      />
+    </>
   );
 }
