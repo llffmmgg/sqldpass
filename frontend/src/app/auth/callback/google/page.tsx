@@ -79,7 +79,20 @@ function GoogleCallback() {
           }
         }
 
-        router.replace("/");
+        // 로그인 진입 직전 페이지에서 sessionStorage 에 postLoginRedirect 를 남겨
+        // 두면 그곳으로 복귀. 그 외에는 홈으로. open-redirect 차단을 위해 내부
+        // 경로(`/...`) 만 허용한다.
+        let target = "/";
+        try {
+          const stored = sessionStorage.getItem("postLoginRedirect");
+          if (stored && stored.startsWith("/") && !stored.startsWith("//")) {
+            target = stored;
+          }
+          sessionStorage.removeItem("postLoginRedirect");
+        } catch {
+          // sessionStorage 사용 불가 환경 — 기본값 유지
+        }
+        router.replace(target);
       } catch (e) {
         if (cancelled) return;
         setError(e instanceof Error ? e.message : "로그인에 실패했습니다.");

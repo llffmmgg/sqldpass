@@ -4,17 +4,9 @@ import { useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 
 import { useSubscription } from "@/hooks/useSubscription";
+import { isAdExcludedPath } from "@/lib/adsExcludedPrefixes";
 
 const ADSENSE_CLIENT = "ca-pub-6512792395955186";
-
-const EXCLUDED_PREFIXES = [
-  "/admin",
-  "/profile",
-  "/mypage/feedback",
-  "/auth/callback",
-  // 결제 결정 흐름 — 광고로 시선 분산 방지
-  "/checkout",
-];
 
 interface AdSidebarProps {
   adSlot: string;
@@ -42,9 +34,7 @@ export default function AdSidebar({ adSlot }: AdSidebarProps) {
   if (loading) return null;
   // 한달권/무제한권 회원은 광고 제거
   if (subscription.removesAds) return null;
-  if (EXCLUDED_PREFIXES.some((prefix) => pathname?.startsWith(prefix))) {
-    return null;
-  }
+  if (isAdExcludedPath(pathname)) return null;
 
   return (
     <aside

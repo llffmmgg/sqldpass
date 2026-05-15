@@ -1,17 +1,15 @@
 "use client";
 
 import { Suspense, useEffect, useRef, useState } from "react";
-import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 
-import { Badge } from "@/components/ui";
 import Spinner from "@/components/Spinner";
 import { useToast } from "@/components/Toast";
 import CheckoutLanding, { planLabel } from "@/components/billing/CheckoutLanding";
 import { isLoggedIn } from "@/lib/auth";
+import { getGoogleLoginUrl } from "@/lib/oauth";
 import {
   getActiveSubscription,
-  getCheckoutEligibility,
   previewPayment,
   startPayment,
   verifyPaymentById,
@@ -23,8 +21,6 @@ import {
 } from "@/lib/payment";
 import BuyerInfoModal from "@/components/billing/BuyerInfoModal";
 import { invalidateSubscriptionCache } from "@/hooks/useSubscription";
-
-type AccessState = "loading" | "anonymous" | "denied" | "allowed";
 
 export default function CheckoutClient() {
   return (
@@ -47,7 +43,6 @@ function CheckoutContent() {
   // 모바일 redirectUrl 복귀 케이스 — payment.ts 가 ?paymentId=... 로 돌려보냄.
   // 데스크탑은 SDK Promise resolve 로 onPay 안에서 verify 함 → 이 쿼리는 비어있음.
   const returnedPaymentId = searchParams.get("paymentId");
-  const [access, setAccess] = useState<AccessState>("loading");
   const [subscription, setSubscription] = useState<ActiveSubscription | null>(null);
   const [payingPlan, setPayingPlan] = useState<SubscriptionPlan | null>(null);
   const [method, setMethod] = useState<PaymentMethod>("CARD");
@@ -65,28 +60,16 @@ function CheckoutContent() {
   });
 
   useEffect(() => {
-    // dev UI preview — 백엔드 없이 화면만 보고 싶을 때 NEXT_PUBLIC_DEV_UI_PREVIEW=true 면
-    // 비로그인 + 백엔드 호출 실패해도 결제 카드들을 그대로 렌더. 운영 빌드는 미적용.
-    const devPreview =
-      process.env.NODE_ENV !== "production" &&
-      process.env.NEXT_PUBLIC_DEV_UI_PREVIEW === "true";
-
-    if (!isLoggedIn()) {
-      if (devPreview) {
-        setAccess("allowed");
-        return;
-      }
-      setAccess("anonymous");
-      return;
-    }
-    Promise.all([getCheckoutEligibility(), getActiveSubscription()])
-      .then(([elig, sub]) => {
-        setAccess(elig.eligible ? "allowed" : "denied");
+    // 비로그인 사용자도 결제 카드는 그대로 노출. 구매 버튼 클릭 시점에 onPay 가
+    // OAuth 로 보낸다. eligibility 게이팅은 백엔드 prepare/verify 에 일임 — 화이트
+    // 리스트 미회원도 카드는 보고, 결제 시점에 에러 토스트로 안내한다.
+    if (!isLoggedIn()) return;
+    getActiveSubscription()
+      .then((sub) => {
         setSubscription(sub);
-
         // 활성 구독이 있으면 plan 별 미리보기 호출 (prorate 표시용).
         // 비활성이면 baseAmount 그대로 표시되니 호출 생략 (네트워크 절약).
-        if (elig.eligible && sub.active) {
+        if (sub.active) {
           (["THREE_DAY", "FOCUS", "ONE_MONTH", "UNLIMITED"] as const).forEach((plan) => {
             previewPayment(plan)
               .then((p) => setPreviews((prev) => ({ ...prev, [plan]: p })))
@@ -97,9 +80,7 @@ function CheckoutContent() {
         }
       })
       .catch(() => {
-        // dev preview 모드면 백엔드 다운 상황에서도 카드를 보여준다.
-        if (devPreview) setAccess("allowed");
-        else setAccess("denied");
+        // subscription 조회 실패해도 카드는 노출 — 결제 시도 시 백엔드 에러가 안내해줌
       });
   }, []);
 
@@ -143,24 +124,19 @@ function CheckoutContent() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [returnedPaymentId]);
 
-  if (access === "loading") {
-    return (
-      <div className="flex min-h-[40vh] items-center justify-center">
-        <Spinner message="확인 중..." />
-      </div>
-    );
-  }
-
-  if (access === "anonymous") {
-    return <ComingSoonView showLogin />;
-  }
-  if (access === "denied") {
-    return <ComingSoonView showLogin={false} />;
-  }
-
-  // 결제 버튼 클릭 — BuyerInfoModal 을 열고, 실제 결제는 onBuyerSubmit 에서 진행.
+  // 결제 버튼 클릭 — 비로그인이면 OAuth 로 보내고 로그인 후 /checkout 으로 복귀.
+  // 로그인 상태면 BuyerInfoModal 을 열고, 실제 결제는 onBuyerSubmit 에서 진행.
   function onPay(plan: SubscriptionPlan) {
     if (payingPlan) return;
+    if (!isLoggedIn()) {
+      try {
+        sessionStorage.setItem("postLoginRedirect", "/checkout");
+      } catch {
+        // sessionStorage 사용 불가 환경 — 로그인 후 홈으로 가도 사용자가 직접 복귀 가능
+      }
+      window.location.href = getGoogleLoginUrl();
+      return;
+    }
     setPendingPlan(plan);
   }
 
@@ -221,36 +197,5 @@ function CheckoutContent() {
         />
       )}
     </>
-  );
-}
-
-function ComingSoonView({ showLogin }: { showLogin: boolean }) {
-  return (
-    <div className="mx-auto max-w-md text-center">
-      <div className="rounded-2xl border border-border bg-surface/40 p-10">
-        <Badge variant="soft" tone="info" size="sm">
-          준비 중
-        </Badge>
-        <h1 className="mt-4 text-2xl font-bold tracking-tight">
-          결제 페이지는 곧 오픈됩니다
-        </h1>
-        <p className="mt-3 text-sm leading-relaxed text-text-muted">
-          지금은 베타 오픈 단계라 일부 운영자 계정에서만 결제가 가능합니다.
-          <br />
-          정식 오픈 안내는 사이트 공지사항으로 알려드릴게요.
-        </p>
-        <div className="mt-6 flex flex-col items-center gap-3 text-sm">
-          {showLogin && (
-            <p className="text-xs text-text-subtle">로그인이 필요할 수도 있습니다.</p>
-          )}
-          <Link
-            href="/mock-exams"
-            className="rounded-lg border border-border bg-surface px-5 py-2.5 text-text transition-colors hover:border-primary/40"
-          >
-            모의고사로 →
-          </Link>
-        </div>
-      </div>
-    </div>
   );
 }
