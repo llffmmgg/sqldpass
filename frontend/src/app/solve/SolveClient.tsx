@@ -39,6 +39,7 @@ import {
   type CertToken,
 } from "@/lib/cert-tokens";
 import { hapticError, hapticLight, hapticSuccess } from "@/lib/haptic";
+import { useDoubleTap } from "@/hooks/useDoubleTap";
 
 type Phase = "select" | "solve" | "session-complete";
 
@@ -467,6 +468,15 @@ function SolvePageContent() {
     setCorrectCount(0);
   }
 
+  const handleOptionTap = useDoubleTap<number>(
+    (num) => handleSelect(num),
+    (num) => {
+      if (revealed) return;
+      handleSelect(num);
+      handleSubmit(num);
+    },
+  );
+
   if (loading) {
     return (
       <section className="flex min-h-[40vh] items-center justify-center bg-bg text-text">
@@ -734,7 +744,7 @@ function SolvePageContent() {
 
   return (
     <section className="bg-bg pb-40 text-text lg:pb-24">
-      <SolveTutorialModal open={showTutorial} onClose={() => setShowTutorial(false)} />
+      <SolveTutorialModal open={showTutorial} onClose={() => setShowTutorial(false)} kind="graded" />
       <Container size="narrow" className="py-10">
         <div className="flex items-center justify-between gap-3">
           <button
@@ -834,12 +844,7 @@ function SolvePageContent() {
                 return (
                   <li key={num}>
                     <button
-                      onClick={() => handleSelect(num)}
-                      onDoubleClick={() => {
-                        if (revealed) return;
-                        handleSelect(num);
-                        handleSubmit(num);
-                      }}
+                      onClick={() => handleOptionTap(num)}
                       disabled={revealed}
                       className={`flex min-h-[52px] w-full items-start gap-3 select-none touch-manipulation rounded-lg border px-4 py-3 text-left text-base leading-relaxed transition-all duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 ${style} ${motion} disabled:cursor-default`}
                     >

@@ -24,6 +24,7 @@ import {
 import { hapticError, hapticLight, hapticSuccess } from "@/lib/haptic";
 import SolveTutorialModal from "@/components/SolveTutorialModal";
 import { hasSeenSolveTutorial } from "@/lib/tutorialStorage";
+import { useDoubleTap } from "@/hooks/useDoubleTap";
 
 type Phase = "pre" | "solve" | "session-complete";
 
@@ -124,6 +125,15 @@ export default function BookmarksSolveClient() {
   }, []);
 
   // 키보드 단축키 (1-4 옵션, Enter 제출/다음)
+  const handleOptionTap = useDoubleTap<number>(
+    (num) => handleSelect(num),
+    (num) => {
+      if (revealed) return;
+      handleSelect(num);
+      handleSubmit(num);
+    },
+  );
+
   useEffect(() => {
     if (phase !== "solve" || !current) return;
     function onKey(e: KeyboardEvent) {
@@ -514,7 +524,7 @@ export default function BookmarksSolveClient() {
 
   return (
     <section className="bg-bg pb-40 text-text lg:pb-24">
-      <SolveTutorialModal open={showTutorial} onClose={() => setShowTutorial(false)} />
+      <SolveTutorialModal open={showTutorial} onClose={() => setShowTutorial(false)} kind="graded" />
       <Container size="narrow" className="py-10">
         <div className="flex items-center justify-between gap-3">
           <Link
@@ -592,12 +602,7 @@ export default function BookmarksSolveClient() {
                 return (
                   <li key={num}>
                     <button
-                      onClick={() => handleSelect(num)}
-                      onDoubleClick={() => {
-                        if (revealed) return;
-                        handleSelect(num);
-                        handleSubmit(num);
-                      }}
+                      onClick={() => handleOptionTap(num)}
                       disabled={revealed}
                       className={`flex min-h-[52px] w-full items-start gap-3 select-none touch-manipulation rounded-lg border px-4 py-3 text-left text-base leading-relaxed transition-all duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 ${style} ${motion} disabled:cursor-default`}
                     >

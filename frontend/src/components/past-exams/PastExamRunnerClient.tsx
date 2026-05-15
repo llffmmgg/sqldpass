@@ -10,6 +10,7 @@ import QuestionContent from "@/components/QuestionContent";
 import { GradingDisclaimerModal } from "@/components/GradingDisclaimerModal";
 import SolveTutorialModal from "@/components/SolveTutorialModal";
 import { hasSeenSolveTutorial } from "@/lib/tutorialStorage";
+import { useDoubleTap } from "@/hooks/useDoubleTap";
 import { Badge, Button, Card, Container } from "@/components/ui";
 import {
   CERT_TOKENS,
@@ -331,7 +332,7 @@ export default function PastExamRunnerClient({
   return (
     <main className="min-h-screen bg-bg text-text">
       <GradingDisclaimerModal />
-      <SolveTutorialModal open={showTutorial} onClose={() => setShowTutorial(false)} />
+      <SolveTutorialModal open={showTutorial} onClose={() => setShowTutorial(false)} kind="batch" />
       <Container size="default" className="py-10">
         <div className="mb-6 rounded-2xl border border-border bg-surface/70 p-5">
           <div className="flex flex-wrap items-center gap-2">
@@ -751,6 +752,13 @@ function MCQOptions({
   cert: CertKey;
 }) {
   const token = CERT_TOKENS[cert];
+  const handleOptionTap = useDoubleTap<number>(
+    (num) => onSelect(num),
+    (num) => {
+      onSelect(num);
+      onAdvance?.();
+    },
+  );
 
   return (
     <ul className="space-y-2">
@@ -761,11 +769,7 @@ function MCQOptions({
         return (
           <li key={num}>
             <button
-              onClick={() => onSelect(num)}
-              onDoubleClick={() => {
-                onSelect(num);
-                onAdvance?.();
-              }}
+              onClick={() => handleOptionTap(num)}
               className={`flex w-full items-start gap-3 select-none touch-manipulation rounded-lg border px-4 py-3 text-left text-base transition-all duration-150 ease-out ${
                 isSelected
                   ? `${token.tailwind.border} ${token.tailwind.bgSoft} text-text animate-tap-bounce`

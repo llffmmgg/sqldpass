@@ -38,6 +38,7 @@ import { CERT_TOKENS, certFromExamType } from "@/lib/cert-tokens";
 import { GradingDisclaimerModal } from "@/components/GradingDisclaimerModal";
 import SolveTutorialModal from "@/components/SolveTutorialModal";
 import { hasSeenSolveTutorial } from "@/lib/tutorialStorage";
+import { useDoubleTap } from "@/hooks/useDoubleTap";
 import AdInfeed from "@/components/AdInfeed";
 import AdDisplay from "@/components/AdDisplay";
 import QuestionJumpPanel, {
@@ -529,7 +530,7 @@ function MockExamDetailContent() {
   return (
     <main className="min-h-screen bg-background text-foreground">
       <GradingDisclaimerModal />
-      <SolveTutorialModal open={showTutorial} onClose={() => setShowTutorial(false)} />
+      <SolveTutorialModal open={showTutorial} onClose={() => setShowTutorial(false)} kind="batch" />
       <Container size="default" className="py-12">
       <div className="flex gap-4 items-stretch">
       {/* 타이머 패널 — 데스크톱에서 왼쪽 sticky, 모바일에서 하단 fixed */}
@@ -763,6 +764,13 @@ function MCQOptions({
   onAdvance?: () => void;
   accent: Accent;
 }) {
+  const handleOptionTap = useDoubleTap<number>(
+    (num) => onSelect(num),
+    (num) => {
+      onSelect(num);
+      onAdvance?.();
+    },
+  );
   return (
     <ul className="space-y-2">
       {options.map((optionText, idx) => {
@@ -771,11 +779,7 @@ function MCQOptions({
         return (
           <li key={num}>
             <button
-              onClick={() => onSelect(num)}
-              onDoubleClick={() => {
-                onSelect(num);
-                onAdvance?.();
-              }}
+              onClick={() => handleOptionTap(num)}
               className={`flex w-full items-start gap-3 select-none touch-manipulation rounded-lg border px-4 py-3 text-left text-base transition-all duration-150 ease-out ${
                 isSelected
                   ? `${accent.border} bg-amber-500/10 text-foreground animate-tap-bounce`
