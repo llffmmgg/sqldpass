@@ -20,6 +20,7 @@ import {
   type SubscriptionPlan,
 } from "@/lib/payment";
 import BuyerInfoModal from "@/components/billing/BuyerInfoModal";
+import NoAdsGuard from "@/components/NoAdsGuard";
 import { invalidateSubscriptionCache } from "@/hooks/useSubscription";
 
 export default function CheckoutClient() {
@@ -178,6 +179,7 @@ function CheckoutContent() {
 
   return (
     <>
+      <NoAdsGuard />
       <CheckoutLanding
         currentPlan={subscription?.active ? subscription.plan : null}
         previews={previews}
