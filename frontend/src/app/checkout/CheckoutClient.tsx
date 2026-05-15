@@ -114,12 +114,19 @@ function CheckoutContent() {
     if (verifiedRef.current === returnedPaymentId) return;
     verifiedRef.current = returnedPaymentId;
     verifyPaymentById(returnedPaymentId)
-      .then((result) => {
+      .then(async (result) => {
         toast.show(`${planLabel(result.plan)} 결제 완료`, "success");
         // 결제 직후 광고 제거/PDF 권한이 다음 페이지에서 즉시 반영되도록 캐시 무효화
         invalidateSubscriptionCache();
+        // ?paymentId 쿼리 제거 — 새로고침/뒤로가기 시 verify 재실행 방지
         router.replace("/checkout");
-        setTimeout(() => router.push("/mock-exams"), 800);
+        // 같은 페이지에 머무는 동안 버튼이 즉시 "이용 중"으로 바뀌도록 로컬 state 도 갱신
+        try {
+          const fresh = await getActiveSubscription();
+          setSubscription(fresh);
+        } catch {
+          // refetch 실패해도 결제 자체는 성공 — 다음 페이지 진입 때 정합화됨
+        }
       })
       .catch((e) => {
         const message = e instanceof Error ? e.message : "";
@@ -167,7 +174,13 @@ function CheckoutContent() {
       toast.show(`${planLabel(result.plan)} 결제 완료`, "success");
       // 결제 직후 광고 제거/PDF 권한이 다음 페이지에서 즉시 반영되도록 캐시 무효화
       invalidateSubscriptionCache();
-      setTimeout(() => router.push("/mock-exams"), 800);
+      // 같은 페이지에 머무는 동안 버튼이 즉시 "이용 중"으로 바뀌도록 로컬 state 도 갱신
+      try {
+        const fresh = await getActiveSubscription();
+        setSubscription(fresh);
+      } catch {
+        // refetch 실패해도 결제 자체는 성공 — 다음 페이지 진입 때 정합화됨
+      }
     } catch (e) {
       const message = e instanceof Error ? e.message : "";
       // PortOne SDK 의 사용자 취소는 message 안에 "취소" / "cancel" 키워드 포함 — info 톤
