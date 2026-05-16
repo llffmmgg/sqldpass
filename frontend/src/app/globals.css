@@ -823,6 +823,22 @@ html:not(.dark) .rounded-full.border-info\/40 {
   border-color: var(--info) !important;
 }
 
+/* 9. /plan · /checkout 광고 가드 — NoAdsGuard 가 body.no-ads 클래스 토글 시
+ * 광고 selector 들을 display:none 으로 가림. DOM 은 그대로 보존되어 다른
+ * 페이지로 이동하면 자동 복원 (이전 MutationObserver remove 방식의
+ * "다녀오면 광고 영구 비활성" 버그 fix). */
+body.no-ads ins.adsbygoogle,
+body.no-ads .adsbygoogle,
+body.no-ads .google-auto-placed,
+body.no-ads iframe[id^="google_ads_iframe"],
+body.no-ads iframe[id^="aswift_"],
+body.no-ads iframe[src*="googlesyndication"],
+body.no-ads iframe[src*="googleads"],
+body.no-ads div[data-google-query-id],
+body.no-ads div[data-ad-status] {
+  display: none !important;
+}
+
 /* ── Promo Picket — Duo 마스코트 스타일 idle 호흡 + 폴짝 점프 + squash/stretch ──
  * 4.5s 사이클: 호흡(0~25%) → 정지(25~40%) → 웅크림(40~48%) → 점프(48~62%) →
  * 착지 압축(62~78%) → 회복(78~100%). 회전축은 문어 발(하단)에 두어 자연스러운 점프. */
