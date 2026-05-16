@@ -98,7 +98,7 @@ export default function Footer() {
             </div>
             <div className="flex gap-2 sm:col-span-2">
               <dt className="shrink-0 text-text-muted">사업장 주소</dt>
-              <dd>서울특별시 서대문구 독립문로10길 2, 101동 1801호 (천연동)</dd>
+              <dd>서울특별시 서대문구 독립문로10길 2</dd>
             </div>
             <div className="flex gap-2">
               <dt className="shrink-0 text-text-muted">대표번호</dt>
