@@ -38,7 +38,7 @@ export default function AdspCramHero() {
     } catch (e) {
       if (e instanceof PdfDownloadError && e.code === "PDF_REQUIRES_SUBSCRIPTION") {
         toast.show(
-          "PDF 다운로드는 Thunder 이상 구독 회원 전용입니다. 우측 상단 프로필에서 업그레이드할 수 있어요.",
+          "PDF 다운로드는 플랜 회원 전용입니다. 우측 상단 프로필에서 업그레이드할 수 있어요.",
           "info",
         );
       } else {
@@ -79,7 +79,7 @@ export default function AdspCramHero() {
         </button>
       )}
       <p className="mt-3 text-sm text-text-subtle">
-        Thunder 플랜 이상 회원 다운로드 가능
+        플랜 회원 다운로드 가능
       </p>
     </div>
   );
