@@ -240,42 +240,6 @@ function rateColor(rate: number) {
   return "text-red-400";
 }
 
-/** 정답률 링 게이지. 부모 text 색을 SVG stroke 로 사용 (currentColor). r=15.9155 → 둘레 ≈ 100 */
-function RateRing({ rate }: { rate: number }) {
-  const clamped = Math.max(0, Math.min(100, rate));
-  return (
-    <div
-      className={`relative h-14 w-14 shrink-0 ${rateColor(rate)}`}
-      aria-label={`정답률 ${rate}%`}
-    >
-      <svg viewBox="0 0 36 36" className="h-full w-full -rotate-90">
-        <circle
-          cx="18"
-          cy="18"
-          r="15.9155"
-          fill="none"
-          stroke="currentColor"
-          strokeOpacity="0.15"
-          strokeWidth="3"
-        />
-        <circle
-          cx="18"
-          cy="18"
-          r="15.9155"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="3"
-          strokeLinecap="round"
-          strokeDasharray={`${clamped} 100`}
-        />
-      </svg>
-      <span className="absolute inset-0 flex items-center justify-center text-xs font-bold tabular-nums">
-        {rate}%
-      </span>
-    </div>
-  );
-}
-
 export default function DashboardPage() {
   return (
     <AuthGuard>
@@ -503,18 +467,25 @@ function DashboardPageContent() {
                         </p>
                       </header>
 
-                      {/* 과목 타일 그리드 — 링 게이지 + 복습 CTA */}
-                      <ul className="grid grid-cols-1 gap-2 p-3 pl-4 sm:grid-cols-2 lg:grid-cols-3">
+                      {/* 과목 마스터리 테이블 — UWorld 식 정렬된 row 리스트 */}
+                      <div className="divide-y divide-border">
                         {g.subjects.map((m, i) => {
                           const isTopWeak = i === 0 && m.wrongCount > 0;
+                          // 우선순위 dots — 오답수 기반 1-4단계
+                          const priority =
+                            m.wrongCount === 0
+                              ? 0
+                              : m.wrongCount <= 3
+                                ? 1
+                                : m.wrongCount <= 10
+                                  ? 2
+                                  : m.wrongCount <= 20
+                                    ? 3
+                                    : 4;
                           return (
-                            <li
+                            <div
                               key={m.id}
-                              className={`relative flex flex-col overflow-hidden rounded-lg border bg-bg-elevated p-3.5 transition-colors ${
-                                isTopWeak
-                                  ? "border-border-strong"
-                                  : "border-border hover:border-border-strong"
-                              }`}
+                              className="relative grid grid-cols-[1fr_auto] items-center gap-3 px-5 py-3 pl-6 sm:grid-cols-[minmax(0,1.8fr)_minmax(0,2fr)_auto_auto_auto] sm:gap-4"
                             >
                               {isTopWeak && (
                                 <span
@@ -522,51 +493,72 @@ function DashboardPageContent() {
                                   aria-hidden
                                 />
                               )}
-                              <div className="flex items-start gap-3">
-                                <RateRing rate={m.rate} />
-                                <div className="min-w-0 flex-1">
-                                  <p className="truncate text-sm font-semibold leading-tight">
-                                    {m.name}
-                                  </p>
-                                  <p className="mt-1 text-[11px] text-muted/80 tabular-nums">
-                                    정답 {m.correct}/{m.total}
-                                  </p>
+
+                              {/* 과목명 */}
+                              <div className="min-w-0">
+                                <p className="truncate text-sm font-medium leading-tight">
+                                  {m.name}
+                                </p>
+                                <p className="mt-0.5 text-[11px] text-text-subtle tabular-nums sm:hidden">
+                                  {m.correct}/{m.total}
                                   {m.wrongCount > 0 && (
-                                    <p
-                                      className={`mt-0.5 text-[11px] font-medium tabular-nums ${g.token.tailwind.textSoft}`}
-                                    >
-                                      오답 {m.wrongCount}개
-                                    </p>
+                                    <span className={`ml-1.5 ${g.token.tailwind.textSoft}`}>
+                                      오답 {m.wrongCount}
+                                    </span>
                                   )}
-                                </div>
+                                </p>
                               </div>
 
+                              {/* 정답률 진행바 (sm+) */}
+                              <div className="hidden items-center gap-2 sm:flex">
+                                <div className="h-1.5 flex-1 overflow-hidden rounded-sm bg-bg-elevated">
+                                  <div
+                                    className={`h-full ${g.token.tailwind.bg} transition-all`}
+                                    style={{ width: `${m.rate}%` }}
+                                  />
+                                </div>
+                                <span
+                                  className={`shrink-0 text-xs font-semibold tabular-nums ${rateColor(m.rate)}`}
+                                >
+                                  {m.rate}%
+                                </span>
+                              </div>
+
+                              {/* 풀이수 (sm+) */}
+                              <span className="hidden text-xs text-text-muted tabular-nums sm:inline">
+                                {m.correct}/{m.total}
+                              </span>
+
+                              {/* 우선순위 dots (sm+) */}
+                              <span className="hidden items-center gap-0.5 sm:flex">
+                                {priority > 0 ? (
+                                  Array.from({ length: priority }, (_, j) => (
+                                    <span
+                                      key={j}
+                                      className={`h-1.5 w-1.5 rounded-full ${g.token.tailwind.dot}`}
+                                      aria-hidden
+                                    />
+                                  ))
+                                ) : (
+                                  <span className="text-xs text-text-subtle">·</span>
+                                )}
+                              </span>
+
+                              {/* CTA */}
                               {m.wrongCount > 0 ? (
                                 <Link
                                   href={`/wrong-answers?subjectId=${m.id}`}
-                                  className={`mt-3 inline-flex items-center justify-center gap-1 rounded-md border px-2.5 py-1.5 text-xs font-semibold transition-colors ${g.token.tailwind.border} ${g.token.tailwind.bgSoft} ${g.token.tailwind.textSoft} ${g.token.tailwind.bgHover}`}
+                                  className={`inline-flex items-center justify-center rounded-sm border ${g.token.tailwind.border} ${g.token.tailwind.bgSoft} ${g.token.tailwind.textSoft} px-3 py-1 text-xs font-medium transition-colors ${g.token.tailwind.bgHover}`}
                                 >
-                                  오답 {m.wrongCount}개 복습하기
-                                  <svg
-                                    className="h-3 w-3"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                    stroke="currentColor"
-                                    strokeWidth={2.5}
-                                    aria-hidden
-                                  >
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                                  </svg>
+                                  복습
                                 </Link>
                               ) : (
-                                <p className="mt-3 text-center text-[11px] text-muted/60">
-                                  탄탄해요 · 새 문제 도전
-                                </p>
+                                <span className="text-[11px] text-text-muted">탄탄</span>
                               )}
-                            </li>
+                            </div>
                           );
                         })}
-                      </ul>
+                      </div>
                     </article>
                   ))}
                 </div>

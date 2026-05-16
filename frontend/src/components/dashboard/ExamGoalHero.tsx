@@ -152,23 +152,61 @@ export default function ExamGoalHero({ activeCerts }: Props) {
             </div>
           )}
 
-          {/* 합격 갭 */}
-          <p className="mt-2 text-sm leading-relaxed text-text-muted">
-            {focus.passed ? (
-              <>
-                최근 5회 평균{" "}
-                <span className="font-semibold text-primary">{focus.activity.recent5AvgScore}점</span>
-                — <span className="font-semibold text-primary">합격선 도달 ✓</span> 최종 정리 단계로 들어가요.
-              </>
-            ) : (
-              <>
-                최근 5회 평균{" "}
-                <span className="font-semibold text-text">{focus.activity.recent5AvgScore}점</span>
-                {" — 합격선까지 "}
-                <span className="font-semibold text-text">+{focus.passGap}점</span> 더 필요해요.
-              </>
-            )}
-          </p>
+          {/* 합격 예측 게이지 — UWorld 식 */}
+          {(() => {
+            const threshold = focus.activity.recent5AvgScore + focus.passGap;
+            // 게이지 최대 = max(100, threshold + buffer). 100점 만점 가정.
+            const score = focus.activity.recent5AvgScore;
+            const scorePct = Math.min(100, Math.max(0, score));
+            const thresholdPct = Math.min(100, Math.max(0, threshold));
+            // 색 분기: 합격선 도달 = primary, +5점 이내 근접 = warning, 미달 = danger
+            const barColor = focus.passed
+              ? "var(--primary)"
+              : focus.passGap <= 5
+                ? "var(--warning)"
+                : "var(--danger)";
+            const labelClass = focus.passed
+              ? "text-primary"
+              : focus.passGap <= 5
+                ? "text-warning"
+                : "text-danger";
+            return (
+              <div className="mt-3">
+                <div className="flex items-baseline justify-between gap-2 text-xs">
+                  <span className="text-text-muted">
+                    예상 점수{" "}
+                    <span className="font-semibold tabular-nums text-text">{score}점</span>
+                  </span>
+                  <span className={`font-semibold tabular-nums ${labelClass}`}>
+                    {focus.passed
+                      ? "합격선 도달 ✓"
+                      : `합격까지 +${focus.passGap}점`}
+                  </span>
+                </div>
+                {/* 게이지 바 */}
+                <div className="relative mt-1.5 h-2 overflow-hidden rounded-sm bg-bg-elevated">
+                  {/* 합격선 마커 (점선) */}
+                  <div
+                    className="absolute top-0 h-full border-l border-dashed border-text-subtle"
+                    style={{ left: `${thresholdPct}%` }}
+                    aria-hidden
+                  />
+                  {/* 현재 점수 fill */}
+                  <div
+                    className="h-full transition-all duration-700"
+                    style={{ width: `${scorePct}%`, backgroundColor: barColor }}
+                  />
+                </div>
+                <div className="mt-1 flex justify-between text-[10px] text-text-subtle tabular-nums">
+                  <span>0</span>
+                  <span style={{ marginLeft: `${thresholdPct - 4}%` }}>
+                    합격선 {threshold}
+                  </span>
+                  <span>100</span>
+                </div>
+              </div>
+            );
+          })()}
         </div>
 
         {/* CTA 2개 */}
