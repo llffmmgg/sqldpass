@@ -9,8 +9,6 @@ type Period = 7 | 14 | 30;
 type StudyActivityChartProps = {
   /** 최근 30일치 일별 풀이 데이터 (오래된 → 최신 순). 기간 토글로 슬라이스. */
   data: DayData[];
-  /** 전체 사용자 일평균 — 기준선 점선 */
-  overallAvg?: number;
 };
 
 const VB_W = 600;
@@ -33,16 +31,13 @@ function niceCeil(v: number): number {
   return Math.ceil(v / 50) * 50;
 }
 
-/** Catmull-Rom 효과 — midpoint cubic bezier. Supabase 대시보드 톤 부드러운 곡선. */
+/** 점을 직선으로 잇는 polyline 경로. */
 function buildLinePath(points: { x: number; y: number }[]): string {
   if (points.length === 0) return "";
   if (points.length === 1) return `M ${points[0].x} ${points[0].y}`;
   let d = `M ${points[0].x} ${points[0].y}`;
   for (let i = 1; i < points.length; i++) {
-    const prev = points[i - 1];
-    const cur = points[i];
-    const midX = (prev.x + cur.x) / 2;
-    d += ` C ${midX} ${prev.y}, ${midX} ${cur.y}, ${cur.x} ${cur.y}`;
+    d += ` L ${points[i].x} ${points[i].y}`;
   }
   return d;
 }
@@ -92,20 +87,11 @@ function useCountUp(target: number, durationMs = 800): number {
   return value;
 }
 
-export default function StudyActivityChart({ data, overallAvg }: StudyActivityChartProps) {
+export default function StudyActivityChart({ data }: StudyActivityChartProps) {
   const [period, setPeriod] = useState<Period>(14);
   const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
 
   const sliced = useMemo(() => data.slice(-period), [data, period]);
-
-  // 이전 기간 비교용 — period 두 배의 history 가 있을 때만. 30일 모드는 현재 30일치만이라 prev 없음.
-  const prevSliced = useMemo(() => {
-    const start = data.length - period * 2;
-    const end = data.length - period;
-    if (start < 0) return [];
-    return data.slice(start, end);
-  }, [data, period]);
-  const hasPrev = prevSliced.length === period;
 
   const totalSum = sliced.reduce((s, d) => s + d.total, 0);
   const correctSum = sliced.reduce((s, d) => s + d.correct, 0);
@@ -117,14 +103,7 @@ export default function StudyActivityChart({ data, overallAvg }: StudyActivityCh
   // 전체 30일 데이터 기준 (period 무관하게 안정적). period >= 14 일 때만 표시.
   const weekDelta = computeWeekDelta(data);
 
-  const hasOverall = typeof overallAvg === "number" && overallAvg > 0;
-  const prevMax = hasPrev ? Math.max(...prevSliced.map((d) => d.total), 0) : 0;
-  const dataMax = Math.max(
-    ...sliced.map((d) => d.total),
-    hasOverall ? overallAvg! : 0,
-    prevMax,
-    1,
-  );
+  const dataMax = Math.max(...sliced.map((d) => d.total), 1);
   const max = niceCeil(dataMax);
 
   const colW = PLOT_W / sliced.length;
@@ -248,33 +227,7 @@ export default function StudyActivityChart({ data, overallAvg }: StudyActivityCh
             </g>
           ))}
 
-          {/* 전체 평균 점선 */}
-          {hasOverall && overallAvg! <= max && (
-            <g>
-              <line
-                x1={PADDING_LEFT}
-                x2={PADDING_LEFT + PLOT_W}
-                y1={PADDING_TOP + (1 - overallAvg! / max) * PLOT_H}
-                y2={PADDING_TOP + (1 - overallAvg! / max) * PLOT_H}
-                stroke="var(--primary)"
-                strokeWidth={1}
-                strokeDasharray="3 3"
-                opacity={0.55}
-              />
-              <text
-                x={PADDING_LEFT + PLOT_W - 4}
-                y={PADDING_TOP + (1 - overallAvg! / max) * PLOT_H - 4}
-                textAnchor="end"
-                fill="var(--primary)"
-                fontSize="9"
-                opacity={0.75}
-              >
-                평균
-              </text>
-            </g>
-          )}
-
-          {/* gradient def — area fill 용 (Supabase 시그니처 emerald glow) */}
+          {/* gradient def — area fill 용 */}
           <defs>
             <linearGradient id="totalAreaGradient" x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor="var(--primary)" stopOpacity="0.28" />
@@ -282,28 +235,8 @@ export default function StudyActivityChart({ data, overallAvg }: StudyActivityCh
             </linearGradient>
           </defs>
 
-          {/* 이전 기간 라인 — dashed, 옅은 톤. period 두 배 history 있을 때만 (7d/14d) */}
-          {hasPrev && (() => {
-            const prevPoints = prevSliced.map((d, i) => ({
-              x: PADDING_LEFT + i * colW + colW / 2,
-              y: baseY - (d.total / max) * PLOT_H,
-            }));
-            const prevLinePath = buildLinePath(prevPoints);
-            return (
-              <path
-                d={prevLinePath}
-                fill="none"
-                stroke="var(--primary)"
-                strokeWidth={1.5}
-                strokeDasharray="4 4"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                opacity={0.4}
-              />
-            );
-          })()}
-
-          {/* area fill + line — 일별 총 풀이수 단일 metric */}
+          {/* area fill + line — 일별 총 풀이수 단일 metric, 직선 polyline.
+           * period 토글 시 d 가 CSS transition 으로 보간돼 라인이 부드럽게 변형됨. */}
           {(() => {
             const points = sliced.map((d, i) => ({
               x: PADDING_LEFT + i * colW + colW / 2,
@@ -312,8 +245,12 @@ export default function StudyActivityChart({ data, overallAvg }: StudyActivityCh
             const areaPath = buildAreaPath(points, baseY);
             const linePath = buildLinePath(points);
             return (
-              <g>
-                <path d={areaPath} fill="url(#totalAreaGradient)" />
+              <g key={period} className="chart-fade-in">
+                <path
+                  d={areaPath}
+                  fill="url(#totalAreaGradient)"
+                  className="chart-path-morph"
+                />
                 <path
                   d={linePath}
                   fill="none"
@@ -321,6 +258,7 @@ export default function StudyActivityChart({ data, overallAvg }: StudyActivityCh
                   strokeWidth={2}
                   strokeLinecap="round"
                   strokeLinejoin="round"
+                  className="chart-path-morph"
                 />
               </g>
             );
@@ -390,8 +328,6 @@ export default function StudyActivityChart({ data, overallAvg }: StudyActivityCh
 
         {/* HTML 툴팁 — 풍부한 비교 카드. Google Analytics 식: 현재 + 이전 + 변화 */}
         {hovered && hoveredIdx !== null && (() => {
-          const prevHovered = hasPrev ? prevSliced[hoveredIdx] : null;
-          const delta = prevHovered ? hovered.total - prevHovered.total : null;
           const fmtDate = (s: string) =>
             new Date(s).toLocaleDateString("ko-KR", {
               month: "short",
@@ -400,78 +336,24 @@ export default function StudyActivityChart({ data, overallAvg }: StudyActivityCh
             });
           return (
             <div
-              className="pointer-events-none absolute z-10 -translate-x-1/2 -translate-y-full rounded-md border border-border bg-bg-elevated px-4 py-3 text-[11px] shadow-md min-w-[200px]"
+              className="pointer-events-none absolute z-10 -translate-x-1/2 -translate-y-full rounded-md border border-border bg-bg-elevated px-3 py-2 text-[11px] shadow-md"
               style={{
                 left: `${((PADDING_LEFT + hoveredIdx * colW + colW / 2) / VB_W) * 100}%`,
                 top: `${((baseY - (hovered.total / max) * PLOT_H - 8) / VB_H) * 100}%`,
               }}
             >
               <p className="font-semibold text-text">{fmtDate(hovered.date)}</p>
-
-              <div className="mt-2 space-y-1.5">
-                <div className="flex items-center justify-between gap-4">
-                  <span className="inline-flex items-center gap-1.5 text-text-muted">
-                    <span className="inline-block h-2 w-2 rounded-sm bg-primary" aria-hidden />
-                    이번 기간
-                  </span>
-                  <span className="font-bold tabular-nums text-text">{hovered.total}</span>
-                </div>
-
-                {prevHovered && (
-                  <div className="flex items-center justify-between gap-4">
-                    <span className="inline-flex items-center gap-1.5 text-text-muted">
-                      <span className="inline-block h-0.5 w-2 bg-primary opacity-50" aria-hidden />
-                      이전 기간
-                    </span>
-                    <span className="font-medium tabular-nums text-text-muted">{prevHovered.total}</span>
-                  </div>
-                )}
-
-                {delta !== null && delta !== 0 && (
-                  <div className="flex items-center justify-between gap-4 border-t border-border pt-1.5">
-                    <span className="text-text-muted">변화</span>
-                    <span
-                      className={`font-semibold tabular-nums ${delta > 0 ? "text-primary" : "text-danger"}`}
-                    >
-                      {delta > 0 ? "▲" : "▼"}{Math.abs(delta)}
-                    </span>
-                  </div>
-                )}
-              </div>
-
-              <p className="mt-2 text-text-subtle">
+              <p className="mt-1 tabular-nums">
+                <span className="font-bold text-text">{hovered.total}</span>
+                <span className="ml-1 text-text-subtle">문제</span>
+              </p>
+              <p className="mt-1 text-text-subtle tabular-nums">
                 정답 {hovered.correct} · 오답 {hovered.wrong}
               </p>
             </div>
           );
         })()}
       </div>
-
-      {/* 범례 — 이전 기간 비교 또는 전체 평균 점선 있을 때 표시 */}
-      {(hasPrev || hasOverall) && (
-        <div className="mt-3 flex items-center justify-end gap-4 text-[11px] text-text-muted">
-          <span className="inline-flex items-center gap-1.5">
-            <span className="inline-block h-0.5 w-3 bg-primary" aria-hidden />
-            이번 기간
-          </span>
-          {hasPrev && (
-            <span className="inline-flex items-center gap-1.5">
-              <span
-                className="inline-block h-0.5 w-3 bg-primary opacity-50"
-                style={{ borderTop: "1px dashed currentColor" }}
-                aria-hidden
-              />
-              이전 기간
-            </span>
-          )}
-          {hasOverall && (
-            <span className="inline-flex items-center gap-1.5">
-              <span className="inline-block h-px w-3 bg-primary opacity-60" aria-hidden />
-              전체 평균
-            </span>
-          )}
-        </div>
-      )}
     </section>
   );
 }

@@ -24,7 +24,7 @@ export default function LoginRequired() {
 
           <p className="mt-3 max-w-sm text-center text-sm leading-relaxed text-muted sm:text-left">
             오답 자동 복습과 회차별 점수 추이는 로그인된 세션에만 저장됩니다.
-            구글 계정으로 한 번만 클릭해주세요.
+            구글 계정으로 바로 시작해보세요.
           </p>
 
           <button

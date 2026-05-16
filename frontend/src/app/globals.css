@@ -874,3 +874,18 @@ body.no-ads div[data-ad-status] {
   transform-origin: 60% 95%;
   will-change: transform;
 }
+
+/* ── Chart period 전환 — d 모핑 + 부드러운 페이드 ──
+ * SVG path d 속성을 CSS transition 으로 보간 (Chrome 90+/Safari 16+).
+ * period 7↔14↔30 토글 시 라인이 휙 바뀌지 않고 자연스럽게 이어지는 느낌. */
+.chart-path-morph {
+  transition: d 450ms cubic-bezier(0.4, 0, 0.2, 1),
+              opacity 350ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+@keyframes chart-enter {
+  from { opacity: 0; transform: translateY(3px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.chart-fade-in {
+  animation: chart-enter 400ms cubic-bezier(0.4, 0, 0.2, 1);
+}

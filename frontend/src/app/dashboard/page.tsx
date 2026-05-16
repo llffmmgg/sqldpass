@@ -8,7 +8,6 @@ import MascotImage from "@/components/mascot/MascotImage";
 import MascotEmpty from "@/components/mascot/MascotEmpty";
 import {
   getMyBestScores,
-  getOverallStats,
   getSolves,
   getSubjects,
   getWrongAnswerStats,
@@ -22,7 +21,6 @@ import AuthGuard from "@/components/AuthGuard";
 import Spinner from "@/components/Spinner";
 import StudyActivityChart from "@/components/StudyActivityChart";
 import AdResponsive from "@/components/AdResponsive";
-import ExamGoalHero from "@/components/dashboard/ExamGoalHero";
 import { inferActiveCerts } from "@/lib/dashboard/activeCerts";
 import { Container } from "@/components/ui";
 import {
@@ -57,27 +55,6 @@ function buildSubjectCertMap(subjects: Subject[]): Record<number, CertKey> {
   return map;
 }
 
-function getStreakDays(solves: SolveSummaryResponse[]): number {
-  if (solves.length === 0) return 0;
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  const dates = new Set(
-    solves.map((s) => {
-      const d = new Date(s.solvedAt);
-      d.setHours(0, 0, 0, 0);
-      return d.getTime();
-    })
-  );
-
-  let streak = 0;
-  const day = new Date(today);
-  while (dates.has(day.getTime())) {
-    streak++;
-    day.setDate(day.getDate() - 1);
-  }
-  return streak;
-}
 
 type SubjectStat = { id: number; name: string; total: number; correct: number; rate: number };
 
@@ -188,34 +165,6 @@ function rateColor(rate: number) {
   return "text-danger";
 }
 
-/** 최근 7일 vs 이전 7일 풀이수·정답률 delta — Plausible 식 KPI 변화 표시용. */
-function computeWeekDeltas(solves: SolveSummaryResponse[]): {
-  totalDelta: number;
-  accuracyDelta: number;
-} {
-  const now = Date.now();
-  const day = 86_400_000;
-  let recentTotal = 0, recentCorrect = 0;
-  let prevTotal = 0, prevCorrect = 0;
-  for (const s of solves) {
-    const at = new Date(s.solvedAt).getTime();
-    const ago = (now - at) / day;
-    if (ago < 7) {
-      recentTotal += s.totalCount;
-      recentCorrect += s.correctCount;
-    } else if (ago < 14) {
-      prevTotal += s.totalCount;
-      prevCorrect += s.correctCount;
-    }
-  }
-  const recentAcc = recentTotal > 0 ? (recentCorrect / recentTotal) * 100 : 0;
-  const prevAcc = prevTotal > 0 ? (prevCorrect / prevTotal) * 100 : 0;
-  return {
-    totalDelta: recentTotal - prevTotal,
-    accuracyDelta: Math.round((recentAcc - prevAcc) * 10) / 10,
-  };
-}
-
 export default function DashboardPage() {
   return (
     <AuthGuard>
@@ -229,7 +178,6 @@ function DashboardPageContent() {
   const [subjectMap, setSubjectMap] = useState<Record<number, string>>({});
   const [subjectCertMap, setSubjectCertMap] = useState<Record<number, CertKey>>({});
   const [weakStats, setWeakStats] = useState<WrongAnswerStatsResponse[]>([]);
-  const [overallAvg, setOverallAvg] = useState<number | undefined>(undefined);
   const [bestScores, setBestScores] = useState<BestScoreMap>({});
   const [loading, setLoading] = useState(true);
   const [nickname, setNickname] = useState<string | null>(null);
@@ -242,18 +190,14 @@ function DashboardPageContent() {
       getSolves(),
       getSubjects(),
       getWrongAnswerStats(),
-      getOverallStats(),
       getMyBestScores(),
-    ]).then(([solvesRes, subjectsRes, statsRes, overallRes, bestScoresRes]) => {
+    ]).then(([solvesRes, subjectsRes, statsRes, bestScoresRes]) => {
       if (solvesRes.status === "fulfilled") setSolves(solvesRes.value);
       if (subjectsRes.status === "fulfilled") {
         setSubjectMap(buildSubjectMap(subjectsRes.value));
         setSubjectCertMap(buildSubjectCertMap(subjectsRes.value));
       }
       setWeakStats(statsRes.status === "fulfilled" ? statsRes.value : []);
-      if (overallRes.status === "fulfilled") {
-        setOverallAvg(overallRes.value.avgDailyCount);
-      }
       if (bestScoresRes.status === "fulfilled") setBestScores(bestScoresRes.value);
     }).finally(() => setLoading(false));
   }, []);
@@ -266,14 +210,10 @@ function DashboardPageContent() {
     );
 
   const totalSolved = solves.reduce((acc, s) => acc + s.totalCount, 0);
-  const totalCorrect = solves.reduce((acc, s) => acc + s.correctCount, 0);
-  const overallRate = totalSolved > 0 ? Math.round((totalCorrect / totalSolved) * 100) : 0;
-  const streak = getStreakDays(solves);
   const subjectStats = getSubjectStats(solves, subjectMap);
   const merged = mergeSubjectStats(subjectStats, weakStats);
   const activity = getRecentActivity(solves);
   const activeCerts = inferActiveCerts(solves, subjectCertMap);
-  const { totalDelta, accuracyDelta } = computeWeekDeltas(solves);
 
   // 약점 과목 TOP 5 — wrongCount 많은 순
   const topWeak = [...merged]
@@ -309,9 +249,6 @@ function DashboardPageContent() {
           </div>
         </div>
 
-        {/* ── 시험 D-day Hero — 활성 자격증(풀이수 5건+) 있을 때만 표시 ─── */}
-        {totalSolved > 0 && <ExamGoalHero activeCerts={activeCerts} />}
-
         {/* 빈 상태 */}
         {totalSolved === 0 && (
           <div className="mt-8">
@@ -333,54 +270,87 @@ function DashboardPageContent() {
 
         {totalSolved > 0 && (
           <>
-            {/* ── KPI row — Plausible 식 single row + 내부 divider + delta ─── */}
-            <div className="mt-6 grid grid-cols-2 overflow-hidden rounded-xl border border-border bg-surface divide-x divide-y divide-border sm:grid-cols-4 sm:divide-y-0">
-              <div className="px-5 py-4">
-                <p className="text-[11px] font-medium uppercase tracking-wider text-text-subtle">총 풀이</p>
-                <div className="mt-1.5 flex items-baseline gap-1.5">
-                  <span className="text-2xl font-bold tabular-nums text-text sm:text-3xl">{totalSolved}</span>
-                  <span className="text-xs text-text-muted">문제</span>
-                  {totalDelta !== 0 && (
-                    <span className={`ml-auto text-[11px] tabular-nums ${totalDelta > 0 ? "text-primary" : "text-danger"}`}>
-                      {totalDelta > 0 ? "▲" : "▼"}{Math.abs(totalDelta)}
-                    </span>
-                  )}
-                </div>
-              </div>
-              <div className="px-5 py-4">
-                <p className="text-[11px] font-medium uppercase tracking-wider text-text-subtle">정답률</p>
-                <div className="mt-1.5 flex items-baseline gap-1.5">
-                  <span className={`text-2xl font-bold tabular-nums sm:text-3xl ${rateColor(overallRate)}`}>{overallRate}</span>
-                  <span className="text-xs text-text-muted">%</span>
-                  {accuracyDelta !== 0 && (
-                    <span className={`ml-auto text-[11px] tabular-nums ${accuracyDelta > 0 ? "text-primary" : "text-danger"}`}>
-                      {accuracyDelta > 0 ? "▲" : "▼"}{Math.abs(accuracyDelta)}%
-                    </span>
-                  )}
-                </div>
-              </div>
-              <div className="px-5 py-4">
-                <p className="text-[11px] font-medium uppercase tracking-wider text-text-subtle">연속 학습</p>
-                <div className="mt-1.5 flex items-baseline gap-1.5">
-                  <span className="text-2xl font-bold tabular-nums text-primary sm:text-3xl">{streak}</span>
-                  <span className="text-xs text-text-muted">일</span>
-                </div>
-              </div>
-              <div className="px-5 py-4">
-                <p className="text-[11px] font-medium uppercase tracking-wider text-text-subtle">풀이 세션</p>
-                <div className="mt-1.5 flex items-baseline gap-1.5">
-                  <span className="text-2xl font-bold tabular-nums text-text sm:text-3xl">{solves.length}</span>
-                  <span className="text-xs text-text-muted">회</span>
-                </div>
-              </div>
-            </div>
+            {/* ── 학습 활동 — 차트 카드 헤더에 총풀이/정답률/연속/전주Δ 포함 ── */}
+            <StudyActivityChart data={activity} />
 
-            {/* ── 학습 활동 ──────────────────────────────────── */}
-            <StudyActivityChart data={activity} overallAvg={overallAvg} />
+            {/* ── 자격증 진행 — full-width 가로 cells (위로 올림) ────── */}
+            {activeCerts.length > 0 && (
+              <div className="mt-6 overflow-hidden rounded-xl border border-border bg-surface">
+                <header className="flex items-center justify-between gap-2 border-b border-border px-5 py-3">
+                  <h3 className="text-sm font-semibold">자격증 진행</h3>
+                  <span className="text-xs text-text-muted">최근 5회 평균</span>
+                </header>
+                <div className="grid grid-cols-2 divide-x divide-y divide-border sm:grid-cols-3 sm:divide-y-0 lg:grid-cols-4 xl:grid-cols-5">
+                  {activeCerts.map((a) => {
+                    const token = CERT_TOKENS[a.cert];
+                    return (
+                      <div key={a.cert} className="px-5 py-4">
+                        <div className="flex items-center gap-1.5">
+                          <span className={`h-1.5 w-1.5 rounded-full ${token.tailwind.dot}`} aria-hidden />
+                          <span className="truncate text-xs font-medium text-text-muted">
+                            {token.label}
+                          </span>
+                        </div>
+                        <p className={`mt-1.5 text-2xl font-bold tabular-nums ${rateColor(a.recent5AvgScore)}`}>
+                          {a.recent5AvgScore}
+                          <span className="ml-0.5 text-xs font-normal text-text-subtle">점</span>
+                        </p>
+                        <div className="mt-2 h-1.5 overflow-hidden rounded-sm bg-bg-elevated">
+                          <div
+                            className="h-full bg-primary transition-all duration-500"
+                            style={{ width: `${Math.min(100, a.recent5AvgScore)}%` }}
+                          />
+                        </div>
+                        <p className="mt-1 text-[10px] text-text-subtle tabular-nums">
+                          {a.solveCount}문제 풀이
+                        </p>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
 
-            {/* ── 2-col 패널 그리드 — Plausible 식 데이터 슬라이스 ────── */}
+            {/* ── 회차 최고점 — full-width 가로 medal cells (길게) ───── */}
+            {topMockExams.length > 0 && (
+              <div className="mt-6 overflow-hidden rounded-xl border border-border bg-surface">
+                <header className="flex items-center justify-between gap-2 border-b border-border px-5 py-3">
+                  <h3 className="text-sm font-semibold">회차 최고점 TOP 5</h3>
+                  <Link href="/mock-exams" className="text-xs text-text-muted hover:text-text">
+                    전체 →
+                  </Link>
+                </header>
+                <div className="grid grid-cols-2 divide-x divide-y divide-border sm:grid-cols-3 sm:divide-y-0 md:grid-cols-5">
+                  {topMockExams.map((e) => {
+                    const medal = e.pct >= 95 ? "🥇" : e.pct >= 85 ? "🥈" : e.pct >= 75 ? "🥉" : "·";
+                    return (
+                      <Link
+                        key={e.id}
+                        href={`/mock-exams/${e.id}`}
+                        className="block px-5 py-4 transition-colors hover:bg-bg-elevated"
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-xs font-medium text-text-muted tabular-nums">
+                            #{e.id}
+                          </span>
+                          <span className="text-base" aria-hidden>{medal}</span>
+                        </div>
+                        <p className={`mt-1.5 text-2xl font-bold tabular-nums ${rateColor(e.pct)}`}>
+                          {e.pct}
+                          <span className="ml-0.5 text-xs font-normal text-text-subtle">점</span>
+                        </p>
+                        <p className="mt-0.5 text-[10px] text-text-subtle tabular-nums">
+                          {e.correct}/{e.total} 정답
+                        </p>
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* ── 약점 과목 TOP 5 + 오늘의 권장 — 2-col ─────────────── */}
             <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
-              {/* 약점 과목 TOP 5 */}
               <div className="overflow-hidden rounded-xl border border-border bg-surface">
                 <header className="flex items-center justify-between gap-2 border-b border-border px-5 py-3">
                   <h3 className="text-sm font-semibold">약점 과목 TOP 5</h3>
@@ -423,41 +393,6 @@ function DashboardPageContent() {
                 )}
               </div>
 
-              {/* 회차 최고점 TOP 5 */}
-              <div className="overflow-hidden rounded-xl border border-border bg-surface">
-                <header className="flex items-center justify-between gap-2 border-b border-border px-5 py-3">
-                  <h3 className="text-sm font-semibold">회차 최고점 TOP 5</h3>
-                  <Link href="/mock-exams" className="text-xs text-text-muted hover:text-text">
-                    전체 →
-                  </Link>
-                </header>
-                {topMockExams.length === 0 ? (
-                  <p className="px-5 py-8 text-center text-sm text-text-muted">아직 응시한 모의고사 없음</p>
-                ) : (
-                  <ul className="divide-y divide-border">
-                    {topMockExams.map((e) => {
-                      const medal = e.pct >= 95 ? "🥇" : e.pct >= 85 ? "🥈" : e.pct >= 75 ? "🥉" : "·";
-                      return (
-                        <li key={e.id}>
-                          <Link
-                            href={`/mock-exams/${e.id}`}
-                            className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 px-5 py-3 transition-colors hover:bg-bg-elevated"
-                          >
-                            <span className="w-4 text-center text-base" aria-hidden>{medal}</span>
-                            <span className="text-sm font-medium tabular-nums">#{e.id}</span>
-                            <span className={`text-sm font-bold tabular-nums ${rateColor(e.pct)}`}>
-                              {e.pct}
-                              <span className="ml-0.5 text-[10px] font-normal text-text-subtle">점</span>
-                            </span>
-                          </Link>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                )}
-              </div>
-
-              {/* 오늘의 권장 — Today's Focus 감증 */}
               <div className="overflow-hidden rounded-xl border border-border bg-surface">
                 <header className="flex items-center justify-between gap-2 border-b border-border px-5 py-3">
                   <h3 className="text-sm font-semibold">오늘의 권장</h3>
@@ -485,40 +420,6 @@ function DashboardPageContent() {
                     </Link>
                   )}
                 </div>
-              </div>
-
-              {/* 자격증 진행 — activeCerts 기반 */}
-              <div className="overflow-hidden rounded-xl border border-border bg-surface">
-                <header className="flex items-center justify-between gap-2 border-b border-border px-5 py-3">
-                  <h3 className="text-sm font-semibold">자격증 진행</h3>
-                </header>
-                {activeCerts.length === 0 ? (
-                  <p className="px-5 py-8 text-center text-sm text-text-muted">아직 응시한 자격증 없음</p>
-                ) : (
-                  <ul className="divide-y divide-border">
-                    {activeCerts.map((a) => {
-                      const token = CERT_TOKENS[a.cert];
-                      return (
-                        <li
-                          key={a.cert}
-                          className="grid grid-cols-[auto_minmax(0,1fr)_auto_auto] items-center gap-3 px-5 py-3"
-                        >
-                          <span className={`h-1.5 w-1.5 rounded-full ${token.tailwind.dot}`} aria-hidden />
-                          <span className="truncate text-sm font-medium">{token.label}</span>
-                          <div className="hidden h-1.5 w-24 overflow-hidden rounded-sm bg-bg-elevated sm:block">
-                            <div
-                              className="h-full bg-primary"
-                              style={{ width: `${Math.min(100, a.recent5AvgScore)}%` }}
-                            />
-                          </div>
-                          <span className={`text-xs font-semibold tabular-nums ${rateColor(a.recent5AvgScore)}`}>
-                            {a.recent5AvgScore}점
-                          </span>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                )}
               </div>
             </div>
 

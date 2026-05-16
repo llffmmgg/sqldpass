@@ -16,7 +16,8 @@ type Props = {
 
 type FocusInfo = {
   activity: CertActivity;
-  dDay: number | null;        // 시험 D-day (null = 상시 시험)
+  dDay: number | null;        // 시험 D-day (null = 상시 시험 또는 진행중)
+  isOngoing: boolean;         // 기간 시험 진행 중 (start <= today <= endDate)
   examLabel: string | null;   // "제62회" / "2026년 1회" 등
   dateLabel: string | null;   // "8/22" 또는 "10/24~11/13"
   passGap: number;            // 합격선까지 % 차이 (>=0)
@@ -31,16 +32,24 @@ function buildFocus(activity: CertActivity, now: Date): FocusInfo {
     : null;
 
   let dDay: number | null = null;
+  let isOngoing = false;
   let dateLabel: string | null = null;
   if (upcoming) {
-    const target = new Date(upcoming.date + "T00:00:00+09:00");
-    dDay = diffDays(target, now);
     const start = new Date(upcoming.date + "T00:00:00+09:00");
+    const end = upcoming.endDate
+      ? new Date(upcoming.endDate + "T23:59:59+09:00")
+      : start;
+    // 기간 시험: 시작일 지났고 종료일 전이면 "진행 중". D-day 계산 안 함.
+    if (now.getTime() >= start.getTime() && now.getTime() <= end.getTime()) {
+      isOngoing = true;
+    } else {
+      dDay = diffDays(start, now);
+    }
     const startLabel = `${start.getMonth() + 1}/${start.getDate()}`;
-    const end = upcoming.endDate ? new Date(upcoming.endDate + "T00:00:00+09:00") : null;
-    dateLabel = end
-      ? `${startLabel}~${end.getMonth() + 1}/${end.getDate()}`
-      : startLabel;
+    const endLabel = upcoming.endDate
+      ? `${end.getMonth() + 1}/${end.getDate()}`
+      : null;
+    dateLabel = endLabel ? `${startLabel}~${endLabel}` : startLabel;
   }
 
   const threshold = PASS_THRESHOLD[activity.cert];
@@ -49,6 +58,7 @@ function buildFocus(activity: CertActivity, now: Date): FocusInfo {
   return {
     activity,
     dDay,
+    isOngoing,
     examLabel: upcoming?.label ?? null,
     dateLabel,
     passGap: Math.max(0, Math.round(gap * 10) / 10),
@@ -111,16 +121,10 @@ export default function ExamGoalHero({ activeCerts }: Props) {
 
   return (
     <section
-      className="relative mt-6 overflow-hidden rounded-xl border border-border bg-surface p-5 sm:p-6"
+      className="mt-6 overflow-hidden rounded-xl border border-border bg-surface p-5 sm:p-6"
       aria-label="시험 목표"
     >
-      {/* 좌측 cert 컬러 strip */}
-      <span
-        className={`absolute left-0 top-0 h-full w-1 ${token.tailwind.bg}`}
-        aria-hidden
-      />
-
-      <div className="flex flex-col gap-4 pl-2 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0 flex-1">
           {/* cert chip */}
           <div className="flex items-center gap-2">
