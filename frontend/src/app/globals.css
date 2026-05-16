@@ -10,47 +10,53 @@
  */
 
 :root {
-  /* surfaces — LeetCode 라이트 톤. 흰 배경 위에 카드 단차와 보더가 또렷이 보이도록 */
-  --bg: #ffffff;
-  --bg-elevated: #f0f1f3;     /* 카드 안의 강조 박스 (마스터·피드백) — 카드보다 더 회색 */
-  --surface: #f7f8fa;         /* 카드 — 살짝 회색 */
-  --surface-hover: #eef0f3;
-  --border: #d0d3d9;          /* 또렷한 솔리드 보더 (이전 #e5e5e5 너무 옅음) */
-  --border-strong: #a8acb6;   /* 호버·강조 */
+  /* Reverse Supabase 라이트 — Supabase 다크 surface tier 를 백색 계열로 미러링.
+   * 페이지 #fafafa(Whiteout) / 카드 #ffffff(Steel 미러) / 인풋 #f4f4f4(Graphite 미러). */
+  --bg: #fafafa;
+  --bg-elevated: #f4f4f4;     /* 인풋·secondary 배경 (Graphite Base 미러) */
+  --surface: #ffffff;         /* 카드 — 순백 (Steel Surface 미러) */
+  --surface-hover: #f4f4f4;
+  --border: #e5e5e5;          /* Cloud Gray (Carbon Border 미러) */
+  --border-strong: #c4c4c4;   /* Iron Outline 미러 */
 
-  /* text — WCAG AA 4.5:1 on white(#fff) and surface(#f7f8fa)
-   * text-subtle 은 이전 #5e636e (3.6:1 fail on surface) 였음. 31% L 로 어둡게. */
-  --text: #181a1f;
-  --text-muted: #4a505a;
-  --text-subtle: #454a56;
+  /* text — Reverse Supabase. 본문 #181818 + Mid-Gray #666 + subtle #8a8a8a */
+  --text: #181818;
+  --text-muted: #666666;
+  --text-subtle: #8a8a8a;
 
-  /* brand */
+  /* brand — emerald (sqldpass 정체성 유지) */
   --primary: #24b47e;
   --primary-hover: #1fa374;
   --primary-fg: #ffffff;
   --primary-soft: rgba(36, 180, 126, 0.10);
   --primary-ring: rgba(36, 180, 126, 0.35);
 
-  /* semantic — LeetCode 라이트 (살짝 더 진해서 흰 배경 위 대비 확보) */
+  /* Supabase CTA 패턴 (라이트) — primary solid bg + darker emerald 보더 + 6px */
+  --cta-bg: #24b47e;
+  --cta-bg-hover: #1fa374;
+  --cta-border: rgba(23, 128, 88, 0.40);
+  --glow-link: #00997a;
+
+  /* semantic */
   --danger: #ef4444;
   --warning: #d97706;
   --success: #00997a;
   --info: #0a84ff;
 
-  /* effects */
+  /* effects — Supabase 평면. 글로우 거의 0 */
   --glow: rgba(62, 207, 142, 0.18);
   --accent-glow: rgba(62, 207, 142, 0.10);
 
-  /* code block bg (prose) */
-  --code-bg: #f0f1f3;
+  /* code block bg */
+  --code-bg: #f4f4f4;
 
-  /* shadow elevation (light) — 살짝 진해서 카드 elevation 살림 */
+  /* shadow elevation — Supabase 는 surface 색차로 elevation. 그림자 토큰은 보존하되 카드엔 미적용 (글로벌 룰) */
   --shadow-subtle: 0 1px 2px rgba(15, 23, 42, 0.06);
   --shadow-md: 0 2px 8px rgba(15, 23, 42, 0.08), 0 1px 2px rgba(15, 23, 42, 0.05);
   --shadow-lg: 0 10px 28px rgba(15, 23, 42, 0.10), 0 2px 6px rgba(15, 23, 42, 0.05);
   --shadow-xl: 0 20px 48px rgba(15, 23, 42, 0.12);
 
-  /* cert accents (same across modes, tuned for AA) */
+  /* cert accents — 원본 유지 (Supabase 와 별개 시스템) */
   --cert-sqld: #f59e0b;
   --cert-engineer-practical: #2dbb7a;
   --cert-engineer-written: #f43f5e;
@@ -58,7 +64,7 @@
   --cert-cl2: #6366f1;
   --cert-adsp: #14b8a6;
 
-  /* legacy aliases (many components still reference these) */
+  /* legacy aliases */
   --background: var(--bg);
   --foreground: var(--text);
   --muted: var(--text-muted);
@@ -67,23 +73,31 @@
 }
 
 :root.dark {
-  /* surfaces — LeetCode 다크 톤 (회색조만). primary 는 sqldpass 정체성 유지(emerald) */
-  --bg: #1a1a1a;
-  --bg-elevated: #262626;
-  --surface: #262626;
-  --surface-hover: #2d2d2d;
-  --border: #3e3e3e;          /* 또렷한 솔리드 보더 — LeetCode 시그니처 */
-  --border-strong: #525252;   /* 호버·강조 */
+  /* Supabase 다크 — Ebony Canvas / Steel Surface / Graphite Base 3-tier surface
+   * Level 0 페이지 = Ebony, Level 1 카드 = Steel, Level 2 인풋/secondary/hover = Graphite */
+  --bg: #121212;              /* Ebony Canvas — 페이지 */
+  --bg-elevated: #242424;     /* Graphite Base — 인풋·secondary 배경 */
+  --surface: #2e2e2e;         /* Steel Surface — 카드 */
+  --surface-hover: #242424;   /* Graphite hover */
+  --border: #393939;          /* Carbon Border */
+  --border-strong: #4d4d4d;   /* Iron Outline */
 
-  --text: #eff1f6;            /* 살짝 차가운 흰색 */
-  --text-muted: #a1a1aa;      /* WCAG AA 4.5:1 on bg(#1a1a1a) */
-  --text-subtle: #8a8e98;     /* AA 4.5:1 on bg/surface */
+  --text: #fafafa;            /* Whiteout */
+  --text-muted: #b4b4b4;      /* Silver Highlight */
+  --text-subtle: #898989;     /* Mid-Gray Text */
 
+  /* Supabase Green — 헤딩/링크/포커스/aria 액센트 */
   --primary: #3ecf8e;
-  --primary-hover: #4fd6a0;
-  --primary-fg: #0a0a0a;
+  --primary-hover: #00c573;   /* Glow Green (호버) */
+  --primary-fg: #fafafa;      /* CTA 버튼 글자색 — Whiteout (Forest bg 위에) */
   --primary-soft: rgba(62, 207, 142, 0.12);
   --primary-ring: rgba(62, 207, 142, 0.40);
+
+  /* Supabase CTA 패턴 — Forest bg + Supabase Green 30% 보더 */
+  --cta-bg: #006239;          /* Forest Call to Action */
+  --cta-bg-hover: #1f4b37;    /* Deep Sea Green */
+  --cta-border: rgba(62, 207, 142, 0.30);
+  --glow-link: #00c573;       /* Glow Green */
 
   --danger: #f63737;
   --warning: #ffb800;
@@ -93,8 +107,9 @@
   --glow: rgba(62, 207, 142, 0.22);
   --accent-glow: rgba(62, 207, 142, 0.14);
 
-  --code-bg: #1f1f1f;
+  --code-bg: #242424;         /* Graphite Base */
 
+  /* Supabase 는 그림자로 elevation 안 함. 토큰 보존하되 카드엔 글로벌 룰로 미적용 */
   --shadow-subtle: 0 1px 2px rgba(0, 0, 0, 0.40);
   --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.45);
   --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.55);
@@ -137,11 +152,37 @@
   --color-cert-cl2: var(--cert-cl2);
   --color-cert-adsp: var(--cert-adsp);
 
+  /* Supabase 팔레트 14종 — Tailwind 유틸로 직접 노출 (bg-ebony, text-whiteout 등) */
+  --color-midnight-abyss: #000000;
+  --color-ebony: #121212;
+  --color-graphite: #242424;
+  --color-steel: #2e2e2e;
+  --color-carbon: #393939;
+  --color-iron: #4d4d4d;
+  --color-mid-gray: #898989;
+  --color-silver: #b4b4b4;
+  --color-whiteout: #fafafa;
+  --color-supabase-green: #3ecf8e;
+  --color-deep-sea-green: #1f4b37;
+  --color-forest: #006239;
+  --color-glow-green: #00c573;
+  --color-shadow-green: #002918;
+
+  /* Supabase 라디우스 사양 — 버튼/인풋 6px, 카드 16px */
   --radius-sm: 6px;
   --radius-md: 8px;
-  --radius-lg: 12px;
+  --radius-lg: 16px;        /* 카드 (이전 12px → 16px) */
   --radius-xl: 16px;
   --radius-2xl: 20px;
+
+  /* Supabase 타이포 스케일 — caption 12 ~ display 72 */
+  --text-caption: 12px;
+  --text-body-sm: 14px;
+  --text-body: 16px;
+  --text-subheading: 18px;
+  --text-heading: 24px;
+  --text-heading-lg: 36px;
+  --text-display: 72px;
 
   --font-sans: var(--font-sans-kr), system-ui, sans-serif;
   --font-mono: var(--font-jetbrains-mono), ui-monospace, monospace;
@@ -155,6 +196,7 @@ body {
   background: var(--bg);
   color: var(--text);
   font-family: var(--font-sans);
+  letter-spacing: -0.007em;   /* Supabase 사양 */
   word-break: keep-all;
   overflow-wrap: break-word;
 }
@@ -244,10 +286,9 @@ html:not(.dark) .text-pink-300 { color: #be185d; }
 html:not(.dark) .text-zinc-300 { color: #52525b; }
 html:not(.dark) .text-zinc-400 { color: #71717a; }
 
-/* Hero orbs/ambient — 라이트 모드에서 완전 제거 (AI 보일러플레이트 느낌 차단).
- * 다크 모드는 sqldpass 정체성 유지하기 위해 그대로 살림. */
-html:not(.dark) .hero-orb,
-html:not(.dark) .hero-ambient { display: none !important; }
+/* Hero orbs/ambient — Supabase 평면 미학 따라 양쪽 모드 모두 제거. */
+.hero-orb,
+.hero-ambient { display: none !important; }
 
 /* ── Blog prose ──
  * Long-form Korean reading. Tuned for comfortable scanning:
@@ -681,22 +722,19 @@ details[open] summary .chevron-icon { transform: rotate(90deg); }
 }
 
 /* ───────────────────────────────────────────────────────────────────────────
- * 라이트 모드 가독성 + AI 티 제거 패치
+ * Supabase 디자인 시스템 풀 적용 패치
  *
- * 사용자 메모리 룰:
- *  - 색 hue 변경 금지 (opacity/lightness 만 조정)
- *  - AI 스러운 흐릿 효과 금지 (backdrop-blur, /5~/10 옅은 배경, drop-shadow glow, opacity pulse)
- *
- * 라이트 모드만 강화하고 다크 모드는 거의 건드리지 않음.
+ * 다크 = Supabase 정확 hex, 라이트 = Reverse Supabase 미러링.
+ * 글로우/그라데이션/그림자 모두 제거 — surface 색차로만 elevation.
  * ─────────────────────────────────────────────────────────────────────────── */
 
-/* 1. 글로우/패턴/shimmer — 라이트 모드 비활성 */
-html:not(.dark) .grid-pattern { opacity: 0 !important; }
-html:not(.dark) .btn-glow::after { display: none !important; }
-html:not(.dark) .shimmer-line::after { display: none !important; }
+/* 1. 글로우/패턴/shimmer — 양쪽 모드 비활성 */
+.grid-pattern { opacity: 0 !important; }
+.btn-glow::after { display: none !important; }
+.shimmer-line::after { display: none !important; }
 
-/* 2. Tailwind slash opacity 보정 — bg-primary/{5,10,15} 흰 배경 위 거의 안 보이는 문제.
- * 다크 모드는 어두운 배경 위라 그대로 OK. 라이트에서만 +5pp 정도 진하게. */
+/* 2. Tailwind slash opacity 보정 — 라이트 모드 흰 배경 위에서 너무 옅은 문제.
+ * 다크 모드는 어두운 배경 위라 그대로 OK. 라이트만 +5pp 진하게. */
 html:not(.dark) .bg-primary\/5  { background-color: color-mix(in srgb, var(--primary) 10%, transparent) !important; }
 html:not(.dark) .bg-primary\/10 { background-color: color-mix(in srgb, var(--primary) 15%, transparent) !important; }
 html:not(.dark) .bg-primary\/15 { background-color: color-mix(in srgb, var(--primary) 20%, transparent) !important; }
@@ -704,16 +742,47 @@ html:not(.dark) .border-primary\/25 { border-color: color-mix(in srgb, var(--pri
 html:not(.dark) .border-primary\/30 { border-color: color-mix(in srgb, var(--primary) 45%, transparent) !important; }
 html:not(.dark) .border-primary\/40 { border-color: color-mix(in srgb, var(--primary) 55%, transparent) !important; }
 
-/* success/info 도 동일 패턴 — 라이트에서 약한 색감 보정 */
 html:not(.dark) .bg-success\/10 { background-color: color-mix(in srgb, var(--success) 18%, transparent) !important; }
 html:not(.dark) .bg-success\/15 { background-color: color-mix(in srgb, var(--success) 22%, transparent) !important; }
 html:not(.dark) .border-success\/40 { border-color: color-mix(in srgb, var(--success) 55%, transparent) !important; }
 
-/* 3. backdrop-blur 글로벌 무력화 — frosted glass 인상 차단.
- * 클래스명은 코드에 그대로 두고 효과만 죽임. 향후 복귀 가능. */
+/* 3. backdrop-blur 글로벌 무력화 — frosted glass 인상 차단 */
 [class*="backdrop-blur"] {
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
+}
+
+/* 4. 카드 그림자 양쪽 모드 제거 — Supabase 는 surface 색차로 elevation.
+ * 단 버튼(.bg-primary 3D 호환 / a.bg-primary) 의 그림자는 보존. */
+[class*="shadow-md"]:not(button):not(a),
+[class*="shadow-lg"]:not(button):not(a),
+[class*="shadow-xl"]:not(button):not(a),
+[class*="shadow-2xl"]:not(button):not(a) {
+  box-shadow: none !important;
+}
+
+/* 5. Supabase Primary CTA 패턴 — 다크: Forest bg + green-30% 보더. 라이트: emerald solid + darker emerald 보더. 6px 라디우스. */
+:where(button, a, [type="submit"]).bg-primary:not(:disabled) {
+  background-color: var(--cta-bg) !important;
+  border: 1px solid var(--cta-border) !important;
+  color: var(--primary-fg) !important;
+  border-radius: 6px !important;
+}
+:where(button, a, [type="submit"]).bg-primary:hover:not(:disabled) {
+  background-color: var(--cta-bg-hover) !important;
+  border-color: var(--primary) !important;
+}
+
+/* 6. Supabase Secondary 버튼 패턴 — bg-surface 사용처. Graphite/Cloud bg + Carbon/Cloud Gray 보더. 6px. */
+:where(button, a).bg-surface:not(:disabled) {
+  background-color: var(--bg-elevated) !important;
+  border: 1px solid var(--border) !important;
+  color: var(--text) !important;
+  border-radius: 6px !important;
+}
+:where(button, a).bg-surface:hover:not(:disabled) {
+  background-color: var(--surface-hover) !important;
+  border-color: var(--border-strong) !important;
 }
 
 /* ── Promo Picket — Duo 마스코트 스타일 idle 호흡 + 폴짝 점프 + squash/stretch ──
