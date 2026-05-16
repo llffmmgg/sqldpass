@@ -275,7 +275,17 @@ export function getOverallStats() {
  */
 export type BestScoreMap = Record<number, { correct: number; total: number }>;
 
+const FIXTURE_BEST_SCORES: BestScoreMap = {
+  101: { correct: 42, total: 50 }, // 84% silver
+  102: { correct: 38, total: 50 }, // 76% bronze
+  103: { correct: 47, total: 50 }, // 94% gold
+  104: { correct: 35, total: 50 }, // 70% bronze
+  201: { correct: 18, total: 20 }, // 90% gold
+  301: { correct: 28, total: 40 }, // 70% bronze
+};
+
 export function getMyBestScores(): Promise<BestScoreMap> {
+  if (DEV_FIXTURES) return Promise.resolve(FIXTURE_BEST_SCORES);
   return fetchApi<BestScoreMap>("/mock-exams/best-scores");
 }
 

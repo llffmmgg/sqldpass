@@ -7,10 +7,12 @@ import { useEffect, useState } from "react";
 import MascotImage from "@/components/mascot/MascotImage";
 import MascotEmpty from "@/components/mascot/MascotEmpty";
 import {
+  getMyBestScores,
   getOverallStats,
   getSolves,
   getSubjects,
   getWrongAnswerStats,
+  type BestScoreMap,
   type SolveSummaryResponse,
   type Subject,
   type WrongAnswerStatsResponse,
@@ -20,6 +22,10 @@ import AuthGuard from "@/components/AuthGuard";
 import Spinner from "@/components/Spinner";
 import StudyActivityChart from "@/components/StudyActivityChart";
 import AdResponsive from "@/components/AdResponsive";
+import DailyQuestionWidget from "@/components/DailyQuestionWidget";
+import ExamGoalHero from "@/components/dashboard/ExamGoalHero";
+import BestScoreGrid from "@/components/dashboard/BestScoreGrid";
+import { inferActiveCerts } from "@/lib/dashboard/activeCerts";
 import { Container } from "@/components/ui";
 import {
   CERT_TOKENS,
@@ -212,7 +218,8 @@ function getRecentActivity(
   }
   const result: { date: string; total: number; correct: number; wrong: number }[] = [];
   const today = new Date();
-  for (let i = 13; i >= 0; i--) {
+  // 30일치로 빌드 — StudyActivityChart 가 7/14/30 토글로 슬라이스
+  for (let i = 29; i >= 0; i--) {
     const d = new Date(today);
     d.setDate(d.getDate() - i);
     const key = toLocalDateStr(d);
@@ -283,19 +290,21 @@ function DashboardPageContent() {
   const [subjectCertMap, setSubjectCertMap] = useState<Record<number, CertKey>>({});
   const [weakStats, setWeakStats] = useState<WrongAnswerStatsResponse[]>([]);
   const [overallAvg, setOverallAvg] = useState<number | undefined>(undefined);
+  const [bestScores, setBestScores] = useState<BestScoreMap>({});
   const [loading, setLoading] = useState(true);
   const [nickname, setNickname] = useState<string | null>(null);
 
   useEffect(() => {
     setNickname(getNickname());
-    // 라이브러리 권한 없는 회원에게 getWrongAnswerStats 만 403 — 다른 데이터까지 막히지 않도록
-    // allSettled 로 독립 처리. 권한 없는 응답은 빈 배열로 폴백해 약점 과목 섹션만 비움.
+    // 라이브러리 권한 없는 회원에게 getWrongAnswerStats / getMyBestScores 가 403 — 다른 데이터까지
+    // 막히지 않도록 allSettled 로 독립 처리. 권한 없는 응답은 빈 배열·객체로 폴백.
     Promise.allSettled([
       getSolves(),
       getSubjects(),
       getWrongAnswerStats(),
       getOverallStats(),
-    ]).then(([solvesRes, subjectsRes, statsRes, overallRes]) => {
+      getMyBestScores(),
+    ]).then(([solvesRes, subjectsRes, statsRes, overallRes, bestScoresRes]) => {
       if (solvesRes.status === "fulfilled") setSolves(solvesRes.value);
       if (subjectsRes.status === "fulfilled") {
         setSubjectMap(buildSubjectMap(subjectsRes.value));
@@ -305,6 +314,7 @@ function DashboardPageContent() {
       if (overallRes.status === "fulfilled") {
         setOverallAvg(overallRes.value.avgDailyCount);
       }
+      if (bestScoresRes.status === "fulfilled") setBestScores(bestScoresRes.value);
     }).finally(() => setLoading(false));
   }, []);
 
@@ -323,6 +333,7 @@ function DashboardPageContent() {
   const merged = mergeSubjectStats(subjectStats, weakStats);
   const certGroups = groupByCert(merged, subjectCertMap);
   const activity = getRecentActivity(solves);
+  const activeCerts = inferActiveCerts(solves, subjectCertMap);
 
   // 가장 약한 과목 — 오답이 있는 것 중 첫 번째
   const focus = merged.find((m) => m.wrongCount > 0) ?? null;
@@ -337,9 +348,12 @@ function DashboardPageContent() {
             <h1 className="text-3xl font-bold sm:text-4xl">
               {nickname ? `${nickname}님의 학습 현황` : "학습 대시보드"}
             </h1>
-            <p className="mt-1 text-sm text-muted">합격을 향한 여정을 한눈에 확인하세요.</p>
+            <p className="mt-1 text-sm text-muted">풀었던 시험, 점수 변화, 오답 기록을 한눈에 확인해보세요.</p>
           </div>
         </div>
+
+        {/* ── 시험 D-day Hero — 활성 자격증(풀이수 5건+) 있을 때만 표시 ─── */}
+        {totalSolved > 0 && <ExamGoalHero activeCerts={activeCerts} />}
 
         {/* 빈 상태 */}
         {totalSolved === 0 && (
@@ -391,12 +405,9 @@ function DashboardPageContent() {
                 </div>
                 <Link
                   href={focus ? `/wrong-answers?subjectId=${focus.id}` : "/solve"}
-                  className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-primary-fg transition-colors hover:bg-primary-hover"
+                  className="inline-flex items-center rounded-sm bg-primary px-4 py-2 text-sm font-medium text-primary-fg transition-colors hover:bg-primary-hover"
                 >
-                  {focus ? "복습 시작" : "문제 풀기"}
-                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                  </svg>
+                  {focus ? "복습 하러가기" : "문제 풀기"}
                 </Link>
               </div>
             </div>
@@ -433,10 +444,16 @@ function DashboardPageContent() {
               </div>
             </div>
 
-            <AdResponsive adSlot="4461637143" height={90} />
+            {/* ── 오늘의 문제 — 자격증별 한 문제 데일리 챌린지 ────────── */}
+            <div className="mt-6">
+              <DailyQuestionWidget />
+            </div>
 
-            {/* ── 최근 2주 학습량 ──────────────────────────────────── */}
+            {/* ── 학습 활동 ──────────────────────────────────── */}
             <StudyActivityChart data={activity} overallAvg={overallAvg} />
+
+            {/* ── 회차별 최고 점수 (메달 그리드) ─────────────────────── */}
+            <BestScoreGrid bestScores={bestScores} />
 
             {/* ── 과목별 학습 현황 (자격증별 그룹) ───────────────────── */}
             <section className="mt-6">
@@ -607,6 +624,11 @@ function DashboardPageContent() {
                   );
                 })}
               </div>
+            </div>
+
+            {/* ── 페이지 하단 광고 ─────────────────────────────────── */}
+            <div className="mt-8">
+              <AdResponsive adSlot="4461637143" height={90} />
             </div>
           </>
         )}
