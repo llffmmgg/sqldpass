@@ -238,16 +238,25 @@ export default function CheckoutLanding({
       {/* 구매 유도 — 시험 난이도 변화 (실제 합격률 데이터 기반) */}
       <div className="mx-auto mt-16 max-w-2xl text-center">
         <h2 className="text-2xl font-bold tracking-tight text-text sm:text-3xl">
-          최근 자격증 시험이 점점 어려워지고 있어요
+          최근 자격증 시험은 점점 어려워지고 있습니다
         </h2>
-        <p className="mx-auto mt-3 max-w-xl text-sm leading-relaxed text-text-muted sm:text-base">
-          컴퓨터활용능력 1급 실기는 2024년 개정 이후 합격률{" "}
-          <span className="font-semibold text-text">6.9%</span>로 이전 평균 대비 절반 아래로
-          떨어졌고, 정보처리기사 실기도 2025년 1회{" "}
-          <span className="font-semibold text-text">15.1%</span>로 최근 회차 중 낮은 편이에요.
-          기출만으로는 채우기 어려운 신유형, PASS+ 회차로 미리 풀어보세요.
+        <p className="mx-auto mt-4 max-w-xl text-sm leading-relaxed text-text-muted sm:text-base">
+          컴퓨터활용능력 1급 실기는 2024년 개정 이후 합격률이{" "}
+          <span className="font-semibold text-text">6.9%</span>까지 떨어졌고,
+          정보처리기사 실기도 2025년 1회 합격률이{" "}
+          <span className="font-semibold text-text">15.1%</span>에 그쳤습니다.
         </p>
-        <p className="mx-auto mt-3 text-[11px] text-text-subtle">
+        <p className="mx-auto mt-4 max-w-xl text-sm leading-relaxed text-text-muted sm:text-base">
+          기출을 반복해서 풀었는데도 막상 시험장에서 낯선 문제가 나오면 당황할 수
+          있습니다. 그래서 시험 전에는 기출 복원 문제뿐 아니라, 신유형과 변형 문제를
+          반영한 추가 회차까지 풀어보는 것이 좋습니다.
+        </p>
+        <p className="mx-auto mt-4 max-w-xl text-sm leading-relaxed text-text sm:text-base">
+          <span className="font-semibold text-primary">PASS+</span>로 시험 전에 한 번 더
+          점검해보세요. 익숙한 문제만 푸는 연습에서 끝내지 말고, 실제 시험에서 마주칠 수
+          있는 낯선 문제까지 미리 대비할 수 있습니다.
+        </p>
+        <p className="mx-auto mt-5 text-[11px] text-text-subtle">
           자료: 큐넷·대한상공회의소 공개 자격 통계
         </p>
       </div>
@@ -359,8 +368,10 @@ function PlanCard({
         )}
       </div>
 
-      {/* 가격 — prorate 분기. 가격 영역 높이를 고정해 모든 카드의 버튼 정렬을 맞춤 */}
-      <div className="mt-5 flex min-h-[68px] flex-col justify-start">
+      {/* 가격 — prorate 분기. 가격 영역 높이를 고정해 모든 카드의 버튼 정렬을 맞춤.
+       * prorate 상태는 3줄(finalAmount / line-through baseAmount / 잔여 차감) 표시되므로
+       * min-h 96px 로 비활성 카드들도 같은 높이 확보. */}
+      <div className="mt-5 flex min-h-[96px] flex-col justify-start">
         {hasProrate && preview ? (
           <>
             <div className="flex items-baseline gap-1.5">

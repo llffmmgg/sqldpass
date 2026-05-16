@@ -69,55 +69,41 @@ export default function Footer() {
         </div>
 
         <div data-nosnippet className="mt-10 border-t border-border pt-6">
-          <p className="text-xs text-text-muted">
-            배너 광고 문의 및 비즈니스 제안 ·{" "}
-            <a
-              href="mailto:ssomker.dev@gmail.com"
-              className="text-text transition-colors hover:text-primary"
-            >
-              ssomker.dev@gmail.com
-            </a>
-          </p>
-          {/* 사업자 정보 — 전자상거래법 13조 + PG 심사를 위해 항상 노출 (이전 details 접힘 제거) */}
-          <dl className="mt-4 grid grid-cols-1 gap-x-6 gap-y-1 text-[11px] leading-relaxed text-text-subtle sm:grid-cols-2">
-            <div className="flex gap-2">
-              <dt className="shrink-0 text-text-muted">상호</dt>
-              <dd>에스큐엘디패스</dd>
-            </div>
-            <div className="flex gap-2">
-              <dt className="shrink-0 text-text-muted">대표자</dt>
-              <dd>정희훈</dd>
-            </div>
-            <div className="flex gap-2">
-              <dt className="shrink-0 text-text-muted">사업자등록번호</dt>
-              <dd>443-41-01548</dd>
-            </div>
-            <div className="flex gap-2">
-              <dt className="shrink-0 text-text-muted">통신판매업 신고</dt>
-              <dd>제2026-서울서대문-0466호</dd>
-            </div>
-            <div className="flex gap-2 sm:col-span-2">
-              <dt className="shrink-0 text-text-muted">사업장 주소</dt>
-              <dd>서울특별시 서대문구 독립문로10길 2</dd>
-            </div>
-            <div className="flex gap-2">
-              <dt className="shrink-0 text-text-muted">대표번호</dt>
-              <dd>
-                <a
-                  href="tel:+821046393411"
-                  className="transition-colors hover:text-text"
-                >
-                  010-4639-3411
-                </a>
-              </dd>
-            </div>
-            <div className="flex gap-2">
-              <dt className="shrink-0 text-text-muted">개인정보책임자</dt>
-              <dd>정희훈</dd>
-            </div>
-          </dl>
+          {/* 사업자 정보 — 전자상거래법 13조 + PG 심사 요건. 두 줄 compact. */}
+          <div className="space-y-1 text-[11px] leading-relaxed text-text-subtle">
+            <p>
+              <span className="text-text-muted">배너 광고 및 비즈니스 제안</span>{" "}
+              <a
+                href="mailto:ssomker.dev@gmail.com"
+                className="text-text transition-colors hover:text-primary"
+              >
+                ssomker.dev@gmail.com
+              </a>
+              <span className="mx-2.5 text-text-subtle/40">·</span>
+              에스큐엘디패스
+              <span className="mx-2.5 text-text-subtle/40">·</span>
+              대표 정희훈
+              <span className="mx-2.5 text-text-subtle/40">·</span>
+              사업자등록 443-41-01548
+            </p>
+            <p>
+              통신판매업 제2026-서울서대문-0466호
+              <span className="mx-2.5 text-text-subtle/40">·</span>
+              서울특별시 서대문구 독립문로10길 2
+              <span className="mx-2.5 text-text-subtle/40">·</span>
+              대표번호{" "}
+              <a
+                href="tel:+821046393411"
+                className="transition-colors hover:text-text"
+              >
+                010-4639-3411
+              </a>
+            </p>
+          </div>
           <p className="mt-4 text-xs text-text-subtle">
-            © {new Date().getFullYear()} 에스큐엘디패스 · sqldpass.com
+            © {new Date().getFullYear()} 에스큐엘디패스
+            <span className="mx-2 text-text-subtle/40">·</span>
+            sqldpass.com
           </p>
         </div>
       </div>

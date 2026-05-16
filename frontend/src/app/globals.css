@@ -785,6 +785,44 @@ html:not(.dark) .border-success\/40 { border-color: color-mix(in srgb, var(--suc
   border-color: var(--border-strong) !important;
 }
 
+/* 7. Supabase 평면 Pill 스타일 — opacity 배경(bg-X/5~/20) 대신 페이지 색 +
+ * 솔리드 보더. 흐릿한 frosted glass 느낌 제거. 보더가 색 정체성 담당.
+ * html prefix 로 라이트 모드 광역 opacity 보정 룰보다 specificity 같게 맞춤. */
+html .rounded-full.bg-primary\/5,
+html .rounded-full.bg-primary\/10,
+html .rounded-full.bg-primary\/15,
+html .rounded-full.bg-primary\/20,
+html .rounded-full.bg-success\/5,
+html .rounded-full.bg-success\/10,
+html .rounded-full.bg-success\/15,
+html .rounded-full.bg-info\/5,
+html .rounded-full.bg-info\/10,
+html .rounded-full.bg-info\/15,
+html .rounded-full.bg-warning\/5,
+html .rounded-full.bg-warning\/10,
+html .rounded-full.bg-warning\/15,
+html .rounded-full.bg-danger\/5,
+html .rounded-full.bg-danger\/10,
+html .rounded-full.bg-danger\/15 {
+  background-color: var(--bg) !important;
+}
+
+/* 8. 라이트 모드에서 pill 보더는 풀 컬러 (옅은 옵아실치 X) — 흰 배경 위에 또렷이.
+ * 라이트 광역 보더 보정 룰 (40%) 도 pill 에서는 풀 컬러로 강화. */
+html:not(.dark) .rounded-full.border-primary\/25,
+html:not(.dark) .rounded-full.border-primary\/30,
+html:not(.dark) .rounded-full.border-primary\/40 {
+  border-color: var(--primary) !important;
+}
+html:not(.dark) .rounded-full.border-success\/25,
+html:not(.dark) .rounded-full.border-success\/40 {
+  border-color: var(--success) !important;
+}
+html:not(.dark) .rounded-full.border-info\/25,
+html:not(.dark) .rounded-full.border-info\/40 {
+  border-color: var(--info) !important;
+}
+
 /* ── Promo Picket — Duo 마스코트 스타일 idle 호흡 + 폴짝 점프 + squash/stretch ──
  * 4.5s 사이클: 호흡(0~25%) → 정지(25~40%) → 웅크림(40~48%) → 점프(48~62%) →
  * 착지 압축(62~78%) → 회복(78~100%). 회전축은 문어 발(하단)에 두어 자연스러운 점프. */

@@ -5,9 +5,10 @@ import { cn } from "./cn";
 type Variant = "primary" | "secondary" | "ghost" | "outline" | "danger";
 type Size = "sm" | "md" | "lg";
 
+// Supabase 버튼 사양 — 모든 버튼 6px 라디우스, 그림자 없음 (surface 색차로만 분리).
 const variantClass: Record<Variant, string> = {
   primary:
-    "bg-primary text-[var(--primary-fg)] hover:bg-primary-hover shadow-[0_1px_2px_rgba(0,0,0,0.08)]",
+    "bg-primary text-[var(--primary-fg)] hover:bg-primary-hover",
   secondary:
     "bg-surface text-text border border-border hover:bg-surface-hover hover:border-border-strong",
   ghost:
@@ -18,10 +19,11 @@ const variantClass: Record<Variant, string> = {
     "bg-danger/10 text-danger border border-danger/30 hover:bg-danger/15",
 };
 
+// Supabase 사양 — padding 8px 16px 기준. 기존보다 세로 4-8px 얇게.
 const sizeClass: Record<Size, string> = {
-  sm: "h-8 px-3 text-xs rounded-md gap-1.5",
-  md: "h-9 px-4 text-sm rounded-lg gap-2",
-  lg: "h-11 px-5 text-sm rounded-xl gap-2",
+  sm: "h-7 px-3 text-xs rounded-sm gap-1.5",
+  md: "h-8 px-3.5 text-sm rounded-sm gap-2",
+  lg: "h-9 px-4 text-sm rounded-sm gap-2",
 };
 
 function base(variant: Variant, size: Size, glow: boolean, extra?: string) {

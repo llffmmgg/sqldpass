@@ -10,14 +10,12 @@ import {
   getQuestionDetail,
   retryWrongAnswer,
   getBookmarks,
-  getWrongAnswersPreview,
   type WrongAnswerResponse,
   type WrongAnswerStatsResponse,
   type Subject,
   type QuestionDetail,
   type WrongAnswerRetryResponse,
   type BookmarkResponse,
-  type WrongAnswerPreviewResponse,
 } from "@/lib/api";
 import { useSubscription } from "@/hooks/useSubscription";
 import { formatRelativeDate } from "@/lib/format";
@@ -390,7 +388,7 @@ function WrongAnswersPageContent() {
         <div className="cursor-pointer flex items-center gap-3 px-4 py-3" onClick={() => handleExpand(wa.questionId)}>
           {/* 순번 + 우선순위/즐겨찾기 뱃지 */}
           <div className="flex flex-col items-center gap-1 shrink-0 w-8">
-            {num && <span className="text-[10px] text-muted/70 tabular-nums">#{num}</span>}
+            {num && <span className="text-xs text-muted tabular-nums">#{num}</span>}
             {isBookmark ? (
               <span className="flex h-6 w-6 items-center justify-center rounded-full bg-amber-500/15 text-amber-400 ring-1 ring-amber-500/40" title="즐겨찾기">
                 <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -409,13 +407,13 @@ function WrongAnswersPageContent() {
             <p className="text-sm leading-snug text-foreground truncate">
               {getFirstLine(wa.questionContent)}
             </p>
-            <div className="mt-1 flex items-center gap-2 text-[11px] text-muted">
+            <div className="mt-1 flex items-center gap-2 text-[13px] text-muted">
               {isBookmark ? (
                 <span>즐겨찾기 · {formatRelativeDate(wa.lastWrongAt)}</span>
               ) : (
                 <>
                   <span>{wa.wrongCount}회 틀림</span>
-                  <span className="text-muted/50">·</span>
+                  <span className="text-muted/60">·</span>
                   <span>{formatRelativeDate(wa.lastWrongAt)}</span>
                 </>
               )}
@@ -820,21 +818,9 @@ function WrongAnswersPageContent() {
 }
 
 // ----------------------------------------------------------
-// 오답노트 잠금 뷰 — 무료/Starter 사용자에게 본인 오답 5개를 블러 처리해 노출 + Focus/Thunder CTA
+// 오답노트 잠금 뷰 — 무료 사용자에게 안내 + Focus/Thunder CTA. blur preview 제거 (렌더 지연 이슈).
 // ----------------------------------------------------------
 function WrongAnswerLockView() {
-  const [preview, setPreview] = useState<WrongAnswerPreviewResponse[] | null>(null);
-  const [previewError, setPreviewError] = useState(false);
-
-  useEffect(() => {
-    getWrongAnswersPreview(5)
-      .then((data) => setPreview(data))
-      .catch(() => {
-        setPreviewError(true);
-        setPreview([]);
-      });
-  }, []);
-
   return (
     <div className="mt-6 overflow-hidden rounded-xl border border-border bg-surface">
       <div className="border-b border-border px-6 py-5 sm:px-8">
@@ -845,57 +831,22 @@ function WrongAnswerLockView() {
             </svg>
           </span>
           <div>
-            <h2 className="text-base font-bold text-text">
-              오답 노트는 Free 플랜 이상에서 사용 가능해요
-            </h2>
+            <h2 className="text-base font-bold text-text">오답노트를 사용해보세요</h2>
             <p className="mt-1 text-xs leading-relaxed text-text-muted">
-              틀린 문제만 모아 약점만 골라 복습할 수 있어요. 다시 맞히면 자동으로 목록에서 사라집니다.
+              틀린 문제는 자동으로 오답노트에 저장됩니다. 시험 전 다시 봐야 할 문제만
+              복습하고, 다시 맞힌 문제는 목록에서 자동으로 사라져요.
             </p>
           </div>
         </div>
       </div>
 
-      {/* 본인 오답 미리보기 — 블러 처리, 상호작용 차단 */}
-      <div className="px-6 pt-5 pb-2 sm:px-8">
-        {preview && preview.length > 0 ? (
-          <div
-            aria-hidden
-            className="select-none space-y-2"
-            style={{
-              filter: "blur(6px)",
-              pointerEvents: "none",
-              WebkitUserSelect: "none",
-              userSelect: "none",
-            }}
-          >
-            {preview.map((item) => (
-              <div key={item.questionId} className="rounded-lg border border-border bg-bg-elevated px-4 py-3">
-                <p className="text-xs font-medium text-text-muted">{item.subjectName}</p>
-                <p className="mt-1 text-sm text-text line-clamp-1">{item.questionContent}</p>
-              </div>
-            ))}
-          </div>
-        ) : preview && preview.length === 0 ? (
-          <div className="rounded-lg border border-border bg-bg-elevated px-4 py-6 text-center text-sm text-text-muted">
-            아직 풀이 기록이 없어요. 시험 한 회차 풀고 다시 오면 약점이 모입니다.
-          </div>
-        ) : (
-          <div className="h-32 animate-pulse rounded-lg bg-border/30" />
-        )}
-      </div>
-
-      <div className="px-6 pb-6 pt-4 sm:px-8">
+      <div className="px-6 py-5 sm:px-8">
         <Link
           href="/checkout"
           className="block w-full rounded-lg bg-primary px-5 py-3 text-center text-sm font-semibold text-primary-fg transition-colors hover:bg-primary-hover"
         >
           플랜 보러가기 →
         </Link>
-        {previewError && (
-          <p className="mt-3 text-center text-[11px] text-text-subtle">
-            * 일부 정보는 권한 보호로 표시할 수 없습니다.
-          </p>
-        )}
       </div>
     </div>
   );

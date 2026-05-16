@@ -2,8 +2,9 @@
 
 import { useSyncExternalStore } from "react";
 import { isLoggedIn, getNickname } from "@/lib/auth";
+import { getGoogleLoginUrl } from "@/lib/oauth";
 import { trackEvent } from "@/lib/gtag";
-import { ButtonLink } from "@/components/ui";
+import { Button, ButtonLink } from "@/components/ui";
 
 function subscribeAuth(callback: () => void) {
   if (typeof window === "undefined") return () => {};
@@ -37,9 +38,6 @@ export default function HeroCta() {
   const primary = authed
     ? { href: "/solve", label: "이어서 문제 풀기" }
     : { href: "/solve", label: "무료로 시작하기" };
-  const secondary = authed
-    ? { href: "/dashboard", label: "내 대시보드" }
-    : { href: "#preview", label: "문제 미리보기" };
 
   return (
     <div className="flex flex-col items-center">
@@ -85,14 +83,27 @@ export default function HeroCta() {
         >
           {primary.label}
         </ButtonLink>
-        <ButtonLink
-          href={secondary.href}
-          variant="outline"
-          size="lg"
-          onClick={() => trackEvent("click_cta", { cta: "secondary", label: secondary.label, authed })}
-        >
-          {secondary.label}
-        </ButtonLink>
+        {authed ? (
+          <ButtonLink
+            href="/dashboard"
+            variant="outline"
+            size="lg"
+            onClick={() => trackEvent("click_cta", { cta: "secondary", label: "내 대시보드", authed })}
+          >
+            내 대시보드
+          </ButtonLink>
+        ) : (
+          <Button
+            variant="outline"
+            size="lg"
+            onClick={() => {
+              trackEvent("click_cta", { cta: "secondary", label: "3초 로그인", authed });
+              window.location.href = getGoogleLoginUrl();
+            }}
+          >
+            3초 로그인
+          </Button>
+        )}
       </div>
     </div>
   );
