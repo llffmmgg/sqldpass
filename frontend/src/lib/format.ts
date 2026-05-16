@@ -1,7 +1,16 @@
-/** 백엔드 UTC 날짜를 KST Date로 변환 (타임존 접미사 없는 경우 UTC로 강제 해석) */
+/**
+ * 백엔드는 JVM TZ=Asia/Seoul + Jackson time-zone=Asia/Seoul 설정으로
+ * LocalDateTime 을 KST naive ISO 로 직렬화한다. ("2026-05-17T11:21:00")
+ * 따라서 TZ 접미사 없는 문자열은 UTC 가 아닌 KST 로 해석해야 시간이 맞다.
+ * Instant/OffsetDateTime 은 +09:00 offset 이 붙어서 그대로 절대 시각으로 파싱된다.
+ */
 function toKstDate(isoString: string): Date {
-  const s = isoString.endsWith("Z") || isoString.includes("+") ? isoString : isoString + "Z";
-  return new Date(s);
+  // Z 또는 ±HH:MM offset 명시 → 절대 시각으로 그대로 파싱
+  if (isoString.endsWith("Z") || /[+-]\d{2}:?\d{2}$/.test(isoString)) {
+    return new Date(isoString);
+  }
+  // TZ 미지정 (naive LocalDateTime) → KST 로 가정. 브라우저 TZ 무관.
+  return new Date(isoString + "+09:00");
 }
 
 export function formatDate(isoString: string): string {

@@ -17,10 +17,15 @@ import {
 } from "@/lib/adminApi";
 import { formatDate } from "@/lib/format";
 
-/** 백엔드 UTC 문자열에 Z 가 빠져도 안전하게 UTC 로 파싱. KST 대비 시간차 계산용. */
+/**
+ * 백엔드는 KST naive LocalDateTime 으로 직렬화 (JVM TZ=Asia/Seoul).
+ * TZ 미지정 시 KST 로 해석해 절대 ms 반환. Date.now() 와 일관되게 비교 가능.
+ */
 function parseUtcMs(iso: string): number {
-  const s = iso.endsWith("Z") || iso.includes("+") ? iso : iso + "Z";
-  return new Date(s).getTime();
+  if (iso.endsWith("Z") || /[+-]\d{2}:?\d{2}$/.test(iso)) {
+    return new Date(iso).getTime();
+  }
+  return new Date(iso + "+09:00").getTime();
 }
 
 type AdminDifficultyFilter = "ALL" | "쉬움" | "보통" | "어려움" | "매우 어려움";
