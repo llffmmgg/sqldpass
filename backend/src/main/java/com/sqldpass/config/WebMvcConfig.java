@@ -40,7 +40,8 @@ public class WebMvcConfig implements WebMvcConfigurer {
                         "/api/notifications/**",
                         "/api/streak/**",
                         "/api/uploads/**",
-                        "/api/payment/**");
+                        "/api/payment/**",
+                        "/api/blog-downloads/**");
 
         // 비로그인도 접근 가능하지만 로그인 시 memberId 를 부가적으로 주입.
         // /api/posts: GET 은 비로그인 허용, POST/PATCH/DELETE 는 controller 안에서 memberId null 체크.

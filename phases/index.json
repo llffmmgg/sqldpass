@@ -190,6 +190,14 @@
       "status": "completed",
       "created_at": "2026-05-16T01:15:00+0900",
       "completed_at": "2026-05-16T01:40:00+0900"
+    },
+    {
+      "dir": "adsp-cram-blog-download",
+      "name": "adsp-cram-blog-download",
+      "description": "ADsP D-1 정리본 PDF를 Thunder 이상 회원에게 블로그에서 다운로드 제공. 백엔드 ClassPathResource 스트리밍(subscriptionService.allowsPdf 재사용) + 프론트 useSubscription 기반 히어로 박스 + 신규 MDX 글에 1·2페이지 미리보기 이미지.",
+      "status": "completed",
+      "created_at": "2026-05-16T23:30:00+0900",
+      "completed_at": "2026-05-16T23:55:00+0900"
     }
   ]
 }

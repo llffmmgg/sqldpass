@@ -13,10 +13,11 @@ import PassRateDial from "@/components/blog/PassRateDial";
 import StatBar from "@/components/blog/StatBar";
 import DistributionBar from "@/components/blog/DistributionBar";
 import Highlight from "@/components/blog/Highlight";
+import AdspCramHero from "@/components/blog/AdspCramHero";
 import { Badge, ButtonLink, Card, Container } from "@/components/ui";
 import { certFromBlogCategory } from "@/lib/cert-tokens";
 
-const mdxComponents = { PassRateBar, PassRateTrend, PassRateDial, StatBar, DistributionBar, Highlight };
+const mdxComponents = { PassRateBar, PassRateTrend, PassRateDial, StatBar, DistributionBar, Highlight, AdspCramHero };
 
 type Params = { slug: string };
 

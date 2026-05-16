@@ -1,0 +1,35 @@
+{
+  "project": "sqldpass",
+  "phase": "adsp-cram-blog-download",
+  "description": "ADsP D-1 정리본 PDF를 Thunder 이상 회원에게 블로그에서 다운로드 제공. 백엔드는 ClassPathResource 로 정적 PDF 를 권한 검증 후 스트리밍 (subscriptionService.allowsPdf 재사용, MockExamController#downloadPdf 동일 패턴). 프론트는 useSubscription 으로 등급 분기하는 히어로 박스 + 신규 MDX 글에서 미리보기 1·2페이지 이미지 노출. PDF 본체는 frontend/public 에 두지 않아 직접 URL 접근 차단.",
+  "steps": [
+    {
+      "step": 1,
+      "name": "backend-blog-download-controller",
+      "description": "BlogDownloadController + ClassPathResource(blog-downloads/adsp-cram.pdf) 스트리밍 + WebMvcConfig 인증 등록. allowsPdf 검증.",
+      "status": "completed",
+      "summary": "BlogDownloadController 신규 + WebMvcConfig memberAuthInterceptor 에 /api/blog-downloads/** 추가, compileJava OK"
+    },
+    {
+      "step": 2,
+      "name": "frontend-download-client-and-hero",
+      "description": "downloadAdspCramPdf 클라이언트 함수 + AdspCramHero 히어로 컴포넌트 (등급별 CTA).",
+      "status": "completed",
+      "summary": "payment.ts 에 downloadAdspCramPdf 추가 + AdspCramHero 컴포넌트(비로그인/Free/Thunder+ 3분기) 신규"
+    },
+    {
+      "step": 3,
+      "name": "blog-post-and-mdx-component-mapping",
+      "description": "신규 MDX 글 adsp-d1-cheer + blog/[slug]/page.tsx 의 mdxComponents 에 AdspCramHero 매핑 + lint/build 검증.",
+      "status": "completed",
+      "summary": "adsp-d1-cheer.mdx 신규 + mdxComponents 에 AdspCramHero 매핑, lint/build OK"
+    }
+  ],
+  "created_at": "2026-05-16T23:30:00+0900",
+  "completed_at": "2026-05-16T23:55:00+0900",
+  "post_install_notes": [
+    "사용자가 직접 배치해야 동작: backend/src/main/resources/blog-downloads/adsp-cram.pdf (데스크탑 PDF 복사)",
+    "사용자가 직접 추출: frontend/public/blog/adsp-cram-preview-1.png, adsp-cram-preview-2.png (PDF 1·2 페이지)",
+    "Backend 재시작 필요 — 새 컨트롤러는 핫리로드 안 됨"
+  ]
+}

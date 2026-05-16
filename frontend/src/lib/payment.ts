@@ -198,6 +198,45 @@ export async function downloadMockExamPdfAsUser(id: number): Promise<void> {
 }
 
 /**
+ * ADsP D-1 정리본 PDF 다운로드 — Thunder 이상 회원 전용 (백엔드 검증).
+ * 정적 PDF 를 백엔드가 권한 검증 후 바이트 스트리밍. R2/public 노출 X.
+ */
+export async function downloadAdspCramPdf(): Promise<void> {
+  const token = getToken();
+  const res = await fetch("/api/blog-downloads/adsp-cram", {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  if (!res.ok) {
+    let code = `HTTP_${res.status}`;
+    let message = `PDF 다운로드 실패 (${res.status})`;
+    try {
+      const body = await res.json();
+      if (body?.code) code = body.code;
+      if (body?.message) message = body.message;
+    } catch {
+      /* body 파싱 실패 시 기본 메시지 사용 */
+    }
+    throw new PdfDownloadError(code, message);
+  }
+  const disposition = res.headers.get("Content-Disposition") ?? "";
+  const utf8Match = /filename\*=UTF-8''([^;]+)/i.exec(disposition);
+  const asciiMatch = /filename="?([^";]+)"?/i.exec(disposition);
+  const filename = utf8Match
+    ? decodeURIComponent(utf8Match[1])
+    : asciiMatch?.[1] ?? "adsp-cram.pdf";
+
+  const blob = await res.blob();
+  const objectUrl = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = objectUrl;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(objectUrl), 100);
+}
+
+/**
  * 결제 시작 — 실행 환경에 따라 PortOne(웹) 또는 Google Play Billing(안드로이드 앱) 으로 분기.
  *
  * 안드로이드 앱에서 PortOne 결제창을 띄우면 Play 정책 위반이라 즉시 등록 거절. 반대로 웹에서
