@@ -34,8 +34,10 @@ public class BlogDownloadController {
 
     @GetMapping("/adsp-cram")
     @Operation(
-            summary = "ADsP D-1 정리본 PDF 다운로드 (Thunder 이상 구독 회원 한정)",
+            summary = "ADsP D-1 정리본 PDF 다운로드 (Thunder 이상 활성 구독 회원 한정)",
             description = "정적 PDF 를 백엔드에서 권한 검증 후 바이트 스트리밍. "
+                    + "모의고사 PDF(UNLIMITED 전용) 와 정책이 달라 활성 구독 여부만 체크 — "
+                    + "Thunder/Focus/Pro/UNLIMITED 모두 가능. "
                     + "프론트 public 에 두지 않아 직접 URL 접근 불가."
     )
     public ResponseEntity<byte[]> downloadAdspCram(HttpServletRequest request) throws Exception {
@@ -43,7 +45,7 @@ public class BlogDownloadController {
         if (memberId == null) {
             throw new SqldpassException(ErrorCode.UNAUTHORIZED);
         }
-        if (!subscriptionService.allowsPdf(memberId)) {
+        if (subscriptionService.getActive(memberId).isEmpty()) {
             throw new SqldpassException(ErrorCode.PDF_REQUIRES_SUBSCRIPTION);
         }
 

@@ -28,7 +28,7 @@ export default function AdspCramHero() {
   const [busy, setBusy] = useState(false);
 
   const loggedIn = isLoggedIn();
-  const canDownload = loggedIn && subscription.allowsPdf;
+  const canDownload = loggedIn && subscription.active;
 
   async function handleDownload() {
     if (busy) return;
