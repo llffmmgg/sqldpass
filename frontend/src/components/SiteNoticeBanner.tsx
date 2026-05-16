@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import { getActiveNotice, type ActiveNotice } from "@/lib/noticeApi";
 
-const STORAGE_KEY = "site-banner-dismissed-v";
+const STORAGE_KEY = "site-banner-dismissed-";
+const dismissKey = (n: ActiveNotice) => `${STORAGE_KEY}${n.id}-v${n.version}`;
 
 export function SiteNoticeBanner() {
   const [notice, setNotice] = useState<ActiveNotice | null>(null);
@@ -14,7 +15,7 @@ export function SiteNoticeBanner() {
     getActiveNotice("BANNER").then((n) => {
       if (cancelled || !n) return;
       try {
-        if (localStorage.getItem(STORAGE_KEY + n.version) === "1") {
+        if (localStorage.getItem(dismissKey(n)) === "1") {
           setDismissed(true);
           return;
         }
@@ -30,7 +31,7 @@ export function SiteNoticeBanner() {
 
   function dismiss() {
     try {
-      if (notice) localStorage.setItem(STORAGE_KEY + notice.version, "1");
+      if (notice) localStorage.setItem(dismissKey(notice), "1");
     } catch {}
     setDismissed(true);
   }

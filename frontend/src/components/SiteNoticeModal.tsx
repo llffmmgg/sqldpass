@@ -4,8 +4,9 @@ import { useEffect, useState } from "react";
 import { getActiveNotice, type ActiveNotice } from "@/lib/noticeApi";
 import { Button } from "@/components/ui";
 
-const STORAGE_KEY = "site-notice-dismissed-v";
+const STORAGE_KEY = "site-notice-dismissed-";
 const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
+const dismissKey = (n: ActiveNotice) => `${STORAGE_KEY}${n.id}-v${n.version}`;
 
 export function SiteNoticeModal() {
   const [notice, setNotice] = useState<ActiveNotice | null>(null);
@@ -15,7 +16,7 @@ export function SiteNoticeModal() {
     getActiveNotice("MODAL").then((n) => {
       if (cancelled || !n) return;
       try {
-        const until = Number(localStorage.getItem(STORAGE_KEY + n.version) ?? 0);
+        const until = Number(localStorage.getItem(dismissKey(n)) ?? 0);
         if (Date.now() < until) return;
       } catch {}
       setNotice(n);
@@ -33,7 +34,7 @@ export function SiteNoticeModal() {
   function dismissForWeek() {
     try {
       if (notice) {
-        localStorage.setItem(STORAGE_KEY + notice.version, String(Date.now() + SEVEN_DAYS_MS));
+        localStorage.setItem(dismissKey(notice), String(Date.now() + SEVEN_DAYS_MS));
       }
     } catch {}
     setNotice(null);
