@@ -312,6 +312,50 @@ class PaymentServiceTest {
     }
 
     @Test
+    @DisplayName("THREE_DAY 활성 + FOCUS 결제 시도 → INVALID_INPUT (THUNDER 는 PASS+ 있고 FOCUS 는 없으므로 비대칭 경로 차단)")
+    void prepareBlockedThunderToFocus() {
+        properties.setReviewerNicknames("");
+        SubscriptionEntity active = new SubscriptionEntity(
+                1L, SubscriptionPlan.THREE_DAY, 100L,
+                LocalDateTime.now().minusDays(1), LocalDateTime.now().plusDays(2));
+        given(subscriptionRepository.findActiveByMemberId(any(), any()))
+                .willReturn(java.util.List.of(active));
+
+        assertThatThrownBy(() -> service.prepare(1L, SubscriptionPlan.FOCUS, "홍길동", "buyer@example.com", "01012345678"))
+                .isInstanceOf(SqldpassException.class)
+                .extracting("errorCode").isEqualTo(ErrorCode.INVALID_INPUT);
+    }
+
+    @Test
+    @DisplayName("FOCUS 활성 + THREE_DAY 결제 시도 → INVALID_INPUT (FOCUS 가 더 긴 기간이라 짧은 plan 으로 못 감)")
+    void prepareBlockedFocusToThunder() {
+        properties.setReviewerNicknames("");
+        SubscriptionEntity active = new SubscriptionEntity(
+                1L, SubscriptionPlan.FOCUS, 100L,
+                LocalDateTime.now().minusDays(5), LocalDateTime.now().plusDays(25));
+        given(subscriptionRepository.findActiveByMemberId(any(), any()))
+                .willReturn(java.util.List.of(active));
+
+        assertThatThrownBy(() -> service.prepare(1L, SubscriptionPlan.THREE_DAY, "홍길동", "buyer@example.com", "01012345678"))
+                .isInstanceOf(SqldpassException.class)
+                .extracting("errorCode").isEqualTo(ErrorCode.INVALID_INPUT);
+    }
+
+    @Test
+    @DisplayName("THREE_DAY 활성 + ONE_MONTH 업그레이드 → 허용")
+    void prepareAllowsThunderToPro() {
+        properties.setReviewerNicknames("");
+        SubscriptionEntity active = new SubscriptionEntity(
+                1L, SubscriptionPlan.THREE_DAY, 100L,
+                LocalDateTime.now().minusDays(1), LocalDateTime.now().plusDays(2));
+        given(subscriptionRepository.findActiveByMemberId(any(), any()))
+                .willReturn(java.util.List.of(active));
+
+        var result = service.prepare(1L, SubscriptionPlan.ONE_MONTH, "홍길동", "buyer@example.com", "01012345678");
+        assertThat(result.plan()).isEqualTo(SubscriptionPlan.ONE_MONTH);
+    }
+
+    @Test
     @DisplayName("preview — 활성 구독 없으면 baseAmount 그대로, allowed=true")
     void previewWithoutSubscription() {
         properties.setReviewerNicknames("");

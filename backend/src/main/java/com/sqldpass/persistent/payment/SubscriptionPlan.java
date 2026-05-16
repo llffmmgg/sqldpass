@@ -14,10 +14,10 @@ package com.sqldpass.persistent.payment;
  * 절대 변경 금지. 사용자 노출 라벨은 프론트에서 매핑 (THREE_DAY → "Thunder").
  */
 public enum SubscriptionPlan {
-    THREE_DAY(3,    true, false, true, /* allowsPremium */ true,  1),
-    FOCUS    (30,   true, false, true, /* allowsPremium */ false, 2),
-    ONE_MONTH(30,   true, false, true, /* allowsPremium */ true,  3),
-    UNLIMITED(null, true, true,  true, /* allowsPremium */ true,  4);
+    THREE_DAY(3,    true, false, true, /* allowsPremium */ true),
+    FOCUS    (30,   true, false, true, /* allowsPremium */ false),
+    ONE_MONTH(30,   true, false, true, /* allowsPremium */ true),
+    UNLIMITED(null, true, true,  true, /* allowsPremium */ true);
 
     private final Integer days;
     private final boolean removesAds;
@@ -26,26 +26,38 @@ public enum SubscriptionPlan {
     private final boolean hasLibraryAccess;
     /** PASS+ 회차 풀이 허용. Focus 만 false (paywall 정책). */
     private final boolean allowsPremium;
-    /** 업그레이드 비교용 강도. 큰 값일수록 강한 plan. */
-    private final int tier;
 
     SubscriptionPlan(Integer days, boolean removesAds, boolean allowsPdf,
-                     boolean hasLibraryAccess, boolean allowsPremium, int tier) {
+                     boolean hasLibraryAccess, boolean allowsPremium) {
         this.days = days;
         this.removesAds = removesAds;
         this.allowsPdf = allowsPdf;
         this.hasLibraryAccess = hasLibraryAccess;
         this.allowsPremium = allowsPremium;
-        this.tier = tier;
     }
 
-    public int getTier() {
-        return tier;
-    }
-
-    /** 본 plan 이 currentPlan 의 업그레이드인지. 같은 plan 또는 약한 plan 은 false. */
+    /**
+     * 본 plan 이 currentPlan 의 업그레이드인지 — 명시적 매트릭스.
+     *
+     * 단순 tier 비교로는 THREE_DAY(3일 PASS+ 포함) → FOCUS(30일 PASS+ 없음) 같은
+     * "기간/기능 교차" 경로가 업그레이드로 인식되는 문제가 있어 매트릭스로 고정.
+     *
+     * 허용:
+     *   THREE_DAY → ONE_MONTH, UNLIMITED   (FOCUS 는 PASS+ 잃는 비대칭 경로라 차단)
+     *   FOCUS     → ONE_MONTH, UNLIMITED
+     *   ONE_MONTH → UNLIMITED
+     *   UNLIMITED → (없음)
+     */
     public boolean isUpgradeFrom(SubscriptionPlan currentPlan) {
-        return currentPlan != null && this.tier > currentPlan.tier;
+        if (currentPlan == null || this == currentPlan) {
+            return false;
+        }
+        return switch (currentPlan) {
+            case THREE_DAY -> this == ONE_MONTH || this == UNLIMITED;
+            case FOCUS     -> this == ONE_MONTH || this == UNLIMITED;
+            case ONE_MONTH -> this == UNLIMITED;
+            case UNLIMITED -> false;
+        };
     }
 
     public Integer getDays() {
