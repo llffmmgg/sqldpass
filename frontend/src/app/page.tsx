@@ -65,10 +65,7 @@ export default function Home() {
         <Container size="default" className="relative py-24 text-center sm:py-32 md:py-40">
           <ScrollReveal>
             <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/25 bg-primary/10 px-3.5 py-1.5 text-xs font-medium text-primary">
-              <span className="relative flex h-1.5 w-1.5">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-60" />
-                <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-primary" />
-              </span>
+              <span className="inline-flex h-1.5 w-1.5 rounded-full bg-primary" />
               CBT 모의고사 · 기출 복원 · 모두 무료
             </span>
           </ScrollReveal>
@@ -77,9 +74,7 @@ export default function Home() {
             <h1 className="mt-6 text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl lg:text-7xl">
               SQLD · 정처기 · 컴활 · ADsP
               <br />
-              <span className="bg-gradient-to-r from-primary to-[#5ee0a5] bg-clip-text text-transparent">
-                무료 CBT 모의고사
-              </span>
+              <span className="text-primary">무료 CBT 모의고사</span>
             </h1>
           </ScrollReveal>
 

@@ -397,7 +397,7 @@ export default function StudyActivityChart({ data, overallAvg }: StudyActivityCh
             </>
           )}
 
-          {/* 전체 라인 — 글로우 살림 */}
+          {/* 전체 라인 — drop-shadow glow 제거 (AI 티 차단). 라인 두께로만 강조. */}
           {totalPoints.length > 0 && (
             <path
               d={buildLinePath(totalPoints)}
@@ -410,7 +410,6 @@ export default function StudyActivityChart({ data, overallAvg }: StudyActivityCh
               style={{
                 opacity: mounted ? 1 : 0,
                 transition: "opacity 600ms ease-out",
-                filter: "drop-shadow(0 0 6px var(--glow))",
               }}
             />
           )}
