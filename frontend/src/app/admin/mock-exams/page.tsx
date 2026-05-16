@@ -15,6 +15,13 @@ import {
   type MockExamVisibility,
   type PdfBackfillStatus,
 } from "@/lib/adminApi";
+import { formatDate } from "@/lib/format";
+
+/** 백엔드 UTC 문자열에 Z 가 빠져도 안전하게 UTC 로 파싱. KST 대비 시간차 계산용. */
+function parseUtcMs(iso: string): number {
+  const s = iso.endsWith("Z") || iso.includes("+") ? iso : iso + "Z";
+  return new Date(s).getTime();
+}
 
 type AdminDifficultyFilter = "ALL" | "쉬움" | "보통" | "어려움" | "매우 어려움";
 
@@ -172,7 +179,7 @@ export default function AdminMockExamsPage() {
           .find(
             (e) =>
               e.sequence > prevMaxSeq &&
-              Date.now() - new Date(e.createdAt).getTime() < 180_000,
+              Date.now() - parseUtcMs(e.createdAt) < 180_000,
           );
         if (recent) {
           // 실제로는 생성 성공한 케이스
@@ -483,7 +490,7 @@ export default function AdminMockExamsPage() {
                         />
                       </td>
                       <td className="px-4 py-3 text-muted">
-                        {new Date(exam.createdAt).toLocaleDateString("ko-KR")}
+                        {formatDate(exam.createdAt)}
                       </td>
                       <td className="px-4 py-3 text-right">
                         <div className="flex items-center justify-end gap-3">

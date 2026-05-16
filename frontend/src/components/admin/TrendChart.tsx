@@ -1,110 +1,177 @@
 "use client";
 
-import { useEffect, useId, useState } from "react";
+/* eslint-disable react-hooks/set-state-in-effect -- fetch 시작 시 pending sync setState */
+
+import { useEffect, useId, useMemo, useState } from "react";
+import {
+  AnimatePresence,
+  motion,
+  useMotionValue,
+  useSpring,
+  useTransform,
+} from "framer-motion";
 import { getTrend, type AdminTrendPoint } from "@/lib/adminApi";
 
-const PERIOD_OPTIONS = [
-  { days: 7, label: "7일" },
-  { days: 14, label: "14일" },
-  { days: 30, label: "30일" },
-];
-
+const PERIOD_OPTIONS = [7, 14, 30] as const;
+type Period = (typeof PERIOD_OPTIONS)[number];
 type Field = "newMembers" | "newSolves";
 
-export default function TrendChart() {
-  const [days, setDays] = useState(7);
-  const [points, setPoints] = useState<AdminTrendPoint[] | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+const SPRING_FAST = { stiffness: 220, damping: 28, mass: 0.6 };
+const PATH_TWEEN = { duration: 0.35, ease: [0.4, 0, 0.2, 1] as const };
+const FADE_TWEEN = { duration: 0.25, ease: [0.4, 0, 0.2, 1] as const };
 
-  // 사용자 클릭으로 기간 변경 — loading/error 리셋은 핸들러에서, 이펙트 안에서 sync setState 회피.
-  function handleDaysChange(next: number) {
-    if (next === days) return;
-    setLoading(true);
-    setError(null);
-    setDays(next);
-  }
+function AnimatedInt({ value, className }: { value: number; className?: string }) {
+  const mv = useMotionValue(value);
+  const spring = useSpring(mv, SPRING_FAST);
+  const rounded = useTransform(spring, (v) => Math.round(v).toLocaleString());
+  useEffect(() => {
+    mv.set(value);
+  }, [value, mv]);
+  return <motion.span className={className}>{rounded}</motion.span>;
+}
+
+export default function TrendChart() {
+  const [days, setDays] = useState<Period>(7);
+  const [points, setPoints] = useState<AdminTrendPoint[] | null>(null);
+  const [pending, setPending] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let alive = true;
+    setPending(true);
+    setError(null);
     getTrend(days)
       .then((r) => {
         if (!alive) return;
         setPoints(r.points);
-        setLoading(false);
+        setPending(false);
       })
       .catch((e) => {
         if (!alive) return;
-        setPoints([]);
         setError(e instanceof Error ? e.message : "불러오기 실패");
-        setLoading(false);
+        setPending(false);
       });
     return () => {
       alive = false;
     };
   }, [days]);
 
+  const initialLoad = pending && !points;
+
   return (
-    <div className="rounded-xl border border-border bg-surface p-3">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className="text-xs font-semibold">회원/풀이 추이</h2>
-        <div className="flex items-center gap-0.5 rounded border border-border bg-background p-0.5">
-          {PERIOD_OPTIONS.map((opt) => (
-            <button
-              key={opt.days}
-              onClick={() => handleDaysChange(opt.days)}
-              className={`rounded px-1.5 py-0.5 text-[10px] font-medium transition ${
-                days === opt.days
-                  ? "bg-primary text-zinc-900"
-                  : "text-muted hover:text-foreground"
-              }`}
-            >
-              {opt.label}
-            </button>
-          ))}
+    <div className="rounded-xl border border-border bg-surface p-5" aria-busy={pending}>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <h2 className="text-sm font-semibold">회원/풀이 추이</h2>
+
+        {/* segmented control — 대시보드 패턴: framer-motion layoutId 슬라이딩 indicator */}
+        <div
+          role="group"
+          aria-label="기간 선택"
+          className="relative inline-flex items-center rounded-sm border border-border bg-bg-elevated p-0.5 text-xs"
+        >
+          {PERIOD_OPTIONS.map((p) => {
+            const isActive = days === p;
+            return (
+              <button
+                key={p}
+                type="button"
+                aria-pressed={isActive}
+                aria-label={`최근 ${p}일`}
+                disabled={initialLoad}
+                onClick={() => setDays(p)}
+                className={`relative z-10 rounded-sm px-2.5 py-1 font-medium transition-colors duration-200 ${
+                  isActive ? "text-text" : "text-text-subtle hover:text-text"
+                } ${initialLoad ? "cursor-wait opacity-70" : ""}`}
+              >
+                {isActive && (
+                  <motion.span
+                    layoutId="admin-trend-active-indicator"
+                    className="absolute inset-0 -z-10 rounded-sm bg-surface shadow-sm"
+                    transition={{ type: "spring", stiffness: 380, damping: 32 }}
+                    aria-hidden
+                  />
+                )}
+                <span className="relative">{p}일</span>
+              </button>
+            );
+          })}
         </div>
       </div>
 
       {error && (
-        <p className="mt-3 rounded-md border border-rose-500/30 bg-rose-500/10 px-2.5 py-1.5 text-[11px] text-rose-300">
+        <p className="mt-3 rounded-sm border border-danger bg-bg-elevated px-3 py-2 text-xs text-danger">
           데이터를 불러올 수 없습니다: {error}
         </p>
       )}
 
-      {loading && !points ? (
-        <div className="mt-3 h-24 animate-pulse rounded-lg bg-background" />
+      {initialLoad ? (
+        <div className="mt-4 h-32 rounded-lg bg-bg-elevated" />
       ) : points && points.length > 0 ? (
-        <div className="mt-3 grid gap-3 md:grid-cols-2">
+        <div className="mt-4 grid gap-4 md:grid-cols-2">
           <LineSeries
             title="신규 가입"
             points={points}
             field="newMembers"
-            color="#a78bfa"
+            color="var(--info)"
           />
           <LineSeries
             title="풀이"
             points={points}
             field="newSolves"
-            color="#4ade80"
+            color="var(--primary)"
           />
         </div>
       ) : (
-        <p className="mt-3 text-xs text-muted">데이터가 없습니다.</p>
+        <p className="mt-4 text-xs text-text-muted">데이터가 없습니다.</p>
       )}
     </div>
   );
 }
 
-const W = 400;
-const H = 120;
-const PAD_L = 34;
-const PAD_R = 8;
-const PAD_T = 12;
-const PAD_B = 20;
+// ── SVG 좌표계 (대시보드 StudyActivityChart 동일) ──
+const VB_W = 600;
+const VB_H = 160;
+const PADDING_LEFT = 12;
+const PADDING_RIGHT = 36;
+const PADDING_TOP = 16;
+const PADDING_BOTTOM = 28;
+const PLOT_W = VB_W - PADDING_LEFT - PADDING_RIGHT;
+const PLOT_H = VB_H - PADDING_TOP - PADDING_BOTTOM;
+
+function niceCeil(v: number): number {
+  if (v <= 0) return 4;
+  if (v <= 5) return 5;
+  if (v <= 10) return 10;
+  if (v <= 20) return 20;
+  if (v <= 50) return 50;
+  if (v <= 100) return 100;
+  return Math.ceil(v / 50) * 50;
+}
+
+function buildLinePath(points: { x: number; y: number }[]): string {
+  if (points.length === 0) return "";
+  if (points.length === 1) return `M ${points[0].x} ${points[0].y}`;
+  let d = `M ${points[0].x} ${points[0].y}`;
+  for (let i = 1; i < points.length; i++) d += ` L ${points[i].x} ${points[i].y}`;
+  return d;
+}
+
+function buildAreaPath(points: { x: number; y: number }[], baselineY: number): string {
+  const line = buildLinePath(points);
+  if (!line) return "";
+  const last = points[points.length - 1];
+  const first = points[0];
+  return `${line} L ${last.x} ${baselineY} L ${first.x} ${baselineY} Z`;
+}
+
+function formatTick(v: number): string {
+  if (v >= 1000) return `${(v / 1000).toFixed(v % 1000 === 0 ? 0 : 1)}k`;
+  return v.toLocaleString(undefined, { maximumFractionDigits: 0 });
+}
 
 function LineSeries({
   title,
-  points,
+  points: data,
   field,
   color,
 }: {
@@ -114,52 +181,65 @@ function LineSeries({
   color: string;
 }) {
   const gradId = useId();
-  const values = points.map((p) => p[field]);
-  const rawMax = Math.max(0, ...values);
-  const max = niceMax(rawMax);
+  const values = data.map((p) => p[field]);
   const total = values.reduce((s, v) => s + v, 0);
-  const avg = total / points.length;
+  const avg = data.length > 0 ? total / data.length : 0;
+  const dataMax = Math.max(...values, 1);
+  const max = niceCeil(dataMax);
 
-  const plotW = W - PAD_L - PAD_R;
-  const plotH = H - PAD_T - PAD_B;
-  const n = points.length;
-  const xStep = n > 1 ? plotW / (n - 1) : 0;
+  const colW = PLOT_W / data.length;
+  const baseY = PADDING_TOP + PLOT_H;
 
-  const coords = points.map((p, i) => {
-    const v = p[field];
-    return {
-      x: PAD_L + (n > 1 ? i * xStep : plotW / 2),
-      y: PAD_T + plotH - (max === 0 ? 0 : (v / max) * plotH),
-      v,
-      date: p.date,
-    };
-  });
+  const yTicks = useMemo(
+    () =>
+      [0, max / 2, max].map((v) => ({
+        value: Math.round(v),
+        y: PADDING_TOP + (1 - v / max) * PLOT_H,
+      })),
+    [max],
+  );
 
-  const linePath = buildSmoothPath(coords);
-  const areaPath =
-    linePath +
-    ` L ${coords[coords.length - 1].x} ${PAD_T + plotH}` +
-    ` L ${coords[0].x} ${PAD_T + plotH} Z`;
+  const labelInterval = data.length <= 7 ? 1 : data.length <= 14 ? 2 : 5;
+  const visibleLabels = useMemo(
+    () =>
+      data
+        .map((d, i) => ({ d, i }))
+        .filter(({ i }) => i % labelInterval === 0 || i === data.length - 1),
+    [data, labelInterval],
+  );
 
-  const yTicks = [0, max * 0.25, max * 0.5, max * 0.75, max];
-  const labelEvery = n <= 7 ? 1 : n <= 14 ? 2 : 5;
+  const pts = useMemo(
+    () =>
+      data.map((p, i) => ({
+        x: PADDING_LEFT + i * colW + colW / 2,
+        y: baseY - (p[field] / max) * PLOT_H,
+      })),
+    [data, colW, baseY, max, field],
+  );
+  const areaPath = buildAreaPath(pts, baseY);
+  const linePath = buildLinePath(pts);
 
   return (
     <div>
-      <div className="mb-1 flex items-baseline justify-between">
+      <div className="mb-2 flex items-baseline justify-between gap-2">
         <div className="flex items-center gap-1.5">
-          <span className="h-1.5 w-1.5 rounded-full" style={{ background: color }} />
-          <span className="text-[11px] font-semibold text-foreground">{title}</span>
+          <span className="h-1.5 w-1.5 rounded-full" style={{ background: color }} aria-hidden />
+          <span className="text-xs font-semibold text-text">{title}</span>
         </div>
-        <span className="text-[10px] text-muted">
-          합계 <span className="font-medium text-foreground">{total.toLocaleString()}</span>
-          <span className="mx-0.5 text-border">·</span>
-          평균 <span className="font-medium text-foreground">{avg.toFixed(1)}</span>
+        <span className="text-[10px] text-text-muted">
+          합계{" "}
+          <AnimatedInt
+            value={total}
+            className="font-semibold tabular-nums text-text"
+          />
+          <span className="mx-1 text-border">·</span>
+          평균{" "}
+          <span className="font-semibold tabular-nums text-text">{avg.toFixed(1)}</span>
         </span>
       </div>
 
       <svg
-        viewBox={`0 0 ${W} ${H}`}
+        viewBox={`0 0 ${VB_W} ${VB_H}`}
         className="w-full"
         preserveAspectRatio="none"
         role="img"
@@ -167,46 +247,58 @@ function LineSeries({
       >
         <defs>
           <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor={color} stopOpacity={0.32} />
+            <stop offset="0%" stopColor={color} stopOpacity={0.28} />
             <stop offset="100%" stopColor={color} stopOpacity={0} />
           </linearGradient>
         </defs>
 
-        {/* y축 그리드 + 틱 라벨 */}
-        {yTicks.map((tv, i) => {
-          const y = PAD_T + plotH - (tv / max) * plotH;
-          return (
-            <g key={i}>
-              <line
-                x1={PAD_L}
-                x2={W - PAD_R}
-                y1={y}
-                y2={y}
-                stroke="currentColor"
-                className="text-border"
+        {/* y grid + label */}
+        <AnimatePresence mode="popLayout">
+          {yTicks.map((t) => (
+            <motion.g
+              key={`ytick-${t.value}`}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={FADE_TWEEN}
+            >
+              <motion.line
+                x1={PADDING_LEFT}
+                x2={PADDING_LEFT + PLOT_W}
+                animate={{ y1: t.y, y2: t.y }}
+                initial={false}
+                transition={PATH_TWEEN}
+                stroke="var(--border-strong)"
                 strokeWidth={1}
-                strokeDasharray={i === 0 ? "" : "2 4"}
-                opacity={i === 0 ? 1 : 0.6}
+                strokeDasharray={t.value === 0 ? "0" : "3 3"}
+                opacity={t.value === 0 ? 0.9 : 0.75}
               />
-              <text
-                x={PAD_L - 6}
-                y={y + 3}
-                textAnchor="end"
-                fontSize={9}
-                className="fill-current text-muted"
+              <motion.text
+                x={PADDING_LEFT + PLOT_W + 6}
+                animate={{ y: t.y + 3 }}
+                initial={false}
+                transition={PATH_TWEEN}
+                textAnchor="start"
+                fill="var(--text-subtle)"
+                fontSize="10"
               >
-                {formatTick(tv)}
-              </text>
-            </g>
-          );
-        })}
+                {formatTick(t.value)}
+              </motion.text>
+            </motion.g>
+          ))}
+        </AnimatePresence>
 
-        {/* 영역 fill */}
-        <path d={areaPath} fill={`url(#${gradId})`} />
-
-        {/* 라인 */}
-        <path
-          d={linePath}
+        {/* area + line — d 모핑 */}
+        <motion.path
+          animate={{ d: areaPath }}
+          initial={false}
+          transition={PATH_TWEEN}
+          fill={`url(#${gradId})`}
+        />
+        <motion.path
+          animate={{ d: linePath }}
+          initial={false}
+          transition={PATH_TWEEN}
           fill="none"
           stroke={color}
           strokeWidth={2}
@@ -214,50 +306,36 @@ function LineSeries({
           strokeLinejoin="round"
         />
 
-        {/* 데이터 포인트 */}
-        {coords.map((c) => (
-          <g key={c.date}>
-            <circle
-              cx={c.x}
-              cy={c.y}
-              r={3}
-              fill="var(--color-surface, #18181b)"
-              stroke={color}
-              strokeWidth={1.75}
-            >
-              <title>
-                {c.date}: {c.v.toLocaleString()}
-              </title>
-            </circle>
-          </g>
-        ))}
-
-        {/* x축 날짜 라벨 */}
-        {points.map((p, i) => {
-          const show = i % labelEvery === 0 || i === n - 1;
-          if (!show) return null;
-          const cx = coords[i].x;
-          return (
-            <text
-              key={p.date}
-              x={cx}
-              y={H - 8}
-              textAnchor="middle"
-              fontSize={10}
-              className="fill-current text-muted"
-            >
-              {formatDate(p.date)}
-            </text>
-          );
-        })}
+        {/* x 라벨 — date key 안정, 좌표만 부드럽게 이동 */}
+        <AnimatePresence mode="popLayout">
+          {visibleLabels.map(({ d, i }) => {
+            const cx = PADDING_LEFT + i * colW + colW / 2;
+            const dt = new Date(d.date + "T00:00:00");
+            return (
+              <motion.text
+                key={d.date}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1, x: cx }}
+                exit={{ opacity: 0 }}
+                transition={FADE_TWEEN}
+                y={PADDING_TOP + PLOT_H + 16}
+                textAnchor="middle"
+                fill="var(--text-subtle)"
+                fontSize="10"
+              >
+                {`${dt.getMonth() + 1}/${dt.getDate()}`}
+              </motion.text>
+            );
+          })}
+        </AnimatePresence>
 
         {total === 0 && (
           <text
-            x={W / 2}
-            y={H / 2}
+            x={VB_W / 2}
+            y={VB_H / 2}
             textAnchor="middle"
             fontSize={12}
-            className="fill-current text-muted"
+            fill="var(--text-muted)"
           >
             해당 기간 활동이 없습니다
           </text>
@@ -265,49 +343,4 @@ function LineSeries({
       </svg>
     </div>
   );
-}
-
-/** Catmull-Rom → Cubic Bezier 변환으로 자연스러운 스무딩 곡선 생성. */
-function buildSmoothPath(coords: { x: number; y: number }[]): string {
-  if (coords.length === 0) return "";
-  if (coords.length === 1) {
-    const { x, y } = coords[0];
-    return `M ${x} ${y}`;
-  }
-  const tension = 0.2;
-  let d = `M ${coords[0].x} ${coords[0].y}`;
-  for (let i = 0; i < coords.length - 1; i++) {
-    const p0 = coords[i - 1] ?? coords[i];
-    const p1 = coords[i];
-    const p2 = coords[i + 1];
-    const p3 = coords[i + 2] ?? p2;
-    const cp1x = p1.x + (p2.x - p0.x) * tension;
-    const cp1y = p1.y + (p2.y - p0.y) * tension;
-    const cp2x = p2.x - (p3.x - p1.x) * tension;
-    const cp2y = p2.y - (p3.y - p1.y) * tension;
-    d += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${p2.x} ${p2.y}`;
-  }
-  return d;
-}
-
-function niceMax(v: number): number {
-  if (v <= 0) return 4;
-  const pow = Math.pow(10, Math.floor(Math.log10(v)));
-  const n = v / pow;
-  let step;
-  if (n <= 1) step = 1;
-  else if (n <= 2) step = 2;
-  else if (n <= 5) step = 5;
-  else step = 10;
-  return step * pow;
-}
-
-function formatTick(v: number): string {
-  if (v >= 1000) return `${(v / 1000).toFixed(v % 1000 === 0 ? 0 : 1)}k`;
-  return v.toLocaleString(undefined, { maximumFractionDigits: 0 });
-}
-
-function formatDate(iso: string): string {
-  const d = new Date(iso + "T00:00:00");
-  return `${d.getMonth() + 1}/${d.getDate()}`;
 }

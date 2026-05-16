@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 
 import { CERT_TOKENS, certFromExamType, type CertKey } from "@/lib/cert-tokens";
 import { adminListPosts, type PostStatus, type PostSummary } from "@/lib/api";
+import { formatDateTime } from "@/lib/format";
 
 type Tab = "ALL" | "PENDING" | "PUBLISHED";
 
@@ -88,7 +89,7 @@ export default function AdminPostsPage() {
                     <p className="mt-1 flex items-center gap-2 text-xs text-muted tabular-nums">
                       <span>{p.authorNickname}</span>
                       <span aria-hidden>·</span>
-                      <span>{new Date(p.createdAt).toLocaleString("ko-KR")}</span>
+                      <span>{formatDateTime(p.createdAt)}</span>
                       {p.commentCount > 0 && (
                         <>
                           <span aria-hidden>·</span>

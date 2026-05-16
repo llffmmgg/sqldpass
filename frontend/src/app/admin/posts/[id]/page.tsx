@@ -20,6 +20,7 @@ import {
   adminGetPost,
   type PostDetail,
 } from "@/lib/api";
+import { formatDateTime } from "@/lib/format";
 
 export default function AdminPostDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -160,7 +161,7 @@ export default function AdminPostDetailPage({ params }: { params: Promise<{ id: 
         <h1 className="mt-3 text-2xl font-bold tracking-tight">{post.title}</h1>
 
         <div className="mt-3 text-xs text-muted tabular-nums">
-          {post.authorNickname} · {new Date(post.createdAt).toLocaleString("ko-KR")}
+          {post.authorNickname} · {formatDateTime(post.createdAt)}
         </div>
 
         <div className="mt-5 flex items-center justify-between border-t border-border pt-5">
@@ -298,7 +299,7 @@ export default function AdminPostDetailPage({ params }: { params: Promise<{ id: 
                 <div className="flex items-center justify-between gap-2 text-xs text-muted tabular-nums">
                   <span className="font-medium text-foreground">{c.authorNickname}</span>
                   <div className="flex items-center gap-2">
-                    <span>{new Date(c.createdAt).toLocaleString("ko-KR")}</span>
+                    <span>{formatDateTime(c.createdAt)}</span>
                     <button
                       type="button"
                       onClick={() => handleDeleteComment(c.id)}

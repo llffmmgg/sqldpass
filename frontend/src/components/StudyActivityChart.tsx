@@ -22,7 +22,7 @@ type StudyActivityChartProps = {
 };
 
 const VB_W = 600;
-const VB_H = 200;
+const VB_H = 160;
 const PADDING_LEFT = 12;
 const PADDING_RIGHT = 36;
 const PADDING_TOP = 16;
@@ -268,10 +268,10 @@ export default function StudyActivityChart({ data, pending = false }: StudyActiv
                   animate={{ y1: t.y, y2: t.y }}
                   initial={false}
                   transition={PATH_TWEEN}
-                  stroke="var(--border)"
+                  stroke={t.value === 0 ? "var(--border-strong)" : "var(--border-strong)"}
                   strokeWidth={1}
-                  strokeDasharray={t.value === 0 ? "0" : "2 3"}
-                  opacity={t.value === 0 ? 0.9 : 0.5}
+                  strokeDasharray={t.value === 0 ? "0" : "3 3"}
+                  opacity={t.value === 0 ? 0.9 : 0.75}
                 />
                 <motion.text
                   x={PADDING_LEFT + PLOT_W + 6}

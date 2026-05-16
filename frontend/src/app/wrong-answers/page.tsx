@@ -519,12 +519,13 @@ function WrongAnswersPageContent() {
 
   return (
     <main className="min-h-screen bg-bg text-text">
-      <Container size="default" className="py-16">
+      <Container size="default" className="py-12">
+        {/* 헤더 — 대시보드와 동일 패턴 (py-12 + mascot 180 + h1 3xl/4xl + 설명 text-sm) */}
         <div className="flex items-center gap-5">
           <MascotImage pose="check" size={180} priority className="shrink-0" />
           <div>
             <h1 className="text-3xl font-bold sm:text-4xl">오답 노트</h1>
-            <p className="mt-2 text-base text-muted">
+            <p className="mt-1 text-sm text-muted">
               {topTab === "wrong"
                 ? "틀린 문제를 다시 풀어 마스터하세요. 다시 맞히면 목록에서 자동으로 사라집니다."
                 : "즐겨찾기한 문제를 모아 언제든 다시 풀 수 있어요."}

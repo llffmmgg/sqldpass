@@ -16,6 +16,7 @@ import PageHeader from "@/components/admin/PageHeader";
 import DataTable, { TableSkeleton } from "@/components/admin/DataTable";
 import EmptyState from "@/components/admin/EmptyState";
 import SubscriptionStatsPanel from "@/components/admin/SubscriptionStatsPanel";
+import { formatDateTime as formatKstDateTime } from "@/lib/format";
 
 const PLAN_LABEL: Record<AdminSubscriptionPlan, string> = {
   THREE_DAY: "Thunder",
@@ -333,18 +334,3 @@ function GrantModal({ onClose, onDone }: { onClose: () => void; onDone: () => vo
   );
 }
 
-// 백엔드 LocalDateTime 문자열을 "YYYY-MM-DD HH:mm" 으로 표시.
-// 브라우저 Date 파싱이 TZ 없는 ISO 를 로컬 TZ 가정으로 해석하므로,
-// 백엔드 컨테이너 JVM TZ=Asia/Seoul 일치 + 한국 브라우저 환경에서 정확.
-function formatKstDateTime(iso: string): string {
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return iso;
-  return d.toLocaleString("ko-KR", {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  });
-}

@@ -13,6 +13,7 @@ import {
   type AdminSubscriptionPlan,
 } from "@/lib/adminApi";
 import PageHeader from "@/components/admin/PageHeader";
+import { formatDateTime } from "@/lib/format";
 import DataTable, { TableSkeleton } from "@/components/admin/DataTable";
 import EmptyState from "@/components/admin/EmptyState";
 
@@ -303,12 +304,3 @@ function getDisabledReason(row: AdminPaymentRow): string {
   return "환불 불가";
 }
 
-function formatDateTime(iso: string): string {
-  const d = new Date(iso);
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  const hh = String(d.getHours()).padStart(2, "0");
-  const mm = String(d.getMinutes()).padStart(2, "0");
-  return `${y}-${m}-${day} ${hh}:${mm}`;
-}
