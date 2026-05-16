@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { Noto_Sans_KR, JetBrains_Mono, Caveat } from "next/font/google";
+import { JetBrains_Mono, Caveat } from "next/font/google";
+import localFont from "next/font/local";
 import { Suspense } from "react";
 import NavBar from "@/components/NavBar";
 import BottomTabBar from "@/components/BottomTabBar";
@@ -20,10 +21,13 @@ const ADSENSE_SIDEBAR_SLOT = process.env.NEXT_PUBLIC_ADSENSE_SIDEBAR_SLOT ?? "16
 
 const ADSENSE_CLIENT = "ca-pub-6512792395955186";
 
-const notoSansKr = Noto_Sans_KR({
+// Pretendard Variable — Inter 의 한국 카운터파트. 한글/라틴 모두 자체 지원.
+// next/font/local 로 node_modules 의 woff2 직접 참조 → 빌드 시 self-host + preload.
+const pretendard = localFont({
+  src: "../../node_modules/pretendard/dist/web/variable/woff2/PretendardVariable.woff2",
+  display: "swap",
   variable: "--font-sans-kr",
-  subsets: ["latin", "latin-ext"],
-  weight: ["400", "500", "600", "700"],
+  weight: "45 920",
 });
 
 const jetbrainsMono = JetBrains_Mono({
@@ -170,7 +174,7 @@ export default function RootLayout({
   return (
     <html
       lang="ko"
-      className={`${notoSansKr.variable} ${jetbrainsMono.variable} ${caveat.variable} h-full antialiased`}
+      className={`${pretendard.variable} ${jetbrainsMono.variable} ${caveat.variable} h-full antialiased`}
       suppressHydrationWarning
     >
       <head>
