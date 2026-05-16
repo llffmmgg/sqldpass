@@ -104,6 +104,7 @@ const TIERS: Tier[] = [
     name: "All Pass",
     tagline: "한 번 결제로 계속 이용",
     price: 29900,
+    originalPrice: 39900,
     pitch: "한 번 결제로 새 회차와 모의고사 PDF 다운로드까지 평생 사용하세요.",
     features: [
       { text: "PASS+ 회차 무제한" },
@@ -141,6 +142,21 @@ export default function CheckoutLanding({
 }: Props) {
   return (
     <div className="relative">
+      {/* 우측 상단 — 한정 할인가 유지 기간 안내 */}
+      <div className="absolute right-0 top-0 z-10 hidden sm:block">
+        <div className="inline-flex items-center gap-2 rounded-lg border border-primary/40 bg-primary px-3 py-1.5 text-[11px] font-semibold text-primary-fg shadow-sm">
+          <span aria-hidden>🎉</span>
+          <span>할인가 5월 30일까지 유지</span>
+        </div>
+      </div>
+      {/* 모바일 — 헤더 위에 같은 안내를 인라인 표시 */}
+      <div className="mb-4 flex justify-center sm:hidden">
+        <div className="inline-flex items-center gap-2 rounded-lg border border-primary/40 bg-primary px-3 py-1.5 text-[11px] font-semibold text-primary-fg shadow-sm">
+          <span aria-hidden>🎉</span>
+          <span>할인가 5월 30일까지 유지</span>
+        </div>
+      </div>
+
       <header className="text-center">
         <span className="inline-flex items-center gap-1.5 rounded-full bg-primary px-3 py-1 text-xs font-semibold text-primary-fg">
           요금제
