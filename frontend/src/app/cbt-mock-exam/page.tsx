@@ -97,9 +97,7 @@ export default function CbtMockExamPage() {
           <h1 className="mt-6 text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl">
             무료 CBT 모의고사
             <br />
-            <span className="bg-gradient-to-r from-primary to-[#5ee0a5] bg-clip-text text-transparent">
-              자격증 한 곳에서
-            </span>
+            <span className="text-primary">자격증 한 곳에서</span>
           </h1>
           <p className="mx-auto mt-6 max-w-2xl text-base leading-relaxed text-text-muted sm:text-lg">
             SQLD · 정보처리기사 필기/실기 · 컴퓨터활용능력 1/2급 · ADsP CBT 모의고사를
