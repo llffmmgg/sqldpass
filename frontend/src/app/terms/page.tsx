@@ -13,7 +13,7 @@ export default function TermsPage() {
     <main className="py-12 text-foreground">
       <Container size="narrow">
       <h1 className="text-3xl font-bold">이용약관</h1>
-      <p className="mt-2 text-sm text-muted">최종 개정일: 2026년 5월 6일</p>
+      <p className="mt-2 text-sm text-muted">최종 개정일: 2026년 5월 17일</p>
 
       <Section title="1. 목적">
         <p>
@@ -24,18 +24,19 @@ export default function TermsPage() {
 
       <Section title="2. 컨텐츠 정확성과 면책">
         <p>
-          사이트의 문제와 해설은 운영자가 제작·검증하며, 제작 과정에서 AI 도구를 보조적으로
-          활용합니다. 그럼에도 일부 문제에는 오류가 포함될 수 있으며, 사이트는 다음을 보증하지
-          않습니다.
+          사이트의 문제·해설 및 정리본 PDF 등 학습 자료는 운영자가 제작·검증하며, 제작 과정에서
+          AI 도구를 보조적으로 활용합니다. 그럼에도 일부 내용에는 오류가 포함될 수 있으며,
+          사이트는 다음을 보증하지 않습니다.
         </p>
         <ul className="mt-2 list-disc pl-5">
-          <li>모든 문제와 해설의 절대적 정확성</li>
+          <li>모든 문제·해설·정리본 PDF의 절대적 정확성</li>
           <li>실제 시험 합격 또는 점수</li>
           <li>실제 시험 출제 범위와의 완전 일치</li>
         </ul>
         <p className="mt-2">
           이용자는 학습 보조 자료로 활용하시고, 정확한 시험 범위·정답은 공식 출제기관의 자료를
-          병행해 확인해 주세요. 오류 발견 시{" "}
+          병행해 확인해 주세요. 정리본 PDF 는 본인이 직접 정리한 노트를 대체하는 자료가 아니며,
+          빠진 개념을 빠르게 보충하는 보조 용도로 활용해 주세요. 오류 발견 시{" "}
           <Link href="/profile" className="text-primary underline">피드백</Link>으로 알려주시면
           신속히 수정합니다.
         </p>
@@ -115,6 +116,7 @@ export default function TermsPage() {
 
       <Section title="10. 개정 이력">
         <ul className="list-disc pl-5">
+          <li>2026-05-17 — 정리본 PDF 등 학습 자료 면책 범위 명시</li>
           <li>2026-05-06 — 유료 결제(프리미엄 모의고사) 조항 추가</li>
           <li>2026-04-09 — 최초 작성</li>
         </ul>
