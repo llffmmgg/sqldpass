@@ -65,12 +65,12 @@ export default function AdspCramHero() {
           className={OUTLINE_BTN}
         >
           <DownloadIcon />
-          로그인하고 PDF 받기
+          PDF 받기
         </button>
       ) : !canDownload ? (
         <Link href="/checkout" className={OUTLINE_BTN}>
           <DownloadIcon />
-          Thunder 플랜 보고 PDF 받기
+          PDF 받기
         </Link>
       ) : (
         <button onClick={handleDownload} disabled={busy} className={PRIMARY_BTN}>
@@ -78,6 +78,9 @@ export default function AdspCramHero() {
           {busy ? "PDF 준비 중..." : "전체 PDF 다운로드"}
         </button>
       )}
+      <p className="mt-3 text-sm text-text-subtle">
+        Thunder 플랜 이상 회원 다운로드 가능
+      </p>
     </div>
   );
 }
