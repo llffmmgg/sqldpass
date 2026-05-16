@@ -134,9 +134,89 @@ export interface WrongAnswerStatsResponse {
   wrongRate: number;
 }
 
+// ── dev fixture 데이터 ─────────────────────────────────────
+// AuthGuard 의 NEXT_PUBLIC_DEV_UI_PREVIEW=true + NODE_ENV !== 'production' 일 때
+// 대시보드/오답노트의 6개 GET API 가 백엔드 호출 대신 mock 데이터 반환.
+// production 빌드에선 NODE_ENV 분기로 항상 false → fixture 코드 dead-code 제거됨.
+const DEV_FIXTURES =
+  typeof window !== "undefined" &&
+  process.env.NODE_ENV !== "production" &&
+  process.env.NEXT_PUBLIC_DEV_UI_PREVIEW === "true";
+
+const fxDate = (daysAgo: number) =>
+  new Date(Date.now() - daysAgo * 86_400_000).toISOString();
+
+const FIXTURE_SUBJECTS: Subject[] = [
+  {
+    id: 1, name: "SQLD", displayOrder: 1, children: [
+      { id: 11, name: "1과목 데이터 모델링의 이해", displayOrder: 1, children: [] },
+      { id: 12, name: "2과목 SQL 기본 및 활용", displayOrder: 2, children: [] },
+    ],
+  },
+  {
+    id: 2, name: "정보처리기사 필기", displayOrder: 2, children: [
+      { id: 21, name: "소프트웨어 설계", displayOrder: 1, children: [] },
+      { id: 22, name: "데이터베이스 구축", displayOrder: 2, children: [] },
+    ],
+  },
+  {
+    id: 3, name: "정보처리기사 실기", displayOrder: 3, children: [
+      { id: 31, name: "응용 SW 기초 기술 활용", displayOrder: 1, children: [] },
+    ],
+  },
+  {
+    id: 4, name: "컴퓨터활용능력 1급", displayOrder: 4, children: [
+      { id: 41, name: "컴퓨터 일반", displayOrder: 1, children: [] },
+    ],
+  },
+  {
+    id: 5, name: "ADsP", displayOrder: 5, children: [
+      { id: 51, name: "데이터의 이해", displayOrder: 1, children: [] },
+    ],
+  },
+];
+
+const FIXTURE_SOLVES: SolveSummaryResponse[] = [
+  { id: 1, subjectId: 11, mockExamId: null, totalCount: 10, correctCount: 8, score: 80, solvedAt: fxDate(0) },
+  { id: 2, subjectId: 12, mockExamId: null, totalCount: 10, correctCount: 7, score: 70, solvedAt: fxDate(1) },
+  { id: 3, subjectId: null, mockExamId: 101, totalCount: 50, correctCount: 38, score: 76, solvedAt: fxDate(1) },
+  { id: 4, subjectId: 21, mockExamId: null, totalCount: 15, correctCount: 12, score: 80, solvedAt: fxDate(2) },
+  { id: 5, subjectId: 11, mockExamId: null, totalCount: 10, correctCount: 9, score: 90, solvedAt: fxDate(3) },
+  { id: 6, subjectId: null, mockExamId: 102, totalCount: 50, correctCount: 42, score: 84, solvedAt: fxDate(3) },
+  { id: 7, subjectId: 12, mockExamId: null, totalCount: 10, correctCount: 6, score: 60, solvedAt: fxDate(4) },
+  { id: 8, subjectId: 22, mockExamId: null, totalCount: 12, correctCount: 10, score: 83, solvedAt: fxDate(5) },
+  { id: 9, subjectId: 11, mockExamId: null, totalCount: 10, correctCount: 8, score: 80, solvedAt: fxDate(6) },
+  { id: 10, subjectId: 51, mockExamId: null, totalCount: 8, correctCount: 6, score: 75, solvedAt: fxDate(7) },
+  { id: 11, subjectId: 41, mockExamId: null, totalCount: 10, correctCount: 7, score: 70, solvedAt: fxDate(9) },
+  { id: 12, subjectId: null, mockExamId: 103, totalCount: 50, correctCount: 35, score: 70, solvedAt: fxDate(10) },
+];
+
+const FIXTURE_WRONG_STATS: WrongAnswerStatsResponse[] = [
+  { subjectId: 11, subjectName: "1과목 데이터 모델링의 이해", totalSolved: 50, wrongCount: 8, wrongRate: 0.16 },
+  { subjectId: 12, subjectName: "2과목 SQL 기본 및 활용", totalSolved: 80, wrongCount: 22, wrongRate: 0.275 },
+  { subjectId: 21, subjectName: "소프트웨어 설계", totalSolved: 30, wrongCount: 5, wrongRate: 0.167 },
+  { subjectId: 22, subjectName: "데이터베이스 구축", totalSolved: 25, wrongCount: 9, wrongRate: 0.36 },
+  { subjectId: 31, subjectName: "응용 SW 기초 기술 활용", totalSolved: 15, wrongCount: 4, wrongRate: 0.267 },
+  { subjectId: 41, subjectName: "컴퓨터 일반", totalSolved: 20, wrongCount: 6, wrongRate: 0.30 },
+];
+
+const FIXTURE_OVERALL_STATS: OverallStatsResponse = { avgDailyCount: 5.2 };
+
+const FIXTURE_WRONG_ANSWERS: WrongAnswerResponse[] = [
+  { questionId: 1001, questionContent: "데이터베이스 정규화에서 제3정규형의 조건을 가장 잘 설명한 것은?", subjectId: 11, subjectName: "1과목 데이터 모델링의 이해", wrongCount: 3, lastWrongAt: fxDate(0) },
+  { questionId: 1002, questionContent: "다음 SQL 구문 중 GROUP BY 절을 사용했을 때 SELECT 절에 올 수 없는 것은?", subjectId: 12, subjectName: "2과목 SQL 기본 및 활용", wrongCount: 2, lastWrongAt: fxDate(1) },
+  { questionId: 1003, questionContent: "트랜잭션의 ACID 특성 중 격리성(Isolation)에 해당하는 설명은?", subjectId: 11, subjectName: "1과목 데이터 모델링의 이해", wrongCount: 4, lastWrongAt: fxDate(2) },
+  { questionId: 1004, questionContent: "JOIN 연산에서 LEFT OUTER JOIN 의 결과로 옳은 것은?", subjectId: 12, subjectName: "2과목 SQL 기본 및 활용", wrongCount: 1, lastWrongAt: fxDate(3) },
+  { questionId: 1005, questionContent: "응집도(Cohesion)와 결합도(Coupling) 의 관계를 가장 적절히 설명한 것은?", subjectId: 21, subjectName: "소프트웨어 설계", wrongCount: 2, lastWrongAt: fxDate(4) },
+  { questionId: 1006, questionContent: "RAID 구성 방식 중 데이터 분산 + 패리티를 함께 쓰는 것은?", subjectId: 41, subjectName: "컴퓨터 일반", wrongCount: 1, lastWrongAt: fxDate(5) },
+  { questionId: 1007, questionContent: "ER 모델에서 약한 개체(Weak Entity) 의 특징으로 옳은 것은?", subjectId: 22, subjectName: "데이터베이스 구축", wrongCount: 3, lastWrongAt: fxDate(6) },
+  { questionId: 1008, questionContent: "데이터 분석 절차에서 데이터 클렌징의 주된 목적은?", subjectId: 51, subjectName: "데이터의 이해", wrongCount: 2, lastWrongAt: fxDate(8) },
+];
+
 // API 함수
 
 export function getSubjects() {
+  if (DEV_FIXTURES) return Promise.resolve(FIXTURE_SUBJECTS);
   return fetchApi<Subject[]>("/subjects");
 }
 
@@ -169,6 +249,13 @@ export async function submitSolve(request: SolveRequest): Promise<SolveResponse>
 }
 
 export function getSolves(opts?: { mockExamId?: number }) {
+  if (DEV_FIXTURES) {
+    return Promise.resolve(
+      opts?.mockExamId != null
+        ? FIXTURE_SOLVES.filter((s) => s.mockExamId === opts.mockExamId)
+        : FIXTURE_SOLVES,
+    );
+  }
   const qs = opts?.mockExamId != null ? `?mockExamId=${opts.mockExamId}` : "";
   return fetchApi<SolveSummaryResponse[]>(`/solves${qs}`);
 }
@@ -178,6 +265,7 @@ export function getSolve(id: number) {
 }
 
 export function getOverallStats() {
+  if (DEV_FIXTURES) return Promise.resolve(FIXTURE_OVERALL_STATS);
   return fetchApi<OverallStatsResponse>("/solves/stats/overall-avg");
 }
 
@@ -192,11 +280,19 @@ export function getMyBestScores(): Promise<BestScoreMap> {
 }
 
 export function getWrongAnswers(subjectId?: number) {
+  if (DEV_FIXTURES) {
+    return Promise.resolve(
+      subjectId
+        ? FIXTURE_WRONG_ANSWERS.filter((w) => w.subjectId === subjectId)
+        : FIXTURE_WRONG_ANSWERS,
+    );
+  }
   const params = subjectId ? `?subjectId=${subjectId}` : "";
   return fetchApi<WrongAnswerResponse[]>(`/wrong-answers${params}`);
 }
 
 export function getWrongAnswerStats() {
+  if (DEV_FIXTURES) return Promise.resolve(FIXTURE_WRONG_STATS);
   return fetchApi<WrongAnswerStatsResponse[]>("/wrong-answers/stats");
 }
 
@@ -284,6 +380,21 @@ export function removeBookmark(questionId: number): Promise<void> {
  * 31번째 이상은 백엔드에 보존되며 결제 후 즉시 복원.
  */
 export function getBookmarks(): Promise<BookmarkListResponse> {
+  if (DEV_FIXTURES) {
+    return Promise.resolve({
+      items: [
+        { questionId: 2001, questionContent: "DBMS의 동시성 제어 기법 중 잠금(Lock) 방식의 단점은?", questionType: "MCQ", subjectId: 11, subjectName: "1과목 데이터 모델링의 이해", createdAt: fxDate(0) },
+        { questionId: 2002, questionContent: "다음 중 SQL 표준에서 정의된 데이터형이 아닌 것은?", questionType: "MCQ", subjectId: 12, subjectName: "2과목 SQL 기본 및 활용", createdAt: fxDate(2) },
+        { questionId: 2003, questionContent: "정규화 과정에서 BCNF 가 3NF 와 다른 점은?", questionType: "SHORT_ANSWER", subjectId: 11, subjectName: "1과목 데이터 모델링의 이해", createdAt: fxDate(4) },
+        { questionId: 2004, questionContent: "TCP 와 UDP 의 헤더 크기 차이는?", questionType: "MCQ", subjectId: 21, subjectName: "소프트웨어 설계", createdAt: fxDate(6) },
+        { questionId: 2005, questionContent: "엑셀에서 IF 함수를 중첩하여 학점을 구할 때 옳은 식은?", questionType: "MCQ", subjectId: 41, subjectName: "컴퓨터 일반", createdAt: fxDate(8) },
+        { questionId: 2006, questionContent: "데이터마이닝 기법 중 분류와 군집화의 차이를 설명하시오.", questionType: "DESCRIPTIVE", subjectId: 51, subjectName: "데이터의 이해", createdAt: fxDate(10) },
+      ],
+      totalCount: 6,
+      limited: false,
+      freeLimit: 30,
+    });
+  }
   return fetchApi<BookmarkListResponse>(`/bookmarks`);
 }
 
