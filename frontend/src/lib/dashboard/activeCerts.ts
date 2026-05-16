@@ -16,9 +16,10 @@ export type CertActivity = {
 
 const MIN_SOLVES = 5;
 
-export function inferActiveCerts(
+function buildCertActivity(
   solves: SolveSummaryResponse[],
   subjectCertMap: Record<number, CertKey>,
+  minSolves: number,
 ): CertActivity[] {
   const byCert = new Map<CertKey, {
     count: number;
@@ -37,7 +38,7 @@ export function inferActiveCerts(
 
   const result: CertActivity[] = [];
   for (const [cert, entry] of byCert) {
-    if (entry.count < MIN_SOLVES) continue;
+    if (entry.count < minSolves) continue;
     const recent5 = entry.recentScores
       .sort((a, b) => b.at.localeCompare(a.at))
       .slice(0, 5);
@@ -47,9 +48,24 @@ export function inferActiveCerts(
     result.push({ cert, solveCount: entry.count, recent5AvgScore: Math.round(avg * 10) / 10 });
   }
 
-  // 최근 풀이수 많은 순으로 정렬
   result.sort((a, b) => b.solveCount - a.solveCount);
   return result;
+}
+
+export function inferActiveCerts(
+  solves: SolveSummaryResponse[],
+  subjectCertMap: Record<number, CertKey>,
+): CertActivity[] {
+  return buildCertActivity(solves, subjectCertMap, MIN_SOLVES);
+}
+
+/** 풀이 ≥1 건이지만 < MIN_SOLVES 인 자격증. 합격률 추정 불가 + CTA cell 용도. */
+export function inferTouchedButInactiveCerts(
+  solves: SolveSummaryResponse[],
+  subjectCertMap: Record<number, CertKey>,
+): CertActivity[] {
+  const all = buildCertActivity(solves, subjectCertMap, 1);
+  return all.filter((a) => a.solveCount < MIN_SOLVES);
 }
 
 /** 자격증별 합격선 (% 기준). 합격까지 점수 차이 계산용. */
