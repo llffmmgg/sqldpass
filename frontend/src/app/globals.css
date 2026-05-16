@@ -18,10 +18,11 @@
   --border: #d0d3d9;          /* 또렷한 솔리드 보더 (이전 #e5e5e5 너무 옅음) */
   --border-strong: #a8acb6;   /* 호버·강조 */
 
-  /* text — WCAG AA 4.5:1 on white(#fff) and surface(#f7f8fa) */
+  /* text — WCAG AA 4.5:1 on white(#fff) and surface(#f7f8fa)
+   * text-subtle 은 이전 #5e636e (3.6:1 fail on surface) 였음. 31% L 로 어둡게. */
   --text: #181a1f;
   --text-muted: #4a505a;
-  --text-subtle: #5e636e;
+  --text-subtle: #454a56;
 
   /* brand */
   --primary: #24b47e;
@@ -222,7 +223,7 @@ select:focus-visible, input:focus-visible, textarea:focus-visible {
 html:not(.dark) .text-amber-300 { color: #b45309; }
 html:not(.dark) .text-amber-200 { color: #92400e; }
 html:not(.dark) .text-amber-100 { color: #78350f; }
-html:not(.dark) .text-emerald-300 { color: #047857; }
+html:not(.dark) .text-emerald-300 { color: #035e47; }
 html:not(.dark) .text-emerald-200 { color: #065f46; }
 html:not(.dark) .text-emerald-100 { color: #064e3b; }
 html:not(.dark) .text-emerald-100\/90 { color: #064e3b; }
@@ -243,9 +244,10 @@ html:not(.dark) .text-pink-300 { color: #be185d; }
 html:not(.dark) .text-zinc-300 { color: #52525b; }
 html:not(.dark) .text-zinc-400 { color: #71717a; }
 
-/* Hero orbs are subtler on white backgrounds */
-html:not(.dark) .hero-orb { opacity: 0.45; }
-html:not(.dark) .hero-ambient { opacity: 0.55; }
+/* Hero orbs/ambient — 라이트 모드에서 완전 제거 (AI 보일러플레이트 느낌 차단).
+ * 다크 모드는 sqldpass 정체성 유지하기 위해 그대로 살림. */
+html:not(.dark) .hero-orb,
+html:not(.dark) .hero-ambient { display: none !important; }
 
 /* ── Blog prose ──
  * Long-form Korean reading. Tuned for comfortable scanning:
@@ -664,6 +666,42 @@ details[open] summary .chevron-icon { transform: rotate(90deg); }
 }
 .animate-mascot-in     { animation: mascot-bob-in 520ms cubic-bezier(0.22, 1, 0.36, 1); }
 .animate-mascot-bounce { animation: mascot-bounce-soft 2.4s ease-in-out infinite 520ms; }
+
+/* ───────────────────────────────────────────────────────────────────────────
+ * 라이트 모드 가독성 + AI 티 제거 패치
+ *
+ * 사용자 메모리 룰:
+ *  - 색 hue 변경 금지 (opacity/lightness 만 조정)
+ *  - AI 스러운 흐릿 효과 금지 (backdrop-blur, /5~/10 옅은 배경, drop-shadow glow, opacity pulse)
+ *
+ * 라이트 모드만 강화하고 다크 모드는 거의 건드리지 않음.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+/* 1. 글로우/패턴/shimmer — 라이트 모드 비활성 */
+html:not(.dark) .grid-pattern { opacity: 0 !important; }
+html:not(.dark) .btn-glow::after { display: none !important; }
+html:not(.dark) .shimmer-line::after { display: none !important; }
+
+/* 2. Tailwind slash opacity 보정 — bg-primary/{5,10,15} 흰 배경 위 거의 안 보이는 문제.
+ * 다크 모드는 어두운 배경 위라 그대로 OK. 라이트에서만 +5pp 정도 진하게. */
+html:not(.dark) .bg-primary\/5  { background-color: color-mix(in srgb, var(--primary) 10%, transparent) !important; }
+html:not(.dark) .bg-primary\/10 { background-color: color-mix(in srgb, var(--primary) 15%, transparent) !important; }
+html:not(.dark) .bg-primary\/15 { background-color: color-mix(in srgb, var(--primary) 20%, transparent) !important; }
+html:not(.dark) .border-primary\/25 { border-color: color-mix(in srgb, var(--primary) 40%, transparent) !important; }
+html:not(.dark) .border-primary\/30 { border-color: color-mix(in srgb, var(--primary) 45%, transparent) !important; }
+html:not(.dark) .border-primary\/40 { border-color: color-mix(in srgb, var(--primary) 55%, transparent) !important; }
+
+/* success/info 도 동일 패턴 — 라이트에서 약한 색감 보정 */
+html:not(.dark) .bg-success\/10 { background-color: color-mix(in srgb, var(--success) 18%, transparent) !important; }
+html:not(.dark) .bg-success\/15 { background-color: color-mix(in srgb, var(--success) 22%, transparent) !important; }
+html:not(.dark) .border-success\/40 { border-color: color-mix(in srgb, var(--success) 55%, transparent) !important; }
+
+/* 3. backdrop-blur 글로벌 무력화 — frosted glass 인상 차단.
+ * 클래스명은 코드에 그대로 두고 효과만 죽임. 향후 복귀 가능. */
+[class*="backdrop-blur"] {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
 
 /* ── Promo Picket — Duo 마스코트 스타일 idle 호흡 + 폴짝 점프 + squash/stretch ──
  * 4.5s 사이클: 호흡(0~25%) → 정지(25~40%) → 웅크림(40~48%) → 점프(48~62%) →
