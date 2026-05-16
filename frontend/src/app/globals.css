@@ -664,3 +664,39 @@ details[open] summary .chevron-icon { transform: rotate(90deg); }
 }
 .animate-mascot-in     { animation: mascot-bob-in 520ms cubic-bezier(0.22, 1, 0.36, 1); }
 .animate-mascot-bounce { animation: mascot-bounce-soft 2.4s ease-in-out infinite 520ms; }
+
+/* ── Promo Picket — Duo 마스코트 스타일 idle 호흡 + 폴짝 점프 + squash/stretch ──
+ * 4.5s 사이클: 호흡(0~25%) → 정지(25~40%) → 웅크림(40~48%) → 점프(48~62%) →
+ * 착지 압축(62~78%) → 회복(78~100%). 회전축은 문어 발(하단)에 두어 자연스러운 점프. */
+@keyframes octopus-hop {
+  /* 호흡 — 살짝 위아래 + 미세한 좌우 흔들림 */
+  0%   { transform: translateY(0) scaleX(1) scaleY(1) rotate(0deg); }
+  12%  { transform: translateY(-1px) scaleX(1.01) scaleY(0.99) rotate(0.5deg); }
+
+  /* 평온한 idle */
+  25%  { transform: translateY(0) scaleX(1) scaleY(1) rotate(0deg); }
+  40%  { transform: translateY(0) scaleX(1) scaleY(1) rotate(0deg); }
+
+  /* 웅크림 anticipation — 가로로 퍼지고 세로로 짧아짐 */
+  48%  { transform: translateY(3px) scaleX(1.07) scaleY(0.91) rotate(0deg); }
+
+  /* 도약 — 세로로 늘어남, 살짝 좌향 회전 */
+  56%  { transform: translateY(-12px) scaleX(0.95) scaleY(1.06) rotate(-2deg); }
+  62%  { transform: translateY(-14px) scaleX(0.97) scaleY(1.04) rotate(2deg); }
+
+  /* 낙하 */
+  72%  { transform: translateY(0) scaleX(1) scaleY(1) rotate(0deg); }
+
+  /* 착지 압축 */
+  78%  { transform: translateY(3px) scaleX(1.06) scaleY(0.92) rotate(0deg); }
+
+  /* 회복 */
+  88%  { transform: translateY(-1px) scaleX(1) scaleY(1) rotate(0deg); }
+  100% { transform: translateY(0) scaleX(1) scaleY(1) rotate(0deg); }
+}
+.animate-octopus-hop {
+  animation: octopus-hop 4.5s cubic-bezier(0.34, 1.56, 0.64, 1) infinite;
+  /* 회전축을 문어 발(이미지 하단) 위치에 두어 점프 시 자연스러운 회전 */
+  transform-origin: 60% 95%;
+  will-change: transform;
+}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 
 import {
@@ -142,19 +143,13 @@ export default function CheckoutLanding({
 }: Props) {
   return (
     <div className="relative">
-      {/* 우측 상단 — 한정 할인가 유지 기간 안내 */}
-      <div className="absolute right-0 top-0 z-10 hidden sm:block">
-        <div className="inline-flex items-center gap-2 rounded-lg border border-primary/40 bg-primary px-3 py-1.5 text-[11px] font-semibold text-primary-fg shadow-sm">
-          <span aria-hidden>🎉</span>
-          <span>할인가 5월 30일까지 유지</span>
-        </div>
+      {/* 우측 상단 — 문어 마스코트가 피켓 들고 흔드는 한정 할인 안내 */}
+      <div className="pointer-events-none absolute -right-2 -top-6 z-10 hidden sm:block">
+        <PromoPicket />
       </div>
-      {/* 모바일 — 헤더 위에 같은 안내를 인라인 표시 */}
-      <div className="mb-4 flex justify-center sm:hidden">
-        <div className="inline-flex items-center gap-2 rounded-lg border border-primary/40 bg-primary px-3 py-1.5 text-[11px] font-semibold text-primary-fg shadow-sm">
-          <span aria-hidden>🎉</span>
-          <span>할인가 5월 30일까지 유지</span>
-        </div>
+      {/* 모바일 — 헤더 위에 동일 피켓 인라인 표시 */}
+      <div className="mb-2 flex justify-center sm:hidden">
+        <PromoPicket />
       </div>
 
       <header className="text-center">
@@ -661,6 +656,25 @@ function StarSvg({ className = "" }: { className?: string }) {
     <svg className={className} fill="currentColor" viewBox="0 0 24 24">
       <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
     </svg>
+  );
+}
+
+// 문어 마스코트가 "할인가 5월 30일까지" 사인을 들고 점프하는 피켓.
+// 글자는 이미지에 베이크 인됨 (CSS 오버레이 불필요). Duo 스타일 호흡+점프 모션.
+function PromoPicket() {
+  return (
+    <div className="inline-block w-[200px] select-none sm:w-[220px]">
+      <div className="animate-octopus-hop">
+        <Image
+          src="/promo/octopus-picket.webp"
+          alt="할인가 5월 30일까지"
+          width={577}
+          height={433}
+          className="h-auto w-full"
+          priority={false}
+        />
+      </div>
+    </div>
   );
 }
 
