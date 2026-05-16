@@ -143,7 +143,7 @@
   --radius-xl: 16px;
   --radius-2xl: 20px;
 
-  --font-sans: var(--font-sans-kr), Pretendard, system-ui, sans-serif;
+  --font-sans: var(--font-sans-kr), system-ui, sans-serif;
   --font-mono: var(--font-jetbrains-mono), ui-monospace, monospace;
 }
 
@@ -666,6 +666,19 @@ details[open] summary .chevron-icon { transform: rotate(90deg); }
 }
 .animate-mascot-in     { animation: mascot-bob-in 520ms cubic-bezier(0.22, 1, 0.36, 1); }
 .animate-mascot-bounce { animation: mascot-bounce-soft 2.4s ease-in-out infinite 520ms; }
+
+/* ── Marquee (Supabase 트러스트바 스타일) ──
+ * 자식 요소를 두 번 렌더하고 -50% 이동 → 끊김 없는 무한 가로 스크롤.
+ * prefers-reduced-motion 환경에서는 기존 미디어쿼리로 자동 정지.
+ * 클래스명 .cert-marquee 사용 — Tailwind 의 animate-* 유틸과 충돌 회피. */
+@keyframes marquee-x {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+.cert-marquee {
+  animation: marquee-x 30s linear infinite;
+  will-change: transform;
+}
 
 /* ───────────────────────────────────────────────────────────────────────────
  * 라이트 모드 가독성 + AI 티 제거 패치

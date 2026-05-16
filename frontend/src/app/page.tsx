@@ -6,7 +6,6 @@ import HeroStats from "@/components/HeroStats";
 import ExamCountdownStrip from "@/components/ExamCountdownStrip";
 import DailyQuestionWidget from "@/components/DailyQuestionWidget";
 import { SiteNoticeModal } from "@/components/SiteNoticeModal";
-import CertChips from "@/components/CertChips";
 import RankingSection from "@/components/RankingSection";
 import { Badge, ButtonLink, Card, Container, Section } from "@/components/ui";
 import { getAllPosts } from "@/lib/blog";
@@ -86,19 +85,13 @@ export default function Home() {
           </ScrollReveal>
 
           <ScrollReveal delay={3}>
-            <div className="mt-8">
-              <CertChips />
-            </div>
-          </ScrollReveal>
-
-          <ScrollReveal delay={4}>
             <div className="mt-10">
               <HeroCta />
             </div>
           </ScrollReveal>
 
           <ScrollReveal delay={4}>
-            <div className="mt-6">
+            <div className="mt-10">
               <ExamCountdownStrip />
             </div>
           </ScrollReveal>

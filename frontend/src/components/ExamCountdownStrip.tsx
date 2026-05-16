@@ -31,65 +31,74 @@ export default function ExamCountdownStrip() {
 
   if (!now || items.length === 0) return null;
 
+  // Supabase 트러스트바 스타일 — 가로 무한 스크롤. 아이템 2회 렌더 + translateX(-50%) 로
+  // 끊김 없는 루프. 좌우 끝은 마스크 그라데이션으로 페이드. 호버 시 일시정지.
+  const loopItems = [...items, ...items];
+
   return (
-    <div className="mx-auto grid max-w-3xl grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
-      {items.map((item) => {
-        if (item.isAlwaysOpen) {
+    <div
+      className="mx-auto max-w-4xl overflow-hidden"
+      style={{
+        maskImage:
+          "linear-gradient(to right, transparent, black 6%, black 94%, transparent)",
+        WebkitMaskImage:
+          "linear-gradient(to right, transparent, black 6%, black 94%, transparent)",
+      }}
+    >
+      <div className="cert-marquee flex w-max items-start gap-x-9 sm:gap-x-12 md:gap-x-14">
+        {loopItems.map((item, idx) => {
+          const key = `${item.cert.id}-${idx}`;
+
+          if (item.isAlwaysOpen) {
+            return (
+              <div key={key} className="flex flex-col items-center leading-tight">
+                <span className="whitespace-nowrap text-[11px] font-semibold text-text-subtle sm:text-xs">
+                  {item.cert.name}
+                </span>
+                <span className="mt-1 text-sm font-bold tabular-nums text-text-muted sm:text-base">
+                  상시
+                </span>
+                <span className="mt-0.5 whitespace-nowrap text-[10px] text-text-subtle sm:text-[11px]">
+                  수시 응시
+                </span>
+              </div>
+            );
+          }
+
+          const { cert, upcoming, days } = item;
+          const isOngoing = days! < 0;
+          const isToday = days === 0;
+          const isUrgent = days! > 0 && days! <= 7;
+          const dayLabel = isOngoing ? "진행중" : isToday ? "D-DAY" : `D-${days}`;
+          const dayClass = isOngoing || isToday || isUrgent ? "text-primary" : "text-text";
+
+          const start = new Date(upcoming!.date + "T00:00:00+09:00");
+          const startLabel = `${start.getMonth() + 1}.${start.getDate()}`;
+          const end = upcoming!.endDate
+            ? new Date(upcoming!.endDate + "T00:00:00+09:00")
+            : null;
+          const dateLabel = end
+            ? `${startLabel}~${end.getMonth() + 1}.${end.getDate()}`
+            : startLabel;
+
           return (
-            <div
-              key={item.cert.id}
-              className="flex flex-col items-center rounded-xl border border-border/60 bg-surface/60 px-3 py-2.5 text-center"
-            >
-              <span className={`text-[10px] font-semibold uppercase tracking-wide ${item.cert.colorClass}`}>
-                {item.cert.name}
+            <div key={key} className="flex flex-col items-center leading-tight">
+              <span
+                className="whitespace-nowrap text-[11px] font-semibold text-text-subtle sm:text-xs"
+                aria-hidden={idx >= items.length}
+              >
+                {cert.name}
               </span>
-              <span className="mt-1 text-sm font-bold text-muted">상시</span>
-              <span className="text-[10px] text-muted/70">수시 응시</span>
+              <span className={`mt-1 text-sm font-bold tabular-nums sm:text-base ${dayClass}`}>
+                {dayLabel}
+              </span>
+              <span className="mt-0.5 whitespace-nowrap text-[10px] text-text-subtle sm:text-[11px]">
+                {dateLabel} · {upcoming!.label}
+              </span>
             </div>
           );
-        }
-
-        const { cert, upcoming, days } = item;
-        const isOngoing = days! < 0; // 이미 시작했지만 기간 내라 upcoming으로 유지된 경우
-        const isToday = days === 0;
-        const isUrgent = days! > 0 && days! <= 7;
-
-        const start = new Date(upcoming!.date + "T00:00:00+09:00");
-        const startLabel = `${start.getMonth() + 1}.${start.getDate()}`;
-        const end = upcoming!.endDate
-          ? new Date(upcoming!.endDate + "T00:00:00+09:00")
-          : null;
-        const dateLabel = end
-          ? `${startLabel}~${end.getMonth() + 1}.${end.getDate()}`
-          : startLabel;
-
-        return (
-          <div
-            key={cert.id}
-            className={`flex flex-col items-center rounded-xl border ${cert.borderClass} bg-surface px-3 py-2.5 text-center ${
-              isOngoing || isToday || isUrgent ? "shadow-[0_0_16px_var(--accent-glow)]" : ""
-            }`}
-          >
-            <span className={`text-[10px] font-semibold uppercase tracking-wide ${cert.colorClass}`}>
-              {cert.name}
-            </span>
-            <span
-              className={`mt-1 text-lg font-bold tabular-nums leading-tight ${
-                isOngoing
-                  ? "text-accent"
-                  : isToday
-                    ? "text-accent"
-                    : isUrgent
-                      ? "text-primary"
-                      : "text-foreground"
-              }`}
-            >
-              {isOngoing ? "진행중" : isToday ? "D-DAY" : `D-${days}`}
-            </span>
-            <span className="text-[10px] text-muted">{dateLabel} · {upcoming!.label}</span>
-          </div>
-        );
-      })}
+        })}
+      </div>
     </div>
   );
 }
