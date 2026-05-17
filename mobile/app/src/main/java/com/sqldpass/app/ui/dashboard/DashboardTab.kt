@@ -99,6 +99,9 @@ fun DashboardTab(
                     myRecentAvg = state.dashboard?.overallAvg?.myRecentAvg,
                 )
             }
+            item {
+                DailyChartCard(counts = state.dashboard?.dailyCounts.orEmpty())
+            }
             val best = state.dashboard?.bestScores.orEmpty()
             if (best.isNotEmpty()) {
                 item { Text("회차별 최고 점수", style = MaterialTheme.typography.titleMedium) }

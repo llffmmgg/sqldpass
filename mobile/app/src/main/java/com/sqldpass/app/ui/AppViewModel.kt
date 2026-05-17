@@ -28,6 +28,7 @@ data class DashboardData(
     val streak: StreakResponse? = null,
     val overallAvg: OverallAvgResponse? = null,
     val bestScores: List<BestScoreSummary> = emptyList(),
+    val dailyCounts: List<com.sqldpass.app.data.DailyCountResponse> = emptyList(),
 )
 
 data class AppUiState(
@@ -250,9 +251,15 @@ class AppViewModel(
             val streak = runCatching { repository.streak() }.getOrNull()
             val avg = runCatching { repository.overallAvg() }.getOrNull()
             val best = runCatching { repository.bestScores() }.getOrDefault(emptyList())
+            val daily = runCatching { repository.myDailyCounts(14) }.getOrDefault(emptyList())
             _state.update {
                 it.copy(
-                    dashboard = DashboardData(streak = streak, overallAvg = avg, bestScores = best),
+                    dashboard = DashboardData(
+                        streak = streak,
+                        overallAvg = avg,
+                        bestScores = best,
+                        dailyCounts = daily,
+                    ),
                     dashboardLoading = false,
                 )
             }

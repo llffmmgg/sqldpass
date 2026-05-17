@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.sqldpass.controller.solve.dto.DailyCountResponse;
 import com.sqldpass.controller.solve.dto.OverallStatsResponse;
 import com.sqldpass.controller.solve.dto.SolveRequest;
 import com.sqldpass.controller.solve.dto.SolveResponse;
@@ -66,6 +67,15 @@ public class SolveController {
     @Operation(summary = "전체 사용자의 14일 일평균 풀이 수 (대시보드 비교선용)")
     public OverallStatsResponse getOverallStats() {
         return solveService.getOverallStats();
+    }
+
+    @GetMapping("/api/solves/me/daily")
+    @Operation(summary = "내 최근 N일 일별 풀이 수 (대시보드 라인 차트용)")
+    public List<DailyCountResponse> getMyDailyCounts(
+            HttpServletRequest request,
+            @RequestParam(defaultValue = "14") int days) {
+        Long memberId = (Long) request.getAttribute("memberId");
+        return solveService.getMyDailyCounts(memberId, days);
     }
 
     @GetMapping("/api/solves/me/last-cert")

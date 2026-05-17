@@ -25,6 +25,21 @@ public interface SolveRepository extends JpaRepository<SolveEntity, Long> {
             nativeQuery = true)
     List<Object[]> countByDaySince(@Param("since") LocalDateTime since);
 
+    /**
+     * 회원의 일자별 풀이 수 — 모바일 대시보드 라인 차트용.
+     * 풀이가 없는 날은 응답에서 빠짐 (클라이언트가 0 으로 채움).
+     * 결과 row: [java.sql.Date date, Long count]
+     *
+     * CAST(... AS DATE) 는 MySQL·H2 모두 표준 SQL 로 동작 — 테스트 호환.
+     */
+    @Query(value = "SELECT CAST(created_at AS DATE) AS d, COUNT(*) AS cnt "
+                 + "FROM solve WHERE member_id = :memberId AND created_at >= :since "
+                 + "GROUP BY CAST(created_at AS DATE) ORDER BY d",
+            nativeQuery = true)
+    List<Object[]> countByDayForMemberSince(
+            @Param("memberId") Long memberId,
+            @Param("since") LocalDateTime since);
+
     /** 어드민 풀이 상세 — answers, question, subject 까지 한 번에 로딩 */
     @Query("SELECT DISTINCT s FROM SolveEntity s "
             + "LEFT JOIN FETCH s.answers a "

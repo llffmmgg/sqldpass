@@ -194,4 +194,32 @@ class SolveServiceTest {
         assertThat(second.getId()).isEqualTo(first.getId());
         assertThat(solveService.getMySolves(member.getId())).hasSize(1);
     }
+
+    @Test
+    @DisplayName("getMyDailyCounts 는 오늘 풀이를 일자별로 집계하고 days 는 1~90 으로 clamp 된다")
+    void getMyDailyCountsAggregatesByDay() {
+        // 같은 날 2번 풀이
+        solveService.solve(member.getId(), new SolveRequest(
+                subject.getId(), null, null,
+                List.of(new SolveAnswerRequest(q1.getId(), 1, null)),
+                "android-day-1"));
+        solveService.solve(member.getId(), new SolveRequest(
+                subject.getId(), null, null,
+                List.of(new SolveAnswerRequest(q2.getId(), 1, null)),
+                "android-day-2"));
+        entityManager.flush();
+        entityManager.clear();
+
+        var rows = solveService.getMyDailyCounts(member.getId(), 14);
+        assertThat(rows).hasSize(1);
+        assertThat(rows.get(0).count()).isEqualTo(2L);
+
+        // days 가 0/음수면 1 로 clamp — 1일 윈도우라도 오늘 풀이는 포함돼야 한다.
+        assertThat(solveService.getMyDailyCounts(member.getId(), 0)).hasSize(1);
+        assertThat(solveService.getMyDailyCounts(member.getId(), -5)).hasSize(1);
+
+        // 다른 회원은 0건
+        MemberEntity stranger = memberRepository.save(new MemberEntity("google", "stranger-1", "낯선이"));
+        assertThat(solveService.getMyDailyCounts(stranger.getId(), 14)).isEmpty();
+    }
 }

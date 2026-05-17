@@ -9,6 +9,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.sqldpass.controller.solve.dto.DailyCountResponse;
 import com.sqldpass.controller.solve.dto.OverallStatsResponse;
 import com.sqldpass.controller.solve.dto.SolveAnswerRequest;
 import com.sqldpass.controller.solve.dto.SolveRequest;
@@ -293,5 +294,36 @@ public class SolveService {
         int userCount = rows.size();
         double avgDaily = (double) totalSum / userCount / 14.0;
         return new OverallStatsResponse(avgDaily);
+    }
+
+    /**
+     * 회원의 최근 N 일(기본 14일) 일별 풀이 수. 모바일 대시보드 라인 차트용.
+     * 풀이 없는 날은 응답에서 빠짐 — 클라이언트가 0 으로 채움.
+     * days 는 1~90 사이로 clamp.
+     */
+    public List<DailyCountResponse> getMyDailyCounts(Long memberId, int days) {
+        int clamped = Math.max(1, Math.min(days, 90));
+        LocalDateTime since = LocalDateTime.now().minusDays(clamped).toLocalDate().atStartOfDay();
+        return solveRepository.countByDayForMemberSince(memberId, since).stream()
+                .map(row -> {
+                    // CAST(... AS DATE) 결과는 드라이버에 따라 java.sql.Date(MySQL) 또는
+                    // java.time.LocalDate(H2) 로 옴 — 양쪽 호환을 위해 분기.
+                    java.time.LocalDate date;
+                    Object d = row[0];
+                    if (d instanceof java.time.LocalDate ld) {
+                        date = ld;
+                    } else if (d instanceof java.sql.Date sd) {
+                        date = sd.toLocalDate();
+                    } else if (d instanceof java.sql.Timestamp ts) {
+                        date = ts.toLocalDateTime().toLocalDate();
+                    } else {
+                        throw new IllegalStateException(
+                                "Unexpected date type from DB: "
+                                        + (d == null ? "null" : d.getClass().getName()));
+                    }
+                    Number cnt = (Number) row[1];
+                    return new DailyCountResponse(date, cnt.longValue());
+                })
+                .toList();
     }
 }

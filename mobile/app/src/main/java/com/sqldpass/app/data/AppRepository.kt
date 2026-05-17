@@ -237,6 +237,9 @@ class AppRepository(
         api.updateNickname(UpdateNicknameRequest(nickname))
 
     suspend fun me(): MemberMeResponse = api.getMe()
+
+    suspend fun myDailyCounts(days: Int = 14): List<DailyCountResponse> =
+        api.getMyDailyCounts(days)
 }
 
 data class SyncResult(

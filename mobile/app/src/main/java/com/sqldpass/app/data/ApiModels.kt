@@ -301,3 +301,8 @@ data class MemberMeResponse(
     val provider: String? = null,
     val createdAt: String? = null,
 )
+
+data class DailyCountResponse(
+    val date: String, // ISO yyyy-MM-dd
+    val count: Long,
+)

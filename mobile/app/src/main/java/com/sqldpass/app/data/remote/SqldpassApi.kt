@@ -88,6 +88,9 @@ interface SqldpassApi {
     @GET("api/solves/stats/overall-avg")
     suspend fun getOverallAvg(): OverallAvgResponse
 
+    @GET("api/solves/me/daily")
+    suspend fun getMyDailyCounts(@Query("days") days: Int = 14): List<com.sqldpass.app.data.DailyCountResponse>
+
     @GET("api/mock-exams/best-scores")
     suspend fun getBestScores(): Response<Map<String, BestScoreEntry>>
 
