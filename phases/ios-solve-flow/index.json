@@ -46,7 +46,7 @@
       "status": "completed",
       "started_at": "2026-05-18T01:31:03+0900",
       "summary": "Features/MockExams/MockExamRoutes.swift 신설(detail/solve/result Hashable enum, 식별자 기반 커스텀 Hashable) + MockExamsListView NavigationPath 도입(navigationDestination MockExamRoute 단일화) + MockExamDetailView path Binding 받아 시험 시작 버튼이 .solve 푸시 + 결과 화면 '목록으로' → NavigationPath() 리셋. pbxproj 4곳에 MockExamRoutes.swift 등록. iphonesimulator SDK Debug 빌드 성공, 시뮬레이터 SessionGate 화면 스크린샷 확인.",
-      "completed_at": "2026-05-18T01:36:30+0900"
+      "completed_at": "2026-05-18T01:37:49+0900"
     }
   ],
   "created_at": "2026-05-18T01:00:00+0900"
