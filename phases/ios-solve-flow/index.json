@@ -34,7 +34,10 @@
       "step": 4,
       "name": "solve-result-view",
       "description": "SolveResultView — 총점/정답률, 과목별 분석, 문항별 정/오답 + 해설 펼치기, '다시 풀기'/'목록으로' 액션. 시뮬레이터 빌드 + 스크린샷 검증.",
-      "status": "pending"
+      "status": "completed",
+      "started_at": "2026-05-18T01:27:22+0900",
+      "summary": "Features/Solve/SolveResultView.swift + Components/{ScoreHeadline,SubjectBreakdownCard,AnswerReviewRow}.swift 신설 — ScrollView 안에 점수 헤드라인(점수대별 색·milestone/streak)·과목별 정답률 카드·문항별 검토 행(아코디언 토글), 하단 safeAreaInset '목록으로' 액션 버튼. iphonesimulator SDK Debug 빌드 성공.",
+      "completed_at": "2026-05-18T01:30:30+0900"
     },
     {
       "step": 5,
