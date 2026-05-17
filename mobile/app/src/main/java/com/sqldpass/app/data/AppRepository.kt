@@ -199,6 +199,44 @@ class AppRepository(
             )
         }
     }
+
+    suspend fun solveDetail(id: Long): SolveResponse = api.getSolve(id)
+
+    suspend fun subscription(): SubscriptionResponse = api.getSubscription()
+
+    suspend fun bookmarks(): BookmarkListResponse = api.getBookmarks()
+
+    suspend fun addBookmark(questionId: Long) {
+        api.addBookmark(questionId)
+    }
+
+    suspend fun removeBookmark(questionId: Long) {
+        api.removeBookmark(questionId)
+    }
+
+    suspend fun isBookmarked(questionId: Long): Boolean =
+        runCatching { api.bookmarkExists(questionId).exists }.getOrDefault(false)
+
+    suspend fun reportFeedback(type: String, questionId: Long?, content: String, pageUrl: String? = null) {
+        api.createFeedback(
+            CreateFeedbackRequest(
+                type = type,
+                questionId = questionId,
+                content = content,
+                pageUrl = pageUrl,
+            ),
+        )
+    }
+
+    suspend fun wrongAnswers(subjectId: Long? = null): List<WrongAnswerSummary> =
+        api.getWrongAnswers(subjectId)
+
+    suspend fun wrongAnswerStats(): List<WrongAnswerStatsSummary> = api.getWrongAnswerStats()
+
+    suspend fun updateNickname(nickname: String): MemberMeResponse =
+        api.updateNickname(UpdateNicknameRequest(nickname))
+
+    suspend fun me(): MemberMeResponse = api.getMe()
 }
 
 data class SyncResult(

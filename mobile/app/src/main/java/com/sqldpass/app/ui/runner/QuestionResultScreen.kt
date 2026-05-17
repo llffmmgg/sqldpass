@@ -1,6 +1,7 @@
 package com.sqldpass.app.ui.runner
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -18,11 +19,16 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.sqldpass.app.data.PastExamGradeResponse
+import com.sqldpass.app.data.PastExamGradedItem
 import com.sqldpass.app.data.PastExamSubjectScore
+import com.sqldpass.app.data.SolveAnswerResponse
 import com.sqldpass.app.data.SolveResponse
 import com.sqldpass.app.ui.theme.LocalSqldpassSemanticColors
 
@@ -44,7 +50,12 @@ fun QuestionResultScreen(
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
         when (result) {
-            is RunnerResult.Solve -> SolveResultCard(result.response)
+            is RunnerResult.Solve -> {
+                SolveResultCard(result.response)
+                if (result.response.answers.isNotEmpty()) {
+                    AnswerBreakdownCard(answers = result.response.answers)
+                }
+            }
             is RunnerResult.PastExam -> {
                 PassBanner(result.response)
                 ScoreCard(
@@ -52,6 +63,9 @@ fun QuestionResultScreen(
                     total = result.response.totalCount,
                 )
                 SubjectScoreList(result.response.subjectScores)
+                if (result.response.items.isNotEmpty()) {
+                    PastExamItemBreakdownCard(items = result.response.items)
+                }
             }
         }
 
@@ -168,6 +182,114 @@ private fun ScoreCard(correct: Int, total: Int) {
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
+        }
+    }
+}
+
+@Composable
+private fun AnswerBreakdownCard(answers: List<SolveAnswerResponse>) {
+    val correctCount = answers.count { it.correct }
+    Card(
+        shape = RoundedCornerShape(CardCorner),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface,
+            contentColor = MaterialTheme.colorScheme.onSurface,
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(18.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            Text(
+                "문항별 결과 ($correctCount/${answers.size} 정답)",
+                style = MaterialTheme.typography.titleMedium,
+            )
+            answers.forEachIndexed { idx, a ->
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                ) {
+                    Text(
+                        "${idx + 1}번 — ${if (a.correct) "정답" else "오답"}",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = if (a.correct) MaterialTheme.colorScheme.primary
+                        else MaterialTheme.colorScheme.error,
+                    )
+                    Text(
+                        "내 답 ${a.selectedOption} · 정답 ${a.correctOption}",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun PastExamItemBreakdownCard(items: List<PastExamGradedItem>) {
+    var expandedQid by remember { mutableStateOf<Long?>(null) }
+    val correctCount = items.count { it.correct }
+    Card(
+        shape = RoundedCornerShape(CardCorner),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface,
+            contentColor = MaterialTheme.colorScheme.onSurface,
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(18.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Text(
+                "문항별 정답·해설 ($correctCount/${items.size})",
+                style = MaterialTheme.typography.titleMedium,
+            )
+            items.forEachIndexed { idx, item ->
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                expandedQid = if (expandedQid == item.questionId) null else item.questionId
+                            }
+                            .padding(vertical = 6.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                    ) {
+                        Text(
+                            "${idx + 1}번 — ${if (item.correct) "정답" else "오답"}",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = if (item.correct) MaterialTheme.colorScheme.primary
+                            else MaterialTheme.colorScheme.error,
+                        )
+                        Text(
+                            if (expandedQid == item.questionId) "닫기" else "해설 보기",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    if (expandedQid == item.questionId) {
+                        Text(
+                            "내 답 ${item.selectedOption ?: "-"} · 정답 ${item.correctOption ?: item.answer ?: "-"}",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        item.explanation?.takeIf { it.isNotBlank() }?.let { exp ->
+                            Text(
+                                exp,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurface,
+                            )
+                        }
+                    }
+                }
+            }
         }
     }
 }

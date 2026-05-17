@@ -24,11 +24,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.sqldpass.app.data.PastExamSummary
 import com.sqldpass.app.ui.AppUiState
-import com.sqldpass.app.ui.runner.QuestionResultScreen
-import com.sqldpass.app.ui.runner.QuestionRunnerScreen
 import com.sqldpass.app.ui.runner.RunnerAnswerDraft
+import com.sqldpass.app.ui.runner.RunnerHost
 import com.sqldpass.app.ui.runner.RunnerMode
-import com.sqldpass.app.ui.runner.RunnerResult
 
 private val CardCorner = 14.dp
 private val ButtonCorner = 12.dp
@@ -41,21 +39,19 @@ fun PastExamTab(
     onSubmitAnswers: (List<RunnerAnswerDraft>) -> Unit,
     onCancelRunner: () -> Unit,
     onDismissResult: () -> Unit,
+    onToggleBookmark: (Long) -> Unit,
+    onReport: (type: String, questionId: Long?, content: String, onDone: (Boolean) -> Unit) -> Unit,
 ) {
-    val runner = state.runner
-    val result = state.runnerResult
-    when {
-        runner != null && runner.mode == RunnerMode.PAST_EXAM ->
-            QuestionRunnerScreen(
-                title = runner.title,
-                questions = runner.questions,
-                onCancel = onCancelRunner,
-                onSubmit = onSubmitAnswers,
-                submitting = state.runnerSubmitting,
-            )
-        result is RunnerResult.PastExam ->
-            QuestionResultScreen(result = result, onClose = onDismissResult)
-        else -> PastExamList(
+    RunnerHost(
+        state = state,
+        mode = RunnerMode.PAST_EXAM,
+        onSubmitAnswers = onSubmitAnswers,
+        onCancelRunner = onCancelRunner,
+        onDismissResult = onDismissResult,
+        onToggleBookmark = onToggleBookmark,
+        onReport = onReport,
+    ) {
+        PastExamList(
             state = state,
             onSelectCert = onSelectCert,
             onStart = { id -> onStartExam(id, state.selectedCertSlug) },

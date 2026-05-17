@@ -103,6 +103,16 @@ data class SolveResponse(
     val correctCount: Int,
     val score: Int,
     val solvedAt: String,
+    val answers: List<SolveAnswerResponse> = emptyList(),
+    val currentStreak: Int? = null,
+    val milestoneReached: Int? = null,
+)
+
+data class SolveAnswerResponse(
+    val questionId: Long,
+    val selectedOption: Int,
+    val correctOption: Int,
+    val correct: Boolean,
 )
 
 data class VerifyPlayBillingRequest(
@@ -229,4 +239,65 @@ data class OverallAvgResponse(
 data class BestScoreEntry(
     val correctCount: Int,
     val totalCount: Int,
+)
+
+data class BookmarkSummary(
+    val questionId: Long,
+    val questionContent: String,
+    val questionType: String?,
+    val subjectId: Long?,
+    val subjectName: String?,
+    val createdAt: String? = null,
+)
+
+data class BookmarkListResponse(
+    val items: List<BookmarkSummary> = emptyList(),
+    val totalCount: Long = 0,
+    val limited: Boolean = false,
+    val freeLimit: Int = 30,
+)
+
+data class BookmarkExistsResponse(val exists: Boolean)
+
+data class CreateFeedbackRequest(
+    val type: String,
+    val questionId: Long? = null,
+    val content: String,
+    val pageUrl: String? = null,
+)
+
+data class SubscriptionResponse(
+    val active: Boolean,
+    val plan: String? = null,
+    val expiresAt: String? = null,
+    val removesAds: Boolean = false,
+    val allowsPdf: Boolean = false,
+    val hasLibraryAccess: Boolean = false,
+    val allowsPremium: Boolean = false,
+)
+
+data class WrongAnswerSummary(
+    val questionId: Long,
+    val questionContent: String,
+    val subjectId: Long?,
+    val subjectName: String?,
+    val wrongCount: Int,
+    val lastWrongAt: String? = null,
+)
+
+data class WrongAnswerStatsSummary(
+    val subjectId: Long,
+    val subjectName: String,
+    val totalSolved: Int,
+    val wrongCount: Int,
+    val wrongRate: Int,
+)
+
+data class UpdateNicknameRequest(val nickname: String)
+
+data class MemberMeResponse(
+    val id: Long,
+    val nickname: String?,
+    val provider: String? = null,
+    val createdAt: String? = null,
 )

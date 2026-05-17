@@ -3,7 +3,7 @@ package com.sqldpass.app.ui.runner
 import com.sqldpass.app.data.PastExamGradeResponse
 import com.sqldpass.app.data.SolveResponse
 
-enum class RunnerMode { MOCK_EXAM, PAST_EXAM, PRACTICE }
+enum class RunnerMode { MOCK_EXAM, PAST_EXAM, PRACTICE, WRONG_ANSWERS }
 
 data class RunnerQuestion(
     val id: Long,
@@ -19,6 +19,8 @@ data class RunnerSession(
     val questions: List<RunnerQuestion>,
     val certSlug: String? = null,
     val subjectId: Long? = null,
+    /** 시험 시간(초). 0 이면 무제한. */
+    val durationSeconds: Int = 0,
 )
 
 sealed interface RunnerResult {

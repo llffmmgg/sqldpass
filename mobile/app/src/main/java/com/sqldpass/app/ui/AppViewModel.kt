@@ -45,8 +45,11 @@ data class AppUiState(
     val runner: RunnerSession? = null,
     val runnerSubmitting: Boolean = false,
     val runnerResult: RunnerResult? = null,
+    val runnerBookmarks: Set<Long> = emptySet(),
     val dashboard: DashboardData? = null,
     val dashboardLoading: Boolean = false,
+    val subscription: com.sqldpass.app.data.SubscriptionResponse? = null,
+    val wrongAnswerStats: List<com.sqldpass.app.data.WrongAnswerStatsSummary> = emptyList(),
 )
 
 class AppViewModel(
@@ -98,6 +101,103 @@ class AppViewModel(
 
     fun setMessage(message: String?) {
         _state.update { it.copy(message = message) }
+    }
+
+    fun toggleBookmark(questionId: Long) {
+        val isBookmarked = _state.value.runnerBookmarks.contains(questionId)
+        // optimistic
+        _state.update {
+            it.copy(
+                runnerBookmarks = if (isBookmarked) it.runnerBookmarks - questionId
+                else it.runnerBookmarks + questionId
+            )
+        }
+        viewModelScope.launch {
+            runCatching {
+                if (isBookmarked) repository.removeBookmark(questionId)
+                else repository.addBookmark(questionId)
+            }.onFailure { e ->
+                // revert
+                _state.update {
+                    it.copy(
+                        runnerBookmarks = if (isBookmarked) it.runnerBookmarks + questionId
+                        else it.runnerBookmarks - questionId,
+                        message = "즐겨찾기 변경 실패: ${e.message}",
+                    )
+                }
+            }
+        }
+    }
+
+    fun submitFeedback(type: String, questionId: Long?, content: String, onDone: (Boolean) -> Unit) {
+        viewModelScope.launch {
+            runCatching {
+                repository.reportFeedback(type, questionId, content, pageUrl = "mobile://runner")
+            }.onSuccess {
+                _state.update { it.copy(message = "신고가 접수됐습니다. 감사합니다.") }
+                onDone(true)
+            }.onFailure { e ->
+                _state.update { it.copy(message = "신고 전송 실패: ${e.message}") }
+                onDone(false)
+            }
+        }
+    }
+
+    fun loadSubscription() {
+        viewModelScope.launch {
+            runCatching { repository.subscription() }
+                .onSuccess { sub -> _state.update { it.copy(subscription = sub) } }
+        }
+    }
+
+    fun loadWrongAnswerStats() {
+        viewModelScope.launch {
+            runCatching { repository.wrongAnswerStats() }
+                .onSuccess { stats -> _state.update { it.copy(wrongAnswerStats = stats) } }
+        }
+    }
+
+    fun startWrongAnswerRunner(subjectId: Long?, subjectName: String?) {
+        viewModelScope.launch {
+            _state.update { it.copy(loading = true, message = null) }
+            runCatching { repository.wrongAnswers(subjectId) }
+                .onSuccess { items ->
+                    if (items.isEmpty()) {
+                        _state.update { it.copy(loading = false, message = "오답이 없습니다.") }
+                        return@onSuccess
+                    }
+                    val session = RunnerSession(
+                        mode = RunnerMode.WRONG_ANSWERS,
+                        title = "오답 다시 풀기${subjectName?.let { " · $it" } ?: ""}",
+                        originId = subjectId ?: -1L,
+                        questions = items.mapIndexed { idx, q ->
+                            RunnerQuestion(q.questionId, idx + 1, q.questionContent, "MCQ")
+                        },
+                        subjectId = subjectId,
+                    )
+                    _state.update {
+                        it.copy(loading = false, runner = session, runnerResult = null)
+                    }
+                }
+                .onFailure { e ->
+                    _state.update { it.copy(loading = false, message = e.message) }
+                }
+        }
+    }
+
+    fun updateNickname(newName: String, onDone: (Boolean) -> Unit) {
+        viewModelScope.launch {
+            runCatching { repository.updateNickname(newName) }
+                .onSuccess { me ->
+                    tokenStore.nickname = me.nickname
+                    _state.update { it.copy(nickname = me.nickname, message = "닉네임이 변경됐습니다.") }
+                    onDone(true)
+                }
+                .onFailure { e ->
+                    _state.update { it.copy(message = "닉네임 변경 실패: ${e.message}") }
+                    onDone(false)
+                }
+        }
     }
 
     fun selectCertSlug(slug: String) {
@@ -166,9 +266,10 @@ class AppViewModel(
                         questions = exam.questions.map {
                             RunnerQuestion(it.id, it.displayOrder, it.content, it.questionType)
                         },
+                        durationSeconds = defaultDurationSeconds(exam.examType),
                     )
                     _state.update {
-                        it.copy(loading = false, runner = session, runnerResult = null)
+                        it.copy(loading = false, runner = session, runnerResult = null, runnerBookmarks = emptySet())
                     }
                 }
                 .onFailure { e ->
@@ -190,15 +291,26 @@ class AppViewModel(
                             RunnerQuestion(it.id, it.displayOrder, it.content, it.questionType)
                         },
                         certSlug = certSlug,
+                        durationSeconds = defaultDurationSeconds(exam.examType ?: certSlug),
                     )
                     _state.update {
-                        it.copy(loading = false, runner = session, runnerResult = null)
+                        it.copy(loading = false, runner = session, runnerResult = null, runnerBookmarks = emptySet())
                     }
                 }
                 .onFailure { e ->
                     _state.update { it.copy(loading = false, message = e.message) }
                 }
         }
+    }
+
+    private fun defaultDurationSeconds(examType: String?): Int = when {
+        examType.isNullOrBlank() -> 0
+        examType.contains("ENGINEER", ignoreCase = true) -> 150 * 60
+        examType.contains("ADSP", ignoreCase = true) -> 90 * 60
+        examType.contains("ADP", ignoreCase = true) -> 180 * 60
+        examType.contains("SQLD", ignoreCase = true) -> 90 * 60
+        examType.contains("COMP", ignoreCase = true) -> 50 * 60
+        else -> 60 * 60
     }
 
     fun startPracticeRunner(subjectId: Long) {
@@ -244,13 +356,18 @@ class AppViewModel(
                         val response = repository.submitMockExam(session.originId, answers)
                         RunnerResult.Solve(response, RunnerMode.MOCK_EXAM)
                     }
-                    RunnerMode.PRACTICE -> {
+                    RunnerMode.PRACTICE, RunnerMode.WRONG_ANSWERS -> {
                         val answers = drafts.map {
                             SolveAnswerRequest(it.questionId, it.selectedOption, it.answerText)
                         }
-                        val subjectId = session.subjectId ?: error("과목 ID 가 없습니다.")
-                        val response = repository.submitPractice(subjectId, answers)
-                        RunnerResult.Solve(response, RunnerMode.PRACTICE)
+                        val subjectId = session.subjectId ?: -1L
+                        val response = if (subjectId > 0) {
+                            repository.submitPractice(subjectId, answers)
+                        } else {
+                            // 오답노트 전체 풀이 등 subjectId 없는 케이스 — 백엔드 호환 시 그대로
+                            repository.submitPractice(0L, answers)
+                        }
+                        RunnerResult.Solve(response, session.mode)
                     }
                     RunnerMode.PAST_EXAM -> {
                         val answers = drafts.map {

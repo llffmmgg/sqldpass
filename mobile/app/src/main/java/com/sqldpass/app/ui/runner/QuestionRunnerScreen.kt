@@ -4,6 +4,7 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -19,10 +20,17 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.AppRegistration
 import androidx.compose.material.icons.outlined.Close
+import androidx.compose.material.icons.outlined.MoreVert
+import androidx.compose.material.icons.outlined.Report
+import androidx.compose.material.icons.outlined.Star
+import androidx.compose.material.icons.outlined.StarBorder
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
@@ -32,12 +40,15 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
@@ -49,6 +60,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.text.HtmlCompat
 import com.sqldpass.app.ui.theme.SqldpassTheme
+import kotlinx.coroutines.delay
 
 private val CardCorner = 12.dp
 private val ButtonCorner = 12.dp
@@ -60,6 +72,10 @@ fun QuestionRunnerScreen(
     onCancel: () -> Unit,
     onSubmit: (List<RunnerAnswerDraft>) -> Unit,
     submitting: Boolean = false,
+    durationSeconds: Int = 0,
+    bookmarkedIds: Set<Long> = emptySet(),
+    onToggleBookmark: ((Long) -> Unit)? = null,
+    onReport: ((Long) -> Unit)? = null,
 ) {
     if (questions.isEmpty()) {
         EmptyRunnerState(title = title, onCancel = onCancel)
@@ -72,40 +88,117 @@ fun QuestionRunnerScreen(
         }
     }
     var index by remember(questions) { mutableStateOf(0) }
+    var jumpOpen by remember { mutableStateOf(false) }
+    var menuOpen by remember { mutableStateOf(false) }
     val current = questions[index]
     val draft = drafts[current.id] ?: RunnerAnswerDraft(questionId = current.id)
     val isLast by remember { derivedStateOf { index == questions.lastIndex } }
     val haptic = LocalHapticFeedback.current
+
+    var remainingSec by remember(questions, durationSeconds) { mutableStateOf(durationSeconds) }
+    val timerEnabled = durationSeconds > 0
+    val autoSubmitted = remember(questions) { mutableStateOf(false) }
+    LaunchedEffect(timerEnabled, questions) {
+        if (!timerEnabled) return@LaunchedEffect
+        while (remainingSec > 0) {
+            delay(1000)
+            remainingSec -= 1
+        }
+        if (!autoSubmitted.value) {
+            autoSubmitted.value = true
+            onSubmit(questions.map { drafts[it.id] ?: RunnerAnswerDraft(it.id) })
+        }
+    }
+
+    val answeredIndices = remember(drafts.values.toList()) {
+        questions.mapIndexedNotNull { i, q ->
+            if (drafts[q.id]?.isAnswered == true) i else null
+        }.toSet()
+    }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background),
     ) {
+        // Header row
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 12.dp, vertical = 8.dp),
-            verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+                .padding(horizontal = 8.dp, vertical = 6.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             IconButton(
                 onClick = onCancel,
                 modifier = Modifier.sizeIn(minWidth = 48.dp, minHeight = 48.dp),
             ) {
-                Icon(
-                    Icons.Outlined.Close,
-                    contentDescription = "풀이 닫기",
-                    tint = MaterialTheme.colorScheme.onSurface,
-                )
+                Icon(Icons.Outlined.Close, contentDescription = "풀이 닫기")
             }
-            Spacer(Modifier.size(4.dp))
             Column(modifier = Modifier.weight(1f)) {
-                Text(title, style = MaterialTheme.typography.titleMedium)
                 Text(
-                    "${index + 1} / ${questions.size}",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    title,
+                    style = MaterialTheme.typography.titleMedium,
+                    maxLines = 1,
                 )
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        "${index + 1} / ${questions.size}",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    if (timerEnabled) {
+                        val danger = remainingSec in 1..300 // 5분 이하
+                        Text(
+                            formatRemaining(remainingSec),
+                            style = MaterialTheme.typography.labelLarge,
+                            color = if (danger) MaterialTheme.colorScheme.error
+                            else MaterialTheme.colorScheme.primary,
+                        )
+                    }
+                }
+            }
+            if (onToggleBookmark != null) {
+                val isBookmarked = current.id in bookmarkedIds
+                IconButton(
+                    onClick = { onToggleBookmark(current.id) },
+                    modifier = Modifier.sizeIn(minWidth = 48.dp, minHeight = 48.dp),
+                ) {
+                    Icon(
+                        if (isBookmarked) Icons.Outlined.Star else Icons.Outlined.StarBorder,
+                        contentDescription = if (isBookmarked) "즐겨찾기 해제" else "즐겨찾기",
+                        tint = if (isBookmarked) MaterialTheme.colorScheme.primary
+                        else MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+            IconButton(
+                onClick = { jumpOpen = true },
+                modifier = Modifier.sizeIn(minWidth = 48.dp, minHeight = 48.dp),
+            ) {
+                Icon(Icons.Outlined.AppRegistration, contentDescription = "문제 이동")
+            }
+            if (onReport != null) {
+                Box {
+                    IconButton(
+                        onClick = { menuOpen = true },
+                        modifier = Modifier.sizeIn(minWidth = 48.dp, minHeight = 48.dp),
+                    ) {
+                        Icon(Icons.Outlined.MoreVert, contentDescription = "메뉴")
+                    }
+                    DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
+                        DropdownMenuItem(
+                            leadingIcon = { Icon(Icons.Outlined.Report, contentDescription = null) },
+                            text = { Text("이 문제 신고") },
+                            onClick = {
+                                menuOpen = false
+                                onReport(current.id)
+                            },
+                        )
+                    }
+                }
             }
         }
         LinearProgressIndicator(
@@ -191,6 +284,16 @@ fun QuestionRunnerScreen(
             }
         }
     }
+
+    if (jumpOpen) {
+        RunnerJumpGrid(
+            total = questions.size,
+            currentIndex = index,
+            answeredIndices = answeredIndices,
+            onJump = { index = it },
+            onDismiss = { jumpOpen = false },
+        )
+    }
 }
 
 @Composable
@@ -210,7 +313,7 @@ private fun OptionRow(label: String, selected: Boolean, onClick: () -> Unit) {
                 .fillMaxWidth()
                 .sizeIn(minHeight = 48.dp)
                 .padding(horizontal = 12.dp, vertical = 6.dp),
-            verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             RadioButton(selected = selected, onClick = onClick)
             Spacer(Modifier.size(4.dp))
@@ -268,6 +371,13 @@ private fun EmptyRunnerState(title: String, onCancel: () -> Unit) {
     }
 }
 
+private fun formatRemaining(seconds: Int): String {
+    if (seconds <= 0) return "00:00"
+    val m = seconds / 60
+    val s = seconds % 60
+    return "%02d:%02d".format(m, s)
+}
+
 private fun optionLabel(option: Int): String = when (option) {
     1 -> "① 1번"
     2 -> "② 2번"
@@ -303,6 +413,10 @@ private fun RunnerPreviewLight() {
             title = "SQLD 모의고사 1회",
             questions = sampleQuestions,
             onCancel = {}, onSubmit = {},
+            durationSeconds = 5400,
+            bookmarkedIds = setOf(1L),
+            onToggleBookmark = {},
+            onReport = {},
         )
     }
 }
@@ -315,18 +429,7 @@ private fun RunnerPreviewDark() {
             title = "기출복원 2024 1회",
             questions = sampleQuestions,
             onCancel = {}, onSubmit = {},
-        )
-    }
-}
-
-@Preview(name = "Runner — Large font", showBackground = true, fontScale = 1.5f)
-@Composable
-private fun RunnerPreviewLargeFont() {
-    SqldpassTheme(darkTheme = false) {
-        QuestionRunnerScreen(
-            title = "랜덤 10문제",
-            questions = sampleQuestions,
-            onCancel = {}, onSubmit = {},
+            durationSeconds = 0,
         )
     }
 }

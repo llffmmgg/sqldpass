@@ -157,6 +157,8 @@ private fun SqldpassApp(
                     onSubmitAnswers = viewModel::submitRunner,
                     onCancelRunner = viewModel::cancelRunner,
                     onDismissResult = viewModel::dismissResult,
+                    onToggleBookmark = viewModel::toggleBookmark,
+                    onReport = viewModel::submitFeedback,
                 )
                 2 -> PastExamTab(
                     state = state,
@@ -165,6 +167,8 @@ private fun SqldpassApp(
                     onSubmitAnswers = viewModel::submitRunner,
                     onCancelRunner = viewModel::cancelRunner,
                     onDismissResult = viewModel::dismissResult,
+                    onToggleBookmark = viewModel::toggleBookmark,
+                    onReport = viewModel::submitFeedback,
                 )
                 3 -> SolveTab(
                     state = state,
@@ -174,6 +178,8 @@ private fun SqldpassApp(
                     onCancelRunner = viewModel::cancelRunner,
                     onDismissResult = viewModel::dismissResult,
                     onNextSet = viewModel::restartLastPractice,
+                    onToggleBookmark = viewModel::toggleBookmark,
+                    onReport = viewModel::submitFeedback,
                 )
                 else -> DashboardTab(
                     state = state,
