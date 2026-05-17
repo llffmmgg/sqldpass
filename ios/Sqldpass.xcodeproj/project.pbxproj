@@ -18,6 +18,7 @@
 		1F1504C81D2ED08B161CD72C /* MemberService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FFB7967904ADA9CDF33E7FEE /* MemberService.swift */; };
 		2830AC780BC8930E6B06D776 /* Color+Tokens.swift in Sources */ = {isa = PBXBuildFile; fileRef = D66A3952679D9F0ADD9871BE /* Color+Tokens.swift */; };
 		2E37FE98BFB0FDB69031CBAE /* AuthStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35EEE75165FFA9D1CC356B7E /* AuthStore.swift */; };
+		3071A6748D7F9E526DE7BA67 /* ScoreHeadline.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9FA501A352BF28A9553CAD49 /* ScoreHeadline.swift */; };
 		36AB49C2EF3AB475523D783A /* APIClient+Shared.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3679CDD78BB233811B7555B /* APIClient+Shared.swift */; };
 		388FB55138321B051690D693 /* SolveService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 61EDA8D14E7F131955B10EBC /* SolveService.swift */; };
 		46F348F9EA34E5FFC45A723B /* Solve.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2DEDCA7D76CC8906CADDBFF1 /* Solve.swift */; };
@@ -34,6 +35,8 @@
 		704E1312A8F6F07D5B09595E /* WrongAnswersView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 708D60E6ED0114C06B59ABA9 /* WrongAnswersView.swift */; };
 		70E27BC22A0205E1F8E7C8E3 /* Auth.swift in Sources */ = {isa = PBXBuildFile; fileRef = EBA1ED936A987B69851776CE /* Auth.swift */; };
 		7337F8752B0859743CFE160C /* MainTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F90FE83B19F079DD654FB6E4 /* MainTabView.swift */; };
+		73382EE2EA66ACB8875C24DA /* AnswerReviewRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3AC2AAA4465DED7698809F4F /* AnswerReviewRow.swift */; };
+		8276A3AEDED629405BA85F6D /* SubjectBreakdownCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = C9B058741E894BDCD6A70F5A /* SubjectBreakdownCard.swift */; };
 		8327D2ADF0D63B44A8883501 /* Member.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46DABBAA8C879C7B0C4D58B3 /* Member.swift */; };
 		845BFAF1CB35F90119B47B15 /* SolveHeader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66D4C11ADB0FF2DEDCC421E4 /* SolveHeader.swift */; };
 		86EB2173A6D70EB98F94A8A6 /* QuestionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8DCC6E698912DFA8033CF012 /* QuestionService.swift */; };
@@ -57,6 +60,7 @@
 		EC0207748C8B11B67C5E64D5 /* APIError.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB4E676048135B0AB8D5DD95 /* APIError.swift */; };
 		EC0CA9D80465F6E1C35F437D /* StreakService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9304FB02C4CA965282101805 /* StreakService.swift */; };
 		F1D9AC1F5CA41C7B545C52AE /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA32763C4F867AC156D755AB /* APIClient.swift */; };
+		FA4DB95DC1B14D16ED6CEB47 /* SolveResultView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3723EDF6972EC89C1D38DE2 /* SolveResultView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -75,6 +79,7 @@
 		33AF477F8D8432720B4E763D /* Question.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Question.swift; sourceTree = "<group>"; };
 		35EEE75165FFA9D1CC356B7E /* AuthStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthStore.swift; sourceTree = "<group>"; };
 		35F209C7176E9E566771D690 /* WrongAnswer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WrongAnswer.swift; sourceTree = "<group>"; };
+		3AC2AAA4465DED7698809F4F /* AnswerReviewRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnswerReviewRow.swift; sourceTree = "<group>"; };
 		46DABBAA8C879C7B0C4D58B3 /* Member.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Member.swift; sourceTree = "<group>"; };
 		52849D6EE4571395433DE899 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
 		52EBE180252E86251C7D944F /* UIColor+Hex.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UIColor+Hex.swift"; sourceTree = "<group>"; };
@@ -91,6 +96,7 @@
 		9304FB02C4CA965282101805 /* StreakService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StreakService.swift; sourceTree = "<group>"; };
 		934CC05ED3031C490208135C /* Spacing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Spacing.swift; sourceTree = "<group>"; };
 		9B5230450D260413558F4154 /* BookmarkToggleButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BookmarkToggleButton.swift; sourceTree = "<group>"; };
+		9FA501A352BF28A9553CAD49 /* ScoreHeadline.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScoreHeadline.swift; sourceTree = "<group>"; };
 		A2EC0804EBF7C264DDA4A2A5 /* MockExamsListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockExamsListView.swift; sourceTree = "<group>"; };
 		A5D29C8A96832A3E6418C529 /* SolveViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SolveViewModel.swift; sourceTree = "<group>"; };
 		A5E02115A57224055005B8E7 /* ProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileView.swift; sourceTree = "<group>"; };
@@ -99,8 +105,10 @@
 		BB4E676048135B0AB8D5DD95 /* APIError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIError.swift; sourceTree = "<group>"; };
 		BE7B980FAB66301BA7EA4899 /* KeychainStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainStore.swift; sourceTree = "<group>"; };
 		C3679CDD78BB233811B7555B /* APIClient+Shared.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "APIClient+Shared.swift"; sourceTree = "<group>"; };
+		C9B058741E894BDCD6A70F5A /* SubjectBreakdownCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubjectBreakdownCard.swift; sourceTree = "<group>"; };
 		D66A3952679D9F0ADD9871BE /* Color+Tokens.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Color+Tokens.swift"; sourceTree = "<group>"; };
 		D7F02CC2BC6A078429111348 /* DashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardView.swift; sourceTree = "<group>"; };
+		E3723EDF6972EC89C1D38DE2 /* SolveResultView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SolveResultView.swift; sourceTree = "<group>"; };
 		E41EA15CF5EB8586A1357280 /* Sqldpass.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Sqldpass.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		E6835096BA3621089913C59A /* APIEnvironment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIEnvironment.swift; sourceTree = "<group>"; };
 		EA32763C4F867AC156D755AB /* APIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClient.swift; sourceTree = "<group>"; };
@@ -242,11 +250,14 @@
 		682ECC59DC58BE2E2E192FEA /* Components */ = {
 			isa = PBXGroup;
 			children = (
+				3AC2AAA4465DED7698809F4F /* AnswerReviewRow.swift */,
 				9B5230450D260413558F4154 /* BookmarkToggleButton.swift */,
 				1064D8FE025922FAFB54DA17 /* OMRAnswerGrid.swift */,
 				58245B5A1311AC33D542BBCC /* QuestionBody.swift */,
+				9FA501A352BF28A9553CAD49 /* ScoreHeadline.swift */,
 				31E3A87E868AA01B3EAD195E /* SolveActionBar.swift */,
 				66D4C11ADB0FF2DEDCC421E4 /* SolveHeader.swift */,
+				C9B058741E894BDCD6A70F5A /* SubjectBreakdownCard.swift */,
 			);
 			path = Components;
 			sourceTree = "<group>";
@@ -254,6 +265,7 @@
 		6FB41984F83AA4B957D6B77C /* Solve */ = {
 			isa = PBXGroup;
 			children = (
+				E3723EDF6972EC89C1D38DE2 /* SolveResultView.swift */,
 				FB2BCAA6C4B0C055CC447D1F /* SolveView.swift */,
 				A5D29C8A96832A3E6418C529 /* SolveViewModel.swift */,
 				682ECC59DC58BE2E2E192FEA /* Components */,
@@ -434,6 +446,7 @@
 				F1D9AC1F5CA41C7B545C52AE /* APIClient.swift in Sources */,
 				D013CE75999DDE46365FFA21 /* APIEnvironment.swift in Sources */,
 				EC0207748C8B11B67C5E64D5 /* APIError.swift in Sources */,
+				73382EE2EA66ACB8875C24DA /* AnswerReviewRow.swift in Sources */,
 				6E6721F0D8F075FC170404C3 /* AppleAuthService.swift in Sources */,
 				70E27BC22A0205E1F8E7C8E3 /* Auth.swift in Sources */,
 				2E37FE98BFB0FDB69031CBAE /* AuthStore.swift in Sources */,
@@ -463,11 +476,13 @@
 				86EB2173A6D70EB98F94A8A6 /* QuestionService.swift in Sources */,
 				9A9EECF4B48D4E1885328335 /* Radius.swift in Sources */,
 				D4905F3C2C4434F7CD530856 /* RootView.swift in Sources */,
+				3071A6748D7F9E526DE7BA67 /* ScoreHeadline.swift in Sources */,
 				CD5EB5267A2DDBD22AE3EA01 /* SessionGate.swift in Sources */,
 				46F348F9EA34E5FFC45A723B /* Solve.swift in Sources */,
 				5FD7D0D9E0032D32D22BF854 /* SolveActionBar.swift in Sources */,
 				01C56FC06AD89D8DE411CC07 /* SolveAnswerEntry.swift in Sources */,
 				845BFAF1CB35F90119B47B15 /* SolveHeader.swift in Sources */,
+				FA4DB95DC1B14D16ED6CEB47 /* SolveResultView.swift in Sources */,
 				388FB55138321B051690D693 /* SolveService.swift in Sources */,
 				0169494DD6335F80701E6C88 /* SolveView.swift in Sources */,
 				5FC1A9AF7BB7FE6BE05CE0F0 /* SolveViewModel.swift in Sources */,
@@ -475,6 +490,7 @@
 				E72AE124E427E982B94A1F3D /* SqldpassApp.swift in Sources */,
 				636DF982B299901FECAB3FD7 /* Streak.swift in Sources */,
 				EC0CA9D80465F6E1C35F437D /* StreakService.swift in Sources */,
+				8276A3AEDED629405BA85F6D /* SubjectBreakdownCard.swift in Sources */,
 				DEF87070A95747B6AF7E23EF /* Subscription.swift in Sources */,
 				4A30795B8EDDD0183A59DFA0 /* Typography.swift in Sources */,
 				90A5785F507DA19672E4C3AC /* UIColor+Hex.swift in Sources */,
