@@ -1,0 +1,40 @@
+{
+  "project": "sqldpass",
+  "phase": "ios-solve-flow",
+  "description": "iOS 네이티브 앱 Phase 3.3-3.4 — 풀이 화면(Solve)과 채점 결과 화면(SolveResult) 신규 구현. iOS AGENTS.md 작성 + 추가 Service(Question, Bookmark) + SolveViewModel/View + 결과 화면 + MockExamDetail 연결. 시뮬레이터 빌드/스크린샷 검증.",
+  "steps": [
+    {
+      "step": 1,
+      "name": "ios-foundation-and-services",
+      "description": "iOS 자체 AGENTS.md(검증 명령 정의) 신설 + QuestionService/BookmarkService 추가 + SolveAnswerEntry/SubmittedAnswerInput 모델 확장.",
+      "status": "completed",
+      "started_at": "2026-05-18T01:17:11+0900",
+      "summary": "ios/AGENTS.md(작업 디렉토리/검증 명령/금지사항) + QuestionService(detail/list) + BookmarkService(list/exists/add/remove) + SolveAnswerEntry(메모리용 답안 구조체, SubmitRequest.Answer 매핑) 신설. iphonesimulator SDK Debug 빌드 성공."
+    },
+    {
+      "step": 2,
+      "name": "solve-viewmodel",
+      "description": "SolveViewModel(@Observable) — 문제 페이징 인덱스, 타이머(백그라운드 안전 Date 델타), 답안 dictionary, 다시보기 표시 set, 제출 호출. 순수 비즈니스 로직만, View 없음.",
+      "status": "pending"
+    },
+    {
+      "step": 3,
+      "name": "solve-view-ui",
+      "description": "SolveView — 헤더(진행률+타이머), 문제 본문, OMR 답안 선택지, 하단 이전/다음/종료 액션, 다시보기 표시 토글, 북마크 토글. 시뮬레이터 빌드 + 스크린샷 검증.",
+      "status": "pending"
+    },
+    {
+      "step": 4,
+      "name": "solve-result-view",
+      "description": "SolveResultView — 총점/정답률, 과목별 분석, 문항별 정/오답 + 해설 펼치기, '다시 풀기'/'목록으로' 액션. 시뮬레이터 빌드 + 스크린샷 검증.",
+      "status": "pending"
+    },
+    {
+      "step": 5,
+      "name": "wire-and-final-validation",
+      "description": "MockExamDetailView '시험 시작' 버튼 → SolveView 네비게이션, SolveView '제출' → SolveResultView 푸시, '목록으로' → 루트 pop. 전체 사이클 빌드 + 스크린샷.",
+      "status": "pending"
+    }
+  ],
+  "created_at": "2026-05-18T01:00:00+0900"
+}
