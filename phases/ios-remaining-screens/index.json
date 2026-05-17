@@ -9,7 +9,8 @@
       "description": "Models/WrongAnswer.swift 실제 백엔드 DTO(WrongAnswerResponse 필드: questionId/questionContent/subjectId/subjectName/wrongCount/lastWrongAt)와 일치하도록 재작성 + WrongAnswerStats/Preview/RetryResponse 모델 추가 + WrongAnswerService(list/stats/retry/preview) 신설 + MemberService.updateNickname 추가.",
       "status": "completed",
       "started_at": "2026-05-18T02:00:19+0900",
-      "summary": "WrongAnswer 모델 실 DTO 일치 재작성(+ Stats/Preview/RetryResult), WrongAnswerService 4메서드 신설, APIClient.patch 헬퍼 + MemberService.updateNickname 추가, project.pbxproj 등록, 시뮬레이터 빌드 성공."
+      "summary": "WrongAnswer 모델 실 DTO 일치 재작성(+ Stats/Preview/RetryResult), WrongAnswerService 4메서드 신설, APIClient.patch 헬퍼 + MemberService.updateNickname 추가, project.pbxproj 등록, 시뮬레이터 빌드 성공.",
+      "completed_at": "2026-05-18T02:03:51+0900"
     },
     {
       "step": 2,
