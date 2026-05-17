@@ -19,7 +19,7 @@
       "status": "completed",
       "started_at": "2026-05-18T01:21:22+0900",
       "summary": "Features/Solve/SolveViewModel.swift 신설 — @Observable, mockExamId+questions 입력, currentIndex/answers/startedAt 상태, Date 델타 기반 elapsedSeconds(백그라운드 안전), Task 기반 1초 ticker, 선택/마크/네비/제출 액션. iphonesimulator SDK Debug 빌드 성공.",
-      "completed_at": "2026-05-18T01:23:00+0900"
+      "completed_at": "2026-05-18T01:23:44+0900"
     },
     {
       "step": 3,
