@@ -15,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 public class AuthService {
 
     private final GoogleOAuthClient googleOAuthClient;
+    private final AppleIdTokenVerifier appleIdTokenVerifier;
     private final MemberRepository memberRepository;
     private final JwtProvider jwtProvider;
     private final DiscordNotifier discordNotifier;
@@ -34,6 +35,32 @@ public class AuthService {
     public AuthResult loginWithGoogleIdToken(String idToken) {
         GoogleOAuthClient.GoogleUserInfo userInfo = googleOAuthClient.verifyIdToken(idToken);
         return upsertMemberAndIssueToken(userInfo);
+    }
+
+    /**
+     * iOS 앱 — 네이티브 ASAuthorizationAppleIDProvider 가 발급한 JWS 를 검증하고
+     * Apple {@code sub} 을 provider id 로 회원 발급. Apple 은 첫 로그인에만 이름을
+     * 제공하므로 신규 가입자에겐 임시 닉네임을 부여한다(Google 흐름과 동일).
+     */
+    @Transactional
+    public AuthResult loginWithApple(String idToken) {
+        String appleSub = appleIdTokenVerifier.verify(idToken);
+
+        boolean[] isNew = {false};
+        MemberEntity member = memberRepository.findByProviderAndProviderId("apple", appleSub)
+                .orElseGet(() -> {
+                    isNew[0] = true;
+                    String placeholder = "user_" + appleSub.substring(0, Math.min(12, appleSub.length()));
+                    return memberRepository.save(
+                            new MemberEntity("apple", appleSub, placeholder));
+                });
+
+        if (isNew[0]) {
+            discordNotifier.notifyNewMember(member);
+        }
+
+        String token = jwtProvider.createUserToken(member.getId());
+        return new AuthResult(token, member.getNickname(), isNew[0]);
     }
 
     private AuthResult upsertMemberAndIssueToken(GoogleOAuthClient.GoogleUserInfo userInfo) {
