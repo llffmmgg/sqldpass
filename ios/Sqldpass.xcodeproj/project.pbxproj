@@ -67,6 +67,9 @@
 		DEF87070A95747B6AF7E23EF /* Subscription.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF29A3CD13BA2DEDA06BF118 /* Subscription.swift */; };
 		E72AE124E427E982B94A1F3D /* SqldpassApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1A910BE5F74468E50D613BA /* SqldpassApp.swift */; };
 		E748B6097E47AC676B7C11B8 /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5E02115A57224055005B8E7 /* ProfileView.swift */; };
+		AAAA0001AAAA0001AAAA0001 /* ProfileViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAAA0002AAAA0002AAAA0002 /* ProfileViewModel.swift */; };
+		AAAA0003AAAA0003AAAA0003 /* NicknameEditView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAAA0004AAAA0004AAAA0004 /* NicknameEditView.swift */; };
+		AAAA0005AAAA0005AAAA0005 /* AccountDeletionConfirmView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAAA0006AAAA0006AAAA0006 /* AccountDeletionConfirmView.swift */; };
 		EAC2D57B7FF3552CCC4FFEBB /* WrongAnswer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35F209C7176E9E566771D690 /* WrongAnswer.swift */; };
 		EC0207748C8B11B67C5E64D5 /* APIError.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB4E676048135B0AB8D5DD95 /* APIError.swift */; };
 		EC0CA9D80465F6E1C35F437D /* StreakService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9304FB02C4CA965282101805 /* StreakService.swift */; };
@@ -122,6 +125,9 @@
 		B7C3D9F4A1E2B5C6D9E0F1A2 /* MockExamRoutes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockExamRoutes.swift; sourceTree = "<group>"; };
 		A5D29C8A96832A3E6418C529 /* SolveViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SolveViewModel.swift; sourceTree = "<group>"; };
 		A5E02115A57224055005B8E7 /* ProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileView.swift; sourceTree = "<group>"; };
+		AAAA0002AAAA0002AAAA0002 /* ProfileViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileViewModel.swift; sourceTree = "<group>"; };
+		AAAA0004AAAA0004AAAA0004 /* NicknameEditView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NicknameEditView.swift; sourceTree = "<group>"; };
+		AAAA0006AAAA0006AAAA0006 /* AccountDeletionConfirmView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountDeletionConfirmView.swift; sourceTree = "<group>"; };
 		B1A910BE5F74468E50D613BA /* SqldpassApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SqldpassApp.swift; sourceTree = "<group>"; };
 		B342183DA41EFF2FB6C1F19F /* SessionGate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionGate.swift; sourceTree = "<group>"; };
 		BB4E676048135B0AB8D5DD95 /* APIError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIError.swift; sourceTree = "<group>"; };
@@ -306,6 +312,9 @@
 			isa = PBXGroup;
 			children = (
 				A5E02115A57224055005B8E7 /* ProfileView.swift */,
+				AAAA0002AAAA0002AAAA0002 /* ProfileViewModel.swift */,
+				AAAA0004AAAA0004AAAA0004 /* NicknameEditView.swift */,
+				AAAA0006AAAA0006AAAA0006 /* AccountDeletionConfirmView.swift */,
 			);
 			path = Profile;
 			sourceTree = "<group>";
@@ -505,6 +514,9 @@
 				B83DBB33E099A614BD0435C5 /* MockExamsViewModel.swift in Sources */,
 				543825661FFE6E9A64052225 /* OMRAnswerGrid.swift in Sources */,
 				E748B6097E47AC676B7C11B8 /* ProfileView.swift in Sources */,
+				AAAA0001AAAA0001AAAA0001 /* ProfileViewModel.swift in Sources */,
+				AAAA0003AAAA0003AAAA0003 /* NicknameEditView.swift in Sources */,
+				AAAA0005AAAA0005AAAA0005 /* AccountDeletionConfirmView.swift in Sources */,
 				66E45204EEC341E63C21D0B8 /* Question.swift in Sources */,
 				5427CB85CCBF020B518785E6 /* QuestionBody.swift in Sources */,
 				86EB2173A6D70EB98F94A8A6 /* QuestionService.swift in Sources */,
