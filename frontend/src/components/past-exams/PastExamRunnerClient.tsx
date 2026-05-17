@@ -7,6 +7,8 @@ import { useRouter } from "next/navigation";
 
 import Spinner from "@/components/Spinner";
 import QuestionContent from "@/components/QuestionContent";
+import BookmarkButton from "@/components/BookmarkButton";
+import ReportQuestionButton from "@/components/ReportQuestionButton";
 import { GradingDisclaimerModal } from "@/components/GradingDisclaimerModal";
 import SolveTutorialModal from "@/components/SolveTutorialModal";
 import { hasSeenSolveTutorial } from "@/lib/tutorialStorage";
@@ -407,7 +409,11 @@ export default function PastExamRunnerClient({
                 <p className="text-xs font-medium text-text-muted">
                   {exam.examType === "ENGINEER_PRACTICAL" ? "" : current.subjectName}
                 </p>
-                <QuestionTypeBadge type={current.questionType} />
+                <div className="flex items-center gap-3">
+                  <BookmarkButton questionId={current.id} />
+                  <ReportQuestionButton questionId={current.id} />
+                  <QuestionTypeBadge type={current.questionType} />
+                </div>
               </div>
               <h2 className="mt-2 text-lg font-semibold">문항 {currentIdx + 1}</h2>
               <div className="mt-4">
