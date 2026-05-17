@@ -28,7 +28,7 @@
       "status": "completed",
       "started_at": "2026-05-18T02:07:05+0900",
       "summary": "WrongAnswersViewModel(@Observable, list+stats 병렬 로딩, markMastered) 신규, WrongAnswersView 재작성(통계 카드 가로 스크롤 + 오답 카드 리스트 + 상태별 분기), WrongAnswerRetrySheet 신규(1~4 선택 → POST retry → 정/오답+해설 표시, 정답 시 자동 마스터), project.pbxproj 등록, 시뮬레이터 빌드 성공.",
-      "completed_at": "2026-05-18T02:15:00+0900"
+      "completed_at": "2026-05-18T02:10:50+0900"
     },
     {
       "step": 4,
