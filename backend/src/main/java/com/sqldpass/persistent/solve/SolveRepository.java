@@ -2,6 +2,7 @@ package com.sqldpass.persistent.solve;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -11,6 +12,8 @@ import org.springframework.data.repository.query.Param;
 public interface SolveRepository extends JpaRepository<SolveEntity, Long> {
 
     long countByCreatedAtAfter(LocalDateTime dateTime);
+
+    Optional<SolveEntity> findByMember_IdAndClientSubmissionId(Long memberId, String clientSubmissionId);
 
     /**
      * 일자별 신규 풀이 수 — 대시보드 추이 그래프용.

@@ -198,6 +198,22 @@
       "status": "completed",
       "created_at": "2026-05-16T23:30:00+0900",
       "completed_at": "2026-05-16T23:55:00+0900"
+    },
+    {
+      "dir": "native-android-cbt-app",
+      "name": "native-android-cbt-app",
+      "description": "mobile/ Capacitor WebView 셸을 Kotlin Compose 네이티브 Android CBT 앱으로 전환한다. 웹 브랜드 톤을 유지하고, Google 로그인, 모의고사, 완전 오프라인, Play Billing, 모바일 전용 백엔드 계약을 구현한다.",
+      "status": "completed",
+      "created_at": "2026-05-17T18:30:00+0900",
+      "completed_at": "2026-05-17T18:44:06+0900"
+    },
+    {
+      "dir": "mobile-5tab-runner",
+      "name": "mobile-5tab-runner",
+      "description": "mobile/ 하단 탭을 홈/모의고사/기출복원/문제풀기/대시보드 5개로 재구성하고, 공통 풀이 화면(QuestionRunnerScreen) + 신규 API(past-exams, subjects, questions, streak, overall-avg, best-scores)로 각 탭이 풀이까지 동작하는 기본 화면을 갖추도록 한다.",
+      "status": "completed",
+      "created_at": "2026-05-17T19:00:00+0900",
+      "completed_at": "2026-05-17T19:35:00+0900"
     }
   ]
 }

@@ -2,11 +2,11 @@
 
 ## Scope
 
-This repository is a monorepo with two active apps and one mobile shell:
+This repository is a monorepo with two active apps and one native mobile app:
 
 - `frontend/`: Next.js 16, React 19, TypeScript, Tailwind CSS 4
 - `backend/`: Spring Boot 4, Java 21, Gradle
-- `mobile/`: Capacitor 7 (Android 앱, `https://www.sqldpass.com` 외부 URL 모드)
+- `mobile/`: Native Android app, Kotlin, Jetpack Compose, Room, Retrofit, Play Billing
 
 Read this file first. Then read the `AGENTS.md` inside the app you are changing for stack-specific guidance.
 
@@ -14,20 +14,20 @@ Read this file first. Then read the `AGENTS.md` inside the app you are changing 
 
 - Run frontend commands from `frontend/`.
 - Run backend commands from `backend/`.
-- Run mobile (Capacitor) commands from `mobile/`.
+- Run mobile Android commands from `mobile/`.
 - Do not install dependencies or generate build artifacts at the repository root unless the repo is explicitly restructured to support that.
 
 ## Ownership And Boundaries
 
 - Keep frontend changes inside `frontend/` unless the task explicitly requires a cross-cutting change.
 - Keep backend changes inside `backend/` unless the task explicitly requires a cross-cutting change.
-- `mobile/` is an external-URL Capacitor shell — do not put screen/UI code here. The Android app reuses the deployed `frontend/` via WebView, so app-only behavior should live behind a `isCapacitorApp()` branch in `frontend/`.
+- `mobile/` is a native Android client. Keep Android UI, offline cache, Google Sign-In, and Play Billing code inside `mobile/`; do not move Android-only behavior into `frontend/`.
 - If a task touches API contracts, update both sides in one pass or document the mismatch clearly.
 
 ## Harness Workflow
 
 - Use the root harness configuration for cross-app planning, phase tracking, and shared documentation.
-- Keep app-specific implementation rules in `frontend/AGENTS.md` and `backend/AGENTS.md`.
+- Keep app-specific implementation rules in `frontend/AGENTS.md`, `backend/AGENTS.md`, and `mobile/AGENTS.md`.
 - A phase can target one app only, or both apps when the feature spans an API contract.
 - Step files should list the exact app directories and validation commands they require.
 

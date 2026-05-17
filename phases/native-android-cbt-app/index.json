@@ -1,0 +1,33 @@
+{
+  "project": "sqldpass",
+  "phase": "native-android-cbt-app",
+  "description": "Capacitor WebView mobile/을 Kotlin Compose 네이티브 CBT 앱으로 전환하고, 완전 오프라인과 Play Billing에 필요한 최소 백엔드 계약을 추가한다.",
+  "steps": [
+    {
+      "step": 1,
+      "name": "backend-mobile-contracts",
+      "description": "모바일 스냅샷 API와 오프라인 제출 중복 방지 계약 추가",
+      "status": "completed",
+      "summary": "POST /api/solves optional clientSubmissionId + solve.client_submission_id/Flyway V88 + idempotent reuse, GET /api/mobile/content/snapshot ETag endpoint with premium filtering. compileJava, SolveServiceTest, SolveControllerTest, and full backend test passed.",
+      "completed_at": "2026-05-17T18:15:00+0900"
+    },
+    {
+      "step": 2,
+      "name": "android-compose-app",
+      "description": "mobile/을 Kotlin Compose Android 앱 프로젝트로 전환",
+      "status": "completed",
+      "summary": "Removed tracked Capacitor files and added Kotlin Compose Android project with package com.sqldpass.app, 문어CBT app label, reused logo, Retrofit/Moshi/Room/token store/offline queue/Google auth/Play Billing integration points, and tab-based CBT UI.",
+      "completed_at": "2026-05-17T18:18:00+0900"
+    },
+    {
+      "step": 3,
+      "name": "validation-and-handoff",
+      "description": "검증 명령 실행, Android SDK 제약 기록, phase 상태 정리",
+      "status": "completed",
+      "summary": "Installed Android Studio plus Android SDK command-line tools/platform android-35/build-tools/platform-tools, configured mobile/local.properties, fixed Java/Kotlin target alignment, and verified mobile :app:assembleDebug plus backend .\\gradlew.bat test.",
+      "completed_at": "2026-05-17T18:44:06+0900"
+    }
+  ],
+  "created_at": "2026-05-17T18:30:00+0900",
+  "completed_at": "2026-05-17T18:44:06+0900"
+}

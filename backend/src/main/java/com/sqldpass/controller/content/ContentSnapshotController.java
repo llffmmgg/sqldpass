@@ -13,7 +13,7 @@ import com.sqldpass.service.content.ContentSnapshotService;
 import lombok.RequiredArgsConstructor;
 
 /**
- * 안드로이드 Capacitor 앱 첫 부트(또는 ETag 변경 시) 호출되는 콘텐츠 prefetch 엔드포인트.
+ * 네이티브 안드로이드 앱 첫 부트(또는 ETag 변경 시) 호출되는 콘텐츠 prefetch 엔드포인트.
  * 비로그인 호출 가능 — 보안 경계는 풀이 권한 체크(/api/mock-exams/...)와 결제 검증에 있다.
  */
 @RestController

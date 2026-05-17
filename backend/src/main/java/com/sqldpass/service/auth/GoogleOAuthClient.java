@@ -76,7 +76,7 @@ public class GoogleOAuthClient {
     }
 
     /**
-     * 안드로이드 Capacitor 앱이 네이티브 Google Sign-In 으로 받은 ID 토큰을 검증한다.
+     * 네이티브 안드로이드 앱이 Google Sign-In 으로 받은 ID 토큰을 검증한다.
      * Google 의 공개 tokeninfo 엔드포인트를 호출 — 서명/만료/issuer 확인은 Google 측에서 끝나고,
      * 우리는 audience(aud) 가 우리 client_id 중 하나와 일치하는지만 추가 검증한다.
      */

@@ -175,4 +175,23 @@ class SolveServiceTest {
         List<Solve> all = solveService.getMySolves(member.getId(), null);
         assertThat(all).hasSize(5);
     }
+
+    @Test
+    @DisplayName("같은 clientSubmissionId 로 제출하면 기존 풀이를 재사용한다")
+    void solveIsIdempotentByClientSubmissionId() {
+        SolveRequest req = new SolveRequest(subject.getId(), null, null, List.of(
+                new SolveAnswerRequest(q1.getId(), 1, null)
+        ), "android-submit-1");
+
+        Solve first = solveService.solve(member.getId(), req).solve();
+        entityManager.flush();
+        entityManager.clear();
+
+        Solve second = solveService.solve(member.getId(), req).solve();
+        entityManager.flush();
+        entityManager.clear();
+
+        assertThat(second.getId()).isEqualTo(first.getId());
+        assertThat(solveService.getMySolves(member.getId())).hasSize(1);
+    }
 }

@@ -12,7 +12,7 @@ import lombok.Setter;
 
 /**
  * Google Play Billing 설정.
- * - {@code packageName}: 앱 ID (Capacitor 의 com.sqldpass.app 과 동일)
+ * - {@code packageName}: 앱 ID (네이티브 안드로이드 앱의 com.sqldpass.app 과 동일)
  * - {@code serviceAccountJsonPath}: Play Console 에서 발급한 서비스 계정 JSON 키 경로.
  *   미설정이면 PlayBillingClient 가 fail-fast (검증 호출 시 IllegalStateException).
  * - {@code productIdMapping}: Play Console 에 등록한 상품 ID(SKU) ↔ 우리 SubscriptionPlan 매핑.

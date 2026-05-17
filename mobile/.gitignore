@@ -1,29 +1,15 @@
-node_modules/
+.gradle/
+.idea/
+build/
+app/build/
+local.properties
+*.iml
 
-# Android Studio / Gradle
-android/.gradle/
-android/.idea/
-android/build/
-android/app/build/
-android/app/release/
-android/captures/
-android/local.properties
-android/gradle.properties.local
-
-# Signing — keystores never go in git
+# Signing credentials
 *.keystore
 *.jks
 keystore.properties
 
-# Firebase / Play services configs (contain project IDs/keys)
-android/app/google-services.json
-android/app/google-services-debug.json
-
-# Capacitor sync artefacts
-android/app/src/main/assets/public/
-android/app/src/main/assets/capacitor.config.json
-android/app/src/main/assets/capacitor.plugins.json
-
-# Misc
+# Generated and local files
 .DS_Store
 *.log

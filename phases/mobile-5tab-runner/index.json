@@ -1,0 +1,57 @@
+{
+  "project": "sqldpass",
+  "phase": "mobile-5tab-runner",
+  "description": "mobile/ 하단 탭을 홈/모의고사/기출복원/문제풀기/대시보드 5개로 재구성하고, 공통 풀이 화면 + 신규 API 로 각 탭이 풀이까지 동작하는 기본 화면을 갖추도록 한다. 로그인/PASS+ 구매는 홈 헤더 + 대시보드 상단에 통합.",
+  "steps": [
+    {
+      "step": 1,
+      "name": "data-layer",
+      "description": "SqldpassApi 6개 엔드포인트 추가 + ApiModels record + AppRepository 메서드",
+      "status": "completed",
+      "summary": "SqldpassApi 8개 신규(past-exams 3 + subjects + questions + streak + overall-avg + best-scores), ApiModels 12개 신규 data class, AppRepository 7개 신규 메서드 + submitPractice. compileDebugKotlin BUILD SUCCESSFUL.",
+      "completed_at": "2026-05-17T19:10:00+0900"
+    },
+    {
+      "step": 2,
+      "name": "question-runner",
+      "description": "QuestionRunnerScreen 공통 풀이 화면 + 결과 표시",
+      "status": "completed",
+      "summary": "RunnerModels(mode/session/result/draft), QuestionRunnerScreen(HtmlCompat 본문 + 1~4 선지 / 단답 입력 + 이전·다음·제출), QuestionResultScreen(SolveResponse / PastExamGradeResponse 분기, 합격 배너·과목별 점수). compileDebugKotlin BUILD SUCCESSFUL.",
+      "completed_at": "2026-05-17T19:20:00+0900"
+    },
+    {
+      "step": 3,
+      "name": "tabs-and-home",
+      "description": "MainActivity 5탭 재구성 + 홈 헤더 로그인 통합",
+      "status": "completed",
+      "summary": "tabs = 홈/모의고사/기출복원/문제풀기/대시보드 로 교체, HomeScreen 분리(BrandHeaderRow 우측 로그인/로그아웃 메뉴), AppViewModel 에 신규 상태 슬라이스(certSlugs, pastExamsByCert, subjects, runner, runnerResult, dashboard) 및 인텐트(loadPastExams, loadSubjects, loadDashboard, startMockExamRunner, startPastExamRunner, startPracticeRunner, submitRunner, cancelRunner, dismissResult, restartLastPractice) 추가.",
+      "completed_at": "2026-05-17T19:30:00+0900"
+    },
+    {
+      "step": 4,
+      "name": "mockexam-pastexam",
+      "description": "모의고사 + 기출복원 탭 풀이 동작",
+      "status": "completed",
+      "summary": "MockExamTab(카드 → QuestionRunner → QuestionResult, 잠금 카드 PASS+ 표기 + 풀이 시작 비활성), PastExamTab(자격증 칩 → 회차 카드 → 풀이 → grade 결과). 둘 다 runner.mode 분기로 화면 전환.",
+      "completed_at": "2026-05-17T19:30:00+0900"
+    },
+    {
+      "step": 5,
+      "name": "practice-dashboard",
+      "description": "문제풀기 + 대시보드 탭 신규 구현",
+      "status": "completed",
+      "summary": "SolveTab(과목 트리 FlowRow 칩 → randomQuestions(10) → 풀이 → SolveResponse → 다음 세트 재시작), DashboardTab(회원 카드 + streak + overall-avg + 시험별 best-score + PASS+ 카드).",
+      "completed_at": "2026-05-17T19:30:00+0900"
+    },
+    {
+      "step": 6,
+      "name": "validation",
+      "description": "assembleDebug 빌드 검증 + phase 마무리",
+      "status": "completed",
+      "summary": ":app:assembleDebug BUILD SUCCESSFUL (39 tasks, 1 deprecation warning - AutoMirrored.Outlined.Login 권장만, 비차단).",
+      "completed_at": "2026-05-17T19:35:00+0900"
+    }
+  ],
+  "created_at": "2026-05-17T19:00:00+0900",
+  "completed_at": "2026-05-17T19:35:00+0900"
+}

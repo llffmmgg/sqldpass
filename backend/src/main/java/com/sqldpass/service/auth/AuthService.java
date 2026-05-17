@@ -27,7 +27,7 @@ public class AuthService {
     }
 
     /**
-     * 안드로이드 Capacitor 앱 — 네이티브 Google Sign-In 이 ID 토큰을 직접 반환하므로
+     * 네이티브 안드로이드 앱 — Google Sign-In 이 ID 토큰을 직접 반환하므로
      * code↔access_token 교환 단계가 없다. ID 토큰 자체를 검증하고 같은 흐름으로 회원 발급.
      */
     @Transactional

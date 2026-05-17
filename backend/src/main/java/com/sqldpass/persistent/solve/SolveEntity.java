@@ -29,7 +29,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
 @Table(name = "solve", indexes = {
-    @Index(name = "idx_solve_member_id", columnList = "member_id")
+    @Index(name = "idx_solve_member_id", columnList = "member_id"),
+    @Index(name = "idx_solve_client_submission", columnList = "member_id, client_submission_id")
 })
 public class SolveEntity extends BaseTimeEntity {
 
@@ -58,37 +59,75 @@ public class SolveEntity extends BaseTimeEntity {
     @Column(nullable = false)
     private int score;
 
+    @Column(name = "client_submission_id", length = 64)
+    private String clientSubmissionId;
+
     @OneToMany(mappedBy = "solve", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<SolveAnswerEntity> answers = new ArrayList<>();
 
     public SolveEntity(MemberEntity member, SubjectEntity subject, int totalCount, int correctCount, int score) {
+        this(member, subject, totalCount, correctCount, score, null);
+    }
+
+    public SolveEntity(
+            MemberEntity member,
+            SubjectEntity subject,
+            int totalCount,
+            int correctCount,
+            int score,
+            String clientSubmissionId) {
         this.member = member;
         this.subject = subject;
         this.totalCount = totalCount;
         this.correctCount = correctCount;
         this.score = score;
+        this.clientSubmissionId = normalizeClientSubmissionId(clientSubmissionId);
     }
 
     public SolveEntity(MemberEntity member, MockExamEntity mockExam, int totalCount, int correctCount, int score) {
+        this(member, mockExam, totalCount, correctCount, score, null);
+    }
+
+    public SolveEntity(
+            MemberEntity member,
+            MockExamEntity mockExam,
+            int totalCount,
+            int correctCount,
+            int score,
+            String clientSubmissionId) {
         this.member = member;
         this.mockExam = mockExam;
         this.totalCount = totalCount;
         this.correctCount = correctCount;
         this.score = score;
+        this.clientSubmissionId = normalizeClientSubmissionId(clientSubmissionId);
     }
 
-    /**
-     * 즐겨찾기 모아 풀기 등 subject/mockExam 어느 쪽에도 속하지 않는 풀이용 생성자.
-     * subject_id / mock_exam_id 컬럼 둘 다 NULL 로 저장된다.
-     */
     public SolveEntity(MemberEntity member, int totalCount, int correctCount, int score) {
+        this(member, totalCount, correctCount, score, null);
+    }
+
+    public SolveEntity(
+            MemberEntity member,
+            int totalCount,
+            int correctCount,
+            int score,
+            String clientSubmissionId) {
         this.member = member;
         this.totalCount = totalCount;
         this.correctCount = correctCount;
         this.score = score;
+        this.clientSubmissionId = normalizeClientSubmissionId(clientSubmissionId);
     }
 
     public void addAnswer(SolveAnswerEntity answer) {
         this.answers.add(answer);
+    }
+
+    private static String normalizeClientSubmissionId(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        return value.trim();
     }
 }

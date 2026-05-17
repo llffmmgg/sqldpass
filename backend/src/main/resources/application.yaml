@@ -59,11 +59,11 @@ sqldpass:
     google:
       client-id: ${GOOGLE_OAUTH_CLIENT_ID:not-set}
       client-secret: ${GOOGLE_OAUTH_CLIENT_SECRET:not-set}
-      # 안드로이드 Capacitor 앱이 네이티브 Google Sign-In 으로 받는 ID 토큰의 audience.
+      # 네이티브 Android 앱이 Google Sign-In 으로 받는 ID 토큰의 audience.
       # Google Cloud Console 에서 Android 클라이언트 (package name + SHA-1) 를 따로 발급해 입력.
       android-client-id: ${GOOGLE_OAUTH_ANDROID_CLIENT_ID:}
   play-billing:
-    # 앱 ID — Capacitor capacitor.config.ts 의 appId 와 동일해야 한다.
+    # 앱 ID — native Android applicationId 와 동일해야 한다.
     package-name: ${PLAY_BILLING_PACKAGE_NAME:com.sqldpass.app}
     # Play Console > 설정 > API 액세스에서 발급한 서비스 계정 JSON 키 경로.
     # 운영 배포 시 컨테이너에 마운트하고 환경변수로 절대경로 주입.

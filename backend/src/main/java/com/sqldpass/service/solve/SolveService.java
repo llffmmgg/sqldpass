@@ -62,6 +62,8 @@ public class SolveService {
 
     @Transactional
     public SolveWithStreak solve(Long memberId, SolveRequest request) {
+        String clientSubmissionId = normalizeClientSubmissionId(request.clientSubmissionId());
+
         com.sqldpass.controller.solve.dto.SolveSource source = request.effectiveSource();
         if (source == com.sqldpass.controller.solve.dto.SolveSource.BOOKMARK) {
             // 즐겨찾기 모아 풀기 — subject/mockExam 둘 다 비어 있어야 함
@@ -79,6 +81,13 @@ public class SolveService {
 
         MemberEntity member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new SqldpassException(ErrorCode.MEMBER_NOT_FOUND));
+
+        if (clientSubmissionId != null) {
+            var existing = solveRepository.findByMember_IdAndClientSubmissionId(memberId, clientSubmissionId);
+            if (existing.isPresent()) {
+                return new SolveWithStreak(SolveMapper.toDomain(existing.get()), null);
+            }
+        }
 
         List<Long> questionIds = request.answers().stream()
                 .map(SolveAnswerRequest::questionId)
@@ -112,15 +121,15 @@ public class SolveService {
         // 풀이 종류에 따라 SolveEntity 생성
         SolveEntity solveEntity;
         if (source == com.sqldpass.controller.solve.dto.SolveSource.BOOKMARK) {
-            solveEntity = new SolveEntity(member, totalCount, correctCount, score);
+            solveEntity = new SolveEntity(member, totalCount, correctCount, score, clientSubmissionId);
         } else if (request.subjectId() != null) {
             SubjectEntity subject = subjectRepository.findById(request.subjectId())
                     .orElseThrow(() -> new SqldpassException(ErrorCode.SUBJECT_NOT_FOUND));
-            solveEntity = new SolveEntity(member, subject, totalCount, correctCount, score);
+            solveEntity = new SolveEntity(member, subject, totalCount, correctCount, score, clientSubmissionId);
         } else {
             MockExamEntity mockExam = mockExamRepository.findById(request.mockExamId())
                     .orElseThrow(() -> new SqldpassException(ErrorCode.MOCK_EXAM_NOT_FOUND));
-            solveEntity = new SolveEntity(member, mockExam, totalCount, correctCount, score);
+            solveEntity = new SolveEntity(member, mockExam, totalCount, correctCount, score, clientSubmissionId);
         }
 
         // 답안별 엔티티 생성
@@ -174,6 +183,13 @@ public class SolveService {
 
     /** 풀이 결과 + streak 갱신 결과를 함께 반환. */
     public record SolveWithStreak(com.sqldpass.domain.solve.Solve solve, StreakUpdateResult streakUpdate) {
+    }
+
+    private static String normalizeClientSubmissionId(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        return value.trim();
     }
 
     public List<Solve> getMySolves(Long memberId) {
