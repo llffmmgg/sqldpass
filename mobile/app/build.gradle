@@ -4,7 +4,25 @@ plugins {
     id "com.google.devtools.ksp"
 }
 
-def googleWebClientId = (project.findProperty("GOOGLE_WEB_CLIENT_ID") ?: "").toString()
+// GOOGLE_WEB_CLIENT_ID 읽기 우선순위:
+//   1) -P CLI 인자 / gradle.properties / ~/.gradle/gradle.properties / ORG_GRADLE_PROJECT_* env
+//   2) (fallback) mobile/local.properties — AGP 표준은 sdk.dir 만 자동 로드라 여기서 직접 읽음
+// 비어 있어도 빌드는 통과(컴파일 회귀 검증 가능). 단 Google 로그인이 즉시 RESULT_CANCELED 됨.
+def googleWebClientId = ""
+def fromGradle = project.findProperty("GOOGLE_WEB_CLIENT_ID")
+if (fromGradle != null && fromGradle.toString().trim()) {
+    googleWebClientId = fromGradle.toString().trim()
+} else {
+    def localProps = rootProject.file("local.properties")
+    if (localProps.exists()) {
+        def props = new Properties()
+        localProps.withInputStream { props.load(it) }
+        def fromLocal = props.getProperty("GOOGLE_WEB_CLIENT_ID")
+        if (fromLocal != null && fromLocal.trim()) {
+            googleWebClientId = fromLocal.trim()
+        }
+    }
+}
 
 android {
     namespace "com.sqldpass.app"

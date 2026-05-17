@@ -1,0 +1,71 @@
+# ============================================================
+# sqldpass 모바일 CI — Android Compose 앱 회귀 검증
+# ============================================================
+#
+# PR이 main 으로 올라올 때 또는 main 에 직접 push 될 때,
+# mobile/** 변경이 있으면 :app:assembleDebug 를 돌려 빌드 깨짐을 잡는다.
+#
+# 릴리스 서명·Play Store 자동 업로드는 별도 phase (mobile-release-cd).
+#
+# GitHub Secrets 권장 등록:
+#   - GOOGLE_WEB_CLIENT_ID  (GCP Web 클라이언트 ID; 미설정이어도 빌드는 통과)
+# ============================================================
+
+name: 모바일 CI
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'mobile/**'
+      - '.github/workflows/mobile-ci.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'mobile/**'
+      - '.github/workflows/mobile-ci.yml'
+
+jobs:
+  android-debug:
+    name: assembleDebug
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: mobile
+
+    steps:
+      - name: 소스 코드 체크아웃
+        uses: actions/checkout@v4
+
+      - name: Java 17 설정
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Android SDK 설정
+        uses: android-actions/setup-android@v3
+        with:
+          packages: ''  # AGP 가 필요한 SDK 자동 다운로드 (compileSdk 35)
+
+      - name: Gradle 캐시 설정
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-mobile-${{ hashFiles('mobile/**/*.gradle*', 'mobile/gradle/wrapper/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-mobile-
+            ${{ runner.os }}-gradle-
+
+      - name: gradlew 실행 권한 부여
+        run: chmod +x gradlew
+
+      - name: assembleDebug 실행
+        env:
+          # GitHub Secrets 에 GOOGLE_WEB_CLIENT_ID 가 없으면 빈 문자열 — 빌드는 통과(회귀 검증 목적).
+          # 실제 로그인은 secret 등록 후에야 동작.
+          ORG_GRADLE_PROJECT_GOOGLE_WEB_CLIENT_ID: ${{ secrets.GOOGLE_WEB_CLIENT_ID }}
+        run: ./gradlew :app:assembleDebug --no-daemon

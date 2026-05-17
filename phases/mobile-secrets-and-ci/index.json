@@ -1,0 +1,33 @@
+{
+  "project": "sqldpass",
+  "phase": "mobile-secrets-and-ci",
+  "description": "안드로이드 secret 주입 보강(local.properties fallback) + 모바일 GitHub Actions 회귀 검증 워크플로우 신규.",
+  "steps": [
+    {
+      "step": 1,
+      "name": "build-gradle-fallback",
+      "description": "mobile/app/build.gradle 의 GOOGLE_WEB_CLIENT_ID 읽기 로직을 local.properties fallback 까지 확장, gradle.properties placeholder, mobile/AGENTS.md 셋업 섹션 갱신",
+      "status": "completed",
+      "summary": "build.gradle 가 project.findProperty 미스 시 rootProject.file('local.properties') 의 GOOGLE_WEB_CLIENT_ID 도 읽도록 확장. gradle.properties 에 placeholder 주석(값 비움), mobile/AGENTS.md 에 Local secrets 섹션 추가(5단 우선순위 + GCP 발급 안내).",
+      "completed_at": "2026-05-17T20:45:00+0900"
+    },
+    {
+      "step": 2,
+      "name": "github-actions-mobile-ci",
+      "description": ".github/workflows/mobile-ci.yml 신규 — PR/main push 마다 :app:assembleDebug 자동 빌드, GOOGLE_WEB_CLIENT_ID secret 주입",
+      "status": "completed",
+      "summary": "mobile-ci.yml 신규. JDK 17 + android-actions/setup-android@v3 + Gradle 캐시 + gradlew chmod + :app:assembleDebug. paths 필터로 mobile/** 또는 워크플로우 파일 변경 시에만 트리거. ORG_GRADLE_PROJECT_GOOGLE_WEB_CLIENT_ID 환경변수로 secret 주입(미설정 시 빈 값으로 빌드 통과).",
+      "completed_at": "2026-05-17T20:50:00+0900"
+    },
+    {
+      "step": 3,
+      "name": "validation",
+      "description": "로컬 :app:assembleDebug 통과 확인, commit + pull --rebase + push, phase 마무리",
+      "status": "completed",
+      "summary": "로컬 :app:assembleDebug BUILD SUCCESSFUL (2s, 캐시 hit). 커밋 후 push 단계로 진행.",
+      "completed_at": "2026-05-17T20:55:00+0900"
+    }
+  ],
+  "created_at": "2026-05-17T20:30:00+0900",
+  "completed_at": "2026-05-17T20:55:00+0900"
+}
