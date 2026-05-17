@@ -19,7 +19,7 @@
       "status": "completed",
       "started_at": "2026-05-18T02:03:51+0900",
       "summary": "HistoryViewModel(@Observable, SolveService.myHistory + 최신순 정렬), HistoryView(상태별 분기 — 로딩/에러/빈/리스트, NavigationLink로 SolveResultView 재사용, HistoryCard 점수·정답수·연속학습·일자) 신규, project.pbxproj 등록, 시뮬레이터 빌드 성공.",
-      "completed_at": "2026-05-18T02:10:00+0900"
+      "completed_at": "2026-05-18T02:07:05+0900"
     },
     {
       "step": 3,
