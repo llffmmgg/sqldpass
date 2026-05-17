@@ -34,7 +34,10 @@
       "step": 4,
       "name": "bookmarks-view",
       "description": "Features/Bookmarks/{BookmarksView,BookmarksViewModel}.swift 신규 — GET /api/bookmarks 리스트, 스와이프 액션으로 제거(DELETE), 탭하면 QuestionService.detail로 본문 시트 표시.",
-      "status": "pending"
+      "status": "completed",
+      "started_at": "2026-05-18T02:10:50+0900",
+      "summary": "BookmarksViewModel(@Observable, list 로딩 + 옵티미스틱 remove with rollback) 신규, BookmarksView(상태별 분기 + List/swipeActions로 제거 + 탭하면 본문 시트), BookmarkDetailSheet(questionId로 lazy fetch — Question.detail) 신규, project.pbxproj 등록, 시뮬레이터 빌드 성공.",
+      "completed_at": "2026-05-18T02:14:00+0900"
     },
     {
       "step": 5,
