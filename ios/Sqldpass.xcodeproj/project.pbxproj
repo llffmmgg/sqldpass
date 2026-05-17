@@ -47,6 +47,7 @@
 		B83DBB33E099A614BD0435C5 /* MockExamsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C0C0526CCA58284C941607C /* MockExamsViewModel.swift */; };
 		BA167C9CB0A2157CBF470110 /* KeychainStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE7B980FAB66301BA7EA4899 /* KeychainStore.swift */; };
 		BF4065A4C43CE097CCC21587 /* BookmarkService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 62181C4207794F88C443019F /* BookmarkService.swift */; };
+		A1B2C3D4E5F60718293A4B5C /* WrongAnswerService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1E2D3C4B5A6978685746352 /* WrongAnswerService.swift */; };
 		C7341F1B1FADF497865BAB9E /* BookmarkToggleButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B5230450D260413558F4154 /* BookmarkToggleButton.swift */; };
 		CC2A7B4658525E29A483949C /* MockExamDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A26596C46008DBA2BCFE632 /* MockExamDetailView.swift */; };
 		D9F4A1E2B5C6D9E0F1A2B7C3 /* MockExamRoutes.swift in Sources */ = {isa = PBXBuildFile; fileRef = B7C3D9F4A1E2B5C6D9E0F1A2 /* MockExamRoutes.swift */; };
@@ -88,6 +89,7 @@
 		5EF21A9844C89CF0269FE47C /* SolveAnswerEntry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SolveAnswerEntry.swift; sourceTree = "<group>"; };
 		61EDA8D14E7F131955B10EBC /* SolveService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SolveService.swift; sourceTree = "<group>"; };
 		62181C4207794F88C443019F /* BookmarkService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BookmarkService.swift; sourceTree = "<group>"; };
+		F1E2D3C4B5A6978685746352 /* WrongAnswerService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WrongAnswerService.swift; sourceTree = "<group>"; };
 		66D4C11ADB0FF2DEDCC421E4 /* SolveHeader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SolveHeader.swift; sourceTree = "<group>"; };
 		6FF44ECEF832ED92A3684796 /* Streak.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Streak.swift; sourceTree = "<group>"; };
 		708D60E6ED0114C06B59ABA9 /* WrongAnswersView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WrongAnswersView.swift; sourceTree = "<group>"; };
@@ -193,6 +195,7 @@
 				8DCC6E698912DFA8033CF012 /* QuestionService.swift */,
 				61EDA8D14E7F131955B10EBC /* SolveService.swift */,
 				9304FB02C4CA965282101805 /* StreakService.swift */,
+				F1E2D3C4B5A6978685746352 /* WrongAnswerService.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -499,6 +502,7 @@
 				4A30795B8EDDD0183A59DFA0 /* Typography.swift in Sources */,
 				90A5785F507DA19672E4C3AC /* UIColor+Hex.swift in Sources */,
 				EAC2D57B7FF3552CCC4FFEBB /* WrongAnswer.swift in Sources */,
+				A1B2C3D4E5F60718293A4B5C /* WrongAnswerService.swift in Sources */,
 				704E1312A8F6F07D5B09595E /* WrongAnswersView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

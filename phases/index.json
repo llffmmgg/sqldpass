@@ -206,6 +206,13 @@
       "status": "completed",
       "created_at": "2026-05-18T01:00:00+0900",
       "completed_at": "2026-05-18T01:37:49+0900"
+    },
+    {
+      "dir": "ios-remaining-screens",
+      "name": "ios-remaining-screens",
+      "description": "iOS 네이티브 앱 Phase 3.5~3.9 — 남은 5개 화면(풀이 히스토리/오답 노트/북마크/인사이트/프로필 상세) 신규 구현 + API 실연동(코드). WrongAnswerService 추가, Models/WrongAnswer 실 DTO 일치 정정, Swift Charts 도입(인사이트), 프로필 닉네임 편집/계정 삭제 2단계 다이얼로그. ProfileView 메뉴 → 각 화면 NavigationLink 연결.",
+      "status": "pending",
+      "created_at": "2026-05-18T02:00:00+0900"
     }
   ]
 }

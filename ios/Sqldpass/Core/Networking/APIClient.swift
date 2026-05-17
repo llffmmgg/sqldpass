@@ -56,6 +56,10 @@ final class APIClient {
         let _: EmptyResponse = try await send(path: path, method: .delete, body: Optional<EmptyBody>.none)
     }
 
+    func patch<R: Decodable, B: Encodable>(_ path: String, body: B) async throws -> R {
+        try await send(path: path, method: .patch, body: body)
+    }
+
     // MARK: - Core send
 
     private func send<R: Decodable, B: Encodable>(

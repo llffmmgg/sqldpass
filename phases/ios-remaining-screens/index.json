@@ -1,0 +1,46 @@
+{
+  "project": "sqldpass",
+  "phase": "ios-remaining-screens",
+  "description": "iOS 네이티브 앱 Phase 3.5~3.9 — 남은 5개 화면(풀이 히스토리/오답 노트/북마크/인사이트/프로필 상세) 신규 구현 + API 실연동(코드). WrongAnswerService 추가, Models/WrongAnswer 실 DTO 일치 정정, Swift Charts 도입(인사이트), 프로필 닉네임 편집/계정 삭제 2단계 다이얼로그. ProfileView 메뉴 → 각 화면 NavigationLink 연결. 시뮬레이터 빌드/스크린샷 검증.",
+  "steps": [
+    {
+      "step": 1,
+      "name": "wronganswer-service-and-model-fix",
+      "description": "Models/WrongAnswer.swift 실제 백엔드 DTO(WrongAnswerResponse 필드: questionId/questionContent/subjectId/subjectName/wrongCount/lastWrongAt)와 일치하도록 재작성 + WrongAnswerStats/Preview/RetryResponse 모델 추가 + WrongAnswerService(list/stats/retry/preview) 신설 + MemberService.updateNickname 추가.",
+      "status": "completed",
+      "started_at": "2026-05-18T02:00:19+0900",
+      "summary": "WrongAnswer 모델 실 DTO 일치 재작성(+ Stats/Preview/RetryResult), WrongAnswerService 4메서드 신설, APIClient.patch 헬퍼 + MemberService.updateNickname 추가, project.pbxproj 등록, 시뮬레이터 빌드 성공."
+    },
+    {
+      "step": 2,
+      "name": "history-view",
+      "description": "Features/History/{HistoryView,HistoryViewModel}.swift + HistoryDetailView 신규 — GET /api/solves 리스트, 카드 표시(시험명/점수/일시), 탭하면 SolveResultView 재사용으로 상세. 빈 상태 ContentUnavailableView.",
+      "status": "pending"
+    },
+    {
+      "step": 3,
+      "name": "wronganswers-view",
+      "description": "Features/WrongAnswers/{WrongAnswersView,WrongAnswersViewModel}.swift 재작성 — placeholder 제거 후 실데이터(WrongAnswerService.list/stats), 과목별 통계 상단 카드 + 문항 리스트(wrongCount 표시), 탭하면 retry 시트(객관식 1-4 선택 + 결과 표시).",
+      "status": "pending"
+    },
+    {
+      "step": 4,
+      "name": "bookmarks-view",
+      "description": "Features/Bookmarks/{BookmarksView,BookmarksViewModel}.swift 신규 — GET /api/bookmarks 리스트, 스와이프 액션으로 제거(DELETE), 탭하면 QuestionService.detail로 본문 시트 표시.",
+      "status": "pending"
+    },
+    {
+      "step": 5,
+      "name": "insights-view",
+      "description": "Features/Insights/{InsightsView,InsightsViewModel}.swift 신규 — Swift Charts 활용. 스트릭(/api/streak/me), 전체 14일 평균(/api/solves/stats/overall-avg), 과목별 오답률(WrongAnswerStats). BarMark + LineMark 두 차트.",
+      "status": "pending"
+    },
+    {
+      "step": 6,
+      "name": "profile-detail-and-wiring",
+      "description": "ProfileView 재작성 — Member.me 표시, '학습 기록'/'북마크'/'인사이트'/'프로필 편집'/'계정 삭제' NavigationLink. 신규 Features/Profile/{NicknameEditView,AccountDeletionConfirmView}.swift. 닉네임 PATCH /api/members/me/nickname, 계정 삭제 2단계 확인(체크박스+'영구 삭제하기' destructive) → DELETE /api/members/me → 로그아웃 → AuthView 복귀. 빌드 + 시뮬레이터 스크린샷 4탭.",
+      "status": "pending"
+    }
+  ],
+  "created_at": "2026-05-18T02:00:00+0900"
+}
