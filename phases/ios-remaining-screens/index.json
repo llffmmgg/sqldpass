@@ -46,7 +46,7 @@
       "status": "completed",
       "started_at": "2026-05-18T02:14:12+0900",
       "summary": "InsightsViewModel(@Observable, streak+overall+stats+history 4건 async let 병렬 로딩, recentSolves는 오래된순 10건 슬라이스) 신규, InsightsView(상태별 분기 + 3분할 overview 카드 + LineMark 점수 추이 + BarMark 과목별 오답률 + barColor 토큰 헬퍼) 신규, project.pbxproj 등록(Insights 그룹 children + Sources phase), 시뮬레이터 빌드 성공.",
-      "completed_at": "2026-05-18T02:18:30+0900"
+      "completed_at": "2026-05-18T02:17:29+0900"
     },
     {
       "step": 6,
