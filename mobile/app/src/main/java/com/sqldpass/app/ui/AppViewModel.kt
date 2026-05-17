@@ -50,6 +50,7 @@ data class AppUiState(
     val dashboardLoading: Boolean = false,
     val subscription: com.sqldpass.app.data.SubscriptionResponse? = null,
     val wrongAnswerStats: List<com.sqldpass.app.data.WrongAnswerStatsSummary> = emptyList(),
+    val passplusOpen: Boolean = false,
 )
 
 class AppViewModel(
@@ -149,6 +150,10 @@ class AppViewModel(
                 .onSuccess { sub -> _state.update { it.copy(subscription = sub) } }
         }
     }
+
+    fun openPassPlus() { _state.update { it.copy(passplusOpen = true) } }
+
+    fun closePassPlus() { _state.update { it.copy(passplusOpen = false) } }
 
     fun loadWrongAnswerStats() {
         viewModelScope.launch {

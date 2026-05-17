@@ -24,6 +24,11 @@ if (fromGradle != null && fromGradle.toString().trim()) {
     }
 }
 
+// CI/배포에서는 versionCode 를 자동 증가시키기 위해 GitHub run_number 를 env 로 받는다.
+// 로컬 빌드는 1 로 시작, CI 는 ORG_GRADLE_PROJECT_VERSION_CODE 또는 -PVERSION_CODE 로 덮어쓴다.
+def resolvedVersionCode = (project.findProperty("VERSION_CODE") ?: "1").toString().toInteger()
+def resolvedVersionName = (project.findProperty("VERSION_NAME") ?: "0.1.0").toString()
+
 android {
     namespace "com.sqldpass.app"
     compileSdk 35
@@ -32,11 +37,36 @@ android {
         applicationId "com.sqldpass.app"
         minSdk 23
         targetSdk 35
-        versionCode 1
-        versionName "0.1.0"
+        versionCode resolvedVersionCode
+        versionName resolvedVersionName
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         buildConfigField "String", "API_BASE_URL", "\"https://www.sqldpass.com/\""
         resValue "string", "google_web_client_id", "\"${googleWebClientId}\""
+    }
+
+    signingConfigs {
+        release {
+            def storePath = System.getenv("SQLDPASS_KEYSTORE_PATH")
+            if (storePath) {
+                storeFile file(storePath)
+                storePassword System.getenv("SQLDPASS_KEYSTORE_PASS") ?: ""
+                keyAlias System.getenv("SQLDPASS_KEY_ALIAS") ?: "sqldpass"
+                keyPassword System.getenv("SQLDPASS_KEY_PASS") ?: ""
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            // 키스토어 환경변수가 있으면 signed release, 없으면 미서명(로컬 검증용).
+            if (System.getenv("SQLDPASS_KEYSTORE_PATH")) {
+                signingConfig signingConfigs.release
+            }
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile("proguard-android-optimize.txt"),
+                    "proguard-rules.pro"
+        }
     }
 
     buildFeatures {
@@ -68,6 +98,7 @@ dependencies {
     implementation "androidx.lifecycle:lifecycle-runtime-compose:2.8.7"
     implementation "androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7"
     implementation "androidx.navigation:navigation-compose:2.8.5"
+    implementation "androidx.core:core-splashscreen:1.0.1"
 
     implementation "androidx.room:room-runtime:2.6.1"
     implementation "androidx.room:room-ktx:2.6.1"

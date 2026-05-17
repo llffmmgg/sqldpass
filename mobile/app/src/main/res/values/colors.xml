@@ -1,4 +1,6 @@
 <resources>
     <color name="brand_primary">#F59E0B</color>
     <color name="brand_bg">#0A0A0A</color>
+    <!-- 스플래시 배경 — 흰색 카드 위에 로고가 떠 있는 느낌. 다크 테마는 system 가 알아서 처리. -->
+    <color name="brand_splash_bg">#FAFAFA</color>
 </resources>

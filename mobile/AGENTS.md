@@ -17,6 +17,23 @@ Run commands from `mobile/`.
 - `.\gradlew.bat :app:assembleDebug`
 - `.\gradlew.bat :app:testDebugUnitTest`
 
+## Release signing (keystore)
+
+릴리스 빌드는 `mobile/app/build.gradle` 의 `signingConfigs.release` 가 다음 환경변수를 읽음:
+
+| 변수 | 의미 |
+|---|---|
+| `SQLDPASS_KEYSTORE_PATH` | 키스토어 파일 절대 경로 |
+| `SQLDPASS_KEYSTORE_PASS` | 키스토어 비밀번호 |
+| `SQLDPASS_KEY_ALIAS` | 키 alias (보통 `sqldpass`) |
+| `SQLDPASS_KEY_PASS` | 키 비밀번호 |
+
+미설정 시 release 빌드는 미서명으로 떨어짐 (로컬 검증용). CI 는 `.github/workflows/mobile-cd.yml` 이 GitHub Secrets 에서 base64 키스토어를 풀어 위 env 로 전달.
+
+`versionCode` 는 `-PVERSION_CODE=<n>` 또는 `ORG_GRADLE_PROJECT_VERSION_CODE` 로 덮어쓸 수 있다 (CI 는 `github.run_number` 사용).
+
+키스토어 생성·백업·SHA-1 등록 가이드는 `docs/ANDROID_LAUNCH.md` Step 5 참조. **분실 = 같은 앱 영구 재출시 불가**.
+
 ## Local secrets
 
 `GOOGLE_WEB_CLIENT_ID` (Android Google Sign-In ID 토큰 audience — GCP Web 클라이언트 ID) 는 빌드 시 APK 안 `res/values/strings.xml` 의 `google_web_client_id` 로 박힘. 읽기 우선순위:

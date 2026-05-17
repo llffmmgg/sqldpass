@@ -6,6 +6,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -44,6 +45,7 @@ import com.sqldpass.app.ui.AppViewModelFactory
 import com.sqldpass.app.ui.dashboard.DashboardTab
 import com.sqldpass.app.ui.home.HomeScreen
 import com.sqldpass.app.ui.mockexam.MockExamTab
+import com.sqldpass.app.ui.passplus.PassPlusCatalogScreen
 import com.sqldpass.app.ui.pastexam.PastExamTab
 import com.sqldpass.app.ui.solve.SolveTab
 import com.sqldpass.app.ui.theme.SqldpassTheme
@@ -58,6 +60,8 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        // AndroidX SplashScreen 폴리필 — API 31+ 는 시스템 처리, 그 이하는 라이브러리.
+        installSplashScreen()
         super.onCreate(savedInstanceState)
         app.billingManager.connect()
         setContent {
@@ -87,6 +91,8 @@ class MainActivity : ComponentActivity() {
                         viewModel.onAuthChanged()
                     },
                     onPurchase = { productId -> app.billingManager.launch(this, productId) },
+                    productSnapshot = { app.billingManager.productSnapshot() },
+                    onLoadProducts = { scope.launch { app.billingManager.loadProducts() } },
                 )
             }
         }
@@ -119,7 +125,40 @@ private fun SqldpassApp(
     onLogin: () -> Unit,
     onLogout: () -> Unit,
     onPurchase: (String) -> Unit,
+    productSnapshot: () -> List<com.sqldpass.app.billing.BillingProductSnapshot>,
+    onLoadProducts: () -> Unit,
 ) {
+    if (state.passplusOpen) {
+        PassPlusCatalogScreen(
+            subscription = state.subscription,
+            products = productSnapshot(),
+            onLoadProducts = onLoadProducts,
+            onLoadSubscription = viewModel::loadSubscription,
+            onPurchase = { id ->
+                onPurchase(id)
+                viewModel.closePassPlus()
+            },
+            onClose = viewModel::closePassPlus,
+        )
+        return
+    }
+    // 오답 모아풀기는 탭 외부 풀스크린으로 동작
+    val isWrongAnswers = state.runner?.mode == com.sqldpass.app.ui.runner.RunnerMode.WRONG_ANSWERS ||
+        (state.runnerResult is com.sqldpass.app.ui.runner.RunnerResult.Solve &&
+            (state.runnerResult as com.sqldpass.app.ui.runner.RunnerResult.Solve).mode ==
+            com.sqldpass.app.ui.runner.RunnerMode.WRONG_ANSWERS)
+    if (isWrongAnswers) {
+        com.sqldpass.app.ui.runner.RunnerHost(
+            state = state,
+            mode = com.sqldpass.app.ui.runner.RunnerMode.WRONG_ANSWERS,
+            onSubmitAnswers = viewModel::submitRunner,
+            onCancelRunner = viewModel::cancelRunner,
+            onDismissResult = viewModel::dismissResult,
+            onToggleBookmark = viewModel::toggleBookmark,
+            onReport = viewModel::submitFeedback,
+        ) { /* fallback 없음 — 진입 시 항상 runner 또는 result */ }
+        return
+    }
     var selected by remember { mutableStateOf(0) }
     Scaffold(
         bottomBar = {
@@ -148,7 +187,7 @@ private fun SqldpassApp(
                     onLogin = onLogin,
                     onLogout = onLogout,
                     onSync = viewModel::sync,
-                    onPurchase = onPurchase,
+                    onPurchase = { viewModel.openPassPlus() },
                 )
                 1 -> MockExamTab(
                     state = state,
@@ -186,7 +225,10 @@ private fun SqldpassApp(
                     onLoadDashboard = viewModel::loadDashboard,
                     onLogin = onLogin,
                     onLogout = onLogout,
-                    onPurchase = onPurchase,
+                    onPurchase = { viewModel.openPassPlus() },
+                    onLoadWrongStats = viewModel::loadWrongAnswerStats,
+                    onStartWrongAnswers = viewModel::startWrongAnswerRunner,
+                    onUpdateNickname = viewModel::updateNickname,
                 )
             }
             if (state.loading) {

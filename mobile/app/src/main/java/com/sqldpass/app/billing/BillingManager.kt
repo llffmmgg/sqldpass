@@ -18,6 +18,13 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 
+data class BillingProductSnapshot(
+    val productId: String,
+    val title: String,
+    val description: String,
+    val formattedPrice: String,
+)
+
 class BillingManager(
     context: Context,
     private val api: SqldpassApi,
@@ -79,6 +86,21 @@ class BillingManager(
             .build()
         billingClient.launchBillingFlow(activity, params)
     }
+
+    /**
+     * 카탈로그 화면이 사용하는 가격·이름 스냅샷. `loadProducts()` 호출 후 채워진다.
+     * 빈 리스트면 카탈로그가 "가격 정보 로드 중" 으로 표시한다.
+     */
+    fun productSnapshot(): List<BillingProductSnapshot> =
+        productDetails.values.map { d ->
+            val offer = d.oneTimePurchaseOfferDetails
+            BillingProductSnapshot(
+                productId = d.productId,
+                title = d.name,
+                description = d.description,
+                formattedPrice = offer?.formattedPrice.orEmpty(),
+            )
+        }
 
     private fun verifyPurchase(purchase: Purchase) {
         val productId = purchase.products.firstOrNull() ?: return

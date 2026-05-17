@@ -1,7 +1,19 @@
 <resources>
+    <!-- 일반 앱 테마 -->
     <style name="Theme.Sqldpass" parent="android:style/Theme.Material.Light.NoActionBar">
         <item name="android:windowLightStatusBar">true</item>
         <item name="android:navigationBarColor">#FFFFFF</item>
         <item name="android:fontFamily">sans</item>
+    </style>
+
+    <!--
+        AndroidX SplashScreen 호환 테마 (API 23+).
+        API 31+ 는 시스템이 그대로 사용, 30 이하는 androidx.core:core-splashscreen 가 폴리필.
+    -->
+    <style name="Theme.Sqldpass.Splash" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/brand_splash_bg</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/logo</item>
+        <item name="windowSplashScreenAnimationDuration">500</item>
+        <item name="postSplashScreenTheme">@style/Theme.Sqldpass</item>
     </style>
 </resources>

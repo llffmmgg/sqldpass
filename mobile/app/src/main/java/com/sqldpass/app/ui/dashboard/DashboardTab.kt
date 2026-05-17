@@ -19,12 +19,17 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.sqldpass.app.data.BestScoreSummary
 import com.sqldpass.app.data.OverallAvgResponse
 import com.sqldpass.app.data.StreakResponse
+import com.sqldpass.app.data.WrongAnswerStatsSummary
 import com.sqldpass.app.ui.AppUiState
 import com.sqldpass.app.ui.DashboardData
 import com.sqldpass.app.ui.home.ActionCard
@@ -40,9 +45,31 @@ fun DashboardTab(
     onLogin: () -> Unit,
     onLogout: () -> Unit,
     onPurchase: (String) -> Unit,
+    onLoadWrongStats: () -> Unit = {},
+    onStartWrongAnswers: (Long?, String?) -> Unit = { _, _ -> },
+    onUpdateNickname: (String, (Boolean) -> Unit) -> Unit = { _, cb -> cb(false) },
 ) {
+    var nicknameDialogOpen by remember { mutableStateOf(false) }
+    var nicknameSubmitting by remember { mutableStateOf(false) }
+    if (nicknameDialogOpen) {
+        NicknameEditDialog(
+            currentNickname = state.nickname,
+            submitting = nicknameSubmitting,
+            onDismiss = { if (!nicknameSubmitting) nicknameDialogOpen = false },
+            onSubmit = { newName ->
+                nicknameSubmitting = true
+                onUpdateNickname(newName) { ok ->
+                    nicknameSubmitting = false
+                    if (ok) nicknameDialogOpen = false
+                }
+            },
+        )
+    }
     LaunchedEffect(state.nickname) {
-        if (state.nickname != null) onLoadDashboard()
+        if (state.nickname != null) {
+            onLoadDashboard()
+            onLoadWrongStats()
+        }
     }
     val examNameById = state.mockExams.associate { it.id to it.name }
     LazyColumn(
@@ -56,6 +83,7 @@ fun DashboardTab(
                 nickname = state.nickname,
                 onLogin = onLogin,
                 onLogout = onLogout,
+                onEditNickname = { nicknameDialogOpen = true },
             )
         }
         if (state.nickname != null) {
@@ -78,6 +106,27 @@ fun DashboardTab(
                     )
                 }
             }
+            val weak = state.wrongAnswerStats
+                .sortedByDescending { it.wrongRate }
+                .take(5)
+            if (weak.isNotEmpty()) {
+                item { Text("취약 과목", style = MaterialTheme.typography.titleMedium) }
+                items(weak, key = { it.subjectId }) { s ->
+                    WeakSubjectCard(
+                        stat = s,
+                        onStart = { onStartWrongAnswers(s.subjectId, s.subjectName) },
+                    )
+                }
+                item {
+                    OutlinedButton(
+                        shape = RoundedCornerShape(ButtonCorner),
+                        onClick = { onStartWrongAnswers(null, null) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .sizeIn(minHeight = 48.dp),
+                    ) { Text("오답 전체 모아풀기") }
+                }
+            }
         }
         item {
             ActionCard(
@@ -95,6 +144,7 @@ private fun AccountCard(
     nickname: String?,
     onLogin: () -> Unit,
     onLogout: () -> Unit,
+    onEditNickname: () -> Unit = {},
 ) {
     Card(
         shape = RoundedCornerShape(CardCorner),
@@ -130,6 +180,11 @@ private fun AccountCard(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedButton(
+                        shape = RoundedCornerShape(ButtonCorner),
+                        onClick = onEditNickname,
+                        modifier = Modifier.sizeIn(minHeight = 48.dp),
+                    ) { Text("닉네임 편집") }
                     OutlinedButton(
                         shape = RoundedCornerShape(ButtonCorner),
                         onClick = onLogout,
@@ -204,6 +259,39 @@ private fun AvgCard(overallAvg: Double?, myRecentAvg: Double?) {
                     color = MaterialTheme.colorScheme.primary,
                 )
             }
+        }
+    }
+}
+
+@Composable
+private fun WeakSubjectCard(stat: WrongAnswerStatsSummary, onStart: () -> Unit) {
+    Card(
+        shape = RoundedCornerShape(CardCorner),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface,
+            contentColor = MaterialTheme.colorScheme.onSurface,
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(stat.subjectName, style = MaterialTheme.typography.titleMedium)
+                Text(
+                    "오답 ${stat.wrongCount}/${stat.totalSolved} · 오답률 ${stat.wrongRate}%",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            OutlinedButton(
+                shape = RoundedCornerShape(ButtonCorner),
+                onClick = onStart,
+                modifier = Modifier.sizeIn(minHeight = 48.dp),
+            ) { Text("다시 풀기") }
         }
     }
 }
