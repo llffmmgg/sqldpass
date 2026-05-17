@@ -96,6 +96,10 @@ class AppViewModel(
         refresh()
     }
 
+    fun setMessage(message: String?) {
+        _state.update { it.copy(message = message) }
+    }
+
     fun selectCertSlug(slug: String) {
         _state.update { it.copy(selectedCertSlug = slug) }
         loadPastExams(slug)

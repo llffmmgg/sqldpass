@@ -68,8 +68,14 @@ class MainActivity : ComponentActivity() {
                     ActivityResultContracts.StartActivityForResult(),
                 ) { result ->
                     scope.launch {
-                        runCatching { app.authManager.handleSignInResult(result.data) }
-                        viewModel.onAuthChanged()
+                        try {
+                            app.authManager.handleSignInResult(result.data)
+                            viewModel.onAuthChanged()
+                        } catch (e: com.google.android.gms.common.api.ApiException) {
+                            viewModel.setMessage(authErrorMessage(e.statusCode))
+                        } catch (e: Exception) {
+                            viewModel.setMessage("Google 로그인 실패: ${e.message ?: "알 수 없는 오류"}")
+                        }
                     }
                 }
                 SqldpassApp(
@@ -85,6 +91,15 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+}
+
+private fun authErrorMessage(statusCode: Int): String = when (statusCode) {
+    12501 -> "로그인이 취소됐습니다."
+    7 -> "네트워크 연결을 확인해주세요."
+    10 -> "Google 로그인 설정 오류 (DEVELOPER_ERROR). 키 등록을 확인하세요."
+    12500 -> "Google 로그인에 실패했습니다 (SIGN_IN_FAILED)."
+    12502 -> "이전 로그인이 아직 진행 중입니다."
+    else -> "Google 로그인 실패 (code $statusCode)"
 }
 
 private data class Tab(val label: String, val icon: ImageVector)
