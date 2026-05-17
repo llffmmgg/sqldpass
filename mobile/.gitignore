@@ -13,3 +13,7 @@ keystore.properties
 # Generated and local files
 .DS_Store
 *.log
+
+# Gradle wrapper jar 는 커밋해야 CI 가 ./gradlew 를 실행할 수 있음.
+# 루트 .gitignore 의 *.jar 가 무시하므로 명시적으로 예외 처리.
+!gradle/wrapper/gradle-wrapper.jar
