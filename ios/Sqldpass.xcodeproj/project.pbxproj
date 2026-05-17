@@ -3,10 +3,11 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 56;
+	objectVersion = 77;
 	objects = {
 
 /* Begin PBXBuildFile section */
+		0169494DD6335F80701E6C88 /* SolveView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB2BCAA6C4B0C055CC447D1F /* SolveView.swift */; };
 		01C56FC06AD89D8DE411CC07 /* SolveAnswerEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EF21A9844C89CF0269FE47C /* SolveAnswerEntry.swift */; };
 		0426E6678A3CF848DF501D80 /* Bookmark.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8514BDFE6C9C7D329DCA9926 /* Bookmark.swift */; };
 		0DC5A877FB1B292BACB387FC /* MockExamDetail.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2EEA32F635DDE3B85BB77453 /* MockExamDetail.swift */; };
@@ -22,8 +23,11 @@
 		46F348F9EA34E5FFC45A723B /* Solve.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2DEDCA7D76CC8906CADDBFF1 /* Solve.swift */; };
 		4A30795B8EDDD0183A59DFA0 /* Typography.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1A0039256078F2B16C18C8C /* Typography.swift */; };
 		53820D3FF79D25BD46CF90D1 /* AuthView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2002F27C1741CFCE4146FCD2 /* AuthView.swift */; };
+		5427CB85CCBF020B518785E6 /* QuestionBody.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58245B5A1311AC33D542BBCC /* QuestionBody.swift */; };
+		543825661FFE6E9A64052225 /* OMRAnswerGrid.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1064D8FE025922FAFB54DA17 /* OMRAnswerGrid.swift */; };
 		5AD29C1E61A8EE72543BA768 /* MockExam.swift in Sources */ = {isa = PBXBuildFile; fileRef = 036B702C2E49606E4BC9E084 /* MockExam.swift */; };
 		5FC1A9AF7BB7FE6BE05CE0F0 /* SolveViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5D29C8A96832A3E6418C529 /* SolveViewModel.swift */; };
+		5FD7D0D9E0032D32D22BF854 /* SolveActionBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31E3A87E868AA01B3EAD195E /* SolveActionBar.swift */; };
 		636DF982B299901FECAB3FD7 /* Streak.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6FF44ECEF832ED92A3684796 /* Streak.swift */; };
 		66E45204EEC341E63C21D0B8 /* Question.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33AF477F8D8432720B4E763D /* Question.swift */; };
 		6E6721F0D8F075FC170404C3 /* AppleAuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = EFD6305FDD1D166CCD2CDCF9 /* AppleAuthService.swift */; };
@@ -31,6 +35,7 @@
 		70E27BC22A0205E1F8E7C8E3 /* Auth.swift in Sources */ = {isa = PBXBuildFile; fileRef = EBA1ED936A987B69851776CE /* Auth.swift */; };
 		7337F8752B0859743CFE160C /* MainTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F90FE83B19F079DD654FB6E4 /* MainTabView.swift */; };
 		8327D2ADF0D63B44A8883501 /* Member.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46DABBAA8C879C7B0C4D58B3 /* Member.swift */; };
+		845BFAF1CB35F90119B47B15 /* SolveHeader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66D4C11ADB0FF2DEDCC421E4 /* SolveHeader.swift */; };
 		86EB2173A6D70EB98F94A8A6 /* QuestionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8DCC6E698912DFA8033CF012 /* QuestionService.swift */; };
 		90A5785F507DA19672E4C3AC /* UIColor+Hex.swift in Sources */ = {isa = PBXBuildFile; fileRef = 52EBE180252E86251C7D944F /* UIColor+Hex.swift */; };
 		9A9EECF4B48D4E1885328335 /* Radius.swift in Sources */ = {isa = PBXBuildFile; fileRef = 263AAB3613016EECA71C0BAC /* Radius.swift */; };
@@ -39,6 +44,7 @@
 		B83DBB33E099A614BD0435C5 /* MockExamsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C0C0526CCA58284C941607C /* MockExamsViewModel.swift */; };
 		BA167C9CB0A2157CBF470110 /* KeychainStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE7B980FAB66301BA7EA4899 /* KeychainStore.swift */; };
 		BF4065A4C43CE097CCC21587 /* BookmarkService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 62181C4207794F88C443019F /* BookmarkService.swift */; };
+		C7341F1B1FADF497865BAB9E /* BookmarkToggleButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B5230450D260413558F4154 /* BookmarkToggleButton.swift */; };
 		CC2A7B4658525E29A483949C /* MockExamDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A26596C46008DBA2BCFE632 /* MockExamDetailView.swift */; };
 		CD5EB5267A2DDBD22AE3EA01 /* SessionGate.swift in Sources */ = {isa = PBXBuildFile; fileRef = B342183DA41EFF2FB6C1F19F /* SessionGate.swift */; };
 		D013CE75999DDE46365FFA21 /* APIEnvironment.swift in Sources */ = {isa = PBXBuildFile; fileRef = E6835096BA3621089913C59A /* APIEnvironment.swift */; };
@@ -56,6 +62,7 @@
 /* Begin PBXFileReference section */
 		027D0D01305F94B81E43294B /* ExamService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExamService.swift; sourceTree = "<group>"; };
 		036B702C2E49606E4BC9E084 /* MockExam.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockExam.swift; sourceTree = "<group>"; };
+		1064D8FE025922FAFB54DA17 /* OMRAnswerGrid.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OMRAnswerGrid.swift; sourceTree = "<group>"; };
 		1A26596C46008DBA2BCFE632 /* MockExamDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockExamDetailView.swift; sourceTree = "<group>"; };
 		1C0C0526CCA58284C941607C /* MockExamsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockExamsViewModel.swift; sourceTree = "<group>"; };
 		2002F27C1741CFCE4146FCD2 /* AuthView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthView.swift; sourceTree = "<group>"; };
@@ -64,15 +71,18 @@
 		2DEDCA7D76CC8906CADDBFF1 /* Solve.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Solve.swift; sourceTree = "<group>"; };
 		2E4FABDEC7CA1C88E58F0875 /* DashboardViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardViewModel.swift; sourceTree = "<group>"; };
 		2EEA32F635DDE3B85BB77453 /* MockExamDetail.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockExamDetail.swift; sourceTree = "<group>"; };
+		31E3A87E868AA01B3EAD195E /* SolveActionBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SolveActionBar.swift; sourceTree = "<group>"; };
 		33AF477F8D8432720B4E763D /* Question.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Question.swift; sourceTree = "<group>"; };
 		35EEE75165FFA9D1CC356B7E /* AuthStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthStore.swift; sourceTree = "<group>"; };
 		35F209C7176E9E566771D690 /* WrongAnswer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WrongAnswer.swift; sourceTree = "<group>"; };
 		46DABBAA8C879C7B0C4D58B3 /* Member.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Member.swift; sourceTree = "<group>"; };
 		52849D6EE4571395433DE899 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
 		52EBE180252E86251C7D944F /* UIColor+Hex.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UIColor+Hex.swift"; sourceTree = "<group>"; };
+		58245B5A1311AC33D542BBCC /* QuestionBody.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuestionBody.swift; sourceTree = "<group>"; };
 		5EF21A9844C89CF0269FE47C /* SolveAnswerEntry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SolveAnswerEntry.swift; sourceTree = "<group>"; };
 		61EDA8D14E7F131955B10EBC /* SolveService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SolveService.swift; sourceTree = "<group>"; };
 		62181C4207794F88C443019F /* BookmarkService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BookmarkService.swift; sourceTree = "<group>"; };
+		66D4C11ADB0FF2DEDCC421E4 /* SolveHeader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SolveHeader.swift; sourceTree = "<group>"; };
 		6FF44ECEF832ED92A3684796 /* Streak.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Streak.swift; sourceTree = "<group>"; };
 		708D60E6ED0114C06B59ABA9 /* WrongAnswersView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WrongAnswersView.swift; sourceTree = "<group>"; };
 		7699624602F2E33306208593 /* GoogleAuthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GoogleAuthService.swift; sourceTree = "<group>"; };
@@ -80,6 +90,7 @@
 		8DCC6E698912DFA8033CF012 /* QuestionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuestionService.swift; sourceTree = "<group>"; };
 		9304FB02C4CA965282101805 /* StreakService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StreakService.swift; sourceTree = "<group>"; };
 		934CC05ED3031C490208135C /* Spacing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Spacing.swift; sourceTree = "<group>"; };
+		9B5230450D260413558F4154 /* BookmarkToggleButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BookmarkToggleButton.swift; sourceTree = "<group>"; };
 		A2EC0804EBF7C264DDA4A2A5 /* MockExamsListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockExamsListView.swift; sourceTree = "<group>"; };
 		A5D29C8A96832A3E6418C529 /* SolveViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SolveViewModel.swift; sourceTree = "<group>"; };
 		A5E02115A57224055005B8E7 /* ProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileView.swift; sourceTree = "<group>"; };
@@ -97,6 +108,7 @@
 		EFD6305FDD1D166CCD2CDCF9 /* AppleAuthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleAuthService.swift; sourceTree = "<group>"; };
 		F1A0039256078F2B16C18C8C /* Typography.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Typography.swift; sourceTree = "<group>"; };
 		F90FE83B19F079DD654FB6E4 /* MainTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainTabView.swift; sourceTree = "<group>"; };
+		FB2BCAA6C4B0C055CC447D1F /* SolveView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SolveView.swift; sourceTree = "<group>"; };
 		FF29A3CD13BA2DEDA06BF118 /* Subscription.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Subscription.swift; sourceTree = "<group>"; };
 		FFB7967904ADA9CDF33E7FEE /* MemberService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemberService.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -227,10 +239,24 @@
 			path = WrongAnswers;
 			sourceTree = "<group>";
 		};
+		682ECC59DC58BE2E2E192FEA /* Components */ = {
+			isa = PBXGroup;
+			children = (
+				9B5230450D260413558F4154 /* BookmarkToggleButton.swift */,
+				1064D8FE025922FAFB54DA17 /* OMRAnswerGrid.swift */,
+				58245B5A1311AC33D542BBCC /* QuestionBody.swift */,
+				31E3A87E868AA01B3EAD195E /* SolveActionBar.swift */,
+				66D4C11ADB0FF2DEDCC421E4 /* SolveHeader.swift */,
+			);
+			path = Components;
+			sourceTree = "<group>";
+		};
 		6FB41984F83AA4B957D6B77C /* Solve */ = {
 			isa = PBXGroup;
 			children = (
+				FB2BCAA6C4B0C055CC447D1F /* SolveView.swift */,
 				A5D29C8A96832A3E6418C529 /* SolveViewModel.swift */,
+				682ECC59DC58BE2E2E192FEA /* Components */,
 			);
 			path = Solve;
 			sourceTree = "<group>";
@@ -414,6 +440,7 @@
 				53820D3FF79D25BD46CF90D1 /* AuthView.swift in Sources */,
 				0426E6678A3CF848DF501D80 /* Bookmark.swift in Sources */,
 				BF4065A4C43CE097CCC21587 /* BookmarkService.swift in Sources */,
+				C7341F1B1FADF497865BAB9E /* BookmarkToggleButton.swift in Sources */,
 				2830AC780BC8930E6B06D776 /* Color+Tokens.swift in Sources */,
 				1797DA2E3BDD4D72B1BD93E8 /* DashboardView.swift in Sources */,
 				B5518C0F8F8B92650B89E2D8 /* DashboardViewModel.swift in Sources */,
@@ -429,15 +456,20 @@
 				CC2A7B4658525E29A483949C /* MockExamDetailView.swift in Sources */,
 				D5899EBC7D15210632803323 /* MockExamsListView.swift in Sources */,
 				B83DBB33E099A614BD0435C5 /* MockExamsViewModel.swift in Sources */,
+				543825661FFE6E9A64052225 /* OMRAnswerGrid.swift in Sources */,
 				E748B6097E47AC676B7C11B8 /* ProfileView.swift in Sources */,
 				66E45204EEC341E63C21D0B8 /* Question.swift in Sources */,
+				5427CB85CCBF020B518785E6 /* QuestionBody.swift in Sources */,
 				86EB2173A6D70EB98F94A8A6 /* QuestionService.swift in Sources */,
 				9A9EECF4B48D4E1885328335 /* Radius.swift in Sources */,
 				D4905F3C2C4434F7CD530856 /* RootView.swift in Sources */,
 				CD5EB5267A2DDBD22AE3EA01 /* SessionGate.swift in Sources */,
 				46F348F9EA34E5FFC45A723B /* Solve.swift in Sources */,
+				5FD7D0D9E0032D32D22BF854 /* SolveActionBar.swift in Sources */,
 				01C56FC06AD89D8DE411CC07 /* SolveAnswerEntry.swift in Sources */,
+				845BFAF1CB35F90119B47B15 /* SolveHeader.swift in Sources */,
 				388FB55138321B051690D693 /* SolveService.swift in Sources */,
+				0169494DD6335F80701E6C88 /* SolveView.swift in Sources */,
 				5FC1A9AF7BB7FE6BE05CE0F0 /* SolveViewModel.swift in Sources */,
 				9E59CA2463A520F6E6F9278C /* Spacing.swift in Sources */,
 				E72AE124E427E982B94A1F3D /* SqldpassApp.swift in Sources */,

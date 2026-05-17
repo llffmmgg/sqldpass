@@ -25,7 +25,10 @@
       "step": 3,
       "name": "solve-view-ui",
       "description": "SolveView — 헤더(진행률+타이머), 문제 본문, OMR 답안 선택지, 하단 이전/다음/종료 액션, 다시보기 표시 토글, 북마크 토글. 시뮬레이터 빌드 + 스크린샷 검증.",
-      "status": "pending"
+      "status": "completed",
+      "started_at": "2026-05-18T01:23:44+0900",
+      "summary": "Features/Solve/SolveView.swift + Components/{SolveHeader,QuestionBody,OMRAnswerGrid,SolveActionBar,BookmarkToggleButton}.swift 신설 — NavigationStack 내부 화면(상단 진행률·타이머 헤더, 본문 카드, 4지선다 OMR sensoryFeedback, 하단 이전/다음/제출 액션바, toolbar 북마크/다시보기 토글, 종료 confirmationDialog, 제출 실패 alert). iphonesimulator SDK Debug 빌드 성공.",
+      "completed_at": "2026-05-18T01:26:55+0900"
     },
     {
       "step": 4,
