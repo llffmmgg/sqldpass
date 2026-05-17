@@ -9,7 +9,8 @@
       "description": "iOS 자체 AGENTS.md(검증 명령 정의) 신설 + QuestionService/BookmarkService 추가 + SolveAnswerEntry/SubmittedAnswerInput 모델 확장.",
       "status": "completed",
       "started_at": "2026-05-18T01:17:11+0900",
-      "summary": "ios/AGENTS.md(작업 디렉토리/검증 명령/금지사항) + QuestionService(detail/list) + BookmarkService(list/exists/add/remove) + SolveAnswerEntry(메모리용 답안 구조체, SubmitRequest.Answer 매핑) 신설. iphonesimulator SDK Debug 빌드 성공."
+      "summary": "ios/AGENTS.md(작업 디렉토리/검증 명령/금지사항) + QuestionService(detail/list) + BookmarkService(list/exists/add/remove) + SolveAnswerEntry(메모리용 답안 구조체, SubmitRequest.Answer 매핑) 신설. iphonesimulator SDK Debug 빌드 성공.",
+      "completed_at": "2026-05-18T01:21:22+0900"
     },
     {
       "step": 2,
