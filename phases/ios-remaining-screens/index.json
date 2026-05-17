@@ -55,7 +55,7 @@
       "status": "completed",
       "started_at": "2026-05-18T02:17:29+0900",
       "summary": "ProfileViewModel(@Observable, MemberService.me + updateLocalNickname) 신규, ProfileView 재작성(실데이터 헤더 + 학습 섹션 3건 NavigationLink + 프로필 편집/로그아웃/계정 삭제), NicknameEditView 신규(Form + 2~20자 검증 + PATCH), AccountDeletionConfirmView 신규(2단계 체크박스 + destructive 버튼 + DELETE → signOut), project.pbxproj 등록(Profile 그룹 children + Sources phase), 시뮬레이터 빌드/설치/실행 성공.",
-      "completed_at": "2026-05-18T02:20:00+0900"
+      "completed_at": "2026-05-18T02:21:25+0900"
     }
   ],
   "created_at": "2026-05-18T02:00:00+0900"
