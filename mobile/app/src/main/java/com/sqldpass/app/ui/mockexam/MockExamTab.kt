@@ -25,9 +25,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.sqldpass.app.data.MockExamSummary
 import com.sqldpass.app.ui.AppUiState
-import com.sqldpass.app.ui.runner.RunnerAnswerDraft
-import com.sqldpass.app.ui.runner.RunnerHost
-import com.sqldpass.app.ui.runner.RunnerMode
+import com.sqldpass.app.ui.common.SkeletonCard
 
 private val CardCorner = 14.dp
 private val ButtonCorner = 12.dp
@@ -37,30 +35,6 @@ fun MockExamTab(
     state: AppUiState,
     onRefresh: () -> Unit,
     onStartExam: (Long) -> Unit,
-    onSubmitAnswers: (List<RunnerAnswerDraft>) -> Unit,
-    onCancelRunner: () -> Unit,
-    onDismissResult: () -> Unit,
-    onToggleBookmark: (Long) -> Unit,
-    onReport: (type: String, questionId: Long?, content: String, onDone: (Boolean) -> Unit) -> Unit,
-) {
-    RunnerHost(
-        state = state,
-        mode = RunnerMode.MOCK_EXAM,
-        onSubmitAnswers = onSubmitAnswers,
-        onCancelRunner = onCancelRunner,
-        onDismissResult = onDismissResult,
-        onToggleBookmark = onToggleBookmark,
-        onReport = onReport,
-    ) {
-        MockExamList(state = state, onRefresh = onRefresh, onStart = onStartExam)
-    }
-}
-
-@Composable
-private fun MockExamList(
-    state: AppUiState,
-    onRefresh: () -> Unit,
-    onStart: (Long) -> Unit,
 ) {
     val exams = state.mockExams
     LazyColumn(
@@ -78,14 +52,19 @@ private fun MockExamList(
             }
         }
         when {
-            state.loading && exams.isEmpty() ->
-                item { StatusText("회차를 불러오는 중…") }
+            state.loading && exams.isEmpty() -> items(3) { SkeletonCard() }
             exams.isEmpty() && state.message != null ->
                 item { ErrorCard(message = state.message, onRetry = onRefresh) }
             exams.isEmpty() ->
-                item { StatusText("공개된 회차가 없습니다. 잠시 후 다시 시도하세요.") }
+                item {
+                    Text(
+                        "공개된 회차가 없습니다. 잠시 후 다시 시도하세요.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
             else -> items(exams, key = { it.id }) { exam ->
-                ExamCard(exam = exam, onStart = onStart)
+                ExamCard(exam = exam, onStart = onStartExam)
             }
         }
     }
@@ -141,15 +120,6 @@ private fun ExamCard(exam: MockExamSummary, onStart: (Long) -> Unit) {
             }
         }
     }
-}
-
-@Composable
-private fun StatusText(text: String) {
-    Text(
-        text,
-        style = MaterialTheme.typography.bodyMedium,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-    )
 }
 
 @Composable

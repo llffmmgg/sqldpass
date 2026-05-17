@@ -29,6 +29,7 @@ import androidx.compose.ui.unit.dp
 import com.sqldpass.app.data.BestScoreSummary
 import com.sqldpass.app.data.OverallAvgResponse
 import com.sqldpass.app.data.StreakResponse
+import com.sqldpass.app.data.ThemeMode
 import com.sqldpass.app.data.WrongAnswerStatsSummary
 import com.sqldpass.app.ui.AppUiState
 import com.sqldpass.app.ui.DashboardData
@@ -48,6 +49,8 @@ fun DashboardTab(
     onLoadWrongStats: () -> Unit = {},
     onStartWrongAnswers: (Long?, String?) -> Unit = { _, _ -> },
     onUpdateNickname: (String, (Boolean) -> Unit) -> Unit = { _, cb -> cb(false) },
+    themeMode: ThemeMode = ThemeMode.SYSTEM,
+    onThemeChange: (ThemeMode) -> Unit = {},
 ) {
     var nicknameDialogOpen by remember { mutableStateOf(false) }
     var nicknameSubmitting by remember { mutableStateOf(false) }
@@ -135,6 +138,49 @@ fun DashboardTab(
                 action = "PASS+ 보기",
                 onClick = { onPurchase("iap_one_month") },
             )
+        }
+        item { ThemeToggleCard(themeMode = themeMode, onChange = onThemeChange) }
+    }
+}
+
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+@Composable
+private fun ThemeToggleCard(themeMode: ThemeMode, onChange: (ThemeMode) -> Unit) {
+    Card(
+        shape = RoundedCornerShape(CardCorner),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface,
+            contentColor = MaterialTheme.colorScheme.onSurface,
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(18.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Text("화면 테마", style = MaterialTheme.typography.titleMedium)
+            androidx.compose.foundation.layout.FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp),
+            ) {
+                listOf(
+                    ThemeMode.SYSTEM to "시스템",
+                    ThemeMode.LIGHT to "라이트",
+                    ThemeMode.DARK to "다크",
+                ).forEach { (mode, label) ->
+                    val selected = themeMode == mode
+                    androidx.compose.material3.AssistChip(
+                        onClick = { onChange(mode) },
+                        label = { Text(label) },
+                        colors = if (selected) androidx.compose.material3.AssistChipDefaults.assistChipColors(
+                            containerColor = MaterialTheme.colorScheme.primaryContainer,
+                            labelColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                        ) else androidx.compose.material3.AssistChipDefaults.assistChipColors(),
+                    )
+                }
+            }
         }
     }
 }

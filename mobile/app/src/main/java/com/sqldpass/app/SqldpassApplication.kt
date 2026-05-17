@@ -5,6 +5,7 @@ import androidx.room.Room
 import com.sqldpass.app.auth.AuthManager
 import com.sqldpass.app.billing.BillingManager
 import com.sqldpass.app.data.AppRepository
+import com.sqldpass.app.data.SettingsStore
 import com.sqldpass.app.data.TokenStore
 import com.sqldpass.app.data.local.SqldpassDatabase
 import com.sqldpass.app.data.remote.SqldpassApi
@@ -66,4 +67,6 @@ class SqldpassApplication : Application() {
     val billingManager: BillingManager by lazy {
         BillingManager(this, api)
     }
+
+    val settingsStore: SettingsStore by lazy { SettingsStore(this) }
 }

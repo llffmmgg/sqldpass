@@ -2,13 +2,18 @@ package com.sqldpass.app.ui.theme
 
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
+import com.sqldpass.app.R
 
-// 브랜드 폰트 파일 (Pretendard 등) 이 mobile/app/src/main/res/font/ 에 추가되면
-// 여기 Display 만 FontFamily(Font(R.font.pretendard_*)) 로 바꾸면 된다.
-private val Display: FontFamily = FontFamily.Default
+private val Display: FontFamily = FontFamily(
+    Font(R.font.pretendard_regular, FontWeight.Normal),
+    Font(R.font.pretendard_semibold, FontWeight.SemiBold),
+    Font(R.font.pretendard_bold, FontWeight.Bold),
+    Font(R.font.pretendard_black, FontWeight.Black),
+)
 
 val SqldpassTypography = Typography(
     displayLarge = TextStyle(fontFamily = Display, fontWeight = FontWeight.Black, fontSize = 34.sp, lineHeight = 42.sp),

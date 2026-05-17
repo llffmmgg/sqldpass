@@ -24,9 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.sqldpass.app.data.PastExamSummary
 import com.sqldpass.app.ui.AppUiState
-import com.sqldpass.app.ui.runner.RunnerAnswerDraft
-import com.sqldpass.app.ui.runner.RunnerHost
-import com.sqldpass.app.ui.runner.RunnerMode
+import com.sqldpass.app.ui.common.SkeletonCard
 
 private val CardCorner = 14.dp
 private val ButtonCorner = 12.dp
@@ -36,34 +34,6 @@ fun PastExamTab(
     state: AppUiState,
     onSelectCert: (String) -> Unit,
     onStartExam: (Long, String) -> Unit,
-    onSubmitAnswers: (List<RunnerAnswerDraft>) -> Unit,
-    onCancelRunner: () -> Unit,
-    onDismissResult: () -> Unit,
-    onToggleBookmark: (Long) -> Unit,
-    onReport: (type: String, questionId: Long?, content: String, onDone: (Boolean) -> Unit) -> Unit,
-) {
-    RunnerHost(
-        state = state,
-        mode = RunnerMode.PAST_EXAM,
-        onSubmitAnswers = onSubmitAnswers,
-        onCancelRunner = onCancelRunner,
-        onDismissResult = onDismissResult,
-        onToggleBookmark = onToggleBookmark,
-        onReport = onReport,
-    ) {
-        PastExamList(
-            state = state,
-            onSelectCert = onSelectCert,
-            onStart = { id -> onStartExam(id, state.selectedCertSlug) },
-        )
-    }
-}
-
-@Composable
-private fun PastExamList(
-    state: AppUiState,
-    onSelectCert: (String) -> Unit,
-    onStart: (Long) -> Unit,
 ) {
     LaunchedEffect(state.selectedCertSlug) {
         if (state.pastExamsByCert[state.selectedCertSlug] == null) {
@@ -93,14 +63,7 @@ private fun PastExamList(
             }
         }
         when {
-            state.pastExamsLoading && exams.isEmpty() ->
-                item {
-                    Text(
-                        "회차를 불러오는 중…",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
+            state.pastExamsLoading && exams.isEmpty() -> items(3) { SkeletonCard() }
             exams.isEmpty() ->
                 item {
                     Text(
@@ -110,14 +73,17 @@ private fun PastExamList(
                     )
                 }
             else -> items(exams, key = { it.id }) { exam ->
-                PastExamCard(exam = exam, onStart = onStart)
+                PastExamCard(
+                    exam = exam,
+                    onStart = { onStartExam(exam.id, state.selectedCertSlug) },
+                )
             }
         }
     }
 }
 
 @Composable
-private fun PastExamCard(exam: PastExamSummary, onStart: (Long) -> Unit) {
+private fun PastExamCard(exam: PastExamSummary, onStart: () -> Unit) {
     Card(
         shape = RoundedCornerShape(CardCorner),
         colors = CardDefaults.cardColors(
@@ -156,7 +122,7 @@ private fun PastExamCard(exam: PastExamSummary, onStart: (Long) -> Unit) {
             }
             Button(
                 shape = RoundedCornerShape(ButtonCorner),
-                onClick = { onStart(exam.id) },
+                onClick = onStart,
                 modifier = Modifier.sizeIn(minHeight = 48.dp),
             ) { Text("풀이 시작") }
         }
