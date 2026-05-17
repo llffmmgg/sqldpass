@@ -2,6 +2,7 @@ import SwiftUI
 
 struct MockExamDetailView: View {
     let examId: Int64
+    @Binding var path: NavigationPath
 
     @State private var detail: MockExamDetail?
     @State private var isLoading = true
@@ -35,9 +36,9 @@ struct MockExamDetailView: View {
             }
         }
         .safeAreaInset(edge: .bottom) {
-            if detail != nil {
+            if let detail {
                 Button {
-                    // Phase 3.3 — 풀이 화면으로 이동 예정
+                    path.append(MockExamRoute.solve(examId: detail.id, questions: detail.questions))
                 } label: {
                     Text("시험 시작하기")
                         .font(AppType.bodyEmph)
@@ -49,6 +50,7 @@ struct MockExamDetailView: View {
                 .padding(.horizontal, Spacing.base)
                 .padding(.bottom, Spacing.sm)
                 .background(Color.appPage)
+                .disabled(detail.questions.isEmpty)
             }
         }
         .task {

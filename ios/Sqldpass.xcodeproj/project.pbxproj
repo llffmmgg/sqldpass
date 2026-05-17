@@ -49,6 +49,7 @@
 		BF4065A4C43CE097CCC21587 /* BookmarkService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 62181C4207794F88C443019F /* BookmarkService.swift */; };
 		C7341F1B1FADF497865BAB9E /* BookmarkToggleButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B5230450D260413558F4154 /* BookmarkToggleButton.swift */; };
 		CC2A7B4658525E29A483949C /* MockExamDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A26596C46008DBA2BCFE632 /* MockExamDetailView.swift */; };
+		D9F4A1E2B5C6D9E0F1A2B7C3 /* MockExamRoutes.swift in Sources */ = {isa = PBXBuildFile; fileRef = B7C3D9F4A1E2B5C6D9E0F1A2 /* MockExamRoutes.swift */; };
 		CD5EB5267A2DDBD22AE3EA01 /* SessionGate.swift in Sources */ = {isa = PBXBuildFile; fileRef = B342183DA41EFF2FB6C1F19F /* SessionGate.swift */; };
 		D013CE75999DDE46365FFA21 /* APIEnvironment.swift in Sources */ = {isa = PBXBuildFile; fileRef = E6835096BA3621089913C59A /* APIEnvironment.swift */; };
 		D4905F3C2C4434F7CD530856 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 52849D6EE4571395433DE899 /* RootView.swift */; };
@@ -98,6 +99,7 @@
 		9B5230450D260413558F4154 /* BookmarkToggleButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BookmarkToggleButton.swift; sourceTree = "<group>"; };
 		9FA501A352BF28A9553CAD49 /* ScoreHeadline.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScoreHeadline.swift; sourceTree = "<group>"; };
 		A2EC0804EBF7C264DDA4A2A5 /* MockExamsListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockExamsListView.swift; sourceTree = "<group>"; };
+		B7C3D9F4A1E2B5C6D9E0F1A2 /* MockExamRoutes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockExamRoutes.swift; sourceTree = "<group>"; };
 		A5D29C8A96832A3E6418C529 /* SolveViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SolveViewModel.swift; sourceTree = "<group>"; };
 		A5E02115A57224055005B8E7 /* ProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileView.swift; sourceTree = "<group>"; };
 		B1A910BE5F74468E50D613BA /* SqldpassApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SqldpassApp.swift; sourceTree = "<group>"; };
@@ -136,6 +138,7 @@
 			isa = PBXGroup;
 			children = (
 				1A26596C46008DBA2BCFE632 /* MockExamDetailView.swift */,
+				B7C3D9F4A1E2B5C6D9E0F1A2 /* MockExamRoutes.swift */,
 				A2EC0804EBF7C264DDA4A2A5 /* MockExamsListView.swift */,
 				1C0C0526CCA58284C941607C /* MockExamsViewModel.swift */,
 			);
@@ -467,6 +470,7 @@
 				5AD29C1E61A8EE72543BA768 /* MockExam.swift in Sources */,
 				0DC5A877FB1B292BACB387FC /* MockExamDetail.swift in Sources */,
 				CC2A7B4658525E29A483949C /* MockExamDetailView.swift in Sources */,
+				D9F4A1E2B5C6D9E0F1A2B7C3 /* MockExamRoutes.swift in Sources */,
 				D5899EBC7D15210632803323 /* MockExamsListView.swift in Sources */,
 				B83DBB33E099A614BD0435C5 /* MockExamsViewModel.swift in Sources */,
 				543825661FFE6E9A64052225 /* OMRAnswerGrid.swift in Sources */,

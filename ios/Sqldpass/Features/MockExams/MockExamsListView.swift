@@ -2,9 +2,10 @@ import SwiftUI
 
 struct MockExamsListView: View {
     @State private var viewModel = MockExamsViewModel()
+    @State private var path = NavigationPath()
 
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $path) {
             content
                 .background(Color.appPage)
                 .navigationTitle("모의고사")
@@ -15,6 +16,27 @@ struct MockExamsListView: View {
                 .task {
                     if viewModel.exams.isEmpty {
                         await viewModel.load()
+                    }
+                }
+                .navigationDestination(for: MockExamRoute.self) { route in
+                    switch route {
+                    case .detail(let examId):
+                        MockExamDetailView(examId: examId, path: $path)
+                    case .solve(let examId, let questions):
+                        SolveView(
+                            viewModel: SolveViewModel(mockExamId: examId, questions: questions),
+                            onSubmitted: { result in
+                                path.append(MockExamRoute.result(result: result, questions: questions))
+                            }
+                        )
+                    case .result(let result, let questions):
+                        SolveResultView(
+                            result: result,
+                            questions: questions,
+                            onDone: {
+                                path = NavigationPath() // 모의고사 목록으로 복귀
+                            }
+                        )
                     }
                 }
         }
@@ -46,16 +68,15 @@ struct MockExamsListView: View {
             ScrollView {
                 LazyVStack(spacing: Spacing.md) {
                     ForEach(viewModel.exams) { exam in
-                        NavigationLink(value: exam) {
+                        Button {
+                            path.append(MockExamRoute.detail(examId: exam.id))
+                        } label: {
                             ExamCard(exam: exam)
                         }
                         .buttonStyle(.plain)
                     }
                 }
                 .padding(Spacing.base)
-            }
-            .navigationDestination(for: MockExamSummary.self) { exam in
-                MockExamDetailView(examId: exam.id)
             }
         }
     }
