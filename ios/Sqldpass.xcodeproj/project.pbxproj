@@ -23,6 +23,7 @@
 		4A30795B8EDDD0183A59DFA0 /* Typography.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1A0039256078F2B16C18C8C /* Typography.swift */; };
 		53820D3FF79D25BD46CF90D1 /* AuthView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2002F27C1741CFCE4146FCD2 /* AuthView.swift */; };
 		5AD29C1E61A8EE72543BA768 /* MockExam.swift in Sources */ = {isa = PBXBuildFile; fileRef = 036B702C2E49606E4BC9E084 /* MockExam.swift */; };
+		5FC1A9AF7BB7FE6BE05CE0F0 /* SolveViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5D29C8A96832A3E6418C529 /* SolveViewModel.swift */; };
 		636DF982B299901FECAB3FD7 /* Streak.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6FF44ECEF832ED92A3684796 /* Streak.swift */; };
 		66E45204EEC341E63C21D0B8 /* Question.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33AF477F8D8432720B4E763D /* Question.swift */; };
 		6E6721F0D8F075FC170404C3 /* AppleAuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = EFD6305FDD1D166CCD2CDCF9 /* AppleAuthService.swift */; };
@@ -80,6 +81,7 @@
 		9304FB02C4CA965282101805 /* StreakService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StreakService.swift; sourceTree = "<group>"; };
 		934CC05ED3031C490208135C /* Spacing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Spacing.swift; sourceTree = "<group>"; };
 		A2EC0804EBF7C264DDA4A2A5 /* MockExamsListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockExamsListView.swift; sourceTree = "<group>"; };
+		A5D29C8A96832A3E6418C529 /* SolveViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SolveViewModel.swift; sourceTree = "<group>"; };
 		A5E02115A57224055005B8E7 /* ProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileView.swift; sourceTree = "<group>"; };
 		B1A910BE5F74468E50D613BA /* SqldpassApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SqldpassApp.swift; sourceTree = "<group>"; };
 		B342183DA41EFF2FB6C1F19F /* SessionGate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionGate.swift; sourceTree = "<group>"; };
@@ -228,6 +230,7 @@
 		6FB41984F83AA4B957D6B77C /* Solve */ = {
 			isa = PBXGroup;
 			children = (
+				A5D29C8A96832A3E6418C529 /* SolveViewModel.swift */,
 			);
 			path = Solve;
 			sourceTree = "<group>";
@@ -435,6 +438,7 @@
 				46F348F9EA34E5FFC45A723B /* Solve.swift in Sources */,
 				01C56FC06AD89D8DE411CC07 /* SolveAnswerEntry.swift in Sources */,
 				388FB55138321B051690D693 /* SolveService.swift in Sources */,
+				5FC1A9AF7BB7FE6BE05CE0F0 /* SolveViewModel.swift in Sources */,
 				9E59CA2463A520F6E6F9278C /* Spacing.swift in Sources */,
 				E72AE124E427E982B94A1F3D /* SqldpassApp.swift in Sources */,
 				636DF982B299901FECAB3FD7 /* Streak.swift in Sources */,
