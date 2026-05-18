@@ -20,7 +20,8 @@ import lombok.NoArgsConstructor;
 
 /**
  * 회원의 구독권 row. 단발 결제 → expiresAt = now + plan.days.
- * UNLIMITED 는 expiresAt = null (평생).
+ * UNLIMITED 는 paidAt + 181일 00:00 KR 만료 (6개월 정책).
+ * 단 기존 데이터에 expiresAt=NULL 로 저장된 평생권은 그대로 활성 유지된다.
  * 한 회원이 다건 보유 가능 (구매 누적). SubscriptionService 에서 가장 강한 plan 우선 적용.
  */
 @Getter

@@ -5,7 +5,10 @@ package com.sqldpass.persistent.payment;
  *
  * - days = "결제일 이후 추가로 받는 일수". 실제 사용 가능 일수는 결제일 포함 (days + 1).
  *   예: THREE_DAY(3) → 결제일 + 3일 = 4일치 사용. 만료는 결제일 + (days+1)일의 00:00 KR.
- * - days = null 이면 평생 (UNLIMITED).
+ * - UNLIMITED 는 180 일 (= 6개월). 사용자 노출 라벨은 "All Pass" 유지.
+ *   현재 모든 plan 이 days 를 가지므로 isLifetime() 은 항상 false 반환.
+ *   단, 기존 subscription 테이블에 expires_at=NULL 로 저장된 평생권은 활성 판정
+ *   (expires_at IS NULL OR > now) 에서 자동으로 평생 유지 — 정책 결정.
  * - removesAds / allowsPdf / hasLibraryAccess / allowsPremium 은 plan 별 차등 (thunder-focus-paywall 매트릭스).
  * - allowsPremium 은 PASS+(난이도 ≥ 0.5 또는 visibility=PREMIUM) 회차 풀이 허용 여부.
  *   Focus 만 false — paywall 정책상 일상 학습 권한만 제공한다.
@@ -17,7 +20,7 @@ public enum SubscriptionPlan {
     THREE_DAY(3,    true, false, true, /* allowsPremium */ true),
     FOCUS    (30,   true, false, true, /* allowsPremium */ false),
     ONE_MONTH(30,   true, false, true, /* allowsPremium */ true),
-    UNLIMITED(null, true, true,  true, /* allowsPremium */ true);
+    UNLIMITED(180,  true, true,  true, /* allowsPremium */ true);
 
     private final Integer days;
     private final boolean removesAds;
@@ -80,7 +83,10 @@ public enum SubscriptionPlan {
         return allowsPremium;
     }
 
-    /** UNLIMITED 면 true. */
+    /**
+     * days 가 null 이면 true. 현재 모든 plan 이 days 를 가지므로 항상 false.
+     * 호출부(만료 계산) 는 "expires_at 을 null 로 저장할지 vs 날짜 계산할지" 분기용으로 유지.
+     */
     public boolean isLifetime() {
         return days == null;
     }

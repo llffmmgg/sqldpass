@@ -3,6 +3,7 @@ package com.sqldpass.service.payment;
 import java.lang.reflect.Field;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.util.Map;
 import java.util.Optional;
 
@@ -378,7 +379,7 @@ class PaymentServiceTest {
 
         var preview = service.preview(1L, SubscriptionPlan.ONE_MONTH);
         assertThat(preview.allowed()).isFalse();
-        assertThat(preview.reason()).contains("무제한");
+        assertThat(preview.reason()).contains("All Pass");
     }
 
     @Test
@@ -651,27 +652,31 @@ class PaymentServiceTest {
     }
 
     @Test
-    @DisplayName("UNLIMITED verify 성공 시 expiresAt = null (평생)")
-    void verifyUnlimitedCreatesLifetimeSubscription() {
+    @DisplayName("UNLIMITED verify 성공 시 expiresAt = paidAt 일자 + 181일 00:00 (6개월 정책)")
+    void verifyUnlimitedCreates6MonthSubscription() {
         MemberEntity m = newMember(1L, "pay-rv-7f2a91");
         given(memberRepository.findById(1L)).willReturn(Optional.of(m));
 
-        PaymentEntity entity = new PaymentEntity("p-1", 1L, null, "무제한권",
+        PaymentEntity entity = new PaymentEntity("p-1", 1L, null, "All Pass",
                 SubscriptionPlan.UNLIMITED, 29900);
         given(paymentRepository.findByPaymentId("p-1")).willReturn(Optional.of(entity));
 
+        OffsetDateTime paidOffset = OffsetDateTime.now();
         var info = new PortOneClient.PortOnePaymentInfo("p-1", "PAID", 29900, "KRW",
-                OffsetDateTime.now(), Map.of("id", "p-1", "status", "PAID"));
+                paidOffset, Map.of("id", "p-1", "status", "PAID"));
         given(portOneClient.getPayment("p-1")).willReturn(info);
 
         var result = service.verify(1L, "p-1");
 
         assertThat(result.plan()).isEqualTo(SubscriptionPlan.UNLIMITED);
-        assertThat(result.expiresAt()).isNull();
+        LocalDateTime expectedExpiry = paidOffset
+                .atZoneSameInstant(ZoneId.systemDefault()).toLocalDate()
+                .plusDays(181).atStartOfDay();
+        assertThat(result.expiresAt()).isEqualTo(expectedExpiry);
 
         ArgumentCaptor<SubscriptionEntity> captor = ArgumentCaptor.forClass(SubscriptionEntity.class);
         verify(subscriptionRepository, times(1)).save(captor.capture());
-        assertThat(captor.getValue().getExpiresAt()).isNull();
+        assertThat(captor.getValue().getExpiresAt()).isEqualTo(expectedExpiry);
     }
 
     // ============================================================
@@ -1245,9 +1250,9 @@ class PaymentServiceTest {
     }
 
     @Test
-    @DisplayName("reissueSubscription: UNLIMITED 결제는 expiresAt=null 로 재발급")
-    void reissueSubscription_UNLIMITED_은_expiresAt_null() {
-        PaymentEntity entity = new PaymentEntity("p-life", 1L, null, "무제한권",
+    @DisplayName("reissueSubscription: UNLIMITED 결제는 paidAt + 180일 만료로 재발급 (6개월 정책)")
+    void reissueSubscription_UNLIMITED_은_180일_만료() {
+        PaymentEntity entity = new PaymentEntity("p-life", 1L, null, "All Pass",
                 SubscriptionPlan.UNLIMITED, 29900);
         LocalDateTime paidAt = LocalDateTime.of(2026, 5, 1, 10, 0, 0);
         entity.markPaid("{...}", paidAt);
@@ -1257,12 +1262,13 @@ class PaymentServiceTest {
 
         var result = service.reissueSubscription(88L, 7L);
 
+        LocalDateTime expectedExpiry = paidAt.plusDays(180);
         assertThat(result.issued()).isTrue();
-        assertThat(result.expiresAt()).isNull();
+        assertThat(result.expiresAt()).isEqualTo(expectedExpiry);
 
         ArgumentCaptor<SubscriptionEntity> subCaptor = ArgumentCaptor.forClass(SubscriptionEntity.class);
         verify(subscriptionRepository, times(1)).save(subCaptor.capture());
-        assertThat(subCaptor.getValue().getExpiresAt()).isNull();
+        assertThat(subCaptor.getValue().getExpiresAt()).isEqualTo(expectedExpiry);
         assertThat(subCaptor.getValue().getPlan()).isEqualTo(SubscriptionPlan.UNLIMITED);
     }
 

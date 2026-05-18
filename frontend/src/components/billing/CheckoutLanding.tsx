@@ -103,13 +103,13 @@ const TIERS: Tier[] = [
   {
     key: "UNLIMITED",
     name: "All Pass",
-    tagline: "한 번 결제로 계속 이용",
+    tagline: "6개월 풀 액세스",
     price: 29900,
     originalPrice: 39900,
-    pitch: "한 번 결제로 새 회차와 모의고사 PDF 다운로드까지 평생 사용하세요.",
+    pitch: "6개월 동안 새 회차와 모의고사 PDF 다운로드까지 무제한으로 사용하세요.",
     features: [
       { text: "PASS+ 회차 무제한" },
-      { text: "무제한 풀 엑세스" },
+      { text: "6개월 풀 액세스" },
       { text: "광고 제거" },
       { text: "오답노트 사용" },
       { text: "즐겨찾기 무제한" },

@@ -1,0 +1,33 @@
+{
+  "project": "sqldpass",
+  "phase": "all-pass-6-month",
+  "description": "All Pass(UNLIMITED) 플랜을 평생 → 6개월(180일) 로 변경. enum days 만 null→180 으로 바꾸고 사용자 노출 라벨/카피의 '평생' 문구만 '6개월' 로 정리. enum/SKU 식별자와 가격(29,900원)은 유지. 기존 UNLIMITED 구독자(subscription.expires_at=NULL) 는 그대로 평생 활성. DB 마이그레이션·Play Console 변경 없음.",
+  "steps": [
+    {
+      "step": 1,
+      "name": "backend-enum-and-tests",
+      "description": "SubscriptionPlan.UNLIMITED 의 days 를 null → 180 으로 변경 + 관련 주석/메시지 정리 + 영향 받는 테스트 어설션 보정. expires_at 계산 식은 그대로 두므로 신규 UNLIMITED 결제는 paidAt 의 KR 일자 + 181일 00:00 KST 만료. 기존 expires_at=NULL 행은 활성 판정에서 그대로 평생 유지.",
+      "status": "completed",
+      "summary": "SubscriptionPlan.UNLIMITED days null→180 + javadoc 갱신, SubscriptionEntity javadoc 갱신, PaymentService evaluateUpgrade 메시지 '무제한 이용권'→'All Pass', PaymentServiceTest 3건(verify/reissue/preview) + SubscriptionServiceTest DisplayName 1건 보정, gradlew test 전체 통과",
+      "completed_at": "2026-05-18T11:03:00+0900"
+    },
+    {
+      "step": 2,
+      "name": "mobile-catalog-copy",
+      "description": "PassPlusCatalogScreen.kt 의 All Pass 항목 durationLabel '평생' → '6개월', benefits '평생 무제한' → '6개월 PASS+ 무제한 풀이' 로 사용자 노출 문구 정리. planLabel('All Pass') 및 productId('iap_unlimited') 는 유지.",
+      "status": "completed",
+      "summary": "PassPlusCatalogScreen.kt All Pass durationLabel '6개월', benefits 갱신(3번째는 'PDF 다운로드' 명시), :app:assembleDebug 통과",
+      "completed_at": "2026-05-18T11:05:00+0900"
+    },
+    {
+      "step": 3,
+      "name": "frontend-and-cd-copy",
+      "description": "CheckoutLanding.tsx All Pass 카드 pitch 의 '평생 사용' 문구를 '6개월 동안 무제한 사용' 으로, plan-tokens.ts UNLIMITED.short '무기한' → '6개월' 로 변경. cd.yml 의 PAYMENT_UNLIMITED_NAME 기본값을 application.yaml 와 일치하는 '문어CBT All Pass' 로 갱신. 가격·label·SKU 는 손대지 않음.",
+      "status": "completed",
+      "summary": "CheckoutLanding tagline/pitch/feature 갱신(엑세스→액세스 오타 정정 포함), plan-tokens.ts UNLIMITED.short '6개월', cd.yml PAYMENT_UNLIMITED_NAME 기본값 정합, npm run lint+build 통과",
+      "completed_at": "2026-05-18T11:08:00+0900"
+    }
+  ],
+  "created_at": "2026-05-18T00:00:00+0900",
+  "completed_at": "2026-05-18T11:08:00+0900"
+}

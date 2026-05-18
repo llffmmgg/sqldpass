@@ -106,7 +106,7 @@ class SubscriptionServiceTest {
     }
 
     @Test
-    @DisplayName("UNLIMITED(All Pass) 활성 → expiresAt=null, allowsPdf=true, premium=true")
+    @DisplayName("UNLIMITED 기존 평생 구독자(expires_at=NULL) → 활성, allowsPdf=true, premium=true")
     void unlimitedActive() {
         SubscriptionEntity sub = new SubscriptionEntity(
                 1L, SubscriptionPlan.UNLIMITED, 100L,

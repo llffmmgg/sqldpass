@@ -1,19 +1,23 @@
 package com.sqldpass.app.ui.passplus
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.sizeIn
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -39,6 +43,7 @@ private data class CatalogEntry(
     val planLabel: String,
     val durationLabel: String,
     val benefits: List<String>,
+    val recommended: Boolean = false,
 )
 
 private val DEFAULT_CATALOG = listOf(
@@ -59,12 +64,13 @@ private val DEFAULT_CATALOG = listOf(
         planLabel = "Pro",
         durationLabel = "30일",
         benefits = listOf("프리미엄 회차 + Focus 혜택", "PDF 다운로드"),
+        recommended = true,
     ),
     CatalogEntry(
         productId = "iap_unlimited",
         planLabel = "All Pass",
-        durationLabel = "평생",
-        benefits = listOf("Pro 의 모든 혜택", "평생 무제한", "출시 후 추가 기능 포함"),
+        durationLabel = "6개월",
+        benefits = listOf("Pro 의 모든 혜택", "6개월 PASS+ 무제한 풀이", "모의고사 PDF 다운로드"),
     ),
 )
 
@@ -91,6 +97,7 @@ fun PassPlusCatalogScreen(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
+                .statusBarsPadding()
                 .padding(horizontal = 8.dp, vertical = 6.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -107,7 +114,9 @@ fun PassPlusCatalogScreen(
             )
         }
         LazyColumn(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier
+                .fillMaxSize()
+                .navigationBarsPadding(),
             contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
@@ -193,6 +202,14 @@ private fun PlanCard(
     available: Boolean,
     onPurchase: () -> Unit,
 ) {
+    val accent = MaterialTheme.colorScheme.primary
+    val borderModifier = if (entry.recommended) {
+        Modifier.border(
+            width = 2.dp,
+            color = accent,
+            shape = RoundedCornerShape(CardCorner),
+        )
+    } else Modifier
     Card(
         shape = RoundedCornerShape(CardCorner),
         colors = CardDefaults.cardColors(
@@ -200,12 +217,13 @@ private fun PlanCard(
             contentColor = MaterialTheme.colorScheme.onSurface,
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        modifier = borderModifier,
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(18.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -213,7 +231,18 @@ private fun PlanCard(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Column {
-                    Text(entry.planLabel, style = MaterialTheme.typography.titleMedium)
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    ) {
+                        Text(entry.planLabel, style = MaterialTheme.typography.titleMedium)
+                        if (entry.recommended) {
+                            com.sqldpass.app.ui.common.SqldpassBadge(
+                                label = "가장 인기",
+                                base = accent,
+                            )
+                        }
+                    }
                     Text(
                         entry.durationLabel,
                         style = MaterialTheme.typography.labelMedium,
@@ -223,15 +252,26 @@ private fun PlanCard(
                 Text(
                     formattedPrice,
                     style = MaterialTheme.typography.titleLarge,
-                    color = MaterialTheme.colorScheme.primary,
+                    color = accent,
                 )
             }
             entry.benefits.forEach { benefit ->
-                Text(
-                    "· $benefit",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    androidx.compose.material3.Icon(
+                        imageVector = Icons.Filled.Check,
+                        contentDescription = null,
+                        tint = accent,
+                        modifier = Modifier.size(16.dp),
+                    )
+                    Text(
+                        benefit,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface,
+                    )
+                }
             }
             Button(
                 shape = RoundedCornerShape(ButtonCorner),

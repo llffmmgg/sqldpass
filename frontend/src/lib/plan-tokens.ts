@@ -13,7 +13,7 @@ export const PLAN_TOKENS: Record<SubscriptionPlanKey, {
   THREE_DAY: { label: "Thunder",  short: "3일",    bar: "bg-amber-500",   dot: "bg-amber-500",   text: "text-amber-300" },
   FOCUS:     { label: "Focus",    short: "30일",   bar: "bg-sky-500",     dot: "bg-sky-500",     text: "text-sky-300" },
   ONE_MONTH: { label: "Pro",      short: "30일",   bar: "bg-violet-500",  dot: "bg-violet-500",  text: "text-violet-300" },
-  UNLIMITED: { label: "All Pass", short: "무기한", bar: "bg-emerald-500", dot: "bg-emerald-500", text: "text-emerald-300" },
+  UNLIMITED: { label: "All Pass", short: "6개월", bar: "bg-emerald-500", dot: "bg-emerald-500", text: "text-emerald-300" },
 };
 
 export function planLabelOf(key: string): string {

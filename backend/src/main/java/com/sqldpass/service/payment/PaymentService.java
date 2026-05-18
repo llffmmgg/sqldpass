@@ -142,7 +142,7 @@ public class PaymentService {
         SubscriptionPlan currentPlan = active.getPlan();
         if (currentPlan == SubscriptionPlan.UNLIMITED) {
             return new UpgradeEvaluation(false, 0, baseAmount,
-                    "이미 무제한 이용권을 이용 중입니다.");
+                    "이미 All Pass 를 이용 중입니다.");
         }
         if (!newPlan.isUpgradeFrom(currentPlan)) {
             // 같은/낮은 plan — 다운그레이드 또는 갱신은 만료 후
