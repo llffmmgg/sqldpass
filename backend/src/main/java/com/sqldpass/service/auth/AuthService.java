@@ -6,6 +6,8 @@ import org.springframework.transaction.annotation.Transactional;
 import com.sqldpass.persistent.member.MemberEntity;
 import com.sqldpass.persistent.member.MemberRepository;
 import com.sqldpass.service.admin.JwtProvider;
+import com.sqldpass.service.common.ErrorCode;
+import com.sqldpass.service.common.SqldpassException;
 import com.sqldpass.service.notification.DiscordNotifier;
 
 import lombok.RequiredArgsConstructor;
@@ -63,6 +65,19 @@ public class AuthService {
         return new AuthResult(token, member.getNickname(), isNew[0]);
     }
 
+    /**
+     * 이미 유효한 JWT 를 가진 회원에게 만료시간을 갱신한 새 JWT 를 발급한다.
+     * MemberAuthInterceptor 를 통과한 호출에서만 사용 — 토큰 검증은 이미 끝난 상태.
+     * 회원이 탈퇴/삭제된 경우 404 로 차단해 좀비 세션을 끊는다.
+     */
+    @Transactional(readOnly = true)
+    public TokenRefreshResult reissueToken(Long memberId) {
+        MemberEntity member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new SqldpassException(ErrorCode.MEMBER_NOT_FOUND));
+        String token = jwtProvider.createUserToken(member.getId());
+        return new TokenRefreshResult(token, member.getNickname());
+    }
+
     private AuthResult upsertMemberAndIssueToken(GoogleOAuthClient.GoogleUserInfo userInfo) {
         boolean[] isNew = {false};
         MemberEntity member = memberRepository.findByProviderAndProviderId("google", userInfo.sub())
@@ -85,5 +100,8 @@ public class AuthService {
     }
 
     public record AuthResult(String token, String nickname, boolean isNew) {
+    }
+
+    public record TokenRefreshResult(String token, String nickname) {
     }
 }

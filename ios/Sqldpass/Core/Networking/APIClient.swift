@@ -12,17 +12,22 @@ enum HTTPMethod: String {
 ///
 /// - Bearer 토큰: `tokenProvider` 클로저로 주입. 매 요청마다 호출되므로
 ///   AuthStore 가 토큰을 갱신해도 자동 반영.
-/// - 401 응답: `onUnauthorized` 콜백 발생 후 `APIError.unauthorized` throw.
-///   호출자는 콜백에서 토큰 폐기 + 인증 화면 전환을 처리한다.
+/// - 401 응답: `tokenRefresher` 가 주입돼 있으면 한 번 갱신을 시도해 같은 요청을
+///   재실행한다. 갱신 실패 시 `onUnauthorized` 콜백 발생 후 `APIError.unauthorized`
+///   throw. 호출자는 콜백에서 토큰 폐기 + 인증 화면 전환을 처리한다.
 final class APIClient {
     let baseURL: URL
     private let session: URLSession
     private let decoder: JSONDecoder
     private let encoder: JSONEncoder
+    private let refreshCoordinator = TokenRefreshCoordinator()
 
     /// 매 요청 직전에 호출. nil 이면 Authorization 헤더 미주입.
     var tokenProvider: () -> String? = { nil }
-    /// 401 응답 시 호출. 메인 액터에서 토큰 폐기/라우팅 처리 권장.
+    /// 401 응답 시 새 토큰 발급을 시도한다. true 반환 시 같은 요청을 1회 재실행.
+    /// 동시 다발 401 에 대해 내부 single-flight 가드가 한 번만 호출한다.
+    var tokenRefresher: (@Sendable () async -> Bool)?
+    /// 갱신 실패 또는 refresher 미주입 시 401 에서 호출. 메인 액터에서 토큰 폐기/라우팅 처리 권장.
     var onUnauthorized: (@Sendable () -> Void)?
 
     init(baseURL: URL, session: URLSession = .shared) {
@@ -66,7 +71,8 @@ final class APIClient {
         path: String,
         method: HTTPMethod,
         query: [URLQueryItem] = [],
-        body: B?
+        body: B?,
+        allowRefresh: Bool = true
     ) async throws -> R {
         guard var components = URLComponents(url: baseURL.appendingPathComponent(path), resolvingAgainstBaseURL: false) else {
             throw APIError.invalidURL
@@ -116,6 +122,18 @@ final class APIClient {
                 throw APIError.decoding(message: error.localizedDescription)
             }
         case 401:
+            if allowRefresh, let refresher = tokenRefresher {
+                let refreshed = await refreshCoordinator.refresh(using: refresher)
+                if refreshed {
+                    return try await send(
+                        path: path,
+                        method: method,
+                        query: query,
+                        body: body,
+                        allowRefresh: false
+                    )
+                }
+            }
             onUnauthorized?()
             throw APIError.unauthorized
         case 403:
@@ -139,4 +157,21 @@ private struct EmptyBody: Encodable {}
 struct EmptyResponse: Decodable {
     init() {}
     init(from decoder: Decoder) throws {}
+}
+
+/// 401 폭주 시 refresh 호출이 동시에 여러 번 발사되는 것을 막는 single-flight 가드.
+/// 진행 중인 갱신이 있으면 같은 결과를 await 해서 공유한다.
+private actor TokenRefreshCoordinator {
+    private var inFlight: Task<Bool, Never>?
+
+    func refresh(using refresher: @escaping @Sendable () async -> Bool) async -> Bool {
+        if let task = inFlight {
+            return await task.value
+        }
+        let task = Task { await refresher() }
+        inFlight = task
+        let result = await task.value
+        inFlight = nil
+        return result
+    }
 }

@@ -60,4 +60,26 @@ class AuthControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("INVALID_INPUT"));
     }
+
+    @Test
+    @DisplayName("POST /api/auth/refresh reissues JWT for the bearer token's member")
+    void refresh() throws Exception {
+        given(jwtProvider.validateToken("valid-token")).willReturn(true);
+        given(jwtProvider.extractMemberId("valid-token")).willReturn(42L);
+        given(authService.reissueToken(42L))
+                .willReturn(new AuthService.TokenRefreshResult("new-jwt", "tester"));
+
+        mockMvc.perform(post("/api/auth/refresh")
+                        .header("Authorization", "Bearer valid-token"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.token").value("new-jwt"))
+                .andExpect(jsonPath("$.nickname").value("tester"));
+    }
+
+    @Test
+    @DisplayName("POST /api/auth/refresh returns 401 without Authorization header")
+    void refresh_unauthorized() throws Exception {
+        mockMvc.perform(post("/api/auth/refresh"))
+                .andExpect(status().isUnauthorized());
+    }
 }

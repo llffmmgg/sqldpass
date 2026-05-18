@@ -1,6 +1,7 @@
 package com.sqldpass.controller.auth;
 
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestAttribute;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -8,6 +9,7 @@ import com.sqldpass.controller.auth.dto.AppleLoginRequest;
 import com.sqldpass.controller.auth.dto.GoogleIdTokenLoginRequest;
 import com.sqldpass.controller.auth.dto.OAuthLoginRequest;
 import com.sqldpass.controller.auth.dto.OAuthLoginResponse;
+import com.sqldpass.controller.auth.dto.TokenRefreshResponse;
 import com.sqldpass.service.auth.AuthService;
 
 import jakarta.validation.Valid;
@@ -44,5 +46,12 @@ public class AuthController {
             @Valid @RequestBody AppleLoginRequest request) {
         AuthService.AuthResult result = authService.loginWithApple(request.idToken());
         return new OAuthLoginResponse(result.token(), result.nickname(), result.isNew());
+    }
+
+    @PostMapping("/api/auth/refresh")
+    @Operation(summary = "JWT 재발급 — 현재 유효한 토큰을 새 만료시간으로 갱신")
+    public TokenRefreshResponse refresh(@RequestAttribute("memberId") Long memberId) {
+        AuthService.TokenRefreshResult result = authService.reissueToken(memberId);
+        return new TokenRefreshResponse(result.token(), result.nickname());
     }
 }
