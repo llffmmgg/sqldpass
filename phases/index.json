@@ -361,6 +361,33 @@
       "created_at": "2026-05-19T13:00:00+0900",
       "completed_at": "2026-05-19T14:00:00+0900",
       "summary": "iOS APIClient 15s/30s + AuthStore refresh 20s/30s. Android OkHttp/refreshOkHttp 둘 다 15s/30s/30s. callTimeout 은 의도적 미설정."
+    },
+    {
+      "dir": "backend-apple-jws-verification",
+      "name": "backend-apple-jws-verification",
+      "description": "Apple App Store Server Notifications v2 JWS 페이로드를 공식 라이브러리(app-store-server-library) 로 검증. 인증서 체인 + 서명 + bundleId 검증 실패 시 webhook 401 reject. backend-refund-webhook phase 의 후속 — 위장 webhook 차단.",
+      "status": "completed",
+      "created_at": "2026-05-19T15:00:00+0900",
+      "completed_at": "2026-05-19T16:00:00+0900",
+      "summary": "com.apple.itunes.storekit:app-store-server-library:3.5.0 도입. AppStorePayloadVerifier + Apple Root CA G3 embed + 검증 실패 401. 테스트 19건 통과."
+    },
+    {
+      "dir": "ios-offline-queue-partial-retry",
+      "name": "ios-offline-queue-partial-retry",
+      "description": "iOS SolveSyncManager 의 break-on-first-error → partial retry. 인증 실패(401/403)만 break, 일시 오류는 continue + 실패 row 카운트 published 프로퍼티 노출. Android AppRepository.drainPendingSolves 와 동치 동작.",
+      "status": "completed",
+      "created_at": "2026-05-19T15:00:00+0900",
+      "completed_at": "2026-05-19T16:00:00+0900",
+      "summary": "tryDrain() catch 분기: APIError.unauthorized/.forbidden break, 나머지 continue + lastDrainFailedCount/SyncedCount @Published. ObservableObject 채택. macOS 빌드는 사용자 별도 검증."
+    },
+    {
+      "dir": "android-test-coverage",
+      "name": "android-test-coverage",
+      "description": "Android test source set 신설 + 핵심 비즈니스 로직 단위 테스트. TokenAuthenticator (single-flight refresh / loop guard / session-loss) + BillingManager (PURCHASED/PENDING 분기 + ack) + AppRepository.drainPendingSolves (FIFO + partial retry + idempotency).",
+      "status": "completed",
+      "created_at": "2026-05-19T15:00:00+0900",
+      "completed_at": "2026-05-19T16:00:00+0900",
+      "summary": "mobile/app/src/test 디렉토리 신설 + 17 테스트 (5+7+5) 통과. BillingManager 에 @VisibleForTesting internal 가시성 + 테스트용 internal constructor 추가 (public API 보존)."
     }
   ]
 }
