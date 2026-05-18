@@ -9,7 +9,8 @@
       "description": "ios/Sqldpass/Core/Networking/APIEnvironment.swift 의 Debug 분기를 운영 URL로 변경. Debug/Release 모두 https://sqldpass.com 기본값. SQLDPASS_BACKEND_URL env override 유지(필요 시 로컬 dev 서버 가리키게). 시뮬레이터에서 실 운영 API 호출 가능. 빌드 검증.",
       "status": "completed",
       "started_at": "2026-05-18T14:15:49+0900",
-      "summary": "APIEnvironment.swift Debug/Release 분기 제거, 기본값을 https://sqldpass.com 으로 일원화하고 SQLDPASS_BACKEND_URL env override 유지. Debug 빌드 SUCCEEDED."
+      "summary": "APIEnvironment.swift Debug/Release 분기 제거, 기본값을 https://sqldpass.com 으로 일원화하고 SQLDPASS_BACKEND_URL env override 유지. Debug 빌드 SUCCEEDED.",
+      "completed_at": "2026-05-18T14:18:27+0900"
     },
     {
       "step": 2,
