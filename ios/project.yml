@@ -20,6 +20,11 @@ settings:
     CODE_SIGN_STYLE: Automatic
     ENABLE_USER_SCRIPT_SANDBOXING: YES
 
+packages:
+  GoogleSignIn:
+    url: https://github.com/google/GoogleSignIn-iOS
+    from: 8.0.0
+
 targets:
   Sqldpass:
     type: application
@@ -27,17 +32,33 @@ targets:
     deploymentTarget: '17.0'
     sources:
       - path: Sqldpass
+    dependencies:
+      - package: GoogleSignIn
+        product: GoogleSignIn
+      - package: GoogleSignIn
+        product: GoogleSignInSwift
+    info:
+      path: Sqldpass/Info.plist
+      properties:
+        CFBundleDisplayName: 문어CBT
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+        UISupportedInterfaceOrientations~ipad:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationPortraitUpsideDown
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+        CFBundleURLTypes:
+          - CFBundleTypeRole: Editor
+            CFBundleURLSchemes:
+              - com.googleusercontent.apps.1026495161962-jtgphtjb90025fsmvb8e13tpnokv3edp
+        GIDClientID: 1026495161962-jtgphtjb90025fsmvb8e13tpnokv3edp.apps.googleusercontent.com
     settings:
       base:
         PRODUCT_NAME: Sqldpass
         PRODUCT_BUNDLE_IDENTIFIER: com.sqldpass.app
-        GENERATE_INFOPLIST_FILE: YES
         ENABLE_PREVIEWS: YES
         MARKETING_VERSION: '1.0.0'
         CURRENT_PROJECT_VERSION: '1'
         TARGETED_DEVICE_FAMILY: '1'
-        INFOPLIST_KEY_CFBundleDisplayName: 문어CBT
-        INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
-        INFOPLIST_KEY_UILaunchScreen_Generation: YES
-        INFOPLIST_KEY_UISupportedInterfaceOrientations: UIInterfaceOrientationPortrait
-        INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad: 'UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight'
