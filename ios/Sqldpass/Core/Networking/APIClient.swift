@@ -30,9 +30,9 @@ final class APIClient {
     /// 갱신 실패 또는 refresher 미주입 시 401 에서 호출. 메인 액터에서 토큰 폐기/라우팅 처리 권장.
     var onUnauthorized: (@Sendable () -> Void)?
 
-    init(baseURL: URL, session: URLSession = .shared) {
+    init(baseURL: URL, session: URLSession? = nil) {
         self.baseURL = baseURL
-        self.session = session
+        self.session = session ?? APIClient.makeDefaultSession()
 
         let decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .iso8601
@@ -41,6 +41,18 @@ final class APIClient {
         let encoder = JSONEncoder()
         encoder.dateEncodingStrategy = .iso8601
         self.encoder = encoder
+    }
+
+    /// APIClient 전용 URLSession.
+    /// 모바일 네트워크 변동 상황에서 사용자가 60초씩 멈춰 보이지 않도록,
+    /// URLSession.shared 기본값(request 60s / resource 7d) 대신 짧은 timeout 사용.
+    /// `URLSession.shared` 동작은 그대로 두어 SwiftUI AsyncImage 등 다른 사용처에 영향 없음.
+    private static func makeDefaultSession() -> URLSession {
+        let config = URLSessionConfiguration.default
+        config.timeoutIntervalForRequest = 15        // connect + 첫 응답 대기
+        config.timeoutIntervalForResource = 30       // 전체 다운로드 한도
+        config.waitsForConnectivity = false          // 즉시 실패해 사용자에게 빠른 피드백
+        return URLSession(configuration: config)
     }
 
     // MARK: - High level helpers

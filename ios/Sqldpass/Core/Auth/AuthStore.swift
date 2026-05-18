@@ -12,6 +12,17 @@ final class AuthStore {
 
     private let keychain = KeychainStore(service: "com.sqldpass.app.auth", account: "jwt")
 
+    /// `refresh()` 전용 URLSession. APIClient 와 동일한 톤이지만 인증 갱신은
+    /// 모바일 네트워크에서 약간 더 여유를 둔다 (request 20s / resource 30s).
+    /// `URLSession.shared` 동작은 건드리지 않음.
+    private let refreshSession: URLSession = {
+        let config = URLSessionConfiguration.default
+        config.timeoutIntervalForRequest = 20
+        config.timeoutIntervalForResource = 30
+        config.waitsForConnectivity = false
+        return URLSession(configuration: config)
+    }()
+
     private(set) var token: String?
     private(set) var nickname: String?
 
@@ -56,7 +67,7 @@ final class AuthStore {
         request.setValue("application/json", forHTTPHeaderField: "Accept")
 
         do {
-            let (data, response) = try await URLSession.shared.data(for: request)
+            let (data, response) = try await refreshSession.data(for: request)
             guard let http = response as? HTTPURLResponse, http.statusCode == 200 else {
                 return false
             }
