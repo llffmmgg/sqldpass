@@ -5,6 +5,7 @@ import java.util.Base64;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -13,9 +14,14 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.apple.itunes.storekit.model.JWSTransactionDecodedPayload;
+import com.apple.itunes.storekit.model.NotificationTypeV2;
+import com.apple.itunes.storekit.model.ResponseBodyV2DecodedPayload;
 import com.sqldpass.controller.payment.dto.AppStoreNotificationRequest;
 import com.sqldpass.service.auth.GoogleIdTokenVerifier;
 import com.sqldpass.service.common.SqldpassException;
+import com.sqldpass.service.payment.AppStorePayloadVerificationException;
+import com.sqldpass.service.payment.AppStorePayloadVerifier;
 import com.sqldpass.service.payment.PaymentService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -35,6 +41,9 @@ import tools.jackson.databind.ObjectMapper;
  * <p>보안: Pub/Sub push subscription 의 OIDC ID token (Authorization Bearer) 을 우선 검증하고,
  * 미설정·미발급 환경에서는 URL {@code ?token=...} shared secret 로 fallback. 둘 다 미설정 시
  * dev 모드로 검증 스킵.
+ *
+ * <p>App Store Server Notifications V2 는 {@link AppStorePayloadVerifier} 가 JWS 서명·체인·bundleId 를
+ * 검증한 뒤에만 dispatch — 검증 실패 시 401.
  */
 @Slf4j
 @Tag(name = "결제 webhook", description = "Play Billing RTDN 등 외부 결제 통지 처리")
@@ -45,6 +54,7 @@ public class PaymentWebhookController {
 
     private final PaymentService paymentService;
     private final GoogleIdTokenVerifier idTokenVerifier;
+    private final AppStorePayloadVerifier appStorePayloadVerifier;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Value("${sqldpass.play-billing.rtdn-shared-secret:}")
@@ -141,84 +151,72 @@ public class PaymentWebhookController {
 
     @PostMapping("/app-store/notifications")
     @Operation(summary = "App Store Server Notifications V2 — 구독 갱신/만료/환불 비동기 통보")
-    public Map<String, String> handleAppStoreNotification(@RequestBody AppStoreNotificationRequest body) {
+    public ResponseEntity<Map<String, String>> handleAppStoreNotification(@RequestBody AppStoreNotificationRequest body) {
         if (body == null || body.signedPayload() == null || body.signedPayload().isBlank()) {
             log.warn("App Store notification 빈 signedPayload");
-            return Map.of("status", "ignored");
+            return ResponseEntity.ok(Map.of("status", "ignored"));
         }
 
+        ResponseBodyV2DecodedPayload decoded;
         try {
-            String[] parts = body.signedPayload().split("\\.");
-            if (parts.length != 3) {
-                log.warn("App Store notification JWS 형식 아님");
-                return Map.of("status", "ignored");
-            }
-            byte[] payloadBytes = Base64.getUrlDecoder().decode(parts[1]);
-            JsonNode payload = objectMapper.readTree(payloadBytes);
-
-            String notificationType = payload.path("notificationType").asText();
-            String subtype = payload.path("subtype").asText();
-
-            log.info("App Store notification: type={} subtype={}", notificationType, subtype);
-
-            // TODO: App Store JWS 서명 검증 (Apple Root CA 체인) — 별도 phase 에서 구현.
-            //   현재는 페이로드 신뢰만 — webhook URL 자체가 secret 으로 보호됨.
-
-            // Non-Renewing 모델: SUBSCRIBED / DID_RENEW / EXPIRED / DID_FAIL_TO_RENEW /
-            // GRACE_PERIOD_EXPIRED / OFFER_REDEEMED 는 우리 정책상 발생하지 않거나 무시 가능.
-            // 환불·가족공유 회수만 entitlement 회수.
-            switch (notificationType) {
-                case "REFUND", "REVOKE" -> {
-                    String transactionId = extractAppStoreTransactionId(payload);
-                    if (transactionId == null || transactionId.isBlank()) {
-                        log.warn("App Store {} — transactionId 추출 실패", notificationType);
-                    } else {
-                        boolean revoked = paymentService.revokeAppStoreByTransactionId(transactionId);
-                        log.info("App Store {} 처리 txId={} revoked={}",
-                                notificationType, mask(transactionId), revoked);
-                    }
-                }
-                default -> log.info("App Store notification 무시 type={}", notificationType);
-            }
-
-            return Map.of("status", "ok", "type", notificationType);
-        } catch (Exception e) {
-            log.warn("App Store notification 처리 실패", e);
-            return Map.of("status", "error");
+            decoded = appStorePayloadVerifier.verifyAndDecodeNotification(body.signedPayload());
+        } catch (AppStorePayloadVerificationException e) {
+            log.warn("ASSN v2 검증 실패 — webhook reject: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
+
+        NotificationTypeV2 notificationTypeEnum = decoded.getNotificationType();
+        String notificationType = notificationTypeEnum != null
+                ? notificationTypeEnum.name()
+                : decoded.getRawNotificationType();
+        // Subtype 은 enum (UPGRADE/VOLUNTARY/...) — name() 으로 String 화. raw 값 fallback.
+        String subtype = decoded.getSubtype() != null
+                ? decoded.getSubtype().name()
+                : decoded.getRawSubtype();
+
+        log.info("App Store notification: type={} subtype={}", notificationType, subtype);
+
+        // Non-Renewing 모델: SUBSCRIBED / DID_RENEW / EXPIRED / DID_FAIL_TO_RENEW /
+        // GRACE_PERIOD_EXPIRED / OFFER_REDEEMED 는 우리 정책상 발생하지 않거나 무시 가능.
+        // 환불·가족공유 회수만 entitlement 회수.
+        if ("REFUND".equals(notificationType) || "REVOKE".equals(notificationType)) {
+            String transactionId = extractAppStoreTransactionId(decoded);
+            if (transactionId == null || transactionId.isBlank()) {
+                log.warn("App Store {} — transactionId 추출 실패", notificationType);
+            } else {
+                boolean revoked = paymentService.revokeAppStoreByTransactionId(transactionId);
+                log.info("App Store {} 처리 txId={} revoked={}",
+                        notificationType, mask(transactionId), revoked);
+            }
+        } else {
+            log.info("App Store notification 무시 type={}", notificationType);
+        }
+
+        return ResponseEntity.ok(Map.of(
+                "status", "ok",
+                "type", notificationType == null ? "" : notificationType));
     }
 
     /**
-     * ASSN v2 페이로드에서 transactionId 추출. payload 의 {@code data.signedTransactionInfo}
-     * 가 JWS 형식이므로 한 단계 더 base64URL 디코딩이 필요. 추출 실패 시 null.
-     *
-     * <p>대체 경로: data.signedTransactionInfo 가 없으면 payload.transactionId 또는
-     * data.originalTransactionId 사용 (테스트/구버전 호환).
+     * ASSN v2 검증된 payload 의 {@code data.signedTransactionInfo} 를 다시 검증·디코딩하여 transactionId 추출.
+     * 검증 실패 또는 transactionId 누락 시 null.
      */
-    private String extractAppStoreTransactionId(JsonNode payload) {
-        JsonNode data = payload.path("data");
-        String signedTransactionInfo = data.path("signedTransactionInfo").asText(null);
-        if (signedTransactionInfo != null && !signedTransactionInfo.isBlank()) {
-            try {
-                String[] parts = signedTransactionInfo.split("\\.");
-                if (parts.length == 3) {
-                    byte[] txPayloadBytes = Base64.getUrlDecoder().decode(parts[1]);
-                    JsonNode tx = objectMapper.readTree(txPayloadBytes);
-                    String txId = tx.path("transactionId").asText(null);
-                    if (txId != null && !txId.isBlank()) return txId;
-                    String origTxId = tx.path("originalTransactionId").asText(null);
-                    if (origTxId != null && !origTxId.isBlank()) return origTxId;
-                }
-            } catch (Exception e) {
-                log.warn("App Store signedTransactionInfo 파싱 실패", e);
-            }
+    private String extractAppStoreTransactionId(ResponseBodyV2DecodedPayload decoded) {
+        if (decoded.getData() == null || decoded.getData().getSignedTransactionInfo() == null) {
+            return null;
         }
-        // Fallback — 일부 페이로드/테스트 변형은 평문 transactionId/originalTransactionId 를 직접 들고 옴.
-        String direct = payload.path("transactionId").asText(null);
-        if (direct != null && !direct.isBlank()) return direct;
-        String dataDirect = data.path("originalTransactionId").asText(null);
-        if (dataDirect != null && !dataDirect.isBlank()) return dataDirect;
-        return null;
+        try {
+            JWSTransactionDecodedPayload tx = appStorePayloadVerifier
+                    .verifyAndDecodeTransaction(decoded.getData().getSignedTransactionInfo());
+            String txId = tx.getTransactionId();
+            if (txId != null && !txId.isBlank()) return txId;
+            String origTxId = tx.getOriginalTransactionId();
+            if (origTxId != null && !origTxId.isBlank()) return origTxId;
+            return null;
+        } catch (AppStorePayloadVerificationException e) {
+            log.warn("App Store signedTransactionInfo 검증 실패: {}", e.getMessage());
+            return null;
+        }
     }
 
     /** Google Pub/Sub push subscription 표준 envelope. */

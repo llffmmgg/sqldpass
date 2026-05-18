@@ -44,6 +44,9 @@ dependencies {
 	// (네이티브 안드로이드 앱 → /api/payment/play-billing/verify 검증 흐름에서 사용)
 	implementation 'com.google.apis:google-api-services-androidpublisher:v3-rev20240805-2.0.0'
 	implementation 'com.google.auth:google-auth-library-oauth2-http:1.23.0'
+	// Apple App Store Server Library — ASSN v2 JWS 서명/체인 검증.
+	// (iOS native 앱 → /api/webhook/app-store/notifications 위조 차단)
+	implementation 'com.apple.itunes.storekit:app-store-server-library:3.5.0'
 	compileOnly 'org.projectlombok:lombok'
 	annotationProcessor 'org.projectlombok:lombok'
 	runtimeOnly 'com.mysql:mysql-connector-j'

@@ -1,0 +1,11 @@
+{
+  "name": "backend-apple-jws-verification",
+  "description": "Apple App Store Server Notifications v2 JWS 페이로드를 공식 라이브러리로 검증. 인증서 체인 + 서명 검증 실패 시 webhook reject. backend-refund-webhook phase 의 후속.",
+  "status": "pending",
+  "steps": [
+    {
+      "id": "step1",
+      "description": "app-store-server-library Gradle 추가 + AppStorePayloadVerifier 신설 + PaymentWebhookController 의 ASSN v2 경로에 검증 호출 + 테스트"
+    }
+  ]
+}

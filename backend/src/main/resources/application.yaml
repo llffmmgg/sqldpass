@@ -163,3 +163,12 @@ sqldpass:
     cache-key-prefix: ${PDF_CACHE_KEY_PREFIX:pdf/mock-exams}
     # true 면 서버 시작 시 Chromium 을 실제로 띄워봐서 런타임 장애를 startup 단계로 당긴다.
     verify-on-startup: ${PDF_VERIFY_ON_STARTUP:false}
+
+# Apple App Store Server Notifications V2 — JWS 검증용 설정.
+# bundle-id: iOS native 앱 Bundle ID (`com.sqldpass.app`).
+# app-apple-id: App Store Connect numeric app id. PRODUCTION 환경에서 필수 — 미설정(0) 시 경고만 로그.
+# environment: SANDBOX | PRODUCTION | XCODE | LOCAL_TESTING. 운영은 PRODUCTION.
+app-store:
+  bundle-id: ${APP_STORE_BUNDLE_ID:com.sqldpass.app}
+  app-apple-id: ${APP_STORE_APP_APPLE_ID:0}
+  environment: ${APP_STORE_ENVIRONMENT:SANDBOX}

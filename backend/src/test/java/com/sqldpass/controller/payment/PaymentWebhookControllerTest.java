@@ -13,17 +13,24 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 
+import com.apple.itunes.storekit.model.Data;
+import com.apple.itunes.storekit.model.JWSTransactionDecodedPayload;
+import com.apple.itunes.storekit.model.NotificationTypeV2;
+import com.apple.itunes.storekit.model.ResponseBodyV2DecodedPayload;
 import com.sqldpass.service.admin.JwtProvider;
 import com.sqldpass.service.auth.GoogleIdTokenVerifier;
 import com.sqldpass.service.common.ErrorCode;
 import com.sqldpass.service.common.SqldpassException;
 import com.sqldpass.service.notification.DiscordNotifier;
+import com.sqldpass.service.payment.AppStorePayloadVerificationException;
+import com.sqldpass.service.payment.AppStorePayloadVerifier;
 import com.sqldpass.service.payment.PaymentService;
 
 import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.node.ObjectNode;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.never;
@@ -46,6 +53,9 @@ class PaymentWebhookControllerTest {
 
     @MockitoBean
     private GoogleIdTokenVerifier idTokenVerifier;
+
+    @MockitoBean
+    private AppStorePayloadVerifier appStorePayloadVerifier;
 
     @MockitoBean
     private JwtProvider jwtProvider;
@@ -101,30 +111,24 @@ class PaymentWebhookControllerTest {
     }
 
     /**
-     * ASSN v2 signedPayload 생성 — header.payload.signature 형식의 JWS.
-     * payload 안에 또 다시 signedTransactionInfo JWS 가 들어가는 구조.
+     * 검증 mock 으로 사용할 ASSN v2 페이로드 stub.
+     * 실제 JWS 가 아닌 더미 token 을 컨트롤러에 보내고, verifier mock 이 이 객체를 반환하도록 stub.
      */
-    private String appStoreSignedPayload(String notificationType, String transactionId) throws Exception {
-        ObjectMapper mapper = new ObjectMapper();
-        // signedTransactionInfo 내부 JWS payload
-        ObjectNode txPayload = mapper.createObjectNode();
-        txPayload.put("transactionId", transactionId);
-        txPayload.put("originalTransactionId", transactionId);
-        txPayload.put("productId", "iap_one_month");
-        txPayload.put("bundleId", "com.sqldpass.app");
-        String txJwsPart2 = Base64.getUrlEncoder().withoutPadding().encodeToString(
-                mapper.writeValueAsString(txPayload).getBytes(StandardCharsets.UTF_8));
-        String signedTransactionInfo = "hdr." + txJwsPart2 + ".sig";
+    private ResponseBodyV2DecodedPayload buildDecodedPayload(String notificationType, String signedTxInfoStub) {
+        ResponseBodyV2DecodedPayload payload = new ResponseBodyV2DecodedPayload();
+        // NotificationTypeV2.fromValue 를 raw 값으로 set — 알 수 없는 값(SUBSCRIBED 등 enum 매핑 안 되는 케이스 포함).
+        payload.setRawNotificationType(notificationType);
+        Data data = new Data();
+        data.setSignedTransactionInfo(signedTxInfoStub);
+        payload.setData(data);
+        return payload;
+    }
 
-        // 바깥 ASSN v2 payload
-        ObjectNode data = mapper.createObjectNode();
-        data.put("signedTransactionInfo", signedTransactionInfo);
-        ObjectNode payload = mapper.createObjectNode();
-        payload.put("notificationType", notificationType);
-        payload.set("data", data);
-        String outerPart2 = Base64.getUrlEncoder().withoutPadding().encodeToString(
-                mapper.writeValueAsString(payload).getBytes(StandardCharsets.UTF_8));
-        return "hdr." + outerPart2 + ".sig";
+    private JWSTransactionDecodedPayload buildDecodedTransaction(String transactionId) {
+        JWSTransactionDecodedPayload tx = new JWSTransactionDecodedPayload();
+        tx.setTransactionId(transactionId);
+        tx.setOriginalTransactionId(transactionId);
+        return tx;
     }
 
     private String appStoreBodyJson(String signedPayload) throws Exception {
@@ -301,26 +305,34 @@ class PaymentWebhookControllerTest {
     }
 
     @Test
-    @DisplayName("App Store REFUND → revokeAppStoreByTransactionId 호출 + 200 ok")
+    @DisplayName("App Store REFUND → verifier 가 검증된 페이로드 반환 시 revokeAppStoreByTransactionId 호출 + 200")
     void appstore_refund_calls_revoke() throws Exception {
+        given(appStorePayloadVerifier.verifyAndDecodeNotification(anyString()))
+                .willReturn(buildDecodedPayload(NotificationTypeV2.REFUND.name(), "stub-signed-tx"));
+        given(appStorePayloadVerifier.verifyAndDecodeTransaction(eq("stub-signed-tx")))
+                .willReturn(buildDecodedTransaction("tx-refund-1"));
         given(paymentService.revokeAppStoreByTransactionId("tx-refund-1")).willReturn(true);
 
         mockMvc.perform(post("/api/webhook/app-store/notifications")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(appStoreBodyJson(appStoreSignedPayload("REFUND", "tx-refund-1"))))
+                        .content(appStoreBodyJson("dummy.jws.payload")))
                 .andExpect(status().isOk());
 
         verify(paymentService).revokeAppStoreByTransactionId("tx-refund-1");
     }
 
     @Test
-    @DisplayName("App Store REVOKE → revokeAppStoreByTransactionId 호출 + 200 ok")
+    @DisplayName("App Store REVOKE → verifier 가 검증된 페이로드 반환 시 revokeAppStoreByTransactionId 호출 + 200")
     void appstore_revoke_calls_revoke() throws Exception {
+        given(appStorePayloadVerifier.verifyAndDecodeNotification(anyString()))
+                .willReturn(buildDecodedPayload(NotificationTypeV2.REVOKE.name(), "stub-signed-tx"));
+        given(appStorePayloadVerifier.verifyAndDecodeTransaction(eq("stub-signed-tx")))
+                .willReturn(buildDecodedTransaction("tx-revoke-2"));
         given(paymentService.revokeAppStoreByTransactionId("tx-revoke-2")).willReturn(true);
 
         mockMvc.perform(post("/api/webhook/app-store/notifications")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(appStoreBodyJson(appStoreSignedPayload("REVOKE", "tx-revoke-2"))))
+                        .content(appStoreBodyJson("dummy.jws.payload")))
                 .andExpect(status().isOk());
 
         verify(paymentService).revokeAppStoreByTransactionId("tx-revoke-2");
@@ -329,9 +341,12 @@ class PaymentWebhookControllerTest {
     @Test
     @DisplayName("App Store DID_RENEW 무시 → revoke 0회")
     void appstore_did_renew_ignored() throws Exception {
+        given(appStorePayloadVerifier.verifyAndDecodeNotification(anyString()))
+                .willReturn(buildDecodedPayload(NotificationTypeV2.DID_RENEW.name(), "stub-signed-tx"));
+
         mockMvc.perform(post("/api/webhook/app-store/notifications")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(appStoreBodyJson(appStoreSignedPayload("DID_RENEW", "tx-1"))))
+                        .content(appStoreBodyJson("dummy.jws.payload")))
                 .andExpect(status().isOk());
 
         verify(paymentService, never()).revokeAppStoreByTransactionId(any());
@@ -340,9 +355,12 @@ class PaymentWebhookControllerTest {
     @Test
     @DisplayName("App Store SUBSCRIBED 무시 → revoke 0회")
     void appstore_subscribed_ignored() throws Exception {
+        given(appStorePayloadVerifier.verifyAndDecodeNotification(anyString()))
+                .willReturn(buildDecodedPayload(NotificationTypeV2.SUBSCRIBED.name(), "stub-signed-tx"));
+
         mockMvc.perform(post("/api/webhook/app-store/notifications")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(appStoreBodyJson(appStoreSignedPayload("SUBSCRIBED", "tx-1"))))
+                        .content(appStoreBodyJson("dummy.jws.payload")))
                 .andExpect(status().isOk());
 
         verify(paymentService, never()).revokeAppStoreByTransactionId(any());
@@ -351,9 +369,12 @@ class PaymentWebhookControllerTest {
     @Test
     @DisplayName("App Store EXPIRED 무시 (Non-Renewing 정책상 만료 자동 처리) → revoke 0회")
     void appstore_expired_ignored() throws Exception {
+        given(appStorePayloadVerifier.verifyAndDecodeNotification(anyString()))
+                .willReturn(buildDecodedPayload(NotificationTypeV2.EXPIRED.name(), "stub-signed-tx"));
+
         mockMvc.perform(post("/api/webhook/app-store/notifications")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(appStoreBodyJson(appStoreSignedPayload("EXPIRED", "tx-1"))))
+                        .content(appStoreBodyJson("dummy.jws.payload")))
                 .andExpect(status().isOk());
 
         verify(paymentService, never()).revokeAppStoreByTransactionId(any());
@@ -366,6 +387,20 @@ class PaymentWebhookControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"signedPayload\":\"\"}"))
                 .andExpect(status().isOk());
+
+        verify(paymentService, never()).revokeAppStoreByTransactionId(any());
+    }
+
+    @Test
+    @DisplayName("App Store JWS 검증 실패 시 401 + revoke 0회 (위조 webhook 차단)")
+    void appstore_verification_failure_returns_401() throws Exception {
+        given(appStorePayloadVerifier.verifyAndDecodeNotification(anyString()))
+                .willThrow(new AppStorePayloadVerificationException("invalid x5c chain"));
+
+        mockMvc.perform(post("/api/webhook/app-store/notifications")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(appStoreBodyJson("forged.jws.payload")))
+                .andExpect(status().isUnauthorized());
 
         verify(paymentService, never()).revokeAppStoreByTransactionId(any());
     }
