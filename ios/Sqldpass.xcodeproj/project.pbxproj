@@ -80,6 +80,8 @@
 		A1B2C3D4E5F60718293A4B5C /* PaymentProduct.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A2B3C4D5E6F708192A3B4C5 /* PaymentProduct.swift */; };
 		B2C3D4E5F60718293A4B5C6D /* StoreKitService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B3C4D5E6F708192A3B4C5D6 /* StoreKitService.swift */; };
 		C3D4E5F60718293A4B5C6D7E /* PaymentService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C4D5E6F708192A3B4C5D6E7 /* PaymentService.swift */; };
+		D4E5F60718293A4B5C6D7E8F /* PaywallViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D5E6F708192A3B4C5D6E7F8 /* PaywallViewModel.swift */; };
+		E5F60718293A4B5C6D7E8F90 /* PaywallView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E6F708192A3B4C5D6E7F809 /* PaywallView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -156,6 +158,8 @@
 		1A2B3C4D5E6F708192A3B4C5 /* PaymentProduct.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaymentProduct.swift; sourceTree = "<group>"; };
 		2B3C4D5E6F708192A3B4C5D6 /* StoreKitService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreKitService.swift; sourceTree = "<group>"; };
 		3C4D5E6F708192A3B4C5D6E7 /* PaymentService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaymentService.swift; sourceTree = "<group>"; };
+		4D5E6F708192A3B4C5D6E7F8 /* PaywallViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallViewModel.swift; sourceTree = "<group>"; };
+		5E6F708192A3B4C5D6E7F809 /* PaywallView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -260,6 +264,8 @@
 		446CB07F8A7FF2893B419C16 /* Paywall */ = {
 			isa = PBXGroup;
 			children = (
+				5E6F708192A3B4C5D6E7F809 /* PaywallView.swift */,
+				4D5E6F708192A3B4C5D6E7F8 /* PaywallViewModel.swift */,
 			);
 			path = Paywall;
 			sourceTree = "<group>";
@@ -555,6 +561,8 @@
 				543825661FFE6E9A64052225 /* OMRAnswerGrid.swift in Sources */,
 				A1B2C3D4E5F60718293A4B5C /* PaymentProduct.swift in Sources */,
 				C3D4E5F60718293A4B5C6D7E /* PaymentService.swift in Sources */,
+				E5F60718293A4B5C6D7E8F90 /* PaywallView.swift in Sources */,
+				D4E5F60718293A4B5C6D7E8F /* PaywallViewModel.swift in Sources */,
 				E748B6097E47AC676B7C11B8 /* ProfileView.swift in Sources */,
 				7C2437BB132E7CD20FEF946B /* ProfileViewModel.swift in Sources */,
 				66E45204EEC341E63C21D0B8 /* Question.swift in Sources */,

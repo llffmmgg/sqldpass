@@ -27,8 +27,11 @@ struct ProfileView: View {
                     }
                 }
                 Section("구독") {
-                    Label("프리미엄 보기", systemImage: "crown")
-                        .foregroundStyle(Color.appTextSubtle)
+                    NavigationLink {
+                        PaywallView()
+                    } label: {
+                        Label("프리미엄 보기", systemImage: "crown")
+                    }
                 }
                 Section("계정") {
                     NavigationLink {
