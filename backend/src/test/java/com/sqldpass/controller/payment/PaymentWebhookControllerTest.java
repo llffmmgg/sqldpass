@@ -77,6 +77,63 @@ class PaymentWebhookControllerTest {
         return mapper.writeValueAsString(envelope);
     }
 
+    /** subscriptionNotification 변형 — 일회성 결제 알림 대신 구독 알림 (notificationType 12 = REVOKED). */
+    private String subscriptionEnvelopeJson(int notificationType, String purchaseToken) throws Exception {
+        ObjectMapper mapper = new ObjectMapper();
+        ObjectNode sub = mapper.createObjectNode();
+        sub.put("version", "1.0");
+        sub.put("notificationType", notificationType);
+        sub.put("purchaseToken", purchaseToken);
+        sub.put("subscriptionId", "iap_one_month");
+        ObjectNode root = mapper.createObjectNode();
+        root.put("packageName", "com.sqldpass.app");
+        root.set("subscriptionNotification", sub);
+        String dataB64 = Base64.getEncoder().encodeToString(
+                mapper.writeValueAsString(root).getBytes(StandardCharsets.UTF_8));
+        ObjectNode message = mapper.createObjectNode();
+        message.put("data", dataB64);
+        message.put("messageId", "msg-sub");
+        message.put("publishTime", "2026-05-11T00:00:00Z");
+        ObjectNode envelope = mapper.createObjectNode();
+        envelope.set("message", message);
+        envelope.put("subscription", "projects/sqldpass/subscriptions/play-billing-rtdn");
+        return mapper.writeValueAsString(envelope);
+    }
+
+    /**
+     * ASSN v2 signedPayload 생성 — header.payload.signature 형식의 JWS.
+     * payload 안에 또 다시 signedTransactionInfo JWS 가 들어가는 구조.
+     */
+    private String appStoreSignedPayload(String notificationType, String transactionId) throws Exception {
+        ObjectMapper mapper = new ObjectMapper();
+        // signedTransactionInfo 내부 JWS payload
+        ObjectNode txPayload = mapper.createObjectNode();
+        txPayload.put("transactionId", transactionId);
+        txPayload.put("originalTransactionId", transactionId);
+        txPayload.put("productId", "iap_one_month");
+        txPayload.put("bundleId", "com.sqldpass.app");
+        String txJwsPart2 = Base64.getUrlEncoder().withoutPadding().encodeToString(
+                mapper.writeValueAsString(txPayload).getBytes(StandardCharsets.UTF_8));
+        String signedTransactionInfo = "hdr." + txJwsPart2 + ".sig";
+
+        // 바깥 ASSN v2 payload
+        ObjectNode data = mapper.createObjectNode();
+        data.put("signedTransactionInfo", signedTransactionInfo);
+        ObjectNode payload = mapper.createObjectNode();
+        payload.put("notificationType", notificationType);
+        payload.set("data", data);
+        String outerPart2 = Base64.getUrlEncoder().withoutPadding().encodeToString(
+                mapper.writeValueAsString(payload).getBytes(StandardCharsets.UTF_8));
+        return "hdr." + outerPart2 + ".sig";
+    }
+
+    private String appStoreBodyJson(String signedPayload) throws Exception {
+        ObjectMapper mapper = new ObjectMapper();
+        ObjectNode body = mapper.createObjectNode();
+        body.put("signedPayload", signedPayload);
+        return mapper.writeValueAsString(body);
+    }
+
     @BeforeEach
     void resetWebhookConfig() {
         ReflectionTestUtils.setField(controller, "rtdnSharedSecret", "");
@@ -206,6 +263,111 @@ class PaymentWebhookControllerTest {
                 .andExpect(status().isOk());
 
         verify(paymentService, never()).revokePlayBillingByToken(any());
+    }
+
+    @Test
+    @DisplayName("RTDN subscriptionNotification type=12 (REVOKED) → revokePlayBillingByToken 호출")
+    void rtdn_subscription_revoked_type_12_calls_revoke() throws Exception {
+        given(paymentService.revokePlayBillingByToken("sub-tok-12")).willReturn(true);
+
+        mockMvc.perform(post("/api/webhook/play-billing/rtdn")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(subscriptionEnvelopeJson(12, "sub-tok-12")))
+                .andExpect(status().isOk());
+
+        verify(paymentService).revokePlayBillingByToken("sub-tok-12");
+    }
+
+    @Test
+    @DisplayName("RTDN subscriptionNotification type=2 (RENEWED) Non-Renewing 모델 무시 → revoke 0회")
+    void rtdn_subscription_renewed_type_2_ignored() throws Exception {
+        mockMvc.perform(post("/api/webhook/play-billing/rtdn")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(subscriptionEnvelopeJson(2, "sub-tok-2")))
+                .andExpect(status().isOk());
+
+        verify(paymentService, never()).revokePlayBillingByToken(any());
+    }
+
+    @Test
+    @DisplayName("RTDN subscriptionNotification type=3 (CANCELED) 무시 → revoke 0회")
+    void rtdn_subscription_canceled_type_3_ignored() throws Exception {
+        mockMvc.perform(post("/api/webhook/play-billing/rtdn")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(subscriptionEnvelopeJson(3, "sub-tok-3")))
+                .andExpect(status().isOk());
+
+        verify(paymentService, never()).revokePlayBillingByToken(any());
+    }
+
+    @Test
+    @DisplayName("App Store REFUND → revokeAppStoreByTransactionId 호출 + 200 ok")
+    void appstore_refund_calls_revoke() throws Exception {
+        given(paymentService.revokeAppStoreByTransactionId("tx-refund-1")).willReturn(true);
+
+        mockMvc.perform(post("/api/webhook/app-store/notifications")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(appStoreBodyJson(appStoreSignedPayload("REFUND", "tx-refund-1"))))
+                .andExpect(status().isOk());
+
+        verify(paymentService).revokeAppStoreByTransactionId("tx-refund-1");
+    }
+
+    @Test
+    @DisplayName("App Store REVOKE → revokeAppStoreByTransactionId 호출 + 200 ok")
+    void appstore_revoke_calls_revoke() throws Exception {
+        given(paymentService.revokeAppStoreByTransactionId("tx-revoke-2")).willReturn(true);
+
+        mockMvc.perform(post("/api/webhook/app-store/notifications")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(appStoreBodyJson(appStoreSignedPayload("REVOKE", "tx-revoke-2"))))
+                .andExpect(status().isOk());
+
+        verify(paymentService).revokeAppStoreByTransactionId("tx-revoke-2");
+    }
+
+    @Test
+    @DisplayName("App Store DID_RENEW 무시 → revoke 0회")
+    void appstore_did_renew_ignored() throws Exception {
+        mockMvc.perform(post("/api/webhook/app-store/notifications")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(appStoreBodyJson(appStoreSignedPayload("DID_RENEW", "tx-1"))))
+                .andExpect(status().isOk());
+
+        verify(paymentService, never()).revokeAppStoreByTransactionId(any());
+    }
+
+    @Test
+    @DisplayName("App Store SUBSCRIBED 무시 → revoke 0회")
+    void appstore_subscribed_ignored() throws Exception {
+        mockMvc.perform(post("/api/webhook/app-store/notifications")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(appStoreBodyJson(appStoreSignedPayload("SUBSCRIBED", "tx-1"))))
+                .andExpect(status().isOk());
+
+        verify(paymentService, never()).revokeAppStoreByTransactionId(any());
+    }
+
+    @Test
+    @DisplayName("App Store EXPIRED 무시 (Non-Renewing 정책상 만료 자동 처리) → revoke 0회")
+    void appstore_expired_ignored() throws Exception {
+        mockMvc.perform(post("/api/webhook/app-store/notifications")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(appStoreBodyJson(appStoreSignedPayload("EXPIRED", "tx-1"))))
+                .andExpect(status().isOk());
+
+        verify(paymentService, never()).revokeAppStoreByTransactionId(any());
+    }
+
+    @Test
+    @DisplayName("App Store signedPayload 빈 문자열 → ignored + revoke 0회")
+    void appstore_empty_payload_ignored() throws Exception {
+        mockMvc.perform(post("/api/webhook/app-store/notifications")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"signedPayload\":\"\"}"))
+                .andExpect(status().isOk());
+
+        verify(paymentService, never()).revokeAppStoreByTransactionId(any());
     }
 
     @Test

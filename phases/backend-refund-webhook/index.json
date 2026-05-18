@@ -1,0 +1,11 @@
+{
+  "name": "backend-refund-webhook",
+  "description": "Play Billing RTDN refund + App Store ASSN v2 REFUND 핸들러 실 구현. Non-Renewing 모델 전제 — 갱신/취소 분기 제외, 환불만 처리.",
+  "status": "pending",
+  "steps": [
+    {
+      "id": "step1",
+      "description": "Play Billing RTDN refund + ASSN v2 REFUND/REVOKE 처리 + SubscriptionService.archive 호출 + 단위 테스트"
+    }
+  ]
+}

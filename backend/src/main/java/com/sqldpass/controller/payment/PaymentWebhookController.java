@@ -70,19 +70,33 @@ public class PaymentWebhookController {
                     Base64.getDecoder().decode(envelope.message().data()),
                     StandardCharsets.UTF_8);
             JsonNode root = objectMapper.readTree(decoded);
+
+            // oneTimeProductNotification.notificationType
+            // 1 = PURCHASED (정보성, verify 단계에서 이미 처리), 2 = CANCELED (환불) → revoke.
             JsonNode oneTime = root.get("oneTimeProductNotification");
             if (oneTime != null && !oneTime.isNull()) {
-                int notificationType = oneTime.has("notificationType")
-                        ? oneTime.get("notificationType").asInt()
-                        : 0;
-                String purchaseToken = oneTime.has("purchaseToken")
-                        ? oneTime.get("purchaseToken").asText()
-                        : null;
-                // 1 = PURCHASED (정보성, 우리는 verify 단계에서 이미 처리), 2 = CANCELED (환불)
+                int notificationType = oneTime.path("notificationType").asInt(0);
+                String purchaseToken = oneTime.path("purchaseToken").asText(null);
                 if (notificationType == 2 && purchaseToken != null && !purchaseToken.isBlank()) {
                     boolean revoked = paymentService.revokePlayBillingByToken(purchaseToken);
-                    log.info("Play Billing RTDN refund 처리 token={} revoked={}",
+                    log.info("Play Billing RTDN one-time refund 처리 token={} revoked={}",
                             mask(purchaseToken), revoked);
+                }
+            }
+
+            // subscriptionNotification.notificationType — Non-Renewing 모델이라 갱신/취소/만료는
+            // 발생하지 않거나 무시 가능. 12 = SUBSCRIPTION_REVOKED (환불·차지백·정책 위반으로
+            // entitlement 회수) 만 처리.
+            JsonNode subNoti = root.get("subscriptionNotification");
+            if (subNoti != null && !subNoti.isNull()) {
+                int notificationType = subNoti.path("notificationType").asInt(0);
+                String purchaseToken = subNoti.path("purchaseToken").asText(null);
+                if (notificationType == 12 && purchaseToken != null && !purchaseToken.isBlank()) {
+                    boolean revoked = paymentService.revokePlayBillingByToken(purchaseToken);
+                    log.info("Play Billing RTDN subscription revoke 처리 token={} revoked={}",
+                            mask(purchaseToken), revoked);
+                } else {
+                    log.info("Play Billing RTDN subscriptionNotification 무시 type={}", notificationType);
                 }
             }
         } catch (Exception e) {
@@ -147,19 +161,24 @@ public class PaymentWebhookController {
 
             log.info("App Store notification: type={} subtype={}", notificationType, subtype);
 
-            // notificationType 분기 — 1차는 로그 + history 기록만, 실제 entitlement 동기화는 후속
+            // TODO: App Store JWS 서명 검증 (Apple Root CA 체인) — 별도 phase 에서 구현.
+            //   현재는 페이로드 신뢰만 — webhook URL 자체가 secret 으로 보호됨.
+
+            // Non-Renewing 모델: SUBSCRIBED / DID_RENEW / EXPIRED / DID_FAIL_TO_RENEW /
+            // GRACE_PERIOD_EXPIRED / OFFER_REDEEMED 는 우리 정책상 발생하지 않거나 무시 가능.
+            // 환불·가족공유 회수만 entitlement 회수.
             switch (notificationType) {
-                case "SUBSCRIBED", "DID_RENEW" -> {
-                    // TODO: SubscriptionService.activateFromAppStoreNotification(payload)
-                    log.info("App Store SUBSCRIBED/DID_RENEW — 후속 phase 에서 entitlement 갱신 구현");
+                case "REFUND", "REVOKE" -> {
+                    String transactionId = extractAppStoreTransactionId(payload);
+                    if (transactionId == null || transactionId.isBlank()) {
+                        log.warn("App Store {} — transactionId 추출 실패", notificationType);
+                    } else {
+                        boolean revoked = paymentService.revokeAppStoreByTransactionId(transactionId);
+                        log.info("App Store {} 처리 txId={} revoked={}",
+                                notificationType, mask(transactionId), revoked);
+                    }
                 }
-                case "EXPIRED", "DID_FAIL_TO_RENEW", "GRACE_PERIOD_EXPIRED", "REVOKE" -> {
-                    log.info("App Store {} — 후속 phase 에서 entitlement 만료 구현", notificationType);
-                }
-                case "REFUND" -> {
-                    log.info("App Store REFUND — 후속 phase 에서 환불 동기화 구현");
-                }
-                default -> log.info("App Store notification 미처리 type: {}", notificationType);
+                default -> log.info("App Store notification 무시 type={}", notificationType);
             }
 
             return Map.of("status", "ok", "type", notificationType);
@@ -167,6 +186,39 @@ public class PaymentWebhookController {
             log.warn("App Store notification 처리 실패", e);
             return Map.of("status", "error");
         }
+    }
+
+    /**
+     * ASSN v2 페이로드에서 transactionId 추출. payload 의 {@code data.signedTransactionInfo}
+     * 가 JWS 형식이므로 한 단계 더 base64URL 디코딩이 필요. 추출 실패 시 null.
+     *
+     * <p>대체 경로: data.signedTransactionInfo 가 없으면 payload.transactionId 또는
+     * data.originalTransactionId 사용 (테스트/구버전 호환).
+     */
+    private String extractAppStoreTransactionId(JsonNode payload) {
+        JsonNode data = payload.path("data");
+        String signedTransactionInfo = data.path("signedTransactionInfo").asText(null);
+        if (signedTransactionInfo != null && !signedTransactionInfo.isBlank()) {
+            try {
+                String[] parts = signedTransactionInfo.split("\\.");
+                if (parts.length == 3) {
+                    byte[] txPayloadBytes = Base64.getUrlDecoder().decode(parts[1]);
+                    JsonNode tx = objectMapper.readTree(txPayloadBytes);
+                    String txId = tx.path("transactionId").asText(null);
+                    if (txId != null && !txId.isBlank()) return txId;
+                    String origTxId = tx.path("originalTransactionId").asText(null);
+                    if (origTxId != null && !origTxId.isBlank()) return origTxId;
+                }
+            } catch (Exception e) {
+                log.warn("App Store signedTransactionInfo 파싱 실패", e);
+            }
+        }
+        // Fallback — 일부 페이로드/테스트 변형은 평문 transactionId/originalTransactionId 를 직접 들고 옴.
+        String direct = payload.path("transactionId").asText(null);
+        if (direct != null && !direct.isBlank()) return direct;
+        String dataDirect = data.path("originalTransactionId").asText(null);
+        if (dataDirect != null && !dataDirect.isBlank()) return dataDirect;
+        return null;
     }
 
     /** Google Pub/Sub push subscription 표준 envelope. */

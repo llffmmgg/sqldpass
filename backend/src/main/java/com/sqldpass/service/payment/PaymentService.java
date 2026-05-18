@@ -559,22 +559,51 @@ public class PaymentService {
      */
     @Transactional
     public boolean revokePlayBillingByToken(String purchaseToken) {
-        if (purchaseToken == null || purchaseToken.isBlank()) return false;
-        Optional<PaymentEntity> found = paymentRepository.findByPurchaseToken(purchaseToken);
-        if (found.isEmpty()) return false;
+        return revokeByProviderToken(PaymentProvider.PLAY_BILLING, purchaseToken, "play:rtdn-refund");
+    }
+
+    /**
+     * App Store Server Notifications V2 — REFUND/REVOKE 통지 처리.
+     * transactionId(purchase_token 컬럼 재활용) 로 결제 row 를 찾아 PaymentStatus=CANCELLED +
+     * Subscription.expiresAt=now. 매칭되는 결제가 없으면 무시 (다른 앱의 알림이거나 이미 처리됨).
+     */
+    @Transactional
+    public boolean revokeAppStoreByTransactionId(String transactionId) {
+        return revokeByProviderToken(PaymentProvider.APP_STORE, transactionId, "appstore:refund");
+    }
+
+    /**
+     * 공통 환불 회수 — purchaseToken 또는 App Store transactionId 로 결제 row + 구독 회수.
+     *
+     * <p>이미 CANCELLED 면 결제 markCancelled 는 idempotent skip. Subscription row 가 없거나
+     * 이미 expiresAt 이 과거여도 revoke(now) 자체는 안전(멱등). history 는 매 호출마다 1줄 기록 —
+     * Pub/Sub / ASSN 중복 전송 추적용.
+     */
+    private boolean revokeByProviderToken(PaymentProvider provider, String token, String reason) {
+        if (token == null || token.isBlank()) return false;
+        Optional<PaymentEntity> found = paymentRepository.findByPurchaseToken(token);
+        if (found.isEmpty()) {
+            log.warn("{} 환불 webhook — 결제 매칭 실패 token={}", provider, maskToken(token));
+            return false;
+        }
 
         PaymentEntity payment = found.get();
+        if (provider != null && payment.getProvider() != provider) {
+            log.warn("{} 환불 webhook — provider 불일치 token={} expected={} actual={}",
+                    provider, maskToken(token), provider, payment.getProvider());
+            return false;
+        }
         if (payment.getStatus() != PaymentStatus.CANCELLED) {
-            payment.markCancelled("play:rtdn-refund");
+            payment.markCancelled(reason);
         }
         Optional<SubscriptionEntity> sub = subscriptionRepository.findByPaymentId(payment.getId());
         if (sub.isEmpty()) return false;
         sub.get().revoke(LocalDateTime.now());
         historyService.record(payment.getMemberId(), payment.getPlan(),
-                SubscriptionHistoryAction.REFUNDED, "play:rtdn-refund",
+                SubscriptionHistoryAction.REFUNDED, reason,
                 /* actorAdminId */ null, payment.getId());
-        log.info("Play Billing revoke memberId={} paymentId={} plan={}",
-                payment.getMemberId(), payment.getPaymentId(), payment.getPlan());
+        log.info("{} revoke memberId={} paymentId={} plan={}",
+                provider, payment.getMemberId(), payment.getPaymentId(), payment.getPlan());
         return true;
     }
 

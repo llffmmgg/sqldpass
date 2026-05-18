@@ -915,6 +915,53 @@ class PaymentServiceTest {
         assertThat(service.revokePlayBillingByToken("tok-missing")).isFalse();
     }
 
+    @Test
+    @DisplayName("revokeAppStoreByTransactionId: 결제 + 구독 모두 찾아 expiresAt=now 강제 만료 + history REFUNDED")
+    void revokeAppStoreByTransactionIdExpiresSubscription() {
+        PaymentEntity payment = new PaymentEntity(
+                "appstore-x", 2L, null, "문어CBT 한달 이용권",
+                SubscriptionPlan.ONE_MONTH, 9900, 9900, 0,
+                com.sqldpass.persistent.payment.PaymentProvider.APP_STORE, "tx-asn-1");
+        payment.markPaid("appstore:txId=tx-asn-1", LocalDateTime.now().minusDays(2));
+        setField(payment, "id", 88L);
+        given(paymentRepository.findByPurchaseToken("tx-asn-1")).willReturn(Optional.of(payment));
+
+        SubscriptionEntity sub = new SubscriptionEntity(
+                2L, SubscriptionPlan.ONE_MONTH, 88L,
+                LocalDateTime.now().minusDays(2), LocalDateTime.now().plusDays(28));
+        given(subscriptionRepository.findByPaymentId(88L)).willReturn(Optional.of(sub));
+
+        boolean revoked = service.revokeAppStoreByTransactionId("tx-asn-1");
+
+        assertThat(revoked).isTrue();
+        assertThat(sub.getExpiresAt()).isBeforeOrEqualTo(LocalDateTime.now().plusSeconds(1));
+        verify(historyService, times(1)).record(eq(2L), eq(SubscriptionPlan.ONE_MONTH),
+                eq(com.sqldpass.persistent.payment.SubscriptionHistoryAction.REFUNDED),
+                anyString(), eq(null), eq(88L));
+    }
+
+    @Test
+    @DisplayName("revokeAppStoreByTransactionId: 매칭되는 결제 없으면 false 반환")
+    void revokeAppStoreByTransactionIdNoOpWhenMissing() {
+        given(paymentRepository.findByPurchaseToken("tx-missing")).willReturn(Optional.empty());
+        assertThat(service.revokeAppStoreByTransactionId("tx-missing")).isFalse();
+    }
+
+    @Test
+    @DisplayName("revokeAppStoreByTransactionId: provider 가 APP_STORE 가 아닌 결제는 거부 → false")
+    void revokeAppStoreByTransactionIdRejectsWrongProvider() {
+        // Play Billing 결제 row 가 같은 토큰값을 우연히 가지는 경우 (실서비스 거의 없음) — provider 가드.
+        PaymentEntity payment = new PaymentEntity(
+                "play-x", 3L, null, "문어CBT 3일 이용권",
+                SubscriptionPlan.THREE_DAY, 3900, 3900, 0,
+                com.sqldpass.persistent.payment.PaymentProvider.PLAY_BILLING, "tx-wrong");
+        setField(payment, "id", 99L);
+        given(paymentRepository.findByPurchaseToken("tx-wrong")).willReturn(Optional.of(payment));
+
+        assertThat(service.revokeAppStoreByTransactionId("tx-wrong")).isFalse();
+        verify(historyService, never()).record(any(), any(), any(), any(), any(), any());
+    }
+
     // ============================================================
     // verify idempotency 보강 (Step 3) — 호출 횟수/expiresAt 정확성/UNIQUE 방어선
     // ============================================================
