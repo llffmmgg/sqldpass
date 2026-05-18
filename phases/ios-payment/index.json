@@ -1,0 +1,46 @@
+{
+  "project": "sqldpass",
+  "phase": "ios-payment",
+  "description": "iOS Phase 4 결제 — StoreKit 2 인앱 결제 통합 (코드 + 시뮬레이터 IAP 테스트). APIEnvironment Debug/Release 모두 운영 sqldpass.com 일원화. 백엔드 AppStoreClient(JWS 검증) + /api/payment/apple/verify + Server Notifications V2 웹훅 + PaymentProvider.APP_STORE enum 추가. iOS Models/Services/Paywall View 신규 + Profile 메뉴 연결. .storekit Configuration 파일로 Xcode StoreKit Testing 가짜 구매. App Store Connect 실 등록은 출시 단계로 미룸.",
+  "steps": [
+    {
+      "step": 1,
+      "name": "ios-api-environment-prod",
+      "description": "ios/Sqldpass/Core/Networking/APIEnvironment.swift 의 Debug 분기를 운영 URL로 변경. Debug/Release 모두 https://sqldpass.com 기본값. SQLDPASS_BACKEND_URL env override 유지(필요 시 로컬 dev 서버 가리키게). 시뮬레이터에서 실 운영 API 호출 가능. 빌드 검증.",
+      "status": "completed",
+      "started_at": "2026-05-18T14:15:49+0900",
+      "summary": "APIEnvironment.swift Debug/Release 분기 제거, 기본값을 https://sqldpass.com 으로 일원화하고 SQLDPASS_BACKEND_URL env override 유지. Debug 빌드 SUCCEEDED."
+    },
+    {
+      "step": 2,
+      "name": "backend-app-store-verify",
+      "description": "backend: PaymentProvider enum에 APP_STORE 추가 (V90__add_payment_provider_app_store.sql). service/payment/AppStoreClient.java 신규 — Apple JWS signedTransaction JWS 서명 검증 (JJWT + Apple root CA) + iss/aud/exp/bundleId 검증 + transactionId 추출. controller/payment/PaymentController.java에 POST /api/payment/apple/verify 추가. SubscriptionService에 APP_STORE provider 분기 + 통합 entitlement (이미 활성이면 신규 결제 차단).",
+      "status": "pending"
+    },
+    {
+      "step": 3,
+      "name": "backend-app-store-notifications",
+      "description": "backend: controller/payment/PaymentWebhookController.java에 POST /api/webhook/app-store/notifications 추가. App Store Server Notifications V2 signedPayload JWS 검증 → notificationType (SUBSCRIBED/DID_RENEW/EXPIRED/REFUND/REVOKE) 라우팅 → SubscriptionHistoryService 재사용. application.yaml에 sqldpass.payment.app-store.bundle-id 등 키 추가.",
+      "status": "pending"
+    },
+    {
+      "step": 4,
+      "name": "ios-storekit-service-and-payment-service",
+      "description": "iOS: Models/PaymentProduct.swift 신규 (Product 메타). Services/StoreKitService.swift 신규 — Product.products(for:), Transaction.updates 스트림, purchase, restore. Services/PaymentService.swift 신규 — GET /api/payment/subscription, POST /api/payment/apple/verify. 빌드 검증.",
+      "status": "pending"
+    },
+    {
+      "step": 5,
+      "name": "ios-paywall-view-and-routing",
+      "description": "iOS: Features/Paywall/PaywallView.swift + PaywallViewModel.swift 신규 — 동적 가격, 자동갱신 약관/EULA/개인정보 링크, 구매/복원 버튼, 통합 entitlement 체크(이미 활성 구독이면 안내 메시지). Features/Profile/ProfileView.swift '프리미엄 보기' placeholder → PaywallView NavigationLink로 교체. 빌드 검증.",
+      "status": "pending"
+    },
+    {
+      "step": 6,
+      "name": "storekit-configuration-and-final-build",
+      "description": "ios/Sqldpass/Sqldpass.storekit Configuration 파일 신규 — 4개 구독 상품(Thunder/Focus/Pro/All Pass) 또는 단일 premium_monthly/yearly 정의. Xcode scheme에 StoreKit Configuration 연결. 빌드 + 시뮬레이터 install/launch + 스크린샷.",
+      "status": "pending"
+    }
+  ],
+  "created_at": "2026-05-18T14:00:00+0900"
+}
