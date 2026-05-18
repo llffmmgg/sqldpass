@@ -95,6 +95,26 @@ class MainActivity : ComponentActivity() {
                 viewModel.setMessage("세션이 만료되어 로그아웃되었습니다. 다시 로그인해 주세요.")
             }
         }
+        // Play Billing 결과 메시지 + 구독 상태 동기화.
+        lifecycleScope.launch {
+            app.billingManager.events.collect { event ->
+                when (event) {
+                    is com.sqldpass.app.billing.BillingEvent.Processing ->
+                        viewModel.setMessage("결제 정보를 확인하는 중이에요…")
+                    is com.sqldpass.app.billing.BillingEvent.Pending ->
+                        viewModel.setMessage("결제가 대기 중이에요. 승인이 완료되면 자동으로 활성화돼요.")
+                    is com.sqldpass.app.billing.BillingEvent.Canceled ->
+                        viewModel.setMessage("결제가 취소되었어요.")
+                    is com.sqldpass.app.billing.BillingEvent.Failed ->
+                        viewModel.setMessage(event.message)
+                    is com.sqldpass.app.billing.BillingEvent.Success -> {
+                        viewModel.setMessage(event.warning ?: "구매가 완료됐어요. PASS+ 혜택이 활성화됐어요.")
+                        // 백엔드가 entitlement 를 갱신했으므로 즉시 구독 상태 재조회.
+                        viewModel.loadSubscription()
+                    }
+                }
+            }
+        }
         setContent {
             val themeMode by app.settingsStore.themeMode.collectAsState()
             val systemDark = androidx.compose.foundation.isSystemInDarkTheme()
