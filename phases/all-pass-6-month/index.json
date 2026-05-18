@@ -26,8 +26,16 @@
       "status": "completed",
       "summary": "CheckoutLanding tagline/pitch/feature 갱신(엑세스→액세스 오타 정정 포함), plan-tokens.ts UNLIMITED.short '6개월', cd.yml PAYMENT_UNLIMITED_NAME 기본값 정합, npm run lint+build 통과",
       "completed_at": "2026-05-18T11:08:00+0900"
+    },
+    {
+      "step": 4,
+      "name": "policy-notice-modal",
+      "description": "/checkout(= /plan redirect) 진입 시 PG사 제약·6개월 전환·기존 구매자 평생 유지 안내 모달 노출. sessionStorage 로 세션당 1회. AllPassPolicyNotice.tsx 신규 + CheckoutClient 통합. React 19 set-state-in-effect 룰 우회 위해 useSyncExternalStore 패턴 사용. Supabase 톤(blur 금지).",
+      "status": "completed",
+      "summary": "AllPassPolicyNotice 모달 신규(useSyncExternalStore 로 sessionStorage 구독, SSR snapshot=dismissed 로 hydration 안전) + CheckoutContent 최상단 마운트, ESC/오버레이/버튼 dismiss, lint+build 통과",
+      "completed_at": "2026-05-18T11:20:00+0900"
     }
   ],
   "created_at": "2026-05-18T00:00:00+0900",
-  "completed_at": "2026-05-18T11:08:00+0900"
+  "completed_at": "2026-05-18T11:20:00+0900"
 }

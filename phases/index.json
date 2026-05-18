@@ -229,7 +229,7 @@
       "description": "All Pass(UNLIMITED) 플랜을 평생 → 6개월(180일) 로 변경. enum days 만 null→180 으로 바꾸고 사용자 노출 카피의 '평생' 문구만 '6개월' 로 정리. enum/SKU 식별자와 가격(29,900원)은 유지. 기존 UNLIMITED 구독자(subscription.expires_at=NULL) 는 그대로 평생 활성. DB 마이그레이션·Play Console 변경 없음.",
       "status": "completed",
       "created_at": "2026-05-18T00:00:00+0900",
-      "completed_at": "2026-05-18T11:08:00+0900"
+      "completed_at": "2026-05-18T11:20:00+0900"
     }
   ]
 }
