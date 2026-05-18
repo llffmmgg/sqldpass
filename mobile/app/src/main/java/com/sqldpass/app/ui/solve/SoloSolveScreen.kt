@@ -6,39 +6,43 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.navigationBarsPadding
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Bookmark
+import androidx.compose.material.icons.outlined.BookmarkBorder
+import androidx.compose.material.icons.outlined.Close
+import androidx.compose.material.icons.outlined.MoreVert
+import androidx.compose.material.icons.outlined.Report
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
@@ -49,13 +53,28 @@ import com.sqldpass.app.text.parseQuestion
 import com.sqldpass.app.ui.AppUiState
 import com.sqldpass.app.ui.SoloSession
 import com.sqldpass.app.ui.SOLO_SET_SIZE
+import com.sqldpass.app.ui.common.AppBottomActionBar
+import com.sqldpass.app.ui.common.AppButton
+import com.sqldpass.app.ui.common.AppButtonSize
+import com.sqldpass.app.ui.common.AppButtonVariant
+import com.sqldpass.app.ui.common.AppCard
+import com.sqldpass.app.ui.common.AppCardSurface
+import com.sqldpass.app.ui.common.AppMascot
+import com.sqldpass.app.ui.common.AppMascotPose
+import com.sqldpass.app.ui.common.AppNumberCell
+import com.sqldpass.app.ui.common.AppNumberCellSize
+import com.sqldpass.app.ui.common.AppOptionRow
+import com.sqldpass.app.ui.common.AppProgressPill
+import com.sqldpass.app.ui.common.AppSectionHeader
+import com.sqldpass.app.ui.common.AppStateView
+import com.sqldpass.app.ui.common.AppTextField
+import com.sqldpass.app.ui.common.AppViewState
+import com.sqldpass.app.ui.common.BottomAction
 import com.sqldpass.app.ui.common.SoloMarkdownContent
+import com.sqldpass.app.ui.common.appOptionStateOf
 import com.sqldpass.app.ui.solve.components.OfflineQueueChip
-import com.sqldpass.app.ui.solve.components.SolveOptionRow
-import com.sqldpass.app.ui.solve.components.SoloBottomActionBar
 import com.sqldpass.app.ui.solve.components.SoloExplanationCard
-import com.sqldpass.app.ui.solve.components.SoloProgressHeader
-import com.sqldpass.app.ui.theme.LocalSqldpassSemanticColors
+import com.sqldpass.app.ui.theme.LocalSqldpassPalette
 import com.sqldpass.app.ui.theme.SqldRadius
 import com.sqldpass.app.ui.theme.SqldSpacing
 
@@ -64,6 +83,10 @@ import com.sqldpass.app.ui.theme.SqldSpacing
  *
  * AppViewModel.startSoloSolve(...) 가 먼저 호출돼 state.soloSession 이 채워진 뒤 진입한다.
  * 본 화면은 콜백만 받고 상태는 모두 ViewModel.
+ *
+ * Inked OMR 마이그레이션: 모든 chrome 은 App* primitive (AppOptionRow / AppProgressPill /
+ * AppBottomActionBar / AppCard / AppButton / AppBadge / AppStateView / AppTextField) 로 구성.
+ * Material3 colorScheme 직접 참조 없음 — LocalSqldpassPalette.current 만 읽는다.
  */
 @Composable
 fun SoloSolveScreen(
@@ -80,9 +103,17 @@ fun SoloSolveScreen(
     onReport: (Long) -> Unit,
     bookmarkedIds: Set<Long> = emptySet(),
 ) {
+    val palette = LocalSqldpassPalette.current
     val session = state.soloSession
     if (session == null) {
-        SoloLoadingState()
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(palette.page),
+            contentAlignment = Alignment.Center,
+        ) {
+            AppStateView(state = AppViewState.Loading)
+        }
         return
     }
 
@@ -98,7 +129,14 @@ fun SoloSolveScreen(
 
     val current = session.current
     if (current == null) {
-        SoloLoadingState()
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(palette.page),
+            contentAlignment = Alignment.Center,
+        ) {
+            AppStateView(state = AppViewState.Loading)
+        }
         return
     }
 
@@ -120,9 +158,9 @@ fun SoloSolveScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background),
+            .background(palette.page),
     ) {
-        SoloProgressHeader(
+        SoloHeader(
             solvedCount = session.solvedCount,
             totalCount = SOLO_SET_SIZE,
             correctCount = session.correctCount,
@@ -146,7 +184,7 @@ fun SoloSolveScreen(
             Text(
                 session.subjectName,
                 style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.primary,
+                color = palette.accent,
                 fontWeight = FontWeight.SemiBold,
             )
 
@@ -160,12 +198,14 @@ fun SoloSolveScreen(
                 Column(verticalArrangement = Arrangement.spacedBy(SqldSpacing.sm)) {
                     (1..displayCount).forEach { num ->
                         val optionText = parsed.options.getOrNull(num - 1)
-                        SolveOptionRow(
+                        AppOptionRow(
                             optionNumber = num,
                             optionText = optionText,
-                            selected = session.selectedOption == num,
-                            revealed = session.revealed,
-                            isCorrectOption = correctOption == num,
+                            state = appOptionStateOf(
+                                selected = session.selectedOption == num,
+                                revealed = session.revealed,
+                                isCorrectOption = correctOption == num,
+                            ),
                             onClick = {
                                 if (!session.revealed) {
                                     haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
@@ -179,6 +219,7 @@ fun SoloSolveScreen(
                                     onSubmit()
                                 }
                             },
+                            modifier = Modifier.fillMaxWidth(),
                         )
                     }
                 }
@@ -207,12 +248,12 @@ fun SoloSolveScreen(
                 Text(
                     "풀이 기록 저장 실패 — $err",
                     style = MaterialTheme.typography.labelMedium,
-                    color = LocalSqldpassSemanticColors.current.state.warning,
+                    color = palette.warning,
                 )
             }
         }
 
-        SoloBottomActionBar(
+        SoloBottomBar(
             revealed = session.revealed,
             hasAnswer = session.hasAnswer,
             submitting = session.submitting,
@@ -228,16 +269,163 @@ fun SoloSolveScreen(
             title = { Text("풀이 종료") },
             text = { Text("지금까지의 진행은 저장되지 않습니다.") },
             confirmButton = {
-                TextButton(onClick = {
-                    showExitConfirm = false
-                    onExit()
-                }) {
-                    Text("종료", color = LocalSqldpassSemanticColors.current.state.danger)
-                }
+                AppButton(
+                    text = "종료하기",
+                    onClick = {
+                        showExitConfirm = false
+                        onExit()
+                    },
+                    variant = AppButtonVariant.Destructive,
+                    size = AppButtonSize.Compact,
+                )
             },
             dismissButton = {
-                TextButton(onClick = { showExitConfirm = false }) { Text("계속 풀기") }
+                AppButton(
+                    text = "계속 풀기",
+                    onClick = { showExitConfirm = false },
+                    variant = AppButtonVariant.Tertiary,
+                    size = AppButtonSize.Compact,
+                )
             },
+        )
+    }
+}
+
+/**
+ * 단일 채점 풀이 상단 헤더 — 종료 / 진행도 / 북마크 / 메뉴.
+ *
+ * 좌측 닫기 → 중앙 AppProgressPill → 우측 북마크 + 메뉴(신고).
+ * 1dp bottom hairline 만, 그림자 없음. statusBarsPadding 으로 시스템 인셋 회피.
+ */
+@Composable
+private fun SoloHeader(
+    solvedCount: Int,
+    totalCount: Int,
+    correctCount: Int,
+    isBookmarked: Boolean,
+    onClose: () -> Unit,
+    onToggleBookmark: () -> Unit,
+    onReport: () -> Unit,
+) {
+    val palette = LocalSqldpassPalette.current
+    val displayCurrent = (solvedCount + 1).coerceAtMost(totalCount)
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(palette.card),
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .statusBarsPadding()
+                .padding(horizontal = SqldSpacing.sm, vertical = SqldSpacing.xs),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(SqldSpacing.sm),
+        ) {
+            HeaderIconButton(
+                icon = Icons.Outlined.Close,
+                contentDescription = "풀이 종료",
+                tint = palette.textPrimary,
+                onClick = onClose,
+            )
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(2.dp),
+            ) {
+                AppProgressPill(
+                    current = displayCurrent,
+                    total = totalCount,
+                )
+                Text(
+                    "정답 $correctCount / $solvedCount",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = palette.textMuted,
+                )
+            }
+            HeaderIconButton(
+                icon = if (isBookmarked) Icons.Outlined.Bookmark else Icons.Outlined.BookmarkBorder,
+                contentDescription = if (isBookmarked) "북마크 해제" else "북마크",
+                tint = if (isBookmarked) palette.accent else palette.textMuted,
+                onClick = onToggleBookmark,
+            )
+            var menuOpen by remember { mutableStateOf(false) }
+            Box {
+                HeaderIconButton(
+                    icon = Icons.Outlined.MoreVert,
+                    contentDescription = "메뉴",
+                    tint = palette.textMuted,
+                    onClick = { menuOpen = true },
+                )
+                DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
+                    DropdownMenuItem(
+                        leadingIcon = { Icon(Icons.Outlined.Report, contentDescription = null) },
+                        text = { Text("이 문제 신고") },
+                        onClick = {
+                            menuOpen = false
+                            onReport()
+                        },
+                    )
+                }
+            }
+        }
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(1.dp)
+                .background(palette.border),
+        )
+    }
+}
+
+@Composable
+private fun HeaderIconButton(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    contentDescription: String,
+    tint: Color,
+    onClick: () -> Unit,
+) {
+    Box(
+        modifier = Modifier
+            .size(40.dp)
+            .clip(androidx.compose.foundation.shape.RoundedCornerShape(SqldRadius.full))
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(icon, contentDescription = contentDescription, tint = tint)
+    }
+}
+
+/**
+ * 단일 채점 풀이 하단 액션 바 — AppBottomActionBar 위에 미답/공개 상태 매핑.
+ */
+@Composable
+private fun SoloBottomBar(
+    revealed: Boolean,
+    hasAnswer: Boolean,
+    submitting: Boolean,
+    isLastBeforeComplete: Boolean,
+    onSubmit: () -> Unit,
+    onNext: () -> Unit,
+) {
+    if (!revealed) {
+        AppBottomActionBar(
+            primary = BottomAction(
+                label = if (submitting) "확인중…" else "정답 확인",
+                onClick = onSubmit,
+                enabled = hasAnswer && !submitting,
+                loading = submitting,
+                variant = AppButtonVariant.Primary,
+            ),
+        )
+    } else {
+        AppBottomActionBar(
+            primary = BottomAction(
+                label = if (isLastBeforeComplete) "결과 보기" else "다음 문제",
+                onClick = onNext,
+                enabled = !submitting,
+                variant = AppButtonVariant.Primary,
+            ),
         )
     }
 }
@@ -248,12 +436,9 @@ private fun QuestionContentCard(question: QuestionResponse) {
         if (isMcq(question.questionType)) parseQuestion(question.content).body
         else question.content
     }
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(SqldRadius.lg))
-            .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(SqldRadius.lg))
-            .padding(SqldSpacing.base),
+    AppCard(
+        surface = AppCardSurface.Card,
+        modifier = Modifier.fillMaxWidth(),
     ) {
         SoloMarkdownContent(text = body.ifBlank { question.content })
     }
@@ -266,39 +451,18 @@ private fun ShortAnswerInput(
     onChange: (String) -> Unit,
     onImeSubmit: () -> Unit,
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(SqldSpacing.xs)) {
-        Text(
-            "답안 입력",
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        OutlinedTextField(
-            value = value,
-            onValueChange = onChange,
-            enabled = !revealed,
-            modifier = Modifier.fillMaxWidth(),
-            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-            keyboardActions = KeyboardActions(onDone = { onImeSubmit() }),
-            singleLine = false,
-        )
-        Text(
-            "대소문자·앞뒤 공백은 자동으로 무시됩니다.",
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-    }
-}
-
-@Composable
-private fun SoloLoadingState() {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background),
-        contentAlignment = Alignment.Center,
-    ) {
-        CircularProgressIndicator()
-    }
+    AppTextField(
+        value = value,
+        onValueChange = onChange,
+        label = "답안 입력",
+        placeholder = "답안을 입력하세요",
+        helper = "대소문자·앞뒤 공백은 자동으로 무시됩니다.",
+        enabled = !revealed,
+        singleLine = false,
+        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+        keyboardActions = KeyboardActions(onDone = { onImeSubmit() }),
+        modifier = Modifier.fillMaxWidth(),
+    )
 }
 
 @Composable
@@ -308,13 +472,13 @@ private fun SessionCompleteCard(
     onNewRandom: () -> Unit,
     onExit: () -> Unit,
 ) {
+    val palette = LocalSqldpassPalette.current
     val total = session.solvedCount.coerceAtLeast(1)
     val rate = (session.correctCount * 100 / total)
-    val semantic = LocalSqldpassSemanticColors.current
     val rateColor = when {
-        rate >= 90 -> semantic.state.success
-        rate >= 70 -> semantic.state.warning
-        else -> semantic.state.danger
+        rate >= 90 -> palette.success
+        rate >= 70 -> palette.warning
+        else -> palette.danger
     }
     val message = when {
         rate >= 90 -> "완벽해요! 같은 과목을 더 풀어볼까요?"
@@ -325,68 +489,73 @@ private fun SessionCompleteCard(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
+            .background(palette.page)
             .statusBarsPadding()
             .padding(SqldSpacing.lg),
         verticalArrangement = Arrangement.spacedBy(SqldSpacing.base),
     ) {
-        Text(
-            "세션 완료",
-            style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.primary,
+        AppSectionHeader(
+            eyebrow = "세션 완료",
+            title = session.subjectName,
         )
-        Text(
-            session.subjectName,
-            style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.Bold,
-        )
-        Row(verticalAlignment = Alignment.Bottom) {
-            Text(
-                "${session.correctCount}",
-                style = MaterialTheme.typography.displayMedium,
-                color = rateColor,
-                fontWeight = FontWeight.Bold,
+
+        // KPI 그리드 — 맞힌 문제 / 정답률
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(SqldSpacing.md),
+        ) {
+            AppNumberCell(
+                value = "${session.correctCount}",
+                label = "맞힌 문제",
+                unit = "/$total",
+                size = AppNumberCellSize.Display,
+                accent = rateColor,
+                modifier = Modifier.weight(1f),
             )
-            Text(
-                "/$total",
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(start = SqldSpacing.xs, bottom = SqldSpacing.sm),
+            AppNumberCell(
+                value = "$rate%",
+                label = "정답률",
+                size = AppNumberCellSize.Display,
+                accent = rateColor,
+                modifier = Modifier.weight(1f),
             )
-            Text(
-                "  $rate%",
-                style = MaterialTheme.typography.titleLarge,
-                color = rateColor,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(bottom = SqldSpacing.xs),
-            )
+        }
+
+        // 마스코트 + 메시지
+        Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+            AppMascot(pose = AppMascotPose.Celebrate, sizeDp = 88)
         }
         Text(
             message,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            style = MaterialTheme.typography.bodyLarge,
+            color = palette.textMuted,
         )
 
         Box(modifier = Modifier.weight(1f))
 
-        Column(
-            modifier = Modifier.navigationBarsPadding(),
-            verticalArrangement = Arrangement.spacedBy(SqldSpacing.sm),
-        ) {
-            OutlinedButton(
-                onClick = onReplaySame,
-                shape = RoundedCornerShape(SqldRadius.sm),
-                modifier = Modifier.fillMaxWidth(),
-            ) { Text("같은 10문제 다시") }
-            Button(
+        // 액션 버튼 3종 — Primary / Secondary / Tertiary
+        Column(verticalArrangement = Arrangement.spacedBy(SqldSpacing.sm)) {
+            AppButton(
+                text = "새 10문제",
                 onClick = onNewRandom,
-                shape = RoundedCornerShape(SqldRadius.sm),
+                variant = AppButtonVariant.Primary,
+                size = AppButtonSize.Regular,
                 modifier = Modifier.fillMaxWidth(),
-            ) { Text("새 10문제") }
-            TextButton(
+            )
+            AppButton(
+                text = "같은 10문제 다시",
+                onClick = onReplaySame,
+                variant = AppButtonVariant.Secondary,
+                size = AppButtonSize.Regular,
+                modifier = Modifier.fillMaxWidth(),
+            )
+            AppButton(
+                text = "다른 과목 선택",
                 onClick = onExit,
+                variant = AppButtonVariant.Tertiary,
+                size = AppButtonSize.Regular,
                 modifier = Modifier.fillMaxWidth(),
-            ) { Text("다른 과목 선택") }
+            )
         }
     }
 }

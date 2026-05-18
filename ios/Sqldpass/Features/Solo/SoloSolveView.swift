@@ -3,7 +3,7 @@ import SwiftUI
 /// 단일 채점 풀이 화면 — 웹 frontend/src/app/solve/SolveClient.tsx phase="solve" 와 동치.
 ///
 /// `SoloSolveViewModel(subjectId:subjectName:)` 인스턴스를 받아 push.
-/// 시스템 NavigationBar 는 숨기고 자체 `SoloProgressHeader` 가 상단을 채운다.
+/// 시스템 NavigationBar 는 숨기고 자체 헤더(`AppProgressPill` 기반)가 상단을 채운다.
 struct SoloSolveView: View {
     @State var viewModel: SoloSolveViewModel
     @State private var showExitConfirm = false
@@ -63,15 +63,53 @@ struct SoloSolveView: View {
                       || current.questionType.uppercased().contains("TEXT"))
 
         VStack(spacing: 0) {
-            SoloProgressHeader(
-                solvedCount: viewModel.solvedCount,
-                totalCount: SoloSolveViewModel.setSize,
-                correctCount: viewModel.correctCount,
-                isBookmarked: bookmarkedIds.contains(current.id),
-                onClose: { showExitConfirm = true },
-                onToggleBookmark: { toggleBookmark(current.id) },
-                onReport: { report(questionId: current.id) }
-            )
+            // 헤더: 닫기 + 진행률 알약 + 북마크 + 신고
+            HStack(spacing: Spacing.sm) {
+                Button {
+                    showExitConfirm = true
+                } label: {
+                    Image(systemName: "xmark")
+                        .font(.title3)
+                        .foregroundStyle(Color.appTextPrimary)
+                        .frame(width: 40, height: 40)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("풀이 종료")
+
+                AppProgressPill(
+                    current: min(viewModel.solvedCount + 1, SoloSolveViewModel.setSize),
+                    total: SoloSolveViewModel.setSize,
+                    label: nil
+                )
+                .frame(maxWidth: .infinity)
+
+                Button {
+                    toggleBookmark(current.id)
+                } label: {
+                    Image(systemName: bookmarkedIds.contains(current.id) ? "bookmark.fill" : "bookmark")
+                        .foregroundStyle(bookmarkedIds.contains(current.id) ? Color.brandPrimary : Color.appTextMuted)
+                        .frame(width: 40, height: 40)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(bookmarkedIds.contains(current.id) ? "즐겨찾기 해제" : "즐겨찾기")
+
+                Button {
+                    report(questionId: current.id)
+                } label: {
+                    Image(systemName: "ellipsis")
+                        .rotationEffect(.degrees(90))
+                        .foregroundStyle(Color.appTextMuted)
+                        .frame(width: 40, height: 40)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("메뉴")
+            }
+            .padding(.horizontal, Spacing.base)
+            .padding(.vertical, Spacing.sm)
+            .background(Color.appSurface)
+            .overlay(alignment: .bottom) {
+                Rectangle().fill(Color.appBorder).frame(height: 1)
+            }
 
             ScrollView {
                 VStack(alignment: .leading, spacing: Spacing.base) {
@@ -93,12 +131,14 @@ struct SoloSolveView: View {
                             ForEach(1...displayCount, id: \.self) { num in
                                 let text = parsed.options.indices.contains(num - 1)
                                     ? parsed.options[num - 1] : nil
-                                SolveOptionRow(
+                                AppOptionRow(
                                     optionNumber: num,
                                     optionText: text,
-                                    selected: viewModel.selectedOption == num,
-                                    revealed: viewModel.revealed,
-                                    isCorrectOption: viewModel.detail?.correctOption == num,
+                                    state: AppOptionRow.appOptionStateOf(
+                                        selected: viewModel.selectedOption == num,
+                                        revealed: viewModel.revealed,
+                                        isCorrectOption: viewModel.detail?.correctOption == num
+                                    ),
                                     onTap: {
                                         Haptics.light()
                                         viewModel.selectOption(num)
@@ -139,14 +179,27 @@ struct SoloSolveView: View {
             .background(Color.appPage)
         }
         .safeAreaInset(edge: .bottom, spacing: 0) {
-            SoloBottomActionBar(
-                revealed: viewModel.revealed,
-                hasAnswer: viewModel.hasAnswer,
-                submitting: viewModel.submitting,
-                isLastBeforeComplete: viewModel.isLastBeforeComplete,
-                onSubmit: { Task { await viewModel.submit() } },
-                onNext: { Task { await viewModel.goNext() } }
-            )
+            if viewModel.revealed {
+                AppBottomActionBar(
+                    primary: BottomAction(
+                        title: viewModel.isLastBeforeComplete ? "결과 보기" : "다음 문제",
+                        action: { Task { await viewModel.goNext() } },
+                        isEnabled: true,
+                        isLoading: false,
+                        variant: .primary
+                    )
+                )
+            } else {
+                AppBottomActionBar(
+                    primary: BottomAction(
+                        title: "정답 확인",
+                        action: { Task { await viewModel.submit() } },
+                        isEnabled: viewModel.hasAnswer,
+                        isLoading: viewModel.submitting,
+                        variant: .primary
+                    )
+                )
+            }
         }
         .background(Color.appPage.ignoresSafeArea())
     }
@@ -183,17 +236,9 @@ struct SoloSolveView: View {
 private struct QuestionBodyCard: View {
     let content: String
     var body: some View {
-        VStack(alignment: .leading) {
+        AppCard(surface: .card) {
             QuestionContentView(text: content)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(Spacing.base)
-        .background(Color.appSurface)
-        .overlay(
-            RoundedRectangle(cornerRadius: Radius.lg)
-                .stroke(Color.appBorder, lineWidth: 1)
-        )
-        .clipShape(RoundedRectangle(cornerRadius: Radius.lg))
     }
 }
 
@@ -203,40 +248,24 @@ private struct ShortAnswerInput: View {
     let onImeSubmit: () -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: Spacing.xs) {
-            Text("답안 입력")
-                .font(AppType.caption.weight(.semibold))
-                .foregroundStyle(Color.appTextMuted)
-            TextField("답안을 입력하세요", text: $value, axis: .vertical)
-                .lineLimit(3...8)
-                .padding(Spacing.md)
-                .background(Color.appSurface)
-                .overlay(
-                    RoundedRectangle(cornerRadius: Radius.md)
-                        .stroke(Color.appBorder, lineWidth: 1)
-                )
-                .clipShape(RoundedRectangle(cornerRadius: Radius.md))
-                .disabled(disabled)
-                .submitLabel(.done)
-                .onSubmit { onImeSubmit() }
-            Text("대소문자·앞뒤 공백은 자동으로 무시됩니다.")
-                .font(AppType.caption)
-                .foregroundStyle(Color.appTextSubtle)
-        }
+        AppTextField(
+            text: $value,
+            label: "답안 입력",
+            placeholder: "답안을 입력하세요",
+            helper: "대소문자·앞뒤 공백은 자동으로 무시됩니다.",
+            isEnabled: !disabled,
+            isSecure: false,
+            keyboardType: .default,
+            leadingSystemImage: nil,
+            onSubmit: onImeSubmit
+        )
     }
 }
 
 private struct LoadingState: View {
     var body: some View {
-        VStack {
-            ProgressView()
-            Text("문제를 불러오는 중…")
-                .font(AppType.footnote)
-                .foregroundStyle(Color.appTextMuted)
-                .padding(.top, Spacing.sm)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color.appPage.ignoresSafeArea())
+        AppStateView(state: .loading)
+            .background(Color.appPage.ignoresSafeArea())
     }
 }
 
@@ -246,18 +275,15 @@ private struct FatalErrorState: View {
 
     var body: some View {
         VStack(spacing: Spacing.md) {
-            Image(systemName: "exclamationmark.triangle")
-                .font(.system(size: 36))
-                .foregroundStyle(Color.semanticWarning)
+            AppMascot(pose: .review, sizeDp: 96)
             Text("문제를 가져올 수 없습니다")
                 .font(AppType.bodyEmph)
+                .foregroundStyle(Color.appTextPrimary)
             Text(message)
                 .font(AppType.footnote)
                 .foregroundStyle(Color.appTextMuted)
                 .multilineTextAlignment(.center)
-            Button("닫기", action: onDismiss)
-                .buttonStyle(.borderedProminent)
-                .tint(Color.brandPrimary)
+            AppButton(title: "닫기", variant: .secondary, action: onDismiss)
         }
         .padding(Spacing.lg)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -273,10 +299,8 @@ private struct SessionCompleteCard: View {
     let onNewRandom: () -> Void
     let onExit: () -> Void
 
-    private var rate: Int {
-        let total = max(solvedCount, 1)
-        return correctCount * 100 / total
-    }
+    private var total: Int { max(solvedCount, 1) }
+    private var rate: Int { correctCount * 100 / total }
     private var rateColor: Color {
         switch rate {
         case 90...: return .semanticSuccess
@@ -293,57 +317,36 @@ private struct SessionCompleteCard: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: Spacing.base) {
-            Text("세션 완료")
-                .font(AppType.bodyEmph)
-                .foregroundStyle(Color.brandPrimary)
-            Text(subjectName)
-                .font(AppType.title)
-                .foregroundStyle(Color.appTextPrimary)
+        VStack(spacing: Spacing.lg) {
+            AppSectionHeader(title: subjectName, eyebrow: "세션 완료")
 
-            HStack(alignment: .lastTextBaseline, spacing: Spacing.xs) {
-                Text("\(correctCount)")
-                    .font(AppType.display.monospacedDigit())
-                    .foregroundStyle(rateColor)
-                Text("/ \(max(solvedCount, 1))")
-                    .font(AppType.heading.monospacedDigit())
-                    .foregroundStyle(Color.appTextMuted)
-                Text("\(rate)%")
-                    .font(AppType.heading.monospacedDigit())
-                    .foregroundStyle(rateColor)
-                    .padding(.leading, Spacing.sm)
+            HStack(spacing: Spacing.md) {
+                AppNumberCell(value: "\(correctCount)",
+                              label: "맞힌 문제",
+                              unit: "/\(total)",
+                              accent: rateColor,
+                              size: .display)
+                    .frame(maxWidth: .infinity)
+                AppNumberCell(value: "\(rate)%",
+                              label: "정답률",
+                              accent: rateColor,
+                              size: .display)
+                    .frame(maxWidth: .infinity)
             }
+
+            AppMascot(pose: .celebrate, sizeDp: 88)
 
             Text(message)
                 .font(AppType.body)
                 .foregroundStyle(Color.appTextMuted)
+                .multilineTextAlignment(.center)
 
             Spacer()
 
             VStack(spacing: Spacing.sm) {
-                Button(action: onReplaySame) {
-                    Text("같은 10문제 다시")
-                        .font(AppType.bodyEmph)
-                        .frame(maxWidth: .infinity, minHeight: 48)
-                }
-                .buttonStyle(.bordered)
-                .tint(Color.brandPrimary)
-
-                Button(action: onNewRandom) {
-                    Text("새 10문제")
-                        .font(AppType.bodyEmph)
-                        .frame(maxWidth: .infinity, minHeight: 48)
-                }
-                .buttonStyle(.borderedProminent)
-                .tint(Color.brandPrimary)
-
-                Button(action: onExit) {
-                    Text("다른 과목 선택")
-                        .font(AppType.body)
-                        .frame(maxWidth: .infinity, minHeight: 44)
-                }
-                .buttonStyle(.plain)
-                .foregroundStyle(Color.appTextMuted)
+                AppButton(title: "새 10문제", variant: .primary, action: onNewRandom)
+                AppButton(title: "같은 10문제 다시", variant: .secondary, action: onReplaySame)
+                AppButton(title: "다른 과목 선택", variant: .tertiary, action: onExit)
             }
         }
         .padding(Spacing.lg)

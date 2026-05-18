@@ -11,7 +11,7 @@ struct AppHeroHeader<Accessory: View>: View {
             HStack(alignment: .center) {
                 Text(eyebrow)
                     .font(AppType.heading.weight(.bold))
-                    .foregroundStyle(Color.brandPrimaryFG)
+                    .foregroundStyle(Color.brandPrimary)
                 Spacer()
                 accessory
             }
@@ -19,11 +19,11 @@ struct AppHeroHeader<Accessory: View>: View {
             VStack(alignment: .leading, spacing: Spacing.sm) {
                 Text(title)
                     .font(AppType.title.weight(.bold))
-                    .foregroundStyle(Color.brandPrimaryFG)
+                    .foregroundStyle(Color.appTextPrimary)
                     .fixedSize(horizontal: false, vertical: true)
                 Text(subtitle)
                     .font(AppType.callout)
-                    .foregroundStyle(Color.brandPrimaryFG.opacity(0.78))
+                    .foregroundStyle(Color.appTextMuted)
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
@@ -31,13 +31,12 @@ struct AppHeroHeader<Accessory: View>: View {
         .padding(.top, Spacing.xxl)
         .padding(.bottom, Spacing.xl)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-            LinearGradient(
-                colors: [Color.brandPrimaryHover, Color.brandPrimary],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-        )
+        .background(Color.appPage)
+        .overlay(alignment: .bottom) {
+            Rectangle()
+                .fill(Color.appBorder)
+                .frame(height: 1)
+        }
     }
 }
 
@@ -72,26 +71,6 @@ struct AppPanel<Content: View>: View {
                 .stroke(Color.appBorder, lineWidth: 1)
         )
         .clipShape(RoundedRectangle(cornerRadius: Radius.lg))
-    }
-}
-
-struct AppSectionHeader: View {
-    let title: String
-    var actionTitle: String?
-    var action: (() -> Void)?
-
-    var body: some View {
-        HStack(alignment: .firstTextBaseline) {
-            Text(title)
-                .font(AppType.bodyEmph)
-                .foregroundStyle(Color.appTextPrimary)
-            Spacer()
-            if let actionTitle, let action {
-                Button(actionTitle, action: action)
-                    .font(AppType.footnote)
-                    .foregroundStyle(Color.appTextMuted)
-            }
-        }
     }
 }
 

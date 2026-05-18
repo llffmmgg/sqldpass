@@ -1,5 +1,9 @@
 import SwiftUI
 
+/// 객관식 4지선다 OMR 입력 (Inked OMR 디자인 시스템).
+///
+/// 각 보기는 `AppOptionRow` primitive 가 담당. `QuestionContentView` 가 보기 본문을
+/// frozen 렌더로 그린다 — `.lineLimit` 절대 적용하지 않음.
 struct OMRAnswerGrid: View {
     let question: MockExamQuestionItem
     let selectedOption: Int?
@@ -7,52 +11,24 @@ struct OMRAnswerGrid: View {
 
     private let choices = [1, 2, 3, 4]
 
-    @State private var feedbackTrigger: Int = 0
-
     var body: some View {
+        let parsed = QuestionParser.parse(question.content)
+
         VStack(spacing: Spacing.sm) {
             ForEach(choices, id: \.self) { value in
-                Button {
-                    feedbackTrigger &+= 1
-                    onSelect(value)
-                } label: {
-                    HStack(spacing: Spacing.md) {
-                        ZStack {
-                            Circle()
-                                .stroke(
-                                    selectedOption == value ? Color.brandPrimary : Color.appBorder,
-                                    lineWidth: selectedOption == value ? 2 : 1
-                                )
-                                .frame(width: 32, height: 32)
-                            Text("\(value)")
-                                .font(AppType.bodyEmph)
-                                .foregroundStyle(
-                                    selectedOption == value ? Color.brandPrimary : Color.appTextPrimary
-                                )
-                        }
-                        Text("\(value)번")
-                            .font(AppType.body)
-                            .foregroundStyle(Color.appTextPrimary)
-                        Spacer()
+                let text = parsed.options.indices.contains(value - 1)
+                    ? parsed.options[value - 1]
+                    : nil
+                AppOptionRow(
+                    optionNumber: value,
+                    optionText: text,
+                    state: selectedOption == value ? .selected : .idle,
+                    onTap: {
+                        Haptics.light()
+                        onSelect(value)
                     }
-                    .padding(Spacing.md)
-                    .background(
-                        selectedOption == value ? Color.brandPrimary.opacity(0.1) : Color.appSurface
-                    )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: Radius.md)
-                            .stroke(
-                                selectedOption == value ? Color.brandPrimary : Color.appBorder,
-                                lineWidth: 1
-                            )
-                    )
-                    .clipShape(RoundedRectangle(cornerRadius: Radius.md))
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel("\(value)번 선택")
-                .accessibilityAddTraits(selectedOption == value ? .isSelected : [])
+                )
             }
         }
-        .sensoryFeedback(.selection, trigger: feedbackTrigger)
     }
 }

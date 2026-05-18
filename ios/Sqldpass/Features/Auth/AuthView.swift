@@ -19,11 +19,24 @@ struct AuthView: View {
         .safeAreaInset(edge: .bottom) {
             VStack(spacing: Spacing.md) {
                 if let errorMessage {
-                    Text(errorMessage)
-                        .font(AppType.footnote)
-                        .foregroundStyle(Color.semanticDanger)
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal, Spacing.md)
+                    HStack(alignment: .top, spacing: Spacing.sm) {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .foregroundStyle(Color.semanticDanger)
+                            .font(.footnote)
+                        Text(errorMessage)
+                            .font(AppType.footnote)
+                            .foregroundStyle(Color.semanticDanger)
+                            .multilineTextAlignment(.leading)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                    .padding(.horizontal, Spacing.md)
+                    .padding(.vertical, Spacing.sm)
+                    .background(Color.semanticDanger.opacity(0.10))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: Radius.md)
+                            .stroke(Color.semanticDanger.opacity(0.40), lineWidth: 1)
+                    )
+                    .clipShape(RoundedRectangle(cornerRadius: Radius.md))
                 }
 
                 SignInWithAppleButton(.signIn) { request in
@@ -37,26 +50,16 @@ struct AuthView: View {
                 .accessibilityLabel("Apple로 로그인")
                 .disabled(isExchanging)
 
-                Button {
-                    handleGoogleTap()
-                } label: {
-                    HStack(spacing: Spacing.sm) {
-                        Image(systemName: "g.circle.fill")
-                            .font(.title3)
-                        Text("Google로 로그인")
-                            .font(AppType.bodyEmph)
-                    }
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 50)
-                    .background(Color.appSurface)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: Radius.sm)
-                            .stroke(Color.appBorder, lineWidth: 1)
-                    )
-                    .clipShape(RoundedRectangle(cornerRadius: Radius.sm))
-                    .foregroundStyle(Color.appTextPrimary)
-                }
-                .disabled(isExchanging)
+                AppButton(
+                    title: "Google 로 로그인",
+                    variant: .secondary,
+                    size: .large,
+                    isEnabled: !isExchanging,
+                    isLoading: false,
+                    leadingSystemImage: "g.circle.fill",
+                    action: { handleGoogleTap() }
+                )
+                .accessibilityLabel("Google로 로그인")
 
                 Text("로그인하면 이용약관과 개인정보처리방침에 동의한 것으로 간주됩니다.")
                     .font(AppType.caption)
@@ -72,14 +75,7 @@ struct AuthView: View {
 
     private var logoSection: some View {
         VStack(spacing: Spacing.lg) {
-            ZStack {
-                Circle()
-                    .fill(Color.brandPrimary.opacity(0.12))
-                    .frame(width: 96, height: 96)
-                Image(systemName: "checkmark.seal.fill")
-                    .font(.system(size: 48))
-                    .foregroundStyle(Color.brandPrimary)
-            }
+            AppMascot(pose: .onboarding, sizeDp: 120)
             VStack(spacing: Spacing.xs) {
                 Text("문어CBT")
                     .font(AppType.display)

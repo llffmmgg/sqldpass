@@ -1,5 +1,9 @@
 import SwiftUI
 
+/// 모의고사 풀이 화면 (Inked OMR 디자인 시스템).
+///
+/// 자체 헤더(닫기 / 진행 알약 / 북마크 / 다시보기 플래그) + 본문 + 하단 액션바 로 구성.
+/// 시스템 NavigationBar 는 숨기고 자체 chrome 으로 대체한다.
 struct SolveView: View {
     @State var viewModel: SolveViewModel
     @State private var showExitConfirm = false
@@ -9,21 +13,7 @@ struct SolveView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            SolveHeader(
-                progress: viewModel.progress,
-                currentIndex: viewModel.currentIndex,
-                totalCount: viewModel.totalCount,
-                answeredCount: viewModel.answeredCount,
-                elapsedSeconds: viewModel.elapsedSeconds
-            )
-            .padding(.horizontal, Spacing.base)
-            .padding(.vertical, Spacing.sm)
-            .background(Color.appSurface)
-            .overlay(alignment: .bottom) {
-                Rectangle()
-                    .fill(Color.appBorder)
-                    .frame(height: 1)
-            }
+            topBar
 
             ScrollView {
                 VStack(alignment: .leading, spacing: Spacing.lg) {
@@ -36,20 +26,24 @@ struct SolveView: View {
                                 viewModel.clearAnswer()
                             } label: {
                                 Label("답안 지우기", systemImage: "arrow.uturn.backward")
-                                    .font(AppType.footnote)
+                                    .font(AppType.footnote.weight(.semibold))
+                                    .foregroundStyle(Color.appTextMuted)
                             }
-                            .buttonStyle(.borderless)
-                            .foregroundStyle(Color.appTextMuted)
+                            .buttonStyle(.plain)
                         }
                     } else {
                         Text("문제가 없습니다")
+                            .font(AppType.body)
                             .foregroundStyle(Color.appTextMuted)
                     }
                 }
                 .padding(Spacing.base)
             }
             .background(Color.appPage)
-
+        }
+        .navigationBarBackButtonHidden(true)
+        .toolbar(.hidden, for: .navigationBar)
+        .safeAreaInset(edge: .bottom, spacing: 0) {
             SolveActionBar(
                 canGoPrevious: viewModel.currentIndex > 0,
                 canGoNext: viewModel.currentIndex < viewModel.totalCount - 1,
@@ -66,32 +60,6 @@ struct SolveView: View {
                     }
                 }
             )
-        }
-        .navigationTitle("")
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .topBarLeading) {
-                Button("종료") { showExitConfirm = true }
-                    .foregroundStyle(Color.semanticDanger)
-            }
-            ToolbarItem(placement: .topBarTrailing) {
-                if let q = viewModel.currentQuestion {
-                    HStack(spacing: Spacing.sm) {
-                        BookmarkToggleButton(questionId: q.id)
-                        Button {
-                            viewModel.toggleMark()
-                        } label: {
-                            Image(systemName: viewModel.currentEntry?.markedForReview == true ? "flag.fill" : "flag")
-                                .foregroundStyle(
-                                    viewModel.currentEntry?.markedForReview == true
-                                    ? Color.semanticWarning
-                                    : Color.appTextSubtle
-                                )
-                        }
-                        .accessibilityLabel("다시 볼 문제로 표시")
-                    }
-                }
-            }
         }
         .confirmationDialog(
             "정말 종료할까요?",
@@ -124,32 +92,73 @@ struct SolveView: View {
         }
     }
 
+    // MARK: - Top bar
+
+    @ViewBuilder
+    private var topBar: some View {
+        HStack(spacing: Spacing.sm) {
+            Button {
+                showExitConfirm = true
+            } label: {
+                Image(systemName: "xmark")
+                    .font(.title3)
+                    .foregroundStyle(Color.appTextPrimary)
+                    .frame(width: 40, height: 40)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("풀이 종료")
+
+            SolveHeader(
+                progress: viewModel.progress,
+                currentIndex: viewModel.currentIndex,
+                totalCount: viewModel.totalCount,
+                answeredCount: viewModel.answeredCount,
+                elapsedSeconds: viewModel.elapsedSeconds
+            )
+            .frame(maxWidth: .infinity, alignment: .leading)
+
+            if let q = viewModel.currentQuestion {
+                BookmarkToggleButton(questionId: q.id)
+                Button {
+                    viewModel.toggleMark()
+                } label: {
+                    Image(systemName: viewModel.currentEntry?.markedForReview == true ? "flag.fill" : "flag")
+                        .font(AppType.body)
+                        .foregroundStyle(
+                            viewModel.currentEntry?.markedForReview == true
+                            ? Color.semanticWarning
+                            : Color.appTextMuted
+                        )
+                        .frame(width: 40, height: 40)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("다시 볼 문제로 표시")
+            }
+        }
+        .padding(.horizontal, Spacing.base)
+        .padding(.vertical, Spacing.sm)
+        .background(Color.appSurface)
+        .overlay(alignment: .bottom) {
+            Rectangle()
+                .fill(Color.appBorder)
+                .frame(height: 1)
+        }
+    }
+
+    // MARK: - Answer inputs
+
     @ViewBuilder
     private func answerInput(for question: MockExamQuestionItem) -> some View {
         if question.isTextAnswerType {
-            VStack(alignment: .leading, spacing: Spacing.sm) {
-                Text("답안 입력")
-                    .font(AppType.bodyEmph)
-                    .foregroundStyle(Color.appTextPrimary)
-                TextField(
-                    "답안을 입력하세요",
-                    text: Binding(
-                        get: { viewModel.currentEntry?.answerText ?? "" },
-                        set: { viewModel.updateAnswerText($0) }
-                    ),
-                    axis: .vertical
-                )
-                .textFieldStyle(.plain)
-                .lineLimit(3...8)
-                .padding(Spacing.md)
-                .background(Color.appSurface)
-                .overlay(
-                    RoundedRectangle(cornerRadius: Radius.md)
-                        .stroke(Color.appBorder, lineWidth: 1)
-                )
-                .clipShape(RoundedRectangle(cornerRadius: Radius.md))
-                .submitLabel(.done)
-            }
+            AppTextField(
+                text: Binding(
+                    get: { viewModel.currentEntry?.answerText ?? "" },
+                    set: { viewModel.updateAnswerText($0) }
+                ),
+                label: "답안 입력",
+                placeholder: "답안을 입력하세요",
+                helper: "대소문자·앞뒤 공백은 자동으로 무시됩니다."
+            )
         } else {
             OMRAnswerGrid(
                 question: question,

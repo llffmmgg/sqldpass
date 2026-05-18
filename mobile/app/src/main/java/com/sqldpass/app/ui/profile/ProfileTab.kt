@@ -3,7 +3,6 @@ package com.sqldpass.app.ui.profile
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -11,12 +10,10 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.Logout
+import androidx.compose.material.icons.outlined.AccountCircle
 import androidx.compose.material.icons.outlined.Bookmark
 import androidx.compose.material.icons.outlined.CloudDownload
 import androidx.compose.material.icons.outlined.Description
@@ -25,15 +22,8 @@ import androidx.compose.material.icons.outlined.Feedback
 import androidx.compose.material.icons.outlined.History
 import androidx.compose.material.icons.outlined.PrivacyTip
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.AssistChip
-import androidx.compose.material3.AssistChipDefaults
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -49,13 +39,22 @@ import com.sqldpass.app.data.SubscriptionResponse
 import com.sqldpass.app.data.ThemeMode
 import com.sqldpass.app.text.formatKstDate
 import com.sqldpass.app.ui.AppUiState
-import com.sqldpass.app.ui.common.CtaCard
-import com.sqldpass.app.ui.common.HeroHeader
-import com.sqldpass.app.ui.common.MenuListRow
+import com.sqldpass.app.ui.common.AppBadge
+import com.sqldpass.app.ui.common.AppBadgeTone
+import com.sqldpass.app.ui.common.AppBadgeVariant
+import com.sqldpass.app.ui.common.AppButton
+import com.sqldpass.app.ui.common.AppButtonSize
+import com.sqldpass.app.ui.common.AppButtonVariant
+import com.sqldpass.app.ui.common.AppCard
+import com.sqldpass.app.ui.common.AppCardAccent
+import com.sqldpass.app.ui.common.AppCardSurface
+import com.sqldpass.app.ui.common.AppChip
+import com.sqldpass.app.ui.common.AppHero
+import com.sqldpass.app.ui.common.AppListRow
+import com.sqldpass.app.ui.common.AppSectionHeader
+import com.sqldpass.app.ui.common.AppTextField
 import com.sqldpass.app.ui.dashboard.NicknameEditDialog
-
-private val CardCorner = 14.dp
-private val ButtonCorner = 12.dp
+import com.sqldpass.app.ui.theme.LocalSqldpassPalette
 
 @Composable
 fun ProfileTab(
@@ -114,7 +113,14 @@ fun ProfileTab(
     pendingNotice?.let { msg ->
         AlertDialog(
             onDismissRequest = { pendingNotice = null },
-            confirmButton = { TextButton(onClick = { pendingNotice = null }) { Text("확인") } },
+            // Material3 TextButton 누수 방지 — Tertiary AppButton 으로 치환.
+            confirmButton = {
+                AppButton(
+                    text = "확인",
+                    variant = AppButtonVariant.Tertiary,
+                    onClick = { pendingNotice = null },
+                )
+            },
             title = { Text("알림") },
             text = { Text(msg) },
         )
@@ -130,9 +136,10 @@ fun ProfileTab(
     }
 
     Column(modifier = Modifier.fillMaxSize()) {
-        HeroHeader(
+        AppHero(
             title = "마이",
-            subtitle = state.nickname?.let { "$it 님의 학습 공간" } ?: "Google 로 로그인하면 시작돼요.",
+            subtitle = state.nickname?.let { "$it 님의 학습 공간" }
+                ?: "Google 로 로그인하면 시작돼요.",
         )
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
@@ -166,54 +173,54 @@ fun ProfileTab(
                     )
                 }
 
-                item { SectionTitle("학습") }
+                item { AppSectionHeader(title = "학습") }
                 item {
-                    MenuListRow(
-                        icon = Icons.Outlined.History,
-                        label = "오답노트",
+                    AppListRow(
+                        title = "오답노트",
+                        leadingIcon = Icons.Outlined.History,
                         onClick = onOpenWrongAnswers,
                     )
                 }
                 item {
-                    MenuListRow(
-                        icon = Icons.Outlined.Bookmark,
-                        label = "북마크한 문제",
+                    AppListRow(
+                        title = "북마크한 문제",
+                        leadingIcon = Icons.Outlined.Bookmark,
                         onClick = { pendingNotice = "북마크 화면은 곧 출시됩니다." },
                     )
                 }
                 item {
-                    MenuListRow(
-                        icon = Icons.Outlined.History,
-                        label = "풀이 기록",
+                    AppListRow(
+                        title = "풀이 기록",
+                        leadingIcon = Icons.Outlined.History,
                         onClick = { pendingNotice = "풀이 기록 화면은 곧 출시됩니다." },
                     )
                 }
                 item {
-                    MenuListRow(
-                        icon = Icons.Outlined.CloudDownload,
-                        label = "오프라인 콘텐츠 다운로드",
+                    AppListRow(
+                        title = "오프라인 콘텐츠 다운로드",
+                        leadingIcon = Icons.Outlined.CloudDownload,
                         onClick = onSync,
                     )
                 }
 
-                item { SectionTitle("설정") }
+                item { AppSectionHeader(title = "설정") }
                 item {
                     ThemeToggleCard(themeMode = themeMode, onThemeChange = onThemeChange)
                 }
                 item {
-                    MenuListRow(
-                        icon = Icons.Outlined.Edit,
-                        label = "닉네임 편집",
+                    AppListRow(
+                        title = "닉네임 편집",
+                        leadingIcon = Icons.Outlined.Edit,
                         onClick = { nicknameDialogOpen = true },
                     )
                 }
             }
 
-            item { SectionTitle("지원") }
+            item { AppSectionHeader(title = "지원") }
             item {
-                MenuListRow(
-                    icon = Icons.Outlined.Feedback,
-                    label = "피드백 보내기",
+                AppListRow(
+                    title = "피드백 보내기",
+                    leadingIcon = Icons.Outlined.Feedback,
                     onClick = {
                         if (state.nickname == null) pendingNotice = "로그인 후 이용 가능합니다."
                         else feedbackDialogOpen = true
@@ -221,16 +228,16 @@ fun ProfileTab(
                 )
             }
             item {
-                MenuListRow(
-                    icon = Icons.Outlined.Description,
-                    label = "이용약관",
+                AppListRow(
+                    title = "이용약관",
+                    leadingIcon = Icons.Outlined.Description,
                     onClick = { openUrl("https://www.sqldpass.com/terms") },
                 )
             }
             item {
-                MenuListRow(
-                    icon = Icons.Outlined.PrivacyTip,
-                    label = "개인정보처리방침",
+                AppListRow(
+                    title = "개인정보처리방침",
+                    leadingIcon = Icons.Outlined.PrivacyTip,
                     onClick = { openUrl("https://www.sqldpass.com/privacy") },
                 )
             }
@@ -238,16 +245,18 @@ fun ProfileTab(
             if (state.nickname != null) {
                 item { Spacer(Modifier.height(4.dp)) }
                 item {
-                    MenuListRow(
-                        icon = Icons.AutoMirrored.Outlined.Logout,
-                        label = "로그아웃",
+                    AppListRow(
+                        title = "로그아웃",
+                        leadingIcon = Icons.AutoMirrored.Outlined.Logout,
+                        destructive = true,
                         onClick = onLogout,
                     )
                 }
                 item {
-                    MenuListRow(
-                        icon = Icons.AutoMirrored.Outlined.Logout,
-                        label = "계정 삭제",
+                    AppListRow(
+                        title = "계정 삭제",
+                        leadingIcon = Icons.AutoMirrored.Outlined.Logout,
+                        destructive = true,
                         onClick = {
                             pendingNotice = "고객센터(heehun3658@gmail.com) 로 문의해주세요."
                         },
@@ -265,51 +274,52 @@ private fun ProfileHeaderCard(
     onLogin: () -> Unit,
     onEditNickname: () -> Unit,
 ) {
-    Card(
-        shape = RoundedCornerShape(CardCorner),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface,
-            contentColor = MaterialTheme.colorScheme.onSurface,
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
-    ) {
-        Column(
-            modifier = Modifier.fillMaxWidth().padding(18.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            if (nickname == null) {
-                Text("비로그인", style = MaterialTheme.typography.titleMedium)
+    val palette = LocalSqldpassPalette.current
+    AppCard(surface = AppCardSurface.Card) {
+        if (nickname == null) {
+            Text(
+                "비로그인",
+                style = MaterialTheme.typography.titleMedium,
+                color = palette.textPrimary,
+            )
+            Text(
+                "Google 로 로그인하면 풀이 기록·오답·구독이 동기화됩니다.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = palette.textMuted,
+            )
+            Spacer(Modifier.height(4.dp))
+            AppButton(
+                text = "Google 로 로그인",
+                variant = AppButtonVariant.Primary,
+                size = AppButtonSize.Regular,
+                leadingIcon = Icons.Outlined.AccountCircle,
+                onClick = onLogin,
+            )
+        } else {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
                 Text(
-                    "Google 로 로그인하면 풀이 기록·오답·구독이 동기화됩니다.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    nickname,
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.SemiBold,
+                    color = palette.textPrimary,
                 )
-                Spacer(Modifier.height(4.dp))
-                Button(
-                    shape = RoundedCornerShape(ButtonCorner),
-                    onClick = onLogin,
-                    modifier = Modifier.sizeIn(minHeight = 48.dp),
-                ) { Text("Google 로 로그인") }
-            } else {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Text(
-                        nickname,
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.SemiBold,
-                    )
-                    TextButton(onClick = onEditNickname) { Text("편집") }
-                }
-                createdAt?.let {
-                    Text(
-                        "가입일 $it",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
+                AppButton(
+                    text = "편집",
+                    variant = AppButtonVariant.Tertiary,
+                    size = AppButtonSize.Compact,
+                    onClick = onEditNickname,
+                )
+            }
+            createdAt?.let {
+                Text(
+                    "가입일 $it",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = palette.textMuted,
+                )
             }
         }
     }
@@ -320,100 +330,89 @@ private fun SubscriptionCard(
     subscription: SubscriptionResponse?,
     onOpenPassPlus: () -> Unit,
 ) {
+    val palette = LocalSqldpassPalette.current
     val active = subscription?.active == true
     val planLabel = subscription?.plan ?: "FREE"
     val expires = formatKstDate(subscription?.expiresAt)
-    Card(
-        shape = RoundedCornerShape(CardCorner),
-        colors = CardDefaults.cardColors(
-            containerColor = if (active) MaterialTheme.colorScheme.primaryContainer
-            else MaterialTheme.colorScheme.surface,
-            contentColor = if (active) MaterialTheme.colorScheme.onPrimaryContainer
-            else MaterialTheme.colorScheme.onSurface,
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+
+    AppCard(
+        surface = AppCardSurface.Card,
+        accent = if (active) AppCardAccent.Success else AppCardAccent.None,
     ) {
-        Column(
-            modifier = Modifier.fillMaxWidth().padding(18.dp),
-            verticalArrangement = Arrangement.spacedBy(6.dp),
-        ) {
-            Text(
-                if (active) "구독: $planLabel" else "무료 플랜",
-                style = MaterialTheme.typography.titleMedium,
-            )
-            if (active) {
-                expires?.let {
-                    Text("만료 $it", style = MaterialTheme.typography.labelLarge)
-                }
-            } else {
+        if (active) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.fillMaxWidth(),
+            ) {
                 Text(
-                    "PASS+ 로 PDF·오답노트·즐겨찾기를 풀어보세요.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    "구독",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = palette.textPrimary,
                 )
-                Spacer(Modifier.height(4.dp))
-                Button(
-                    shape = RoundedCornerShape(ButtonCorner),
-                    onClick = onOpenPassPlus,
-                    modifier = Modifier.sizeIn(minHeight = 44.dp),
-                ) { Text("PASS+ 알아보기") }
+                AppBadge(
+                    label = planLabel,
+                    tone = AppBadgeTone.Success,
+                    variant = AppBadgeVariant.Solid,
+                )
             }
+            expires?.let {
+                Text(
+                    "만료 $it",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = palette.textMuted,
+                )
+            }
+        } else {
+            Text(
+                "무료 플랜",
+                style = MaterialTheme.typography.titleMedium,
+                color = palette.textPrimary,
+            )
+            Text(
+                "PASS+ 로 PDF·오답노트·즐겨찾기를 풀어보세요.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = palette.textMuted,
+            )
+            Spacer(Modifier.height(4.dp))
+            AppButton(
+                text = "PASS+ 알아보기",
+                variant = AppButtonVariant.Primary,
+                size = AppButtonSize.Regular,
+                onClick = onOpenPassPlus,
+            )
         }
     }
 }
 
-@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
 private fun ThemeToggleCard(
     themeMode: ThemeMode,
     onThemeChange: (ThemeMode) -> Unit,
 ) {
-    Card(
-        shape = RoundedCornerShape(CardCorner),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface,
-            contentColor = MaterialTheme.colorScheme.onSurface,
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
-    ) {
-        Column(
-            modifier = Modifier.fillMaxWidth().padding(18.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+    val palette = LocalSqldpassPalette.current
+    AppCard(surface = AppCardSurface.Card) {
+        Text(
+            "화면 테마",
+            style = MaterialTheme.typography.titleMedium,
+            color = palette.textPrimary,
+        )
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text("화면 테마", style = MaterialTheme.typography.titleMedium)
-            androidx.compose.foundation.layout.FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                verticalArrangement = Arrangement.spacedBy(6.dp),
-            ) {
-                listOf(
-                    ThemeMode.SYSTEM to "시스템",
-                    ThemeMode.LIGHT to "라이트",
-                    ThemeMode.DARK to "다크",
-                ).forEach { (mode, label) ->
-                    val selected = themeMode == mode
-                    AssistChip(
-                        onClick = { onThemeChange(mode) },
-                        label = { Text(label) },
-                        colors = if (selected) AssistChipDefaults.assistChipColors(
-                            containerColor = MaterialTheme.colorScheme.primaryContainer,
-                            labelColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                        ) else AssistChipDefaults.assistChipColors(),
-                    )
-                }
+            listOf(
+                ThemeMode.SYSTEM to "시스템",
+                ThemeMode.LIGHT to "라이트",
+                ThemeMode.DARK to "다크",
+            ).forEach { (mode, label) ->
+                AppChip(
+                    label = label,
+                    selected = themeMode == mode,
+                    onClick = { onThemeChange(mode) },
+                )
             }
         }
-    }
-}
-
-@Composable
-private fun SectionTitle(label: String) {
-    Box(modifier = Modifier.fillMaxWidth().padding(top = 4.dp)) {
-        Text(
-            label,
-            style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            fontWeight = FontWeight.SemiBold,
-        )
     }
 }
 
@@ -428,16 +427,20 @@ private fun FeedbackDialog(
         onDismissRequest = { if (!submitting) onDismiss() },
         title = { Text("피드백 보내기") },
         text = {
-            OutlinedTextField(
+            AppTextField(
                 value = content,
                 onValueChange = { if (it.length <= 1000) content = it },
-                label = { Text("의견 (최대 1000자)") },
+                label = "의견 (최대 1000자)",
+                helper = "${content.length}/1000",
+                singleLine = false,
                 modifier = Modifier.fillMaxWidth(),
-                minLines = 4,
             )
         },
         confirmButton = {
-            Button(
+            AppButton(
+                text = if (submitting) "전송중…" else "보내기",
+                variant = AppButtonVariant.Primary,
+                size = AppButtonSize.Compact,
                 enabled = !submitting && content.trim().length >= 5,
                 onClick = {
                     submitting = true
@@ -448,8 +451,16 @@ private fun FeedbackDialog(
                         }
                     }
                 },
-            ) { Text(if (submitting) "전송중…" else "보내기") }
+            )
         },
-        dismissButton = { TextButton(onClick = onDismiss, enabled = !submitting) { Text("취소") } },
+        dismissButton = {
+            AppButton(
+                text = "취소",
+                variant = AppButtonVariant.Tertiary,
+                size = AppButtonSize.Compact,
+                enabled = !submitting,
+                onClick = onDismiss,
+            )
+        },
     )
 }

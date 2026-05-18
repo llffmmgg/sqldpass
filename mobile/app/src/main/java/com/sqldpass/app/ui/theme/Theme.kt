@@ -1,5 +1,6 @@
 package com.sqldpass.app.ui.theme
 
+import androidx.compose.foundation.LocalIndication
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
@@ -134,7 +135,12 @@ fun SqldpassTheme(
             state = DefaultState,
         )
     }
-    CompositionLocalProvider(LocalSqldpassSemanticColors provides semantic) {
+    val palette = if (darkTheme) darkPalette() else lightPalette()
+    CompositionLocalProvider(
+        LocalSqldpassSemanticColors provides semantic,
+        LocalSqldpassPalette provides palette,
+        LocalIndication provides SqldpassIndication,
+    ) {
         MaterialTheme(
             colorScheme = scheme,
             typography = SqldpassTypography,

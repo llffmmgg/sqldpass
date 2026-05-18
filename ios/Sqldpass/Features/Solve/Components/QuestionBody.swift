@@ -1,30 +1,29 @@
 import SwiftUI
 
-/// 모의고사 풀이(SolveView) 의 문제 카드.
+/// 모의고사 풀이 화면 문제 카드 (Inked OMR 디자인 시스템 chrome).
 ///
-/// 기존에는 단순 `Text(question.content)` 로 본문을 표시해 Markdown / 표 / SVG / 코드블록이
-/// 모두 깨졌다. 본 컴포넌트는 `QuestionContentView` 를 호출해 분리 렌더.
+/// 본문 렌더링은 frozen 한 `QuestionContentView` 가 그대로 담당한다.
+/// `parsed.body` 가 있으면 본문만 분리 표시, 없으면 원본 content 그대로 표시.
 struct QuestionBody: View {
     let question: MockExamQuestionItem
 
     var body: some View {
+        let parsed = QuestionParser.parse(question.content)
+        let bodyText = parsed.options.isEmpty || parsed.body.isEmpty
+            ? question.content
+            : parsed.body
+
         VStack(alignment: .leading, spacing: Spacing.sm) {
-            Text(question.subjectName)
-                .font(AppType.caption.weight(.semibold))
-                .foregroundStyle(Color.brandPrimary)
-            Text("문제 \(question.displayOrder)")
-                .font(AppType.footnote)
-                .foregroundStyle(Color.appTextMuted)
-            QuestionContentView(text: question.content)
-                .textSelection(.enabled)
+            HStack(spacing: Spacing.sm) {
+                AppBadge(label: question.subjectName, tone: .accent)
+                AppBadge(label: "문제 \(question.displayOrder)", tone: .neutral)
+                Spacer(minLength: 0)
+            }
+
+            AppCard(surface: .card) {
+                QuestionContentView(text: bodyText)
+                    .textSelection(.enabled)
+            }
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(Spacing.base)
-        .background(Color.appSurface)
-        .overlay(
-            RoundedRectangle(cornerRadius: Radius.lg)
-                .stroke(Color.appBorder, lineWidth: 1)
-        )
-        .clipShape(RoundedRectangle(cornerRadius: Radius.lg))
     }
 }

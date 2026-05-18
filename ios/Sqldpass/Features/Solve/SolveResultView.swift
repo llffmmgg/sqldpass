@@ -1,9 +1,14 @@
 import SwiftUI
 
+/// 모의고사 채점 결과 화면 (Inked OMR 디자인 시스템).
+///
+/// PASS/FAIL 배너 → 과목별 정답률 → 문항별 검토 순으로 스크롤 구성.
+/// 하단 액션바는 `AppBottomActionBar` 사용.
 struct SolveResultView: View {
     let result: Solve
     let questions: [MockExamQuestionItem]
     let onDone: () -> Void
+    var onRestart: (() -> Void)? = nil
 
     var body: some View {
         ScrollView {
@@ -18,19 +23,28 @@ struct SolveResultView: View {
 
                 if !subjectBreakdown.isEmpty {
                     VStack(alignment: .leading, spacing: Spacing.sm) {
-                        SectionHeader(title: "과목별 정답률")
-                        ForEach(subjectBreakdown, id: \.name) { item in
-                            SubjectBreakdownCard(
-                                subjectName: item.name,
-                                correct: item.correct,
-                                total: item.total
-                            )
+                        AppSectionHeader(title: "과목별 정답률")
+                        AppCard(surface: .card) {
+                            VStack(alignment: .leading, spacing: Spacing.md) {
+                                ForEach(Array(subjectBreakdown.enumerated()), id: \.element.name) { idx, item in
+                                    SubjectBreakdownCard(
+                                        subjectName: item.name,
+                                        correct: item.correct,
+                                        total: item.total
+                                    )
+                                    if idx < subjectBreakdown.count - 1 {
+                                        Rectangle()
+                                            .fill(Color.appBorder)
+                                            .frame(height: 1)
+                                    }
+                                }
+                            }
                         }
                     }
                 }
 
                 VStack(alignment: .leading, spacing: Spacing.sm) {
-                    SectionHeader(title: "문항별 검토")
+                    AppSectionHeader(title: "문항별 검토")
                     ForEach(reviewItems, id: \.questionId) { item in
                         AnswerReviewRow(item: item)
                     }
@@ -41,22 +55,23 @@ struct SolveResultView: View {
         .background(Color.appPage)
         .navigationTitle("채점 결과")
         .navigationBarTitleDisplayMode(.inline)
-        .safeAreaInset(edge: .bottom) {
-            VStack(spacing: Spacing.sm) {
-                Button {
-                    onDone()
-                } label: {
-                    Text("목록으로")
-                        .font(AppType.bodyEmph)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 52)
-                }
-                .buttonStyle(.borderedProminent)
-                .tint(Color.brandPrimary)
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            if let onRestart {
+                AppBottomActionBar(
+                    primary: BottomAction(title: "닫기",
+                                          action: onDone,
+                                          variant: .primary),
+                    secondary: BottomAction(title: "다시 풀기",
+                                            action: onRestart,
+                                            variant: .secondary)
+                )
+            } else {
+                AppBottomActionBar(
+                    primary: BottomAction(title: "닫기",
+                                          action: onDone,
+                                          variant: .primary)
+                )
             }
-            .padding(.horizontal, Spacing.base)
-            .padding(.bottom, Spacing.sm)
-            .background(Color.appPage)
         }
     }
 
@@ -98,14 +113,5 @@ struct SolveResultView: View {
                 isCorrect: ans.correct
             )
         }
-    }
-}
-
-private struct SectionHeader: View {
-    let title: String
-    var body: some View {
-        Text(title)
-            .font(AppType.bodyEmph)
-            .foregroundStyle(Color.appTextPrimary)
     }
 }

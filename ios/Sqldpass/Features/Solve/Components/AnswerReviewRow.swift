@@ -1,5 +1,9 @@
 import SwiftUI
 
+/// 문항별 검토 행 (Inked OMR 디자인 시스템).
+///
+/// `AppListRow` 를 메인 row 로 쓰고, 탭하면 아래에 frozen `QuestionContentView` 본문이 펼쳐진다.
+/// 본문은 절대 lineLimit 으로 자르지 않는다. (subtitle 의 짧은 요약만 1 줄 처리)
 struct AnswerReviewRow: View {
     struct Item {
         let questionId: Int64
@@ -15,51 +19,46 @@ struct AnswerReviewRow: View {
     @State private var isExpanded = false
 
     var body: some View {
-        VStack(alignment: .leading, spacing: Spacing.xs) {
-            Button {
-                isExpanded.toggle()
-            } label: {
-                HStack(alignment: .top, spacing: Spacing.sm) {
-                    Image(systemName: item.isCorrect ? "checkmark.circle.fill" : "xmark.circle.fill")
-                        .foregroundStyle(item.isCorrect ? Color.semanticSuccess : Color.semanticDanger)
-                        .padding(.top, 2)
-                    VStack(alignment: .leading, spacing: Spacing.xxs) {
-                        Text("문제 \(item.displayOrder)")
-                            .font(AppType.bodyEmph)
-                            .foregroundStyle(Color.appTextPrimary)
-                        Text("제출 답안: \(submittedAnswerText)")
-                            .font(AppType.footnote)
-                            .foregroundStyle(Color.appTextMuted)
-                        if let correctOption = item.correctOption, !item.isCorrect {
-                            Text("정답: \(correctOption)번")
-                                .font(AppType.footnote)
-                                .foregroundStyle(Color.semanticSuccess)
-                        }
+        VStack(alignment: .leading, spacing: 0) {
+            AppListRow(
+                title: "문제 \(item.displayOrder)",
+                subtitle: subtitle,
+                leadingSystemImage: item.isCorrect ? "checkmark.circle.fill" : "xmark.circle.fill",
+                leadingTint: item.isCorrect ? .semanticSuccess : .semanticDanger,
+                trailingSystemImage: isExpanded ? "chevron.up" : "chevron.down",
+                onTap: {
+                    Haptics.light()
+                    withAnimation(.easeOut(duration: 0.2)) {
+                        isExpanded.toggle()
                     }
-                    Spacer()
-                    Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
-                        .font(.footnote)
-                        .foregroundStyle(Color.appTextSubtle)
                 }
-            }
-            .buttonStyle(.plain)
+            )
 
             if isExpanded {
-                QuestionContentView(text: item.content)
-                    .padding(.top, Spacing.xs)
+                VStack(alignment: .leading, spacing: 0) {
+                    Rectangle()
+                        .fill(Color.appBorder)
+                        .frame(height: 1)
+                    QuestionContentView(text: item.content)
+                        .padding(Spacing.base)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(Color.appSurface)
+                }
             }
         }
-        .padding(Spacing.md)
         .background(Color.appSurface)
         .overlay(
-            RoundedRectangle(cornerRadius: Radius.md)
+            RoundedRectangle(cornerRadius: Radius.lg)
                 .stroke(Color.appBorder, lineWidth: 1)
         )
-        .clipShape(RoundedRectangle(cornerRadius: Radius.md))
+        .clipShape(RoundedRectangle(cornerRadius: Radius.lg))
     }
 
-    private var submittedAnswerText: String {
-        guard let selectedOption = item.selectedOption else { return "미응답" }
-        return "\(selectedOption)번"
+    private var subtitle: String {
+        let submitted = item.selectedOption.map { "\($0)번" } ?? "미응답"
+        if let correct = item.correctOption {
+            return "정답 \(correct)번 · 선택 \(submitted)"
+        }
+        return "선택 \(submitted)"
     }
 }

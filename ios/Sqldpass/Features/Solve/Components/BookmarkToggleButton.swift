@@ -1,5 +1,8 @@
 import SwiftUI
 
+/// 북마크 토글 아이콘 버튼 (Inked OMR 디자인 시스템).
+///
+/// 초기 상태는 `BookmarkService.exists` 로 동기화, 토글은 optimistic update 후 실패 시 롤백.
 struct BookmarkToggleButton: View {
     let questionId: Int64
 
@@ -11,8 +14,11 @@ struct BookmarkToggleButton: View {
             Task { await toggle() }
         } label: {
             Image(systemName: isBookmarked ? "bookmark.fill" : "bookmark")
-                .foregroundStyle(isBookmarked ? Color.brandPrimary : Color.appTextSubtle)
+                .font(AppType.body)
+                .foregroundStyle(isBookmarked ? Color.brandPrimary : Color.appTextMuted)
+                .frame(width: 40, height: 40)
         }
+        .buttonStyle(.plain)
         .accessibilityLabel(isBookmarked ? "북마크 해제" : "북마크 추가")
         .disabled(isLoading)
         .task {
@@ -27,6 +33,7 @@ struct BookmarkToggleButton: View {
         let previous = isBookmarked
         isBookmarked.toggle() // 옵티미스틱
         isLoading = true
+        Haptics.light()
         do {
             if previous {
                 try await BookmarkService.remove(questionId: questionId)

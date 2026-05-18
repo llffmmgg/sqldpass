@@ -1,127 +1,46 @@
 import SwiftUI
 
-/// 정답 공개 시 노출 — 정답/오답 배너 + (서술/단답일 때) 모범답안 + 키워드 + 해설 카드.
+/// 정답 공개 시 노출 — `AppCard` + `AppBadge` 기반의 결과/해설 카드.
+///
+/// 좌측 액센트 바: 정답 시 success, 오답 시 danger.
+/// 본문 구성: `AppBadge` (정답/오답) + 정답 표기 + (선택) 키워드 칩 스트립 + 해설 본문.
+/// 본문 렌더링은 frozen `QuestionContentView` 를 그대로 사용한다.
 struct SoloExplanationCard: View {
     let detail: QuestionDetail
     let isCorrect: Bool
 
-    private var bannerColor: Color { isCorrect ? .semanticSuccess : .semanticDanger }
-    private var type: String { detail.questionType.uppercased() }
-
     var body: some View {
-        VStack(alignment: .leading, spacing: Spacing.md) {
-            ResultBanner(detail: detail, isCorrect: isCorrect, color: bannerColor)
+        AppCard(surface: .card, accent: isCorrect ? .success : .danger) {
+            VStack(alignment: .leading, spacing: Spacing.md) {
+                HStack(spacing: Spacing.sm) {
+                    AppBadge(label: isCorrect ? "정답" : "오답",
+                             tone: isCorrect ? .success : .danger,
+                             variant: .solid)
+                    if let correctOption = detail.correctOption {
+                        Text("정답 — \(correctOption)번")
+                            .font(AppType.bodyEmph)
+                            .foregroundStyle(Color.appTextPrimary)
+                    } else if let answer = detail.answer, !answer.isEmpty {
+                        Text("정답 — \(answer)")
+                            .font(AppType.bodyEmph)
+                            .foregroundStyle(Color.appTextPrimary)
+                    }
+                }
 
-            if type.contains("SHORT") || type.contains("DESCRIPTIVE") || type.contains("TEXT") {
-                ModelAnswerCard(detail: detail)
-            }
+                if !detail.keywords.isEmpty {
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: Spacing.xs) {
+                            ForEach(detail.keywords, id: \.self) { kw in
+                                AppBadge(label: kw, tone: .accent, variant: .soft)
+                            }
+                        }
+                    }
+                }
 
-            if let explanation = detail.explanation, !explanation.isEmpty {
-                ExplanationCard(text: explanation)
-            }
-        }
-    }
-}
-
-private struct ResultBanner: View {
-    let detail: QuestionDetail
-    let isCorrect: Bool
-    let color: Color
-
-    private var message: String {
-        let type = detail.questionType.uppercased()
-        if isCorrect { return "정답입니다!" }
-        if type.contains("MCQ") || type.contains("MULTIPLE") {
-            return "오답 — 정답은 \(detail.correctOption.map(String.init) ?? "-")번입니다."
-        }
-        return "오답 — 모범답안: \(detail.answer ?? "(없음)")"
-    }
-
-    var body: some View {
-        HStack(spacing: Spacing.sm) {
-            Image(systemName: isCorrect ? "checkmark.circle.fill" : "xmark.circle.fill")
-                .font(.system(size: 18, weight: .bold))
-                .foregroundStyle(color)
-            Text(message)
-                .font(AppType.bodyEmph)
-                .foregroundStyle(color)
-                .frame(maxWidth: .infinity, alignment: .leading)
-        }
-        .padding(.horizontal, Spacing.base)
-        .padding(.vertical, Spacing.md)
-        .background(color.opacity(0.10))
-        .overlay(
-            RoundedRectangle(cornerRadius: Radius.lg)
-                .stroke(color, lineWidth: 1)
-        )
-        .clipShape(RoundedRectangle(cornerRadius: Radius.lg))
-    }
-}
-
-private struct ModelAnswerCard: View {
-    let detail: QuestionDetail
-    var body: some View {
-        VStack(alignment: .leading, spacing: Spacing.sm) {
-            Text("모범답안")
-                .font(AppType.caption.weight(.semibold))
-                .foregroundStyle(Color.appTextMuted)
-            Text(detail.answer?.isEmpty == false ? detail.answer! : "-")
-                .font(.system(.body, design: .monospaced))
-                .foregroundStyle(Color.appTextPrimary)
-            if !detail.keywords.isEmpty {
-                Text(detail.questionType.uppercased().contains("SHORT") ? "허용 표기" : "채점 키워드")
-                    .font(AppType.caption.weight(.semibold))
-                    .foregroundStyle(Color.appTextMuted)
-                    .padding(.top, Spacing.xs)
-                KeywordsFlow(keywords: detail.keywords)
+                if let explanation = detail.explanation, !explanation.isEmpty {
+                    QuestionContentView(text: explanation)
+                }
             }
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(Spacing.base)
-        .background(Color.appSurface)
-        .overlay(
-            RoundedRectangle(cornerRadius: Radius.lg)
-                .stroke(Color.appBorder, lineWidth: 1)
-        )
-        .clipShape(RoundedRectangle(cornerRadius: Radius.lg))
-    }
-}
-
-private struct KeywordsFlow: View {
-    let keywords: [String]
-    var body: some View {
-        // iOS 16+ — `LazyVGrid` 로 단순 wrap. row 폭 측정 없이 깔끔.
-        let columns = [GridItem(.adaptive(minimum: 80), spacing: Spacing.xs)]
-        LazyVGrid(columns: columns, alignment: .leading, spacing: Spacing.xs) {
-            ForEach(Array(keywords.enumerated()), id: \.offset) { _, kw in
-                Text(kw)
-                    .font(AppType.caption.weight(.semibold))
-                    .foregroundStyle(Color.semanticSuccess)
-                    .padding(.horizontal, Spacing.sm)
-                    .padding(.vertical, Spacing.xs)
-                    .background(Color.semanticSuccess.opacity(0.10))
-                    .clipShape(Capsule())
-            }
-        }
-    }
-}
-
-private struct ExplanationCard: View {
-    let text: String
-    var body: some View {
-        VStack(alignment: .leading, spacing: Spacing.sm) {
-            Text("해설")
-                .font(AppType.bodyEmph)
-                .foregroundStyle(Color.brandPrimary)
-            QuestionContentView(text: text)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(Spacing.base)
-        .background(Color.brandPrimary.opacity(0.06))
-        .overlay(
-            RoundedRectangle(cornerRadius: Radius.lg)
-                .stroke(Color.brandPrimary.opacity(0.30), lineWidth: 1)
-        )
-        .clipShape(RoundedRectangle(cornerRadius: Radius.lg))
     }
 }
