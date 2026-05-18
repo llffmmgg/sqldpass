@@ -475,6 +475,8 @@ private fun MarkdownContent(text: String, textSizeSp: Float = 16f) {
                     CodeBlockCard(language = seg.language, code = seg.code)
                 is com.sqldpass.app.text.MarkdownSegment.InlineSvg ->
                     com.sqldpass.app.ui.common.InlineSvgView(svgXml = seg.svgXml)
+                is com.sqldpass.app.text.MarkdownSegment.Image ->
+                    com.sqldpass.app.ui.common.RemoteImageView(src = seg.src, alt = seg.alt)
             }
         }
     }
