@@ -128,10 +128,10 @@ final class SoloSolveViewModel {
                 .init(
                     questionId: questionId,
                     selectedOption: isText ? nil : selectedOption,
-                    answerText: isText ? answerText : nil,
-                ),
+                    answerText: isText ? answerText : nil
+                )
             ],
-            clientSubmissionId: clientSubmissionId,
+            clientSubmissionId: clientSubmissionId
         )
         do {
             _ = try await SolveService.submit(request)
