@@ -9,6 +9,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
+import org.springframework.beans.factory.annotation.Value;
+
 import com.sqldpass.persistent.member.MemberEntity;
 import com.sqldpass.persistent.member.MemberRepository;
 import com.sqldpass.persistent.payment.PaymentEntity;
@@ -47,11 +49,16 @@ public class PaymentService {
     private final MemberRepository memberRepository;
     private final PlayBillingClient playBillingClient;
     private final PlayBillingProperties playBillingProperties;
+    private final AppStoreClient appStoreClient;
     private final PaymentFailureRecorder failureRecorder;
     private final SubscriptionHistoryService historyService;
     private final SubscriptionService subscriptionService;
     private final AppSettingService appSettingService;
     private final DiscordNotifier discordNotifier;
+
+    /** iOS 앱 Bundle ID — Apple StoreKit signedTransaction payload 의 bundleId 와 일치해야 한다. */
+    @Value("${sqldpass.payment.app-store.bundle-id:com.sqldpass.app}")
+    private String appStoreBundleId;
 
     /** 카드사 심사 가이드 + PG 정책상 최소 결제 금액. */
     private static final int MIN_CHARGE_AMOUNT = 100;
@@ -398,6 +405,64 @@ public class PaymentService {
                 memberId, productId, plan, expiresAt);
         return new VerifyPaymentResult(payment.getPaymentId(), payment.getAmount(),
                 payment.getProductName(), plan, expiresAt);
+    }
+
+    /**
+     * iOS 앱 Apple StoreKit 2 영수증 검증 — 클라이언트가 보낸 signedTransaction(JWS) 의 payload 를
+     * 파싱해 productId/transactionId 를 추출하고 SubscriptionEntity 발급.
+     *
+     * <p>본 phase 1차 minimal: JWS 서명 검증 생략. 출시 직전 별도 phase 에서 Apple Root CA 체인 +
+     * App Store Server API 교차 확인 추가 예정.
+     *
+     * <p>Idempotency — 같은 transactionId 가 이미 처리됐으면 같은 응답을 다시 돌려준다 (재시도 무해).
+     * purchaseToken 컬럼을 App Store transactionId 저장소로 재활용 (Play Billing 패턴과 동일).
+     */
+    @Transactional
+    public VerifyPaymentResult verifyAppStore(Long memberId, String signedTransaction, String clientProductId) {
+        ensureReviewer(memberId);
+        AppStoreClient.TransactionInfo info = appStoreClient.parsePayload(signedTransaction);
+
+        // productId 일치 검증 — 클라이언트 hint 와 payload 의 productId 가 같아야 한다.
+        if (!info.productId().equals(clientProductId)) {
+            log.warn("App Store productId mismatch memberId={} client={} payload={}",
+                    memberId, clientProductId, info.productId());
+            throw new SqldpassException(ErrorCode.INVALID_INPUT, "productId 불일치");
+        }
+        // bundleId 검증 — 다른 앱이 발급한 영수증 차단.
+        if (!info.bundleId().equals(appStoreBundleId)) {
+            log.warn("App Store bundleId mismatch memberId={} payload={} expected={}",
+                    memberId, info.bundleId(), appStoreBundleId);
+            throw new SqldpassException(ErrorCode.PAYMENT_VERIFICATION_FAILED, "유효하지 않은 결제");
+        }
+
+        // Idempotency — 같은 transactionId(=purchase_token 컬럼 재활용) 가 PAID 로 이미 처리됐으면 동일 응답.
+        Optional<PaymentEntity> existing = paymentRepository.findByPurchaseToken(info.transactionId());
+        if (existing.isPresent() && !existing.get().getMemberId().equals(memberId)) {
+            log.warn("App Store transactionId 도용 시도 memberId={} expected={} txId={}",
+                    memberId, existing.get().getMemberId(), maskToken(info.transactionId()));
+            throw new SqldpassException(ErrorCode.FORBIDDEN, "다른 회원의 결제 영수증입니다.");
+        }
+        if (existing.isPresent() && existing.get().getStatus() == PaymentStatus.PAID) {
+            PaymentEntity prior = existing.get();
+            LocalDateTime priorExpires = subscriptionRepository.findByPaymentId(prior.getId())
+                    .map(SubscriptionEntity::getExpiresAt).orElse(null);
+            return new VerifyPaymentResult(prior.getPaymentId(), prior.getAmount(),
+                    prior.getProductName(), prior.getPlan(), priorExpires);
+        }
+
+        return createAppStorePayment(memberId, info);
+    }
+
+    /**
+     * App Store 결제 신규 발급 — 실제 영속화 + SubscriptionEntity 발급은 본 step 의 후속 PR 에서
+     * {@link #verifyPlayBilling(Long, String, String)} 흐름을 미러링해 구현 예정.
+     *
+     * <p>현 step 은 컴파일·라우팅 골격만 완성. 호출 시 UnsupportedOperationException 발생.
+     */
+    private VerifyPaymentResult createAppStorePayment(Long memberId, AppStoreClient.TransactionInfo info) {
+        throw new UnsupportedOperationException(
+                "createAppStorePayment 실제 구현은 후속 step 에서 verifyPlayBilling 흐름을 미러링해 작성. "
+                + "memberId=" + memberId + " txId=" + maskToken(info.transactionId()));
     }
 
     /**

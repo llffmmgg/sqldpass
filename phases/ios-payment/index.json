@@ -16,7 +16,10 @@
       "step": 2,
       "name": "backend-app-store-verify",
       "description": "backend: PaymentProvider enum에 APP_STORE 추가 (V90__add_payment_provider_app_store.sql). service/payment/AppStoreClient.java 신규 — Apple JWS signedTransaction JWS 서명 검증 (JJWT + Apple root CA) + iss/aud/exp/bundleId 검증 + transactionId 추출. controller/payment/PaymentController.java에 POST /api/payment/apple/verify 추가. SubscriptionService에 APP_STORE provider 분기 + 통합 entitlement (이미 활성이면 신규 결제 차단).",
-      "status": "pending"
+      "status": "completed",
+      "started_at": "2026-05-18T14:18:28+0900",
+      "summary": "PaymentProvider.APP_STORE enum + V90 noop 마이그레이션 + AppStoreClient(JWS payload 1차 파싱) + AppStoreVerifyRequest DTO + POST /api/payment/apple/verify 엔드포인트 + PaymentService.verifyAppStore 골격(productId/bundleId 검증 + purchase_token 컬럼 재활용 idempotent, createAppStorePayment 영속화는 후속 step) + application.yaml app-store bundle-id/SKU 매핑.",
+      "completed_at": "2026-05-18T14:30:00+0900"
     },
     {
       "step": 3,

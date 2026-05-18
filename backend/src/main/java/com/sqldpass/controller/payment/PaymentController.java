@@ -13,6 +13,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
+import com.sqldpass.controller.payment.dto.AppStoreVerifyRequest;
 import com.sqldpass.persistent.member.MemberEntity;
 import com.sqldpass.persistent.member.MemberRepository;
 import com.sqldpass.persistent.payment.SubscriptionPlan;
@@ -122,6 +123,21 @@ public class PaymentController {
                     "productId 와 purchaseToken 은 필수입니다.");
         }
         return paymentService.verifyPlayBilling(memberId, body.productId(), body.purchaseToken());
+    }
+
+    @PostMapping("/apple/verify")
+    @Operation(summary = "App Store 영수증 검증 — iOS 앱 전용. 동일 transactionId 재요청은 idempotent.")
+    public VerifyPaymentResult verifyAppStore(@RequestBody AppStoreVerifyRequest body,
+                                              HttpServletRequest request) {
+        Long memberId = (Long) request.getAttribute("memberId");
+        if (memberId == null) {
+            throw new SqldpassException(ErrorCode.UNAUTHORIZED);
+        }
+        if (body == null || body.signedTransaction() == null || body.productId() == null) {
+            throw new SqldpassException(ErrorCode.INVALID_INPUT,
+                    "signedTransaction 과 productId 는 필수입니다.");
+        }
+        return paymentService.verifyAppStore(memberId, body.signedTransaction(), body.productId());
     }
 
     @GetMapping("/subscription")

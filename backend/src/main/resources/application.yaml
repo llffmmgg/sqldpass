@@ -142,6 +142,16 @@ sqldpass:
     unlimited:
       amount: ${PAYMENT_UNLIMITED_AMOUNT:29900}
       product-name: ${PAYMENT_UNLIMITED_NAME:문어CBT All Pass}
+    app-store:
+      # 앱 Bundle ID — iOS native 와 동일해야 한다.
+      # Apple StoreKit signedTransaction payload 의 bundleId 검증에 사용.
+      bundle-id: ${APP_STORE_BUNDLE_ID:com.sqldpass.app}
+    # 4티어 + iOS 인앱 결제 SKU 매핑 (App Store Connect 등록 후 확정).
+    app-store-product-id-mapping:
+      THREE_DAY: ${APP_STORE_SKU_THREE_DAY:iap_three_day}
+      FOCUS: ${APP_STORE_SKU_FOCUS:iap_focus}
+      ONE_MONTH: ${APP_STORE_SKU_ONE_MONTH:iap_one_month}
+      UNLIMITED: ${APP_STORE_SKU_UNLIMITED:iap_unlimited}
   pdf:
     # 모의고사 PDF 생성기 — Playwright 헤드리스 Chromium 으로 인쇄 페이지를 PDF 화.
     # print-page-base-url: 백엔드(Playwright) 가 호출할 프론트 인쇄 페이지 베이스 URL.
