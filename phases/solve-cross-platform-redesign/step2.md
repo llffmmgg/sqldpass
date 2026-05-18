@@ -18,7 +18,7 @@ macOS 셸에서만. Windows 에서 빌드 검증을 시도하지 말 것.
 
 | 파일 | 변경 |
 |---|---|
-| `ios/project.yml` | SVGKit SPM 의존성 추가 (`https://github.com/SVGKit/SVGKit`, 트랙 `branch: main` 또는 최신 안정 태그) |
+| `ios/project.yml` | SVGKit SPM 의존성 추가 (`https://github.com/SVGKit/SVGKit`, `branch: "3.x"` — 저장소의 default branch. `main` 은 존재하지 않음) |
 | `ios/Sqldpass/Models/QuestionSegment.swift` | 신규 — `enum QuestionSegment { case markdown(String), codeBlock(language: String?, code: String), inlineSVG(String), image(src: String, alt: String?), table(rows: [[String]]) }` |
 | `ios/Sqldpass/Core/Content/EnsureCodeFences.swift` | 신규 — Android `EnsureCodeFences.kt` 동치. HTML `<pre><code>` → 펜스 markdown, HTML `<table>` → markdown table, inline `<code>` → 백틱, HTML 엔티티 디코드 |
 | `ios/Sqldpass/Core/Content/ParseQuestionContent.swift` | 신규 — Android `splitMarkdownSegments` 동치. 정규식 기반 fenced code / inline SVG / `<img>` / markdown table 분리 → `[QuestionSegment]` |
@@ -152,7 +152,7 @@ struct MarkdownTableView: View {
 packages:
   SVGKit:
     url: https://github.com/SVGKit/SVGKit
-    branch: main   # 또는 최신 태그(3.x)
+    branch: "3.x"   # 저장소 default branch. main 은 존재하지 않음.
 ```
 
 각 target dependencies 에 `package: SVGKit`, `product: SVGKit` 추가. project.yml 변경 후:
