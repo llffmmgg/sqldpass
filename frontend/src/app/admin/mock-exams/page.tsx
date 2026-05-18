@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import {
   getAdminMockExams,
   createMockExam,
+  createMiniMockExams,
   deleteMockExam,
   changeMockExamVisibility,
   startMockExamPdfBackfill,
@@ -135,6 +136,7 @@ type TabId = "all" | CreateMockExamType;
 export default function AdminMockExamsPage() {
   const [exams, setExams] = useState<AdminMockExam[] | null>(null);
   const [creating, setCreating] = useState<CreateMockExamType | null>(null);
+  const [creatingMini, setCreatingMini] = useState<CreateMockExamType | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<TabId>("all");
@@ -200,6 +202,43 @@ export default function AdminMockExamsPage() {
       );
     } finally {
       setCreating(null);
+    }
+  }
+
+  async function handleCreateMini(examType: CreateMockExamType) {
+    const cert = certOf(examType);
+    const label = cert?.label ?? examType;
+    if (
+      !confirm(
+        `${label} 미니 모의고사를 현재 풀에서 가능한 만큼 일괄 생성합니다. (기출/AI/프리미엄 1:1:1 비율 보존)\n\n계속하시겠습니까?`,
+      )
+    ) {
+      return;
+    }
+    setCreatingMini(examType);
+    setError(null);
+    setInfo(null);
+    try {
+      const result = await createMiniMockExams(examType);
+      await load();
+      if (result.createdCount === 0) {
+        setError(
+          `${label} 풀로는 미니 모의고사를 만들 수 없습니다. 풀 보충 후 다시 시도하세요.`,
+        );
+      } else {
+        const remaining = Object.entries(result.remainingPoolBySource)
+          .map(([k, v]) => `${k}=${v}`)
+          .join(" / ");
+        setInfo(
+          `${label} 미니 모의고사 ${result.createdCount}회 생성됨. 잔여 풀: ${remaining}`,
+        );
+      }
+    } catch (e) {
+      setError(
+        e instanceof Error ? e.message : "미니 모의고사 생성에 실패했습니다.",
+      );
+    } finally {
+      setCreatingMini(null);
     }
   }
 
@@ -341,12 +380,34 @@ export default function AdminMockExamsPage() {
             <button
               key={cert.id}
               onClick={() => handleCreate(cert.id)}
-              disabled={creating !== null}
+              disabled={creating !== null || creatingMini !== null}
               className={`rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${cert.accent.button}`}
             >
               {creating === cert.id
                 ? "생성 중..."
                 : `+ ${cert.shortLabel} 모의고사`}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* 미니 모의고사 일괄 생성 — 현재 풀을 비율 보존하며 가능한 회차를 한 번에 발급 */}
+      <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="text-xs text-muted">
+          미니 모의고사 — 현재 풀(검수 완료, 미사용)을 기출/AI/프리미엄
+          1:1:1 비율로 일괄 발급 (visibility=PREMIUM)
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {createButtons.map((cert) => (
+            <button
+              key={`mini-${cert.id}`}
+              onClick={() => handleCreateMini(cert.id)}
+              disabled={creating !== null || creatingMini !== null}
+              className={`rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${cert.accent.button}`}
+            >
+              {creatingMini === cert.id
+                ? "미니 생성 중..."
+                : `+ ${cert.shortLabel} 미니 일괄`}
             </button>
           ))}
         </div>

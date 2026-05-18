@@ -59,6 +59,9 @@ class MockExamServiceTest {
     private AdspMockExamCreator adspMockExamCreator;
 
     @Mock
+    private MiniMockExamCreator miniMockExamCreator;
+
+    @Mock
     private SubjectRepository subjectRepository;
 
     @Mock

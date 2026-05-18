@@ -749,6 +749,25 @@ export function deleteMockExam(id: number) {
   return adminFetch<void>(`/mock-exams/${id}`, { method: "DELETE" });
 }
 
+export interface MiniMockExamGenerationResponse {
+  examType: CreateMockExamType;
+  createdCount: number;
+  createdMockExamIds: number[];
+  /** PAST_EXAM / AI_PUBLISHED / AI_PREMIUM → 잔여 풀 수 */
+  remainingPoolBySource: Record<string, number>;
+}
+
+/**
+ * 미니 모의고사 일괄 생성 — 현재 풀에서 비율 보존하며 만들 수 있는 모든 회차 발급.
+ * visibility=PREMIUM + kind=MINI 로 자동 설정되어 구독자 풀이 흐름에 합류한다.
+ */
+export function createMiniMockExams(examType: CreateMockExamType) {
+  return adminFetch<MiniMockExamGenerationResponse>("/mock-exams/mini", {
+    method: "POST",
+    body: JSON.stringify({ examType }),
+  });
+}
+
 // ----------------------------------------------------------
 // 어드민 수동 모의고사 등록 (JSON 한 통으로 메타 + 문제 N개)
 // ----------------------------------------------------------

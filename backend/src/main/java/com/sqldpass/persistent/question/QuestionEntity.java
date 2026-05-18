@@ -96,6 +96,13 @@ public class QuestionEntity extends BaseTimeEntity {
     @Column(name = "content_hash", length = 64)
     private String contentHash;
 
+    /**
+     * 미니 모의고사로 복제된 시각. NULL 이면 다음 미니 풀 후보, NOT NULL 이면 이미 한 번 복제됨.
+     * 원본 문제에만 세팅되며, 복제본은 항상 NULL 로 시작한다.
+     */
+    @Column(name = "included_in_mini_at")
+    private LocalDateTime includedInMiniAt;
+
     public QuestionEntity(SubjectEntity subject, String content, int correctOption, String explanation) {
         this.subject = subject;
         this.content = content;
@@ -186,5 +193,33 @@ public class QuestionEntity extends BaseTimeEntity {
     public void releaseFromMockExam() {
         this.mockExam = null;
         this.displayOrder = null;
+    }
+
+    /**
+     * 미니 모의고사 복제 생성자 — 원본의 내용/정답/검증 메타를 복사한다.
+     * 다음은 의도적으로 비운다:
+     *  - id (DB 가 새로 부여)
+     *  - mock_exam, display_order (linkQuestion 으로 새 미니 회차에 link)
+     *  - content_hash (AI 생성 중복 체크와 충돌 방지 — 원본 해시는 그대로 풀에 존재)
+     *  - exported_at, included_in_mini_at (복제본은 원점 상태)
+     */
+    public QuestionEntity(QuestionEntity origin) {
+        this.subject = origin.subject;
+        this.content = origin.content;
+        this.questionType = origin.questionType;
+        this.correctOption = origin.correctOption;
+        this.answer = origin.answer;
+        this.keywords = origin.keywords;
+        this.explanation = origin.explanation;
+        this.summary = origin.summary;
+        this.topic = origin.topic;
+        this.difficulty = origin.difficulty;
+        this.verifiedAt = origin.verifiedAt;
+        this.verificationCategory = origin.verificationCategory;
+    }
+
+    /** 미니 모의고사 풀에서 복제 사용됐음을 기록 — 다음 미니 생성에서 제외된다. */
+    public void markIncludedInMini(LocalDateTime now) {
+        this.includedInMiniAt = now;
     }
 }

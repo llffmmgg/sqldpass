@@ -138,4 +138,9 @@ public class MockExamEntity extends BaseTimeEntity {
         this.examDate = null;
         this.pastExamLinkedAt = null;
     }
+
+    /** 미니 모의고사로 마킹 — 어드민 일괄 생성 시 호출. */
+    public void markAsMini() {
+        this.kind = MockExamKind.MINI;
+    }
 }

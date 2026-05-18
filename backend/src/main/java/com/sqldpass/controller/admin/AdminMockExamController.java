@@ -1,5 +1,6 @@
 package com.sqldpass.controller.admin;
 
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -22,6 +23,9 @@ import com.sqldpass.persistent.mockexam.EngineerExamTemplate;
 import com.sqldpass.persistent.mockexam.ExamType;
 import com.sqldpass.persistent.mockexam.MockExamDifficulty;
 import com.sqldpass.persistent.mockexam.MockExamVisibility;
+import com.sqldpass.service.common.ErrorCode;
+import com.sqldpass.service.common.SqldpassException;
+import com.sqldpass.service.mockexam.MiniMockExamCreator;
 import com.sqldpass.service.mockexam.MockExamService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -71,6 +75,37 @@ public class AdminMockExamController {
     @ResponseStatus(HttpStatus.CREATED)
     public MockExamSummaryResponse createManual(@RequestBody ManualMockExamRequest body) {
         return MockExamSummaryResponse.from(mockExamService.createManual(body));
+    }
+
+    @PostMapping("/mini")
+    @Operation(
+            summary = "미니 모의고사 일괄 생성",
+            description = "현재 풀(includedInMiniAt IS NULL 인 검수 완료 문제)에서 기출:AI:프리미엄 = 1:1:1, 과목 분포 보존하며 가능한 회차를 모두 생성한다. visibility=PREMIUM + kind=MINI 로 발급."
+    )
+    @ResponseStatus(HttpStatus.CREATED)
+    public MiniMockExamGenerationResponse createMini(@RequestBody CreateMiniMockExamRequest body) {
+        if (body == null || body.examType() == null) {
+            throw new SqldpassException(ErrorCode.INVALID_INPUT, "examType 은 필수입니다.");
+        }
+        return MiniMockExamGenerationResponse.from(mockExamService.createMiniBatch(body.examType()));
+    }
+
+    public record CreateMiniMockExamRequest(ExamType examType) {}
+
+    public record MiniMockExamGenerationResponse(
+            ExamType examType,
+            int createdCount,
+            List<Long> createdMockExamIds,
+            /** PAST_EXAM / AI_PUBLISHED / AI_PREMIUM 별 잔여 풀 수 (해당 examType 전체 과목 합) */
+            Map<String, Long> remainingPoolBySource
+    ) {
+        public static MiniMockExamGenerationResponse from(MiniMockExamCreator.GenerationResult r) {
+            LinkedHashMap<String, Long> remaining = new LinkedHashMap<>();
+            r.remainingBySource().forEach((k, v) -> remaining.put(k.name(), v));
+            return new MiniMockExamGenerationResponse(
+                    r.examType(), r.createdCount(),
+                    r.createdMockExamIds(), remaining);
+        }
     }
 
     @PatchMapping("/{id}/visibility")

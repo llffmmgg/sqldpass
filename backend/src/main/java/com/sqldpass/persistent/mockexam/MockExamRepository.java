@@ -13,6 +13,9 @@ public interface MockExamRepository extends JpaRepository<MockExamEntity, Long> 
     @Query("SELECT MAX(m.sequence) FROM MockExamEntity m WHERE m.examType = :examType")
     Optional<Integer> findMaxSequenceByExamType(@Param("examType") ExamType examType);
 
+    /** 미니 회차 이름 부여용 — examType + kind 조합 카운트 ("SQLD 미니 모의고사 N회" 의 N) */
+    long countByExamTypeAndKind(ExamType examType, MockExamKind kind);
+
     @Query("SELECT m FROM MockExamEntity m LEFT JOIN FETCH m.questions q LEFT JOIN FETCH q.subject s LEFT JOIN FETCH s.parent WHERE m.id = :id")
     Optional<MockExamEntity> findByIdWithQuestions(Long id);
 
@@ -23,8 +26,10 @@ public interface MockExamRepository extends JpaRepository<MockExamEntity, Long> 
     List<Object[]> findAllWithQuestionCounts();
 
     /**
-     * 사용자용 — AI 모의고사 + 전문가 검수 완료 + (PUBLISHED 또는 PREMIUM). 기출 복원(PAST_EXAM) 은
+     * 사용자용 — AI/MINI 모의고사 + 전문가 검수 완료 + (PUBLISHED 또는 PREMIUM). 기출 복원(PAST_EXAM) 은
      * /past-exams 전용.
+     *
+     * <p>MINI 회차는 어드민이 PREMIUM 으로 발급하므로 기본 정렬에서 상단에 노출된다.
      *
      * <p>정렬: <strong>PREMIUM(PASS+) 회차 먼저</strong>(결제 유도), 같은 그룹 안에서는 sequence DESC.
      * CASE WHEN 으로 visibility=PREMIUM 인 행에 정렬 키 0, 나머지 1 부여.
@@ -33,7 +38,7 @@ public interface MockExamRepository extends JpaRepository<MockExamEntity, Long> 
             "FROM MockExamEntity m LEFT JOIN m.questions q " +
             "WHERE m.visibility <> com.sqldpass.persistent.mockexam.MockExamVisibility.DRAFT " +
             "  AND m.expertVerified = true " +
-            "  AND m.kind = com.sqldpass.persistent.mockexam.MockExamKind.AI " +
+            "  AND m.kind <> com.sqldpass.persistent.mockexam.MockExamKind.PAST_EXAM " +
             "GROUP BY m " +
             "ORDER BY CASE WHEN m.visibility = com.sqldpass.persistent.mockexam.MockExamVisibility.PREMIUM " +
             "              THEN 0 ELSE 1 END, " +

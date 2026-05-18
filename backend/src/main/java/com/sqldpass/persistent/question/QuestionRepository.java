@@ -12,6 +12,9 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import com.sqldpass.persistent.mockexam.MockExamKind;
+import com.sqldpass.persistent.mockexam.MockExamVisibility;
+
 public interface QuestionRepository extends JpaRepository<QuestionEntity, Long> {
 
     /** 어드민 검증 카테고리별 문제 조회 (어드민 페이지의 카테고리 탭용) */
@@ -64,6 +67,34 @@ public interface QuestionRepository extends JpaRepository<QuestionEntity, Long> 
     @Modifying
     @Query("UPDATE QuestionEntity q SET q.mockExam = null, q.displayOrder = null WHERE q.mockExam.id = :mockExamId")
     int releaseFromMockExam(@Param("mockExamId") Long mockExamId);
+
+    /**
+     * 미니 모의고사 풀 조회 — 해당 과목에서 미니로 아직 복제되지 않은(includedInMiniAt IS NULL)
+     * 전문가 검수 완료 원본 문제만 반환.
+     * 출처 분류는 (kind, visibility) 페어로 호출자가 지정:
+     *  - 기출:           kind=PAST_EXAM, visibility=null
+     *  - AI 무료 풀:     kind=AI,        visibility=PUBLISHED
+     *  - AI 프리미엄 풀: kind=AI,        visibility=PREMIUM
+     */
+    @Query("""
+            SELECT q FROM QuestionEntity q
+            JOIN q.mockExam m
+            WHERE q.subject.id = :subjectId
+              AND q.includedInMiniAt IS NULL
+              AND m.expertVerified = true
+              AND m.kind = :kind
+              AND (:visibility IS NULL OR m.visibility = :visibility)
+            """)
+    List<QuestionEntity> findMiniPoolBySubjectAndSource(
+            @Param("subjectId") Long subjectId,
+            @Param("kind") MockExamKind kind,
+            @Param("visibility") MockExamVisibility visibility);
+
+    /** 미니 풀 복제 일괄 마킹 — N+1 dirty checking 없이 단일 UPDATE */
+    @Modifying
+    @Query("UPDATE QuestionEntity q SET q.includedInMiniAt = :now WHERE q.id IN :ids")
+    int markIncludedInMiniInBatch(@Param("ids") List<Long> ids,
+                                  @Param("now") LocalDateTime now);
 
     /**
      * 무한 풀이 — 사용자가 푼 문제는 풀 맨 뒤로 밀려서 같은 문제 반복 노출이 줄어든다.

@@ -50,6 +50,7 @@ public class MockExamService {
     private final ComputerLiteracy2MockExamCreator computerLiteracy2MockExamCreator;
     private final EngineerWrittenMockExamCreator engineerWrittenMockExamCreator;
     private final AdspMockExamCreator adspMockExamCreator;
+    private final MiniMockExamCreator miniMockExamCreator;
     private final ApplicationEventPublisher eventPublisher;
     private final SubscriptionService subscriptionService;
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -346,6 +347,16 @@ public class MockExamService {
         }
         entity.assignContentHash(QuestionContentHasher.hashOf(q.content()));
         return entity;
+    }
+
+    /**
+     * 어드민 미니 모의고사 일괄 생성 — 현재 풀에서 비율 보존하며 만들 수 있는 만큼 회차를 한 번에 발급.
+     * visibility=PREMIUM + kind=MINI 로 생성되어 구독자 풀이 흐름에 자연스럽게 합류한다.
+     */
+    @Transactional
+    @CacheEvict(value = CacheConfig.CACHE_MOCK_EXAM_LIST, allEntries = true)
+    public MiniMockExamCreator.GenerationResult createMiniBatch(ExamType examType) {
+        return miniMockExamCreator.createAllFromPool(examType);
     }
 
     @Transactional
