@@ -1,0 +1,120 @@
+{
+  "identifier": "F8B1A2C3-1111-2222-3333-444455556666",
+  "nonRenewingSubscriptions": [],
+  "products": [],
+  "settings": {
+    "_applicationInternalID": "1234567890",
+    "_developerTeamID": "TEAMIDXXXX",
+    "_lastSynchronizedDate": 0,
+    "_locale": "ko_KR",
+    "_storefront": "KOR",
+    "_storeKitErrors": []
+  },
+  "subscriptionGroups": [
+    {
+      "id": "F8B1A2C3-AAAA-BBBB-CCCC-DDDDEEEEFFFF",
+      "localizations": [
+        {
+          "description": "문어CBT 프리미엄",
+          "displayName": "프리미엄 구독",
+          "locale": "ko_KR"
+        }
+      ],
+      "name": "sqldpass_premium",
+      "subscriptions": [
+        {
+          "adHocOffers": [],
+          "codeOffers": [],
+          "displayPrice": "3900",
+          "familyShareable": false,
+          "groupNumber": 4,
+          "internalID": "iap_three_day_id",
+          "introductoryOffer": null,
+          "localizations": [
+            {
+              "description": "3일 동안 모든 기능 이용",
+              "displayName": "Thunder (3일)",
+              "locale": "ko_KR"
+            }
+          ],
+          "productID": "iap_three_day",
+          "recurringSubscriptionPeriod": "P3D",
+          "referenceName": "Thunder",
+          "subscriptionGroupID": "F8B1A2C3-AAAA-BBBB-CCCC-DDDDEEEEFFFF",
+          "type": "RecurringSubscription",
+          "winbackOffers": []
+        },
+        {
+          "adHocOffers": [],
+          "codeOffers": [],
+          "displayPrice": "2900",
+          "familyShareable": false,
+          "groupNumber": 3,
+          "internalID": "iap_focus_id",
+          "introductoryOffer": null,
+          "localizations": [
+            {
+              "description": "30일 집중 학습 플랜",
+              "displayName": "Focus (30일)",
+              "locale": "ko_KR"
+            }
+          ],
+          "productID": "iap_focus",
+          "recurringSubscriptionPeriod": "P1M",
+          "referenceName": "Focus",
+          "subscriptionGroupID": "F8B1A2C3-AAAA-BBBB-CCCC-DDDDEEEEFFFF",
+          "type": "RecurringSubscription",
+          "winbackOffers": []
+        },
+        {
+          "adHocOffers": [],
+          "codeOffers": [],
+          "displayPrice": "9900",
+          "familyShareable": false,
+          "groupNumber": 2,
+          "internalID": "iap_one_month_id",
+          "introductoryOffer": null,
+          "localizations": [
+            {
+              "description": "한 달간 모든 기능 + 광고 제거",
+              "displayName": "Pro (한 달)",
+              "locale": "ko_KR"
+            }
+          ],
+          "productID": "iap_one_month",
+          "recurringSubscriptionPeriod": "P1M",
+          "referenceName": "Pro",
+          "subscriptionGroupID": "F8B1A2C3-AAAA-BBBB-CCCC-DDDDEEEEFFFF",
+          "type": "RecurringSubscription",
+          "winbackOffers": []
+        },
+        {
+          "adHocOffers": [],
+          "codeOffers": [],
+          "displayPrice": "29900",
+          "familyShareable": false,
+          "groupNumber": 1,
+          "internalID": "iap_unlimited_id",
+          "introductoryOffer": null,
+          "localizations": [
+            {
+              "description": "6개월 무제한 이용권",
+              "displayName": "All Pass (6개월)",
+              "locale": "ko_KR"
+            }
+          ],
+          "productID": "iap_unlimited",
+          "recurringSubscriptionPeriod": "P6M",
+          "referenceName": "All Pass",
+          "subscriptionGroupID": "F8B1A2C3-AAAA-BBBB-CCCC-DDDDEEEEFFFF",
+          "type": "RecurringSubscription",
+          "winbackOffers": []
+        }
+      ]
+    }
+  ],
+  "version": {
+    "major": 4,
+    "minor": 0
+  }
+}
