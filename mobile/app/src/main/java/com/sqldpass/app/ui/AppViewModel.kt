@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.sqldpass.app.data.AppRepository
 import com.sqldpass.app.data.BestScoreSummary
+import com.sqldpass.app.data.BookmarkSummary
 import com.sqldpass.app.data.MockExamSummary
 import com.sqldpass.app.data.OverallAvgResponse
 import com.sqldpass.app.data.PastExamAnswer
@@ -12,6 +13,7 @@ import com.sqldpass.app.data.PastExamSummary
 import com.sqldpass.app.data.QuestionDetailResponse
 import com.sqldpass.app.data.QuestionResponse
 import com.sqldpass.app.data.SolveAnswerRequest
+import com.sqldpass.app.data.SolveSummary
 import com.sqldpass.app.data.StreakResponse
 import com.sqldpass.app.data.SubjectResponse
 import com.sqldpass.app.data.SyncResult
@@ -106,6 +108,12 @@ data class AppUiState(
     val memberMe: com.sqldpass.app.data.MemberMeResponse? = null,
     val passplusOpen: Boolean = false,
     val soloSession: SoloSession? = null,
+    val bookmarks: List<BookmarkSummary> = emptyList(),
+    val bookmarksLoading: Boolean = false,
+    val bookmarksError: String? = null,
+    val history: List<SolveSummary> = emptyList(),
+    val historyLoading: Boolean = false,
+    val historyError: String? = null,
 )
 
 class AppViewModel(
@@ -195,10 +203,13 @@ class AppViewModel(
     fun toggleBookmark(questionId: Long) {
         val isBookmarked = _state.value.runnerBookmarks.contains(questionId)
         // optimistic
+        val previousList = _state.value.bookmarks
         _state.update {
             it.copy(
                 runnerBookmarks = if (isBookmarked) it.runnerBookmarks - questionId
-                else it.runnerBookmarks + questionId
+                else it.runnerBookmarks + questionId,
+                bookmarks = if (isBookmarked) it.bookmarks.filterNot { b -> b.questionId == questionId }
+                else it.bookmarks,
             )
         }
         viewModelScope.launch {
@@ -211,10 +222,63 @@ class AppViewModel(
                     it.copy(
                         runnerBookmarks = if (isBookmarked) it.runnerBookmarks + questionId
                         else it.runnerBookmarks - questionId,
+                        bookmarks = if (isBookmarked) previousList else it.bookmarks,
                         message = "즐겨찾기 변경 실패: ${e.message}",
                     )
                 }
             }
+        }
+    }
+
+    /** BookmarksScreen 진입 시 호출 — 인증 가드 후 GET /api/bookmarks. */
+    fun loadBookmarks() {
+        if (_state.value.bookmarksLoading) return
+        if (tokenStore.token.isNullOrBlank()) {
+            _state.update { it.copy(bookmarks = emptyList(), bookmarksError = null) }
+            return
+        }
+        viewModelScope.launch {
+            _state.update { it.copy(bookmarksLoading = true, bookmarksError = null) }
+            runCatching { repository.bookmarks() }
+                .onSuccess { resp ->
+                    _state.update {
+                        it.copy(
+                            bookmarks = resp.items,
+                            bookmarksLoading = false,
+                            bookmarksError = null,
+                            // 화면 진입 시 runnerBookmarks 도 서버 상태와 동기화
+                            runnerBookmarks = resp.items.map { b -> b.questionId }.toSet(),
+                        )
+                    }
+                }
+                .onFailure { e ->
+                    _state.update {
+                        it.copy(bookmarksLoading = false, bookmarksError = e.message)
+                    }
+                }
+        }
+    }
+
+    /** HistoryScreen 진입 시 호출 — 인증 가드 후 GET /api/solves. */
+    fun loadHistory() {
+        if (_state.value.historyLoading) return
+        if (tokenStore.token.isNullOrBlank()) {
+            _state.update { it.copy(history = emptyList(), historyError = null) }
+            return
+        }
+        viewModelScope.launch {
+            _state.update { it.copy(historyLoading = true, historyError = null) }
+            runCatching { repository.mySolves() }
+                .onSuccess { list ->
+                    _state.update {
+                        it.copy(history = list, historyLoading = false, historyError = null)
+                    }
+                }
+                .onFailure { e ->
+                    _state.update {
+                        it.copy(historyLoading = false, historyError = e.message)
+                    }
+                }
         }
     }
 

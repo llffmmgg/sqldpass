@@ -31,6 +31,12 @@ sealed class SqldpassRoute(val route: String) {
 
     /** 단일 채점 풀이 — 웹 /solve 와 동치(1문제씩 즉시 채점). */
     data object SoloSolve : SqldpassRoute("solo-solve")
+
+    /** 북마크 모아보기 — ProfileTab 에서 진입. */
+    data object Bookmarks : SqldpassRoute("bookmarks")
+
+    /** 풀이 기록 — ProfileTab 에서 진입. */
+    data object History : SqldpassRoute("history")
 }
 
 data class TabSpec(val route: SqldpassRoute, val label: String, val icon: ImageVector)

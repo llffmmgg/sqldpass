@@ -291,6 +291,9 @@ class AppRepository(
 
     suspend fun solveDetail(id: Long): SolveResponse = api.getSolve(id)
 
+    /** GET /api/solves — HistoryScreen 풀이기록 목록. */
+    suspend fun mySolves(): List<SolveSummary> = api.getMySolves()
+
     suspend fun subscription(): SubscriptionResponse = api.getSubscription()
 
     suspend fun bookmarks(): BookmarkListResponse = api.getBookmarks()

@@ -1,0 +1,15 @@
+{
+  "name": "android-bookmarks-history",
+  "description": "Android 북마크/풀이기록 화면 신설 — ProfileTab placeholder 토스트 제거 + 실제 NavGraph 라우트 연결.",
+  "status": "pending",
+  "steps": [
+    {
+      "id": "step1",
+      "description": "BookmarksScreen + ViewModel state 확장 + NavGraph 연결"
+    },
+    {
+      "id": "step2",
+      "description": "HistoryScreen (풀이기록) + ViewModel state 확장 + NavGraph 연결"
+    }
+  ]
+}

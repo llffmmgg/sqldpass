@@ -136,6 +136,21 @@ data class SolveAnswerResponse(
     val correct: Boolean,
 )
 
+/**
+ * GET /api/solves 응답 항목 — 백엔드 `SolveSummaryResponse` 미러.
+ * solvedAt 은 KST naive LocalDateTime ISO ("2026-05-18T16:25:35").
+ */
+@JsonClass(generateAdapter = true)
+data class SolveSummary(
+    val id: Long,
+    val subjectId: Long? = null,
+    val mockExamId: Long? = null,
+    val totalCount: Int,
+    val correctCount: Int,
+    val score: Int,
+    val solvedAt: String,
+)
+
 @JsonClass(generateAdapter = true)
 data class VerifyPlayBillingRequest(
     val productId: String,

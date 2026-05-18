@@ -67,6 +67,8 @@ fun ProfileTab(
     onSubmitFeedback: (String, Long?, String, (Boolean) -> Unit) -> Unit = { _, _, _, cb -> cb(false) },
     onOpenPassPlus: () -> Unit = {},
     onOpenWrongAnswers: () -> Unit = {},
+    onOpenBookmarks: () -> Unit = {},
+    onOpenHistory: () -> Unit = {},
     onLoadMe: () -> Unit = {},
     onLoadSubscription: () -> Unit = {},
     themeMode: ThemeMode = ThemeMode.LIGHT,
@@ -181,14 +183,14 @@ fun ProfileTab(
                     AppListRow(
                         title = "북마크한 문제",
                         leadingIcon = Icons.Outlined.Bookmark,
-                        onClick = { pendingNotice = "북마크 화면은 곧 출시됩니다." },
+                        onClick = onOpenBookmarks,
                     )
                 }
                 item {
                     AppListRow(
                         title = "풀이 기록",
                         leadingIcon = Icons.Outlined.History,
-                        onClick = { pendingNotice = "풀이 기록 화면은 곧 출시됩니다." },
+                        onClick = onOpenHistory,
                     )
                 }
                 item {

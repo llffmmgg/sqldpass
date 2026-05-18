@@ -52,6 +52,9 @@ interface SqldpassApi {
     @POST("api/solves")
     suspend fun submitSolve(@Body body: SolveRequest): SolveResponse
 
+    @GET("api/solves")
+    suspend fun getMySolves(): List<com.sqldpass.app.data.SolveSummary>
+
     @GET("api/solves/{id}")
     suspend fun getSolve(@Path("id") id: Long): SolveResponse
 

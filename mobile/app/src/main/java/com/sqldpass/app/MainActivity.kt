@@ -54,6 +54,8 @@ import com.sqldpass.app.ui.runner.RunnerScreen
 import com.sqldpass.app.ui.solve.SoloSolveScreen
 import com.sqldpass.app.ui.solve.SolveTab
 import com.sqldpass.app.ui.theme.SqldpassTheme
+import com.sqldpass.app.ui.bookmarks.BookmarksScreen
+import com.sqldpass.app.ui.history.HistoryScreen
 import com.sqldpass.app.ui.wronganswer.WrongAnswerTab
 import kotlinx.coroutines.launch
 
@@ -351,6 +353,8 @@ private fun SqldpassApp(
                             onSubmitFeedback = viewModel::submitFeedback,
                             onOpenPassPlus = { navController.navigate(SqldpassRoute.PassPlus.route) },
                             onOpenWrongAnswers = { navController.navigate(SqldpassRoute.WrongAnswers.route) },
+                            onOpenBookmarks = { navController.navigate(SqldpassRoute.Bookmarks.route) },
+                            onOpenHistory = { navController.navigate(SqldpassRoute.History.route) },
                             onLoadMe = viewModel::loadMe,
                             onLoadSubscription = viewModel::loadSubscription,
                             themeMode = themeMode,
@@ -430,6 +434,35 @@ private fun SqldpassApp(
                             ) { /* no-op — 상태는 viewModel.message 로 표시 */ }
                         },
                         bookmarkedIds = state.runnerBookmarks,
+                    )
+                }
+                composable(
+                    SqldpassRoute.Bookmarks.route,
+                    enterTransition = { pushSlideEnter() },
+                    exitTransition = { pushSlideExitForward() },
+                    popExitTransition = { pushSlidePopExit() },
+                ) {
+                    BookmarksScreen(
+                        state = state,
+                        onLoadBookmarks = viewModel::loadBookmarks,
+                        onToggleBookmark = viewModel::toggleBookmark,
+                        onBack = {
+                            if (navController.previousBackStackEntry != null) navController.popBackStack()
+                        },
+                    )
+                }
+                composable(
+                    SqldpassRoute.History.route,
+                    enterTransition = { pushSlideEnter() },
+                    exitTransition = { pushSlideExitForward() },
+                    popExitTransition = { pushSlidePopExit() },
+                ) {
+                    HistoryScreen(
+                        state = state,
+                        onLoadHistory = viewModel::loadHistory,
+                        onBack = {
+                            if (navController.previousBackStackEntry != null) navController.popBackStack()
+                        },
                     )
                 }
             }
