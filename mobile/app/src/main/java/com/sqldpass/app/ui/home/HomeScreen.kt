@@ -1,6 +1,5 @@
 package com.sqldpass.app.ui.home
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -10,13 +9,12 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.Login
 import androidx.compose.material.icons.outlined.AccountCircle
-import androidx.compose.material.icons.outlined.Login
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -25,6 +23,7 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -33,13 +32,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.sqldpass.app.R
-import com.sqldpass.app.ui.theme.SqldpassTheme
 
 private val CardCorner = 14.dp
 private val ButtonCorner = 12.dp
@@ -48,31 +44,63 @@ private val ButtonCorner = 12.dp
 fun HomeScreen(
     nickname: String?,
     message: String?,
-    onLogin: () -> Unit,
-    onLogout: () -> Unit,
+    onQuickPractice: () -> Unit,
     onSync: () -> Unit,
     onPurchase: (String) -> Unit,
 ) {
     LazyColumn(
-        modifier = Modifier
-            .fillMaxSize(),
-        contentPadding = PaddingValues(20.dp),
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 8.dp, bottom = 20.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
-        item {
-            BrandHeaderRow(
-                nickname = nickname,
-                onLogin = onLogin,
-                onLogout = onLogout,
-            )
+        nickname?.let {
+            item {
+                Text(
+                    "$it 님, 오늘도 한 회차 풀어볼까요?",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
         }
         item {
-            ActionCard(
-                title = "오늘 바로 풀기",
-                body = "최근 공개된 모의고사와 다운로드된 문제를 앱에서 바로 이어서 풉니다.",
-                action = "오프라인 준비",
-                onClick = onSync,
-            )
+            // 강조 카드 — 좌측 emerald 액센트 바
+            com.sqldpass.app.ui.common.AccentCard {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(18.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        Text("오늘 바로 풀기", style = MaterialTheme.typography.titleLarge)
+                        com.sqldpass.app.ui.common.SqldpassBadge(
+                            label = "NEW",
+                            base = MaterialTheme.colorScheme.primary,
+                        )
+                    }
+                    Text(
+                        "과목을 골라 10문제 세트로 바로 시작합니다. 필요한 콘텐츠는 앱에 내려받아 둘 수 있어요.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Spacer(Modifier.height(2.dp))
+                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Button(
+                            shape = RoundedCornerShape(ButtonCorner),
+                            onClick = onQuickPractice,
+                            modifier = Modifier.sizeIn(minHeight = 48.dp),
+                        ) { Text("10문제 풀기") }
+                        OutlinedButton(
+                            shape = RoundedCornerShape(ButtonCorner),
+                            onClick = onSync,
+                            modifier = Modifier.sizeIn(minHeight = 48.dp),
+                        ) { Text("오프라인 준비") }
+                    }
+                }
+            }
         }
         item {
             ActionCard(
@@ -80,69 +108,60 @@ fun HomeScreen(
                 body = "프리미엄 회차는 구매 후 앱에서도 오프라인 풀이가 가능합니다.",
                 action = "PASS+ 보기",
                 onClick = { onPurchase("iap_one_month") },
+                badgeLabel = "PASS+",
+                badgeColor = com.sqldpass.app.ui.theme.LocalSqldpassSemanticColors.current.cert.sqld,
             )
         }
         message?.let { item { StatusCard(it) } }
     }
 }
 
+/**
+ * TopAppBar 의 actions 슬롯에 들어갈 로그인/로그아웃 아이콘.
+ * Dropdown 메뉴 포함 — 로그인 상태일 때만 expand.
+ */
 @Composable
-private fun BrandHeaderRow(
+fun HomeAccountMenu(
     nickname: String?,
     onLogin: () -> Unit,
     onLogout: () -> Unit,
 ) {
     var menuOpen by remember { mutableStateOf(false) }
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Image(
-            painter = painterResource(R.drawable.logo),
-            contentDescription = "문어CBT 로고",
-            modifier = Modifier.size(54.dp),
-        )
-        Spacer(Modifier.size(12.dp))
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                "문어CBT",
-                style = MaterialTheme.typography.headlineSmall,
-            )
-            Text(
-                nickname?.let { "$it 님, 오늘도 한 회차 풀어볼까요?" } ?: "웹과 같은 톤, 더 편한 앱 경험",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+    if (nickname == null) {
+        IconButton(
+            onClick = onLogin,
+            modifier = Modifier.sizeIn(minWidth = 48.dp, minHeight = 48.dp),
+        ) {
+            Icon(Icons.AutoMirrored.Outlined.Login, contentDescription = "Google 로그인")
         }
-        if (nickname == null) {
-            IconButton(
-                onClick = onLogin,
-                modifier = Modifier.sizeIn(minWidth = 48.dp, minHeight = 48.dp),
-            ) {
-                Icon(Icons.Outlined.Login, contentDescription = "Google 로그인")
-            }
-        } else {
-            IconButton(
-                onClick = { menuOpen = true },
-                modifier = Modifier.sizeIn(minWidth = 48.dp, minHeight = 48.dp),
-            ) {
-                Icon(Icons.Outlined.AccountCircle, contentDescription = "계정 메뉴")
-            }
-            DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
-                DropdownMenuItem(
-                    text = { Text("로그아웃") },
-                    onClick = {
-                        menuOpen = false
-                        onLogout()
-                    },
-                )
-            }
+    } else {
+        IconButton(
+            onClick = { menuOpen = true },
+            modifier = Modifier.sizeIn(minWidth = 48.dp, minHeight = 48.dp),
+        ) {
+            Icon(Icons.Outlined.AccountCircle, contentDescription = "계정 메뉴")
+        }
+        DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
+            DropdownMenuItem(
+                text = { Text("로그아웃") },
+                onClick = {
+                    menuOpen = false
+                    onLogout()
+                },
+            )
         }
     }
 }
 
 @Composable
-fun ActionCard(title: String, body: String, action: String, onClick: () -> Unit) {
+fun ActionCard(
+    title: String,
+    body: String,
+    action: String,
+    onClick: () -> Unit,
+    badgeLabel: String? = null,
+    badgeColor: Color? = null,
+) {
     val haptic = LocalHapticFeedback.current
     Card(
         shape = RoundedCornerShape(CardCorner),
@@ -158,7 +177,18 @@ fun ActionCard(title: String, body: String, action: String, onClick: () -> Unit)
                 .padding(18.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
-            Text(title, style = MaterialTheme.typography.titleLarge)
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                Text(title, style = MaterialTheme.typography.titleLarge)
+                if (badgeLabel != null && badgeColor != null) {
+                    com.sqldpass.app.ui.common.SqldpassBadge(
+                        label = badgeLabel,
+                        base = badgeColor,
+                    )
+                }
+            }
             Text(
                 body,
                 style = MaterialTheme.typography.bodyMedium,
@@ -190,42 +220,6 @@ fun StatusCard(message: String) {
             message,
             modifier = Modifier.padding(14.dp),
             style = MaterialTheme.typography.bodyMedium,
-        )
-    }
-}
-
-@Preview(name = "Home — Light", showBackground = true)
-@Composable
-private fun HomePreviewLight() {
-    SqldpassTheme(darkTheme = false) {
-        HomeScreen(
-            nickname = "문어",
-            message = "오프라인 콘텐츠가 준비됐습니다.",
-            onLogin = {}, onLogout = {}, onSync = {}, onPurchase = {},
-        )
-    }
-}
-
-@Preview(name = "Home — Dark", showBackground = true)
-@Composable
-private fun HomePreviewDark() {
-    SqldpassTheme(darkTheme = true) {
-        HomeScreen(
-            nickname = null,
-            message = null,
-            onLogin = {}, onLogout = {}, onSync = {}, onPurchase = {},
-        )
-    }
-}
-
-@Preview(name = "Home — Large font", showBackground = true, fontScale = 1.5f)
-@Composable
-private fun HomePreviewLargeFont() {
-    SqldpassTheme(darkTheme = false) {
-        HomeScreen(
-            nickname = "문어",
-            message = null,
-            onLogin = {}, onLogout = {}, onSync = {}, onPurchase = {},
         )
     }
 }

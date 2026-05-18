@@ -8,21 +8,40 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.sizeIn
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.AppRegistration
+import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.MoreVert
+import androidx.compose.material.icons.outlined.RadioButtonUnchecked
 import androidx.compose.material.icons.outlined.Report
 import androidx.compose.material.icons.outlined.Star
 import androidx.compose.material.icons.outlined.StarBorder
@@ -37,10 +56,8 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -50,6 +67,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalFocusManager
@@ -58,11 +76,10 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.core.text.HtmlCompat
 import com.sqldpass.app.ui.theme.SqldpassTheme
 import kotlinx.coroutines.delay
 
-private val CardCorner = 12.dp
+private val CardCorner = 14.dp
 private val ButtonCorner = 12.dp
 
 @Composable
@@ -125,6 +142,7 @@ fun QuestionRunnerScreen(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
+                .statusBarsPadding()
                 .padding(horizontal = 8.dp, vertical = 6.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -222,7 +240,8 @@ fun QuestionRunnerScreen(
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.primary,
             )
-            HtmlContent(html = current.content)
+            val parsed = current.parsed
+            MarkdownContent(text = parsed.body.ifBlank { current.content })
 
             if (isShortAnswer(current.questionType)) {
                 val focus = LocalFocusManager.current
@@ -237,13 +256,27 @@ fun QuestionRunnerScreen(
                 )
             } else {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    (1..4).forEach { option ->
+                    val options = parsed.options
+                    val displayCount = if (options.isNotEmpty()) options.size else 4
+                    (1..displayCount).forEach { option ->
+                        val optionText = options.getOrNull(option - 1)
                         OptionRow(
-                            label = optionLabel(option),
+                            optionNumber = option,
+                            optionText = optionText,
                             selected = draft.selectedOption == option,
                             onClick = {
                                 haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                                 drafts[current.id] = draft.copy(selectedOption = option)
+                            },
+                            onDoubleClick = {
+                                // 더블 탭: 선택 + 다음 문제. 마지막 문제면 제출.
+                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                drafts[current.id] = draft.copy(selectedOption = option)
+                                if (isLast) {
+                                    onSubmit(questions.map { drafts[it.id] ?: RunnerAnswerDraft(it.id) })
+                                } else {
+                                    index += 1
+                                }
                             },
                         )
                     }
@@ -254,6 +287,8 @@ fun QuestionRunnerScreen(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
+                .navigationBarsPadding()
+                .imePadding()
                 .padding(horizontal = 20.dp, vertical = 16.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
@@ -296,54 +331,175 @@ fun QuestionRunnerScreen(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun OptionRow(label: String, selected: Boolean, onClick: () -> Unit) {
+private fun OptionRow(
+    optionNumber: Int,
+    optionText: String?,
+    selected: Boolean,
+    onClick: () -> Unit,
+    onDoubleClick: () -> Unit = onClick,
+) {
+    val containerColor by animateColorAsState(
+        targetValue = if (selected) MaterialTheme.colorScheme.primaryContainer
+        else MaterialTheme.colorScheme.surface,
+        animationSpec = tween(durationMillis = 200),
+        label = "option-bg",
+    )
+    val contentColor by animateColorAsState(
+        targetValue = if (selected) MaterialTheme.colorScheme.onPrimaryContainer
+        else MaterialTheme.colorScheme.onSurface,
+        animationSpec = tween(durationMillis = 200),
+        label = "option-fg",
+    )
+    val accent = MaterialTheme.colorScheme.primary
+
+    // Press 즉시 들어가는 느낌 — 토스/카카오 패턴.
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val pressScale by animateFloatAsState(
+        targetValue = if (isPressed) 0.97f else 1f,
+        animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
+        label = "option-press",
+    )
+
+    // Selection bounce — 선택 직후 살짝 튀어오름 (1.04 → 1.0).
+    var bounceTrigger by remember { mutableStateOf(false) }
+    LaunchedEffect(selected) {
+        if (selected) {
+            bounceTrigger = true
+            kotlinx.coroutines.delay(140)
+            bounceTrigger = false
+        }
+    }
+    val bounceScale by animateFloatAsState(
+        targetValue = if (bounceTrigger) 1.04f else 1f,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessHigh,
+        ),
+        label = "option-bounce",
+    )
+    val combinedScale = pressScale * bounceScale
+
     Card(
+        modifier = Modifier
+            .graphicsLayer { scaleX = combinedScale; scaleY = combinedScale }
+            .combinedClickable(
+                interactionSource = interactionSource,
+                indication = androidx.compose.foundation.LocalIndication.current,
+                onClick = onClick,
+                onDoubleClick = onDoubleClick,
+            ),
         shape = RoundedCornerShape(CardCorner),
         colors = CardDefaults.cardColors(
-            containerColor = if (selected) MaterialTheme.colorScheme.primaryContainer
-            else MaterialTheme.colorScheme.surface,
-            contentColor = if (selected) MaterialTheme.colorScheme.onPrimaryContainer
-            else MaterialTheme.colorScheme.onSurface,
+            containerColor = containerColor,
+            contentColor = contentColor,
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        border = if (selected) BorderStroke(1.dp, accent) else null,
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .sizeIn(minHeight = 48.dp)
-                .padding(horizontal = 12.dp, vertical = 6.dp),
+                .sizeIn(minHeight = 64.dp)
+                .padding(end = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            RadioButton(selected = selected, onClick = onClick)
-            Spacer(Modifier.size(4.dp))
-            Text(
-                label,
-                style = if (selected) MaterialTheme.typography.titleMedium
-                else MaterialTheme.typography.bodyLarge,
+            // 좌측 액센트 바 — 선택 시 emerald 6dp, 미선택 시 투명
+            Box(
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .width(if (selected) 6.dp else 4.dp)
+                    .background(if (selected) accent else androidx.compose.ui.graphics.Color.Transparent),
+            )
+            Spacer(Modifier.size(8.dp))
+            // 번호 서클
+            Box(
+                modifier = Modifier
+                    .size(28.dp)
+                    .background(
+                        if (selected) accent else MaterialTheme.colorScheme.surfaceVariant,
+                        CircleShape,
+                    ),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(
+                    "$optionNumber",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = if (selected) MaterialTheme.colorScheme.onPrimary
+                    else MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            Spacer(Modifier.size(10.dp))
+            // 보기 텍스트 — Markwon 으로 렌더 (코드·표 포함 가능)
+            Box(modifier = Modifier.weight(1f)) {
+                if (optionText != null) {
+                    MarkdownContent(text = optionText, textSizeSp = 14f)
+                } else {
+                    Text(
+                        "${optionNumber}번",
+                        style = MaterialTheme.typography.bodyLarge,
+                    )
+                }
+            }
+            Spacer(Modifier.size(8.dp))
+            Icon(
+                imageVector = if (selected) Icons.Outlined.CheckCircle else Icons.Outlined.RadioButtonUnchecked,
+                contentDescription = if (selected) "선택됨" else "미선택",
+                tint = if (selected) accent else MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
     }
 }
 
+/**
+ * 마크다운/HTML 본문 렌더.
+ *  1) ensureCodeFences — 백엔드가 `<pre><code>` HTML 로 보낸 경우 fenced markdown 으로 정규화
+ *  2) splitMarkdownSegments — 코드블록과 일반 텍스트 분리
+ *  3) 일반 = Markwon TextView, 코드블록 = Compose Native `CodeBlockCard`
+ */
 @Composable
-private fun HtmlContent(html: String) {
+private fun MarkdownContent(text: String, textSizeSp: Float = 16f) {
+    val segments = remember(text) {
+        com.sqldpass.app.text.splitMarkdownSegments(
+            com.sqldpass.app.text.ensureCodeFences(text)
+        )
+    }
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        segments.forEach { seg ->
+            when (seg) {
+                is com.sqldpass.app.text.MarkdownSegment.Markdown ->
+                    MarkwonTextView(text = seg.text, textSizeSp = textSizeSp)
+                is com.sqldpass.app.text.MarkdownSegment.CodeBlock ->
+                    CodeBlockCard(language = seg.language, code = seg.code)
+            }
+        }
+    }
+}
+
+@Composable
+private fun MarkwonTextView(text: String, textSizeSp: Float) {
+    val ctx = androidx.compose.ui.platform.LocalContext.current
     val onSurface = MaterialTheme.colorScheme.onSurface.toArgb()
+    val markwon = remember(ctx) { com.sqldpass.app.text.SqldpassMarkwon.get(ctx) }
+    val spanned = remember(text, markwon) { markwon.toMarkdown(text) }
     AndroidView(
         modifier = Modifier.fillMaxWidth(),
-        factory = { ctx ->
-            TextView(ctx).apply {
+        factory = { c ->
+            TextView(c).apply {
                 layoutParams = ViewGroup.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,
                     ViewGroup.LayoutParams.WRAP_CONTENT,
                 )
-                textSize = 16f
-                setLineSpacing(8f, 1f)
+                textSize = textSizeSp
+                setLineSpacing(6f, 1.05f)
             }
         },
         update = { view ->
             view.setTextColor(onSurface)
-            view.text = HtmlCompat.fromHtml(html, HtmlCompat.FROM_HTML_MODE_COMPACT)
+            view.textSize = textSizeSp
+            markwon.setParsedMarkdown(view, spanned)
         },
     )
 }

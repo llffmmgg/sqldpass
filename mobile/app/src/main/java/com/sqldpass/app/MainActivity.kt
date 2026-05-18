@@ -2,6 +2,7 @@ package com.sqldpass.app
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.enableEdgeToEdge
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
@@ -9,14 +10,11 @@ import androidx.activity.viewModels
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -24,9 +22,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
-import androidx.navigation.NavController
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavGraph.Companion.findStartDestination
-import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -35,6 +32,11 @@ import com.sqldpass.app.data.ThemeMode
 import com.sqldpass.app.nav.BOTTOM_TABS
 import com.sqldpass.app.nav.SqldpassRoute
 import com.sqldpass.app.nav.isBottomTabRoute
+import com.sqldpass.app.nav.pushSlideEnter
+import com.sqldpass.app.nav.pushSlideExitForward
+import com.sqldpass.app.nav.pushSlidePopExit
+import com.sqldpass.app.nav.tabFadeEnter
+import com.sqldpass.app.nav.tabFadeExit
 import com.sqldpass.app.ui.AppUiState
 import com.sqldpass.app.ui.AppViewModel
 import com.sqldpass.app.ui.AppViewModelFactory
@@ -59,17 +61,20 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
+        enableEdgeToEdge()
         super.onCreate(savedInstanceState)
-        app.billingManager.connect()
+        // Play Billing 연결은 IPC 대기가 100~500ms 메인 스레드 블록 가능 — 백그라운드로.
+        lifecycleScope.launch { app.billingManager.connect() }
         setContent {
             val themeMode by app.settingsStore.themeMode.collectAsState()
+            val dynamicColor by app.settingsStore.dynamicColor.collectAsState()
             val systemDark = androidx.compose.foundation.isSystemInDarkTheme()
             val darkTheme = when (themeMode) {
                 ThemeMode.LIGHT -> false
                 ThemeMode.DARK -> true
                 ThemeMode.SYSTEM -> systemDark
             }
-            SqldpassTheme(darkTheme = darkTheme) {
+            SqldpassTheme(darkTheme = darkTheme, dynamicColor = dynamicColor) {
                 val state by viewModel.state.collectAsState()
                 val scope = rememberCoroutineScope()
                 val launcher = rememberLauncherForActivityResult(
@@ -99,6 +104,8 @@ class MainActivity : ComponentActivity() {
                     onLoadProducts = { scope.launch { app.billingManager.loadProducts() } },
                     themeMode = themeMode,
                     onThemeChange = app.settingsStore::setThemeMode,
+                    dynamicColor = dynamicColor,
+                    onDynamicColorChange = app.settingsStore::setDynamicColor,
                 )
             }
         }
@@ -125,60 +132,53 @@ private fun SqldpassApp(
     onLoadProducts: () -> Unit,
     themeMode: ThemeMode,
     onThemeChange: (ThemeMode) -> Unit,
+    dynamicColor: Boolean,
+    onDynamicColorChange: (Boolean) -> Unit,
 ) {
     val navController = rememberNavController()
     val backStack by navController.currentBackStackEntryAsState()
     val currentRoute = backStack?.destination?.route
-    val showBottomBar = isBottomTabRoute(currentRoute)
+    val showNavigationSuite = isBottomTabRoute(currentRoute)
 
-    Scaffold(
-        bottomBar = {
-            if (showBottomBar) {
-                NavigationBar {
-                    BOTTOM_TABS.forEach { tab ->
-                        val selected = currentRoute == tab.route.route
-                        NavigationBarItem(
-                            selected = selected,
-                            onClick = {
-                                navController.navigate(tab.route.route) {
-                                    popUpTo(navController.graph.findStartDestination().id) {
-                                        saveState = true
-                                    }
-                                    launchSingleTop = true
-                                    restoreState = true
-                                }
-                            },
-                            icon = { Icon(tab.icon, contentDescription = tab.label) },
-                            label = { Text(tab.label) },
-                        )
-                    }
-                }
-            }
-        },
-    ) { padding ->
+    val appContent: @Composable () -> Unit = {
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background)
-                .padding(padding),
+                .background(MaterialTheme.colorScheme.background),
         ) {
             NavHost(
                 navController = navController,
                 startDestination = SqldpassRoute.Home.route,
             ) {
-                composable(SqldpassRoute.Home.route) {
-                    TabScaffold(title = "문어CBT") {
+                composable(
+                    SqldpassRoute.Home.route,
+                    enterTransition = { tabFadeEnter() },
+                    exitTransition = { tabFadeExit() },
+                ) {
+                    TabScaffold(
+                        title = "문어CBT",
+                        actions = {
+                            com.sqldpass.app.ui.home.HomeAccountMenu(
+                                nickname = state.nickname,
+                                onLogin = onLogin,
+                                onLogout = onLogout,
+                            )
+                        },
+                    ) {
                         HomeScreen(
                             nickname = state.nickname,
                             message = state.message,
-                            onLogin = onLogin,
-                            onLogout = onLogout,
+                            onQuickPractice = { navController.navigate(SqldpassRoute.Solve.route) },
                             onSync = viewModel::sync,
                             onPurchase = { navController.navigate(SqldpassRoute.PassPlus.route) },
                         )
                     }
                 }
-                composable(SqldpassRoute.MockExam.route) {
+                composable(
+                    SqldpassRoute.MockExam.route,
+                    enterTransition = { tabFadeEnter() },
+                    exitTransition = { tabFadeExit() },
+                ) {
                     TabScaffold(title = "모의고사") {
                         MockExamTab(
                             state = state,
@@ -190,7 +190,11 @@ private fun SqldpassApp(
                         )
                     }
                 }
-                composable(SqldpassRoute.PastExam.route) {
+                composable(
+                    SqldpassRoute.PastExam.route,
+                    enterTransition = { tabFadeEnter() },
+                    exitTransition = { tabFadeExit() },
+                ) {
                     TabScaffold(title = "기출복원") {
                         PastExamTab(
                             state = state,
@@ -202,7 +206,11 @@ private fun SqldpassApp(
                         )
                     }
                 }
-                composable(SqldpassRoute.Solve.route) {
+                composable(
+                    SqldpassRoute.Solve.route,
+                    enterTransition = { tabFadeEnter() },
+                    exitTransition = { tabFadeExit() },
+                ) {
                     TabScaffold(title = "문제풀기") {
                         SolveTab(
                             state = state,
@@ -214,7 +222,11 @@ private fun SqldpassApp(
                         )
                     }
                 }
-                composable(SqldpassRoute.Dashboard.route) {
+                composable(
+                    SqldpassRoute.Dashboard.route,
+                    enterTransition = { tabFadeEnter() },
+                    exitTransition = { tabFadeExit() },
+                ) {
                     TabScaffold(title = "대시보드") {
                         DashboardTab(
                             state = state,
@@ -230,10 +242,17 @@ private fun SqldpassApp(
                             onUpdateNickname = viewModel::updateNickname,
                             themeMode = themeMode,
                             onThemeChange = onThemeChange,
+                            dynamicColor = dynamicColor,
+                            onDynamicColorChange = onDynamicColorChange,
                         )
                     }
                 }
-                composable(SqldpassRoute.PassPlus.route) {
+                composable(
+                    SqldpassRoute.PassPlus.route,
+                    enterTransition = { pushSlideEnter() },
+                    exitTransition = { pushSlideExitForward() },
+                    popExitTransition = { pushSlidePopExit() },
+                ) {
                     PassPlusCatalogScreen(
                         subscription = state.subscription,
                         products = productSnapshot(),
@@ -246,7 +265,12 @@ private fun SqldpassApp(
                         onClose = { navController.popBackStack() },
                     )
                 }
-                composable(SqldpassRoute.Runner.route) {
+                composable(
+                    SqldpassRoute.Runner.route,
+                    enterTransition = { pushSlideEnter() },
+                    exitTransition = { pushSlideExitForward() },
+                    popExitTransition = { pushSlidePopExit() },
+                ) {
                     RunnerScreen(
                         state = state,
                         onSubmitAnswers = viewModel::submitRunner,
@@ -271,5 +295,34 @@ private fun SqldpassApp(
                 CircularProgressIndicator(Modifier.align(Alignment.Center))
             }
         }
+    }
+
+    if (showNavigationSuite) {
+        NavigationSuiteScaffold(
+            navigationSuiteItems = {
+                BOTTOM_TABS.forEach { tab ->
+                    val selected = currentRoute == tab.route.route
+                    item(
+                        selected = selected,
+                        onClick = {
+                            navController.navigate(tab.route.route) {
+                                popUpTo(navController.graph.findStartDestination().id) {
+                                    saveState = true
+                                }
+                                launchSingleTop = true
+                                restoreState = true
+                            }
+                        },
+                        icon = { Icon(tab.icon, contentDescription = tab.label) },
+                        label = { Text(tab.label) },
+                    )
+                }
+            },
+            containerColor = MaterialTheme.colorScheme.background,
+        ) {
+            appContent()
+        }
+    } else {
+        appContent()
     }
 }

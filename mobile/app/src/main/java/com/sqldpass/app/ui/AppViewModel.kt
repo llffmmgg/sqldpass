@@ -37,8 +37,15 @@ data class AppUiState(
     val mockExams: List<MockExamSummary> = emptyList(),
     val syncResult: SyncResult? = null,
     val message: String? = null,
-    val certSlugs: List<String> = listOf("SQLD", "ADsP", "ADP"),
-    val selectedCertSlug: String = "SQLD",
+    val certSlugs: List<String> = listOf(
+        "sqld",
+        "engineer",
+        "engineer-written",
+        "computer-literacy-1",
+        "computer-literacy-2",
+        "adsp",
+    ),
+    val selectedCertSlug: String = "sqld",
     val pastExamsByCert: Map<String, List<PastExamSummary>> = emptyMap(),
     val pastExamsLoading: Boolean = false,
     val subjects: List<SubjectResponse> = emptyList(),
@@ -62,7 +69,9 @@ class AppViewModel(
     val state: StateFlow<AppUiState> = _state
 
     init {
-        refresh()
+        // 비로그인 콜드 스타트에서 /api/mock-exams 가 401 응답까지 100~300ms 블록되는 비용
+        // 회피. 로그인된 상태일 때만 즉시 refresh, 아니면 onAuthChanged() 경로에 맡김.
+        if (!tokenStore.token.isNullOrBlank()) refresh()
     }
 
     fun refresh() {
@@ -98,7 +107,23 @@ class AppViewModel(
 
     fun onAuthChanged() {
         _state.update { it.copy(nickname = tokenStore.nickname) }
-        refresh()
+        // 로그인 직후: 인증 필수 fetch 들 한꺼번에 트리거. 로그아웃 시엔 그대로.
+        if (!tokenStore.token.isNullOrBlank()) {
+            refresh()
+            loadSubjects()
+            loadDashboard()
+            loadWrongAnswerStats()
+        } else {
+            // 로그아웃 시 보호된 상태 초기화
+            _state.update {
+                it.copy(
+                    subjects = emptyList(),
+                    dashboard = null,
+                    wrongAnswerStats = emptyList(),
+                    subscription = null,
+                )
+            }
+        }
     }
 
     fun setMessage(message: String?) {

@@ -1,30 +1,37 @@
 package com.sqldpass.app.ui.pastexam
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.AssistChip
-import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.sqldpass.app.data.PastExamSummary
 import com.sqldpass.app.ui.AppUiState
 import com.sqldpass.app.ui.common.SkeletonCard
+import com.sqldpass.app.ui.theme.CertColors
+import com.sqldpass.app.ui.theme.LocalSqldpassSemanticColors
 
 private val CardCorner = 14.dp
 private val ButtonCorner = 12.dp
@@ -46,38 +53,81 @@ fun PastExamTab(
         contentPadding = PaddingValues(20.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        item { Text("기출복원", style = MaterialTheme.typography.headlineSmall) }
         item {
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                state.certSlugs.forEach { slug ->
-                    val selected = state.selectedCertSlug == slug
-                    AssistChip(
-                        onClick = { onSelectCert(slug) },
-                        label = { Text(slug) },
-                        colors = if (selected) AssistChipDefaults.assistChipColors(
-                            containerColor = MaterialTheme.colorScheme.primaryContainer,
-                            labelColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                        ) else AssistChipDefaults.assistChipColors(),
-                    )
-                }
-            }
+            CertTabRow(
+                certs = state.certSlugs,
+                countByCert = state.pastExamsByCert.mapValues { it.value.size },
+                selected = state.selectedCertSlug,
+                onSelect = onSelectCert,
+            )
         }
         when {
             state.pastExamsLoading && exams.isEmpty() -> items(3) { SkeletonCard() }
             exams.isEmpty() ->
-                item {
-                    Text(
-                        "이 자격증의 기출 회차가 없습니다.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
+                item { EmptyHint(state.selectedCertSlug) }
             else -> items(exams, key = { it.id }) { exam ->
                 PastExamCard(
                     exam = exam,
                     onStart = { onStartExam(exam.id, state.selectedCertSlug) },
                 )
             }
+        }
+    }
+}
+
+@Composable
+private fun CertTabRow(
+    certs: List<String>,
+    countByCert: Map<String, Int>,
+    selected: String,
+    onSelect: (String) -> Unit,
+) {
+    val cert = LocalSqldpassSemanticColors.current.cert
+    LazyRow(
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        contentPadding = PaddingValues(vertical = 4.dp),
+    ) {
+        items(certs, key = { it }) { slug ->
+            val isSelected = slug == selected
+            val dotColor = slugToCertColor(slug, cert)
+            val count = countByCert[slug]?.takeIf { it > 0 }
+            FilterChip(
+                selected = isSelected,
+                onClick = { onSelect(slug) },
+                leadingIcon = {
+                    Box(modifier = Modifier.size(8.dp).background(dotColor, CircleShape))
+                },
+                label = {
+                    Text(
+                        listOfNotNull(slugLabel(slug), count?.toString()).joinToString(" "),
+                        style = MaterialTheme.typography.labelLarge,
+                    )
+                },
+            )
+        }
+    }
+}
+
+@Composable
+private fun EmptyHint(slug: String) {
+    Card(
+        shape = RoundedCornerShape(CardCorner),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface,
+            contentColor = MaterialTheme.colorScheme.onSurface,
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+    ) {
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(18.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            Text("${slugLabel(slug)} 기출 회차가 없습니다.", style = MaterialTheme.typography.titleMedium)
+            Text(
+                "곧 회차가 추가될 예정이에요. 다른 자격증을 선택해보세요.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
     }
 }
@@ -127,4 +177,25 @@ private fun PastExamCard(exam: PastExamSummary, onStart: () -> Unit) {
             ) { Text("풀이 시작") }
         }
     }
+}
+
+/** backend PastExamPublicService.certSlugFromExamType 의 6개 slug → 사람 라벨. */
+private fun slugLabel(slug: String): String = when (slug) {
+    "sqld" -> "SQLD"
+    "engineer" -> "정처기 실기"
+    "engineer-written" -> "정처기 필기"
+    "computer-literacy-1" -> "컴활 1급"
+    "computer-literacy-2" -> "컴활 2급"
+    "adsp" -> "ADsP"
+    else -> slug
+}
+
+private fun slugToCertColor(slug: String, cert: CertColors): Color = when (slug) {
+    "sqld" -> cert.sqld
+    "engineer" -> cert.engineerPractical
+    "engineer-written" -> cert.engineerWritten
+    "computer-literacy-1" -> cert.cl1
+    "computer-literacy-2" -> cert.cl2
+    "adsp" -> cert.adsp
+    else -> cert.sqld
 }

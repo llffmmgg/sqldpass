@@ -62,7 +62,7 @@ fun RunnerJumpGrid(
                             onJump(idx)
                             onDismiss()
                         },
-                        modifier = Modifier.size(44.dp),
+                        modifier = Modifier.size(48.dp),
                     ) {
                         Column(
                             modifier = Modifier.fillMaxWidth(),

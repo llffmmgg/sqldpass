@@ -10,7 +10,12 @@ data class RunnerQuestion(
     val displayOrder: Int,
     val content: String,
     val questionType: String?,
-)
+) {
+    /** content 를 ①②③④ 기준으로 본문/보기 분리한 결과. lazy — 첫 참조 시만 파싱. */
+    val parsed: com.sqldpass.app.text.ParsedQuestion by lazy {
+        com.sqldpass.app.text.parseQuestion(content)
+    }
+}
 
 data class RunnerSession(
     val mode: RunnerMode,

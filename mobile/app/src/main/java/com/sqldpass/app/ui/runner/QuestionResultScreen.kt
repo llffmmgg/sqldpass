@@ -2,13 +2,16 @@ package com.sqldpass.app.ui.runner
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.sizeIn
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -45,6 +48,8 @@ fun QuestionResultScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
+            .statusBarsPadding()
+            .navigationBarsPadding()
             .verticalScroll(rememberScrollState())
             .padding(20.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp),
@@ -189,6 +194,7 @@ private fun ScoreCard(correct: Int, total: Int) {
 @Composable
 private fun AnswerBreakdownCard(answers: List<SolveAnswerResponse>) {
     val correctCount = answers.count { it.correct }
+    val state = LocalSqldpassSemanticColors.current.state
     Card(
         shape = RoundedCornerShape(CardCorner),
         colors = CardDefaults.cardColors(
@@ -201,23 +207,37 @@ private fun AnswerBreakdownCard(answers: List<SolveAnswerResponse>) {
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(18.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             Text(
                 "문항별 결과 ($correctCount/${answers.size} 정답)",
                 style = MaterialTheme.typography.titleMedium,
             )
             answers.forEachIndexed { idx, a ->
+                val bg = if (a.correct) state.success.copy(alpha = 0.08f)
+                else state.danger.copy(alpha = 0.08f)
+                val accent = if (a.correct) state.success else state.danger
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(bg, RoundedCornerShape(8.dp))
+                        .padding(horizontal = 10.dp, vertical = 8.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                 ) {
-                    Text(
-                        "${idx + 1}번 — ${if (a.correct) "정답" else "오답"}",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = if (a.correct) MaterialTheme.colorScheme.primary
-                        else MaterialTheme.colorScheme.error,
-                    )
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    ) {
+                        Text(
+                            if (a.correct) "✓" else "✗",
+                            style = MaterialTheme.typography.titleSmall,
+                            color = accent,
+                        )
+                        Text(
+                            "${idx + 1}번",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = accent,
+                        )
+                    }
                     Text(
                         "내 답 ${a.selectedOption} · 정답 ${a.correctOption}",
                         style = MaterialTheme.typography.labelMedium,

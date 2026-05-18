@@ -14,11 +14,13 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 
+// frontend globals.css 의 --primary(emerald) 와 동기화. amber 는 streak/최고점
+// 같은 보조 강조에서만 그대로 사용 (frontend 의 cert-sqld 와 정합).
 private val LightColors: ColorScheme = lightColorScheme(
-    primary = Amber500,
-    onPrimary = Zinc950,
-    primaryContainer = Amber50,
-    onPrimaryContainer = Amber900,
+    primary = Emerald500Light,
+    onPrimary = Color.White,
+    primaryContainer = EmeraldSoftLight,
+    onPrimaryContainer = Color(0xFF064E3B),
     secondary = Zinc700,
     onSecondary = Color.White,
     background = Neutral50,
@@ -34,10 +36,10 @@ private val LightColors: ColorScheme = lightColorScheme(
 )
 
 private val DarkColors: ColorScheme = darkColorScheme(
-    primary = Amber300,
-    onPrimary = Zinc950,
-    primaryContainer = Color(0xFF3F2C0A),
-    onPrimaryContainer = Amber300,
+    primary = Emerald400Dark,
+    onPrimary = Color(0xFFFAFAFA),
+    primaryContainer = EmeraldDarkCta,
+    onPrimaryContainer = EmeraldDarkText,
     secondary = Zinc400,
     onSecondary = Zinc950,
     background = Color.Black,
@@ -56,12 +58,46 @@ private val DarkColors: ColorScheme = darkColorScheme(
  * 합격 배너처럼 의미가 있는 색은 colorScheme 에 매핑이 어색해 별도 토큰으로 노출.
  * darkTheme 에 따라 톤이 갈리므로 컴포지션 단계에서 결정해 내려준다.
  */
+data class CertColors(
+    val sqld: Color,
+    val engineerPractical: Color,
+    val engineerWritten: Color,
+    val cl1: Color,
+    val cl2: Color,
+    val adsp: Color,
+)
+
+data class StateColors(
+    val success: Color,
+    val warning: Color,
+    val danger: Color,
+    val info: Color,
+)
+
 data class SqldpassSemanticColors(
     val passBg: Color,
     val passText: Color,
     val failBg: Color,
     val failText: Color,
     val highlightBg: Color,
+    val cert: CertColors,
+    val state: StateColors,
+)
+
+private val DefaultCert = CertColors(
+    sqld = CertSqld,
+    engineerPractical = CertEngineerPractical,
+    engineerWritten = CertEngineerWritten,
+    cl1 = CertCl1,
+    cl2 = CertCl2,
+    adsp = CertAdsp,
+)
+
+private val DefaultState = StateColors(
+    success = StateSuccess,
+    warning = StateWarning,
+    danger = StateDanger,
+    info = StateInfo,
 )
 
 val LocalSqldpassSemanticColors = staticCompositionLocalOf {
@@ -71,6 +107,8 @@ val LocalSqldpassSemanticColors = staticCompositionLocalOf {
         failBg = FailLightBg,
         failText = FailLightText,
         highlightBg = Amber50,
+        cert = DefaultCert,
+        state = DefaultState,
     )
 }
 
@@ -95,6 +133,8 @@ fun SqldpassTheme(
             failBg = FailDarkBg,
             failText = FailDarkText,
             highlightBg = Color(0xFF3F2C0A),
+            cert = DefaultCert,    // cert 색은 다크에서도 동일 (frontend 와 일치)
+            state = DefaultState,
         )
     } else {
         SqldpassSemanticColors(
@@ -103,6 +143,8 @@ fun SqldpassTheme(
             failBg = FailLightBg,
             failText = FailLightText,
             highlightBg = Amber50,
+            cert = DefaultCert,
+            state = DefaultState,
         )
     }
     CompositionLocalProvider(LocalSqldpassSemanticColors provides semantic) {
