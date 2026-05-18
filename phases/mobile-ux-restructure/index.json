@@ -10,52 +10,64 @@
       "status": "completed",
       "started_at": "2026-05-18T22:35:00+0900",
       "completed_at": "2026-05-18T22:40:00+0900",
-      "summary": "docs/MOBILE_UX_SPEC.md 신설(7섹션: 탭 구성/각 탭 정보 위계/핵심 동선/양 플랫폼 동일 규칙 14가지/자격증 6종 정적 데이터 표/KPI 4개 데이터 매핑/변경 이력). plan Q1~Q17 1:1 매핑."
+      "summary": "docs/MOBILE_UX_SPEC.md 신설(7섹션). plan Q1~Q17 1:1 매핑."
     },
     {
       "step": 2,
       "name": "android-nav-5tab-restructure",
-      "description": "Android BOTTOM_TABS 5개 재편: Home/MockExam/PastExam/Solve/Profile. WrongAnswers·Insights 탭 제거(라우트는 내정보 진입용으로 유지). 실전 문제 탭은 Solve 라우트(SolveTab — 자격증 칩+과목 카드 진입 화면). SoloSolve 는 풀스크린 push 라우트 그대로.",
+      "description": "Android BOTTOM_TABS 5개 재편.",
       "status": "completed",
       "started_at": "2026-05-18T22:40:00+0900",
       "completed_at": "2026-05-18T22:55:00+0900",
-      "summary": "SqldpassNav.kt BOTTOM_TABS 5탭 교체(Home/MockExam/PastExam/Solve/Profile, 아이콘 History·PlayCircleOutline 신규 import). MainActivity 의 MockExam composable 콜백에서 onSelectCert·onStartPastExam 제거. MockExamTab.kt 단순화. PastExamTab.kt 그대로 사용. assembleDebug BUILD SUCCESSFUL 8s."
+      "summary": "SqldpassNav.kt BOTTOM_TABS 교체(Home/MockExam/PastExam/Solve/Profile). MockExamTab.kt 단순화(기출복원 세그먼트 제거). MainActivity MockExam 콜백 정리. assembleDebug BUILD SUCCESSFUL 8s."
     },
     {
       "step": 3,
       "name": "android-home-restructure",
-      "description": "HomeScreen 정보 구조 재배치: 인사말 헤더 + 스트릭 카드(위험 톤 분기) + 자격증 6종 수평 캐러셀 + 자격증 소개 모달 시트. 이어풀기 카드는 별 phase. 기존 '오늘 바로 풀기'/'PASS+ 모의고사' CTA 카드 제거.",
+      "description": "Android HomeScreen 자격증 캐러셀 + StreakCard 위험 톤 분기.",
       "status": "completed",
       "started_at": "2026-05-18T22:55:00+0900",
       "completed_at": "2026-05-18T23:15:00+0900",
-      "summary": "신규: ui/home/CertCatalog.kt(자격증 6종 정적 데이터), CertInfoSheet.kt(ModalBottomSheet, 시험 정보 4종 + PASS+ CTA), CertCarousel.kt(LazyRow 6 카드), ContinueLastCard.kt(별 phase 호출). HomeScreen.kt 전면 재작성 — HeroHeader + StreakCard(lastSolvedDate < 오늘 시 warning 톤 + 안내문 전환) + CertCarousel + 자격증 카드 탭 → CertInfoSheet. MainActivity.HomeScreen 호출 시그니처 갱신. assembleDebug BUILD SUCCESSFUL 7s."
+      "summary": "신규 CertCatalog/CertInfoSheet/CertCarousel/ContinueLastCard. HomeScreen 전면 재작성(인사말+StreakCard 위험 톤+CertCarousel+자격증 시트). assembleDebug BUILD SUCCESSFUL 7s."
     },
     {
       "step": 4,
       "name": "android-profile-restructure",
-      "description": "ProfileTab 정보 구조: 프로필 헤더 + KPI 2x2 + 3그룹 메뉴. KPI 의 누적·평균·합격 확률은 placeholder, longestStreak 만 실데이터. 오답노트 메뉴 행 → WrongAnswers 라우트.",
+      "description": "Android ProfileTab KPI 2x2 + 학습 섹션 오답노트 진입.",
       "status": "completed",
       "started_at": "2026-05-18T23:15:00+0900",
       "completed_at": "2026-05-18T23:30:00+0900",
-      "summary": "신규: ui/profile/KpiGrid.kt(2x2 KpiTile 4개 — Quiz/Percent/LocalFireDepartment/QueryStats 아이콘, value nil 시 '—'). ProfileTab.kt 에 onOpenWrongAnswers 인자 + 학습 섹션 상단 KpiGrid 호출 + 오답노트 메뉴 행 신규. MainActivity.ProfileTab 호출에 onOpenWrongAnswers=navigate(WrongAnswers.route) 추가. longestStreak 만 state.dashboard.streak.longestStreak 사용, 나머지 nil. assembleDebug BUILD SUCCESSFUL 6s."
+      "summary": "신규 KpiGrid. ProfileTab 에 onOpenWrongAnswers + KpiGrid 상단 + 오답노트 행. longestStreak 만 실데이터, 나머지 3 placeholder. assembleDebug BUILD SUCCESSFUL 6s."
     },
     {
       "step": 5,
       "name": "ios-nav-5tab-restructure",
-      "description": "iOS MainTabView 5탭 재정의: Home/MockExams/PastExams/SoloSolve/Profile. WrongAnswers·Insights 탭 제거(View 는 유지, ProfileView 안 NavigationLink). PastExamsListView 신규. SoloSolve 탭 fullScreenCover 임시 진입점 제거. macOS 검증 대기.",
-      "status": "pending"
+      "description": "iOS MainTabView 5탭 재정의 + PastExamsListView + SoloHubView 신규.",
+      "status": "blocked",
+      "started_at": "2026-05-18T23:45:00+0900",
+      "blocked_at": "2026-05-19T00:30:00+0900",
+      "blocked_reason": "iOS xcodebuild 검증은 macOS 환경 필요. 코드 작성은 Windows 에서 완료. 사용자가 macOS 에서 `cd ios && ~/bin/xcodegen generate && xcodebuild ... build` 실행 후 BUILD SUCCEEDED 확인 시 본 step 을 completed 로 갱신.",
+      "summary": "MainTabView.swift 재정의 — enum MainTab=.home/.mockExams/.pastExams/.soloSolve/.profile, WrongAnswers·Insights 탭 제거, fullScreenCover SoloSolveContext 임시 진입 제거, HomeView 호출. HomeView/MockExamsListView/ProfileView 는 자체 NavigationStack 보유라 wrapping 없이 등록, PastExamsListView/SoloHubView 는 NavigationStack 으로 wrap. 신규 파일 8개: Models/{PastExamSummary,SubjectResponse}.swift, Services/{PastExamService,SubjectService}.swift, Features/PastExams/{PastExamsListView,PastExamsViewModel}.swift, Features/Solo/{SoloHubView,SoloHubViewModel}.swift. 기출 카드 탭은 PastExamPlaceholderView (별 phase 의 PastExamRunnerView 대기). 실전 카드 탭은 SoloSolveView push 정상. xcodegen 의 sources 폴더 기반이라 project.yml 추가 변경 불필요. macOS 검증 대기."
     },
     {
       "step": 6,
       "name": "ios-home-restructure",
-      "description": "iOS Features/Home/HomeView 신규 + 인사말 + StreakCard(위험 톤 분기) + 자격증 6종 ScrollView 캐러셀 + CertInfoSheet. 기존 DashboardView 의 통계 그리드·모의고사 빠른시작 제거. macOS 검증 대기.",
-      "status": "pending"
+      "description": "iOS HomeView 신규 — 인사말 + StreakCard + 자격증 캐러셀 + CertInfoSheet.",
+      "status": "blocked",
+      "started_at": "2026-05-18T23:45:00+0900",
+      "blocked_at": "2026-05-19T00:10:00+0900",
+      "blocked_reason": "iOS xcodebuild 검증은 macOS 환경 필요. 코드 작성은 Windows 에서 완료. 사용자가 macOS 에서 검증 후 본 step 을 completed 로 갱신.",
+      "summary": "신규 파일 6개: Core/Catalog/CertCatalog.swift(자격증 6종 정적 데이터 + certColorOf), Features/Home/HomeView.swift(NavigationStack + ScrollView + AppHeroHeader + StreakCard + ContinueLastCard 조건부 + CertCarousel + .sheet(item:) CertInfoSheet + .sheet(isPresented:) PaywallView), Features/Home/Components/{StreakCard,CertCarousel,CertInfoSheet,ContinueLastCard}.swift. StreakCard 의 isStreakAtRisk(KST 기준 lastSolveDate<오늘 && currentStreak>0) — 위험 톤 warning 색 + '오늘 자정이 끝나면…' 안내, 일반 톤 certSQLD + 'N일째'. CertInfoSheet .presentationDetents([.medium]) + 4종 InfoRow(시행처/문항수/시험 시간/합격 기준) + PASS+ 소개 CTA. CertCarousel 카드 너비 180pt(Android 미러). 매직 넘버 0, 모든 시각 토큰 사용. DashboardView 그대로 유지(별 phase 가 정리). macOS 검증 대기."
     },
     {
       "step": 7,
       "name": "ios-profile-restructure",
-      "description": "iOS ProfileView 재배치: 프로필 헤더 + KPI 2x2 LazyVGrid + 3섹션 List(학습/계정/설정·지원). WrongAnswersView·BookmarksView·HistoryView 진입 NavigationLink. macOS 검증 대기.",
-      "status": "pending"
+      "description": "iOS ProfileView KPI 2x2 + 3그룹 메뉴.",
+      "status": "blocked",
+      "started_at": "2026-05-18T23:45:00+0900",
+      "blocked_at": "2026-05-19T00:15:00+0900",
+      "blocked_reason": "iOS xcodebuild 검증은 macOS 환경 필요. 코드 작성은 Windows 에서 완료. 사용자가 macOS 에서 검증 후 본 step 을 completed 로 갱신.",
+      "summary": "신규 파일 3개: Features/Profile/Models/ProfileKpi.swift(struct + .empty), Components/{KpiTile,KpiGrid}.swift(2x2 LazyVGrid, 4종 KPI, nil→'—'). 수정 파일 2개: ProfileViewModel.swift(kpi 필드 + loadKpi() — StreakService.me() 로 longestStreak 만 채움, 나머지 3 nil), ProfileView.swift(List(insetGrouped) 전면 재구성 — 헤더 섹션[프로필+KpiGrid] + 학습 섹션[NavigationLink: WrongAnswersView/BookmarksView/HistoryView] + 계정 섹션[닉네임/결제·청구placeholder/PaywallView] + 설정·지원 섹션[테마/알림/피드백/공지·약관 외부링크/로그아웃/회원탈퇴]). 결제·청구 진입은 PaymentHistoryView 부재로 placeholder alert. WrongAnswers/Bookmarks/History 가 자체 NavigationStack 보유라 ProfileView NavigationStack 안에서 push 시 헤더 이중 표시 가능 — 별 phase 정리 권장. macOS 검증 대기."
     }
   ],
   "created_at": "2026-05-18T22:30:00+0900"
