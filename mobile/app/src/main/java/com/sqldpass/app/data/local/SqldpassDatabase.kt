@@ -8,6 +8,7 @@ import androidx.room.OnConflictStrategy
 import androidx.room.PrimaryKey
 import androidx.room.Query
 import androidx.room.RoomDatabase
+import kotlinx.coroutines.flow.Flow
 
 @Entity(tableName = "mock_exams")
 data class MockExamEntity(
@@ -86,6 +87,10 @@ interface OfflineDao {
 
     @Query("SELECT * FROM pending_solves WHERE synced = 0 ORDER BY createdAtMillis ASC")
     suspend fun unsyncedSolves(): List<PendingSolveEntity>
+
+    /** SoloSolveScreen 의 "오프라인 — N개 보관 중" 인디케이터용. Room Flow 로 자동 갱신. */
+    @Query("SELECT COUNT(*) FROM pending_solves WHERE synced = 0")
+    fun unsyncedSolveCountFlow(): Flow<Int>
 
     @Query("UPDATE pending_solves SET synced = 1, serverSolveId = :serverSolveId WHERE clientSubmissionId = :clientSubmissionId")
     suspend fun markSolveSynced(clientSubmissionId: String, serverSolveId: Long)

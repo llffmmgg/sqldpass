@@ -9,6 +9,8 @@ import com.sqldpass.app.data.MockExamSummary
 import com.sqldpass.app.data.OverallAvgResponse
 import com.sqldpass.app.data.PastExamAnswer
 import com.sqldpass.app.data.PastExamSummary
+import com.sqldpass.app.data.QuestionDetailResponse
+import com.sqldpass.app.data.QuestionResponse
 import com.sqldpass.app.data.SolveAnswerRequest
 import com.sqldpass.app.data.StreakResponse
 import com.sqldpass.app.data.SubjectResponse
@@ -20,7 +22,9 @@ import com.sqldpass.app.ui.runner.RunnerQuestion
 import com.sqldpass.app.ui.runner.RunnerResult
 import com.sqldpass.app.ui.runner.RunnerSession
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -30,6 +34,45 @@ data class DashboardData(
     val bestScores: List<BestScoreSummary> = emptyList(),
     val dailyCounts: List<com.sqldpass.app.data.DailyCountResponse> = emptyList(),
 )
+
+/**
+ * 단일 채점 풀이(SoloSolve) 세션 상태.
+ *
+ * 웹 frontend/src/app/solve/SolveClient.tsx 의 phase="solve" 상태와 동치.
+ * 1문제씩 즉시 채점 → 정답 공개 → 다음 문제 흐름.
+ *
+ * - queue: 현재 풀이 큐(첫 항목이 current 가 된 직후 currentIndex 로 추적)
+ * - sessionQuestions: 이번 세션의 원본 10문 (replaySame 용)
+ * - solvedCount/correctCount: 누적 카운트 (마지막 SET_SIZE 도달 시 sessionComplete)
+ * - revealed/detail: revealed=true 시 detail 의 정답·해설을 보여주는 단계
+ */
+data class SoloSession(
+    val subjectId: Long,
+    val subjectName: String,
+    val sessionQuestions: List<QuestionResponse>,
+    val queue: List<QuestionResponse>,
+    val currentIndex: Int = 0,
+    val solvedCount: Int = 0,
+    val correctCount: Int = 0,
+    val selectedOption: Int? = null,
+    val answerText: String = "",
+    val revealed: Boolean = false,
+    val detail: QuestionDetailResponse? = null,
+    val sessionComplete: Boolean = false,
+    val submitting: Boolean = false,
+    val submitError: String? = null,
+) {
+    val current: QuestionResponse? get() = queue.firstOrNull()
+    val isLast: Boolean get() = solvedCount >= SOLO_SET_SIZE - 1
+    val hasAnswer: Boolean
+        get() = when (current?.questionType?.uppercase()) {
+            "MCQ", null -> selectedOption != null
+            else -> answerText.trim().isNotEmpty()
+        }
+}
+
+/** 한 세트의 문제 개수 (웹 SolveClient.SET_SIZE 동치). */
+const val SOLO_SET_SIZE = 10
 
 data class AppUiState(
     val loading: Boolean = false,
@@ -62,6 +105,7 @@ data class AppUiState(
     val wrongAnswersLoading: Boolean = false,
     val memberMe: com.sqldpass.app.data.MemberMeResponse? = null,
     val passplusOpen: Boolean = false,
+    val soloSession: SoloSession? = null,
 )
 
 class AppViewModel(
@@ -71,10 +115,25 @@ class AppViewModel(
     private val _state = MutableStateFlow(AppUiState(nickname = tokenStore.nickname))
     val state: StateFlow<AppUiState> = _state
 
+    /**
+     * 오프라인 큐 미동기화 카운트. SoloSolveScreen 의 "오프라인 — N개 보관 중" 인디케이터 노출에 사용.
+     * Room Flow → stateIn 으로 ViewModel scope.
+     */
+    val pendingSolveCount: StateFlow<Int> =
+        repository.pendingSolveCountFlow()
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0)
+
     init {
         // 비로그인 콜드 스타트에서 /api/mock-exams 가 401 응답까지 100~300ms 블록되는 비용
         // 회피. 로그인된 상태일 때만 즉시 refresh, 아니면 onAuthChanged() 경로에 맡김.
         if (!tokenStore.token.isNullOrBlank()) refresh()
+    }
+
+    /** 네트워크 복귀 콜백 등이 호출 — 비차단으로 큐 drain. */
+    fun tryDrainPendingSolves() {
+        viewModelScope.launch {
+            runCatching { repository.drainPendingSolves() }
+        }
     }
 
     fun refresh() {
@@ -500,6 +559,222 @@ class AppViewModel(
             startPracticeRunner(subjectId)
         }
     }
+
+    // ── Solo Solve (단일 채점 풀이) ────────────────────────────────────
+
+    /**
+     * 단일 채점 풀이 세션 시작.
+     * 과목 선택 직후 호출되어 SET_SIZE(10) 문제를 fetch 한 뒤 첫 문제로 진입한다.
+     */
+    fun startSoloSolve(subjectId: Long, subjectName: String) {
+        viewModelScope.launch {
+            _state.update { it.copy(loading = true, message = null) }
+            runCatching { repository.randomQuestions(subjectId, SOLO_SET_SIZE) }
+                .onSuccess { questions ->
+                    if (questions.isEmpty()) {
+                        _state.update {
+                            it.copy(loading = false, message = "이 과목에서 가져올 문제가 없습니다.")
+                        }
+                        return@onSuccess
+                    }
+                    _state.update {
+                        it.copy(
+                            loading = false,
+                            soloSession = SoloSession(
+                                subjectId = subjectId,
+                                subjectName = subjectName,
+                                sessionQuestions = questions,
+                                queue = questions,
+                            ),
+                        )
+                    }
+                }
+                .onFailure { e ->
+                    _state.update { it.copy(loading = false, message = e.message) }
+                }
+        }
+    }
+
+    fun soloSelectOption(option: Int) {
+        _state.update { st ->
+            val s = st.soloSession ?: return@update st
+            if (s.revealed) return@update st
+            st.copy(soloSession = s.copy(selectedOption = option))
+        }
+    }
+
+    fun soloSetAnswerText(text: String) {
+        _state.update { st ->
+            val s = st.soloSession ?: return@update st
+            if (s.revealed) return@update st
+            st.copy(soloSession = s.copy(answerText = text))
+        }
+    }
+
+    /**
+     * 현재 문제 채점. 정답/해설은 GET /api/questions/{id} 응답으로 즉시 표시(클라이언트 측 채점).
+     * 풀이 기록은 백그라운드로 POST /api/solves — 실패해도 진행 흐름 막지 않음.
+     */
+    fun soloSubmit() {
+        val session = _state.value.soloSession ?: return
+        if (session.revealed || session.submitting) return
+        val current = session.current ?: return
+        if (!session.hasAnswer) return
+
+        _state.update { it.copy(soloSession = session.copy(submitting = true, submitError = null)) }
+        viewModelScope.launch {
+            runCatching { repository.questionDetail(current.id) }
+                .onSuccess { detail ->
+                    val correct = isSoloCorrect(detail, session.selectedOption, session.answerText)
+                    _state.update { st ->
+                        val s = st.soloSession ?: return@update st
+                        st.copy(
+                            soloSession = s.copy(
+                                submitting = false,
+                                revealed = true,
+                                detail = detail,
+                                solvedCount = s.solvedCount + 1,
+                                correctCount = s.correctCount + if (correct) 1 else 0,
+                            ),
+                        )
+                    }
+                    // 백그라운드 풀이 기록 — 실패해도 화면 진행 흐름 막지 않음.
+                    if (!tokenStore.token.isNullOrBlank()) {
+                        runCatching {
+                            repository.submitSoloAnswer(
+                                subjectId = session.subjectId,
+                                questionId = current.id,
+                                selectedOption = if (isShortAnswerType(current.questionType)) null
+                                else session.selectedOption,
+                                answerText = if (isShortAnswerType(current.questionType)) session.answerText
+                                else null,
+                            )
+                        }.onFailure { e ->
+                            _state.update { st ->
+                                val s = st.soloSession ?: return@update st
+                                st.copy(soloSession = s.copy(submitError = e.message))
+                            }
+                        }
+                    }
+                }
+                .onFailure { e ->
+                    _state.update { st ->
+                        val s = st.soloSession ?: return@update st
+                        st.copy(soloSession = s.copy(submitting = false, submitError = e.message))
+                    }
+                }
+        }
+    }
+
+    /**
+     * 다음 문제로. SET_SIZE 도달 시 sessionComplete 로 전이.
+     * 큐가 부족하면 추가 fetch (서버에서 새 랜덤).
+     */
+    fun soloNext() {
+        val session = _state.value.soloSession ?: return
+        if (!session.revealed) return
+
+        if (session.solvedCount >= SOLO_SET_SIZE) {
+            _state.update {
+                it.copy(soloSession = session.copy(sessionComplete = true))
+            }
+            return
+        }
+
+        val remaining = session.queue.drop(1)
+        if (remaining.isNotEmpty()) {
+            _state.update {
+                it.copy(
+                    soloSession = session.copy(
+                        queue = remaining,
+                        currentIndex = session.currentIndex + 1,
+                        selectedOption = null,
+                        answerText = "",
+                        revealed = false,
+                        detail = null,
+                        submitError = null,
+                    ),
+                )
+            }
+            return
+        }
+
+        // 큐 소진 — 같은 과목에서 추가 fetch
+        viewModelScope.launch {
+            _state.update {
+                it.copy(soloSession = session.copy(submitting = true))
+            }
+            runCatching { repository.randomQuestions(session.subjectId, SOLO_SET_SIZE) }
+                .onSuccess { fresh ->
+                    _state.update { st ->
+                        val s = st.soloSession ?: return@update st
+                        st.copy(
+                            soloSession = s.copy(
+                                queue = fresh,
+                                currentIndex = s.currentIndex + 1,
+                                selectedOption = null,
+                                answerText = "",
+                                revealed = false,
+                                detail = null,
+                                submitting = false,
+                                submitError = null,
+                            ),
+                        )
+                    }
+                }
+                .onFailure { e ->
+                    _state.update { st ->
+                        val s = st.soloSession ?: return@update st
+                        st.copy(soloSession = s.copy(submitting = false, submitError = e.message))
+                    }
+                }
+        }
+    }
+
+    fun soloExit() {
+        _state.update { it.copy(soloSession = null) }
+    }
+
+    /** 같은 10문제 다시 풀기. */
+    fun soloReplaySame() {
+        val s = _state.value.soloSession ?: return
+        _state.update {
+            it.copy(
+                soloSession = SoloSession(
+                    subjectId = s.subjectId,
+                    subjectName = s.subjectName,
+                    sessionQuestions = s.sessionQuestions,
+                    queue = s.sessionQuestions,
+                ),
+            )
+        }
+    }
+
+    /** 같은 과목 새 10문제. */
+    fun soloNewRandom() {
+        val s = _state.value.soloSession ?: return
+        startSoloSolve(s.subjectId, s.subjectName)
+    }
+
+    private fun isSoloCorrect(
+        detail: QuestionDetailResponse,
+        selectedOption: Int?,
+        answerText: String,
+    ): Boolean {
+        val type = detail.questionType?.uppercase()
+        if (type == null || type == "MCQ") {
+            return selectedOption != null && selectedOption == detail.correctOption
+        }
+        val normalize: (String) -> String = { it.trim().lowercase().replace(Regex("\\s+"), " ") }
+        val submitted = normalize(answerText)
+        if (submitted.isEmpty()) return false
+        detail.answer?.let { if (normalize(it) == submitted) return true }
+        return detail.keywords.any { normalize(it) == submitted }
+    }
+
+    private fun isShortAnswerType(type: String?): Boolean =
+        type.equals("SHORT_ANSWER", ignoreCase = true) ||
+            type.equals("DESCRIPTIVE", ignoreCase = true)
 }
 
 class AppViewModelFactory(

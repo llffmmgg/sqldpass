@@ -1,5 +1,7 @@
 package com.sqldpass.app
 
+import android.net.ConnectivityManager
+import android.net.Network
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.enableEdgeToEdge
@@ -49,6 +51,7 @@ import com.sqldpass.app.ui.passplus.PassPlusCatalogScreen
 import com.sqldpass.app.ui.pastexam.PastExamTab
 import com.sqldpass.app.ui.profile.ProfileTab
 import com.sqldpass.app.ui.runner.RunnerScreen
+import com.sqldpass.app.ui.solve.SoloSolveScreen
 import com.sqldpass.app.ui.solve.SolveTab
 import com.sqldpass.app.ui.theme.SqldpassTheme
 import com.sqldpass.app.ui.wronganswer.WrongAnswerTab
@@ -62,12 +65,27 @@ class MainActivity : ComponentActivity() {
         AppViewModelFactory(app.repository, app.tokenStore)
     }
 
+    /**
+     * 네트워크 복귀 시 오프라인 큐 drain.
+     * onAvailable 은 worker 스레드에서 호출 — ViewModel 의 viewModelScope.launch 가 자동 main thread 처리.
+     */
+    private val networkCallback = object : ConnectivityManager.NetworkCallback() {
+        override fun onAvailable(network: Network) {
+            viewModel.tryDrainPendingSolves()
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         // Play Billing 연결은 IPC 대기가 100~500ms 메인 스레드 블록 가능 — 백그라운드로.
         lifecycleScope.launch { app.billingManager.connect() }
+        // 네트워크 복귀 감지 — 콜백 등록.
+        runCatching {
+            getSystemService(ConnectivityManager::class.java)
+                ?.registerDefaultNetworkCallback(networkCallback)
+        }
         setContent {
             val themeMode by app.settingsStore.themeMode.collectAsState()
             val systemDark = androidx.compose.foundation.isSystemInDarkTheme()
@@ -108,6 +126,14 @@ class MainActivity : ComponentActivity() {
                     onThemeChange = app.settingsStore::setThemeMode,
                 )
             }
+        }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        runCatching {
+            getSystemService(ConnectivityManager::class.java)
+                ?.unregisterNetworkCallback(networkCallback)
         }
     }
 }
@@ -224,8 +250,10 @@ private fun SqldpassApp(
                             state = state,
                             onLoadSubjects = viewModel::loadSubjects,
                             onStartPractice = { id ->
-                                viewModel.startPracticeRunner(id)
-                                navController.navigate(SqldpassRoute.Runner.route)
+                                val name = state.subjects.firstOrNull { it.id == id }?.name
+                                    ?: "랜덤 풀이"
+                                viewModel.startSoloSolve(id, name)
+                                navController.navigate(SqldpassRoute.SoloSolve.route)
                             },
                         )
                     }
@@ -348,6 +376,37 @@ private fun SqldpassApp(
                         onExitScreen = {
                             if (navController.previousBackStackEntry != null) navController.popBackStack()
                         },
+                    )
+                }
+                composable(
+                    SqldpassRoute.SoloSolve.route,
+                    enterTransition = { pushSlideEnter() },
+                    exitTransition = { pushSlideExitForward() },
+                    popExitTransition = { pushSlidePopExit() },
+                ) {
+                    val pendingCount by viewModel.pendingSolveCount.collectAsState()
+                    SoloSolveScreen(
+                        state = state,
+                        pendingSolveCount = pendingCount,
+                        onSelectOption = viewModel::soloSelectOption,
+                        onSetAnswerText = viewModel::soloSetAnswerText,
+                        onSubmit = viewModel::soloSubmit,
+                        onNext = viewModel::soloNext,
+                        onExit = {
+                            viewModel.soloExit()
+                            navController.popBackStack()
+                        },
+                        onReplaySame = viewModel::soloReplaySame,
+                        onNewRandom = viewModel::soloNewRandom,
+                        onToggleBookmark = viewModel::toggleBookmark,
+                        onReport = { questionId ->
+                            viewModel.submitFeedback(
+                                type = "QUESTION_REPORT",
+                                questionId = questionId,
+                                content = "단일 채점 풀이 화면에서 신고",
+                            ) { /* no-op — 상태는 viewModel.message 로 표시 */ }
+                        },
+                        bookmarkedIds = state.runnerBookmarks,
                     )
                 }
             }

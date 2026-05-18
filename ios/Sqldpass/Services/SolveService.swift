@@ -16,11 +16,29 @@ enum SolveService {
         try await APIClient.shared.get("/api/solves/stats/overall-avg")
     }
 
-    /// POST /api/solves — 풀이 제출
+    /// POST /api/solves — 풀이 제출.
+    /// `clientSubmissionId` 는 백엔드의 멱등키(@Size max=64). 같은 키로 재전송 시 중복 row 생성 X.
+    /// Android 와 동등한 패턴: `"ios-\(UUID().uuidString)"`.
     struct SubmitRequest: Encodable {
         let subjectId: Int64?
         let mockExamId: Int64?
+        let source: String?
         let answers: [Answer]
+        let clientSubmissionId: String?
+
+        init(
+            subjectId: Int64? = nil,
+            mockExamId: Int64? = nil,
+            source: String? = nil,
+            answers: [Answer],
+            clientSubmissionId: String? = nil
+        ) {
+            self.subjectId = subjectId
+            self.mockExamId = mockExamId
+            self.source = source
+            self.answers = answers
+            self.clientSubmissionId = clientSubmissionId
+        }
 
         struct Answer: Encodable {
             let questionId: Int64

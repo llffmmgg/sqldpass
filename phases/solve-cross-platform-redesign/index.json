@@ -1,0 +1,65 @@
+{
+  "project": "sqldpass",
+  "phase": "solve-cross-platform-redesign",
+  "description": "Android(mobile/) 와 iOS(ios/) 의 풀이 진행 화면을 양 플랫폼 동시에 처음부터 재설계. 웹 frontend/src/app/solve/SolveClient.tsx 의 phase='solve' 인터랙션(1문제씩 즉시 채점, 정답 공개, 해설, 다음 문제)을 모바일에서 고도화한다. 본문 Markdown/SVG/Table/CodeBlock 분리 렌더(iOS 신규), 더블탭 단축, 햅틱 매트릭스(선택/정답/오답), 정답 공개 상태 시각 전환, 오프라인 답안 큐잉(iOS 신규 SwiftData 구현)까지 양 플랫폼 동등 수준으로 끌어올린다. 백엔드 API 계약은 변경 없음 — 기존 endpoint(/api/questions, /api/questions/{id}, /api/solves)만 사용.",
+  "steps": [
+    {
+      "step": 1,
+      "name": "shared-tokens-and-spec",
+      "description": "공통 디자인 토큰 동기화 + 풀이 화면 UX 스펙 문서. Android ui/theme/Spacing.kt + Radius.kt 신설(매직 넘버 제거 기반), iOS DesignSystem 기존 토큰과 값 1:1 정합 검증, docs/SOLVE_SCREEN_SPEC.md 작성(상태 다이어그램·햅틱 매트릭스·더블탭 정책·오프라인 큐잉 정책·SVG/Markdown/Table 렌더 정책).",
+      "status": "completed",
+      "started_at": "2026-05-18T19:30:00+0900",
+      "summary": "사용자 결정(옵션 A): iOS Spacing.swift/Radius.swift 가 단일 진실 원천. Android SqldSpacing.kt + SqldRadius.kt 신설하여 iOS 값 1:1 미러(xxs=2/xs=4/sm=8/md=12/base=16/lg=24/xl=32/xxl=48/xxxl=64, Radius sm=6/md=8/lg=16/xl=16/xxl=20/full=9999). docs/SOLVE_SCREEN_SPEC.md 신설(토큰/정보위계/상태다이어그램/인터랙션매트릭스/햅틱매트릭스/오프라인큐잉정책/본문렌더정책/풀이모드분리 8섹션). cd mobile; .\\gradlew.bat :app:assembleDebug BUILD SUCCESSFUL 3s. iOS 파일은 본 step 에서 미변경(진실 원천).",
+      "completed_at": "2026-05-18T19:35:00+0900"
+    },
+    {
+      "step": 2,
+      "name": "ios-question-content-rich-rendering",
+      "description": "iOS QuestionBody 를 Markdown + Inline SVG + GFM Table + 코드블록을 분리 렌더하는 신규 컴포넌트로 교체. SVGKit SPM 추가, parseQuestionContent(text:) → [QuestionSegment] 분리 로직(Android splitMarkdownSegments + ensureCodeFences 동치), 각 세그먼트 전용 SwiftUI 뷰. step 4 의 선행 의존.",
+      "status": "blocked",
+      "started_at": "2026-05-18T19:35:00+0900",
+      "blocked_at": "2026-05-18T19:55:00+0900",
+      "blocked_reason": "iOS xcodebuild + 시뮬레이터 검증은 macOS 환경 필요. 코드 작성은 Windows 에서 완료. 사용자가 macOS 에서 `cd ios && ~/bin/xcodegen generate && xcodebuild ... build` 실행 후 BUILD SUCCEEDED 확인 시 본 step 을 completed 로 갱신.",
+      "summary": "ios/project.yml 에 SVGKit SPM 추가 (branch: main). 신규 파일 9개: Models/QuestionSegment.swift (enum: markdown/codeBlock/inlineSVG/image/table), Core/Content/EnsureCodeFences.swift (HTML <pre><code>/<table>/<code>/엔티티 정규화, Android EnsureCodeFences.kt 동치), Core/Content/ParseQuestionContent.swift (fenced/svg/img/GFM table 분리, Android splitMarkdownSegments 동치 + table 케이스 추가), Features/Solve/Components/{QuestionContentView,MarkdownTextView,CodeBlockView,InlineSVGView,MarkdownTableView}.swift (각 세그먼트 전용 SwiftUI 뷰, SVGKFastImageView UIViewRepresentable wrapper). QuestionBody.swift 교체 — 기존 Text(question.content) → QuestionContentView 호출. 모든 시각 토큰은 Spacing/Radius/Color+Tokens 만 사용. macOS 검증 대기."
+    },
+    {
+      "step": 3,
+      "name": "android-solo-solve-screen",
+      "description": "Android 단일 채점 풀이 화면 신규(mobile/ui/solve/SoloSolveScreen.kt). 1문제 풀이 → 정답 확인 → 정답 공개 상태 전환(옵션 색·체크·X·shake) → 해설/모범답안/키워드 카드 → 다음 문제 흐름. 더블탭 = 선택+제출, 햅틱 light/CONFIRM/REJECT, 토큰 적용(매직 넘버 0), 진행 바, 비회원 일일 한도 칩, 키보드 imePadding.",
+      "status": "completed",
+      "started_at": "2026-05-18T19:55:00+0900",
+      "summary": "신규 SoloSolveScreen 흐름 완성. (1) ApiModels QuestionDetailResponse + SqldpassApi getQuestionDetail + AppRepository.questionDetail/submitSoloAnswer 추가. (2) SqldpassRoute.SoloSolve 라우트 신설. (3) AppViewModel 에 SoloSession data class + AppUiState.soloSession + startSoloSolve/soloSelectOption/soloSetAnswerText/soloSubmit/soloNext/soloExit/soloReplaySame/soloNewRandom + 클라이언트 측 isSoloCorrect (MCQ correctOption / SHORT 정규화 매칭) 추가. SOLO_SET_SIZE=10 const. (4) ui/solve/SoloSolveScreen.kt + components/{SolveOptionRow,SoloProgressHeader,SoloExplanationCard,SoloBottomActionBar}.kt + common/SoloMarkdownContent.kt 신규(QuestionRunnerScreen 인라인 MarkdownContent 동등 패턴 ui/common 으로 분리). 5가지 옵션 시각 상태(Idle/Selected/RevealedCorrect/RevealedSelectedWrong/RevealedOther), shake-x 0.3s, bounce 1.04, press 0.97. AnimatedVisibility 로 해설 카드. (5) MainActivity Solve composable 의 onStartPractice 가 startSoloSolve + SoloSolve push 하도록 변경 + SoloSolve composable 등록. QuestionRunnerScreen 은 모의고사용으로 그대로(회귀 0). cd mobile; .\\gradlew.bat :app:assembleDebug BUILD SUCCESSFUL 11s (DashboardTab 기존 warning 만, 본 step 변경분 warning 0).",
+      "completed_at": "2026-05-18T20:25:00+0900"
+    },
+    {
+      "step": 4,
+      "name": "ios-solo-solve-screen",
+      "description": "iOS 단일 채점 풀이 화면 신규(ios/Features/Solo/SoloSolveView + SoloSolveViewModel). step 2 의 QuestionContent 사용. 1문제 풀이 → 즉시 채점 → withAnimation 정답 공개(옵션 색 전환·체크·X) → 해설 카드 등장 → 다음 문제. 더블탭 TapGesture(count:2), 햅틱 UIImpactFeedbackGenerator(.light)/UINotificationFeedbackGenerator(.success/.warning), 토큰 적용, 진행 바, safeArea 처리.",
+      "status": "blocked",
+      "started_at": "2026-05-18T20:25:00+0900",
+      "blocked_at": "2026-05-18T20:55:00+0900",
+      "blocked_reason": "iOS xcodebuild + 시뮬레이터 검증은 macOS 환경 필요. 코드 작성 Windows 에서 완료. 사용자가 macOS 에서 `cd ios && ~/bin/xcodegen generate && xcodebuild ... build` 실행 후 BUILD SUCCEEDED 확인 시 본 step 을 completed 로 갱신.",
+      "summary": "신규 파일: Models/QuestionDetail.swift(correctOption/answer/keywords/explanation 포함 응답 모델, decodeIfPresent 로 nil-safe), Core/Content/ParseQuestion.swift(①②③④ 마커 분리, Android QuestionParser.kt 동치), Core/Haptics/Haptics.swift(light/medium/success/warning/error 5종 헬퍼), Features/Solo/SoloSolveViewModel.swift(@MainActor @Observable, setSize=10, start/selectOption/submit/goNext/replaySame/newRandom, isCorrect 평가 정규화 매칭, 백그라운드 SolveService.submit clientSubmissionId='ios-${UUID}'), Features/Solo/Components/{SolveOptionRow,SoloProgressHeader,SoloExplanationCard,SoloBottomActionBar}.swift(5가지 옵션 시각 상태 + shake-x 0.3s + bounce 1.04 + press scale, ProgressView linear primary, 정답/오답 배너 + 모범답안 + 키워드 + 해설), Features/Solo/SoloSolveView.swift(메인 — task start, .onChange revealed 햅틱 success/warning, confirmationDialog 종료 확인, safeAreaInset bottom action bar, 세션 완료 카드 점수 링·rate%·CTA 3개). 수정: Services/QuestionService.swift(fullDetail(id:) → QuestionDetail 신규, 기존 detail(id:) → Question 유지로 BookmarkDetailSheet 호환), Services/SolveService.swift(SubmitRequest 에 source + clientSubmissionId 인자 추가, 기본값 nil), project.yml(SVGKit SPM 추가는 step 2 에서, 본 step 변경 없음), App/MainTabView.swift(첫 탭을 NavigationStack 으로 wrap + toolbar 'play.circle.fill' 버튼이 fullScreenCover 로 SoloSolveView 진입 — TODO 표기로 실제 과목 선택 흐름은 별 phase). macOS 검증 대기."
+    },
+    {
+      "step": 5,
+      "name": "android-offline-solve-queue",
+      "description": "Android 오프라인 답안 큐잉을 단일 채점 모드까지 확장. 기존 PendingSolveEntity(Room) 가 모의고사용으로만 쓰이는데, SoloSolveScreen 의 1문제 1제출 흐름도 동일 큐를 통과하도록 통합. 네트워크 끊김 시 enqueue → 화면에 '오프라인 — 보관 중' 미니 인디케이터 표시. 복귀 시 OfflineSyncManager 가 자동 drain. submitSolveOffline 멱등성(clientSubmissionId) 유지.",
+      "status": "completed",
+      "started_at": "2026-05-18T20:55:00+0900",
+      "summary": "옵션 B 선택 — PendingSolveEntity 의 mockExamId 컬럼에 sentinel(-1L) 을 넣고 answersJson 에 wrapper(SoloPendingPayload{subjectId, answers}) 직렬화. Room 마이그레이션 회피, version 1 유지. AppRepository.submitSoloAnswer 가 try/catch 안에서 enqueue(sentinel + wrapper) 후 throw. drainPendingSolves 가 sentinel 분기로 SoloPendingPayload 디코드 → subjectId + MOBILE_PRACTICE source 로 재전송, 그 외는 기존 모의고사 흐름. 멱등키 clientSubmissionId 유지. Dao 에 unsyncedSolveCountFlow(): Flow<Int> 추가. AppRepository.pendingSolveCountFlow() 노출. AppViewModel.pendingSolveCount: StateFlow<Int> (stateIn WhileSubscribed 5s) + tryDrainPendingSolves(). 신규 OfflineQueueChip.kt(warning 톤 0.12 alpha, CloudOff 아이콘, count>0 일 때만 노출, '오프라인 — N개 보관 중'). SoloSolveScreen 에 pendingSolveCount 인자 추가 + 본문 상단에 OfflineQueueChip 배치. MainActivity 에 ConnectivityManager.NetworkCallback 등록(onAvailable → viewModel.tryDrainPendingSolves) + onDestroy 해제. cd mobile; .\\gradlew.bat :app:assembleDebug BUILD SUCCESSFUL 12s.",
+      "completed_at": "2026-05-18T21:20:00+0900"
+    },
+    {
+      "step": 6,
+      "name": "ios-offline-solve-queue",
+      "description": "iOS 오프라인 답안 큐잉 신규 구현. SwiftData(@Model PendingSolve) 로 Android PendingSolveEntity 와 동일 필드(localId, subjectId, answers, synced, serverSolveId, syncedAt) 모델 구축. NWPathMonitor 로 네트워크 변경 감지 → SolveSyncManager.tryDrain(). SoloSolveView 에 동일 '오프라인 — 보관 중' 인디케이터. macOS 환경에서 사용자 시뮬레이터 검증 필요.",
+      "status": "blocked",
+      "started_at": "2026-05-18T21:20:00+0900",
+      "blocked_at": "2026-05-18T21:55:00+0900",
+      "blocked_reason": "iOS xcodebuild + 비행기 모드 시나리오 검증은 macOS 환경 필요. 코드 작성 Windows 에서 완료. 사용자가 macOS 에서 `cd ios && ~/bin/xcodegen generate && xcodebuild ... build` 실행 후 BUILD SUCCEEDED 확인 + 시뮬레이터에서 비행기 모드 ON→풀이→OFF 시 자동 sync 확인 시 본 step 을 completed 로 갱신.",
+      "summary": "신규 파일: Core/Persistence/PendingSolveModel.swift(@Model final class, localId 음수 timestamp unique + clientSubmissionId unique, subjectId/mockExamId 둘 다 nullable 로 단일/모의고사 공용), Core/Persistence/SqldpassModelContainer.swift(@MainActor ModelContainer 싱글톤), Core/Persistence/SolveQueue.swift(@MainActor @Observable, enqueueSolo/listUnsynced/markSynced/pendingCount), Core/Persistence/SolveSyncManager.swift(@MainActor, draining guard, listUnsynced 순회 → SolveService.submit → markSynced, 실패 시 break), Core/Networking/NetworkMonitor.swift(NWPathMonitor wrapper, @Observable isOnline, start/cancel idempotent), Features/Solo/Components/OfflineQueueChip.swift(cloud.slash + 'N개 보관 중' warning 톤, count>0 만). 수정: Features/Solo/SoloSolveViewModel.swift(recordAnswer 의 SolveService.submit 실패 catch 안에서 SolveQueue.enqueueSolo 호출, 큐잉 성공이면 submitError 안 띄움), Features/Solo/SoloSolveView.swift(let solveQueue=SolveQueue.shared 보관 + content body 상단에 OfflineQueueChip(count: solveQueue.pendingCount)), App/SqldpassApp.swift(WindowGroup .modelContainer(SqldpassModelContainer.shared) + .task NetworkMonitor.start() + 부팅 즉시 SolveSyncManager.tryDrain + .onChange isOnline true 시 재drain). 멱등키 'ios-${UUID}' 형식으로 Android 'android-${UUID}' 와 prefix 만 다름 — 백엔드는 둘 다 동일 SolveRequest.clientSubmissionId @Size(max=64) 로 처리. macOS 검증 대기."
+    }
+  ],
+  "created_at": "2026-05-18T19:00:00+0900"
+}

@@ -82,6 +82,9 @@ interface SqldpassApi {
         @Query("size") size: Int,
     ): List<QuestionResponse>
 
+    @GET("api/questions/{id}")
+    suspend fun getQuestionDetail(@retrofit2.http.Path("id") id: Long): com.sqldpass.app.data.QuestionDetailResponse
+
     @GET("api/streak/me")
     suspend fun getMyStreak(): StreakResponse
 

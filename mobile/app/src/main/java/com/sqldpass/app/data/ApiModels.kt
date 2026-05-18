@@ -250,6 +250,23 @@ data class QuestionResponse(
     val questionType: String?,
 )
 
+/**
+ * GET /api/questions/{id} 응답.
+ * MCQ: correctOption(1~4), answer/keywords null.
+ * SHORT_ANSWER/DESCRIPTIVE: answer + keywords 채워짐.
+ */
+@JsonClass(generateAdapter = true)
+data class QuestionDetailResponse(
+    val id: Long,
+    val subjectId: Long?,
+    val content: String,
+    val questionType: String?,
+    val correctOption: Int?,
+    val answer: String?,
+    val keywords: List<String> = emptyList(),
+    val explanation: String?,
+)
+
 @JsonClass(generateAdapter = true)
 data class StreakResponse(
     val currentStreak: Int = 0,

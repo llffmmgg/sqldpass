@@ -28,6 +28,9 @@ sealed class SqldpassRoute(val route: String) {
 
     /** 결과 — Runner 와 짝. */
     data object Result : SqldpassRoute("result")
+
+    /** 단일 채점 풀이 — 웹 /solve 와 동치(1문제씩 즉시 채점). */
+    data object SoloSolve : SqldpassRoute("solo-solve")
 }
 
 data class TabSpec(val route: SqldpassRoute, val label: String, val icon: ImageVector)
