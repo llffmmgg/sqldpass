@@ -15,7 +15,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.sqldpass.app.ui.common.AppBadge
 import com.sqldpass.app.ui.common.AppBadgeTone
@@ -55,7 +54,7 @@ fun CodeBlockCard(language: String?, code: String) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .horizontalScroll(rememberScrollState())
-                    .padding(horizontal = 14.dp, vertical = 12.dp),
+                    .padding(horizontal = SqldSpacing.md, vertical = SqldSpacing.md),
             ) {
                 Text(
                     text = code,

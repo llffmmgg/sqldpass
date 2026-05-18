@@ -4,19 +4,19 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.ArrowForward
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
+import com.sqldpass.app.ui.common.AppCard
+import com.sqldpass.app.ui.common.AppCardAccent
+import com.sqldpass.app.ui.common.AppCardSurface
+import com.sqldpass.app.ui.theme.LocalSqldpassPalette
+import com.sqldpass.app.ui.theme.SqldSpacing
 
 /**
  * 이어풀기 추천 카드 — 마지막 풀이의 자격증·모드 기반.
@@ -34,42 +34,38 @@ fun ContinueLastCard(
     lastMode: LastSolveMode,
     onClick: () -> Unit,
 ) {
+    val palette = LocalSqldpassPalette.current
     val modeLabel = when (lastMode) {
         LastSolveMode.PRACTICE -> "어제 풀던 ${lastCertLabel} 랜덤 10문 이어가기"
         LastSolveMode.MOCK_EXAM -> "어제 시작한 ${lastCertLabel} 모의고사 이어가기"
         LastSolveMode.PAST_EXAM -> "어제 시작한 ${lastCertLabel} 기출 이어가기"
     }
-    Card(
-        shape = RoundedCornerShape(14.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface,
-            contentColor = MaterialTheme.colorScheme.onSurface,
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+    AppCard(
+        surface = AppCardSurface.Card,
+        accent = AppCardAccent.None,
         onClick = onClick,
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
+            modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            horizontalArrangement = Arrangement.spacedBy(SqldSpacing.md),
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     "이어풀기",
                     style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.primary,
+                    color = palette.accent,
                 )
                 Text(
                     modeLabel,
                     style = MaterialTheme.typography.titleMedium,
+                    color = palette.textPrimary,
                 )
             }
             Icon(
                 Icons.Outlined.ArrowForward,
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                tint = palette.textMuted,
             )
         }
     }

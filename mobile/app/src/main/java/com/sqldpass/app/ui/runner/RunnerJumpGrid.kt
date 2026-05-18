@@ -14,7 +14,6 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.StarRate
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -22,11 +21,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
-import com.sqldpass.app.ui.common.AppButton
-import com.sqldpass.app.ui.common.AppButtonSize
-import com.sqldpass.app.ui.common.AppButtonVariant
+import com.sqldpass.app.ui.common.AppDialog
 import com.sqldpass.app.ui.theme.LocalSqldpassPalette
 import com.sqldpass.app.ui.theme.SqldRadius
+import com.sqldpass.app.ui.theme.SqldSpacing
 import com.sqldpass.app.ui.theme.SqldpassMonoText
 
 /**
@@ -38,7 +36,7 @@ import com.sqldpass.app.ui.theme.SqldpassMonoText
  *  - Current:    accent fill + accentFg text.
  *  - Bookmarked: answered 와 동일 + 우상단 작은 별표 dot (warning).
  *
- * AlertDialog 외형은 유지(deferred). 내부 액션 버튼은 AppButton.
+ * AppDialog content slot 위에 LazyVerticalGrid 를 올린다. 닫기 버튼은 confirm 슬롯(Tertiary 톤).
  */
 @Composable
 fun RunnerJumpGrid(
@@ -50,15 +48,15 @@ fun RunnerJumpGrid(
     bookmarkedIndices: Set<Int> = emptySet(),
 ) {
     val palette = LocalSqldpassPalette.current
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("문제 이동", color = palette.textPrimary) },
-        text = {
+    AppDialog(
+        onDismiss = onDismiss,
+        title = "문제 이동",
+        content = {
             LazyVerticalGrid(
                 columns = GridCells.Fixed(5),
-                contentPadding = PaddingValues(4.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
+                contentPadding = PaddingValues(SqldSpacing.xs),
+                horizontalArrangement = Arrangement.spacedBy(SqldSpacing.sm),
+                verticalArrangement = Arrangement.spacedBy(SqldSpacing.sm),
             ) {
                 items((0 until total).toList()) { idx ->
                     val isCurrent = idx == currentIndex
@@ -120,13 +118,8 @@ fun RunnerJumpGrid(
                 }
             }
         },
-        confirmButton = {
-            AppButton(
-                text = "닫기",
-                onClick = onDismiss,
-                variant = AppButtonVariant.Tertiary,
-                size = AppButtonSize.Compact,
-            )
-        },
+        confirmLabel = "닫기",
+        onConfirm = onDismiss,
+        dismissLabel = null,
     )
 }

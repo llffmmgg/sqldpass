@@ -2,7 +2,9 @@ package com.sqldpass.app.ui.passplus
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -19,11 +21,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.outlined.Close
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -34,9 +32,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.sqldpass.app.billing.BillingProductSnapshot
 import com.sqldpass.app.data.SubscriptionResponse
-
-private val CardCorner = 14.dp
-private val ButtonCorner = 12.dp
+import com.sqldpass.app.ui.common.AppButton
+import com.sqldpass.app.ui.common.AppButtonSize
+import com.sqldpass.app.ui.common.AppButtonVariant
+import com.sqldpass.app.ui.common.AppCard
+import com.sqldpass.app.ui.common.AppCardAccent
+import com.sqldpass.app.ui.common.AppCardSurface
+import com.sqldpass.app.ui.theme.LocalSqldpassPalette
+import com.sqldpass.app.ui.theme.SqldRadius
+import com.sqldpass.app.ui.theme.SqldSpacing
 
 private data class CatalogEntry(
     val productId: String,
@@ -88,28 +92,36 @@ fun PassPlusCatalogScreen(
         onLoadSubscription()
     }
     val productsById = products.associateBy { it.productId }
+    val palette = LocalSqldpassPalette.current
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background),
+            .background(palette.page),
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .statusBarsPadding()
-                .padding(horizontal = 8.dp, vertical = 6.dp),
+                .padding(horizontal = SqldSpacing.sm, vertical = 6.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            IconButton(
-                onClick = onClose,
-                modifier = Modifier.sizeIn(minWidth = 48.dp, minHeight = 48.dp),
+            Box(
+                modifier = Modifier
+                    .sizeIn(minWidth = 48.dp, minHeight = 48.dp)
+                    .clickable(onClick = onClose),
+                contentAlignment = Alignment.Center,
             ) {
-                Icon(Icons.Outlined.Close, contentDescription = "닫기")
+                Icon(
+                    Icons.Outlined.Close,
+                    contentDescription = "닫기",
+                    tint = palette.textPrimary,
+                )
             }
             Text(
                 "PASS+",
                 style = MaterialTheme.typography.titleMedium,
+                color = palette.textPrimary,
                 modifier = Modifier.weight(1f),
             )
         }
@@ -117,13 +129,17 @@ fun PassPlusCatalogScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .navigationBarsPadding(),
-            contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp),
+            contentPadding = PaddingValues(
+                horizontal = 20.dp,
+                vertical = SqldSpacing.md,
+            ),
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             item {
                 Text(
                     "더 깊은 학습을 위한 4가지 플랜",
                     style = MaterialTheme.typography.headlineSmall,
+                    color = palette.textPrimary,
                 )
             }
             if (subscription != null) {
@@ -144,7 +160,7 @@ fun PassPlusCatalogScreen(
                     Text(
                         "Play Billing 상품 정보를 불러오는 중입니다…",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        color = palette.textMuted,
                     )
                 }
             }
@@ -154,43 +170,36 @@ fun PassPlusCatalogScreen(
 
 @Composable
 private fun ActiveSubscriptionCard(sub: SubscriptionResponse) {
-    val highlight = sub.active
-    Card(
-        shape = RoundedCornerShape(CardCorner),
-        colors = CardDefaults.cardColors(
-            containerColor = if (highlight) MaterialTheme.colorScheme.primaryContainer
-            else MaterialTheme.colorScheme.surface,
-            contentColor = if (highlight) MaterialTheme.colorScheme.onPrimaryContainer
-            else MaterialTheme.colorScheme.onSurface,
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+    val palette = LocalSqldpassPalette.current
+    AppCard(
+        surface = AppCardSurface.Card,
+        accent = if (sub.active) AppCardAccent.Success else AppCardAccent.None,
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(18.dp),
-            verticalArrangement = Arrangement.spacedBy(6.dp),
-        ) {
-            Text(
-                if (sub.active) "활성 구독 — ${sub.plan ?: "PASS+"}"
-                else "활성 구독 없음",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-            )
-            if (sub.active) {
-                com.sqldpass.app.text.formatKstDateTime(sub.expiresAt)?.let {
-                    Text("만료: $it", style = MaterialTheme.typography.bodyMedium)
-                }
+        Text(
+            if (sub.active) "활성 구독 — ${sub.plan ?: "PASS+"}"
+            else "활성 구독 없음",
+            style = MaterialTheme.typography.titleMedium,
+            color = palette.textPrimary,
+            fontWeight = FontWeight.Bold,
+        )
+        if (sub.active) {
+            com.sqldpass.app.text.formatKstDateTime(sub.expiresAt)?.let {
                 Text(
-                    buildString {
-                        if (sub.removesAds) append("광고 제거 · ")
-                        if (sub.allowsPremium) append("프리미엄 · ")
-                        if (sub.allowsPdf) append("PDF · ")
-                        if (sub.hasLibraryAccess) append("라이브러리 · ")
-                    }.trimEnd(' ', '·', ' ').ifBlank { "활성" },
-                    style = MaterialTheme.typography.labelMedium,
+                    "만료: $it",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = palette.textMuted,
                 )
             }
+            Text(
+                buildString {
+                    if (sub.removesAds) append("광고 제거 · ")
+                    if (sub.allowsPremium) append("프리미엄 · ")
+                    if (sub.allowsPdf) append("PDF · ")
+                    if (sub.hasLibraryAccess) append("라이브러리 · ")
+                }.trimEnd(' ', '·', ' ').ifBlank { "활성" },
+                style = MaterialTheme.typography.labelMedium,
+                color = palette.textMuted,
+            )
         }
     }
 }
@@ -202,85 +211,78 @@ private fun PlanCard(
     available: Boolean,
     onPurchase: () -> Unit,
 ) {
-    val accent = MaterialTheme.colorScheme.primary
+    val palette = LocalSqldpassPalette.current
+    val accent = palette.accent
     val borderModifier = if (entry.recommended) {
         Modifier.border(
             width = 2.dp,
             color = accent,
-            shape = RoundedCornerShape(CardCorner),
+            shape = RoundedCornerShape(SqldRadius.lg),
         )
     } else Modifier
-    Card(
-        shape = RoundedCornerShape(CardCorner),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface,
-            contentColor = MaterialTheme.colorScheme.onSurface,
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+    AppCard(
+        surface = AppCardSurface.Card,
         modifier = borderModifier,
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(18.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp),
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Column {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(6.dp),
-                    ) {
-                        Text(entry.planLabel, style = MaterialTheme.typography.titleMedium)
-                        if (entry.recommended) {
-                            com.sqldpass.app.ui.common.SqldpassBadge(
-                                label = "가장 인기",
-                                base = accent,
-                            )
-                        }
-                    }
-                    Text(
-                        entry.durationLabel,
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-                Text(
-                    formattedPrice,
-                    style = MaterialTheme.typography.titleLarge,
-                    color = accent,
-                )
-            }
-            entry.benefits.forEach { benefit ->
+            Column {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
                 ) {
-                    androidx.compose.material3.Icon(
-                        imageVector = Icons.Filled.Check,
-                        contentDescription = null,
-                        tint = accent,
-                        modifier = Modifier.size(16.dp),
-                    )
                     Text(
-                        benefit,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurface,
+                        entry.planLabel,
+                        style = MaterialTheme.typography.titleMedium,
+                        color = palette.textPrimary,
                     )
+                    if (entry.recommended) {
+                        com.sqldpass.app.ui.common.SqldpassBadge(
+                            label = "가장 인기",
+                            base = accent,
+                        )
+                    }
                 }
+                Text(
+                    entry.durationLabel,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = palette.textMuted,
+                )
             }
-            Button(
-                shape = RoundedCornerShape(ButtonCorner),
-                onClick = onPurchase,
-                enabled = available,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .sizeIn(minHeight = 48.dp),
-            ) { Text(if (available) "구매" else "로드 중…") }
+            Text(
+                formattedPrice,
+                style = MaterialTheme.typography.titleLarge,
+                color = accent,
+            )
         }
+        entry.benefits.forEach { benefit ->
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(SqldSpacing.sm),
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.Check,
+                    contentDescription = null,
+                    tint = accent,
+                    modifier = Modifier.size(16.dp),
+                )
+                Text(
+                    benefit,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = palette.textPrimary,
+                )
+            }
+        }
+        AppButton(
+            text = if (available) "구매" else "로드 중…",
+            onClick = onPurchase,
+            variant = AppButtonVariant.Primary,
+            size = AppButtonSize.Regular,
+            enabled = available,
+            modifier = Modifier.fillMaxWidth(),
+        )
     }
 }

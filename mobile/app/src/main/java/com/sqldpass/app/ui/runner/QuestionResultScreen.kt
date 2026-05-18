@@ -380,7 +380,7 @@ private fun AnswerRowContent(
         )
         Column(
             modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(2.dp),
+            verticalArrangement = Arrangement.spacedBy(SqldSpacing.xxs),
         ) {
             Text(
                 "${index + 1}번 — ${if (isCorrect) "정답" else "오답"}",

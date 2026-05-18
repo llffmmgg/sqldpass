@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -14,10 +13,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.sqldpass.app.ui.common.AppButton
-import com.sqldpass.app.ui.common.AppButtonSize
-import com.sqldpass.app.ui.common.AppButtonVariant
 import com.sqldpass.app.ui.common.AppChip
+import com.sqldpass.app.ui.common.AppDialog
 import com.sqldpass.app.ui.common.AppTextField
 import com.sqldpass.app.ui.theme.LocalSqldpassPalette
 
@@ -40,11 +37,12 @@ fun ReportDialog(
     var selectedType by remember { mutableStateOf(FEEDBACK_TYPES.first().first) }
     var content by remember { mutableStateOf("") }
     val isValid = content.length in 5..2000
+    val canSubmit = isValid && !submitting
 
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("이 문제 신고하기", color = palette.textPrimary) },
-        text = {
+    AppDialog(
+        onDismiss = onDismiss,
+        title = "이 문제 신고하기",
+        content = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(
                     "문항 #$questionId — 어떤 문제가 있나요?",
@@ -64,24 +62,10 @@ fun ReportDialog(
                 )
             }
         },
-        confirmButton = {
-            AppButton(
-                text = if (submitting) "전송중…" else "신고",
-                onClick = { onSubmit(selectedType, content) },
-                variant = AppButtonVariant.Primary,
-                size = AppButtonSize.Compact,
-                enabled = isValid && !submitting,
-                loading = submitting,
-            )
-        },
-        dismissButton = {
-            AppButton(
-                text = "취소",
-                onClick = onDismiss,
-                variant = AppButtonVariant.Tertiary,
-                size = AppButtonSize.Compact,
-            )
-        },
+        confirmLabel = if (submitting) "전송중…" else "신고",
+        onConfirm = { if (canSubmit) onSubmit(selectedType, content) },
+        dismissLabel = "취소",
+        onDismissAction = onDismiss,
     )
 }
 

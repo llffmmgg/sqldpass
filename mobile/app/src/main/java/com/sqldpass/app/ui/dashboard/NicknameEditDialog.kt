@@ -1,17 +1,14 @@
 package com.sqldpass.app.ui.dashboard
 
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import com.sqldpass.app.ui.common.AppDialog
+import com.sqldpass.app.ui.common.AppTextField
 
 @Composable
 fun NicknameEditDialog(
@@ -22,25 +19,23 @@ fun NicknameEditDialog(
 ) {
     var value by remember { mutableStateOf(currentNickname.orEmpty()) }
     val valid = value.length in 2..30
+    val canSubmit = valid && !submitting && value != currentNickname
 
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("닉네임 변경") },
-        text = {
-            OutlinedTextField(
+    AppDialog(
+        onDismiss = onDismiss,
+        title = "닉네임 변경",
+        content = {
+            AppTextField(
                 value = value,
                 onValueChange = { value = it },
-                label = { Text("닉네임 (2~30자)") },
-                modifier = Modifier.fillMaxWidth(),
+                label = "닉네임 (2~30자)",
                 singleLine = true,
+                modifier = Modifier.fillMaxWidth(),
             )
         },
-        confirmButton = {
-            Button(
-                enabled = valid && !submitting && value != currentNickname,
-                onClick = { onSubmit(value) },
-            ) { Text(if (submitting) "변경중…" else "변경") }
-        },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("취소") } },
+        confirmLabel = if (submitting) "변경중…" else "변경",
+        onConfirm = { if (canSubmit) onSubmit(value) },
+        dismissLabel = "취소",
+        onDismissAction = onDismiss,
     )
 }

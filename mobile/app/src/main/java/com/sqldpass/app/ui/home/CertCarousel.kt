@@ -6,23 +6,23 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.sqldpass.app.ui.common.AppCard
+import com.sqldpass.app.ui.common.AppCardAccent
+import com.sqldpass.app.ui.common.AppCardSurface
+import com.sqldpass.app.ui.theme.LocalSqldpassPalette
 import com.sqldpass.app.ui.theme.LocalSqldpassSemanticColors
+import com.sqldpass.app.ui.theme.SqldSpacing
 
 /**
  * 홈 자격증 6종 수평 캐러셀 — 카드 탭 시 onCertTap(slug) 호출.
@@ -33,20 +33,23 @@ import com.sqldpass.app.ui.theme.LocalSqldpassSemanticColors
 fun CertCarousel(
     onCertTap: (CertInfo) -> Unit,
 ) {
+    val palette = LocalSqldpassPalette.current
     val cert = LocalSqldpassSemanticColors.current.cert
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(SqldSpacing.sm)) {
         Text(
             "자격증 둘러보기",
             style = MaterialTheme.typography.titleMedium,
+            color = palette.textPrimary,
         )
         LazyRow(
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
-            contentPadding = PaddingValues(vertical = 4.dp),
+            horizontalArrangement = Arrangement.spacedBy(SqldSpacing.sm + 2.dp),
+            contentPadding = PaddingValues(vertical = SqldSpacing.xs),
         ) {
             items(CERT_CATALOG, key = { it.slug }) { info ->
                 CertCard(
                     info = info,
                     dotColor = certColorOf(info.slug, cert),
+                    accent = certAccentOf(info.slug),
                     onClick = { onCertTap(info) },
                 )
             }
@@ -58,41 +61,46 @@ fun CertCarousel(
 private fun CertCard(
     info: CertInfo,
     dotColor: androidx.compose.ui.graphics.Color,
+    accent: AppCardAccent,
     onClick: () -> Unit,
 ) {
-    Card(
-        shape = RoundedCornerShape(14.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface,
-            contentColor = MaterialTheme.colorScheme.onSurface,
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+    val palette = LocalSqldpassPalette.current
+    AppCard(
+        surface = AppCardSurface.Card,
+        accent = accent,
         onClick = onClick,
         modifier = Modifier.width(180.dp),
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(14.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(SqldSpacing.sm),
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                Box(modifier = Modifier.size(8.dp).background(dotColor, CircleShape))
-                Text(info.label, style = MaterialTheme.typography.titleSmall)
-            }
+            Box(modifier = Modifier.size(SqldSpacing.sm).background(dotColor, CircleShape))
             Text(
-                info.shortDesc,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Text(
-                "${info.questionCount}문 · ${info.durationLabel}",
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                info.label,
+                style = MaterialTheme.typography.titleSmall,
+                color = palette.textPrimary,
             )
         }
+        Text(
+            info.shortDesc,
+            style = MaterialTheme.typography.bodySmall,
+            color = palette.textMuted,
+        )
+        Text(
+            "${info.questionCount}문 · ${info.durationLabel}",
+            style = MaterialTheme.typography.labelSmall,
+            color = palette.textMuted,
+        )
     }
+}
+
+private fun certAccentOf(slug: String): AppCardAccent = when (slug) {
+    "sqld" -> AppCardAccent.Sqld
+    "engineer" -> AppCardAccent.EngineerPractical
+    "engineer-written" -> AppCardAccent.EngineerWritten
+    "computer-literacy-1" -> AppCardAccent.Cl1
+    "computer-literacy-2" -> AppCardAccent.Cl2
+    "adsp" -> AppCardAccent.Adsp
+    else -> AppCardAccent.Sqld
 }

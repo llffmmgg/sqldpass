@@ -300,6 +300,14 @@
       "status": "completed",
       "created_at": "2026-05-18T22:45:00+0900",
       "completed_at": "2026-05-19T00:35:00+0900"
+    },
+    {
+      "dir": "android-polish-and-shared-renderer",
+      "name": "android-polish-and-shared-renderer",
+      "description": "Android 폴리시 — 질문 렌더링 단일 진실 원천(AppQuestionContent) + Material3 visible 잔재 제거(Dialog/Sheet/Dropdown/Card/Button/Chip → App* primitive) + 토큰 정합(MaterialTheme.colorScheme → LocalSqldpassPalette, 매직 dp → SqldSpacing/SqldRadius) + Indication·햅틱 보강. 5 step (병렬화 가능: step 1+2 동시, step 3+4 동시, step 4 는 화면 그룹별 sub-agent 5개). CRITICAL: QuestionResultScreen 해설 plain Text → 렌더 fix. 백엔드/frontend/iOS 변경 0.",
+      "status": "in_progress",
+      "created_at": "2026-05-19T01:00:00+0900",
+      "started_at": "2026-05-19T01:00:00+0900"
     }
   ]
 }

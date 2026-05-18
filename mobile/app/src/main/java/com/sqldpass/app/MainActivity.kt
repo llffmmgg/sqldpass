@@ -414,12 +414,17 @@ private fun SqldpassApp(
                 }
             }
             if (state.loading) {
-                CircularProgressIndicator(Modifier.align(Alignment.Center))
+                val palette = com.sqldpass.app.ui.theme.LocalSqldpassPalette.current
+                CircularProgressIndicator(
+                    modifier = Modifier.align(Alignment.Center),
+                    color = palette.accent,
+                )
             }
         }
     }
 
     if (showNavigationSuite) {
+        val palette = com.sqldpass.app.ui.theme.LocalSqldpassPalette.current
         NavigationSuiteScaffold(
             navigationSuiteItems = {
                 BOTTOM_TABS.forEach { tab ->
@@ -440,12 +445,23 @@ private fun SqldpassApp(
                                 }
                             }
                         },
-                        icon = { Icon(tab.icon, contentDescription = tab.label) },
-                        label = { Text(tab.label) },
+                        icon = {
+                            Icon(
+                                tab.icon,
+                                contentDescription = tab.label,
+                                tint = if (selected) palette.accent else palette.textMuted,
+                            )
+                        },
+                        label = {
+                            Text(
+                                tab.label,
+                                color = if (selected) palette.accent else palette.textMuted,
+                            )
+                        },
                     )
                 }
             },
-            containerColor = MaterialTheme.colorScheme.background,
+            containerColor = palette.page,
         ) {
             appContent()
         }

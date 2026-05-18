@@ -1,0 +1,67 @@
+{
+  "project": "sqldpass",
+  "phase": "android-polish-and-shared-renderer",
+  "description": "Android 폴리시 — 질문 렌더링 단일 진실 원천(AppQuestionContent) + Material3 visible 잔재 제거(Dialog/Sheet/Dropdown/Card/Button/Chip → App* primitive) + 토큰 정합(MaterialTheme.colorScheme → LocalSqldpassPalette, 매직 dp → SqldSpacing/SqldRadius) + Indication·햅틱 보강. 5 step (병렬 가능: step 1+2, step 4 안 화면 그룹 5개). CRITICAL: QuestionResultScreen 해설 plain Text → 렌더 fix. 백엔드/frontend/iOS 변경 0.",
+  "dependency_graph": {
+    "step_1": "독립",
+    "step_2": "독립 (Step 1 과 병렬 가능)",
+    "step_3": "Step 2 의존",
+    "step_4": "Step 1 의존, Step 3 와 병렬 가능 (단 같은 파일 충돌로 본 phase 에서는 순차 실행)",
+    "step_5": "Step 1~4 모두 의존"
+  },
+  "parallel_plan": [
+    "round 1: [step 1, step 2] sub-agent 2개 동시 — 완료",
+    "round 2: [step 3] sub-agent 1개 — 완료 (Step 4 와 파일 충돌로 순차)",
+    "round 3: [step 4] sub-agent 5개 동시 (그룹 A/B/C/D/E) — 완료",
+    "round 4: [step 5] 메인 agent 직접 — 완료"
+  ],
+  "steps": [
+    {
+      "step": 1,
+      "name": "shared-question-renderer",
+      "description": "AppQuestionContent 신설 + 모든 질문 본문/해설 호출처 통일. CRITICAL: QuestionResultScreen.kt 의 plain Text(exp) 해설 → AppQuestionContent.",
+      "status": "completed",
+      "started_at": "2026-05-19T01:00:00+0900",
+      "completed_at": "2026-05-19T01:30:00+0900",
+      "summary": "신규: ui/common/AppQuestionContent.kt (splitMarkdownSegments + ensureCodeFences + Markdown/CodeBlock/InlineSvg/Image 분기, AppCodeBlockSurface Card/Bare). 삭제: ui/common/SoloMarkdownContent.kt. 수정 5: QuestionRunnerScreen.kt(private MarkdownContent/MarkwonTextView 제거), QuestionResultScreen.kt:325(CRITICAL FIX — plain Text(exp) → AppQuestionContent), SoloSolveScreen.kt:443, SoloExplanationCard.kt:113, AppOptionRow.kt:233. assembleDebug BUILD SUCCESSFUL 4s."
+    },
+    {
+      "step": 2,
+      "name": "app-primitives-dialog-sheet-dropdown",
+      "description": "신규 App* primitives 3종: AppDialog, AppBottomSheet, AppDropdown. Preview 포함.",
+      "status": "completed",
+      "started_at": "2026-05-19T01:00:00+0900",
+      "completed_at": "2026-05-19T01:30:00+0900",
+      "summary": "신규 3: AppDialog.kt(androidx.compose.ui.window.Dialog 기반, Material3 AlertDialog 미사용, content slot, destructive variant, AppButton 사용), AppBottomSheet.kt(Material3 ModalBottomSheet 내부 격리, top-only SqldRadius.xxl, dragHandle), AppDropdown.kt + AppDropdownItem(destructive 톤). Preview 7개. LocalSqldpassPalette + SqldSpacing + SqldRadius 만 의존. MaterialTheme.colorScheme 직접 호출 0. assembleDebug BUILD SUCCESSFUL 1s."
+    },
+    {
+      "step": 3,
+      "name": "replace-dialog-sheet-dropdown-callsites",
+      "description": "AlertDialog 8회 → AppDialog, ModalBottomSheet 1회 → AppBottomSheet, DropdownMenu 3회 → AppDropdown 치환.",
+      "status": "completed",
+      "started_at": "2026-05-19T01:30:00+0900",
+      "completed_at": "2026-05-19T01:45:00+0900",
+      "summary": "8개 파일 수정: NicknameEditDialog/ProfileTab(pendingNotice+FeedbackDialog)/SoloSolveScreen(종료)/QuestionRunnerScreen(종료)/ReportDialog/RunnerJumpGrid → AppDialog. CertInfoSheet → AppBottomSheet. SoloSolveScreen/QuestionRunnerScreen/HomeScreen DropdownMenu → AppDropdown. 시각 chrome 만 교체, onClick·텍스트·동작 흐름 유지. ProfileTab pendingNotice 단일 버튼 톤이 Tertiary→Primary 살짝 강해짐(AppDialog confirm 슬롯 항상 Primary 한계). assembleDebug BUILD SUCCESSFUL 6s."
+    },
+    {
+      "step": 4,
+      "name": "replace-card-button-chip-tokens",
+      "description": "Material3 Card/Button/Chip/IconButton/Checkbox/OutlinedTextField → App* 치환 + MaterialTheme.colorScheme → LocalSqldpassPalette + 매직 dp → 토큰. 5 그룹 sub-agent 병렬.",
+      "status": "completed",
+      "started_at": "2026-05-19T01:45:00+0900",
+      "completed_at": "2026-05-19T02:20:00+0900",
+      "summary": "5 그룹 sub-agent 병렬 완료. 그룹 A(Solve+Runner): SkeletonCard.kt(Material3 제거, AppSkeleton 위임) + 매직 dp 토큰화. 그룹 B(결과): QuestionResultScreen + RunnerJumpGrid 매직 dp 토큰화(주요 변경은 이전 step). 그룹 C(오답): WrongAnswerTab — Card 4→AppCard, OutlinedButton/Button→AppButton, FilterChip→AppChip, Checkbox 톤 wrap, MaterialTheme.colorScheme 8→palette, CardCorner/ButtonCorner const 제거. 그룹 D(홈+탭, 12 파일): HomeScreen/CertCarousel/ContinueLastCard/CertInfoSheet/MockExamTab/PastExamTab/SolveTab/InsightsTab/DailyChart/CtaCard/MenuListRow/AccentCard — Card 54건 + Button 7건 + Chip 4건 + colorScheme 63건 + 매직 dp 32건 정리. 그룹 E(프로필+결제): ProfileTab/KpiGrid/PassPlusCatalogScreen/DashboardTab — Card 7건 + Button 3건 + Chip 1건 + colorScheme 24건 + const 4건 정리. assembleDebug BUILD SUCCESSFUL."
+    },
+    {
+      "step": 5,
+      "name": "shell-polish-and-validation",
+      "description": "TopAppBar/NavigationSuiteScaffold 시각 정리 + 검증.",
+      "status": "completed",
+      "started_at": "2026-05-19T02:20:00+0900",
+      "completed_at": "2026-05-19T02:35:00+0900",
+      "summary": "TabScaffold.kt: Material3 TopAppBar/Scaffold/scrollBehavior 제거 → 자체 Column+Row 헤더(statusBarsPadding, LocalSqldpassPalette.page 배경, textPrimary 색, sizeIn 48dp). scroll behavior 별 phase. MainActivity NavigationSuiteScaffold: containerColor=palette.page, 탭 icon/label 색 selected=accent / unselected=textMuted 명시. 전역 CircularProgressIndicator color=palette.accent 명시. assembleDebug BUILD SUCCESSFUL 4s. Indication/햅틱 보강은 본 phase 의 다른 step 에서 이미 SqldpassIndication+사용자 폴리시로 적용된 상태."
+    }
+  ],
+  "created_at": "2026-05-19T01:00:00+0900",
+  "completed_at": "2026-05-19T02:35:00+0900"
+}

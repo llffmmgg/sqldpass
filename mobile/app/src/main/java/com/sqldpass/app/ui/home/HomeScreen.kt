@@ -1,6 +1,8 @@
 package com.sqldpass.app.ui.home
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -9,19 +11,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.Login
 import androidx.compose.material.icons.outlined.AccountCircle
 import androidx.compose.material.icons.outlined.Warning
 import androidx.compose.material.icons.outlined.Whatshot
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -32,14 +27,21 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.sqldpass.app.data.StreakResponse
+import com.sqldpass.app.ui.common.AppCard
+import com.sqldpass.app.ui.common.AppCardAccent
+import com.sqldpass.app.ui.common.AppCardSurface
+import com.sqldpass.app.ui.common.AppDropdown
+import com.sqldpass.app.ui.common.AppDropdownItem
 import com.sqldpass.app.ui.common.HeroHeader
-import com.sqldpass.app.ui.theme.LocalSqldpassSemanticColors
+import com.sqldpass.app.ui.theme.LocalSqldpassPalette
+import com.sqldpass.app.ui.theme.SqldSpacing
 import java.time.LocalDate
 import java.time.ZoneId
-
-private val CardCorner = 14.dp
 
 /**
  * 홈 탭 — 오늘 상태 + 다음 행동 추천.
@@ -73,8 +75,13 @@ fun HomeScreen(
         )
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 16.dp, bottom = 20.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp),
+            contentPadding = PaddingValues(
+                start = SqldSpacing.lg - 4.dp,
+                end = SqldSpacing.lg - 4.dp,
+                top = SqldSpacing.base,
+                bottom = SqldSpacing.lg - 4.dp,
+            ),
+            verticalArrangement = Arrangement.spacedBy(SqldSpacing.md + 2.dp),
         ) {
             if (streak != null && nickname != null) {
                 item { StreakCard(streak) }
@@ -104,25 +111,18 @@ fun HomeScreen(
  */
 @Composable
 private fun StreakCard(streak: StreakResponse) {
+    val palette = LocalSqldpassPalette.current
     val atRisk = isStreakAtRisk(streak)
-    val semantic = LocalSqldpassSemanticColors.current
-    val accent = if (atRisk) semantic.state.warning else semantic.cert.sqld
+    val accent = if (atRisk) palette.warning else palette.certSqld
 
-    val isDark = androidx.compose.foundation.isSystemInDarkTheme()
-    val softBg = accent.copy(alpha = if (isDark) 0.18f else 0.10f)
-
-    Card(
-        shape = RoundedCornerShape(CardCorner),
-        colors = CardDefaults.cardColors(
-            containerColor = softBg,
-            contentColor = MaterialTheme.colorScheme.onSurface,
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+    AppCard(
+        surface = AppCardSurface.Card,
+        accent = if (atRisk) AppCardAccent.Warning else AppCardAccent.Sqld,
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            horizontalArrangement = Arrangement.spacedBy(SqldSpacing.sm + 2.dp),
         ) {
             Icon(
                 if (atRisk) Icons.Outlined.Warning else Icons.Outlined.Whatshot,
@@ -140,11 +140,15 @@ private fun StreakCard(streak: StreakResponse) {
                     streak.currentStreak >= 1 -> "꾸준함이 합격을 만듭니다."
                     else -> "한 문제만 풀어도 streak 1일."
                 }
-                Text(title, style = MaterialTheme.typography.titleMedium)
+                Text(
+                    title,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = palette.textPrimary,
+                )
                 Text(
                     body,
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = palette.textMuted,
                 )
             }
         }
@@ -162,6 +166,9 @@ private fun isStreakAtRisk(streak: StreakResponse): Boolean {
 
 /**
  * 홈 우상단 로그인/계정 아이콘. 기존 동작 유지.
+ *
+ * Step 4 그룹 D: Material3 IconButton → Box.clickable.sizeIn(48dp){Icon} 으로 교체.
+ * AppDropdown 은 Step 3 에서 이미 적용. 본 그룹은 IconButton chrome 만.
  */
 @Composable
 fun HomeAccountMenu(
@@ -170,26 +177,38 @@ fun HomeAccountMenu(
     onLogout: () -> Unit,
 ) {
     var menuOpen by remember { mutableStateOf(false) }
-    val iconColors = IconButtonDefaults.iconButtonColors(contentColor = LocalContentColor.current)
+    val tint = LocalContentColor.current
     if (nickname == null) {
-        IconButton(
-            onClick = onLogin,
-            colors = iconColors,
-            modifier = Modifier.sizeIn(minWidth = 48.dp, minHeight = 48.dp),
+        Box(
+            modifier = Modifier
+                .sizeIn(minWidth = SqldSpacing.xxl, minHeight = SqldSpacing.xxl)
+                .clickable(role = Role.Button, onClick = onLogin)
+                .semantics { contentDescription = "Google 로그인" },
+            contentAlignment = Alignment.Center,
         ) {
-            Icon(Icons.AutoMirrored.Outlined.Login, contentDescription = "Google 로그인")
+            Icon(
+                Icons.AutoMirrored.Outlined.Login,
+                contentDescription = null,
+                tint = tint,
+            )
         }
     } else {
-        IconButton(
-            onClick = { menuOpen = true },
-            colors = iconColors,
-            modifier = Modifier.sizeIn(minWidth = 48.dp, minHeight = 48.dp),
+        Box(
+            modifier = Modifier
+                .sizeIn(minWidth = SqldSpacing.xxl, minHeight = SqldSpacing.xxl)
+                .clickable(role = Role.Button, onClick = { menuOpen = true })
+                .semantics { contentDescription = "계정 메뉴" },
+            contentAlignment = Alignment.Center,
         ) {
-            Icon(Icons.Outlined.AccountCircle, contentDescription = "계정 메뉴")
+            Icon(
+                Icons.Outlined.AccountCircle,
+                contentDescription = null,
+                tint = tint,
+            )
         }
-        DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
-            DropdownMenuItem(
-                text = { Text("로그아웃") },
+        AppDropdown(expanded = menuOpen, onDismiss = { menuOpen = false }) {
+            AppDropdownItem(
+                label = "로그아웃",
                 onClick = {
                     menuOpen = false
                     onLogout()
@@ -201,17 +220,16 @@ fun HomeAccountMenu(
 
 @Composable
 fun StatusCard(message: String) {
-    Card(
-        shape = RoundedCornerShape(CardCorner),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer,
-            contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-        ),
+    val palette = LocalSqldpassPalette.current
+    AppCard(
+        surface = AppCardSurface.Card,
+        accent = AppCardAccent.Info,
     ) {
         Text(
             message,
-            modifier = Modifier.padding(14.dp),
+            modifier = Modifier.padding(vertical = SqldSpacing.xxs),
             style = MaterialTheme.typography.bodyMedium,
+            color = palette.textPrimary,
         )
     }
 }

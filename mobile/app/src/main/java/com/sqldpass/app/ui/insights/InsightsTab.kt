@@ -16,8 +16,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.WarningAmber
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -26,16 +24,19 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.sqldpass.app.data.BestScoreSummary
 import com.sqldpass.app.data.WrongAnswerStatsSummary
 import com.sqldpass.app.ui.AppUiState
+import com.sqldpass.app.ui.common.AppCard
+import com.sqldpass.app.ui.common.AppCardAccent
+import com.sqldpass.app.ui.common.AppCardSurface
 import com.sqldpass.app.ui.common.CtaCard
 import com.sqldpass.app.ui.common.HeroHeader
 import com.sqldpass.app.ui.dashboard.DailyChartCard
-
-private val CardCorner = 14.dp
+import com.sqldpass.app.ui.theme.LocalSqldpassPalette
+import com.sqldpass.app.ui.theme.SqldRadius
+import com.sqldpass.app.ui.theme.SqldSpacing
 
 @Composable
 fun InsightsTab(
@@ -55,7 +56,7 @@ fun InsightsTab(
         )
 
         if (state.nickname == null) {
-            Column(modifier = Modifier.padding(20.dp)) {
+            Column(modifier = Modifier.padding(SqldSpacing.lg - 4.dp)) {
                 CtaCard(
                     title = "로그인이 필요합니다",
                     meta = "Google 로 로그인하면 과목별 정답률, 풀이 추이, 회차별 최고 점수가 보입니다.",
@@ -66,6 +67,7 @@ fun InsightsTab(
             return
         }
 
+        val palette = LocalSqldpassPalette.current
         val stats = state.wrongAnswerStats.sortedByDescending { it.wrongRate }
         val daily = state.dashboard?.dailyCounts.orEmpty()
         val bests = state.dashboard?.bestScores.orEmpty()
@@ -73,8 +75,8 @@ fun InsightsTab(
 
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(20.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp),
+            contentPadding = PaddingValues(SqldSpacing.lg - 4.dp),
+            verticalArrangement = Arrangement.spacedBy(SqldSpacing.md + 2.dp),
         ) {
             item {
                 SubjectAccuracyCard(stats = stats)
@@ -84,7 +86,11 @@ fun InsightsTab(
             }
             if (bests.isNotEmpty()) {
                 item {
-                    Text("회차별 최고 점수", style = MaterialTheme.typography.titleMedium)
+                    Text(
+                        "회차별 최고 점수",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = palette.textPrimary,
+                    )
                 }
                 items(bests.take(10), key = { it.mockExamId }) { best ->
                     BestScoreRow(
@@ -99,29 +105,22 @@ fun InsightsTab(
 
 @Composable
 private fun SubjectAccuracyCard(stats: List<WrongAnswerStatsSummary>) {
-    Card(
-        shape = RoundedCornerShape(CardCorner),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface,
-            contentColor = MaterialTheme.colorScheme.onSurface,
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
-    ) {
-        Column(
-            modifier = Modifier.fillMaxWidth().padding(18.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp),
-        ) {
-            Text("과목별 정답률", style = MaterialTheme.typography.titleMedium)
-            if (stats.isEmpty()) {
-                Text(
-                    "아직 집계할 풀이 데이터가 없어요. 한 회차 풀어보면 여기 채워집니다.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            } else {
-                stats.take(8).forEach { stat ->
-                    AccuracyBar(stat)
-                }
+    val palette = LocalSqldpassPalette.current
+    AppCard(surface = AppCardSurface.Card, accent = AppCardAccent.None) {
+        Text(
+            "과목별 정답률",
+            style = MaterialTheme.typography.titleMedium,
+            color = palette.textPrimary,
+        )
+        if (stats.isEmpty()) {
+            Text(
+                "아직 집계할 풀이 데이터가 없어요. 한 회차 풀어보면 여기 채워집니다.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = palette.textMuted,
+            )
+        } else {
+            stats.take(8).forEach { stat ->
+                AccuracyBar(stat)
             }
         }
     }
@@ -129,17 +128,18 @@ private fun SubjectAccuracyCard(stats: List<WrongAnswerStatsSummary>) {
 
 @Composable
 private fun AccuracyBar(stat: WrongAnswerStatsSummary) {
+    val palette = LocalSqldpassPalette.current
     val accuracy = (100 - stat.wrongRate).coerceIn(0, 100)
     val isWeak = accuracy < 70
     val barColor = when {
-        accuracy >= 90 -> MaterialTheme.colorScheme.primary
-        isWeak -> MaterialTheme.colorScheme.error
-        else -> MaterialTheme.colorScheme.tertiary
+        accuracy >= 90 -> palette.accent
+        isWeak -> palette.danger
+        else -> palette.warning
     }
-    val trackColor = MaterialTheme.colorScheme.surfaceVariant
+    val trackColor = palette.elevated
     val fraction = accuracy / 100f
 
-    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(SqldSpacing.xs)) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -147,14 +147,18 @@ private fun AccuracyBar(stat: WrongAnswerStatsSummary) {
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                horizontalArrangement = Arrangement.spacedBy(SqldSpacing.xs),
             ) {
-                Text(stat.subjectName, style = MaterialTheme.typography.bodyMedium)
+                Text(
+                    stat.subjectName,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = palette.textPrimary,
+                )
                 if (isWeak) {
                     Icon(
                         Icons.Outlined.WarningAmber,
                         contentDescription = "취약 과목",
-                        tint = MaterialTheme.colorScheme.error,
+                        tint = palette.danger,
                         modifier = Modifier.size(14.dp),
                     )
                 }
@@ -162,21 +166,21 @@ private fun AccuracyBar(stat: WrongAnswerStatsSummary) {
             Text(
                 "${accuracy}% · 오답 ${stat.wrongCount}/${stat.totalSolved}",
                 style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = palette.textMuted,
             )
         }
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(8.dp)
-                .clip(RoundedCornerShape(4.dp))
+                .height(SqldSpacing.sm)
+                .clip(RoundedCornerShape(SqldRadius.sm - 2.dp))
                 .background(trackColor),
         ) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth(fraction)
-                    .height(8.dp)
-                    .clip(RoundedCornerShape(4.dp))
+                    .height(SqldSpacing.sm)
+                    .clip(RoundedCornerShape(SqldRadius.sm - 2.dp))
                     .background(barColor),
             )
         }
@@ -185,40 +189,32 @@ private fun AccuracyBar(stat: WrongAnswerStatsSummary) {
 
 @Composable
 private fun BestScoreRow(score: BestScoreSummary, examName: String) {
+    val palette = LocalSqldpassPalette.current
     val rate = if (score.totalCount > 0) score.correctCount * 100 / score.totalCount else 0
-    Card(
-        shape = RoundedCornerShape(CardCorner),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface,
-            contentColor = MaterialTheme.colorScheme.onSurface,
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
-    ) {
+    AppCard(surface = AppCardSurface.Card, accent = AppCardAccent.None) {
         Row(
-            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
                 examName,
                 style = MaterialTheme.typography.titleSmall,
+                color = palette.textPrimary,
                 modifier = Modifier.weight(1f),
             )
             Column(horizontalAlignment = Alignment.End) {
                 Text(
                     "${score.correctCount}/${score.totalCount}",
                     style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.primary,
+                    color = palette.accent,
                 )
                 Text(
                     "${rate}%",
                     style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = palette.textMuted,
                 )
             }
         }
     }
 }
-
-@Suppress("unused")
-private val Unused: Color = Color.Transparent

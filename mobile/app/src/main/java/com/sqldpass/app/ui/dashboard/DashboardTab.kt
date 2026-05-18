@@ -6,21 +6,13 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.outlined.Logout
-import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.Whatshot
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -38,13 +30,18 @@ import com.sqldpass.app.data.ThemeMode
 import com.sqldpass.app.data.WrongAnswerStatsSummary
 import com.sqldpass.app.ui.AppUiState
 import com.sqldpass.app.ui.DashboardData
+import com.sqldpass.app.ui.common.AppButton
+import com.sqldpass.app.ui.common.AppButtonSize
+import com.sqldpass.app.ui.common.AppButtonVariant
+import com.sqldpass.app.ui.common.AppCard
+import com.sqldpass.app.ui.common.AppCardAccent
+import com.sqldpass.app.ui.common.AppCardSurface
+import com.sqldpass.app.ui.common.AppChip
 import com.sqldpass.app.ui.common.CtaCard
 import com.sqldpass.app.ui.common.HeroHeader
-import com.sqldpass.app.ui.common.MenuListRow
+import com.sqldpass.app.ui.theme.LocalSqldpassPalette
+import com.sqldpass.app.ui.theme.SqldSpacing
 import com.sqldpass.app.ui.theme.SqldpassTheme
-
-private val CardCorner = 14.dp
-private val ButtonCorner = 12.dp
 
 @Composable
 fun DashboardTab(
@@ -82,6 +79,7 @@ fun DashboardTab(
         }
     }
     val examNameById = state.mockExams.associate { it.id to it.name }
+    val palette = LocalSqldpassPalette.current
     Column(modifier = Modifier.fillMaxSize()) {
         HeroHeader(
             title = "대시보드",
@@ -117,7 +115,13 @@ fun DashboardTab(
             }
             val best = state.dashboard?.bestScores.orEmpty()
             if (best.isNotEmpty()) {
-                item { Text("회차별 최고 점수", style = MaterialTheme.typography.titleMedium) }
+                item {
+                    Text(
+                        "회차별 최고 점수",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = palette.textPrimary,
+                    )
+                }
                 items(best, key = { it.mockExamId }) { score ->
                     BestScoreCard(
                         score = score,
@@ -129,7 +133,13 @@ fun DashboardTab(
                 .sortedByDescending { it.wrongRate }
                 .take(5)
             if (weak.isNotEmpty()) {
-                item { Text("취약 과목", style = MaterialTheme.typography.titleMedium) }
+                item {
+                    Text(
+                        "취약 과목",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = palette.textPrimary,
+                    )
+                }
                 items(weak, key = { it.subjectId }) { s ->
                     WeakSubjectCard(
                         stat = s,
@@ -137,13 +147,13 @@ fun DashboardTab(
                     )
                 }
                 item {
-                    OutlinedButton(
-                        shape = RoundedCornerShape(ButtonCorner),
+                    AppButton(
+                        text = "오답 전체 모아풀기",
                         onClick = { onStartWrongAnswers(null, null) },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .sizeIn(minHeight = 48.dp),
-                    ) { Text("오답 전체 모아풀기") }
+                        variant = AppButtonVariant.Secondary,
+                        size = AppButtonSize.Regular,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
                 }
             }
         }
@@ -165,40 +175,27 @@ private fun ThemeToggleCard(
     themeMode: ThemeMode,
     onThemeChange: (ThemeMode) -> Unit,
 ) {
-    Card(
-        shape = RoundedCornerShape(CardCorner),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface,
-            contentColor = MaterialTheme.colorScheme.onSurface,
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(18.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+    val palette = LocalSqldpassPalette.current
+    AppCard(surface = AppCardSurface.Card) {
+        Text(
+            "화면 테마",
+            style = MaterialTheme.typography.titleMedium,
+            color = palette.textPrimary,
+        )
+        androidx.compose.foundation.layout.FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(SqldSpacing.sm),
+            verticalArrangement = Arrangement.spacedBy(SqldSpacing.sm),
         ) {
-            Text("화면 테마", style = MaterialTheme.typography.titleMedium)
-            androidx.compose.foundation.layout.FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                verticalArrangement = Arrangement.spacedBy(6.dp),
-            ) {
-                listOf(
-                    ThemeMode.SYSTEM to "시스템",
-                    ThemeMode.LIGHT to "라이트",
-                    ThemeMode.DARK to "다크",
-                ).forEach { (mode, label) ->
-                    val selected = themeMode == mode
-                    androidx.compose.material3.AssistChip(
-                        onClick = { onThemeChange(mode) },
-                        label = { Text(label) },
-                        colors = if (selected) androidx.compose.material3.AssistChipDefaults.assistChipColors(
-                            containerColor = MaterialTheme.colorScheme.primaryContainer,
-                            labelColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                        ) else androidx.compose.material3.AssistChipDefaults.assistChipColors(),
-                    )
-                }
+            listOf(
+                ThemeMode.SYSTEM to "시스템",
+                ThemeMode.LIGHT to "라이트",
+                ThemeMode.DARK to "다크",
+            ).forEach { (mode, label) ->
+                AppChip(
+                    label = label,
+                    selected = themeMode == mode,
+                    onClick = { onThemeChange(mode) },
+                )
             }
         }
     }
@@ -206,145 +203,119 @@ private fun ThemeToggleCard(
 
 @Composable
 private fun StreakCard(currentStreak: Int) {
+    val palette = LocalSqldpassPalette.current
     val cert = com.sqldpass.app.ui.theme.LocalSqldpassSemanticColors.current.cert
     val amber = cert.sqld
-    // 라이트: amber alpha 0.10, 다크: amber alpha 0.18
-    val isDark = androidx.compose.foundation.isSystemInDarkTheme()
-    val softBg = amber.copy(alpha = if (isDark) 0.18f else 0.10f)
-    Card(
-        shape = RoundedCornerShape(CardCorner),
-        colors = CardDefaults.cardColors(
-            containerColor = softBg,
-            contentColor = MaterialTheme.colorScheme.onSurface,
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+    AppCard(
+        surface = AppCardSurface.Card,
+        accent = AppCardAccent.Sqld,
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(18.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp),
+        Row(
+            verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
         ) {
-            Row(
-                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
-            ) {
-                Icon(
-                    imageVector = Icons.Outlined.Whatshot,
-                    contentDescription = null,
-                    tint = amber,
-                    modifier = Modifier.size(20.dp),
-                )
-                Text("연속 학습 일수", style = MaterialTheme.typography.titleMedium)
-            }
-            Text(
-                "$currentStreak",
-                style = MaterialTheme.typography.displayMedium,
-                color = amber,
+            Icon(
+                imageVector = Icons.Outlined.Whatshot,
+                contentDescription = null,
+                tint = amber,
+                modifier = Modifier.size(20.dp),
             )
             Text(
-                if (currentStreak >= 1) "오늘도 한 회차, 꾸준함이 합격으로."
-                else "오늘 풀이로 streak 을 시작해보세요.",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                "연속 학습 일수",
+                style = MaterialTheme.typography.titleMedium,
+                color = palette.textPrimary,
             )
         }
+        Text(
+            "$currentStreak",
+            style = MaterialTheme.typography.displayMedium,
+            color = amber,
+        )
+        Text(
+            if (currentStreak >= 1) "오늘도 한 회차, 꾸준함이 합격으로."
+            else "오늘 풀이로 streak 을 시작해보세요.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = palette.textMuted,
+        )
     }
 }
 
 @Composable
 private fun AvgCard(overallAvg: Double?, myRecentAvg: Double?) {
-    Card(
-        shape = RoundedCornerShape(CardCorner),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface,
-            contentColor = MaterialTheme.colorScheme.onSurface,
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(18.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp),
-        ) {
-            Text("최근 14일 평균", style = MaterialTheme.typography.titleMedium)
-            val overall = overallAvg?.let { "%.1f".format(it) } ?: "—"
-            val mine = myRecentAvg?.let { "%.1f".format(it) }
+    val palette = LocalSqldpassPalette.current
+    AppCard(surface = AppCardSurface.Card) {
+        Text(
+            "최근 14일 평균",
+            style = MaterialTheme.typography.titleMedium,
+            color = palette.textPrimary,
+        )
+        val overall = overallAvg?.let { "%.1f".format(it) } ?: "—"
+        val mine = myRecentAvg?.let { "%.1f".format(it) }
+        Text(
+            "전체 평균 ${overall}문 / 일",
+            style = MaterialTheme.typography.bodyMedium,
+            color = palette.textMuted,
+        )
+        mine?.let {
             Text(
-                "전체 평균 ${overall}문 / 일",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                "내 평균 ${it}문 / 일",
+                style = MaterialTheme.typography.labelLarge,
+                color = palette.accent,
             )
-            mine?.let {
-                Text(
-                    "내 평균 ${it}문 / 일",
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.primary,
-                )
-            }
         }
     }
 }
 
 @Composable
 private fun WeakSubjectCard(stat: WrongAnswerStatsSummary, onStart: () -> Unit) {
-    Card(
-        shape = RoundedCornerShape(CardCorner),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface,
-            contentColor = MaterialTheme.colorScheme.onSurface,
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
-    ) {
+    val palette = LocalSqldpassPalette.current
+    AppCard(surface = AppCardSurface.Card) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
+            modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
         ) {
             Column(modifier = Modifier.weight(1f)) {
-                Text(stat.subjectName, style = MaterialTheme.typography.titleMedium)
+                Text(
+                    stat.subjectName,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = palette.textPrimary,
+                )
                 Text(
                     "오답 ${stat.wrongCount}/${stat.totalSolved} · 오답률 ${stat.wrongRate}%",
                     style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = palette.textMuted,
                 )
             }
-            OutlinedButton(
-                shape = RoundedCornerShape(ButtonCorner),
+            AppButton(
+                text = "다시 풀기",
                 onClick = onStart,
-                modifier = Modifier.sizeIn(minHeight = 48.dp),
-            ) { Text("다시 풀기") }
+                variant = AppButtonVariant.Secondary,
+                size = AppButtonSize.Compact,
+            )
         }
     }
 }
 
 @Composable
 private fun BestScoreCard(score: BestScoreSummary, examName: String) {
-    Card(
-        shape = RoundedCornerShape(CardCorner),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface,
-            contentColor = MaterialTheme.colorScheme.onSurface,
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
-    ) {
+    val palette = LocalSqldpassPalette.current
+    AppCard(surface = AppCardSurface.Card) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
+            modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
         ) {
             Text(
                 examName,
                 style = MaterialTheme.typography.titleMedium,
+                color = palette.textPrimary,
                 modifier = Modifier.weight(1f),
             )
             Text(
                 "${score.correctCount}/${score.totalCount}",
                 style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.primary,
+                color = palette.accent,
             )
         }
     }

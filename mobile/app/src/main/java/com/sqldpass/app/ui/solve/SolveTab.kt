@@ -3,24 +3,17 @@ package com.sqldpass.app.ui.solve
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.AssistChip
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -35,11 +28,15 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.sqldpass.app.data.SubjectResponse
 import com.sqldpass.app.ui.AppUiState
+import com.sqldpass.app.ui.common.AppCard
+import com.sqldpass.app.ui.common.AppCardAccent
+import com.sqldpass.app.ui.common.AppCardSurface
+import com.sqldpass.app.ui.common.AppChip
 import com.sqldpass.app.ui.common.SkeletonCard
 import com.sqldpass.app.ui.theme.CertColors
+import com.sqldpass.app.ui.theme.LocalSqldpassPalette
 import com.sqldpass.app.ui.theme.LocalSqldpassSemanticColors
-
-private val CardCorner = 14.dp
+import com.sqldpass.app.ui.theme.SqldSpacing
 
 @Composable
 fun SolveTab(
@@ -58,6 +55,7 @@ fun SolveTab(
         return
     }
 
+    val palette = LocalSqldpassPalette.current
     val grouped = state.subjects.groupBy { it.parentName ?: "기타" }
     val parents = grouped.keys.toList()
     var selectedCert by remember(parents) { mutableStateOf(parents.firstOrNull()) }
@@ -66,14 +64,14 @@ fun SolveTab(
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(20.dp),
-        verticalArrangement = Arrangement.spacedBy(14.dp),
+        contentPadding = PaddingValues(SqldSpacing.lg - 4.dp),
+        verticalArrangement = Arrangement.spacedBy(SqldSpacing.md + 2.dp),
     ) {
         item {
             Text(
                 "자격증을 고르면 10문제 세트를 받습니다.",
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = palette.textMuted,
             )
         }
         // 자격증 탭바 (frontend SolveClient.tsx:512-540 패턴)
@@ -95,7 +93,7 @@ fun SolveTab(
                     Text(
                         "과목 정보를 가져오지 못했습니다. 잠시 후 다시 시도하세요.",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        color = palette.textMuted,
                     )
                 }
             else -> visibleGrouped.forEach { (parent, children) ->
@@ -120,29 +118,27 @@ private fun CertTabRow(
 ) {
     val cert = LocalSqldpassSemanticColors.current.cert
     LazyRow(
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        contentPadding = PaddingValues(vertical = 4.dp),
+        horizontalArrangement = Arrangement.spacedBy(SqldSpacing.sm),
+        contentPadding = PaddingValues(vertical = SqldSpacing.xs),
     ) {
         items(parents) { name ->
             val isSelected = name == selected
             val dotColor = parentNameToCert(name, cert)
-            FilterChip(
-                selected = isSelected,
-                onClick = { onSelect(name) },
-                leadingIcon = {
-                    Box(
-                        modifier = Modifier
-                            .size(8.dp)
-                            .background(dotColor, CircleShape),
-                    )
-                },
-                label = {
-                    Text(
-                        "${shortenCertName(name)} ${countByParent[name] ?: 0}",
-                        style = MaterialTheme.typography.labelLarge,
-                    )
-                },
-            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(SqldSpacing.xs + 2.dp),
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(SqldSpacing.sm)
+                        .background(dotColor, CircleShape),
+                )
+                AppChip(
+                    label = "${shortenCertName(name)} ${countByParent[name] ?: 0}",
+                    selected = isSelected,
+                    onClick = { onSelect(name) },
+                )
+            }
         }
     }
 }
@@ -161,6 +157,16 @@ private fun parentNameToCert(name: String, cert: CertColors): Color = when {
     else -> cert.sqld
 }
 
+private fun parentNameToCardAccent(name: String): AppCardAccent = when {
+    name.contains("SQLD", ignoreCase = true) -> AppCardAccent.Sqld
+    name.contains("실기") -> AppCardAccent.EngineerPractical
+    name.contains("필기") && !name.contains("컴퓨터") -> AppCardAccent.EngineerWritten
+    name.contains("컴퓨터활용능력 1") || name.contains("컴활 1") -> AppCardAccent.Cl1
+    name.contains("컴퓨터활용능력 2") || name.contains("컴활 2") -> AppCardAccent.Cl2
+    name.contains("ADsP", ignoreCase = true) -> AppCardAccent.Adsp
+    else -> AppCardAccent.Sqld
+}
+
 /** 긴 한국어 자격증 명을 짧은 라벨로. */
 private fun shortenCertName(name: String): String = when {
     name.contains("SQLD", ignoreCase = true) -> "SQLD"
@@ -174,29 +180,22 @@ private fun shortenCertName(name: String): String = when {
 
 @Composable
 private fun LoginRequiredHint() {
-    androidx.compose.foundation.layout.Box(
-        modifier = Modifier.fillMaxSize().padding(20.dp),
-        contentAlignment = androidx.compose.ui.Alignment.Center,
+    val palette = LocalSqldpassPalette.current
+    Box(
+        modifier = Modifier.fillMaxSize().padding(SqldSpacing.lg - 4.dp),
+        contentAlignment = Alignment.Center,
     ) {
-        Card(
-            shape = RoundedCornerShape(CardCorner),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surface,
-                contentColor = MaterialTheme.colorScheme.onSurface,
-            ),
-            elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
-        ) {
-            Column(
-                modifier = Modifier.fillMaxWidth().padding(20.dp),
-                verticalArrangement = Arrangement.spacedBy(6.dp),
-            ) {
-                Text("로그인이 필요합니다", style = MaterialTheme.typography.titleMedium)
-                Text(
-                    "Google 로 로그인하면 자격증 과목을 선택해 10문제 세트를 받을 수 있어요. 홈 상단의 로그인 아이콘을 눌러주세요.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
+        AppCard(surface = AppCardSurface.Card, accent = AppCardAccent.None) {
+            Text(
+                "로그인이 필요합니다",
+                style = MaterialTheme.typography.titleMedium,
+                color = palette.textPrimary,
+            )
+            Text(
+                "Google 로 로그인하면 자격증 과목을 선택해 10문제 세트를 받을 수 있어요. 홈 상단의 로그인 아이콘을 눌러주세요.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = palette.textMuted,
+            )
         }
     }
 }
@@ -208,43 +207,38 @@ private fun SubjectGroupCard(
     children: List<SubjectResponse>,
     onStart: (Long) -> Unit,
 ) {
+    val palette = LocalSqldpassPalette.current
     val cert = LocalSqldpassSemanticColors.current.cert
-    val accent = parentNameToCert(parent, cert)
-    Card(
-        shape = RoundedCornerShape(CardCorner),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface,
-            contentColor = MaterialTheme.colorScheme.onSurface,
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+    val dotColor = parentNameToCert(parent, cert)
+    AppCard(
+        surface = AppCardSurface.Card,
+        accent = parentNameToCardAccent(parent),
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp),
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(SqldSpacing.sm),
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(8.dp)
-                        .background(accent, CircleShape),
+            Box(
+                modifier = Modifier
+                    .size(SqldSpacing.sm)
+                    .background(dotColor, CircleShape),
+            )
+            Text(
+                shortenCertName(parent),
+                style = MaterialTheme.typography.titleMedium,
+                color = palette.textPrimary,
+            )
+        }
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(SqldSpacing.sm),
+            verticalArrangement = Arrangement.spacedBy(SqldSpacing.sm),
+        ) {
+            children.forEach { subject ->
+                AppChip(
+                    label = subject.name,
+                    selected = false,
+                    onClick = { onStart(subject.id) },
                 )
-                Text(shortenCertName(parent), style = MaterialTheme.typography.titleMedium)
-            }
-            FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                children.forEach { subject ->
-                    AssistChip(
-                        onClick = { onStart(subject.id) },
-                        label = { Text(subject.name) },
-                    )
-                }
             }
         }
     }

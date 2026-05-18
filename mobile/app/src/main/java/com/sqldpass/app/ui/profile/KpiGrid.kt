@@ -7,9 +7,9 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import com.sqldpass.app.ui.common.AppNumberCell
 import com.sqldpass.app.ui.common.AppNumberCellSize
+import com.sqldpass.app.ui.theme.SqldSpacing
 
 /**
  * 내정보 상단 KPI 2x2 — 총 풀이 / 평균 정답률 / 최장 스트릭 / 합격 확률.
@@ -27,7 +27,7 @@ fun KpiGrid(
     longestStreak: Int?,
     passProbability: Int?,
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(SqldSpacing.md)) {
         Row {
             AppNumberCell(
                 value = totalSolved?.toString() ?: "—",
@@ -36,7 +36,7 @@ fun KpiGrid(
                 size = AppNumberCellSize.Regular,
                 modifier = Modifier.weight(1f),
             )
-            Spacer(Modifier.width(8.dp))
+            Spacer(Modifier.width(SqldSpacing.sm))
             AppNumberCell(
                 value = avgCorrectRate?.let { "$it%" } ?: "—",
                 label = "평균 정답률",
@@ -52,7 +52,7 @@ fun KpiGrid(
                 size = AppNumberCellSize.Regular,
                 modifier = Modifier.weight(1f),
             )
-            Spacer(Modifier.width(8.dp))
+            Spacer(Modifier.width(SqldSpacing.sm))
             AppNumberCell(
                 value = passProbability?.let { "$it%" } ?: "—",
                 label = "합격 확률",

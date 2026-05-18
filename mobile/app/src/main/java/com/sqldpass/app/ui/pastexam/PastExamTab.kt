@@ -3,39 +3,34 @@ package com.sqldpass.app.ui.pastexam
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.sqldpass.app.data.PastExamSummary
 import com.sqldpass.app.ui.AppUiState
+import com.sqldpass.app.ui.common.AppCard
+import com.sqldpass.app.ui.common.AppCardAccent
+import com.sqldpass.app.ui.common.AppCardSurface
+import com.sqldpass.app.ui.common.AppChip
 import com.sqldpass.app.ui.common.CtaCard
 import com.sqldpass.app.ui.common.SkeletonCard
 import com.sqldpass.app.ui.theme.CertColors
+import com.sqldpass.app.ui.theme.LocalSqldpassPalette
 import com.sqldpass.app.ui.theme.LocalSqldpassSemanticColors
-
-private val CardCorner = 14.dp
-private val ButtonCorner = 12.dp
+import com.sqldpass.app.ui.theme.SqldSpacing
 
 @Composable
 fun PastExamTab(
@@ -51,8 +46,8 @@ fun PastExamTab(
     val exams = state.pastExamsByCert[state.selectedCertSlug].orEmpty()
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(20.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+        contentPadding = PaddingValues(SqldSpacing.lg - 4.dp),
+        verticalArrangement = Arrangement.spacedBy(SqldSpacing.md),
     ) {
         item {
             CertTabRow(
@@ -85,51 +80,43 @@ private fun CertTabRow(
 ) {
     val cert = LocalSqldpassSemanticColors.current.cert
     LazyRow(
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        contentPadding = PaddingValues(vertical = 4.dp),
+        horizontalArrangement = Arrangement.spacedBy(SqldSpacing.sm),
+        contentPadding = PaddingValues(vertical = SqldSpacing.xs),
     ) {
         items(certs, key = { it }) { slug ->
             val isSelected = slug == selected
             val dotColor = slugToCertColor(slug, cert)
             val count = countByCert[slug]?.takeIf { it > 0 }
-            FilterChip(
-                selected = isSelected,
-                onClick = { onSelect(slug) },
-                leadingIcon = {
-                    Box(modifier = Modifier.size(8.dp).background(dotColor, CircleShape))
-                },
-                label = {
-                    Text(
-                        listOfNotNull(slugLabel(slug), count?.toString()).joinToString(" "),
-                        style = MaterialTheme.typography.labelLarge,
-                    )
-                },
-            )
+            val label = listOfNotNull(slugLabel(slug), count?.toString()).joinToString(" ")
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(SqldSpacing.xs + 2.dp),
+            ) {
+                Box(modifier = Modifier.size(SqldSpacing.sm).background(dotColor, CircleShape))
+                AppChip(
+                    label = label,
+                    selected = isSelected,
+                    onClick = { onSelect(slug) },
+                )
+            }
         }
     }
 }
 
 @Composable
 private fun EmptyHint(slug: String) {
-    Card(
-        shape = RoundedCornerShape(CardCorner),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface,
-            contentColor = MaterialTheme.colorScheme.onSurface,
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
-    ) {
-        Column(
-            modifier = Modifier.fillMaxWidth().padding(18.dp),
-            verticalArrangement = Arrangement.spacedBy(6.dp),
-        ) {
-            Text("${slugLabel(slug)} 기출 회차가 없습니다.", style = MaterialTheme.typography.titleMedium)
-            Text(
-                "곧 회차가 추가될 예정이에요. 다른 자격증을 선택해보세요.",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
+    val palette = LocalSqldpassPalette.current
+    AppCard(surface = AppCardSurface.Card, accent = AppCardAccent.None) {
+        Text(
+            "${slugLabel(slug)} 기출 회차가 없습니다.",
+            style = MaterialTheme.typography.titleMedium,
+            color = palette.textPrimary,
+        )
+        Text(
+            "곧 회차가 추가될 예정이에요. 다른 자격증을 선택해보세요.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = palette.textMuted,
+        )
     }
 }
 

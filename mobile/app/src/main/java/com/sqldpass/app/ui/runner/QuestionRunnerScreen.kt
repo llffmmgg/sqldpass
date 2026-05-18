@@ -26,9 +26,6 @@ import androidx.compose.material.icons.outlined.BookmarkBorder
 import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material.icons.outlined.Report
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -59,6 +56,9 @@ import com.sqldpass.app.ui.common.AppButtonSize
 import com.sqldpass.app.ui.common.AppButtonVariant
 import com.sqldpass.app.ui.common.AppCard
 import com.sqldpass.app.ui.common.AppCardSurface
+import com.sqldpass.app.ui.common.AppDialog
+import com.sqldpass.app.ui.common.AppDropdown
+import com.sqldpass.app.ui.common.AppDropdownItem
 import com.sqldpass.app.ui.common.AppOptionRow
 import com.sqldpass.app.ui.common.AppOptionState
 import com.sqldpass.app.ui.common.AppProgressPill
@@ -261,34 +261,18 @@ fun QuestionRunnerScreen(
     }
 
     if (giveUpConfirmOpen) {
-        AlertDialog(
-            onDismissRequest = { giveUpConfirmOpen = false },
-            title = { Text("풀이를 포기할까요?", color = palette.textPrimary) },
-            text = {
-                Text(
-                    "지금까지의 답안은 저장되지 않습니다.",
-                    color = palette.textMuted,
-                )
+        AppDialog(
+            onDismiss = { giveUpConfirmOpen = false },
+            title = "풀이를 포기할까요?",
+            message = "지금까지의 답안은 저장되지 않습니다.",
+            confirmLabel = "포기하기",
+            onConfirm = {
+                giveUpConfirmOpen = false
+                onCancel()
             },
-            confirmButton = {
-                AppButton(
-                    text = "포기하기",
-                    onClick = {
-                        giveUpConfirmOpen = false
-                        onCancel()
-                    },
-                    variant = AppButtonVariant.Destructive,
-                    size = AppButtonSize.Compact,
-                )
-            },
-            dismissButton = {
-                AppButton(
-                    text = "계속 풀기",
-                    onClick = { giveUpConfirmOpen = false },
-                    variant = AppButtonVariant.Tertiary,
-                    size = AppButtonSize.Compact,
-                )
-            },
+            destructive = true,
+            dismissLabel = "계속 풀기",
+            onDismissAction = { giveUpConfirmOpen = false },
         )
     }
 }
@@ -338,7 +322,7 @@ private fun RunnerHeader(
             )
             Column(
                 modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(2.dp),
+                verticalArrangement = Arrangement.spacedBy(SqldSpacing.xxs),
             ) {
                 Text(
                     title,
@@ -379,35 +363,24 @@ private fun RunnerHeader(
                     tint = palette.textMuted,
                     onClick = { onMenuOpenChange(true) },
                 )
-                DropdownMenu(
+                AppDropdown(
                     expanded = menuOpen,
-                    onDismissRequest = { onMenuOpenChange(false) },
+                    onDismiss = { onMenuOpenChange(false) },
                 ) {
                     if (onReportClick != null) {
-                        DropdownMenuItem(
-                            leadingIcon = {
-                                Icon(
-                                    Icons.Outlined.Report,
-                                    contentDescription = null,
-                                    tint = palette.textMuted,
-                                )
-                            },
-                            text = { Text("신고하기", color = palette.textPrimary) },
+                        AppDropdownItem(
+                            label = "신고하기",
+                            leadingIcon = Icons.Outlined.Report,
                             onClick = {
                                 onMenuOpenChange(false)
                                 onReportClick()
                             },
                         )
                     }
-                    DropdownMenuItem(
-                        leadingIcon = {
-                            Icon(
-                                Icons.Outlined.Close,
-                                contentDescription = null,
-                                tint = palette.danger,
-                            )
-                        },
-                        text = { Text("포기하기", color = palette.danger) },
+                    AppDropdownItem(
+                        label = "포기하기",
+                        leadingIcon = Icons.Outlined.Close,
+                        destructive = true,
                         onClick = {
                             onMenuOpenChange(false)
                             onGiveUp()

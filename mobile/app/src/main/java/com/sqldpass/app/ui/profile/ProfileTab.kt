@@ -21,7 +21,6 @@ import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.Feedback
 import androidx.compose.material.icons.outlined.History
 import androidx.compose.material.icons.outlined.PrivacyTip
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -49,12 +48,14 @@ import com.sqldpass.app.ui.common.AppCard
 import com.sqldpass.app.ui.common.AppCardAccent
 import com.sqldpass.app.ui.common.AppCardSurface
 import com.sqldpass.app.ui.common.AppChip
+import com.sqldpass.app.ui.common.AppDialog
 import com.sqldpass.app.ui.common.AppHero
 import com.sqldpass.app.ui.common.AppListRow
 import com.sqldpass.app.ui.common.AppSectionHeader
 import com.sqldpass.app.ui.common.AppTextField
 import com.sqldpass.app.ui.dashboard.NicknameEditDialog
 import com.sqldpass.app.ui.theme.LocalSqldpassPalette
+import com.sqldpass.app.ui.theme.SqldSpacing
 
 @Composable
 fun ProfileTab(
@@ -111,18 +112,13 @@ fun ProfileTab(
     }
 
     pendingNotice?.let { msg ->
-        AlertDialog(
-            onDismissRequest = { pendingNotice = null },
-            // Material3 TextButton 누수 방지 — Tertiary AppButton 으로 치환.
-            confirmButton = {
-                AppButton(
-                    text = "확인",
-                    variant = AppButtonVariant.Tertiary,
-                    onClick = { pendingNotice = null },
-                )
-            },
-            title = { Text("알림") },
-            text = { Text(msg) },
+        AppDialog(
+            onDismiss = { pendingNotice = null },
+            title = "알림",
+            message = msg,
+            confirmLabel = "확인",
+            onConfirm = { pendingNotice = null },
+            dismissLabel = null,
         )
     }
 
@@ -243,7 +239,7 @@ fun ProfileTab(
             }
 
             if (state.nickname != null) {
-                item { Spacer(Modifier.height(4.dp)) }
+                item { Spacer(Modifier.height(SqldSpacing.xs)) }
                 item {
                     AppListRow(
                         title = "로그아웃",
@@ -287,7 +283,7 @@ private fun ProfileHeaderCard(
                 style = MaterialTheme.typography.bodyMedium,
                 color = palette.textMuted,
             )
-            Spacer(Modifier.height(4.dp))
+            Spacer(Modifier.height(SqldSpacing.xs))
             AppButton(
                 text = "Google 로 로그인",
                 variant = AppButtonVariant.Primary,
@@ -342,7 +338,7 @@ private fun SubscriptionCard(
         if (active) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalArrangement = Arrangement.spacedBy(SqldSpacing.sm),
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 Text(
@@ -374,7 +370,7 @@ private fun SubscriptionCard(
                 style = MaterialTheme.typography.bodyMedium,
                 color = palette.textMuted,
             )
-            Spacer(Modifier.height(4.dp))
+            Spacer(Modifier.height(SqldSpacing.xs))
             AppButton(
                 text = "PASS+ 알아보기",
                 variant = AppButtonVariant.Primary,
@@ -398,7 +394,7 @@ private fun ThemeToggleCard(
             color = palette.textPrimary,
         )
         Row(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalArrangement = Arrangement.spacedBy(SqldSpacing.sm),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             listOf(
@@ -423,10 +419,12 @@ private fun FeedbackDialog(
 ) {
     var content by remember { mutableStateOf("") }
     var submitting by remember { mutableStateOf(false) }
-    AlertDialog(
-        onDismissRequest = { if (!submitting) onDismiss() },
-        title = { Text("피드백 보내기") },
-        text = {
+    val canSubmit = !submitting && content.trim().length >= 5
+
+    AppDialog(
+        onDismiss = { if (!submitting) onDismiss() },
+        title = "피드백 보내기",
+        content = {
             AppTextField(
                 value = content,
                 onValueChange = { if (it.length <= 1000) content = it },
@@ -436,31 +434,19 @@ private fun FeedbackDialog(
                 modifier = Modifier.fillMaxWidth(),
             )
         },
-        confirmButton = {
-            AppButton(
-                text = if (submitting) "전송중…" else "보내기",
-                variant = AppButtonVariant.Primary,
-                size = AppButtonSize.Compact,
-                enabled = !submitting && content.trim().length >= 5,
-                onClick = {
-                    submitting = true
-                    onSubmit(content.trim()) { ok ->
-                        submitting = false
-                        if (!ok) {
-                            // 다이얼로그 유지 — 외부에서 message 표기.
-                        }
+        confirmLabel = if (submitting) "전송중…" else "보내기",
+        onConfirm = {
+            if (canSubmit) {
+                submitting = true
+                onSubmit(content.trim()) { ok ->
+                    submitting = false
+                    if (!ok) {
+                        // 다이얼로그 유지 — 외부에서 message 표기.
                     }
-                },
-            )
+                }
+            }
         },
-        dismissButton = {
-            AppButton(
-                text = "취소",
-                variant = AppButtonVariant.Tertiary,
-                size = AppButtonSize.Compact,
-                enabled = !submitting,
-                onClick = onDismiss,
-            )
-        },
+        dismissLabel = "취소",
+        onDismissAction = { if (!submitting) onDismiss() },
     )
 }

@@ -1,19 +1,12 @@
 package com.sqldpass.app.ui.common
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.sizeIn
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Lock
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -21,10 +14,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.sqldpass.app.ui.theme.LocalSqldpassPalette
+import com.sqldpass.app.ui.theme.SqldSpacing
 
 /**
  * 라운드 카드 컨테이너 + 풀폭 primary CTA. 잠금 시 우상단 잠금 아이콘 + 버튼 비활성.
- * TOSME 패턴 차용 — 모의고사/기출복원 카드 통일.
+ *
+ * Step 4 그룹 D: 내부를 AppCard(Elevated) + AppButton 으로 통합.
+ * 호출 API 는 그대로 유지 (모의/기출/대시보드/인사이트/오답 노트가 사용 중).
  */
 @Composable
 fun CtaCard(
@@ -37,65 +34,58 @@ fun CtaCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Card(
-        shape = RoundedCornerShape(14.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant,
-            contentColor = MaterialTheme.colorScheme.onSurface,
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+    val palette = LocalSqldpassPalette.current
+    val debounced = rememberDebouncedClick(onClick = onClick)
+    AppCard(
+        surface = AppCardSurface.Elevated,
+        accent = AppCardAccent.None,
         modifier = modifier,
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp),
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(SqldSpacing.xxs),
             ) {
-                Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                    Text(title, style = MaterialTheme.typography.titleMedium)
-                    meta?.let {
-                        Text(
-                            it,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                    highlight?.let {
-                        Text(
-                            it,
-                            style = MaterialTheme.typography.labelLarge,
-                            color = MaterialTheme.colorScheme.primary,
-                        )
-                    }
+                Text(
+                    title,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = palette.textPrimary,
+                )
+                meta?.let {
+                    Text(
+                        it,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = palette.textMuted,
+                    )
                 }
-                if (locked) {
-                    Icon(
-                        Icons.Outlined.Lock,
-                        contentDescription = "잠김",
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.size(20.dp),
+                highlight?.let {
+                    Text(
+                        it,
+                        style = MaterialTheme.typography.labelLarge,
+                        color = palette.accent,
                     )
                 }
             }
-            val debounced = rememberDebouncedClick(onClick = onClick)
-            Button(
-                shape = RoundedCornerShape(12.dp),
-                onClick = debounced,
-                enabled = !locked,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .sizeIn(minHeight = 48.dp),
-            ) {
-                Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                    Text(if (locked) lockedCtaLabel else ctaLabel)
-                }
+            if (locked) {
+                Icon(
+                    Icons.Outlined.Lock,
+                    contentDescription = "잠김",
+                    tint = palette.textMuted,
+                    modifier = Modifier.size(20.dp),
+                )
             }
         }
+        AppButton(
+            text = if (locked) lockedCtaLabel else ctaLabel,
+            onClick = debounced,
+            variant = AppButtonVariant.Primary,
+            size = AppButtonSize.Regular,
+            enabled = !locked,
+            modifier = Modifier.fillMaxWidth(),
+        )
     }
 }

@@ -27,9 +27,6 @@ import androidx.compose.material.icons.outlined.BookmarkBorder
 import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material.icons.outlined.Report
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -59,6 +56,9 @@ import com.sqldpass.app.ui.common.AppButtonSize
 import com.sqldpass.app.ui.common.AppButtonVariant
 import com.sqldpass.app.ui.common.AppCard
 import com.sqldpass.app.ui.common.AppCardSurface
+import com.sqldpass.app.ui.common.AppDialog
+import com.sqldpass.app.ui.common.AppDropdown
+import com.sqldpass.app.ui.common.AppDropdownItem
 import com.sqldpass.app.ui.common.AppMascot
 import com.sqldpass.app.ui.common.AppMascotPose
 import com.sqldpass.app.ui.common.AppNumberCell
@@ -264,29 +264,18 @@ fun SoloSolveScreen(
     }
 
     if (showExitConfirm) {
-        AlertDialog(
-            onDismissRequest = { showExitConfirm = false },
-            title = { Text("풀이 종료") },
-            text = { Text("지금까지의 진행은 저장되지 않습니다.") },
-            confirmButton = {
-                AppButton(
-                    text = "종료하기",
-                    onClick = {
-                        showExitConfirm = false
-                        onExit()
-                    },
-                    variant = AppButtonVariant.Destructive,
-                    size = AppButtonSize.Compact,
-                )
+        AppDialog(
+            onDismiss = { showExitConfirm = false },
+            title = "풀이 종료",
+            message = "지금까지의 진행은 저장되지 않습니다.",
+            confirmLabel = "종료하기",
+            onConfirm = {
+                showExitConfirm = false
+                onExit()
             },
-            dismissButton = {
-                AppButton(
-                    text = "계속 풀기",
-                    onClick = { showExitConfirm = false },
-                    variant = AppButtonVariant.Tertiary,
-                    size = AppButtonSize.Compact,
-                )
-            },
+            destructive = true,
+            dismissLabel = "계속 풀기",
+            onDismissAction = { showExitConfirm = false },
         )
     }
 }
@@ -331,7 +320,7 @@ private fun SoloHeader(
             )
             Column(
                 modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(2.dp),
+                verticalArrangement = Arrangement.spacedBy(SqldSpacing.xxs),
             ) {
                 AppProgressPill(
                     current = displayCurrent,
@@ -357,10 +346,10 @@ private fun SoloHeader(
                     tint = palette.textMuted,
                     onClick = { menuOpen = true },
                 )
-                DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
-                    DropdownMenuItem(
-                        leadingIcon = { Icon(Icons.Outlined.Report, contentDescription = null) },
-                        text = { Text("이 문제 신고") },
+                AppDropdown(expanded = menuOpen, onDismiss = { menuOpen = false }) {
+                    AppDropdownItem(
+                        label = "이 문제 신고",
+                        leadingIcon = Icons.Outlined.Report,
                         onClick = {
                             menuOpen = false
                             onReport()

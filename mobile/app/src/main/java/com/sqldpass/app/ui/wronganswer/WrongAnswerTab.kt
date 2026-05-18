@@ -1,6 +1,5 @@
 package com.sqldpass.app.ui.wronganswer
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -8,18 +7,12 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
-import androidx.compose.material3.FilterChip
+import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -34,13 +27,18 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.sqldpass.app.data.WrongAnswerSummary
 import com.sqldpass.app.ui.AppUiState
+import com.sqldpass.app.ui.common.AppButton
+import com.sqldpass.app.ui.common.AppButtonVariant
+import com.sqldpass.app.ui.common.AppCard
+import com.sqldpass.app.ui.common.AppCardSurface
+import com.sqldpass.app.ui.common.AppChip
 import com.sqldpass.app.ui.common.CtaCard
 import com.sqldpass.app.ui.common.HeroHeader
 import com.sqldpass.app.ui.common.SqldpassBadge
+import com.sqldpass.app.ui.theme.LocalSqldpassPalette
+import com.sqldpass.app.ui.theme.SqldSpacing
 
 private const val ALL_SUBJECTS = "전체"
-private val CardCorner = 14.dp
-private val ButtonCorner = 12.dp
 
 @Composable
 fun WrongAnswerTab(
@@ -64,8 +62,8 @@ fun WrongAnswerTab(
 
         if (state.nickname == null) {
             Column(
-                modifier = Modifier.padding(20.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
+                modifier = Modifier.padding(SqldSpacing.lg - SqldSpacing.xs),
+                verticalArrangement = Arrangement.spacedBy(SqldSpacing.md),
             ) {
                 CtaCard(
                     title = "로그인이 필요합니다",
@@ -95,20 +93,20 @@ fun WrongAnswerTab(
 
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(20.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+            contentPadding = PaddingValues(SqldSpacing.lg - SqldSpacing.xs),
+            verticalArrangement = Arrangement.spacedBy(SqldSpacing.md),
         ) {
             if (subjects.size > 1) {
                 item {
-                    LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    LazyRow(horizontalArrangement = Arrangement.spacedBy(SqldSpacing.sm)) {
                         items(subjects, key = { it }) { name ->
-                            FilterChip(
+                            AppChip(
+                                label = name,
                                 selected = name == selectedSubject,
                                 onClick = {
                                     selectedSubject = name
                                     checkedIds.value = emptySet()
                                 },
-                                label = { Text(name, style = MaterialTheme.typography.labelLarge) },
                             )
                         }
                     }
@@ -165,35 +163,32 @@ private fun ActionBar(
     onStartAll: () -> Unit,
     onStartSelected: () -> Unit,
 ) {
-    Card(
-        shape = RoundedCornerShape(CardCorner),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface,
-            contentColor = MaterialTheme.colorScheme.onSurface,
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
-    ) {
+    val palette = LocalSqldpassPalette.current
+    AppCard(surface = AppCardSurface.Card) {
         Column(
-            modifier = Modifier.fillMaxWidth().padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp),
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(SqldSpacing.md - SqldSpacing.xxs),
         ) {
             Text(
                 "선택 $selectedCount / 전체 $totalCount 문제",
                 style = MaterialTheme.typography.titleSmall,
+                color = palette.textPrimary,
             )
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedButton(
-                    shape = RoundedCornerShape(ButtonCorner),
+            Row(horizontalArrangement = Arrangement.spacedBy(SqldSpacing.sm)) {
+                AppButton(
+                    text = "전체 다시풀기",
                     onClick = onStartAll,
+                    variant = AppButtonVariant.Secondary,
                     enabled = totalCount > 0,
-                    modifier = Modifier.weight(1f).sizeIn(minHeight = 44.dp),
-                ) { Text("전체 다시풀기") }
-                Button(
-                    shape = RoundedCornerShape(ButtonCorner),
+                    modifier = Modifier.weight(1f),
+                )
+                AppButton(
+                    text = "선택 시작 ($selectedCount)",
                     onClick = onStartSelected,
+                    variant = AppButtonVariant.Primary,
                     enabled = selectedCount > 0,
-                    modifier = Modifier.weight(1f).sizeIn(minHeight = 44.dp),
-                ) { Text("선택 시작 ($selectedCount)") }
+                    modifier = Modifier.weight(1f),
+                )
             }
         }
     }
@@ -205,24 +200,29 @@ private fun WrongRow(
     checked: Boolean,
     onToggle: () -> Unit,
 ) {
-    Card(
-        shape = RoundedCornerShape(CardCorner),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface,
-            contentColor = MaterialTheme.colorScheme.onSurface,
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
-        modifier = Modifier.fillMaxWidth().clickable { onToggle() },
+    val palette = LocalSqldpassPalette.current
+    AppCard(
+        surface = AppCardSurface.Card,
+        onClick = onToggle,
+        modifier = Modifier.fillMaxWidth(),
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth().padding(14.dp),
+            modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.Top,
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalArrangement = Arrangement.spacedBy(SqldSpacing.sm),
         ) {
-            Checkbox(checked = checked, onCheckedChange = { onToggle() })
+            Checkbox(
+                checked = checked,
+                onCheckedChange = { onToggle() },
+                colors = CheckboxDefaults.colors(
+                    checkedColor = palette.accent,
+                    uncheckedColor = palette.border,
+                    checkmarkColor = palette.accentFg,
+                ),
+            )
             Column(
                 modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(4.dp),
+                verticalArrangement = Arrangement.spacedBy(SqldSpacing.xs),
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -231,19 +231,20 @@ private fun WrongRow(
                     Text(
                         item.subjectName ?: "과목 미지정",
                         style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        color = palette.textMuted,
                         fontWeight = FontWeight.SemiBold,
                     )
                     if (item.wrongCount >= 2) {
                         SqldpassBadge(
                             label = "${item.wrongCount}회 틀림",
-                            base = MaterialTheme.colorScheme.error,
+                            base = palette.danger,
                         )
                     }
                 }
                 Text(
                     item.questionContent.trim().take(140),
                     style = MaterialTheme.typography.bodyMedium,
+                    color = palette.textPrimary,
                     maxLines = 3,
                 )
             }
@@ -253,37 +254,33 @@ private fun WrongRow(
 
 @Composable
 private fun LoadingRow() {
-    Card(
-        shape = RoundedCornerShape(CardCorner),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-    ) {
+    val palette = LocalSqldpassPalette.current
+    AppCard(surface = AppCardSurface.Card) {
         Text(
             "오답을 불러오는 중…",
-            modifier = Modifier.padding(16.dp),
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            color = palette.textMuted,
         )
     }
 }
 
 @Composable
 private fun EmptyRow(subject: String) {
-    Card(
-        shape = RoundedCornerShape(CardCorner),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-    ) {
+    val palette = LocalSqldpassPalette.current
+    AppCard(surface = AppCardSurface.Card) {
         Column(
-            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            modifier = Modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(6.dp),
         ) {
             Text(
                 if (subject == ALL_SUBJECTS) "오답이 없습니다." else "$subject 에 오답이 없습니다.",
                 style = MaterialTheme.typography.titleSmall,
+                color = palette.textPrimary,
             )
             Text(
                 "문제를 풀고 틀린 문제가 생기면 여기에 모입니다.",
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = palette.textMuted,
             )
         }
     }
