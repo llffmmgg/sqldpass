@@ -1,0 +1,57 @@
+{
+  "project": "sqldpass",
+  "phase": "mobile-5tab-redesign",
+  "description": "mobile/ 하단 5탭을 학습 회귀 사이클(홈/모의고사/오답노트/인사이트/마이) 중심으로 재편한다. 기출복원은 모의고사 탭의 세그먼트로 흡수, 문제풀기 탭은 홈 FAB+CTA로 흡수, 대시보드는 인사이트(시각화)와 마이(계정 설정)로 분해. 데이터 레이어/Repository/AppViewModel 핵심 API는 이미 구비, 본 phase 는 순수 UI 재편이다.",
+  "steps": [
+    {
+      "step": 1,
+      "name": "nav-restructure",
+      "description": "BOTTOM_TABS 를 Home/MockExam/WrongAnswers/Insights/Profile 로 교체. PastExam·Solve·Dashboard 는 풀스크린(또는 라우트만)으로 강등. 새 탭 3개는 빈 스텁으로 등록해 컴파일 통과 보장.",
+      "status": "completed",
+      "summary": "SqldpassRoute 에 WrongAnswers/Insights/Profile 추가, BOTTOM_TABS 5탭 교체(Home/Quiz/Replay/BarChart/PersonOutline), WrongAnswerTab/InsightsTab/ProfileTab/PlaceholderTab 스텁 신설, MainActivity NavHost 라우트 3개 등록. :app:assembleDebug BUILD SUCCESSFUL (스텁 미사용 param 경고만).",
+      "completed_at": "2026-05-18T15:20:00+0900"
+    },
+    {
+      "step": 2,
+      "name": "mockexam-segment-pastexam",
+      "description": "MockExamTab 안에 자격증 칩 + [모의고사 ┃ 기출복원] 세그먼트 토글 추가. 기존 PastExamTab 의 UI 를 동일 카드 패턴으로 흡수해 단일 탭에서 두 컨텍스트 풀이 가능.",
+      "status": "completed",
+      "summary": "MockExamTab 에 SingleChoiceSegmentedButtonRow(모의고사/기출복원) + 분기 컴포저(MockExamList/PastExamList). PastExam 카드/칩/empty/slug 라벨/색 매핑까지 흡수. MainActivity 가 onSelectCert+onStartPastExam 콜백 연결. PastExamTab.kt 는 사용처가 없어졌지만 다음 정리 step 까지 보존. :app:assembleDebug BUILD SUCCESSFUL.",
+      "completed_at": "2026-05-18T15:30:00+0900"
+    },
+    {
+      "step": 3,
+      "name": "wrong-answer-tab",
+      "description": "WrongAnswerTab.kt 신설. 과목 필터 칩 + 멀티선택 모드 + 일괄 다시풀기. AppRepository.wrongAnswers() 재사용. AppViewModel 에 startWrongAnswersFromQuestions(items) 추가 — 선택된 질문만 RunnerSession 으로 구성.",
+      "status": "completed",
+      "summary": "AppUiState 에 wrongAnswers + wrongAnswersLoading 필드, ViewModel 에 loadWrongAnswers/startWrongAnswersFromQuestions 추가. WrongAnswerTab: HeroHeader + 비로그인 CtaCard + 과목 필터 칩(LazyRow) + ActionBar(전체/선택 시작 버튼) + 체크박스 카드 행(2회 이상 틀린 문제 SqldpassBadge). MainActivity 가 콜백 연결 → Runner 진입. :app:assembleDebug BUILD SUCCESSFUL.",
+      "completed_at": "2026-05-18T15:50:00+0900"
+    },
+    {
+      "step": 4,
+      "name": "insights-tab",
+      "description": "InsightsTab.kt 신설. (1) 과목별 정답률 가로 막대(wrongAnswerStats 가공, 70% 미만 ⚠️), (2) DailyChart 재사용, (3) 회차별 최고점 카드. Dashboard 의 시각화 부분을 이관.",
+      "status": "completed",
+      "summary": "InsightsTab: HeroHeader + 비로그인 CtaCard + SubjectAccuracyCard(인하우스 Box 막대, 70% 미만 ⚠️ + error 색, 90%+ primary, 그 외 tertiary) + DailyChartCard 재사용 + BestScoreRow(회차명 매핑). MainActivity 가 loadDashboard+loadWrongAnswerStats 트리거. :app:assembleDebug BUILD SUCCESSFUL.",
+      "completed_at": "2026-05-18T16:00:00+0900"
+    },
+    {
+      "step": 5,
+      "name": "profile-tab",
+      "description": "ProfileTab.kt 신설. 프로필 헤더 + 구독 상태 카드(PASS+ CTA) + 학습 메뉴(북마크/히스토리/오프라인 다운로드) + 설정(테마/닉네임 편집/알림) + 지원(피드백/공지/약관) + 로그아웃/탈퇴. Dashboard 에서 닉네임/테마/로그아웃 책임 제거.",
+      "status": "completed",
+      "summary": "AppUiState.memberMe + loadMe() 추가. ProfileTab: HeroHeader + ProfileHeaderCard(가입일 표시) + SubscriptionCard(active/inactive 분기) + 학습/설정/지원 섹션 + 로그아웃/탈퇴 row. NicknameEditDialog 재사용, FeedbackDialog 신설, 외부 링크 Intent. Dashboard 에서 ThemeToggleCard/닉네임편집/로그아웃 row 제거(시그니처는 유지 — 라우트는 라이브). :app:assembleDebug BUILD SUCCESSFUL.",
+      "completed_at": "2026-05-18T16:20:00+0900"
+    },
+    {
+      "step": 6,
+      "name": "home-fab-and-validation",
+      "description": "Home 에 streak 요약 + Quick Practice FAB 정리. SolveTab 은 BOTTOM_TABS 에서 제거되었으므로 풀스크린 라우트로만 유지(홈 FAB/CTA 진입). :app:assembleDebug 검증.",
+      "status": "completed",
+      "summary": "HomeScreen 에 StreakMiniCard 추가(amber soft bg, Whatshot 아이콘), 로그인 + dashboard.streak 존재 시 노출. MainActivity Home 진입 시 dashboard==null 이면 loadDashboard 트리거. Solve 는 라우트로만 유지(Home '10문제 풀기' 버튼이 navigate). :app:assembleDebug BUILD SUCCESSFUL 39 tasks.",
+      "completed_at": "2026-05-18T16:35:00+0900"
+    }
+  ],
+  "created_at": "2026-05-18T15:00:00+0900",
+  "completed_at": "2026-05-18T16:35:00+0900"
+}

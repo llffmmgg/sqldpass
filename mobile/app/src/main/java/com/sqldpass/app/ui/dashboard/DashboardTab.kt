@@ -155,28 +155,6 @@ fun DashboardTab(
                 onClick = { onPurchase("iap_one_month") },
             )
         }
-        item {
-            ThemeToggleCard(
-                themeMode = themeMode,
-                onThemeChange = onThemeChange,
-            )
-        }
-        if (state.nickname != null) {
-            item {
-                MenuListRow(
-                    icon = Icons.Outlined.Edit,
-                    label = "닉네임 편집",
-                    onClick = { nicknameDialogOpen = true },
-                )
-            }
-            item {
-                MenuListRow(
-                    icon = Icons.AutoMirrored.Outlined.Logout,
-                    label = "로그아웃",
-                    onClick = onLogout,
-                )
-            }
-        }
         }
     }
 }

@@ -43,12 +43,15 @@ import com.sqldpass.app.ui.AppViewModelFactory
 import com.sqldpass.app.ui.common.TabScaffold
 import com.sqldpass.app.ui.dashboard.DashboardTab
 import com.sqldpass.app.ui.home.HomeScreen
+import com.sqldpass.app.ui.insights.InsightsTab
 import com.sqldpass.app.ui.mockexam.MockExamTab
 import com.sqldpass.app.ui.passplus.PassPlusCatalogScreen
 import com.sqldpass.app.ui.pastexam.PastExamTab
+import com.sqldpass.app.ui.profile.ProfileTab
 import com.sqldpass.app.ui.runner.RunnerScreen
 import com.sqldpass.app.ui.solve.SolveTab
 import com.sqldpass.app.ui.theme.SqldpassTheme
+import com.sqldpass.app.ui.wronganswer.WrongAnswerTab
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
@@ -154,9 +157,13 @@ private fun SqldpassApp(
                         title = "문어CBT",
                         topBar = false,
                     ) {
+                        androidx.compose.runtime.LaunchedEffect(state.nickname) {
+                            if (state.nickname != null && state.dashboard == null) viewModel.loadDashboard()
+                        }
                         HomeScreen(
                             nickname = state.nickname,
                             message = state.message,
+                            currentStreak = state.dashboard?.streak?.currentStreak,
                             onQuickPractice = { navController.navigate(SqldpassRoute.Solve.route) },
                             onSync = viewModel::sync,
                             onPurchase = { navController.navigate(SqldpassRoute.PassPlus.route) },
@@ -181,6 +188,11 @@ private fun SqldpassApp(
                             onRefresh = viewModel::refresh,
                             onStartExam = { id ->
                                 viewModel.startMockExamRunner(id)
+                                navController.navigate(SqldpassRoute.Runner.route)
+                            },
+                            onSelectCert = viewModel::selectCertSlug,
+                            onStartPastExam = { id, slug ->
+                                viewModel.startPastExamRunner(id, slug)
                                 navController.navigate(SqldpassRoute.Runner.route)
                             },
                         )
@@ -236,6 +248,60 @@ private fun SqldpassApp(
                                 navController.navigate(SqldpassRoute.Runner.route)
                             },
                             onUpdateNickname = viewModel::updateNickname,
+                            themeMode = themeMode,
+                            onThemeChange = onThemeChange,
+                        )
+                    }
+                }
+                composable(
+                    SqldpassRoute.WrongAnswers.route,
+                    enterTransition = { tabFadeEnter() },
+                    exitTransition = { tabFadeExit() },
+                ) {
+                    TabScaffold(title = "오답노트", topBar = false) {
+                        WrongAnswerTab(
+                            state = state,
+                            onLoad = { viewModel.loadWrongAnswers() },
+                            onStartSession = { items, title ->
+                                viewModel.startWrongAnswersFromQuestions(items, title)
+                                navController.navigate(SqldpassRoute.Runner.route)
+                            },
+                            onLogin = onLogin,
+                        )
+                    }
+                }
+                composable(
+                    SqldpassRoute.Insights.route,
+                    enterTransition = { tabFadeEnter() },
+                    exitTransition = { tabFadeExit() },
+                ) {
+                    TabScaffold(title = "인사이트", topBar = false) {
+                        InsightsTab(
+                            state = state,
+                            onLoad = {
+                                viewModel.loadDashboard()
+                                viewModel.loadWrongAnswerStats()
+                            },
+                            onLogin = onLogin,
+                        )
+                    }
+                }
+                composable(
+                    SqldpassRoute.Profile.route,
+                    enterTransition = { tabFadeEnter() },
+                    exitTransition = { tabFadeExit() },
+                ) {
+                    TabScaffold(title = "마이", topBar = false) {
+                        ProfileTab(
+                            state = state,
+                            onLogin = onLogin,
+                            onLogout = onLogout,
+                            onSync = viewModel::sync,
+                            onUpdateNickname = viewModel::updateNickname,
+                            onSubmitFeedback = viewModel::submitFeedback,
+                            onOpenPassPlus = { navController.navigate(SqldpassRoute.PassPlus.route) },
+                            onLoadMe = viewModel::loadMe,
+                            onLoadSubscription = viewModel::loadSubscription,
                             themeMode = themeMode,
                             onThemeChange = onThemeChange,
                         )

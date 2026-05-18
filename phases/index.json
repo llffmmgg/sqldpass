@@ -270,6 +270,14 @@
       "status": "completed",
       "created_at": "2026-05-18T15:00:00+0900",
       "completed_at": "2026-05-18T15:45:00+0900"
+    },
+    {
+      "dir": "mobile-5tab-redesign",
+      "name": "mobile-5tab-redesign",
+      "description": "Android mobile/ 하단 5탭 재편: 홈/모의고사/오답노트/인사이트/마이 — 기출복원은 모의고사 세그먼트로 흡수, 문제풀기는 홈 CTA로 흡수, 대시보드는 인사이트(시각화)+마이(계정)로 분해. iOS ProfileView/InsightsView/WrongAnswersView 와 정보 구조 통일.",
+      "status": "completed",
+      "created_at": "2026-05-18T15:00:00+0900",
+      "completed_at": "2026-05-18T16:35:00+0900"
     }
   ]
 }

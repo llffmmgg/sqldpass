@@ -58,6 +58,9 @@ data class AppUiState(
     val dashboardLoading: Boolean = false,
     val subscription: com.sqldpass.app.data.SubscriptionResponse? = null,
     val wrongAnswerStats: List<com.sqldpass.app.data.WrongAnswerStatsSummary> = emptyList(),
+    val wrongAnswers: List<com.sqldpass.app.data.WrongAnswerSummary> = emptyList(),
+    val wrongAnswersLoading: Boolean = false,
+    val memberMe: com.sqldpass.app.data.MemberMeResponse? = null,
     val passplusOpen: Boolean = false,
 )
 
@@ -177,6 +180,14 @@ class AppViewModel(
         }
     }
 
+    fun loadMe() {
+        if (tokenStore.token.isNullOrBlank()) return
+        viewModelScope.launch {
+            runCatching { repository.me() }
+                .onSuccess { me -> _state.update { it.copy(memberMe = me) } }
+        }
+    }
+
     fun openPassPlus() { _state.update { it.copy(passplusOpen = true) } }
 
     fun closePassPlus() { _state.update { it.copy(passplusOpen = false) } }
@@ -186,6 +197,47 @@ class AppViewModel(
             runCatching { repository.wrongAnswerStats() }
                 .onSuccess { stats -> _state.update { it.copy(wrongAnswerStats = stats) } }
         }
+    }
+
+    fun loadWrongAnswers(subjectId: Long? = null) {
+        if (_state.value.wrongAnswersLoading) return
+        if (tokenStore.token.isNullOrBlank()) return
+        viewModelScope.launch {
+            _state.update { it.copy(wrongAnswersLoading = true) }
+            runCatching { repository.wrongAnswers(subjectId) }
+                .onSuccess { list ->
+                    _state.update { it.copy(wrongAnswers = list, wrongAnswersLoading = false) }
+                }
+                .onFailure { e ->
+                    _state.update { it.copy(wrongAnswersLoading = false, message = e.message) }
+                }
+        }
+    }
+
+    /**
+     * 선택된 오답 문제만 모아 RunnerSession 시작.
+     * subjectId 는 모든 문제가 동일 과목일 때만 채우고, 섞여 있으면 null → submitPractice 가
+     * 0L 로 폴백한다(기존 startWrongAnswerRunner 동작과 동일).
+     */
+    fun startWrongAnswersFromQuestions(
+        items: List<com.sqldpass.app.data.WrongAnswerSummary>,
+        title: String,
+    ) {
+        if (items.isEmpty()) {
+            _state.update { it.copy(message = "선택된 오답이 없습니다.") }
+            return
+        }
+        val uniformSubjectId = items.map { it.subjectId }.distinct().singleOrNull()
+        val session = RunnerSession(
+            mode = RunnerMode.WRONG_ANSWERS,
+            title = title,
+            originId = uniformSubjectId ?: -1L,
+            questions = items.mapIndexed { idx, q ->
+                RunnerQuestion(q.questionId, idx + 1, q.questionContent, "MCQ")
+            },
+            subjectId = uniformSubjectId,
+        )
+        _state.update { it.copy(runner = session, runnerResult = null, runnerBookmarks = emptySet()) }
     }
 
     fun startWrongAnswerRunner(subjectId: Long?, subjectName: String?) {

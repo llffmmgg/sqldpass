@@ -16,6 +16,7 @@ import com.sqldpass.app.ui.common.HeroHeader
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.Login
 import androidx.compose.material.icons.outlined.AccountCircle
+import androidx.compose.material.icons.outlined.Whatshot
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -47,6 +48,7 @@ private val ButtonCorner = 12.dp
 fun HomeScreen(
     nickname: String?,
     message: String?,
+    currentStreak: Int? = null,
     onQuickPractice: () -> Unit,
     onSync: () -> Unit,
     onPurchase: (String) -> Unit,
@@ -64,6 +66,9 @@ fun HomeScreen(
             contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 16.dp, bottom = 20.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
+        if (nickname != null && currentStreak != null) {
+            item { StreakMiniCard(currentStreak) }
+        }
         item {
             // 강조 카드 — 좌측 emerald 액센트 바
             com.sqldpass.app.ui.common.AccentCard {
@@ -209,6 +214,47 @@ fun ActionCard(
                 },
                 modifier = Modifier.sizeIn(minHeight = 48.dp),
             ) { Text(action) }
+        }
+    }
+}
+
+@Composable
+private fun StreakMiniCard(currentStreak: Int) {
+    val cert = com.sqldpass.app.ui.theme.LocalSqldpassSemanticColors.current.cert
+    val amber = cert.sqld
+    val isDark = androidx.compose.foundation.isSystemInDarkTheme()
+    val softBg = amber.copy(alpha = if (isDark) 0.18f else 0.10f)
+    Card(
+        shape = RoundedCornerShape(CardCorner),
+        colors = CardDefaults.cardColors(
+            containerColor = softBg,
+            contentColor = MaterialTheme.colorScheme.onSurface,
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            Icon(
+                Icons.Outlined.Whatshot,
+                contentDescription = null,
+                tint = amber,
+            )
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    if (currentStreak >= 1) "연속 학습 ${currentStreak}일째"
+                    else "오늘 풀이로 streak 을 시작해요",
+                    style = MaterialTheme.typography.titleMedium,
+                )
+                Text(
+                    if (currentStreak >= 1) "꾸준함이 합격을 만듭니다."
+                    else "한 문제만 풀어도 streak 1일.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
         }
     }
 }
