@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
+import com.sqldpass.app.ui.common.HeroHeader
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.Login
 import androidx.compose.material.icons.outlined.AccountCircle
@@ -47,21 +48,20 @@ fun HomeScreen(
     onQuickPractice: () -> Unit,
     onSync: () -> Unit,
     onPurchase: (String) -> Unit,
+    heroActions: @Composable () -> Unit = {},
 ) {
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 8.dp, bottom = 20.dp),
-        verticalArrangement = Arrangement.spacedBy(14.dp),
-    ) {
-        nickname?.let {
-            item {
-                Text(
-                    "$it 님, 오늘도 한 회차 풀어볼까요?",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-        }
+    Column(modifier = Modifier.fillMaxSize()) {
+        HeroHeader(
+            title = "문어CBT",
+            subtitle = nickname?.let { "$it 님, 오늘도 한 회차 풀어볼까요?" }
+                ?: "Google 로 로그인하면 학습 기록이 쌓여요.",
+            actions = heroActions,
+        )
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 16.dp, bottom = 20.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp),
+        ) {
         item {
             // 강조 카드 — 좌측 emerald 액센트 바
             com.sqldpass.app.ui.common.AccentCard {
@@ -113,6 +113,7 @@ fun HomeScreen(
             )
         }
         message?.let { item { StatusCard(it) } }
+        }
     }
 }
 

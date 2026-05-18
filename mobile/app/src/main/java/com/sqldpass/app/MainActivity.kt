@@ -152,13 +152,7 @@ private fun SqldpassApp(
                 ) {
                     TabScaffold(
                         title = "문어CBT",
-                        actions = {
-                            com.sqldpass.app.ui.home.HomeAccountMenu(
-                                nickname = state.nickname,
-                                onLogin = onLogin,
-                                onLogout = onLogout,
-                            )
-                        },
+                        topBar = false,
                     ) {
                         HomeScreen(
                             nickname = state.nickname,
@@ -166,6 +160,13 @@ private fun SqldpassApp(
                             onQuickPractice = { navController.navigate(SqldpassRoute.Solve.route) },
                             onSync = viewModel::sync,
                             onPurchase = { navController.navigate(SqldpassRoute.PassPlus.route) },
+                            heroActions = {
+                                com.sqldpass.app.ui.home.HomeAccountMenu(
+                                    nickname = state.nickname,
+                                    onLogin = onLogin,
+                                    onLogout = onLogout,
+                                )
+                            },
                         )
                     }
                 }
@@ -222,7 +223,7 @@ private fun SqldpassApp(
                     enterTransition = { tabFadeEnter() },
                     exitTransition = { tabFadeExit() },
                 ) {
-                    TabScaffold(title = "대시보드") {
+                    TabScaffold(title = "대시보드", topBar = false) {
                         DashboardTab(
                             state = state,
                             onLoadDashboard = viewModel::loadDashboard,

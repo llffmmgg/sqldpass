@@ -38,6 +38,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.sqldpass.app.data.MockExamSummary
 import com.sqldpass.app.ui.AppUiState
+import com.sqldpass.app.ui.common.CtaCard
 import com.sqldpass.app.ui.common.SkeletonCard
 import com.sqldpass.app.ui.theme.CertColors
 import com.sqldpass.app.ui.theme.LocalSqldpassSemanticColors
@@ -190,53 +191,18 @@ private fun EmptyHint() {
 @Composable
 private fun ExamCard(exam: MockExamSummary, onStart: (Long) -> Unit) {
     val locked = exam.isPremium && !exam.purchased
-    Card(
-        shape = RoundedCornerShape(CardCorner),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface,
-            contentColor = MaterialTheme.colorScheme.onSurface,
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-            ) {
-                Text(exam.name, style = MaterialTheme.typography.titleMedium)
-                if (locked) Icon(
-                    Icons.Outlined.Lock,
-                    contentDescription = "PASS+ 잠금",
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-            Text(
-                "${exam.examType?.let { examTypeLabel(it) } ?: "CBT"} · ${exam.totalQuestions}문제",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            exam.bestCorrectCount?.let {
-                Text(
-                    "최고 점수 $it/${exam.bestTotalCount ?: exam.totalQuestions}",
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.primary,
-                )
-            }
-            Button(
-                shape = RoundedCornerShape(ButtonCorner),
-                onClick = { onStart(exam.id) },
-                enabled = !locked,
-                modifier = Modifier.sizeIn(minHeight = 48.dp),
-            ) {
-                Text(if (locked) "PASS+ 전용" else "풀이 시작")
-            }
-        }
+    val highlight = exam.bestCorrectCount?.let {
+        "최고 점수 $it/${exam.bestTotalCount ?: exam.totalQuestions}"
     }
+    CtaCard(
+        title = exam.name,
+        meta = "${exam.examType?.let { examTypeLabel(it) } ?: "CBT"} · ${exam.totalQuestions}문제",
+        highlight = highlight,
+        ctaLabel = "응시하기",
+        lockedCtaLabel = "PASS+ 전용",
+        locked = locked,
+        onClick = { onStart(exam.id) },
+    )
 }
 
 @Composable

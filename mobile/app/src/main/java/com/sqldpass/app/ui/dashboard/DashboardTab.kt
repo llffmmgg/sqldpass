@@ -13,11 +13,12 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.Logout
+import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.Whatshot
-import androidx.compose.material3.Button
-import androidx.compose.material3.Icon
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
@@ -37,7 +38,9 @@ import com.sqldpass.app.data.ThemeMode
 import com.sqldpass.app.data.WrongAnswerStatsSummary
 import com.sqldpass.app.ui.AppUiState
 import com.sqldpass.app.ui.DashboardData
-import com.sqldpass.app.ui.home.ActionCard
+import com.sqldpass.app.ui.common.CtaCard
+import com.sqldpass.app.ui.common.HeroHeader
+import com.sqldpass.app.ui.common.MenuListRow
 import com.sqldpass.app.ui.theme.SqldpassTheme
 
 private val CardCorner = 14.dp
@@ -79,20 +82,27 @@ fun DashboardTab(
         }
     }
     val examNameById = state.mockExams.associate { it.id to it.name }
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(20.dp),
-        verticalArrangement = Arrangement.spacedBy(14.dp),
-    ) {
-        item {
-            AccountCard(
-                nickname = state.nickname,
-                onLogin = onLogin,
-                onLogout = onLogout,
-                onEditNickname = { nicknameDialogOpen = true },
-            )
-        }
-        if (state.nickname != null) {
+    Column(modifier = Modifier.fillMaxSize()) {
+        HeroHeader(
+            title = "대시보드",
+            subtitle = state.nickname?.let { "$it 님의 학습 기록" }
+                ?: "Google 로 로그인하면 학습 기록이 쌓여요.",
+        )
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(20.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp),
+        ) {
+        if (state.nickname == null) {
+            item {
+                CtaCard(
+                    title = "로그인이 필요합니다",
+                    meta = "Google 로 로그인하면 연속 학습일과 회차별 최고 점수가 보입니다.",
+                    ctaLabel = "Google 로 로그인",
+                    onClick = onLogin,
+                )
+            }
+        } else {
             item {
                 StreakCard(currentStreak = state.dashboard?.streak?.currentStreak ?: 0)
             }
@@ -138,10 +148,10 @@ fun DashboardTab(
             }
         }
         item {
-            ActionCard(
+            CtaCard(
                 title = "PASS+ 모의고사",
-                body = "프리미엄 회차는 구매 후 앱에서도 오프라인 풀이가 가능합니다.",
-                action = "PASS+ 보기",
+                meta = "프리미엄 회차는 구매 후 앱에서도 오프라인 풀이가 가능합니다.",
+                ctaLabel = "PASS+ 보기",
                 onClick = { onPurchase("iap_one_month") },
             )
         }
@@ -150,6 +160,23 @@ fun DashboardTab(
                 themeMode = themeMode,
                 onThemeChange = onThemeChange,
             )
+        }
+        if (state.nickname != null) {
+            item {
+                MenuListRow(
+                    icon = Icons.Outlined.Edit,
+                    label = "닉네임 편집",
+                    onClick = { nicknameDialogOpen = true },
+                )
+            }
+            item {
+                MenuListRow(
+                    icon = Icons.AutoMirrored.Outlined.Logout,
+                    label = "로그아웃",
+                    onClick = onLogout,
+                )
+            }
+        }
         }
     }
 }
@@ -193,63 +220,6 @@ private fun ThemeToggleCard(
                             labelColor = MaterialTheme.colorScheme.onPrimaryContainer,
                         ) else androidx.compose.material3.AssistChipDefaults.assistChipColors(),
                     )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun AccountCard(
-    nickname: String?,
-    onLogin: () -> Unit,
-    onLogout: () -> Unit,
-    onEditNickname: () -> Unit = {},
-) {
-    Card(
-        shape = RoundedCornerShape(CardCorner),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface,
-            contentColor = MaterialTheme.colorScheme.onSurface,
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(18.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            if (nickname == null) {
-                Text("로그인이 필요합니다", style = MaterialTheme.typography.titleMedium)
-                Text(
-                    "Google 로 로그인해 학습 기록과 합격률을 확인하세요.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                Button(
-                    shape = RoundedCornerShape(ButtonCorner),
-                    onClick = onLogin,
-                    modifier = Modifier.sizeIn(minHeight = 48.dp),
-                ) { Text("Google 로 로그인") }
-            } else {
-                Text("$nickname 님", style = MaterialTheme.typography.titleMedium)
-                Text(
-                    "문어CBT 와 함께 학습 중",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedButton(
-                        shape = RoundedCornerShape(ButtonCorner),
-                        onClick = onEditNickname,
-                        modifier = Modifier.sizeIn(minHeight = 48.dp),
-                    ) { Text("닉네임 편집") }
-                    OutlinedButton(
-                        shape = RoundedCornerShape(ButtonCorner),
-                        onClick = onLogout,
-                        modifier = Modifier.sizeIn(minHeight = 48.dp),
-                    ) { Text("로그아웃") }
                 }
             }
         }

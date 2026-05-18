@@ -29,6 +29,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.sqldpass.app.data.PastExamSummary
 import com.sqldpass.app.ui.AppUiState
+import com.sqldpass.app.ui.common.CtaCard
 import com.sqldpass.app.ui.common.SkeletonCard
 import com.sqldpass.app.ui.theme.CertColors
 import com.sqldpass.app.ui.theme.LocalSqldpassSemanticColors
@@ -134,49 +135,25 @@ private fun EmptyHint(slug: String) {
 
 @Composable
 private fun PastExamCard(exam: PastExamSummary, onStart: () -> Unit) {
-    Card(
-        shape = RoundedCornerShape(CardCorner),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface,
-            contentColor = MaterialTheme.colorScheme.onSurface,
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            Text(exam.name, style = MaterialTheme.typography.titleMedium)
-            val meta = buildString {
-                exam.examYear?.let { append("${it}년") }
-                exam.examRound?.let {
-                    if (isNotEmpty()) append(" · ")
-                    append("${it}회")
-                }
-                if (isNotEmpty()) append(" · ")
-                append("${exam.totalQuestions}문제")
-            }
-            Text(
-                meta,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            exam.bestCorrectCount?.let {
-                Text(
-                    "최고 점수 $it/${exam.bestTotalCount ?: exam.totalQuestions}",
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.primary,
-                )
-            }
-            Button(
-                shape = RoundedCornerShape(ButtonCorner),
-                onClick = onStart,
-                modifier = Modifier.sizeIn(minHeight = 48.dp),
-            ) { Text("풀이 시작") }
+    val meta = buildString {
+        exam.examYear?.let { append("${it}년") }
+        exam.examRound?.let {
+            if (isNotEmpty()) append(" · ")
+            append("${it}회")
         }
+        if (isNotEmpty()) append(" · ")
+        append("${exam.totalQuestions}문제")
     }
+    val highlight = exam.bestCorrectCount?.let {
+        "최고 점수 $it/${exam.bestTotalCount ?: exam.totalQuestions}"
+    }
+    CtaCard(
+        title = exam.name,
+        meta = meta,
+        highlight = highlight,
+        ctaLabel = "기출 풀기",
+        onClick = onStart,
+    )
 }
 
 /** backend PastExamPublicService.certSlugFromExamType 의 6개 slug → 사람 라벨. */
