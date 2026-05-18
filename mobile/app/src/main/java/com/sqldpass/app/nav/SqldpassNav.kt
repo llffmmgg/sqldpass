@@ -1,11 +1,11 @@
 package com.sqldpass.app.nav
 
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.BarChart
+import androidx.compose.material.icons.outlined.History
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.PersonOutline
+import androidx.compose.material.icons.outlined.PlayCircleOutline
 import androidx.compose.material.icons.outlined.Quiz
-import androidx.compose.material.icons.outlined.Replay
 import androidx.compose.ui.graphics.vector.ImageVector
 
 /** 하단 탭 + 풀스크린 destination. */
@@ -38,8 +38,8 @@ data class TabSpec(val route: SqldpassRoute, val label: String, val icon: ImageV
 val BOTTOM_TABS: List<TabSpec> = listOf(
     TabSpec(SqldpassRoute.Home, "홈", Icons.Outlined.Home),
     TabSpec(SqldpassRoute.MockExam, "모의고사", Icons.Outlined.Quiz),
-    TabSpec(SqldpassRoute.WrongAnswers, "오답노트", Icons.Outlined.Replay),
-    TabSpec(SqldpassRoute.Insights, "인사이트", Icons.Outlined.BarChart),
+    TabSpec(SqldpassRoute.PastExam, "기출복원", Icons.Outlined.History),
+    TabSpec(SqldpassRoute.Solve, "실전 문제", Icons.Outlined.PlayCircleOutline),
     TabSpec(SqldpassRoute.Profile, "마이", Icons.Outlined.PersonOutline),
 )
 

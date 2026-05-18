@@ -66,6 +66,7 @@ fun ProfileTab(
     onUpdateNickname: (String, (Boolean) -> Unit) -> Unit = { _, cb -> cb(false) },
     onSubmitFeedback: (String, Long?, String, (Boolean) -> Unit) -> Unit = { _, _, _, cb -> cb(false) },
     onOpenPassPlus: () -> Unit = {},
+    onOpenWrongAnswers: () -> Unit = {},
     onLoadMe: () -> Unit = {},
     onLoadSubscription: () -> Unit = {},
     themeMode: ThemeMode = ThemeMode.LIGHT,
@@ -154,7 +155,25 @@ fun ProfileTab(
             }
 
             if (state.nickname != null) {
+                // KPI 2x2 — longestStreak 만 실데이터, 나머지 3개 placeholder.
+                // 누적·평균·합격 확률 백엔드 신설은 별 phase `kpi-backend-support`.
+                item {
+                    KpiGrid(
+                        totalSolved = null,
+                        avgCorrectRate = null,
+                        longestStreak = state.dashboard?.streak?.longestStreak,
+                        passProbability = null,
+                    )
+                }
+
                 item { SectionTitle("학습") }
+                item {
+                    MenuListRow(
+                        icon = Icons.Outlined.History,
+                        label = "오답노트",
+                        onClick = onOpenWrongAnswers,
+                    )
+                }
                 item {
                     MenuListRow(
                         icon = Icons.Outlined.Bookmark,

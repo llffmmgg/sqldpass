@@ -285,6 +285,13 @@
       "description": "Android(mobile/) 와 iOS(ios/) 의 풀이 진행 화면을 양 플랫폼 동시에 처음부터 재설계. 웹 frontend/src/app/solve/SolveClient.tsx 의 단일 채점 인터랙션(1문제씩 즉시 채점, 정답 공개, 해설, 다음 문제)을 모바일에서 고도화. 본문 Markdown/SVG/Table/CodeBlock 분리 렌더(iOS 신규 SVGKit), 더블탭 단축, 햅틱 매트릭스, 정답 공개 상태 시각 전환, 오프라인 답안 큐잉(iOS 신규 SwiftData)까지 양 플랫폼 동등 수준으로. 백엔드 API 계약 변경 없음.",
       "status": "pending",
       "created_at": "2026-05-18T19:00:00+0900"
+    },
+    {
+      "dir": "mobile-ux-restructure",
+      "name": "mobile-ux-restructure",
+      "description": "Plan giggly-brewing-crystal 의 17개 UX 결정 구현. 5탭 재편(홈/모의고사/기출복원/실전 문제/내정보 — WrongAnswers·Insights 탭 제거 후 내정보 메뉴 흡수, PastExam·SoloSolve 탭 신설), 홈 3 메인 + 자격증 6종 캐러셀 + 자격증 소개 모달 시트, 내정보 KPI 2x2 + 3그룹 메뉴(학습/계정/설정·지원). UI 컴포넌트 폴리시(색·간격·아이콘 디테일)는 사용자가 별 스킬로 — 본 phase 는 정보 구조·라우팅·동작만. 백엔드 API 계약 변경 없음.",
+      "status": "pending",
+      "created_at": "2026-05-18T22:30:00+0900"
     }
   ]
 }

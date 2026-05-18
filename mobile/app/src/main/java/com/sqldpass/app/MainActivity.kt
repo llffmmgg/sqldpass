@@ -189,10 +189,8 @@ private fun SqldpassApp(
                         HomeScreen(
                             nickname = state.nickname,
                             message = state.message,
-                            currentStreak = state.dashboard?.streak?.currentStreak,
-                            onQuickPractice = { navController.navigate(SqldpassRoute.Solve.route) },
-                            onSync = viewModel::sync,
-                            onPurchase = { navController.navigate(SqldpassRoute.PassPlus.route) },
+                            streak = state.dashboard?.streak,
+                            onOpenPassPlus = { navController.navigate(SqldpassRoute.PassPlus.route) },
                             heroActions = {
                                 com.sqldpass.app.ui.home.HomeAccountMenu(
                                     nickname = state.nickname,
@@ -214,11 +212,6 @@ private fun SqldpassApp(
                             onRefresh = viewModel::refresh,
                             onStartExam = { id ->
                                 viewModel.startMockExamRunner(id)
-                                navController.navigate(SqldpassRoute.Runner.route)
-                            },
-                            onSelectCert = viewModel::selectCertSlug,
-                            onStartPastExam = { id, slug ->
-                                viewModel.startPastExamRunner(id, slug)
                                 navController.navigate(SqldpassRoute.Runner.route)
                             },
                         )
@@ -328,6 +321,7 @@ private fun SqldpassApp(
                             onUpdateNickname = viewModel::updateNickname,
                             onSubmitFeedback = viewModel::submitFeedback,
                             onOpenPassPlus = { navController.navigate(SqldpassRoute.PassPlus.route) },
+                            onOpenWrongAnswers = { navController.navigate(SqldpassRoute.WrongAnswers.route) },
                             onLoadMe = viewModel::loadMe,
                             onLoadSubscription = viewModel::loadSubscription,
                             themeMode = themeMode,

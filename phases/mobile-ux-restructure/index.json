@@ -1,0 +1,62 @@
+{
+  "project": "sqldpass",
+  "phase": "mobile-ux-restructure",
+  "description": "Plan `giggly-brewing-crystal.md` 의 17개 UX 결정을 양 플랫폼에 구현. (1) 5탭 재편: 홈/모의고사/기출복원/실전 문제/내정보 — WrongAnswers·Insights 탭 제거(내정보 안 메뉴로 흡수), PastExam·SoloSolve 탭 신설. (2) 홈 = 인사말 + 스트릭 카드 + 이어풀기 추천 + 자격증 6종 수평 캐러셀 + 자격증 소개 모달 시트. (3) 내정보 = KPI 2x2 그리드(총 풀이·평균 정답률·최장 스트릭·합격 확률) + 3그룹 메뉴(학습/계정/설정·지원). UI 컴포넌트 폴리시(색·간격·아이콘 디테일)는 사용자가 별 스킬로 진행 — 본 phase 는 정보 구조·라우팅·동작만. 백엔드 API 계약 변경 없음(KPI 의 누적·평균 데이터는 클라이언트 합산 또는 placeholder, 백엔드 신설은 별 phase).",
+  "steps": [
+    {
+      "step": 1,
+      "name": "mobile-ux-spec-doc",
+      "description": "Plan `giggly-brewing-crystal.md` 의 17개 결정을 양 플랫폼 구현이 참조할 단일 진실 원천 문서 docs/MOBILE_UX_SPEC.md 로 정리.",
+      "status": "completed",
+      "started_at": "2026-05-18T22:35:00+0900",
+      "completed_at": "2026-05-18T22:40:00+0900",
+      "summary": "docs/MOBILE_UX_SPEC.md 신설(7섹션: 탭 구성/각 탭 정보 위계/핵심 동선/양 플랫폼 동일 규칙 14가지/자격증 6종 정적 데이터 표/KPI 4개 데이터 매핑/변경 이력). plan Q1~Q17 1:1 매핑."
+    },
+    {
+      "step": 2,
+      "name": "android-nav-5tab-restructure",
+      "description": "Android BOTTOM_TABS 5개 재편: Home/MockExam/PastExam/Solve/Profile. WrongAnswers·Insights 탭 제거(라우트는 내정보 진입용으로 유지). 실전 문제 탭은 Solve 라우트(SolveTab — 자격증 칩+과목 카드 진입 화면). SoloSolve 는 풀스크린 push 라우트 그대로.",
+      "status": "completed",
+      "started_at": "2026-05-18T22:40:00+0900",
+      "completed_at": "2026-05-18T22:55:00+0900",
+      "summary": "SqldpassNav.kt BOTTOM_TABS 5탭 교체(Home/MockExam/PastExam/Solve/Profile, 아이콘 History·PlayCircleOutline 신규 import). MainActivity 의 MockExam composable 콜백에서 onSelectCert·onStartPastExam 제거. MockExamTab.kt 단순화. PastExamTab.kt 그대로 사용. assembleDebug BUILD SUCCESSFUL 8s."
+    },
+    {
+      "step": 3,
+      "name": "android-home-restructure",
+      "description": "HomeScreen 정보 구조 재배치: 인사말 헤더 + 스트릭 카드(위험 톤 분기) + 자격증 6종 수평 캐러셀 + 자격증 소개 모달 시트. 이어풀기 카드는 별 phase. 기존 '오늘 바로 풀기'/'PASS+ 모의고사' CTA 카드 제거.",
+      "status": "completed",
+      "started_at": "2026-05-18T22:55:00+0900",
+      "completed_at": "2026-05-18T23:15:00+0900",
+      "summary": "신규: ui/home/CertCatalog.kt(자격증 6종 정적 데이터), CertInfoSheet.kt(ModalBottomSheet, 시험 정보 4종 + PASS+ CTA), CertCarousel.kt(LazyRow 6 카드), ContinueLastCard.kt(별 phase 호출). HomeScreen.kt 전면 재작성 — HeroHeader + StreakCard(lastSolvedDate < 오늘 시 warning 톤 + 안내문 전환) + CertCarousel + 자격증 카드 탭 → CertInfoSheet. MainActivity.HomeScreen 호출 시그니처 갱신. assembleDebug BUILD SUCCESSFUL 7s."
+    },
+    {
+      "step": 4,
+      "name": "android-profile-restructure",
+      "description": "ProfileTab 정보 구조: 프로필 헤더 + KPI 2x2 + 3그룹 메뉴. KPI 의 누적·평균·합격 확률은 placeholder, longestStreak 만 실데이터. 오답노트 메뉴 행 → WrongAnswers 라우트.",
+      "status": "completed",
+      "started_at": "2026-05-18T23:15:00+0900",
+      "completed_at": "2026-05-18T23:30:00+0900",
+      "summary": "신규: ui/profile/KpiGrid.kt(2x2 KpiTile 4개 — Quiz/Percent/LocalFireDepartment/QueryStats 아이콘, value nil 시 '—'). ProfileTab.kt 에 onOpenWrongAnswers 인자 + 학습 섹션 상단 KpiGrid 호출 + 오답노트 메뉴 행 신규. MainActivity.ProfileTab 호출에 onOpenWrongAnswers=navigate(WrongAnswers.route) 추가. longestStreak 만 state.dashboard.streak.longestStreak 사용, 나머지 nil. assembleDebug BUILD SUCCESSFUL 6s."
+    },
+    {
+      "step": 5,
+      "name": "ios-nav-5tab-restructure",
+      "description": "iOS MainTabView 5탭 재정의: Home/MockExams/PastExams/SoloSolve/Profile. WrongAnswers·Insights 탭 제거(View 는 유지, ProfileView 안 NavigationLink). PastExamsListView 신규. SoloSolve 탭 fullScreenCover 임시 진입점 제거. macOS 검증 대기.",
+      "status": "pending"
+    },
+    {
+      "step": 6,
+      "name": "ios-home-restructure",
+      "description": "iOS Features/Home/HomeView 신규 + 인사말 + StreakCard(위험 톤 분기) + 자격증 6종 ScrollView 캐러셀 + CertInfoSheet. 기존 DashboardView 의 통계 그리드·모의고사 빠른시작 제거. macOS 검증 대기.",
+      "status": "pending"
+    },
+    {
+      "step": 7,
+      "name": "ios-profile-restructure",
+      "description": "iOS ProfileView 재배치: 프로필 헤더 + KPI 2x2 LazyVGrid + 3섹션 List(학습/계정/설정·지원). WrongAnswersView·BookmarksView·HistoryView 진입 NavigationLink. macOS 검증 대기.",
+      "status": "pending"
+    }
+  ],
+  "created_at": "2026-05-18T22:30:00+0900"
+}
