@@ -267,11 +267,12 @@ public interface QuestionRepository extends JpaRepository<QuestionEntity, Long> 
     List<Long> findIdsByMockExamId(@Param("mockExamId") Long mockExamId,
                                    @Param("onlyUnverified") boolean onlyUnverified);
 
-    /** 안드로이드 앱 스냅샷 버전 계산용 — visible 회차에 속한 문제들의 max(updatedAt). */
+    /** 안드로이드 앱 스냅샷 버전 계산용 — visible 회차에 속한 문제들의 max(updatedAt). MINI 는 제외. */
     @Query("SELECT MAX(q.updatedAt) FROM QuestionEntity q " +
             "JOIN q.mockExam m " +
             "WHERE m.visibility <> com.sqldpass.persistent.mockexam.MockExamVisibility.DRAFT " +
-            "  AND m.expertVerified = true")
+            "  AND m.expertVerified = true " +
+            "  AND m.kind <> com.sqldpass.persistent.mockexam.MockExamKind.MINI")
     java.util.Optional<LocalDateTime> findSnapshotMaxUpdatedAt();
 
     boolean existsByContentHash(String contentHash);

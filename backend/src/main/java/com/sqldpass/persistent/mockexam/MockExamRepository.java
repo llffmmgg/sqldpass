@@ -26,10 +26,8 @@ public interface MockExamRepository extends JpaRepository<MockExamEntity, Long> 
     List<Object[]> findAllWithQuestionCounts();
 
     /**
-     * 사용자용 — AI/MINI 모의고사 + 전문가 검수 완료 + (PUBLISHED 또는 PREMIUM). 기출 복원(PAST_EXAM) 은
-     * /past-exams 전용.
-     *
-     * <p>MINI 회차는 어드민이 PREMIUM 으로 발급하므로 기본 정렬에서 상단에 노출된다.
+     * 사용자용 — AI 모의고사 + 전문가 검수 완료 + (PUBLISHED 또는 PREMIUM). 기출 복원(PAST_EXAM) 은
+     * /past-exams 전용. <strong>MINI</strong> 는 사용자 목록에서 제외 (별도 탭/페이지 도입 전까지 숨김).
      *
      * <p>정렬: <strong>PREMIUM(PASS+) 회차 먼저</strong>(결제 유도), 같은 그룹 안에서는 sequence DESC.
      * CASE WHEN 으로 visibility=PREMIUM 인 행에 정렬 키 0, 나머지 1 부여.
@@ -38,7 +36,7 @@ public interface MockExamRepository extends JpaRepository<MockExamEntity, Long> 
             "FROM MockExamEntity m LEFT JOIN m.questions q " +
             "WHERE m.visibility <> com.sqldpass.persistent.mockexam.MockExamVisibility.DRAFT " +
             "  AND m.expertVerified = true " +
-            "  AND m.kind <> com.sqldpass.persistent.mockexam.MockExamKind.PAST_EXAM " +
+            "  AND m.kind = com.sqldpass.persistent.mockexam.MockExamKind.AI " +
             "GROUP BY m " +
             "ORDER BY CASE WHEN m.visibility = com.sqldpass.persistent.mockexam.MockExamVisibility.PREMIUM " +
             "              THEN 0 ELSE 1 END, " +
@@ -48,6 +46,7 @@ public interface MockExamRepository extends JpaRepository<MockExamEntity, Long> 
     /**
      * 안드로이드 앱 첫 부트 prefetch 용 스냅샷 — visibility != DRAFT + expert_verified=true 인
      * 모든 회차(AI/PAST_EXAM 모두 포함)를 문제 + 과목까지 한 번에 fetch.
+     * MINI 는 사용자 노출 차단되므로 스냅샷에도 포함하지 않는다.
      * 결과는 단일 큰 JSON 으로 직렬화돼 IndexedDB 에 들어간다.
      */
     @Query("SELECT DISTINCT m FROM MockExamEntity m " +
@@ -55,13 +54,15 @@ public interface MockExamRepository extends JpaRepository<MockExamEntity, Long> 
             "LEFT JOIN FETCH q.subject s " +
             "LEFT JOIN FETCH s.parent " +
             "WHERE m.visibility <> com.sqldpass.persistent.mockexam.MockExamVisibility.DRAFT " +
-            "  AND m.expertVerified = true")
+            "  AND m.expertVerified = true " +
+            "  AND m.kind <> com.sqldpass.persistent.mockexam.MockExamKind.MINI")
     List<MockExamEntity> findAllForSnapshot();
 
-    /** 스냅샷 버전 계산용 — visibility != DRAFT + expert_verified 회차의 max(updated_at). */
+    /** 스냅샷 버전 계산용 — visibility != DRAFT + expert_verified 회차의 max(updated_at). MINI 는 제외. */
     @Query("SELECT MAX(m.updatedAt) FROM MockExamEntity m " +
             "WHERE m.visibility <> com.sqldpass.persistent.mockexam.MockExamVisibility.DRAFT " +
-            "  AND m.expertVerified = true")
+            "  AND m.expertVerified = true " +
+            "  AND m.kind <> com.sqldpass.persistent.mockexam.MockExamKind.MINI")
     Optional<java.time.LocalDateTime> findSnapshotMaxUpdatedAt();
 
     /**
