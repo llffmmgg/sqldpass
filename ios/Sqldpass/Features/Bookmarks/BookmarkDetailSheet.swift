@@ -23,10 +23,7 @@ struct BookmarkDetailSheet: View {
                         Text("문제 #\(question.id)")
                             .font(AppType.caption.weight(.semibold))
                             .foregroundStyle(Color.brandPrimary)
-                        Text(question.content)
-                            .font(AppType.body)
-                            .foregroundStyle(Color.appTextPrimary)
-                            .fixedSize(horizontal: false, vertical: true)
+                        QuestionContentView(text: question.content)
                             .textSelection(.enabled)
                     }
                 }

@@ -45,9 +45,7 @@ struct AnswerReviewRow: View {
             .buttonStyle(.plain)
 
             if isExpanded {
-                Text(item.content)
-                    .font(AppType.body)
-                    .foregroundStyle(Color.appTextPrimary)
+                QuestionContentView(text: item.content)
                     .padding(.top, Spacing.xs)
             }
         }
