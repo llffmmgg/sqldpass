@@ -32,7 +32,6 @@ import {
 import { getSolves, type SolveSummaryResponse } from "@/lib/api";
 import { getToken } from "@/lib/auth";
 import MockExamAttemptsView from "@/components/MockExamAttemptsView";
-import MockExamPdfButton from "@/components/MockExamPdfButton";
 import MascotImage from "@/components/mascot/MascotImage";
 import { poseFromScore } from "@/components/mascot";
 import AdInfeed from "@/components/AdInfeed";
@@ -384,18 +383,14 @@ export default function PastExamRunnerClient({
                   </span>
                 </p>
               </div>
-              <div className="flex items-center gap-3">
-                {/* 풀이 중에도 PDF 다운로드 가능 — 결제 회원만 실제 동작, 비회원은 결제 유도 */}
-                <MockExamPdfButton examId={exam.id} />
-                <Button
-                  variant="primary"
-                  size="md"
-                  onClick={handleSubmit}
-                  disabled={submitting || answeredCount === 0}
-                >
-                  {submitting ? "제출 중..." : `제출하기 (${answeredCount}/${total})`}
-                </Button>
-              </div>
+              <Button
+                variant="primary"
+                size="md"
+                onClick={handleSubmit}
+                disabled={submitting || answeredCount === 0}
+              >
+                {submitting ? "제출 중..." : `제출하기 (${answeredCount}/${total})`}
+              </Button>
             </div>
             <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-border">
               <div
@@ -556,19 +551,16 @@ function PastExamResultView({
   return (
     <main className="min-h-screen bg-bg text-text">
       <Container size="narrow" className="py-14">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <div className="flex flex-wrap items-center gap-2">
-              <Badge cert={cert} variant="soft" size="sm" dot>
-                {token.label}
-              </Badge>
-              <span className="text-xs text-text-muted">{roundLabel}</span>
-            </div>
-            <h1 className="mt-3 text-2xl font-bold tracking-tight sm:text-3xl">
-              {exam.name} 결과
-            </h1>
+        <div>
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge cert={cert} variant="soft" size="sm" dot>
+              {token.label}
+            </Badge>
+            <span className="text-xs text-text-muted">{roundLabel}</span>
           </div>
-          <MockExamPdfButton examId={exam.id} />
+          <h1 className="mt-3 text-2xl font-bold tracking-tight sm:text-3xl">
+            {exam.name} 결과
+          </h1>
         </div>
 
         {/* 합격/불합격 배너 — 자격증별 공식 기준 (백엔드 PassFailCriteria 적용) */}
