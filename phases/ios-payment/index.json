@@ -37,7 +37,7 @@
       "status": "completed",
       "started_at": "2026-05-18T14:24:51+0900",
       "summary": "Models/PaymentProduct.swift (StoreKit Product wrapper), Services/StoreKitService.swift (Product.products / Transaction.updates / purchase / restore / currentEntitlementJWS), Services/PaymentService.swift (GET /api/payment/subscription + POST /api/payment/apple/verify) 신규. project.pbxproj 3개 파일 등록(PBXBuildFile/PBXFileReference/Models·Services 그룹/Sources phase). Debug iOS 시뮬레이터 BUILD SUCCEEDED.",
-      "completed_at": "2026-05-18T14:29:20+0900"
+      "completed_at": "2026-05-18T14:29:47+0900"
     },
     {
       "step": 5,
