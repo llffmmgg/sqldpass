@@ -92,13 +92,13 @@ export default function AllPassPolicyNotice() {
           <div className="space-y-3 text-[13.5px] leading-[1.7] text-text-muted">
             <p>
               결제 대행사(PG) 정책상{" "}
-              <strong className="text-text">평생 이용권</strong> 상품을 더 이상 유지할 수 없게
+              <strong className="text-text">무제한 이용권</strong> 상품을 더 이상 유지할 수 없게
               되었어요. 이에 따라 All Pass 플랜의 이용 기간이{" "}
               <strong className="text-text">6개월(180일)</strong> 로 변경되었습니다.
             </p>
             <p>
-              <strong className="text-text">이미 평생 All Pass 를 구매하신 분들은</strong>{" "}
-              그대로 평생 이용 권리가 유지되니 안심해주세요. 변경 사항은 신규 결제부터만
+              <strong className="text-text">이미 All Pass 를 구매하신 분들은</strong>{" "}
+              그대로 무제한 이용 권리가 유지되니 안심해주세요. 변경 사항은 신규 결제부터만
               적용됩니다.
             </p>
           </div>
