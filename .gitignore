@@ -66,3 +66,6 @@ ios/*.xcarchive
 # App Store Connect API keys (NEVER commit)
 ios/fastlane/AuthKey_*.p8
 **/AuthKey_*.p8
+
+# Mobile 개발 중 임시 스크린샷
+.tmp_screenshots/

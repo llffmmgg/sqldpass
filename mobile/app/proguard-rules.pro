@@ -37,6 +37,12 @@
 -dontwarn androidx.compose.**
 -dontwarn androidx.lifecycle.**
 
+# ---- Markwon (commonmark optional extensions) ----
+# gfm-strikethrough 확장은 의존성에 없어도 Markwon html 모듈이 reference 만 가짐.
+-dontwarn org.commonmark.ext.**
+-keep class io.noties.markwon.** { *; }
+-dontwarn io.noties.markwon.**
+
 # ---- Logging strip ----
 -assumenosideeffects class android.util.Log {
     public static *** d(...);
