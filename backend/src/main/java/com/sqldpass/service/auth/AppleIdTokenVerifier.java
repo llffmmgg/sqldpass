@@ -1,6 +1,7 @@
 package com.sqldpass.service.auth;
 
 import java.math.BigInteger;
+import java.security.Key;
 import java.security.KeyFactory;
 import java.security.PublicKey;
 import java.security.spec.RSAPublicKeySpec;
@@ -74,10 +75,10 @@ public class AppleIdTokenVerifier {
         }
     }
 
-    private Locator<PublicKey> appleKeyLocator() {
+    private Locator<Key> appleKeyLocator() {
         return new Locator<>() {
             @Override
-            public PublicKey locate(io.jsonwebtoken.Header header) {
+            public Key locate(io.jsonwebtoken.Header header) {
                 if (!(header instanceof ProtectedHeader protectedHeader)) {
                     throw new SqldpassException(ErrorCode.OAUTH_LOGIN_FAILED);
                 }
