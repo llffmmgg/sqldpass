@@ -67,14 +67,13 @@ class MainActivity : ComponentActivity() {
         lifecycleScope.launch { app.billingManager.connect() }
         setContent {
             val themeMode by app.settingsStore.themeMode.collectAsState()
-            val dynamicColor by app.settingsStore.dynamicColor.collectAsState()
             val systemDark = androidx.compose.foundation.isSystemInDarkTheme()
             val darkTheme = when (themeMode) {
                 ThemeMode.LIGHT -> false
                 ThemeMode.DARK -> true
                 ThemeMode.SYSTEM -> systemDark
             }
-            SqldpassTheme(darkTheme = darkTheme, dynamicColor = dynamicColor) {
+            SqldpassTheme(darkTheme = darkTheme) {
                 val state by viewModel.state.collectAsState()
                 val scope = rememberCoroutineScope()
                 val launcher = rememberLauncherForActivityResult(
@@ -104,8 +103,6 @@ class MainActivity : ComponentActivity() {
                     onLoadProducts = { scope.launch { app.billingManager.loadProducts() } },
                     themeMode = themeMode,
                     onThemeChange = app.settingsStore::setThemeMode,
-                    dynamicColor = dynamicColor,
-                    onDynamicColorChange = app.settingsStore::setDynamicColor,
                 )
             }
         }
@@ -132,8 +129,6 @@ private fun SqldpassApp(
     onLoadProducts: () -> Unit,
     themeMode: ThemeMode,
     onThemeChange: (ThemeMode) -> Unit,
-    dynamicColor: Boolean,
-    onDynamicColorChange: (Boolean) -> Unit,
 ) {
     val navController = rememberNavController()
     val backStack by navController.currentBackStackEntryAsState()
@@ -242,8 +237,6 @@ private fun SqldpassApp(
                             onUpdateNickname = viewModel::updateNickname,
                             themeMode = themeMode,
                             onThemeChange = onThemeChange,
-                            dynamicColor = dynamicColor,
-                            onDynamicColorChange = onDynamicColorChange,
                         )
                     }
                 }

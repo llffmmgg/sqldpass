@@ -1,6 +1,5 @@
 package com.sqldpass.app.ui.dashboard
 
-import android.os.Build
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -21,7 +20,6 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -55,10 +53,8 @@ fun DashboardTab(
     onLoadWrongStats: () -> Unit = {},
     onStartWrongAnswers: (Long?, String?) -> Unit = { _, _ -> },
     onUpdateNickname: (String, (Boolean) -> Unit) -> Unit = { _, cb -> cb(false) },
-    themeMode: ThemeMode = ThemeMode.SYSTEM,
+    themeMode: ThemeMode = ThemeMode.LIGHT,
     onThemeChange: (ThemeMode) -> Unit = {},
-    dynamicColor: Boolean = true,
-    onDynamicColorChange: (Boolean) -> Unit = {},
 ) {
     var nicknameDialogOpen by remember { mutableStateOf(false) }
     var nicknameSubmitting by remember { mutableStateOf(false) }
@@ -152,9 +148,7 @@ fun DashboardTab(
         item {
             ThemeToggleCard(
                 themeMode = themeMode,
-                dynamicColor = dynamicColor,
                 onThemeChange = onThemeChange,
-                onDynamicColorChange = onDynamicColorChange,
             )
         }
     }
@@ -164,11 +158,8 @@ fun DashboardTab(
 @Composable
 private fun ThemeToggleCard(
     themeMode: ThemeMode,
-    dynamicColor: Boolean,
     onThemeChange: (ThemeMode) -> Unit,
-    onDynamicColorChange: (Boolean) -> Unit,
 ) {
-    val supportsDynamicColor = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
     Card(
         shape = RoundedCornerShape(CardCorner),
         colors = CardDefaults.cardColors(
@@ -203,29 +194,6 @@ private fun ThemeToggleCard(
                         ) else androidx.compose.material3.AssistChipDefaults.assistChipColors(),
                     )
                 }
-            }
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
-            ) {
-                Column(
-                    modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(2.dp),
-                ) {
-                    Text("시스템 색상", style = MaterialTheme.typography.titleSmall)
-                    Text(
-                        if (supportsDynamicColor) "기기 배경화면 색상을 반영합니다."
-                        else "Android 12 이상에서 사용할 수 있습니다.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-                Switch(
-                    checked = dynamicColor && supportsDynamicColor,
-                    enabled = supportsDynamicColor,
-                    onCheckedChange = onDynamicColorChange,
-                )
             }
         }
     }

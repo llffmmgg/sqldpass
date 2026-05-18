@@ -1,18 +1,13 @@
 package com.sqldpass.app.ui.theme
 
-import android.os.Build
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.dynamicDarkColorScheme
-import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 
 // frontend globals.css 의 --primary(emerald) 와 동기화. amber 는 streak/최고점
 // 같은 보조 강조에서만 그대로 사용 (frontend 의 cert-sqld 와 정합).
@@ -114,18 +109,10 @@ val LocalSqldpassSemanticColors = staticCompositionLocalOf {
 
 @Composable
 fun SqldpassTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
-    dynamicColor: Boolean = false,
+    darkTheme: Boolean = false,
     content: @Composable () -> Unit,
 ) {
-    val scheme = when {
-        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-            val ctx = LocalContext.current
-            if (darkTheme) dynamicDarkColorScheme(ctx) else dynamicLightColorScheme(ctx)
-        }
-        darkTheme -> DarkColors
-        else -> LightColors
-    }
+    val scheme = if (darkTheme) DarkColors else LightColors
     val semantic = if (darkTheme) {
         SqldpassSemanticColors(
             passBg = PassDarkBg,
