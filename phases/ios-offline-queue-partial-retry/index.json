@@ -1,0 +1,11 @@
+{
+  "name": "ios-offline-queue-partial-retry",
+  "description": "iOS SolveSyncManager 의 'break on first error' 동작을 partial retry 로 변경. 한 row 실패해도 나머지 row 시도. 실패 row 카운트를 ObservableObject 로 노출해 UI 가 표시 가능.",
+  "status": "pending",
+  "steps": [
+    {
+      "id": "step1",
+      "description": "SolveSyncManager partial retry + 실패 row 카운트 노출"
+    }
+  ]
+}
