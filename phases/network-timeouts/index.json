@@ -1,0 +1,15 @@
+{
+  "name": "network-timeouts",
+  "description": "iOS URLSession + Android OkHttp 의 명시 timeout 설정. 기본값(60s+) 의존을 15s connect / 30s read / 30s write 로 명시.",
+  "status": "pending",
+  "steps": [
+    {
+      "id": "step1",
+      "description": "iOS APIClient URLSessionConfiguration timeout"
+    },
+    {
+      "id": "step2",
+      "description": "Android SqldpassApplication okHttp + refreshOkHttp builder timeout"
+    }
+  ]
+}

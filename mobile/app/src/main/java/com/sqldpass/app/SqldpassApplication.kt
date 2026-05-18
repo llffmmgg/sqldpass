@@ -21,6 +21,7 @@ import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
+import java.util.concurrent.TimeUnit
 
 class SqldpassApplication : Application() {
     val tokenStore: TokenStore by lazy { TokenStore(this) }
@@ -55,8 +56,15 @@ class SqldpassApplication : Application() {
 
     // 재발급 호출 전용. Authenticator 미부착 — 부착하면 refresh 자체의 401 응답이
     // 다시 TokenAuthenticator 를 호출해 재귀 루프가 발생함.
+    //
+    // 명시 timeout: OS sleep 이후 좀비 socket 상에서 hang 되는 케이스 차단.
+    // callTimeout 은 추가하지 않음 — 본 클라이언트는 refresh 자체라 retry 가 없어
+    // connect/read/write 만으로 충분.
     private val refreshOkHttp: OkHttpClient by lazy {
         OkHttpClient.Builder()
+            .connectTimeout(15, TimeUnit.SECONDS)
+            .readTimeout(30, TimeUnit.SECONDS)
+            .writeTimeout(30, TimeUnit.SECONDS)
             .addInterceptor(authHeaderInterceptor)
             .apply { debugLogging()?.let { addInterceptor(it) } }
             .build()
@@ -79,8 +87,13 @@ class SqldpassApplication : Application() {
         )
     }
 
+    // 명시 timeout: OS sleep 이후 좀비 socket hang 차단. callTimeout 은 일부러 미설정 —
+    // TokenAuthenticator 의 401 재발급 후 retry 가 callTimeout 안에 끊겨버리는 회귀를 피함.
     private val okHttp: OkHttpClient by lazy {
         OkHttpClient.Builder()
+            .connectTimeout(15, TimeUnit.SECONDS)
+            .readTimeout(30, TimeUnit.SECONDS)
+            .writeTimeout(30, TimeUnit.SECONDS)
             .addInterceptor(authHeaderInterceptor)
             .authenticator(tokenAuthenticator)
             .apply { debugLogging()?.let { addInterceptor(it) } }
