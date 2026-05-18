@@ -70,7 +70,7 @@ struct SoloSolveView: View {
                 isBookmarked: bookmarkedIds.contains(current.id),
                 onClose: { showExitConfirm = true },
                 onToggleBookmark: { toggleBookmark(current.id) },
-                onReport: { Task { await report(questionId: current.id) } }
+                onReport: { report(questionId: current.id) }
             )
 
             ScrollView {
@@ -170,14 +170,12 @@ struct SoloSolveView: View {
         }
     }
 
-    private func report(questionId: Int64) async {
+    private func report(questionId: Int64) {
         guard !reportSubmitting else { return }
         reportSubmitting = true
-        do {
-            // FeedbackService 가 별 phase 에 있을 수 있어서 본 step 은 단순 placeholder.
-            // 실제 신고 흐름은 별 phase 에서 작업.
-            _ = questionId
-        }
+        // FeedbackService 가 별 phase 에 있을 수 있어서 본 step 은 단순 placeholder.
+        // 실제 신고 흐름은 별 phase 에서 작업.
+        _ = questionId
         reportSubmitting = false
     }
 }
@@ -281,16 +279,16 @@ private struct SessionCompleteCard: View {
     }
     private var rateColor: Color {
         switch rate {
-        case 90...: .semanticSuccess
-        case 70..<90: .semanticWarning
-        default: .semanticDanger
+        case 90...: return .semanticSuccess
+        case 70..<90: return .semanticWarning
+        default: return .semanticDanger
         }
     }
     private var message: String {
         switch rate {
-        case 90...: "완벽해요! 같은 과목을 더 풀어볼까요?"
-        case 70..<90: "잘하고 있어요. 한 세트 더 풀면 손에 더 익을 거예요."
-        default: "괜찮아요. 약한 문제부터 다시 한 번 풀어보세요."
+        case 90...: return "완벽해요! 같은 과목을 더 풀어볼까요?"
+        case 70..<90: return "잘하고 있어요. 한 세트 더 풀면 손에 더 익을 거예요."
+        default: return "괜찮아요. 약한 문제부터 다시 한 번 풀어보세요."
         }
     }
 

@@ -40,10 +40,10 @@ final class SoloSolveViewModel {
     var hasAnswer: Bool {
         guard let q = current else { return false }
         let type = q.questionType.uppercased()
-        return if type.contains("MCQ") || type.contains("MULTIPLE") {
-            selectedOption != nil
+        if type.contains("MCQ") || type.contains("MULTIPLE") {
+            return selectedOption != nil
         } else {
-            !answerText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            return !answerText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
         }
     }
 
@@ -217,7 +217,7 @@ final class SoloSolveViewModel {
         let normalize: (String) -> String = {
             $0.trimmingCharacters(in: .whitespacesAndNewlines)
               .lowercased()
-              .replacingOccurrences(of: #"\s+"#, with: " ", options: .regularExpression)
+              .replacingOccurrences(of: "\\s+", with: " ", options: .regularExpression)
         }
         let submitted = normalize(answerText)
         if submitted.isEmpty { return false }

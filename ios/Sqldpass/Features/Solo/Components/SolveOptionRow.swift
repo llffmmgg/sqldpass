@@ -116,67 +116,67 @@ struct SolveOptionRow: View {
 
     private var borderColor: Color {
         switch visual {
-        case .idle, .revealedOther: .appBorder
-        case .selectedIdle:         .brandPrimary
-        case .revealedCorrect:      .semanticSuccess
-        case .revealedSelectedWrong: .semanticDanger
+        case .idle, .revealedOther: return .appBorder
+        case .selectedIdle:         return .brandPrimary
+        case .revealedCorrect:      return .semanticSuccess
+        case .revealedSelectedWrong: return .semanticDanger
         }
     }
     private var borderWidth: CGFloat {
         switch visual {
-        case .selectedIdle, .revealedCorrect, .revealedSelectedWrong: 2
-        default: 1
+        case .selectedIdle, .revealedCorrect, .revealedSelectedWrong: return 2
+        default: return 1
         }
     }
     private var containerColor: Color {
         switch visual {
-        case .revealedCorrect:       Color.semanticSuccess.opacity(0.12)
-        case .revealedSelectedWrong: Color.semanticDanger.opacity(0.12)
-        case .selectedIdle:          Color.brandPrimary.opacity(0.10)
-        default:                     .appSurface
+        case .revealedCorrect:       return Color.semanticSuccess.opacity(0.12)
+        case .revealedSelectedWrong: return Color.semanticDanger.opacity(0.12)
+        case .selectedIdle:          return Color.brandPrimary.opacity(0.10)
+        default:                     return .appSurface
         }
     }
     private var barColor: Color {
         switch visual {
-        case .selectedIdle:          .brandPrimary
-        case .revealedCorrect:       .semanticSuccess
-        case .revealedSelectedWrong: .semanticDanger
-        default:                     .clear
+        case .selectedIdle:          return .brandPrimary
+        case .revealedCorrect:       return .semanticSuccess
+        case .revealedSelectedWrong: return .semanticDanger
+        default:                     return .clear
         }
     }
     private var barWidth: CGFloat {
         switch visual {
-        case .idle, .revealedOther: 4
-        default: 6
+        case .idle, .revealedOther: return 4
+        default: return 6
         }
     }
     private var circleBG: Color {
         switch visual {
-        case .selectedIdle:          .brandPrimary
-        case .revealedCorrect:       .semanticSuccess
-        case .revealedSelectedWrong: .semanticDanger
-        default:                     .appElevated
+        case .selectedIdle:          return .brandPrimary
+        case .revealedCorrect:       return .semanticSuccess
+        case .revealedSelectedWrong: return .semanticDanger
+        default:                     return .appElevated
         }
     }
     private var circleFG: Color {
         switch visual {
-        case .selectedIdle, .revealedCorrect, .revealedSelectedWrong: .white
-        default: .appTextMuted
+        case .selectedIdle, .revealedCorrect, .revealedSelectedWrong: return .white
+        default: return .appTextMuted
         }
     }
     private var trailingIcon: String {
         switch visual {
-        case .revealedCorrect, .selectedIdle: "checkmark.circle.fill"
-        case .revealedSelectedWrong:          "xmark.circle.fill"
-        default:                              "circle"
+        case .revealedCorrect, .selectedIdle: return "checkmark.circle.fill"
+        case .revealedSelectedWrong:          return "xmark.circle.fill"
+        default:                              return "circle"
         }
     }
     private var iconTint: Color {
         switch visual {
-        case .selectedIdle:          .brandPrimary
-        case .revealedCorrect:       .semanticSuccess
-        case .revealedSelectedWrong: .semanticDanger
-        default:                     .appTextSubtle
+        case .selectedIdle:          return .brandPrimary
+        case .revealedCorrect:       return .semanticSuccess
+        case .revealedSelectedWrong: return .semanticDanger
+        default:                     return .appTextSubtle
         }
     }
 }

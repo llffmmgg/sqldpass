@@ -40,7 +40,8 @@ enum SolveService {
             self.clientSubmissionId = clientSubmissionId
         }
 
-        struct Answer: Encodable {
+        /// Codable — SolveSyncManager 가 큐 row 의 answersJSON 을 디코드해 재전송하므로 Decodable 도 필요.
+        struct Answer: Codable {
             let questionId: Int64
             let selectedOption: Int?
             let answerText: String?
