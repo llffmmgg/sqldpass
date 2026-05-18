@@ -55,7 +55,7 @@
       "status": "completed",
       "started_at": "2026-05-18T14:34:29+0900",
       "summary": "ios/Sqldpass/Sqldpass.storekit 신규 — sqldpass_premium 구독 그룹 + 4개 상품(iap_three_day P3D ₩3900 / iap_focus P1M ₩2900 / iap_one_month P1M ₩9900 / iap_unlimited P6M ₩29900) ko_KR 로컬라이제이션 포함. xcodegen sources path가 Sqldpass라 자동 포함. Debug iOS 시뮬레이터 BUILD SUCCEEDED + install/launch 후 SessionGate 로그인 화면 스크린샷 캡처. Xcode scheme StoreKit Configuration 연결은 UI 작업으로 별도 안내.",
-      "completed_at": "2026-05-18T14:36:30+0900"
+      "completed_at": "2026-05-18T14:36:46+0900"
     }
   ],
   "created_at": "2026-05-18T14:00:00+0900"
