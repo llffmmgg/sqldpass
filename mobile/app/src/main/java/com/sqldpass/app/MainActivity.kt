@@ -299,12 +299,17 @@ private fun SqldpassApp(
                     item(
                         selected = selected,
                         onClick = {
-                            navController.navigate(tab.route.route) {
-                                popUpTo(navController.graph.findStartDestination().id) {
-                                    saveState = true
+                            if (selected) {
+                                // 같은 탭 재탭 — 해당 탭의 루트로 popBackStack (Play 표준 UX)
+                                navController.popBackStack(tab.route.route, inclusive = false)
+                            } else {
+                                navController.navigate(tab.route.route) {
+                                    popUpTo(navController.graph.findStartDestination().id) {
+                                        saveState = true
+                                    }
+                                    launchSingleTop = true
+                                    restoreState = true
                                 }
-                                launchSingleTop = true
-                                restoreState = true
                             }
                         },
                         icon = { Icon(tab.icon, contentDescription = tab.label) },

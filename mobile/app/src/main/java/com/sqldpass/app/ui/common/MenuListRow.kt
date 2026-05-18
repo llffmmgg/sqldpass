@@ -32,6 +32,7 @@ fun MenuListRow(
     trailing: String? = null,
     modifier: Modifier = Modifier,
 ) {
+    val debounced = rememberDebouncedClick(windowMillis = 400, onClick = onClick)
     Card(
         shape = RoundedCornerShape(14.dp),
         colors = CardDefaults.cardColors(
@@ -39,7 +40,7 @@ fun MenuListRow(
             contentColor = MaterialTheme.colorScheme.onSurface,
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
-        onClick = onClick,
+        onClick = debounced,
         modifier = modifier,
     ) {
         Row(

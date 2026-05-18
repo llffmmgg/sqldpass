@@ -83,9 +83,10 @@ fun CtaCard(
                     )
                 }
             }
+            val debounced = rememberDebouncedClick(onClick = onClick)
             Button(
                 shape = RoundedCornerShape(12.dp),
-                onClick = onClick,
+                onClick = debounced,
                 enabled = !locked,
                 modifier = Modifier
                     .fillMaxWidth()

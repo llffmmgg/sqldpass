@@ -178,7 +178,7 @@ private fun ActiveSubscriptionCard(sub: SubscriptionResponse) {
                 fontWeight = FontWeight.Bold,
             )
             if (sub.active) {
-                sub.expiresAt?.let {
+                com.sqldpass.app.text.formatKstDateTime(sub.expiresAt)?.let {
                     Text("만료: $it", style = MaterialTheme.typography.bodyMedium)
                 }
                 Text(

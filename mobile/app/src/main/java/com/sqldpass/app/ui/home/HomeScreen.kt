@@ -23,6 +23,8 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
@@ -128,9 +130,11 @@ fun HomeAccountMenu(
     onLogout: () -> Unit,
 ) {
     var menuOpen by remember { mutableStateOf(false) }
+    val iconColors = IconButtonDefaults.iconButtonColors(contentColor = LocalContentColor.current)
     if (nickname == null) {
         IconButton(
             onClick = onLogin,
+            colors = iconColors,
             modifier = Modifier.sizeIn(minWidth = 48.dp, minHeight = 48.dp),
         ) {
             Icon(Icons.AutoMirrored.Outlined.Login, contentDescription = "Google 로그인")
@@ -138,6 +142,7 @@ fun HomeAccountMenu(
     } else {
         IconButton(
             onClick = { menuOpen = true },
+            colors = iconColors,
             modifier = Modifier.sizeIn(minWidth = 48.dp, minHeight = 48.dp),
         ) {
             Icon(Icons.Outlined.AccountCircle, contentDescription = "계정 메뉴")
