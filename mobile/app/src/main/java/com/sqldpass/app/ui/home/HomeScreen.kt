@@ -37,7 +37,7 @@ import com.sqldpass.app.ui.common.AppCardAccent
 import com.sqldpass.app.ui.common.AppCardSurface
 import com.sqldpass.app.ui.common.AppDropdown
 import com.sqldpass.app.ui.common.AppDropdownItem
-import com.sqldpass.app.ui.common.HeroHeader
+import com.sqldpass.app.ui.common.AppHero
 import com.sqldpass.app.ui.theme.LocalSqldpassPalette
 import com.sqldpass.app.ui.theme.SqldSpacing
 import java.time.LocalDate
@@ -46,14 +46,14 @@ import java.time.ZoneId
 /**
  * 홈 탭 — 오늘 상태 + 다음 행동 추천.
  *
- * 위→아래:
- *  1) 인사말 헤더 (HeroHeader)
+ * iOS HomeView (`ios/Sqldpass/Features/Home/HomeView.swift`) 와 정보 위계 1:1 미러:
+ *  1) AppHero (eyebrow="문어CBT", title="{닉네임}님, 오늘도 한 회차 풀어볼까요?",
+ *              subtitle = solvedToday 분기)
  *  2) 스트릭 카드 — 위험 톤 분기(오늘 미풀이 + lastSolvedDate ≤ 어제)
  *  3) 자격증 6종 수평 캐러셀 → 카드 탭 시 CertInfoSheet 모달
+ *  4) 상태 메시지(있을 때) — iOS errorBanner 동등 자리
  *
  * 단일 진실 원천: docs/MOBILE_UX_SPEC.md § 2.1.
- * 이전 phase 에서 있던 "오늘 바로 풀기 CTA"·"PASS+ 모의고사" 카드는 제거됨.
- * 풀이 정문은 실전 문제 탭, PASS+ 진입은 내정보 메뉴 또는 자격증 시트 안 CTA.
  * 이어풀기 카드(`ContinueLastCard`)는 별 phase 에서 lastCert/lastMode 통합 후 추가 예정.
  */
 @Composable
@@ -65,13 +65,25 @@ fun HomeScreen(
     heroActions: @Composable () -> Unit = {},
 ) {
     var sheetCert by remember { mutableStateOf<CertInfo?>(null) }
+    val solvedToday = streak?.let { isSolvedToday(it) } == true
+    val displayName = nickname ?: "학습자"
+    val heroTitle = if (nickname != null) {
+        "${displayName}님, 오늘도 한 회차 풀어볼까요?"
+    } else {
+        "오늘도 한 회차 풀어볼까요?"
+    }
+    val heroSubtitle = when {
+        nickname == null -> "Google 로 로그인하면 학습 기록이 쌓여요."
+        solvedToday -> "오늘 학습 완료. 내일도 같은 시간에 이어가면 좋아요."
+        else -> "짧게라도 한 세트를 풀고 연속 학습을 이어가세요."
+    }
 
     Column(modifier = Modifier.fillMaxSize()) {
-        HeroHeader(
-            title = "문어CBT",
-            subtitle = nickname?.let { "$it 님, 오늘도 한 회차 풀어볼까요?" }
-                ?: "Google 로 로그인하면 학습 기록이 쌓여요.",
-            actions = heroActions,
+        AppHero(
+            eyebrow = "문어CBT",
+            title = heroTitle,
+            subtitle = heroSubtitle,
+            actions = { heroActions() },
         )
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
@@ -103,6 +115,15 @@ fun HomeScreen(
             },
         )
     }
+}
+
+/** iOS HomeView 의 `viewModel.streak?.solvedToday` 동등 — KST 기준 lastSolvedDate == today. */
+private fun isSolvedToday(streak: StreakResponse): Boolean {
+    val today = LocalDate.now(ZoneId.of("Asia/Seoul"))
+    val lastSolved = streak.lastSolvedDate?.let {
+        runCatching { LocalDate.parse(it) }.getOrNull()
+    } ?: return false
+    return lastSolved == today
 }
 
 /**
