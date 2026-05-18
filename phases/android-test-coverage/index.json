@@ -1,0 +1,19 @@
+{
+  "name": "android-test-coverage",
+  "description": "Android test source set 신설 + 핵심 비즈니스 로직 단위 테스트. 우선순위: TokenAuthenticator / BillingManager / AppRepository.drainPendingSolves.",
+  "status": "pending",
+  "steps": [
+    {
+      "id": "step1",
+      "description": "test source set 골격 + TokenAuthenticator 단위 테스트 (single-flight refresh, loop guard, session-loss)"
+    },
+    {
+      "id": "step2",
+      "description": "BillingManager 단위 테스트 (PURCHASED/PENDING/Canceled/Failed 분기, ack 호출 검증)"
+    },
+    {
+      "id": "step3",
+      "description": "AppRepository.drainPendingSolves 단위 테스트 (FIFO 순서, 일부 실패 continue, 로그아웃 시 0 return)"
+    }
+  ]
+}

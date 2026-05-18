@@ -2,6 +2,7 @@ package com.sqldpass.app.billing
 
 import android.app.Activity
 import android.content.Context
+import androidx.annotation.VisibleForTesting
 import com.android.billingclient.api.AcknowledgePurchaseParams
 import com.android.billingclient.api.BillingClient
 import com.android.billingclient.api.BillingClientStateListener
@@ -56,46 +57,59 @@ sealed class BillingEvent {
     data class Failed(val message: String) : BillingEvent()
 }
 
-class BillingManager(
-    context: Context,
+class BillingManager internal constructor(
     private val api: SqldpassApi,
+    private val scope: CoroutineScope,
+    billingClientFactory: (BillingManager) -> BillingClient,
 ) {
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private var productDetails: Map<String, ProductDetails> = emptyMap()
 
     private val _events = MutableSharedFlow<BillingEvent>(extraBufferCapacity = 8)
     val events: SharedFlow<BillingEvent> = _events.asSharedFlow()
 
-    private val billingClient = BillingClient.newBuilder(context)
-        .enablePendingPurchases(
-            PendingPurchasesParams.newBuilder()
-                .enableOneTimeProducts()
-                .build(),
-        )
-        .setListener { result, purchases ->
-            when (result.responseCode) {
-                BillingClient.BillingResponseCode.OK -> {
-                    purchases.orEmpty().forEach { handlePurchase(it) }
+    private val billingClient: BillingClient = billingClientFactory(this)
+
+    constructor(context: Context, api: SqldpassApi) : this(
+        api = api,
+        scope = CoroutineScope(SupervisorJob() + Dispatchers.IO),
+        billingClientFactory = { manager ->
+            BillingClient.newBuilder(context)
+                .enablePendingPurchases(
+                    PendingPurchasesParams.newBuilder()
+                        .enableOneTimeProducts()
+                        .build(),
+                )
+                .setListener { result, purchases ->
+                    manager.onPurchasesUpdated(result, purchases)
                 }
-                BillingClient.BillingResponseCode.USER_CANCELED -> {
-                    _events.tryEmit(BillingEvent.Canceled)
-                }
-                BillingClient.BillingResponseCode.ITEM_ALREADY_OWNED -> {
-                    // 사용자가 이미 보유한 상품을 다시 구매 시도 — entitlement 만 갱신.
-                    _events.tryEmit(
-                        BillingEvent.Failed("이미 보유 중인 상품입니다. 구독 상태를 갱신했어요."),
-                    )
-                    scope.launch { recoverPendingPurchases() }
-                }
-                else -> {
-                    val detail = result.debugMessage
-                        .takeIf { it.isNotBlank() }
-                        ?: "code ${result.responseCode}"
-                    _events.tryEmit(BillingEvent.Failed("결제에 실패했어요 ($detail)."))
-                }
+                .build()
+        },
+    )
+
+    @VisibleForTesting
+    internal fun onPurchasesUpdated(result: BillingResult, purchases: List<Purchase>?) {
+        when (result.responseCode) {
+            BillingClient.BillingResponseCode.OK -> {
+                purchases.orEmpty().forEach { handlePurchase(it) }
+            }
+            BillingClient.BillingResponseCode.USER_CANCELED -> {
+                _events.tryEmit(BillingEvent.Canceled)
+            }
+            BillingClient.BillingResponseCode.ITEM_ALREADY_OWNED -> {
+                // 사용자가 이미 보유한 상품을 다시 구매 시도 — entitlement 만 갱신.
+                _events.tryEmit(
+                    BillingEvent.Failed("이미 보유 중인 상품입니다. 구독 상태를 갱신했어요."),
+                )
+                scope.launch { recoverPendingPurchases() }
+            }
+            else -> {
+                val detail = result.debugMessage
+                    .takeIf { it.isNotBlank() }
+                    ?: "code ${result.responseCode}"
+                _events.tryEmit(BillingEvent.Failed("결제에 실패했어요 ($detail)."))
             }
         }
-        .build()
+    }
 
     fun connect() {
         if (billingClient.isReady) return
@@ -164,7 +178,8 @@ class BillingManager(
             )
         }
 
-    private fun handlePurchase(purchase: Purchase) {
+    @VisibleForTesting
+    internal fun handlePurchase(purchase: Purchase) {
         when (purchase.purchaseState) {
             Purchase.PurchaseState.PURCHASED -> {
                 _events.tryEmit(BillingEvent.Processing)
@@ -182,7 +197,8 @@ class BillingManager(
      * 백엔드 검증 → 성공 시 ack. 검증 실패 시 ack 하지 않아 다음 [recoverPendingPurchases] 에서 재시도.
      * Google Play 정책: 구매 후 3일 내 ack 없으면 자동 환불.
      */
-    private suspend fun verifyAndAcknowledge(purchase: Purchase) {
+    @VisibleForTesting
+    internal suspend fun verifyAndAcknowledge(purchase: Purchase) {
         val productId = purchase.products.firstOrNull()
         if (productId == null) {
             _events.tryEmit(BillingEvent.Failed("결제 정보가 비어 있어요."))
