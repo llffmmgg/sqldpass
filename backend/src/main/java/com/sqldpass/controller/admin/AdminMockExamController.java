@@ -80,31 +80,37 @@ public class AdminMockExamController {
     @PostMapping("/mini")
     @Operation(
             summary = "미니 모의고사 일괄 생성",
-            description = "현재 풀(includedInMiniAt IS NULL 인 검수 완료 문제)에서 기출:AI:프리미엄 = 1:1:1, 과목 분포 보존하며 가능한 회차를 모두 생성한다. visibility=PREMIUM + kind=MINI 로 발급."
+            description = "현재 풀(includedInMiniAt IS NULL + visibility != DRAFT + expertVerified 인 검수 완료 문제)에서 "
+                    + "기출:AI:프리미엄 = 1:1:1, 과목 분포 보존하며 가능한 회차를 모두 생성한다. "
+                    + "difficulty(1~4) 지정 시 해당 난이도 문제만 풀에 포함. visibility=PREMIUM + kind=MINI 로 발급."
     )
     @ResponseStatus(HttpStatus.CREATED)
     public MiniMockExamGenerationResponse createMini(@RequestBody CreateMiniMockExamRequest body) {
         if (body == null || body.examType() == null) {
             throw new SqldpassException(ErrorCode.INVALID_INPUT, "examType 은 필수입니다.");
         }
-        return MiniMockExamGenerationResponse.from(mockExamService.createMiniBatch(body.examType()));
+        return MiniMockExamGenerationResponse.from(
+                mockExamService.createMiniBatch(body.examType(), body.difficulty()));
     }
 
-    public record CreateMiniMockExamRequest(ExamType examType) {}
+    /** difficulty=null 이면 전체 난이도, 1~4 단일값 지정 시 해당 난이도만. */
+    public record CreateMiniMockExamRequest(ExamType examType, Integer difficulty) {}
 
     public record MiniMockExamGenerationResponse(
             ExamType examType,
             int createdCount,
             List<Long> createdMockExamIds,
             /** PAST_EXAM / AI_PUBLISHED / AI_PREMIUM 별 잔여 풀 수 (해당 examType 전체 과목 합) */
-            Map<String, Long> remainingPoolBySource
+            Map<String, Long> remainingPoolBySource,
+            /** 풀 필터에 실제 적용된 난이도. null 이면 전체 난이도 사용. */
+            Integer appliedDifficulty
     ) {
         public static MiniMockExamGenerationResponse from(MiniMockExamCreator.GenerationResult r) {
             LinkedHashMap<String, Long> remaining = new LinkedHashMap<>();
             r.remainingBySource().forEach((k, v) -> remaining.put(k.name(), v));
             return new MiniMockExamGenerationResponse(
                     r.examType(), r.createdCount(),
-                    r.createdMockExamIds(), remaining);
+                    r.createdMockExamIds(), remaining, r.appliedDifficulty());
         }
     }
 

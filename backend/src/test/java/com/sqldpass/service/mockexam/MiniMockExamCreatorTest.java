@@ -28,7 +28,6 @@ import com.sqldpass.service.common.SqldpassException;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.BDDMockito.given;
@@ -78,7 +77,21 @@ class MiniMockExamCreatorTest {
     @Test
     @DisplayName("createAllFromPool: examType null 이면 INVALID_INPUT")
     void createAllFromPool_nullExamType() {
-        assertThatThrownBy(() -> creator.createAllFromPool(null))
+        assertThatThrownBy(() -> creator.createAllFromPool(null, null))
+                .isInstanceOf(SqldpassException.class)
+                .extracting(ex -> ((SqldpassException) ex).getErrorCode())
+                .isEqualTo(ErrorCode.INVALID_INPUT);
+    }
+
+    @Test
+    @DisplayName("createAllFromPool: difficulty 가 1~4 범위 밖이면 INVALID_INPUT")
+    void createAllFromPool_invalidDifficulty() {
+        assertThatThrownBy(() -> creator.createAllFromPool(ExamType.SQLD, 0))
+                .isInstanceOf(SqldpassException.class)
+                .extracting(ex -> ((SqldpassException) ex).getErrorCode())
+                .isEqualTo(ErrorCode.INVALID_INPUT);
+
+        assertThatThrownBy(() -> creator.createAllFromPool(ExamType.SQLD, 5))
                 .isInstanceOf(SqldpassException.class)
                 .extracting(ex -> ((SqldpassException) ex).getErrorCode())
                 .isEqualTo(ErrorCode.INVALID_INPUT);
@@ -87,7 +100,6 @@ class MiniMockExamCreatorTest {
     @Test
     @DisplayName("createAllFromPool: 풀이 전혀 없으면 INSUFFICIENT_QUESTIONS")
     void createAllFromPool_emptyPool() {
-        // 컴활 2급: 가장 단순 — root + leaf 2개
         SubjectEntity root = newSubject(100L, null, "컴퓨터활용능력 2급 필기");
         SubjectEntity leaf1 = newSubject(101L, root, "컴퓨터 일반");
         SubjectEntity leaf2 = newSubject(102L, root, "스프레드시트 일반");
@@ -99,11 +111,10 @@ class MiniMockExamCreatorTest {
         given(subjectRepository.findByNameAndParentId("스프레드시트 일반", 100L))
                 .willReturn(Optional.of(leaf2));
 
-        // 모든 (leaf, source) 풀이 비어 있음
-        given(questionRepository.findMiniPoolBySubjectAndSource(any(), any(), any()))
+        given(questionRepository.findMiniPoolBySubjectAndSource(any(), any(), any(), any()))
                 .willReturn(List.of());
 
-        assertThatThrownBy(() -> creator.createAllFromPool(ExamType.COMPUTER_LITERACY_2))
+        assertThatThrownBy(() -> creator.createAllFromPool(ExamType.COMPUTER_LITERACY_2, null))
                 .isInstanceOf(SqldpassException.class)
                 .extracting(ex -> ((SqldpassException) ex).getErrorCode())
                 .isEqualTo(ErrorCode.MOCK_EXAM_INSUFFICIENT_QUESTIONS);
@@ -124,17 +135,17 @@ class MiniMockExamCreatorTest {
                 .willReturn(Optional.of(leaf2));
 
         // 미니 1회: 각 leaf 8문, source 분배 = 3,3,2 → 풀 각 8문이면 가능 회차 = min(8/3, 8/3, 8/2) = 2
-        given(questionRepository.findMiniPoolBySubjectAndSource(eq(101L), eq(MockExamKind.PAST_EXAM), isNull()))
+        given(questionRepository.findMiniPoolBySubjectAndSource(eq(101L), eq(MockExamKind.PAST_EXAM), isNull(), isNull()))
                 .willReturn(stubPool(8, 1000L));
-        given(questionRepository.findMiniPoolBySubjectAndSource(eq(101L), eq(MockExamKind.AI), eq(MockExamVisibility.PUBLISHED)))
+        given(questionRepository.findMiniPoolBySubjectAndSource(eq(101L), eq(MockExamKind.AI), eq(MockExamVisibility.PUBLISHED), isNull()))
                 .willReturn(stubPool(8, 2000L));
-        given(questionRepository.findMiniPoolBySubjectAndSource(eq(101L), eq(MockExamKind.AI), eq(MockExamVisibility.PREMIUM)))
+        given(questionRepository.findMiniPoolBySubjectAndSource(eq(101L), eq(MockExamKind.AI), eq(MockExamVisibility.PREMIUM), isNull()))
                 .willReturn(stubPool(8, 3000L));
-        given(questionRepository.findMiniPoolBySubjectAndSource(eq(102L), eq(MockExamKind.PAST_EXAM), isNull()))
+        given(questionRepository.findMiniPoolBySubjectAndSource(eq(102L), eq(MockExamKind.PAST_EXAM), isNull(), isNull()))
                 .willReturn(stubPool(8, 4000L));
-        given(questionRepository.findMiniPoolBySubjectAndSource(eq(102L), eq(MockExamKind.AI), eq(MockExamVisibility.PUBLISHED)))
+        given(questionRepository.findMiniPoolBySubjectAndSource(eq(102L), eq(MockExamKind.AI), eq(MockExamVisibility.PUBLISHED), isNull()))
                 .willReturn(stubPool(8, 5000L));
-        given(questionRepository.findMiniPoolBySubjectAndSource(eq(102L), eq(MockExamKind.AI), eq(MockExamVisibility.PREMIUM)))
+        given(questionRepository.findMiniPoolBySubjectAndSource(eq(102L), eq(MockExamKind.AI), eq(MockExamVisibility.PREMIUM), isNull()))
                 .willReturn(stubPool(8, 6000L));
 
         given(mockExamRepository.findMaxSequenceByExamType(ExamType.COMPUTER_LITERACY_2))
@@ -152,11 +163,12 @@ class MiniMockExamCreatorTest {
                 .willAnswer(inv -> inv.getArgument(0));
 
         MiniMockExamCreator.GenerationResult result =
-                creator.createAllFromPool(ExamType.COMPUTER_LITERACY_2);
+                creator.createAllFromPool(ExamType.COMPUTER_LITERACY_2, null);
 
         assertThat(result.createdCount()).isEqualTo(2);
         assertThat(result.createdMockExamIds()).hasSize(2);
         assertThat(result.examType()).isEqualTo(ExamType.COMPUTER_LITERACY_2);
+        assertThat(result.appliedDifficulty()).isNull();
 
         // 잔여 풀: 각 leaf 당 PAST_EXAM 8-2*3=2, AI_PUB 8-2*3=2, AI_PREM 8-2*2=4
         // 합 (leaf 2개): PAST_EXAM=4, AI_PUB=4, AI_PREM=8
@@ -190,18 +202,17 @@ class MiniMockExamCreatorTest {
                 .willReturn(Optional.of(leaf2));
 
         // leaf1 의 AI_PUBLISHED 풀만 3문 → 미니 1회당 3문 필요 → 1회만 가능
-        // 다른 슬롯은 충분
-        given(questionRepository.findMiniPoolBySubjectAndSource(eq(101L), eq(MockExamKind.PAST_EXAM), isNull()))
+        given(questionRepository.findMiniPoolBySubjectAndSource(eq(101L), eq(MockExamKind.PAST_EXAM), isNull(), isNull()))
                 .willReturn(stubPool(20, 1000L));
-        given(questionRepository.findMiniPoolBySubjectAndSource(eq(101L), eq(MockExamKind.AI), eq(MockExamVisibility.PUBLISHED)))
+        given(questionRepository.findMiniPoolBySubjectAndSource(eq(101L), eq(MockExamKind.AI), eq(MockExamVisibility.PUBLISHED), isNull()))
                 .willReturn(stubPool(3, 2000L)); // 병목!
-        given(questionRepository.findMiniPoolBySubjectAndSource(eq(101L), eq(MockExamKind.AI), eq(MockExamVisibility.PREMIUM)))
+        given(questionRepository.findMiniPoolBySubjectAndSource(eq(101L), eq(MockExamKind.AI), eq(MockExamVisibility.PREMIUM), isNull()))
                 .willReturn(stubPool(20, 3000L));
-        given(questionRepository.findMiniPoolBySubjectAndSource(eq(102L), eq(MockExamKind.PAST_EXAM), isNull()))
+        given(questionRepository.findMiniPoolBySubjectAndSource(eq(102L), eq(MockExamKind.PAST_EXAM), isNull(), isNull()))
                 .willReturn(stubPool(20, 4000L));
-        given(questionRepository.findMiniPoolBySubjectAndSource(eq(102L), eq(MockExamKind.AI), eq(MockExamVisibility.PUBLISHED)))
+        given(questionRepository.findMiniPoolBySubjectAndSource(eq(102L), eq(MockExamKind.AI), eq(MockExamVisibility.PUBLISHED), isNull()))
                 .willReturn(stubPool(20, 5000L));
-        given(questionRepository.findMiniPoolBySubjectAndSource(eq(102L), eq(MockExamKind.AI), eq(MockExamVisibility.PREMIUM)))
+        given(questionRepository.findMiniPoolBySubjectAndSource(eq(102L), eq(MockExamKind.AI), eq(MockExamVisibility.PREMIUM), isNull()))
                 .willReturn(stubPool(20, 6000L));
 
         given(mockExamRepository.findMaxSequenceByExamType(ExamType.COMPUTER_LITERACY_2))
@@ -218,9 +229,51 @@ class MiniMockExamCreatorTest {
                 .willAnswer(inv -> inv.getArgument(0));
 
         MiniMockExamCreator.GenerationResult result =
-                creator.createAllFromPool(ExamType.COMPUTER_LITERACY_2);
+                creator.createAllFromPool(ExamType.COMPUTER_LITERACY_2, null);
 
         assertThat(result.createdCount()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("createAllFromPool: difficulty=2 호출 시 풀 쿼리에 정확히 전파, 결과에도 표시됨")
+    void createAllFromPool_difficultyPassthrough() {
+        SubjectEntity root = newSubject(100L, null, "컴퓨터활용능력 2급 필기");
+        SubjectEntity leaf1 = newSubject(101L, root, "컴퓨터 일반");
+        SubjectEntity leaf2 = newSubject(102L, root, "스프레드시트 일반");
+
+        given(subjectRepository.findByNameAndParentIsNull("컴퓨터활용능력 2급 필기"))
+                .willReturn(Optional.of(root));
+        given(subjectRepository.findByNameAndParentId("컴퓨터 일반", 100L))
+                .willReturn(Optional.of(leaf1));
+        given(subjectRepository.findByNameAndParentId("스프레드시트 일반", 100L))
+                .willReturn(Optional.of(leaf2));
+
+        // difficulty=2 인자가 정확히 전파되는지 검증 — 다른 difficulty 로는 풀이 없는 셈
+        given(questionRepository.findMiniPoolBySubjectAndSource(any(), any(), any(), eq(2)))
+                .willReturn(stubPool(8, 1000L));
+
+        given(mockExamRepository.findMaxSequenceByExamType(ExamType.COMPUTER_LITERACY_2))
+                .willReturn(Optional.of(0));
+        given(mockExamRepository.countByExamTypeAndKind(ExamType.COMPUTER_LITERACY_2, MockExamKind.MINI))
+                .willReturn(0L);
+        long[] c = {1L};
+        given(mockExamRepository.save(any(MockExamEntity.class))).willAnswer(inv -> {
+            MockExamEntity e = inv.getArgument(0);
+            setId(e, c[0]++);
+            return e;
+        });
+        given(questionRepository.save(any(QuestionEntity.class)))
+                .willAnswer(inv -> inv.getArgument(0));
+
+        MiniMockExamCreator.GenerationResult result =
+                creator.createAllFromPool(ExamType.COMPUTER_LITERACY_2, 2);
+
+        assertThat(result.appliedDifficulty()).isEqualTo(2);
+        assertThat(result.createdCount()).isGreaterThanOrEqualTo(1);
+
+        // findMiniPool 호출 시 difficulty=2 가 정확히 전달됐는지
+        then(questionRepository).should(org.mockito.Mockito.atLeastOnce())
+                .findMiniPoolBySubjectAndSource(any(), any(), any(), eq(2));
     }
 
     // ---- helpers ----

@@ -755,16 +755,24 @@ export interface MiniMockExamGenerationResponse {
   createdMockExamIds: number[];
   /** PAST_EXAM / AI_PUBLISHED / AI_PREMIUM → 잔여 풀 수 */
   remainingPoolBySource: Record<string, number>;
+  /** 풀 필터에 실제 적용된 난이도 (1~4). null 이면 전체 난이도. */
+  appliedDifficulty: number | null;
 }
 
 /**
  * 미니 모의고사 일괄 생성 — 현재 풀에서 비율 보존하며 만들 수 있는 모든 회차 발급.
+ * 풀 조건: visibility != DRAFT (사용자 노출된 회차만) + 전문가 검수 완료 + 미사용.
  * visibility=PREMIUM + kind=MINI 로 자동 설정되어 구독자 풀이 흐름에 합류한다.
+ *
+ * @param difficulty 1~4 단일 난이도 필터. null 이면 전체 난이도 사용.
  */
-export function createMiniMockExams(examType: CreateMockExamType) {
+export function createMiniMockExams(
+  examType: CreateMockExamType,
+  difficulty: number | null = null,
+) {
   return adminFetch<MiniMockExamGenerationResponse>("/mock-exams/mini", {
     method: "POST",
-    body: JSON.stringify({ examType }),
+    body: JSON.stringify({ examType, difficulty }),
   });
 }
 

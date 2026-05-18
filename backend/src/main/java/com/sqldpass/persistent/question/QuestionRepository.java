@@ -71,10 +71,16 @@ public interface QuestionRepository extends JpaRepository<QuestionEntity, Long> 
     /**
      * 미니 모의고사 풀 조회 — 해당 과목에서 미니로 아직 복제되지 않은(includedInMiniAt IS NULL)
      * 전문가 검수 완료 원본 문제만 반환.
-     * 출처 분류는 (kind, visibility) 페어로 호출자가 지정:
-     *  - 기출:           kind=PAST_EXAM, visibility=null
+     *
+     * <p>안전망: <strong>visibility=DRAFT 회차는 항상 제외</strong> — 사용자에게 단 한 번도
+     * 노출된 적 없는 모의고사의 문제는 미니 풀에 들어가지 못한다.
+     *
+     * <p>출처 분류는 (kind, visibility) 페어로 호출자가 지정:
+     *  - 기출:           kind=PAST_EXAM, visibility=null (PUBLISHED/PREMIUM 모두 허용, DRAFT 는 위 안전망으로 차단)
      *  - AI 무료 풀:     kind=AI,        visibility=PUBLISHED
      *  - AI 프리미엄 풀: kind=AI,        visibility=PREMIUM
+     *
+     * <p>난이도 단일값 필터(difficulty 1~4). null 이면 전체.
      */
     @Query("""
             SELECT q FROM QuestionEntity q
@@ -82,13 +88,16 @@ public interface QuestionRepository extends JpaRepository<QuestionEntity, Long> 
             WHERE q.subject.id = :subjectId
               AND q.includedInMiniAt IS NULL
               AND m.expertVerified = true
+              AND m.visibility <> com.sqldpass.persistent.mockexam.MockExamVisibility.DRAFT
               AND m.kind = :kind
               AND (:visibility IS NULL OR m.visibility = :visibility)
+              AND (:difficulty IS NULL OR q.difficulty = :difficulty)
             """)
     List<QuestionEntity> findMiniPoolBySubjectAndSource(
             @Param("subjectId") Long subjectId,
             @Param("kind") MockExamKind kind,
-            @Param("visibility") MockExamVisibility visibility);
+            @Param("visibility") MockExamVisibility visibility,
+            @Param("difficulty") Integer difficulty);
 
     /** 미니 풀 복제 일괄 마킹 — N+1 dirty checking 없이 단일 UPDATE */
     @Modifying

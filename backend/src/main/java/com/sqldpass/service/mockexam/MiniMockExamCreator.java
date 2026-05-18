@@ -79,23 +79,31 @@ public class MiniMockExamCreator {
         }
     }
 
-    /** 어드민 일괄 생성 결과 — 회차 ID 리스트 + 잔여 풀 통계. */
+    /** 어드민 일괄 생성 결과 — 회차 ID 리스트 + 잔여 풀 통계 + 적용된 난이도 필터. */
     public record GenerationResult(
             ExamType examType,
             List<Long> createdMockExamIds,
             int createdCount,
             /** 출처별 잔여 풀 (해당 examType 전체 과목 합). 다음 풀 보충 시 추가 회차 가능 여부 가늠. */
-            Map<Source, Long> remainingBySource
+            Map<Source, Long> remainingBySource,
+            /** 풀 필터에 적용된 난이도 (1~4). null 이면 전체 난이도 사용. */
+            Integer appliedDifficulty
     ) {}
 
     /**
      * 미니 모의고사 일괄 생성 — 비율 보존하며 만들 수 있는 모든 회차 생성.
      * 풀이 부족해 0회차가 만들어지면 INSUFFICIENT_QUESTIONS 던짐.
+     *
+     * @param difficulty 1~4 (EASY/NORMAL/HARD/VERY_HARD). null 이면 전체 난이도 사용.
      */
     @Transactional
-    public GenerationResult createAllFromPool(ExamType examType) {
+    public GenerationResult createAllFromPool(ExamType examType, Integer difficulty) {
         if (examType == null) {
             throw new SqldpassException(ErrorCode.INVALID_INPUT, "examType 은 필수입니다.");
+        }
+        if (difficulty != null && (difficulty < 1 || difficulty > 4)) {
+            throw new SqldpassException(ErrorCode.INVALID_INPUT,
+                    "difficulty 는 1~4 사이여야 합니다.");
         }
 
         LinkedHashMap<SubjectEntity, Integer> quotas = resolveSubjectQuotas(examType);
@@ -111,7 +119,7 @@ public class MiniMockExamCreator {
             for (Source src : Source.values()) {
                 List<QuestionEntity> pool = new ArrayList<>(
                         questionRepository.findMiniPoolBySubjectAndSource(
-                                subject.getId(), src.kind, src.visibility));
+                                subject.getId(), src.kind, src.visibility, difficulty));
                 Collections.shuffle(pool, random);
                 bySource.put(src, pool);
             }
@@ -133,14 +141,15 @@ public class MiniMockExamCreator {
         }
         if (possibleRounds == 0 || possibleRounds == Integer.MAX_VALUE) {
             throw new SqldpassException(ErrorCode.MOCK_EXAM_INSUFFICIENT_QUESTIONS,
-                    "현재 풀로는 미니 모의고사 1회도 만들 수 없습니다. (examType=" + examType + ")");
+                    "현재 풀로는 미니 모의고사 1회도 만들 수 없습니다. (examType=" + examType
+                            + ", difficulty=" + difficulty + ")");
         }
 
         int nextSeq = mockExamRepository.findMaxSequenceByExamType(examType).orElse(0) + 1;
         long miniCountSoFar = mockExamRepository.countByExamTypeAndKind(examType, MockExamKind.MINI);
 
-        log.info("미니 모의고사 일괄 생성 시작 — examType={}, possibleRounds={}, startSeq={}, baseMiniNumber={}",
-                examType, possibleRounds, nextSeq, miniCountSoFar + 1);
+        log.info("미니 모의고사 일괄 생성 시작 — examType={}, difficulty={}, possibleRounds={}, startSeq={}, baseMiniNumber={}",
+                examType, difficulty, possibleRounds, nextSeq, miniCountSoFar + 1);
 
         List<Long> createdIds = new ArrayList<>(possibleRounds);
         List<Long> originIdsToMark = new ArrayList<>();
@@ -192,10 +201,10 @@ public class MiniMockExamCreator {
             remaining.put(src, total);
         }
 
-        log.info("미니 모의고사 일괄 생성 완료 — examType={}, created={}, remainingPool={}",
-                examType, createdIds.size(), remaining);
+        log.info("미니 모의고사 일괄 생성 완료 — examType={}, difficulty={}, created={}, remainingPool={}",
+                examType, difficulty, createdIds.size(), remaining);
 
-        return new GenerationResult(examType, createdIds, createdIds.size(), remaining);
+        return new GenerationResult(examType, createdIds, createdIds.size(), remaining, difficulty);
     }
 
     /**
