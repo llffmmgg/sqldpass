@@ -77,6 +77,9 @@
 		EC0CA9D80465F6E1C35F437D /* StreakService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9304FB02C4CA965282101805 /* StreakService.swift */; };
 		F1D9AC1F5CA41C7B545C52AE /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA32763C4F867AC156D755AB /* APIClient.swift */; };
 		FA4DB95DC1B14D16ED6CEB47 /* SolveResultView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3723EDF6972EC89C1D38DE2 /* SolveResultView.swift */; };
+		A1B2C3D4E5F60718293A4B5C /* PaymentProduct.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A2B3C4D5E6F708192A3B4C5 /* PaymentProduct.swift */; };
+		B2C3D4E5F60718293A4B5C6D /* StoreKitService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B3C4D5E6F708192A3B4C5D6 /* StoreKitService.swift */; };
+		C3D4E5F60718293A4B5C6D7E /* PaymentService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C4D5E6F708192A3B4C5D6E7 /* PaymentService.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -150,6 +153,9 @@
 		FED8091B72FAA7C8EC304477 /* BookmarksViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BookmarksViewModel.swift; sourceTree = "<group>"; };
 		FF29A3CD13BA2DEDA06BF118 /* Subscription.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Subscription.swift; sourceTree = "<group>"; };
 		FFB7967904ADA9CDF33E7FEE /* MemberService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemberService.swift; sourceTree = "<group>"; };
+		1A2B3C4D5E6F708192A3B4C5 /* PaymentProduct.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaymentProduct.swift; sourceTree = "<group>"; };
+		2B3C4D5E6F708192A3B4C5D6 /* StoreKitService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreKitService.swift; sourceTree = "<group>"; };
+		3C4D5E6F708192A3B4C5D6E7 /* PaymentService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaymentService.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -231,8 +237,10 @@
 				62181C4207794F88C443019F /* BookmarkService.swift */,
 				027D0D01305F94B81E43294B /* ExamService.swift */,
 				FFB7967904ADA9CDF33E7FEE /* MemberService.swift */,
+				3C4D5E6F708192A3B4C5D6E7 /* PaymentService.swift */,
 				8DCC6E698912DFA8033CF012 /* QuestionService.swift */,
 				61EDA8D14E7F131955B10EBC /* SolveService.swift */,
+				2B3C4D5E6F708192A3B4C5D6 /* StoreKitService.swift */,
 				9304FB02C4CA965282101805 /* StreakService.swift */,
 				0120EE8AC3A7D11C640DED97 /* WrongAnswerService.swift */,
 			);
@@ -431,6 +439,7 @@
 				036B702C2E49606E4BC9E084 /* MockExam.swift */,
 				23F71B03B56978654574C9B1 /* MockExam+Display.swift */,
 				2EEA32F635DDE3B85BB77453 /* MockExamDetail.swift */,
+				1A2B3C4D5E6F708192A3B4C5 /* PaymentProduct.swift */,
 				33AF477F8D8432720B4E763D /* Question.swift */,
 				2DEDCA7D76CC8906CADDBFF1 /* Solve.swift */,
 				5EF21A9844C89CF0269FE47C /* SolveAnswerEntry.swift */,
@@ -544,6 +553,8 @@
 				B83DBB33E099A614BD0435C5 /* MockExamsViewModel.swift in Sources */,
 				AE293115B3A8BE3A0C482F6E /* NicknameEditView.swift in Sources */,
 				543825661FFE6E9A64052225 /* OMRAnswerGrid.swift in Sources */,
+				A1B2C3D4E5F60718293A4B5C /* PaymentProduct.swift in Sources */,
+				C3D4E5F60718293A4B5C6D7E /* PaymentService.swift in Sources */,
 				E748B6097E47AC676B7C11B8 /* ProfileView.swift in Sources */,
 				7C2437BB132E7CD20FEF946B /* ProfileViewModel.swift in Sources */,
 				66E45204EEC341E63C21D0B8 /* Question.swift in Sources */,
@@ -563,6 +574,7 @@
 				5FC1A9AF7BB7FE6BE05CE0F0 /* SolveViewModel.swift in Sources */,
 				9E59CA2463A520F6E6F9278C /* Spacing.swift in Sources */,
 				E72AE124E427E982B94A1F3D /* SqldpassApp.swift in Sources */,
+				B2C3D4E5F60718293A4B5C6D /* StoreKitService.swift in Sources */,
 				636DF982B299901FECAB3FD7 /* Streak.swift in Sources */,
 				EC0CA9D80465F6E1C35F437D /* StreakService.swift in Sources */,
 				8276A3AEDED629405BA85F6D /* SubjectBreakdownCard.swift in Sources */,

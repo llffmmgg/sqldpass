@@ -34,7 +34,10 @@
       "step": 4,
       "name": "ios-storekit-service-and-payment-service",
       "description": "iOS: Models/PaymentProduct.swift 신규 (Product 메타). Services/StoreKitService.swift 신규 — Product.products(for:), Transaction.updates 스트림, purchase, restore. Services/PaymentService.swift 신규 — GET /api/payment/subscription, POST /api/payment/apple/verify. 빌드 검증.",
-      "status": "pending"
+      "status": "completed",
+      "started_at": "2026-05-18T14:24:51+0900",
+      "summary": "Models/PaymentProduct.swift (StoreKit Product wrapper), Services/StoreKitService.swift (Product.products / Transaction.updates / purchase / restore / currentEntitlementJWS), Services/PaymentService.swift (GET /api/payment/subscription + POST /api/payment/apple/verify) 신규. project.pbxproj 3개 파일 등록(PBXBuildFile/PBXFileReference/Models·Services 그룹/Sources phase). Debug iOS 시뮬레이터 BUILD SUCCEEDED.",
+      "completed_at": "2026-05-18T14:29:20+0900"
     },
     {
       "step": 5,
