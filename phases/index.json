@@ -305,9 +305,62 @@
       "dir": "android-polish-and-shared-renderer",
       "name": "android-polish-and-shared-renderer",
       "description": "Android 폴리시 — 질문 렌더링 단일 진실 원천(AppQuestionContent) + Material3 visible 잔재 제거(Dialog/Sheet/Dropdown/Card/Button/Chip → App* primitive) + 토큰 정합(MaterialTheme.colorScheme → LocalSqldpassPalette, 매직 dp → SqldSpacing/SqldRadius) + Indication·햅틱 보강. 5 step (병렬화 가능: step 1+2 동시, step 3+4 동시, step 4 는 화면 그룹별 sub-agent 5개). CRITICAL: QuestionResultScreen 해설 plain Text → 렌더 fix. 백엔드/frontend/iOS 변경 0.",
-      "status": "in_progress",
+      "status": "completed",
       "created_at": "2026-05-19T01:00:00+0900",
-      "started_at": "2026-05-19T01:00:00+0900"
+      "started_at": "2026-05-19T01:00:00+0900",
+      "completed_at": "2026-05-19T10:00:00+0900"
+    },
+    {
+      "dir": "android-auth-401-refresh",
+      "name": "android-auth-401-refresh",
+      "description": "Android Phase 2 Auth 견고화. OkHttp Authenticator 기반 single-flight 401 토큰 재발급 (iOS AuthStore.refresh 패턴 패리티). TokenAuthenticator + AuthRefreshApi (별도 OkHttp 클라이언트, 재귀 차단) + sessionLost SharedFlow → MainActivity 가 GoogleSignIn signOut + onAuthChanged + 안내 메시지 트리거. 백엔드 무변경.",
+      "status": "completed",
+      "created_at": "2026-05-19T11:00:00+0900",
+      "completed_at": "2026-05-19T11:30:00+0900"
+    },
+    {
+      "dir": "android-billing-acknowledge-recover",
+      "name": "android-billing-acknowledge-recover",
+      "description": "Android Play Billing 정비 — P0-1/P0-5/P1-2 일괄 해결. acknowledgePurchase (3일 자동 환불 방지), queryPurchasesAsync 시작 시 미완료 결제 복구, BillingEvent SharedFlow (Processing/Pending/Canceled/Success/Failed) → MainActivity setMessage + loadSubscription. PURCHASED/PENDING/UNSPECIFIED 분기, USER_CANCELED/ITEM_ALREADY_OWNED 응답 코드별 메시지.",
+      "status": "completed",
+      "created_at": "2026-05-19T12:00:00+0900",
+      "completed_at": "2026-05-19T12:30:00+0900"
+    },
+    {
+      "dir": "ios-storekit-non-renewing",
+      "name": "ios-storekit-non-renewing",
+      "description": "iOS .storekit 의 4 상품(iap_three_day/iap_focus/iap_one_month/iap_unlimited) 을 RecurringSubscription → NonRenewingSubscription 으로 전환해 Android INAPP 와 결제 모델 정합. StoreKitService.currentEntitlements / Transaction.updates 의 NonRenewing 동작 차이 점검 후 필요 시 보정. iOS 단독, 백엔드 무변경 (이미 기간 만료식 entitlement 모델).",
+      "status": "completed",
+      "created_at": "2026-05-19T13:00:00+0900",
+      "completed_at": "2026-05-19T14:00:00+0900",
+      "summary": "Sqldpass.storekit 4 상품 NonRenewing 전환. StoreKitService 코드 무변경(NonRenewing 호환 확인). macOS 빌드는 사용자 별도 검증."
+    },
+    {
+      "dir": "android-bookmarks-history",
+      "name": "android-bookmarks-history",
+      "description": "Android 북마크/풀이기록 화면 신설 — ProfileTab placeholder 토스트 제거. 북마크 API 는 이미 wired (/api/bookmarks). 풀이기록은 /api/solves + /api/solves/{id}. 신규 BookmarksScreen + HistoryScreen + ViewModel state 확장 + NavGraph 라우트 2개. iOS BookmarksView/HistoryView 와 정보 구조 통일.",
+      "status": "completed",
+      "created_at": "2026-05-19T13:00:00+0900",
+      "completed_at": "2026-05-19T14:00:00+0900",
+      "summary": "BookmarksScreen/HistoryScreen 신설 + ProfileTab 라우트 연결 + SolveSummary DTO + getMySolves API. :app:assembleDebug BUILD SUCCESSFUL."
+    },
+    {
+      "dir": "backend-refund-webhook",
+      "name": "backend-refund-webhook",
+      "description": "백엔드 결제 환불 webhook 실 구현 — Play Billing RTDN refund (notificationType=2/12) + App Store ASSN v2 REFUND/REVOKE. SubscriptionService.archiveByProvider(token) 호출해 subscription archived_at 셋팅. ASSN v2 JWS 서명 검증은 별도 phase 로 분리 (현재는 페이로드 신뢰). Non-Renewing 모델 결정으로 갱신/취소 분기는 제외, 환불만 처리.",
+      "status": "completed",
+      "created_at": "2026-05-19T13:00:00+0900",
+      "completed_at": "2026-05-19T14:00:00+0900",
+      "summary": "PaymentService.revokeAppStoreByTransactionId 신설 + RTDN/ASSN v2 분기 실 구현 + 컨트롤러/서비스 테스트. gradlew test 통과. JWS 서명 검증은 후속 phase TODO."
+    },
+    {
+      "dir": "network-timeouts",
+      "name": "network-timeouts",
+      "description": "iOS URLSession + Android OkHttp 의 명시 timeout 설정 — 기본값(60s+) 의존을 15s connect / 30s read / 30s write 로 명시. 사용자 체감 hang 시간 단축 + 모바일 네트워크 변동 대응. iOS APIClient URLSessionConfiguration + Android SqldpassApplication okHttp/refreshOkHttp 두 클라이언트 모두.",
+      "status": "completed",
+      "created_at": "2026-05-19T13:00:00+0900",
+      "completed_at": "2026-05-19T14:00:00+0900",
+      "summary": "iOS APIClient 15s/30s + AuthStore refresh 20s/30s. Android OkHttp/refreshOkHttp 둘 다 15s/30s/30s. callTimeout 은 의도적 미설정."
     }
   ]
 }
