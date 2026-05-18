@@ -64,7 +64,8 @@ sqldpass:
       android-client-id: ${GOOGLE_OAUTH_ANDROID_CLIENT_ID:}
       # iOS 네이티브 Google Sign-In SDK 가 발급하는 ID 토큰의 audience.
       # Google Cloud Console 에서 iOS 클라이언트 (Bundle ID: com.sqldpass.app) 를 따로 발급해 입력.
-      ios-client-id: ${GOOGLE_OAUTH_IOS_CLIENT_ID:}
+      # Default 값은 public OAuth Client ID — secret 아님(Bundle ID 와 함께 검증). env 로 override 가능.
+      ios-client-id: ${GOOGLE_OAUTH_IOS_CLIENT_ID:1026495161962-jtgphtjb90025fsmvb8e13tpnokv3edp.apps.googleusercontent.com}
   play-billing:
     # 앱 ID — native Android applicationId 와 동일해야 한다.
     package-name: ${PLAY_BILLING_PACKAGE_NAME:com.sqldpass.app}
