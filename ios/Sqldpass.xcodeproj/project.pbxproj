@@ -1,0 +1,685 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		0169494DD6335F80701E6C88 /* SolveView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB2BCAA6C4B0C055CC447D1F /* SolveView.swift */; };
+		01C56FC06AD89D8DE411CC07 /* SolveAnswerEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EF21A9844C89CF0269FE47C /* SolveAnswerEntry.swift */; };
+		0426E6678A3CF848DF501D80 /* Bookmark.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8514BDFE6C9C7D329DCA9926 /* Bookmark.swift */; };
+		0DC5A877FB1B292BACB387FC /* MockExamDetail.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2EEA32F635DDE3B85BB77453 /* MockExamDetail.swift */; };
+		0F53195A539D32D5D5F6BC5D /* GoogleAuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7699624602F2E33306208593 /* GoogleAuthService.swift */; };
+		10FA5F72D62526364D5149DA /* AccountDeletionConfirmView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 759B7C3100C04BA90D7080A8 /* AccountDeletionConfirmView.swift */; };
+		1797DA2E3BDD4D72B1BD93E8 /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7F02CC2BC6A078429111348 /* DashboardView.swift */; };
+		19D810D59B62CF8B4BE6FFF8 /* MockExam+Display.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23F71B03B56978654574C9B1 /* MockExam+Display.swift */; };
+		1AB32B24EC7177D663395B65 /* ExamService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 027D0D01305F94B81E43294B /* ExamService.swift */; };
+		1F1504C81D2ED08B161CD72C /* MemberService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FFB7967904ADA9CDF33E7FEE /* MemberService.swift */; };
+		1F2BF3C20B05621B8B60CCC8 /* InsightsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6DADF26AE5C2EA3F5876B65 /* InsightsView.swift */; };
+		2830AC780BC8930E6B06D776 /* Color+Tokens.swift in Sources */ = {isa = PBXBuildFile; fileRef = D66A3952679D9F0ADD9871BE /* Color+Tokens.swift */; };
+		2E37FE98BFB0FDB69031CBAE /* AuthStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35EEE75165FFA9D1CC356B7E /* AuthStore.swift */; };
+		3071A6748D7F9E526DE7BA67 /* ScoreHeadline.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9FA501A352BF28A9553CAD49 /* ScoreHeadline.swift */; };
+		36AB49C2EF3AB475523D783A /* APIClient+Shared.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3679CDD78BB233811B7555B /* APIClient+Shared.swift */; };
+		388FB55138321B051690D693 /* SolveService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 61EDA8D14E7F131955B10EBC /* SolveService.swift */; };
+		46F348F9EA34E5FFC45A723B /* Solve.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2DEDCA7D76CC8906CADDBFF1 /* Solve.swift */; };
+		4A30795B8EDDD0183A59DFA0 /* Typography.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1A0039256078F2B16C18C8C /* Typography.swift */; };
+		53820D3FF79D25BD46CF90D1 /* AuthView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2002F27C1741CFCE4146FCD2 /* AuthView.swift */; };
+		5427CB85CCBF020B518785E6 /* QuestionBody.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58245B5A1311AC33D542BBCC /* QuestionBody.swift */; };
+		543825661FFE6E9A64052225 /* OMRAnswerGrid.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1064D8FE025922FAFB54DA17 /* OMRAnswerGrid.swift */; };
+		5AD29C1E61A8EE72543BA768 /* MockExam.swift in Sources */ = {isa = PBXBuildFile; fileRef = 036B702C2E49606E4BC9E084 /* MockExam.swift */; };
+		5FC1A9AF7BB7FE6BE05CE0F0 /* SolveViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5D29C8A96832A3E6418C529 /* SolveViewModel.swift */; };
+		5FD7D0D9E0032D32D22BF854 /* SolveActionBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31E3A87E868AA01B3EAD195E /* SolveActionBar.swift */; };
+		636DF982B299901FECAB3FD7 /* Streak.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6FF44ECEF832ED92A3684796 /* Streak.swift */; };
+		66E45204EEC341E63C21D0B8 /* Question.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33AF477F8D8432720B4E763D /* Question.swift */; };
+		6E6721F0D8F075FC170404C3 /* AppleAuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = EFD6305FDD1D166CCD2CDCF9 /* AppleAuthService.swift */; };
+		704E1312A8F6F07D5B09595E /* WrongAnswersView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 708D60E6ED0114C06B59ABA9 /* WrongAnswersView.swift */; };
+		70E27BC22A0205E1F8E7C8E3 /* Auth.swift in Sources */ = {isa = PBXBuildFile; fileRef = EBA1ED936A987B69851776CE /* Auth.swift */; };
+		7337F8752B0859743CFE160C /* MainTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F90FE83B19F079DD654FB6E4 /* MainTabView.swift */; };
+		73382EE2EA66ACB8875C24DA /* AnswerReviewRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3AC2AAA4465DED7698809F4F /* AnswerReviewRow.swift */; };
+		7C2437BB132E7CD20FEF946B /* ProfileViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66565BBF795D43C38FF895B2 /* ProfileViewModel.swift */; };
+		8276A3AEDED629405BA85F6D /* SubjectBreakdownCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = C9B058741E894BDCD6A70F5A /* SubjectBreakdownCard.swift */; };
+		8327D2ADF0D63B44A8883501 /* Member.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46DABBAA8C879C7B0C4D58B3 /* Member.swift */; };
+		845BFAF1CB35F90119B47B15 /* SolveHeader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66D4C11ADB0FF2DEDCC421E4 /* SolveHeader.swift */; };
+		84D8CF8588D0DE2D1496B7D6 /* BookmarksViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FED8091B72FAA7C8EC304477 /* BookmarksViewModel.swift */; };
+		86EB2173A6D70EB98F94A8A6 /* QuestionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8DCC6E698912DFA8033CF012 /* QuestionService.swift */; };
+		8730188D572FD8DC309B2DA2 /* MockExamRoutes.swift in Sources */ = {isa = PBXBuildFile; fileRef = FAA9FC8CFA342AC732835D91 /* MockExamRoutes.swift */; };
+		90A5785F507DA19672E4C3AC /* UIColor+Hex.swift in Sources */ = {isa = PBXBuildFile; fileRef = 52EBE180252E86251C7D944F /* UIColor+Hex.swift */; };
+		91CF69702EE1F3ABC8628274 /* BookmarksView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A8C4CF743568C5FEE06E2998 /* BookmarksView.swift */; };
+		99537866473355CD6069E45A /* WrongAnswerService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0120EE8AC3A7D11C640DED97 /* WrongAnswerService.swift */; };
+		9A9EECF4B48D4E1885328335 /* Radius.swift in Sources */ = {isa = PBXBuildFile; fileRef = 263AAB3613016EECA71C0BAC /* Radius.swift */; };
+		9E59CA2463A520F6E6F9278C /* Spacing.swift in Sources */ = {isa = PBXBuildFile; fileRef = 934CC05ED3031C490208135C /* Spacing.swift */; };
+		A008F00D676279F419FE5915 /* WrongAnswerRetrySheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFF3A1512A4B7490D2E29668 /* WrongAnswerRetrySheet.swift */; };
+		A98640E7E09819B8D3DC52E1 /* InsightsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = D060350097AC13D21D21B581 /* InsightsViewModel.swift */; };
+		AE293115B3A8BE3A0C482F6E /* NicknameEditView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 69386F5358ECFB3D5DC9C94F /* NicknameEditView.swift */; };
+		B5518C0F8F8B92650B89E2D8 /* DashboardViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E4FABDEC7CA1C88E58F0875 /* DashboardViewModel.swift */; };
+		B83DBB33E099A614BD0435C5 /* MockExamsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C0C0526CCA58284C941607C /* MockExamsViewModel.swift */; };
+		BA050FE0F666CD8A1B745808 /* WrongAnswersViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5526C534A4B3752CB583BCE /* WrongAnswersViewModel.swift */; };
+		BA167C9CB0A2157CBF470110 /* KeychainStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE7B980FAB66301BA7EA4899 /* KeychainStore.swift */; };
+		BEC16BE1EBB1387B3A21E9FD /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = 129D93F3277C4BF118B2E111 /* GoogleSignIn */; };
+		BEDA6954DCB8AF25A1D0DDFE /* GoogleSignInSwift in Frameworks */ = {isa = PBXBuildFile; productRef = FE05E00F64F1453D6B7E83AD /* GoogleSignInSwift */; };
+		BF1145CB323D9C43C8F0BDC6 /* HistoryViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A0C8509499665B6339F7A29 /* HistoryViewModel.swift */; };
+		BF4065A4C43CE097CCC21587 /* BookmarkService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 62181C4207794F88C443019F /* BookmarkService.swift */; };
+		C7341F1B1FADF497865BAB9E /* BookmarkToggleButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B5230450D260413558F4154 /* BookmarkToggleButton.swift */; };
+		CC2A7B4658525E29A483949C /* MockExamDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A26596C46008DBA2BCFE632 /* MockExamDetailView.swift */; };
+		CD5EB5267A2DDBD22AE3EA01 /* SessionGate.swift in Sources */ = {isa = PBXBuildFile; fileRef = B342183DA41EFF2FB6C1F19F /* SessionGate.swift */; };
+		CD71D729DE1F5C9B83FCD9DD /* HistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E896F204AF04362F621BBEFA /* HistoryView.swift */; };
+		D013CE75999DDE46365FFA21 /* APIEnvironment.swift in Sources */ = {isa = PBXBuildFile; fileRef = E6835096BA3621089913C59A /* APIEnvironment.swift */; };
+		D4905F3C2C4434F7CD530856 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 52849D6EE4571395433DE899 /* RootView.swift */; };
+		D5899EBC7D15210632803323 /* MockExamsListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2EC0804EBF7C264DDA4A2A5 /* MockExamsListView.swift */; };
+		D5996235BE5182534E9315E6 /* BookmarkDetailSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4868603F5CE6BFE3EB02D554 /* BookmarkDetailSheet.swift */; };
+		DEF87070A95747B6AF7E23EF /* Subscription.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF29A3CD13BA2DEDA06BF118 /* Subscription.swift */; };
+		E72AE124E427E982B94A1F3D /* SqldpassApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1A910BE5F74468E50D613BA /* SqldpassApp.swift */; };
+		E748B6097E47AC676B7C11B8 /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5E02115A57224055005B8E7 /* ProfileView.swift */; };
+		EAC2D57B7FF3552CCC4FFEBB /* WrongAnswer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35F209C7176E9E566771D690 /* WrongAnswer.swift */; };
+		EC0207748C8B11B67C5E64D5 /* APIError.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB4E676048135B0AB8D5DD95 /* APIError.swift */; };
+		EC0CA9D80465F6E1C35F437D /* StreakService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9304FB02C4CA965282101805 /* StreakService.swift */; };
+		F1D9AC1F5CA41C7B545C52AE /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA32763C4F867AC156D755AB /* APIClient.swift */; };
+		FA4DB95DC1B14D16ED6CEB47 /* SolveResultView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3723EDF6972EC89C1D38DE2 /* SolveResultView.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		0120EE8AC3A7D11C640DED97 /* WrongAnswerService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WrongAnswerService.swift; sourceTree = "<group>"; };
+		027D0D01305F94B81E43294B /* ExamService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExamService.swift; sourceTree = "<group>"; };
+		036B702C2E49606E4BC9E084 /* MockExam.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockExam.swift; sourceTree = "<group>"; };
+		1064D8FE025922FAFB54DA17 /* OMRAnswerGrid.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OMRAnswerGrid.swift; sourceTree = "<group>"; };
+		1A26596C46008DBA2BCFE632 /* MockExamDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockExamDetailView.swift; sourceTree = "<group>"; };
+		1C0C0526CCA58284C941607C /* MockExamsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockExamsViewModel.swift; sourceTree = "<group>"; };
+		2002F27C1741CFCE4146FCD2 /* AuthView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthView.swift; sourceTree = "<group>"; };
+		23F71B03B56978654574C9B1 /* MockExam+Display.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "MockExam+Display.swift"; sourceTree = "<group>"; };
+		263AAB3613016EECA71C0BAC /* Radius.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Radius.swift; sourceTree = "<group>"; };
+		2DEDCA7D76CC8906CADDBFF1 /* Solve.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Solve.swift; sourceTree = "<group>"; };
+		2E4FABDEC7CA1C88E58F0875 /* DashboardViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardViewModel.swift; sourceTree = "<group>"; };
+		2EEA32F635DDE3B85BB77453 /* MockExamDetail.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockExamDetail.swift; sourceTree = "<group>"; };
+		31E3A87E868AA01B3EAD195E /* SolveActionBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SolveActionBar.swift; sourceTree = "<group>"; };
+		33AF477F8D8432720B4E763D /* Question.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Question.swift; sourceTree = "<group>"; };
+		35EEE75165FFA9D1CC356B7E /* AuthStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthStore.swift; sourceTree = "<group>"; };
+		35F209C7176E9E566771D690 /* WrongAnswer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WrongAnswer.swift; sourceTree = "<group>"; };
+		3A0C8509499665B6339F7A29 /* HistoryViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryViewModel.swift; sourceTree = "<group>"; };
+		3AC2AAA4465DED7698809F4F /* AnswerReviewRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnswerReviewRow.swift; sourceTree = "<group>"; };
+		46DABBAA8C879C7B0C4D58B3 /* Member.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Member.swift; sourceTree = "<group>"; };
+		4868603F5CE6BFE3EB02D554 /* BookmarkDetailSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BookmarkDetailSheet.swift; sourceTree = "<group>"; };
+		52849D6EE4571395433DE899 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
+		52EBE180252E86251C7D944F /* UIColor+Hex.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UIColor+Hex.swift"; sourceTree = "<group>"; };
+		58245B5A1311AC33D542BBCC /* QuestionBody.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuestionBody.swift; sourceTree = "<group>"; };
+		5EF21A9844C89CF0269FE47C /* SolveAnswerEntry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SolveAnswerEntry.swift; sourceTree = "<group>"; };
+		61EDA8D14E7F131955B10EBC /* SolveService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SolveService.swift; sourceTree = "<group>"; };
+		62181C4207794F88C443019F /* BookmarkService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BookmarkService.swift; sourceTree = "<group>"; };
+		66565BBF795D43C38FF895B2 /* ProfileViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileViewModel.swift; sourceTree = "<group>"; };
+		66D4C11ADB0FF2DEDCC421E4 /* SolveHeader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SolveHeader.swift; sourceTree = "<group>"; };
+		69386F5358ECFB3D5DC9C94F /* NicknameEditView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NicknameEditView.swift; sourceTree = "<group>"; };
+		6FF44ECEF832ED92A3684796 /* Streak.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Streak.swift; sourceTree = "<group>"; };
+		708D60E6ED0114C06B59ABA9 /* WrongAnswersView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WrongAnswersView.swift; sourceTree = "<group>"; };
+		759B7C3100C04BA90D7080A8 /* AccountDeletionConfirmView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountDeletionConfirmView.swift; sourceTree = "<group>"; };
+		7699624602F2E33306208593 /* GoogleAuthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GoogleAuthService.swift; sourceTree = "<group>"; };
+		80F4C5EE01C91CBD8ED8C1CB /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		8514BDFE6C9C7D329DCA9926 /* Bookmark.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Bookmark.swift; sourceTree = "<group>"; };
+		8DCC6E698912DFA8033CF012 /* QuestionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuestionService.swift; sourceTree = "<group>"; };
+		9304FB02C4CA965282101805 /* StreakService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StreakService.swift; sourceTree = "<group>"; };
+		934CC05ED3031C490208135C /* Spacing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Spacing.swift; sourceTree = "<group>"; };
+		9B5230450D260413558F4154 /* BookmarkToggleButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BookmarkToggleButton.swift; sourceTree = "<group>"; };
+		9FA501A352BF28A9553CAD49 /* ScoreHeadline.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScoreHeadline.swift; sourceTree = "<group>"; };
+		A2EC0804EBF7C264DDA4A2A5 /* MockExamsListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockExamsListView.swift; sourceTree = "<group>"; };
+		A5526C534A4B3752CB583BCE /* WrongAnswersViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WrongAnswersViewModel.swift; sourceTree = "<group>"; };
+		A5D29C8A96832A3E6418C529 /* SolveViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SolveViewModel.swift; sourceTree = "<group>"; };
+		A5E02115A57224055005B8E7 /* ProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileView.swift; sourceTree = "<group>"; };
+		A8C4CF743568C5FEE06E2998 /* BookmarksView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BookmarksView.swift; sourceTree = "<group>"; };
+		B1A910BE5F74468E50D613BA /* SqldpassApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SqldpassApp.swift; sourceTree = "<group>"; };
+		B342183DA41EFF2FB6C1F19F /* SessionGate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionGate.swift; sourceTree = "<group>"; };
+		BB4E676048135B0AB8D5DD95 /* APIError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIError.swift; sourceTree = "<group>"; };
+		BE7B980FAB66301BA7EA4899 /* KeychainStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainStore.swift; sourceTree = "<group>"; };
+		BFF3A1512A4B7490D2E29668 /* WrongAnswerRetrySheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WrongAnswerRetrySheet.swift; sourceTree = "<group>"; };
+		C3679CDD78BB233811B7555B /* APIClient+Shared.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "APIClient+Shared.swift"; sourceTree = "<group>"; };
+		C9B058741E894BDCD6A70F5A /* SubjectBreakdownCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubjectBreakdownCard.swift; sourceTree = "<group>"; };
+		D060350097AC13D21D21B581 /* InsightsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InsightsViewModel.swift; sourceTree = "<group>"; };
+		D66A3952679D9F0ADD9871BE /* Color+Tokens.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Color+Tokens.swift"; sourceTree = "<group>"; };
+		D6DADF26AE5C2EA3F5876B65 /* InsightsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InsightsView.swift; sourceTree = "<group>"; };
+		D7F02CC2BC6A078429111348 /* DashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardView.swift; sourceTree = "<group>"; };
+		E3723EDF6972EC89C1D38DE2 /* SolveResultView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SolveResultView.swift; sourceTree = "<group>"; };
+		E41EA15CF5EB8586A1357280 /* Sqldpass.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Sqldpass.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		E6835096BA3621089913C59A /* APIEnvironment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIEnvironment.swift; sourceTree = "<group>"; };
+		E896F204AF04362F621BBEFA /* HistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryView.swift; sourceTree = "<group>"; };
+		EA32763C4F867AC156D755AB /* APIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClient.swift; sourceTree = "<group>"; };
+		EBA1ED936A987B69851776CE /* Auth.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Auth.swift; sourceTree = "<group>"; };
+		EFD6305FDD1D166CCD2CDCF9 /* AppleAuthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleAuthService.swift; sourceTree = "<group>"; };
+		F1A0039256078F2B16C18C8C /* Typography.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Typography.swift; sourceTree = "<group>"; };
+		F90FE83B19F079DD654FB6E4 /* MainTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainTabView.swift; sourceTree = "<group>"; };
+		FAA9FC8CFA342AC732835D91 /* MockExamRoutes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockExamRoutes.swift; sourceTree = "<group>"; };
+		FB2BCAA6C4B0C055CC447D1F /* SolveView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SolveView.swift; sourceTree = "<group>"; };
+		FED8091B72FAA7C8EC304477 /* BookmarksViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BookmarksViewModel.swift; sourceTree = "<group>"; };
+		FF29A3CD13BA2DEDA06BF118 /* Subscription.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Subscription.swift; sourceTree = "<group>"; };
+		FFB7967904ADA9CDF33E7FEE /* MemberService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemberService.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		43228849AB2CB047539B416F /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				BEC16BE1EBB1387B3A21E9FD /* GoogleSignIn in Frameworks */,
+				BEDA6954DCB8AF25A1D0DDFE /* GoogleSignInSwift in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		019AA61FAF94C7A13FA45CEC /* App */ = {
+			isa = PBXGroup;
+			children = (
+				F90FE83B19F079DD654FB6E4 /* MainTabView.swift */,
+				52849D6EE4571395433DE899 /* RootView.swift */,
+				B1A910BE5F74468E50D613BA /* SqldpassApp.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		07A3ABC4BD34D6A74F0A6B97 /* MockExams */ = {
+			isa = PBXGroup;
+			children = (
+				1A26596C46008DBA2BCFE632 /* MockExamDetailView.swift */,
+				FAA9FC8CFA342AC732835D91 /* MockExamRoutes.swift */,
+				A2EC0804EBF7C264DDA4A2A5 /* MockExamsListView.swift */,
+				1C0C0526CCA58284C941607C /* MockExamsViewModel.swift */,
+			);
+			path = MockExams;
+			sourceTree = "<group>";
+		};
+		182CFA117CAF7E8F6972EE08 /* Features */ = {
+			isa = PBXGroup;
+			children = (
+				219F7F508DAEBB37FA64A012 /* Auth */,
+				326B95F188B261FB6650296F /* Bookmarks */,
+				C704CE7D9C888C3A3B3BE981 /* Dashboard */,
+				9A424BF1369B20D601A9EE71 /* History */,
+				B8BAAB7BB915AFB0E33ECE8C /* Insights */,
+				07A3ABC4BD34D6A74F0A6B97 /* MockExams */,
+				98A49C67BDCFD4071BEE3F5F /* Notifications */,
+				446CB07F8A7FF2893B419C16 /* Paywall */,
+				78D45BBB5AF6B850178EC976 /* Profile */,
+				6FB41984F83AA4B957D6B77C /* Solve */,
+				943B1579F1F6257E4A5869F4 /* WebContainers */,
+				64D659C65F4D3064CC458AC9 /* WrongAnswers */,
+			);
+			path = Features;
+			sourceTree = "<group>";
+		};
+		219F7F508DAEBB37FA64A012 /* Auth */ = {
+			isa = PBXGroup;
+			children = (
+				2002F27C1741CFCE4146FCD2 /* AuthView.swift */,
+			);
+			path = Auth;
+			sourceTree = "<group>";
+		};
+		223E23D281CE3AC58FD08828 /* DesignSystem */ = {
+			isa = PBXGroup;
+			children = (
+				D66A3952679D9F0ADD9871BE /* Color+Tokens.swift */,
+				263AAB3613016EECA71C0BAC /* Radius.swift */,
+				934CC05ED3031C490208135C /* Spacing.swift */,
+				F1A0039256078F2B16C18C8C /* Typography.swift */,
+				52EBE180252E86251C7D944F /* UIColor+Hex.swift */,
+			);
+			path = DesignSystem;
+			sourceTree = "<group>";
+		};
+		22AF627780FD8C3D725590EC /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				62181C4207794F88C443019F /* BookmarkService.swift */,
+				027D0D01305F94B81E43294B /* ExamService.swift */,
+				FFB7967904ADA9CDF33E7FEE /* MemberService.swift */,
+				8DCC6E698912DFA8033CF012 /* QuestionService.swift */,
+				61EDA8D14E7F131955B10EBC /* SolveService.swift */,
+				9304FB02C4CA965282101805 /* StreakService.swift */,
+				0120EE8AC3A7D11C640DED97 /* WrongAnswerService.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		326B95F188B261FB6650296F /* Bookmarks */ = {
+			isa = PBXGroup;
+			children = (
+				4868603F5CE6BFE3EB02D554 /* BookmarkDetailSheet.swift */,
+				A8C4CF743568C5FEE06E2998 /* BookmarksView.swift */,
+				FED8091B72FAA7C8EC304477 /* BookmarksViewModel.swift */,
+			);
+			path = Bookmarks;
+			sourceTree = "<group>";
+		};
+		446CB07F8A7FF2893B419C16 /* Paywall */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Paywall;
+			sourceTree = "<group>";
+		};
+		5A2D73C3A2774AD51C41AE13 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				E41EA15CF5EB8586A1357280 /* Sqldpass.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		5E7813A29A4D0788EEAA0DB1 /* Networking */ = {
+			isa = PBXGroup;
+			children = (
+				EA32763C4F867AC156D755AB /* APIClient.swift */,
+				C3679CDD78BB233811B7555B /* APIClient+Shared.swift */,
+				E6835096BA3621089913C59A /* APIEnvironment.swift */,
+				BB4E676048135B0AB8D5DD95 /* APIError.swift */,
+			);
+			path = Networking;
+			sourceTree = "<group>";
+		};
+		623FDB5EC02AB606FF593C08 /* Auth */ = {
+			isa = PBXGroup;
+			children = (
+				EFD6305FDD1D166CCD2CDCF9 /* AppleAuthService.swift */,
+				35EEE75165FFA9D1CC356B7E /* AuthStore.swift */,
+				7699624602F2E33306208593 /* GoogleAuthService.swift */,
+				BE7B980FAB66301BA7EA4899 /* KeychainStore.swift */,
+				B342183DA41EFF2FB6C1F19F /* SessionGate.swift */,
+			);
+			path = Auth;
+			sourceTree = "<group>";
+		};
+		64D659C65F4D3064CC458AC9 /* WrongAnswers */ = {
+			isa = PBXGroup;
+			children = (
+				BFF3A1512A4B7490D2E29668 /* WrongAnswerRetrySheet.swift */,
+				708D60E6ED0114C06B59ABA9 /* WrongAnswersView.swift */,
+				A5526C534A4B3752CB583BCE /* WrongAnswersViewModel.swift */,
+			);
+			path = WrongAnswers;
+			sourceTree = "<group>";
+		};
+		682ECC59DC58BE2E2E192FEA /* Components */ = {
+			isa = PBXGroup;
+			children = (
+				3AC2AAA4465DED7698809F4F /* AnswerReviewRow.swift */,
+				9B5230450D260413558F4154 /* BookmarkToggleButton.swift */,
+				1064D8FE025922FAFB54DA17 /* OMRAnswerGrid.swift */,
+				58245B5A1311AC33D542BBCC /* QuestionBody.swift */,
+				9FA501A352BF28A9553CAD49 /* ScoreHeadline.swift */,
+				31E3A87E868AA01B3EAD195E /* SolveActionBar.swift */,
+				66D4C11ADB0FF2DEDCC421E4 /* SolveHeader.swift */,
+				C9B058741E894BDCD6A70F5A /* SubjectBreakdownCard.swift */,
+			);
+			path = Components;
+			sourceTree = "<group>";
+		};
+		6FB41984F83AA4B957D6B77C /* Solve */ = {
+			isa = PBXGroup;
+			children = (
+				E3723EDF6972EC89C1D38DE2 /* SolveResultView.swift */,
+				FB2BCAA6C4B0C055CC447D1F /* SolveView.swift */,
+				A5D29C8A96832A3E6418C529 /* SolveViewModel.swift */,
+				682ECC59DC58BE2E2E192FEA /* Components */,
+			);
+			path = Solve;
+			sourceTree = "<group>";
+		};
+		78D45BBB5AF6B850178EC976 /* Profile */ = {
+			isa = PBXGroup;
+			children = (
+				759B7C3100C04BA90D7080A8 /* AccountDeletionConfirmView.swift */,
+				69386F5358ECFB3D5DC9C94F /* NicknameEditView.swift */,
+				A5E02115A57224055005B8E7 /* ProfileView.swift */,
+				66565BBF795D43C38FF895B2 /* ProfileViewModel.swift */,
+			);
+			path = Profile;
+			sourceTree = "<group>";
+		};
+		857C054B3ED782558A47790D /* Persistence */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Persistence;
+			sourceTree = "<group>";
+		};
+		943B1579F1F6257E4A5869F4 /* WebContainers */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = WebContainers;
+			sourceTree = "<group>";
+		};
+		968B139EFBDBC2243B8AE56C /* Sqldpass */ = {
+			isa = PBXGroup;
+			children = (
+				80F4C5EE01C91CBD8ED8C1CB /* Info.plist */,
+				019AA61FAF94C7A13FA45CEC /* App */,
+				C56A32FA2641D5A7B12AFD0D /* Core */,
+				182CFA117CAF7E8F6972EE08 /* Features */,
+				E25B491B3160D8973FB795ED /* Models */,
+				CC81ADDE089BA738C0C5953C /* Resources */,
+				22AF627780FD8C3D725590EC /* Services */,
+			);
+			path = Sqldpass;
+			sourceTree = "<group>";
+		};
+		98A49C67BDCFD4071BEE3F5F /* Notifications */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Notifications;
+			sourceTree = "<group>";
+		};
+		9A424BF1369B20D601A9EE71 /* History */ = {
+			isa = PBXGroup;
+			children = (
+				E896F204AF04362F621BBEFA /* HistoryView.swift */,
+				3A0C8509499665B6339F7A29 /* HistoryViewModel.swift */,
+			);
+			path = History;
+			sourceTree = "<group>";
+		};
+		B8BAAB7BB915AFB0E33ECE8C /* Insights */ = {
+			isa = PBXGroup;
+			children = (
+				D6DADF26AE5C2EA3F5876B65 /* InsightsView.swift */,
+				D060350097AC13D21D21B581 /* InsightsViewModel.swift */,
+			);
+			path = Insights;
+			sourceTree = "<group>";
+		};
+		C431B27217B6DA20A1FE0ED3 = {
+			isa = PBXGroup;
+			children = (
+				968B139EFBDBC2243B8AE56C /* Sqldpass */,
+				5A2D73C3A2774AD51C41AE13 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		C56A32FA2641D5A7B12AFD0D /* Core */ = {
+			isa = PBXGroup;
+			children = (
+				623FDB5EC02AB606FF593C08 /* Auth */,
+				223E23D281CE3AC58FD08828 /* DesignSystem */,
+				5E7813A29A4D0788EEAA0DB1 /* Networking */,
+				857C054B3ED782558A47790D /* Persistence */,
+			);
+			path = Core;
+			sourceTree = "<group>";
+		};
+		C704CE7D9C888C3A3B3BE981 /* Dashboard */ = {
+			isa = PBXGroup;
+			children = (
+				D7F02CC2BC6A078429111348 /* DashboardView.swift */,
+				2E4FABDEC7CA1C88E58F0875 /* DashboardViewModel.swift */,
+			);
+			path = Dashboard;
+			sourceTree = "<group>";
+		};
+		CC81ADDE089BA738C0C5953C /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		E25B491B3160D8973FB795ED /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				EBA1ED936A987B69851776CE /* Auth.swift */,
+				8514BDFE6C9C7D329DCA9926 /* Bookmark.swift */,
+				46DABBAA8C879C7B0C4D58B3 /* Member.swift */,
+				036B702C2E49606E4BC9E084 /* MockExam.swift */,
+				23F71B03B56978654574C9B1 /* MockExam+Display.swift */,
+				2EEA32F635DDE3B85BB77453 /* MockExamDetail.swift */,
+				33AF477F8D8432720B4E763D /* Question.swift */,
+				2DEDCA7D76CC8906CADDBFF1 /* Solve.swift */,
+				5EF21A9844C89CF0269FE47C /* SolveAnswerEntry.swift */,
+				6FF44ECEF832ED92A3684796 /* Streak.swift */,
+				FF29A3CD13BA2DEDA06BF118 /* Subscription.swift */,
+				35F209C7176E9E566771D690 /* WrongAnswer.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		2758E06F09565DD7933E084F /* Sqldpass */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = EFDDD44337F5367942393724 /* Build configuration list for PBXNativeTarget "Sqldpass" */;
+			buildPhases = (
+				801DDE4FF183045E80F8B673 /* Sources */,
+				43228849AB2CB047539B416F /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = Sqldpass;
+			packageProductDependencies = (
+				129D93F3277C4BF118B2E111 /* GoogleSignIn */,
+				FE05E00F64F1453D6B7E83AD /* GoogleSignInSwift */,
+			);
+			productName = Sqldpass;
+			productReference = E41EA15CF5EB8586A1357280 /* Sqldpass.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		8D833DED4C4B276F2D880885 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1540;
+				TargetAttributes = {
+					2758E06F09565DD7933E084F = {
+						DevelopmentTeam = "";
+						ProvisioningStyle = Automatic;
+					};
+				};
+			};
+			buildConfigurationList = F5BC0EF7F58B949C2EB556FE /* Build configuration list for PBXProject "Sqldpass" */;
+			developmentRegion = ko;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				ko,
+			);
+			mainGroup = C431B27217B6DA20A1FE0ED3;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				5E7EEA25BD8347A917D5BBBA /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */,
+			);
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 5A2D73C3A2774AD51C41AE13 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				2758E06F09565DD7933E084F /* Sqldpass */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		801DDE4FF183045E80F8B673 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				36AB49C2EF3AB475523D783A /* APIClient+Shared.swift in Sources */,
+				F1D9AC1F5CA41C7B545C52AE /* APIClient.swift in Sources */,
+				D013CE75999DDE46365FFA21 /* APIEnvironment.swift in Sources */,
+				EC0207748C8B11B67C5E64D5 /* APIError.swift in Sources */,
+				10FA5F72D62526364D5149DA /* AccountDeletionConfirmView.swift in Sources */,
+				73382EE2EA66ACB8875C24DA /* AnswerReviewRow.swift in Sources */,
+				6E6721F0D8F075FC170404C3 /* AppleAuthService.swift in Sources */,
+				70E27BC22A0205E1F8E7C8E3 /* Auth.swift in Sources */,
+				2E37FE98BFB0FDB69031CBAE /* AuthStore.swift in Sources */,
+				53820D3FF79D25BD46CF90D1 /* AuthView.swift in Sources */,
+				0426E6678A3CF848DF501D80 /* Bookmark.swift in Sources */,
+				D5996235BE5182534E9315E6 /* BookmarkDetailSheet.swift in Sources */,
+				BF4065A4C43CE097CCC21587 /* BookmarkService.swift in Sources */,
+				C7341F1B1FADF497865BAB9E /* BookmarkToggleButton.swift in Sources */,
+				91CF69702EE1F3ABC8628274 /* BookmarksView.swift in Sources */,
+				84D8CF8588D0DE2D1496B7D6 /* BookmarksViewModel.swift in Sources */,
+				2830AC780BC8930E6B06D776 /* Color+Tokens.swift in Sources */,
+				1797DA2E3BDD4D72B1BD93E8 /* DashboardView.swift in Sources */,
+				B5518C0F8F8B92650B89E2D8 /* DashboardViewModel.swift in Sources */,
+				1AB32B24EC7177D663395B65 /* ExamService.swift in Sources */,
+				0F53195A539D32D5D5F6BC5D /* GoogleAuthService.swift in Sources */,
+				CD71D729DE1F5C9B83FCD9DD /* HistoryView.swift in Sources */,
+				BF1145CB323D9C43C8F0BDC6 /* HistoryViewModel.swift in Sources */,
+				1F2BF3C20B05621B8B60CCC8 /* InsightsView.swift in Sources */,
+				A98640E7E09819B8D3DC52E1 /* InsightsViewModel.swift in Sources */,
+				BA167C9CB0A2157CBF470110 /* KeychainStore.swift in Sources */,
+				7337F8752B0859743CFE160C /* MainTabView.swift in Sources */,
+				8327D2ADF0D63B44A8883501 /* Member.swift in Sources */,
+				1F1504C81D2ED08B161CD72C /* MemberService.swift in Sources */,
+				19D810D59B62CF8B4BE6FFF8 /* MockExam+Display.swift in Sources */,
+				5AD29C1E61A8EE72543BA768 /* MockExam.swift in Sources */,
+				0DC5A877FB1B292BACB387FC /* MockExamDetail.swift in Sources */,
+				CC2A7B4658525E29A483949C /* MockExamDetailView.swift in Sources */,
+				8730188D572FD8DC309B2DA2 /* MockExamRoutes.swift in Sources */,
+				D5899EBC7D15210632803323 /* MockExamsListView.swift in Sources */,
+				B83DBB33E099A614BD0435C5 /* MockExamsViewModel.swift in Sources */,
+				AE293115B3A8BE3A0C482F6E /* NicknameEditView.swift in Sources */,
+				543825661FFE6E9A64052225 /* OMRAnswerGrid.swift in Sources */,
+				E748B6097E47AC676B7C11B8 /* ProfileView.swift in Sources */,
+				7C2437BB132E7CD20FEF946B /* ProfileViewModel.swift in Sources */,
+				66E45204EEC341E63C21D0B8 /* Question.swift in Sources */,
+				5427CB85CCBF020B518785E6 /* QuestionBody.swift in Sources */,
+				86EB2173A6D70EB98F94A8A6 /* QuestionService.swift in Sources */,
+				9A9EECF4B48D4E1885328335 /* Radius.swift in Sources */,
+				D4905F3C2C4434F7CD530856 /* RootView.swift in Sources */,
+				3071A6748D7F9E526DE7BA67 /* ScoreHeadline.swift in Sources */,
+				CD5EB5267A2DDBD22AE3EA01 /* SessionGate.swift in Sources */,
+				46F348F9EA34E5FFC45A723B /* Solve.swift in Sources */,
+				5FD7D0D9E0032D32D22BF854 /* SolveActionBar.swift in Sources */,
+				01C56FC06AD89D8DE411CC07 /* SolveAnswerEntry.swift in Sources */,
+				845BFAF1CB35F90119B47B15 /* SolveHeader.swift in Sources */,
+				FA4DB95DC1B14D16ED6CEB47 /* SolveResultView.swift in Sources */,
+				388FB55138321B051690D693 /* SolveService.swift in Sources */,
+				0169494DD6335F80701E6C88 /* SolveView.swift in Sources */,
+				5FC1A9AF7BB7FE6BE05CE0F0 /* SolveViewModel.swift in Sources */,
+				9E59CA2463A520F6E6F9278C /* Spacing.swift in Sources */,
+				E72AE124E427E982B94A1F3D /* SqldpassApp.swift in Sources */,
+				636DF982B299901FECAB3FD7 /* Streak.swift in Sources */,
+				EC0CA9D80465F6E1C35F437D /* StreakService.swift in Sources */,
+				8276A3AEDED629405BA85F6D /* SubjectBreakdownCard.swift in Sources */,
+				DEF87070A95747B6AF7E23EF /* Subscription.swift in Sources */,
+				4A30795B8EDDD0183A59DFA0 /* Typography.swift in Sources */,
+				90A5785F507DA19672E4C3AC /* UIColor+Hex.swift in Sources */,
+				EAC2D57B7FF3552CCC4FFEBB /* WrongAnswer.swift in Sources */,
+				A008F00D676279F419FE5915 /* WrongAnswerRetrySheet.swift in Sources */,
+				99537866473355CD6069E45A /* WrongAnswerService.swift in Sources */,
+				704E1312A8F6F07D5B09595E /* WrongAnswersView.swift in Sources */,
+				BA050FE0F666CD8A1B745808 /* WrongAnswersViewModel.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		66E7B809976BC60234DF680D /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_PREVIEWS = YES;
+				INFOPLIST_FILE = Sqldpass/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.sqldpass.app;
+				PRODUCT_NAME = Sqldpass;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		795D41F6292CDA5CACB2576F /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_PREVIEWS = YES;
+				INFOPLIST_FILE = Sqldpass/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.sqldpass.app;
+				PRODUCT_NAME = Sqldpass;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+		C0181927184E5EBB4743533D /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		C7F03356A207AE634DF4A059 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		EFDDD44337F5367942393724 /* Build configuration list for PBXNativeTarget "Sqldpass" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				66E7B809976BC60234DF680D /* Debug */,
+				795D41F6292CDA5CACB2576F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		F5BC0EF7F58B949C2EB556FE /* Build configuration list for PBXProject "Sqldpass" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C0181927184E5EBB4743533D /* Debug */,
+				C7F03356A207AE634DF4A059 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		5E7EEA25BD8347A917D5BBBA /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/google/GoogleSignIn-iOS";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 8.0.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		129D93F3277C4BF118B2E111 /* GoogleSignIn */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 5E7EEA25BD8347A917D5BBBA /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */;
+			productName = GoogleSignIn;
+		};
+		FE05E00F64F1453D6B7E83AD /* GoogleSignInSwift */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 5E7EEA25BD8347A917D5BBBA /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */;
+			productName = GoogleSignInSwift;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = 8D833DED4C4B276F2D880885 /* Project object */;
+}

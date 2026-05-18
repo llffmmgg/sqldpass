@@ -1,0 +1,26 @@
+{
+  "project": "sqldpass",
+  "phase": "ios-google-signin",
+  "description": "iOS 앱에 Google Sign-In 실제 구현. GoogleSignIn-iOS 8.x SPM 추가, Info.plist URL types + GIDClientID, GoogleAuthService.signIn() 실 구현, SqldpassApp.onOpenURL handler. 백엔드 GoogleOAuthClient audience 검증에 iOS Client ID 허용. iOS Client ID: 1026495161962-jtgphtjb90025fsmvb8e13tpnokv3edp.apps.googleusercontent.com.",
+  "steps": [
+    {
+      "step": 1,
+      "name": "ios-google-signin-integration",
+      "description": "project.yml에 GoogleSignIn-iOS SPM 의존성 추가 + Info.plist properties(CFBundleURLTypes의 REVERSED_CLIENT_ID URL scheme + GIDClientID). GoogleAuthService.signIn() 실 구현 — GIDSignIn.sharedInstance.signIn(presenting:) → idToken → POST /api/auth/login/google/idtoken → AuthStore.signIn. SqldpassApp에 .onOpenURL { GIDSignIn.sharedInstance.handle($0) } 추가. xcodegen 재생성 + SPM resolve + 빌드.",
+      "status": "blocked",
+      "started_at": "2026-05-18T11:04:01+0900",
+      "blocked_reason": "코드 변경(project.yml SPM + GoogleSignIn deps + info.path/properties, GoogleAuthService 실 구현, SqldpassApp onOpenURL handler) 및 xcodegen 재생성, SPM resolve(GoogleSignIn 8.0.0 + AppAuth/AppCheck/GoogleUtilities 등 7개 패키지) 모두 완료. 그러나 시뮬레이터 빌드 검증 불가 — Xcode 16.2 SDK는 iphonesimulator18.2 인데 로컬에 iOS 18.2 시뮬레이터 런타임이 설치되지 않음 (iOS 17.5만 존재). xcodebuild가 'Sqldpass' scheme에 대해 iOS Simulator 대상을 0개 인식해 'Found no destinations for scheme'으로 즉시 실패. 해결: 사용자가 Xcode → Settings → Platforms에서 iOS 18.2 Simulator 런타임 다운로드(~7GB) 후 재실행 필요. 코드 변경 자체는 Step 2 백엔드 완료 후 실기기/Xcode UI에서 검증 가능. project.pbxproj에 GoogleSignIn 참조 15회 포함, Info.plist에 CFBundleURLTypes + GIDClientID 정상 포함.",
+      "blocked_at": "2026-05-18T11:27:19+0900"
+    },
+    {
+      "step": 2,
+      "name": "backend-google-ios-client-id",
+      "description": "backend/src/main/resources/application.yaml에 sqldpass.oauth.google.ios-client-id 키 추가. GoogleOAuthClient.java에 iosClientId 필드 + verifyIdToken audience 검증에 iOS Client ID 허용 (Android와 동일 OR 분기). 컴파일 검증은 윈도우에서 ./gradlew compileJava — iOS step 의 검증 명령 외.",
+      "status": "completed",
+      "started_at": "2026-05-18T11:30:00+0900",
+      "summary": "application.yaml의 sqldpass.oauth.google 블록에 ios-client-id: ${GOOGLE_OAUTH_IOS_CLIENT_ID:} 추가. GoogleOAuthClient.java에 iosClientId 필드 + 생성자 4번째 인자 + verifyIdToken audMatches OR 분기에 iOS Client ID 추가. macOS에서 grep 검증만 수행(ios-client-id:1, iosClientId:5), 컴파일 검증은 윈도우 ./gradlew compileJava 필요.",
+      "completed_at": "2026-05-18T11:35:00+0900"
+    }
+  ],
+  "created_at": "2026-05-18T03:00:00+0900"
+}

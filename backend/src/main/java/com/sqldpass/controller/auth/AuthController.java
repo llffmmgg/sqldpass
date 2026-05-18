@@ -4,6 +4,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.sqldpass.controller.auth.dto.AppleLoginRequest;
 import com.sqldpass.controller.auth.dto.GoogleIdTokenLoginRequest;
 import com.sqldpass.controller.auth.dto.OAuthLoginRequest;
 import com.sqldpass.controller.auth.dto.OAuthLoginResponse;
@@ -34,6 +35,14 @@ public class AuthController {
     public OAuthLoginResponse loginWithGoogleIdToken(
             @Valid @RequestBody GoogleIdTokenLoginRequest request) {
         AuthService.AuthResult result = authService.loginWithGoogleIdToken(request.idToken());
+        return new OAuthLoginResponse(result.token(), result.nickname(), result.isNew());
+    }
+
+    @PostMapping("/api/auth/login/apple")
+    @Operation(summary = "Sign in with Apple — iOS 앱 네이티브 ID 토큰 흐름")
+    public OAuthLoginResponse loginWithApple(
+            @Valid @RequestBody AppleLoginRequest request) {
+        AuthService.AuthResult result = authService.loginWithApple(request.idToken());
         return new OAuthLoginResponse(result.token(), result.nickname(), result.isNew());
     }
 }

@@ -1,0 +1,54 @@
+{
+  "project": "sqldpass",
+  "phase": "ios-solve-flow",
+  "description": "iOS 네이티브 앱 Phase 3.3-3.4 — 풀이 화면(Solve)과 채점 결과 화면(SolveResult) 신규 구현. iOS AGENTS.md 작성 + 추가 Service(Question, Bookmark) + SolveViewModel/View + 결과 화면 + MockExamDetail 연결. 시뮬레이터 빌드/스크린샷 검증.",
+  "steps": [
+    {
+      "step": 1,
+      "name": "ios-foundation-and-services",
+      "description": "iOS 자체 AGENTS.md(검증 명령 정의) 신설 + QuestionService/BookmarkService 추가 + SolveAnswerEntry/SubmittedAnswerInput 모델 확장.",
+      "status": "completed",
+      "started_at": "2026-05-18T01:17:11+0900",
+      "summary": "ios/AGENTS.md(작업 디렉토리/검증 명령/금지사항) + QuestionService(detail/list) + BookmarkService(list/exists/add/remove) + SolveAnswerEntry(메모리용 답안 구조체, SubmitRequest.Answer 매핑) 신설. iphonesimulator SDK Debug 빌드 성공.",
+      "completed_at": "2026-05-18T01:21:22+0900"
+    },
+    {
+      "step": 2,
+      "name": "solve-viewmodel",
+      "description": "SolveViewModel(@Observable) — 문제 페이징 인덱스, 타이머(백그라운드 안전 Date 델타), 답안 dictionary, 다시보기 표시 set, 제출 호출. 순수 비즈니스 로직만, View 없음.",
+      "status": "completed",
+      "started_at": "2026-05-18T01:21:22+0900",
+      "summary": "Features/Solve/SolveViewModel.swift 신설 — @Observable, mockExamId+questions 입력, currentIndex/answers/startedAt 상태, Date 델타 기반 elapsedSeconds(백그라운드 안전), Task 기반 1초 ticker, 선택/마크/네비/제출 액션. iphonesimulator SDK Debug 빌드 성공.",
+      "completed_at": "2026-05-18T01:23:44+0900"
+    },
+    {
+      "step": 3,
+      "name": "solve-view-ui",
+      "description": "SolveView — 헤더(진행률+타이머), 문제 본문, OMR 답안 선택지, 하단 이전/다음/종료 액션, 다시보기 표시 토글, 북마크 토글. 시뮬레이터 빌드 + 스크린샷 검증.",
+      "status": "completed",
+      "started_at": "2026-05-18T01:23:44+0900",
+      "summary": "Features/Solve/SolveView.swift + Components/{SolveHeader,QuestionBody,OMRAnswerGrid,SolveActionBar,BookmarkToggleButton}.swift 신설 — NavigationStack 내부 화면(상단 진행률·타이머 헤더, 본문 카드, 4지선다 OMR sensoryFeedback, 하단 이전/다음/제출 액션바, toolbar 북마크/다시보기 토글, 종료 confirmationDialog, 제출 실패 alert). iphonesimulator SDK Debug 빌드 성공.",
+      "completed_at": "2026-05-18T01:27:21+0900"
+    },
+    {
+      "step": 4,
+      "name": "solve-result-view",
+      "description": "SolveResultView — 총점/정답률, 과목별 분석, 문항별 정/오답 + 해설 펼치기, '다시 풀기'/'목록으로' 액션. 시뮬레이터 빌드 + 스크린샷 검증.",
+      "status": "completed",
+      "started_at": "2026-05-18T01:27:22+0900",
+      "summary": "Features/Solve/SolveResultView.swift + Components/{ScoreHeadline,SubjectBreakdownCard,AnswerReviewRow}.swift 신설 — ScrollView 안에 점수 헤드라인(점수대별 색·milestone/streak)·과목별 정답률 카드·문항별 검토 행(아코디언 토글), 하단 safeAreaInset '목록으로' 액션 버튼. iphonesimulator SDK Debug 빌드 성공.",
+      "completed_at": "2026-05-18T01:31:02+0900"
+    },
+    {
+      "step": 5,
+      "name": "wire-and-final-validation",
+      "description": "MockExamDetailView '시험 시작' 버튼 → SolveView 네비게이션, SolveView '제출' → SolveResultView 푸시, '목록으로' → 루트 pop. 전체 사이클 빌드 + 스크린샷.",
+      "status": "completed",
+      "started_at": "2026-05-18T01:31:03+0900",
+      "summary": "Features/MockExams/MockExamRoutes.swift 신설(detail/solve/result Hashable enum, 식별자 기반 커스텀 Hashable) + MockExamsListView NavigationPath 도입(navigationDestination MockExamRoute 단일화) + MockExamDetailView path Binding 받아 시험 시작 버튼이 .solve 푸시 + 결과 화면 '목록으로' → NavigationPath() 리셋. pbxproj 4곳에 MockExamRoutes.swift 등록. iphonesimulator SDK Debug 빌드 성공, 시뮬레이터 SessionGate 화면 스크린샷 확인.",
+      "completed_at": "2026-05-18T01:37:49+0900"
+    }
+  ],
+  "created_at": "2026-05-18T01:00:00+0900",
+  "completed_at": "2026-05-18T01:37:49+0900"
+}

@@ -230,6 +230,30 @@
       "status": "completed",
       "created_at": "2026-05-18T00:00:00+0900",
       "completed_at": "2026-05-18T11:20:00+0900"
+    },
+    {
+      "dir": "ios-solve-flow",
+      "name": "ios-solve-flow",
+      "description": "iOS 네이티브 앱 Phase 3.3-3.4 — 풀이 화면(Solve)과 채점 결과 화면(SolveResult) 신규 구현. iOS AGENTS.md 작성 + 추가 Service(Question, Bookmark) + SolveViewModel/View + 결과 화면 + MockExamDetail 연결. 시뮬레이터 빌드/스크린샷 검증.",
+      "status": "completed",
+      "created_at": "2026-05-18T01:00:00+0900",
+      "completed_at": "2026-05-18T01:37:49+0900"
+    },
+    {
+      "dir": "ios-remaining-screens",
+      "name": "ios-remaining-screens",
+      "description": "iOS 네이티브 앱 Phase 3.5~3.9 — 남은 5개 화면(풀이 히스토리/오답 노트/북마크/인사이트/프로필 상세) 신규 구현 + API 실연동(코드). WrongAnswerService 추가, Models/WrongAnswer 실 DTO 일치 정정, Swift Charts 도입(인사이트), 프로필 닉네임 편집/계정 삭제 2단계 다이얼로그. ProfileView 메뉴 → 각 화면 NavigationLink 연결.",
+      "status": "completed",
+      "created_at": "2026-05-18T02:00:00+0900",
+      "completed_at": "2026-05-18T02:21:26+0900"
+    },
+    {
+      "dir": "ios-google-signin",
+      "name": "ios-google-signin",
+      "description": "iOS 앱 Google Sign-In 실 구현. GoogleSignIn-iOS 8.x SPM 추가, Info.plist URL types + GIDClientID, GoogleAuthService.signIn() 실 구현, SqldpassApp.onOpenURL handler. 백엔드 GoogleOAuthClient audience 검증에 iOS Client ID 허용.",
+      "status": "blocked",
+      "created_at": "2026-05-18T03:00:00+0900",
+      "blocked_at": "2026-05-18T11:27:19+0900"
     }
   ]
 }

@@ -22,16 +22,19 @@ public class GoogleOAuthClient {
 
     private final String clientId;
     private final String androidClientId;
+    private final String iosClientId;
     private final String clientSecret;
     private final RestClient restClient;
 
     public GoogleOAuthClient(
             @Value("${sqldpass.oauth.google.client-id}") String clientId,
             @Value("${sqldpass.oauth.google.client-secret}") String clientSecret,
-            @Value("${sqldpass.oauth.google.android-client-id:}") String androidClientId) {
+            @Value("${sqldpass.oauth.google.android-client-id:}") String androidClientId,
+            @Value("${sqldpass.oauth.google.ios-client-id:}") String iosClientId) {
         this.clientId = clientId;
         this.clientSecret = clientSecret;
         this.androidClientId = androidClientId;
+        this.iosClientId = iosClientId;
         this.restClient = RestClient.create();
     }
 
@@ -95,8 +98,13 @@ public class GoogleOAuthClient {
             }
 
             String aud = response.has("aud") ? response.get("aud").asText() : "";
-            if (!aud.equals(clientId)
-                    && !(androidClientId != null && !androidClientId.isBlank() && aud.equals(androidClientId))) {
+            boolean audMatches =
+                    aud.equals(clientId)
+                            || (androidClientId != null && !androidClientId.isBlank()
+                                    && aud.equals(androidClientId))
+                            || (iosClientId != null && !iosClientId.isBlank()
+                                    && aud.equals(iosClientId));
+            if (!audMatches) {
                 log.warn("Google ID token aud mismatch: aud={}", aud);
                 throw new SqldpassException(ErrorCode.OAUTH_LOGIN_FAILED);
             }
