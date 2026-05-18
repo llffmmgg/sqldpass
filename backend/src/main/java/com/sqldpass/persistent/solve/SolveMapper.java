@@ -33,8 +33,8 @@ public class SolveMapper {
         return new SolveAnswer(
                 entity.getId(),
                 entity.getQuestion().getId(),
-                entity.getSelectedOption() != null ? entity.getSelectedOption() : 0,
-                entity.getCorrectOption() != null ? entity.getCorrectOption() : 0,
+                entity.getSelectedOption(),
+                entity.getCorrectOption(),
                 entity.isCorrect()
         );
     }

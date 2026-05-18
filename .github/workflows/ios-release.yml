@@ -1,0 +1,62 @@
+name: iOS Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      upload_to_testflight:
+        description: 'Upload the exported IPA to TestFlight after archive succeeds'
+        required: true
+        type: boolean
+        default: false
+
+jobs:
+  archive:
+    name: App Store archive
+    runs-on: macos-15
+    timeout-minutes: 45
+    defaults:
+      run:
+        working-directory: ios
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Show Xcode version
+        run: xcodebuild -version
+
+      - name: Generate Xcode project
+        run: bash scripts/bootstrap_ci.sh
+
+      - name: Archive and export IPA
+        env:
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          IOS_BUNDLE_ID: ${{ vars.IOS_BUNDLE_ID || 'com.sqldpass.app' }}
+          IOS_EXPORT_METHOD: ${{ vars.IOS_EXPORT_METHOD || 'app-store-connect' }}
+          IOS_CERTIFICATE_P12_BASE64: ${{ secrets.IOS_CERTIFICATE_P12_BASE64 }}
+          IOS_CERTIFICATE_PASSWORD: ${{ secrets.IOS_CERTIFICATE_PASSWORD }}
+          IOS_PROVISIONING_PROFILE_BASE64: ${{ secrets.IOS_PROVISIONING_PROFILE_BASE64 }}
+          IOS_PROVISIONING_PROFILE_NAME: ${{ secrets.IOS_PROVISIONING_PROFILE_NAME }}
+          KEYCHAIN_PASSWORD: ${{ secrets.IOS_KEYCHAIN_PASSWORD }}
+        run: bash scripts/archive_app_store.sh
+
+      - name: Upload IPA artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sqldpass-ios-ipa
+          path: ios/build/export/*.ipa
+          if-no-files-found: error
+
+      - name: Stop before TestFlight
+        if: ${{ !inputs.upload_to_testflight }}
+        run: |
+          echo "IPA export completed."
+          echo "upload_to_testflight=false, so this workflow intentionally stops before App Store Connect upload."
+
+      - name: Upload to TestFlight
+        if: ${{ inputs.upload_to_testflight }}
+        env:
+          APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          APP_STORE_CONNECT_API_KEY_BASE64: ${{ secrets.APP_STORE_CONNECT_API_KEY_BASE64 }}
+        run: bash scripts/upload_testflight.sh build/export/*.ipa

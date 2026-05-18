@@ -55,6 +55,8 @@ class PaymentServiceTest {
     @Mock
     private PlayBillingClient playBillingClient;
     @Mock
+    private AppStoreClient appStoreClient;
+    @Mock
     private PaymentFailureRecorder failureRecorder;
     @Mock
     private SubscriptionHistoryService historyService;
@@ -86,7 +88,7 @@ class PaymentServiceTest {
 
         service = new PaymentService(properties, portOneClient,
                 paymentRepository, subscriptionRepository, memberRepository,
-                playBillingClient, playBillingProperties, failureRecorder, historyService,
+                playBillingClient, playBillingProperties, appStoreClient, failureRecorder, historyService,
                 subscriptionService, appSettingService, discordNotifier);
 
         // 기존 테스트는 화이트리스트(베타) 모드 동작을 검증하므로 토글 OFF 가정.

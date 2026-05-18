@@ -93,7 +93,8 @@ struct SolveResultView: View {
                 questionId: ans.questionId,
                 displayOrder: q?.displayOrder ?? (idx + 1),
                 content: q?.content ?? "(문제 정보 누락)",
-                chosenAnswer: ans.chosenAnswer,
+                selectedOption: ans.selectedOption,
+                correctOption: ans.correctOption,
                 isCorrect: ans.correct
             )
         }

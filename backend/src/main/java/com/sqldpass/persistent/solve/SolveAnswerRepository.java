@@ -18,6 +18,7 @@ public interface SolveAnswerRepository extends JpaRepository<SolveAnswerEntity, 
     @Query(value = """
             SELECT last_sa.question_id AS questionId,
                    q.content AS questionContent,
+                   q.question_type AS questionType,
                    q.subject_id AS subjectId,
                    s2.name AS subjectName,
                    (

@@ -34,7 +34,8 @@ struct AuthView: View {
                 .signInWithAppleButtonStyle(.black)
                 .frame(height: 50)
                 .clipShape(RoundedRectangle(cornerRadius: Radius.sm))
-                .accessibilityLabel("Apple 로 로그인")
+                .accessibilityLabel("Apple로 로그인")
+                .disabled(isExchanging)
 
                 Button {
                     handleGoogleTap()
@@ -42,7 +43,7 @@ struct AuthView: View {
                     HStack(spacing: Spacing.sm) {
                         Image(systemName: "g.circle.fill")
                             .font(.title3)
-                        Text("Google 로 로그인")
+                        Text("Google로 로그인")
                             .font(AppType.bodyEmph)
                     }
                     .frame(maxWidth: .infinity)
@@ -57,7 +58,7 @@ struct AuthView: View {
                 }
                 .disabled(isExchanging)
 
-                Text("로그인 시 [이용약관]과 [개인정보처리방침]에 동의합니다")
+                Text("로그인하면 이용약관과 개인정보처리방침에 동의한 것으로 간주됩니다.")
                     .font(AppType.caption)
                     .foregroundStyle(Color.appTextSubtle)
                     .multilineTextAlignment(.center)
@@ -83,7 +84,7 @@ struct AuthView: View {
                 Text("문어CBT")
                     .font(AppType.display)
                     .foregroundStyle(Color.appTextPrimary)
-                Text("SQLD · 정처기 실기 · 컴활 1급")
+                Text("SQLD · 정보처리기사 · 컴활")
                     .font(AppType.callout)
                     .foregroundStyle(Color.appTextMuted)
             }
@@ -96,7 +97,7 @@ struct AuthView: View {
         switch result {
         case .success(let auth):
             guard let credential = auth.credential as? ASAuthorizationAppleIDCredential else {
-                errorMessage = "Apple 자격 증명을 읽지 못했습니다."
+                errorMessage = "Apple 인증 정보를 읽지 못했습니다."
                 return
             }
             isExchanging = true
@@ -109,7 +110,6 @@ struct AuthView: View {
                 isExchanging = false
             }
         case .failure(let error):
-            // 사용자가 취소한 경우(.canceled)는 메시지 안 띄움.
             if (error as NSError).code != ASAuthorizationError.canceled.rawValue {
                 errorMessage = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
             }

@@ -52,7 +52,7 @@ class WrongAnswerControllerTest {
     @DisplayName("GET /api/wrong-answers returns the wrong-answer list")
     void getWrongAnswers() throws Exception {
         WrongAnswerResponse response = new WrongAnswerResponse(
-                10L, "Question content", 7L, "SQL Basics", 3, LocalDateTime.of(2026, 4, 2, 11, 0));
+                10L, "Question content", "MCQ", 7L, "SQL Basics", 3, LocalDateTime.of(2026, 4, 2, 11, 0));
         given(wrongAnswerService.getWrongAnswers(1L, 7L)).willReturn(List.of(response));
 
         mockMvc.perform(get("/api/wrong-answers")
@@ -60,6 +60,7 @@ class WrongAnswerControllerTest {
                         .param("subjectId", "7"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].questionId").value(10))
+                .andExpect(jsonPath("$[0].questionType").value("MCQ"))
                 .andExpect(jsonPath("$[0].subjectName").value("SQL Basics"))
                 .andExpect(jsonPath("$[0].wrongCount").value(3));
     }

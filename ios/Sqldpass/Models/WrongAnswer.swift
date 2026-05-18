@@ -4,6 +4,7 @@ import Foundation
 struct WrongAnswer: Codable, Equatable, Hashable, Identifiable {
     let questionId: Int64
     let questionContent: String
+    let questionType: String
     let subjectId: Int64
     let subjectName: String
     let wrongCount: Int
@@ -28,6 +29,7 @@ struct WrongAnswerStats: Codable, Equatable, Identifiable {
 struct WrongAnswerPreview: Codable, Equatable, Identifiable {
     let questionId: Int64
     let questionContent: String
+    let questionType: String
     let subjectName: String
 
     var id: Int64 { questionId }
@@ -41,4 +43,23 @@ struct WrongAnswerRetryResult: Codable, Equatable {
     /// 단답/약술형 모범답안. MCQ는 nil
     let correctAnswer: String?
     let explanation: String?
+}
+
+extension WrongAnswer {
+    var isTextAnswerType: Bool {
+        questionType.isTextAnswerType
+    }
+}
+
+extension WrongAnswerPreview {
+    var isTextAnswerType: Bool {
+        questionType.isTextAnswerType
+    }
+}
+
+private extension String {
+    var isTextAnswerType: Bool {
+        let normalized = uppercased()
+        return normalized.contains("SHORT") || normalized.contains("DESCRIPTIVE") || normalized.contains("TEXT")
+    }
 }

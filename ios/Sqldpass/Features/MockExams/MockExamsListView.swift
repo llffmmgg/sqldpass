@@ -9,7 +9,7 @@ struct MockExamsListView: View {
             content
                 .background(Color.appPage)
                 .navigationTitle("모의고사")
-                .navigationBarTitleDisplayMode(.large)
+                .navigationBarTitleDisplayMode(.inline)
                 .refreshable {
                     await viewModel.load()
                 }
@@ -34,7 +34,7 @@ struct MockExamsListView: View {
                             result: result,
                             questions: questions,
                             onDone: {
-                                path = NavigationPath() // 모의고사 목록으로 복귀
+                                path = NavigationPath()
                             }
                         )
                     }
@@ -54,7 +54,7 @@ struct MockExamsListView: View {
             } description: {
                 Text(errorMessage)
             } actions: {
-                Button("재시도") {
+                Button("다시 시도") {
                     Task { await viewModel.load() }
                 }
             }
@@ -62,18 +62,30 @@ struct MockExamsListView: View {
             ContentUnavailableView(
                 "모의고사가 없어요",
                 systemImage: "doc.text",
-                description: Text("관리자가 모의고사를 등록하면 여기에 표시됩니다")
+                description: Text("등록된 시험이 생기면 여기에 표시됩니다.")
             )
         } else {
             ScrollView {
-                LazyVStack(spacing: Spacing.md) {
-                    ForEach(viewModel.exams) { exam in
-                        Button {
-                            path.append(MockExamRoute.detail(examId: exam.id))
-                        } label: {
-                            ExamCard(exam: exam)
+                VStack(alignment: .leading, spacing: Spacing.lg) {
+                    VStack(alignment: .leading, spacing: Spacing.xs) {
+                        Text("모의고사")
+                            .font(AppType.heading.weight(.bold))
+                            .foregroundStyle(Color.appTextPrimary)
+                        Text("실전 감각을 유지할 수 있게 한 회차씩 정리했어요.")
+                            .font(AppType.callout)
+                            .foregroundStyle(Color.appTextMuted)
+                    }
+                    .padding(.top, Spacing.base)
+
+                    LazyVStack(spacing: Spacing.md) {
+                        ForEach(viewModel.exams) { exam in
+                            Button {
+                                path.append(MockExamRoute.detail(examId: exam.id))
+                            } label: {
+                                ExamCard(exam: exam)
+                            }
+                            .buttonStyle(.plain)
                         }
-                        .buttonStyle(.plain)
                     }
                 }
                 .padding(Spacing.base)
@@ -85,42 +97,43 @@ struct MockExamsListView: View {
 private struct ExamCard: View {
     let exam: MockExamSummary
 
+    private var locked: Bool {
+        exam.isPremium && !exam.purchased
+    }
+
     var body: some View {
-        VStack(alignment: .leading, spacing: Spacing.sm) {
-            HStack(spacing: Spacing.sm) {
-                // 종류 chip
+        VStack(alignment: .leading, spacing: Spacing.md) {
+            HStack(alignment: .center, spacing: Spacing.sm) {
                 Text(exam.typeLabel)
                     .font(AppType.caption.weight(.semibold))
                     .foregroundStyle(exam.typeAccentColor)
                     .padding(.horizontal, Spacing.sm)
                     .padding(.vertical, Spacing.xxs)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: Radius.full)
-                            .stroke(exam.typeAccentColor.opacity(0.5), lineWidth: 1)
-                    )
+                    .background(exam.typeAccentColor.opacity(0.12))
+                    .clipShape(RoundedRectangle(cornerRadius: Radius.full))
+
+                Text("No.\(String(format: "%02d", exam.sequence))")
+                    .font(AppType.caption.weight(.semibold))
+                    .foregroundStyle(Color.appTextMuted)
+                    .padding(.horizontal, Spacing.sm)
+                    .padding(.vertical, Spacing.xxs)
+                    .background(Color.appElevated)
+                    .clipShape(RoundedRectangle(cornerRadius: Radius.full))
 
                 if exam.isPastExam {
                     Text("기출")
                         .font(AppType.caption.weight(.semibold))
                         .foregroundStyle(Color.semanticInfo)
-                        .padding(.horizontal, Spacing.sm)
-                        .padding(.vertical, Spacing.xxs)
-                        .background(Color.semanticInfo.opacity(0.1))
-                        .clipShape(RoundedRectangle(cornerRadius: Radius.full))
-                }
-
-                if exam.expertVerified {
-                    Image(systemName: "checkmark.seal.fill")
-                        .font(.caption)
-                        .foregroundStyle(Color.brandPrimary)
                 }
 
                 Spacer()
 
-                if exam.isPremium && !exam.purchased {
+                if locked {
                     Image(systemName: "lock.fill")
-                        .font(.callout)
                         .foregroundStyle(Color.semanticWarning)
+                } else if exam.expertVerified {
+                    Image(systemName: "checkmark.seal.fill")
+                        .foregroundStyle(Color.brandPrimary)
                 }
             }
 
@@ -132,30 +145,36 @@ private struct ExamCard: View {
 
             HStack(spacing: Spacing.md) {
                 Label("\(exam.totalQuestions)문제", systemImage: "list.number")
-                    .font(AppType.footnote)
-                    .foregroundStyle(Color.appTextMuted)
-
                 if let label = exam.difficultyLabel {
                     Label(label, systemImage: "speedometer")
-                        .font(AppType.footnote)
-                        .foregroundStyle(Color.appTextMuted)
                 }
-
                 Spacer()
-
                 if let best = exam.bestScoreLabel {
                     Text(best)
                         .font(AppType.monoNumeric.weight(.semibold))
-                        .foregroundStyle(exam.solved ? Color.brandPrimary : Color.appTextMuted)
+                        .foregroundStyle(Color.brandPrimary)
                 }
             }
+            .font(AppType.footnote)
+            .foregroundStyle(Color.appTextMuted)
+
+            HStack {
+                Spacer()
+                Label(locked ? "프리미엄 필요" : "응시하기", systemImage: locked ? "lock.fill" : "play.fill")
+                    .font(AppType.bodyEmph)
+                    .foregroundStyle(Color.brandPrimaryFG)
+                Spacer()
+            }
+            .frame(height: 48)
+            .background(locked ? Color.appTextSubtle.opacity(0.28) : Color.brandPrimary)
+            .clipShape(RoundedRectangle(cornerRadius: Radius.md))
         }
         .padding(Spacing.base)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.appSurface)
+        .background(locked ? Color.appElevated : Color.appSurface)
         .overlay(
             RoundedRectangle(cornerRadius: Radius.lg)
-                .stroke(Color.appBorder, lineWidth: 1)
+                .stroke(locked ? Color.appBorderStrong : Color.appBorder, lineWidth: 1)
         )
         .clipShape(RoundedRectangle(cornerRadius: Radius.lg))
     }

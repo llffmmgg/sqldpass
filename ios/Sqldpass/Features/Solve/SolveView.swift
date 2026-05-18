@@ -5,7 +5,6 @@ struct SolveView: View {
     @State private var showExitConfirm = false
     @Environment(\.dismiss) private var dismiss
 
-    /// 제출 성공 후 결과 화면 푸시 트리거 (Step 5 에서 wiring)
     var onSubmitted: ((Solve) -> Void)?
 
     var body: some View {
@@ -30,16 +29,13 @@ struct SolveView: View {
                 VStack(alignment: .leading, spacing: Spacing.lg) {
                     if let question = viewModel.currentQuestion {
                         QuestionBody(question: question)
-                        OMRAnswerGrid(
-                            question: question,
-                            chosen: viewModel.currentEntry?.chosenAnswer,
-                            onSelect: { viewModel.select($0) }
-                        )
-                        if viewModel.currentEntry?.chosenAnswer != nil {
+                        answerInput(for: question)
+
+                        if viewModel.currentEntry?.isAnswered == true {
                             Button {
                                 viewModel.clearAnswer()
                             } label: {
-                                Label("선택 지우기", systemImage: "arrow.uturn.backward")
+                                Label("답안 지우기", systemImage: "arrow.uturn.backward")
                                     .font(AppType.footnote)
                             }
                             .buttonStyle(.borderless)
@@ -85,12 +81,14 @@ struct SolveView: View {
                         Button {
                             viewModel.toggleMark()
                         } label: {
-                            Image(systemName: viewModel.currentEntry?.markedForReview == true
-                                  ? "flag.fill" : "flag")
-                                .foregroundStyle(viewModel.currentEntry?.markedForReview == true
-                                                 ? Color.semanticWarning : Color.appTextSubtle)
+                            Image(systemName: viewModel.currentEntry?.markedForReview == true ? "flag.fill" : "flag")
+                                .foregroundStyle(
+                                    viewModel.currentEntry?.markedForReview == true
+                                    ? Color.semanticWarning
+                                    : Color.appTextSubtle
+                                )
                         }
-                        .accessibilityLabel("다시 보기 표시 토글")
+                        .accessibilityLabel("다시 볼 문제로 표시")
                     }
                 }
             }
@@ -106,15 +104,65 @@ struct SolveView: View {
             }
             Button("계속 풀기", role: .cancel) {}
         } message: {
-            Text("지금까지 푼 답안은 저장되지 않습니다.")
+            Text("지금까지의 답안은 저장되지 않습니다.")
         }
-        .alert("제출 실패", isPresented: .constant(viewModel.errorMessage != nil), actions: {
-            Button("확인", role: .cancel) { /* viewModel.errorMessage clearing handled implicitly on next submit */ }
-        }, message: {
-            Text(viewModel.errorMessage ?? "")
-        })
+        .alert(
+            "제출 실패",
+            isPresented: Binding(
+                get: { viewModel.errorMessage != nil },
+                set: { if !$0 { viewModel.dismissError() } }
+            ),
+            actions: {
+                Button("확인", role: .cancel) { viewModel.dismissError() }
+            },
+            message: {
+                Text(viewModel.errorMessage ?? "")
+            }
+        )
         .onAppear {
             viewModel.start()
         }
+    }
+
+    @ViewBuilder
+    private func answerInput(for question: MockExamQuestionItem) -> some View {
+        if question.isTextAnswerType {
+            VStack(alignment: .leading, spacing: Spacing.sm) {
+                Text("답안 입력")
+                    .font(AppType.bodyEmph)
+                    .foregroundStyle(Color.appTextPrimary)
+                TextField(
+                    "답안을 입력하세요",
+                    text: Binding(
+                        get: { viewModel.currentEntry?.answerText ?? "" },
+                        set: { viewModel.updateAnswerText($0) }
+                    ),
+                    axis: .vertical
+                )
+                .textFieldStyle(.plain)
+                .lineLimit(3...8)
+                .padding(Spacing.md)
+                .background(Color.appSurface)
+                .overlay(
+                    RoundedRectangle(cornerRadius: Radius.md)
+                        .stroke(Color.appBorder, lineWidth: 1)
+                )
+                .clipShape(RoundedRectangle(cornerRadius: Radius.md))
+                .submitLabel(.done)
+            }
+        } else {
+            OMRAnswerGrid(
+                question: question,
+                selectedOption: viewModel.currentEntry?.selectedOption,
+                onSelect: { viewModel.select(option: $0) }
+            )
+        }
+    }
+}
+
+private extension MockExamQuestionItem {
+    var isTextAnswerType: Bool {
+        let type = questionType.uppercased()
+        return type.contains("SHORT") || type.contains("DESCRIPTIVE") || type.contains("TEXT")
     }
 }

@@ -8,7 +8,7 @@
 - 최소 iOS: 17.0
 - 프로젝트 생성: xcodegen (`ios/project.yml` → `ios/Sqldpass.xcodeproj`)
 - 빌드 도구: Xcode 15.4+ (현재 16.2)
-- 백엔드 API 베이스: Debug `http://localhost:8080`, Release `https://sqldpass.com`
+- 백엔드 API 베이스: 기본값 `https://www.sqldpass.com`; 로컬/개발 서버는 `SQLDPASS_BACKEND_URL` 환경변수로 override
 
 ## Working Directory
 

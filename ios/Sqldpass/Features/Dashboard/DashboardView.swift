@@ -3,23 +3,44 @@ import SwiftUI
 struct DashboardView: View {
     @State private var viewModel = DashboardViewModel()
 
+    private var nickname: String {
+        viewModel.member?.nickname ?? "학습자"
+    }
+
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(alignment: .leading, spacing: Spacing.lg) {
-                    welcomeHeader
-                    streakCard
-                    quickStatsRow
-
-                    if let errorMessage = viewModel.errorMessage {
-                        errorBanner(message: errorMessage)
+                VStack(spacing: 0) {
+                    AppHeroHeader(
+                        eyebrow: "문어CBT",
+                        title: "\(nickname)님의 오늘 학습",
+                        subtitle: heroSubtitle
+                    ) {
+                        HStack(spacing: Spacing.md) {
+                            Image(systemName: "bell")
+                            Image(systemName: "person.crop.circle")
+                        }
+                        .font(.title3)
+                        .foregroundStyle(Color.brandPrimaryFG.opacity(0.92))
                     }
+
+                    AppSheet {
+                        checkInPanel
+                        statsGrid
+                        quickStartSection
+
+                        if let errorMessage = viewModel.errorMessage {
+                            errorBanner(message: errorMessage)
+                        }
+                    }
+                    .offset(y: -Spacing.base)
+                    .padding(.bottom, -Spacing.base)
                 }
-                .padding(Spacing.base)
             }
+            .ignoresSafeArea(edges: .top)
             .background(Color.appPage)
-            .navigationTitle("홈")
-            .navigationBarTitleDisplayMode(.large)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar(.hidden, for: .navigationBar)
             .refreshable {
                 await viewModel.load()
             }
@@ -37,120 +58,115 @@ struct DashboardView: View {
         }
     }
 
-    // MARK: - Sections
-
-    private var welcomeHeader: some View {
-        VStack(alignment: .leading, spacing: Spacing.xs) {
-            Text("안녕하세요 👋")
-                .font(AppType.callout)
-                .foregroundStyle(Color.appTextMuted)
-            Text(viewModel.member?.nickname.appending("님") ?? "오늘도 한 문제씩")
-                .font(AppType.title)
-                .foregroundStyle(Color.appTextPrimary)
+    private var heroSubtitle: String {
+        if viewModel.streak?.solvedToday == true {
+            return "오늘 학습 완료. 내일도 같은 시간에 이어가면 좋아요."
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
+        return "짧게라도 한 세트를 풀고 연속 학습을 이어가세요."
     }
 
-    private var streakCard: some View {
-        let current = viewModel.streak?.currentStreak
-        let solvedToday = viewModel.streak?.solvedToday ?? false
-        let longest = viewModel.streak?.longestStreak
-
-        return VStack(alignment: .leading, spacing: Spacing.sm) {
-            HStack(spacing: Spacing.sm) {
-                Image(systemName: solvedToday ? "flame.fill" : "flame")
-                    .foregroundStyle(solvedToday ? Color.semanticWarning : Color.appTextSubtle)
-                Text("연속 학습")
-                    .font(AppType.bodyEmph)
-                    .foregroundStyle(Color.appTextPrimary)
-                Spacer()
-                Text(current.map { "\($0)일" } ?? "— 일")
-                    .font(AppType.monoNumericLarge)
+    private var checkInPanel: some View {
+        AppPanel {
+            HStack(spacing: Spacing.md) {
+                Image(systemName: viewModel.streak?.solvedToday == true ? "checkmark.seal.fill" : "sparkles")
+                    .font(.title2)
                     .foregroundStyle(Color.brandPrimary)
-            }
-            if let longest, longest > 0 {
-                Text("최장 \(longest)일 · \(solvedToday ? "오늘 풀이 완료" : "오늘 한 문제 풀어보세요")")
-                    .font(AppType.footnote)
-                    .foregroundStyle(Color.appTextSubtle)
-            } else {
-                Text("아직 푼 기록이 없어요")
-                    .font(AppType.footnote)
-                    .foregroundStyle(Color.appTextSubtle)
+                VStack(alignment: .leading, spacing: Spacing.xxs) {
+                    Text(viewModel.streak?.solvedToday == true ? "오늘 출석 완료" : "출석체크하고 기록 쌓기")
+                        .font(AppType.bodyEmph)
+                        .foregroundStyle(Color.appTextPrimary)
+                    Text("연속 학습 \(viewModel.streak?.currentStreak ?? 0)일")
+                        .font(AppType.footnote)
+                        .foregroundStyle(Color.appTextMuted)
+                }
+                Spacer()
             }
         }
-        .padding(Spacing.base)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.appSurface)
-        .overlay(
+        .background(
             RoundedRectangle(cornerRadius: Radius.lg)
-                .stroke(Color.appBorder, lineWidth: 1)
+                .fill(Color.brandPrimary.opacity(0.08))
         )
-        .clipShape(RoundedRectangle(cornerRadius: Radius.lg))
     }
 
-    private var quickStatsRow: some View {
+    private var statsGrid: some View {
         HStack(spacing: Spacing.md) {
-            statCard(
-                label: "전체 평균 풀이",
-                value: viewModel.stats.map { String(format: "%.1f", $0.avgDailyCount) } ?? "—",
-                hint: "하루 평균",
+            MetricTile(
+                title: "일 평균",
+                value: viewModel.stats.map { String(format: "%.1f", $0.avgDailyCount) } ?? "-",
+                caption: "문제",
+                icon: "chart.bar.fill",
                 color: .brandPrimary
             )
-            statCard(
-                label: "내 연속",
-                value: viewModel.streak.map { "\($0.currentStreak)" } ?? "—",
-                hint: "현재 streak",
-                color: .semanticInfo
+            MetricTile(
+                title: "최장 기록",
+                value: viewModel.streak.map { "\($0.longestStreak)" } ?? "-",
+                caption: "일",
+                icon: "trophy.fill",
+                color: .semanticWarning
             )
         }
     }
 
-    private func statCard(label: String, value: String, hint: String, color: Color) -> some View {
-        VStack(alignment: .leading, spacing: Spacing.xs) {
-            Text(label)
-                .font(AppType.footnote)
-                .foregroundStyle(Color.appTextMuted)
-            Text(value)
-                .font(AppType.monoNumericLarge)
-                .foregroundStyle(color)
-            Text(hint)
-                .font(AppType.caption)
-                .foregroundStyle(Color.appTextSubtle)
+    private var quickStartSection: some View {
+        VStack(alignment: .leading, spacing: Spacing.sm) {
+            AppSectionHeader(title: "바로 시작")
+            HStack(spacing: Spacing.md) {
+                NavigationLink {
+                    MockExamsListView()
+                } label: {
+                    QuickActionCard(title: "모의고사", subtitle: "실전처럼 풀기", icon: "doc.text.fill")
+                }
+                .buttonStyle(.plain)
+
+                NavigationLink {
+                    WrongAnswersView()
+                } label: {
+                    QuickActionCard(title: "오답노트", subtitle: "틀린 문제 복습", icon: "arrow.uturn.backward.circle.fill")
+                }
+                .buttonStyle(.plain)
+            }
         }
-        .padding(Spacing.base)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.appSurface)
-        .overlay(
-            RoundedRectangle(cornerRadius: Radius.lg)
-                .stroke(Color.appBorder, lineWidth: 1)
-        )
-        .clipShape(RoundedRectangle(cornerRadius: Radius.lg))
     }
 
     private func errorBanner(message: String) -> some View {
-        HStack(alignment: .top, spacing: Spacing.sm) {
-            Image(systemName: "exclamationmark.triangle.fill")
-                .foregroundStyle(Color.semanticDanger)
-            VStack(alignment: .leading, spacing: Spacing.xxs) {
-                Text("불러오기 실패")
-                    .font(AppType.bodyEmph)
-                Text(message)
-                    .font(AppType.footnote)
-                    .foregroundStyle(Color.appTextMuted)
+        AppPanel {
+            HStack(alignment: .top, spacing: Spacing.sm) {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .foregroundStyle(Color.semanticDanger)
+                VStack(alignment: .leading, spacing: Spacing.xxs) {
+                    Text("불러오기 실패")
+                        .font(AppType.bodyEmph)
+                    Text(message)
+                        .font(AppType.footnote)
+                        .foregroundStyle(Color.appTextMuted)
+                }
+                Spacer()
+                Button("다시") {
+                    Task { await viewModel.load() }
+                }
+                .font(AppType.footnote)
             }
-            Spacer()
-            Button("재시도") {
-                Task { await viewModel.load() }
-            }
-            .font(AppType.footnote)
         }
-        .padding(Spacing.base)
-        .background(Color.semanticDanger.opacity(0.08))
-        .overlay(
-            RoundedRectangle(cornerRadius: Radius.lg)
-                .stroke(Color.semanticDanger.opacity(0.3), lineWidth: 1)
-        )
-        .clipShape(RoundedRectangle(cornerRadius: Radius.lg))
+    }
+}
+
+private struct QuickActionCard: View {
+    let title: String
+    let subtitle: String
+    let icon: String
+
+    var body: some View {
+        AppPanel {
+            Image(systemName: icon)
+                .font(.title2)
+                .foregroundStyle(Color.brandPrimary)
+            Text(title)
+                .font(AppType.bodyEmph)
+                .foregroundStyle(Color.appTextPrimary)
+            Text(subtitle)
+                .font(AppType.caption)
+                .foregroundStyle(Color.appTextMuted)
+        }
     }
 }
 

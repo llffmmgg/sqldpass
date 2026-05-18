@@ -5,7 +5,8 @@ struct AnswerReviewRow: View {
         let questionId: Int64
         let displayOrder: Int
         let content: String
-        let chosenAnswer: String?
+        let selectedOption: Int?
+        let correctOption: Int?
         let isCorrect: Bool
     }
 
@@ -26,9 +27,14 @@ struct AnswerReviewRow: View {
                         Text("문제 \(item.displayOrder)")
                             .font(AppType.bodyEmph)
                             .foregroundStyle(Color.appTextPrimary)
-                        Text("내 답: \(item.chosenAnswer ?? "미응답")")
+                        Text("제출 답안: \(submittedAnswerText)")
                             .font(AppType.footnote)
                             .foregroundStyle(Color.appTextMuted)
+                        if let correctOption = item.correctOption, !item.isCorrect {
+                            Text("정답: \(correctOption)번")
+                                .font(AppType.footnote)
+                                .foregroundStyle(Color.semanticSuccess)
+                        }
                     }
                     Spacer()
                     Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
@@ -43,9 +49,6 @@ struct AnswerReviewRow: View {
                     .font(AppType.body)
                     .foregroundStyle(Color.appTextPrimary)
                     .padding(.top, Spacing.xs)
-                Text("자세한 해설은 곧 지원 예정입니다.")
-                    .font(AppType.caption)
-                    .foregroundStyle(Color.appTextSubtle)
             }
         }
         .padding(Spacing.md)
@@ -55,5 +58,10 @@ struct AnswerReviewRow: View {
                 .stroke(Color.appBorder, lineWidth: 1)
         )
         .clipShape(RoundedRectangle(cornerRadius: Radius.md))
+    }
+
+    private var submittedAnswerText: String {
+        guard let selectedOption = item.selectedOption else { return "미응답" }
+        return "\(selectedOption)번"
     }
 }

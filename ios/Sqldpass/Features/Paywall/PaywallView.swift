@@ -46,11 +46,19 @@ struct PaywallView: View {
                 ProgressView().controlSize(.large)
             }
         }
-        .alert("구매 완료", isPresented: .constant(viewModel.purchaseSuccess), actions: {
-            Button("확인", role: .cancel) {}
-        }, message: {
-            Text("프리미엄 기능을 모두 이용할 수 있어요.")
-        })
+        .alert(
+            "구매 완료",
+            isPresented: Binding(
+                get: { viewModel.purchaseSuccess },
+                set: { if !$0 { viewModel.dismissPurchaseSuccess() } }
+            ),
+            actions: {
+                Button("확인", role: .cancel) { viewModel.dismissPurchaseSuccess() }
+            },
+            message: {
+                Text("프리미엄 기능을 사용할 수 있습니다.")
+            }
+        )
     }
 
     private var header: some View {
@@ -61,7 +69,7 @@ struct PaywallView: View {
             Text("문어CBT 프리미엄")
                 .font(AppType.title.weight(.bold))
                 .foregroundStyle(Color.appTextPrimary)
-            Text("광고 없이 모든 기능을 마음껏 이용하세요")
+            Text("광고 없이 모든 기능을 이용하세요.")
                 .font(AppType.body)
                 .foregroundStyle(Color.appTextMuted)
         }
@@ -73,7 +81,7 @@ struct PaywallView: View {
             HStack(spacing: Spacing.sm) {
                 Image(systemName: "checkmark.seal.fill")
                     .foregroundStyle(Color.brandPrimary)
-                Text("이미 프리미엄 이용 중")
+                Text("프리미엄 이용 중")
                     .font(AppType.bodyEmph)
             }
             if let provider = viewModel.subscription?.provider {
@@ -116,7 +124,7 @@ struct PaywallView: View {
             Text("자동갱신 안내")
                 .font(AppType.caption.weight(.semibold))
                 .foregroundStyle(Color.appTextPrimary)
-            Text("구매 후 자동으로 갱신되며, 만료 24시간 전까지 취소 가능합니다. 갱신 가격은 변경될 수 있으며 변경 시 사전 안내됩니다.")
+            Text("구매 후 자동으로 갱신되며, 만료 24시간 전까지 취소할 수 있습니다.")
                 .font(AppType.caption)
                 .foregroundStyle(Color.appTextMuted)
                 .fixedSize(horizontal: false, vertical: true)

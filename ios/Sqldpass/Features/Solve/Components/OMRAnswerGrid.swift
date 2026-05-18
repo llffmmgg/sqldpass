@@ -2,11 +2,10 @@ import SwiftUI
 
 struct OMRAnswerGrid: View {
     let question: MockExamQuestionItem
-    let chosen: String?
-    let onSelect: (String) -> Void
+    let selectedOption: Int?
+    let onSelect: (Int) -> Void
 
-    /// 객관식 선택지 — 4지선다 가정. 단답형 등은 향후 확장.
-    private let choices = ["1", "2", "3", "4"]
+    private let choices = [1, 2, 3, 4]
 
     @State private var feedbackTrigger: Int = 0
 
@@ -21,14 +20,14 @@ struct OMRAnswerGrid: View {
                         ZStack {
                             Circle()
                                 .stroke(
-                                    chosen == value ? Color.brandPrimary : Color.appBorder,
-                                    lineWidth: chosen == value ? 2 : 1
+                                    selectedOption == value ? Color.brandPrimary : Color.appBorder,
+                                    lineWidth: selectedOption == value ? 2 : 1
                                 )
                                 .frame(width: 32, height: 32)
-                            Text(value)
+                            Text("\(value)")
                                 .font(AppType.bodyEmph)
                                 .foregroundStyle(
-                                    chosen == value ? Color.brandPrimary : Color.appTextPrimary
+                                    selectedOption == value ? Color.brandPrimary : Color.appTextPrimary
                                 )
                         }
                         Text("\(value)번")
@@ -38,12 +37,12 @@ struct OMRAnswerGrid: View {
                     }
                     .padding(Spacing.md)
                     .background(
-                        chosen == value ? Color.brandPrimary.opacity(0.1) : Color.appSurface
+                        selectedOption == value ? Color.brandPrimary.opacity(0.1) : Color.appSurface
                     )
                     .overlay(
                         RoundedRectangle(cornerRadius: Radius.md)
                             .stroke(
-                                chosen == value ? Color.brandPrimary : Color.appBorder,
+                                selectedOption == value ? Color.brandPrimary : Color.appBorder,
                                 lineWidth: 1
                             )
                     )
@@ -51,7 +50,7 @@ struct OMRAnswerGrid: View {
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel("\(value)번 선택")
-                .accessibilityAddTraits(chosen == value ? .isSelected : [])
+                .accessibilityAddTraits(selectedOption == value ? .isSelected : [])
             }
         }
         .sensoryFeedback(.selection, trigger: feedbackTrigger)

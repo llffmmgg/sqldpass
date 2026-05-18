@@ -8,7 +8,7 @@ struct InsightsView: View {
         content
             .background(Color.appPage)
             .navigationTitle("인사이트")
-            .navigationBarTitleDisplayMode(.large)
+            .navigationBarTitleDisplayMode(.inline)
             .refreshable {
                 await viewModel.load()
             }
@@ -22,18 +22,30 @@ struct InsightsView: View {
     @ViewBuilder
     private var content: some View {
         if viewModel.isLoading && viewModel.streak == nil {
-            ProgressView().controlSize(.large).frame(maxWidth: .infinity, maxHeight: .infinity)
+            ProgressView()
+                .controlSize(.large)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
         } else if let errorMessage = viewModel.errorMessage, viewModel.streak == nil {
             ContentUnavailableView {
                 Label("불러오기 실패", systemImage: "exclamationmark.triangle")
             } description: {
                 Text(errorMessage)
             } actions: {
-                Button("재시도") { Task { await viewModel.load() } }
+                Button("다시 시도") { Task { await viewModel.load() } }
             }
         } else {
             ScrollView {
                 VStack(alignment: .leading, spacing: Spacing.lg) {
+                    VStack(alignment: .leading, spacing: Spacing.xs) {
+                        Text("인사이트")
+                            .font(AppType.heading.weight(.bold))
+                            .foregroundStyle(Color.appTextPrimary)
+                        Text("점수 변화와 취약 과목을 한눈에 확인하세요.")
+                            .font(AppType.callout)
+                            .foregroundStyle(Color.appTextMuted)
+                    }
+                    .padding(.top, Spacing.base)
+
                     overviewSection
                     if !viewModel.recentSolves.isEmpty {
                         scoreTrendSection
@@ -51,22 +63,22 @@ struct InsightsView: View {
         HStack(spacing: Spacing.md) {
             overviewCard(
                 label: "연속 학습",
-                value: viewModel.streak.map { "\($0.currentStreak)" } ?? "—",
+                value: viewModel.streak.map { "\($0.currentStreak)" } ?? "-",
                 unit: "일",
                 color: .semanticWarning,
                 icon: "flame.fill"
             )
             overviewCard(
-                label: "최장",
-                value: viewModel.streak.map { "\($0.longestStreak)" } ?? "—",
+                label: "최장 기록",
+                value: viewModel.streak.map { "\($0.longestStreak)" } ?? "-",
                 unit: "일",
                 color: .brandPrimary,
                 icon: "trophy.fill"
             )
             overviewCard(
-                label: "전체 평균",
-                value: viewModel.overallStats.map { String(format: "%.1f", $0.avgDailyCount) } ?? "—",
-                unit: "건/일",
+                label: "일 평균",
+                value: viewModel.overallStats.map { String(format: "%.1f", $0.avgDailyCount) } ?? "-",
+                unit: "문제",
                 color: .semanticInfo,
                 icon: "chart.bar.fill"
             )
@@ -74,39 +86,29 @@ struct InsightsView: View {
     }
 
     private func overviewCard(label: String, value: String, unit: String, color: Color, icon: String) -> some View {
-        VStack(alignment: .leading, spacing: Spacing.xs) {
-            HStack(spacing: Spacing.xs) {
-                Image(systemName: icon)
-                    .font(.footnote)
-                    .foregroundStyle(color)
-                Text(label)
-                    .font(AppType.caption)
-                    .foregroundStyle(Color.appTextMuted)
-            }
+        AppPanel {
+            Image(systemName: icon)
+                .font(.footnote)
+                .foregroundStyle(color)
+            Text(label)
+                .font(AppType.caption)
+                .foregroundStyle(Color.appTextMuted)
             HStack(alignment: .firstTextBaseline, spacing: 2) {
                 Text(value)
                     .font(AppType.title.weight(.bold))
                     .foregroundStyle(color)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
                 Text(unit)
                     .font(AppType.caption)
                     .foregroundStyle(Color.appTextSubtle)
             }
         }
-        .padding(Spacing.md)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.appSurface)
-        .overlay(
-            RoundedRectangle(cornerRadius: Radius.lg)
-                .stroke(Color.appBorder, lineWidth: 1)
-        )
-        .clipShape(RoundedRectangle(cornerRadius: Radius.lg))
     }
 
     private var scoreTrendSection: some View {
         VStack(alignment: .leading, spacing: Spacing.sm) {
-            Text("최근 점수 추이")
-                .font(AppType.bodyEmph)
-                .foregroundStyle(Color.appTextPrimary)
+            AppSectionHeader(title: "최근 점수 추이")
             Chart {
                 ForEach(Array(viewModel.recentSolves.enumerated()), id: \.element.id) { idx, solve in
                     LineMark(
@@ -135,9 +137,7 @@ struct InsightsView: View {
 
     private var subjectWrongRateSection: some View {
         VStack(alignment: .leading, spacing: Spacing.sm) {
-            Text("과목별 오답률")
-                .font(AppType.bodyEmph)
-                .foregroundStyle(Color.appTextPrimary)
+            AppSectionHeader(title: "과목별 오답률")
             Chart {
                 ForEach(viewModel.subjectStats) { stat in
                     BarMark(

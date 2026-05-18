@@ -35,15 +35,18 @@ final class PaywallViewModel {
     func purchase(_ product: PaymentProduct) async {
         guard !isPurchasing else { return }
         isPurchasing = true
+        defer { isPurchasing = false }
         errorMessage = nil
+
         do {
             let result = try await StoreKitService.shared.purchase(product)
             switch result {
-            case .success(let jws, let productId, _):
+            case .success(let jws, let productId, _, let transaction):
                 _ = try await PaymentService.verifyApple(
                     signedTransaction: jws,
                     productId: productId
                 )
+                await transaction.finish()
                 purchaseSuccess = true
                 subscription = try? await PaymentService.subscription()
             case .userCancelled:
@@ -54,19 +57,36 @@ final class PaywallViewModel {
         } catch {
             errorMessage = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
         }
-        isPurchasing = false
     }
 
     @MainActor
     func restore() async {
+        guard !isPurchasing else { return }
         isPurchasing = true
+        defer { isPurchasing = false }
         errorMessage = nil
+
         do {
             try await StoreKitService.shared.restore()
+            try await syncCurrentEntitlements()
             subscription = try? await PaymentService.subscription()
         } catch {
             errorMessage = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
         }
-        isPurchasing = false
+    }
+
+    func dismissPurchaseSuccess() {
+        purchaseSuccess = false
+    }
+
+    private func syncCurrentEntitlements() async throws {
+        let entitlements = await StoreKitService.shared.currentEntitlements()
+        for entitlement in entitlements {
+            _ = try await PaymentService.verifyApple(
+                signedTransaction: entitlement.jws,
+                productId: entitlement.productId
+            )
+            await entitlement.transaction.finish()
+        }
     }
 }

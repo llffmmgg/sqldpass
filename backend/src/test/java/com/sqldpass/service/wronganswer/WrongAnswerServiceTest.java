@@ -63,6 +63,7 @@ class WrongAnswerServiceTest {
         WrongAnswerProjection projection = mock(WrongAnswerProjection.class);
         given(projection.getQuestionId()).willReturn(10L);
         given(projection.getQuestionContent()).willReturn("Question content");
+        given(projection.getQuestionType()).willReturn("MCQ");
         given(projection.getSubjectName()).willReturn("SQL Basics");
         given(projection.getWrongCount()).willReturn(3);
         given(projection.getLastWrongAt()).willReturn(LocalDateTime.of(2026, 4, 2, 11, 0));
@@ -73,6 +74,7 @@ class WrongAnswerServiceTest {
         assertThat(responses).hasSize(1);
         assertThat(responses.get(0).questionId()).isEqualTo(10L);
         assertThat(responses.get(0).questionContent()).isEqualTo("Question content");
+        assertThat(responses.get(0).questionType()).isEqualTo("MCQ");
         assertThat(responses.get(0).wrongCount()).isEqualTo(3);
     }
 
@@ -111,6 +113,7 @@ class WrongAnswerServiceTest {
         WrongAnswerProjection projection = mock(WrongAnswerProjection.class);
         given(projection.getQuestionId()).willReturn(10L);
         given(projection.getQuestionContent()).willReturn("Preview content");
+        given(projection.getQuestionType()).willReturn("SHORT_ANSWER");
         given(projection.getSubjectName()).willReturn("SQL Basics");
         given(solveAnswerRepository.findWrongAnswers(1L, null)).willReturn(List.of(projection));
 
@@ -119,6 +122,7 @@ class WrongAnswerServiceTest {
         assertThat(preview).hasSize(1);
         assertThat(preview.get(0).questionId()).isEqualTo(10L);
         assertThat(preview.get(0).questionContent()).isEqualTo("Preview content");
+        assertThat(preview.get(0).questionType()).isEqualTo("SHORT_ANSWER");
     }
 
     @Test

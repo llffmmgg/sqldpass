@@ -24,7 +24,8 @@ enum SolveService {
 
         struct Answer: Encodable {
             let questionId: Int64
-            let chosenAnswer: String?
+            let selectedOption: Int?
+            let answerText: String?
         }
     }
 

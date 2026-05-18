@@ -1,7 +1,7 @@
 import SwiftUI
 
 enum MainTab: Hashable {
-    case dashboard, mockExams, wrongAnswers, profile
+    case dashboard, mockExams, wrongAnswers, insights, profile
 }
 
 struct MainTabView: View {
@@ -17,19 +17,27 @@ struct MainTabView: View {
 
             MockExamsListView()
                 .tabItem {
-                    Label("모의고사", systemImage: "doc.text.image.fill")
+                    Label("모의고사", systemImage: "doc.text.fill")
                 }
                 .tag(MainTab.mockExams)
 
             WrongAnswersView()
                 .tabItem {
-                    Label("오답", systemImage: "arrow.uturn.left.circle.fill")
+                    Label("오답노트", systemImage: "arrow.uturn.backward.circle.fill")
                 }
                 .tag(MainTab.wrongAnswers)
 
+            NavigationStack {
+                InsightsView()
+            }
+            .tabItem {
+                Label("인사이트", systemImage: "chart.line.uptrend.xyaxis")
+            }
+            .tag(MainTab.insights)
+
             ProfileView()
                 .tabItem {
-                    Label("내정보", systemImage: "person.circle.fill")
+                    Label("마이", systemImage: "book.closed.fill")
                 }
                 .tag(MainTab.profile)
         }

@@ -7,11 +7,11 @@ public class SolveAnswer {
 
     private final Long id;
     private final Long questionId;
-    private final int selectedOption;
-    private final int correctOption;
+    private final Integer selectedOption;
+    private final Integer correctOption;
     private final boolean correct;
 
-    public SolveAnswer(Long id, Long questionId, int selectedOption, int correctOption, boolean correct) {
+    public SolveAnswer(Long id, Long questionId, Integer selectedOption, Integer correctOption, boolean correct) {
         this.id = id;
         this.questionId = questionId;
         this.selectedOption = selectedOption;

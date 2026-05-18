@@ -1,0 +1,36 @@
+{
+  "project": "sqldpass",
+  "phase": "ios-api-contract-hardening",
+  "description": "iOS solve/wrong-answer/payment flows aligned with the real backend API contract.",
+  "steps": [
+    {
+      "step": 1,
+      "name": "solve-api-contract",
+      "description": "Align iOS Solve submit/result models with /api/solves.",
+      "status": "completed",
+      "started_at": "2026-05-18T15:00:00+0900",
+      "completed_at": "2026-05-18T15:15:00+0900",
+      "summary": "SubmitRequest.Answer now sends selectedOption/answerText instead of chosenAnswer. SolveAnswer response decoding now uses questionId/selectedOption/correctOption/correct, and backend preserves nullable non-MCQ options."
+    },
+    {
+      "step": 2,
+      "name": "answer-type-ui",
+      "description": "Branch solve and wrong-answer retry UI by question type.",
+      "status": "completed",
+      "started_at": "2026-05-18T15:15:00+0900",
+      "completed_at": "2026-05-18T15:30:00+0900",
+      "summary": "MCQ answers use 1-4 selectedOption controls. Short-answer/descriptive answers use text input and submit answerText. Wrong-answer list/preview now include questionType."
+    },
+    {
+      "step": 3,
+      "name": "storekit-env-validation",
+      "description": "Harden StoreKit verification order and iOS environment defaults.",
+      "status": "completed",
+      "started_at": "2026-05-18T15:30:00+0900",
+      "completed_at": "2026-05-18T15:45:00+0900",
+      "summary": "Purchases, restores, and Transaction.updates finish transactions only after PaymentService.verifyApple succeeds. APIEnvironment follows Debug localhost and Release www.sqldpass.com defaults. AuthStore print logging was removed."
+    }
+  ],
+  "created_at": "2026-05-18T15:00:00+0900",
+  "completed_at": "2026-05-18T15:45:00+0900"
+}

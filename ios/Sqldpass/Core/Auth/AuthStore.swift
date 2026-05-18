@@ -28,7 +28,6 @@ final class AuthStore {
             self.nickname = nickname
         } catch {
             // Keychain 쓰기 실패는 드물지만 기록만 하고 메모리 상태는 유지
-            print("[AuthStore] keychain save failed: \(error)")
             self.token = token
             self.nickname = nickname
         }

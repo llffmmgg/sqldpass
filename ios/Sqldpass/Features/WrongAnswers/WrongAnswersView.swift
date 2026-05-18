@@ -8,8 +8,8 @@ struct WrongAnswersView: View {
         NavigationStack {
             content
                 .background(Color.appPage)
-                .navigationTitle("오답")
-                .navigationBarTitleDisplayMode(.large)
+                .navigationTitle("오답노트")
+                .navigationBarTitleDisplayMode(.inline)
                 .refreshable {
                     await viewModel.load()
                 }
@@ -34,24 +34,36 @@ struct WrongAnswersView: View {
     @ViewBuilder
     private var content: some View {
         if viewModel.isLoading && viewModel.items.isEmpty && viewModel.stats.isEmpty {
-            ProgressView().controlSize(.large).frame(maxWidth: .infinity, maxHeight: .infinity)
+            ProgressView()
+                .controlSize(.large)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
         } else if let errorMessage = viewModel.errorMessage, viewModel.items.isEmpty {
             ContentUnavailableView {
                 Label("불러오기 실패", systemImage: "exclamationmark.triangle")
             } description: {
                 Text(errorMessage)
             } actions: {
-                Button("재시도") { Task { await viewModel.load() } }
+                Button("다시 시도") { Task { await viewModel.load() } }
             }
         } else if viewModel.items.isEmpty && viewModel.stats.isEmpty {
             ContentUnavailableView(
                 "오답이 없어요",
                 systemImage: "checkmark.seal",
-                description: Text("틀린 문제가 생기면 여기서 다시 풀 수 있어요")
+                description: Text("틀린 문제가 생기면 여기에 다시 풀 수 있게 모아둘게요.")
             )
         } else {
             ScrollView {
                 VStack(alignment: .leading, spacing: Spacing.lg) {
+                    VStack(alignment: .leading, spacing: Spacing.xs) {
+                        Text("오답노트")
+                            .font(AppType.heading.weight(.bold))
+                            .foregroundStyle(Color.appTextPrimary)
+                        Text("가장 최근에 틀린 문제부터 다시 풀어볼 수 있어요.")
+                            .font(AppType.callout)
+                            .foregroundStyle(Color.appTextMuted)
+                    }
+                    .padding(.top, Spacing.base)
+
                     if !viewModel.stats.isEmpty {
                         statsSection
                     }
@@ -66,9 +78,7 @@ struct WrongAnswersView: View {
 
     private var statsSection: some View {
         VStack(alignment: .leading, spacing: Spacing.sm) {
-            Text("과목별 오답률")
-                .font(AppType.bodyEmph)
-                .foregroundStyle(Color.appTextPrimary)
+            AppSectionHeader(title: "과목별 오답률")
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: Spacing.md) {
                     ForEach(viewModel.stats) { stat in
@@ -81,9 +91,7 @@ struct WrongAnswersView: View {
 
     private var itemsSection: some View {
         VStack(alignment: .leading, spacing: Spacing.sm) {
-            Text("오답 문항 \(viewModel.items.count)개")
-                .font(AppType.bodyEmph)
-                .foregroundStyle(Color.appTextPrimary)
+            AppSectionHeader(title: "오답 문제 \(viewModel.items.count)개")
             ForEach(viewModel.items) { item in
                 Button {
                     retryTarget = item
@@ -100,10 +108,11 @@ private struct StatPill: View {
     let stat: WrongAnswerStats
 
     var body: some View {
-        VStack(alignment: .leading, spacing: Spacing.xs) {
+        AppPanel {
             Text(stat.subjectName)
                 .font(AppType.caption.weight(.semibold))
                 .foregroundStyle(Color.appTextPrimary)
+                .lineLimit(1)
             Text("\(stat.wrongRate)%")
                 .font(AppType.title.weight(.bold))
                 .foregroundStyle(rateColor)
@@ -111,14 +120,7 @@ private struct StatPill: View {
                 .font(AppType.caption)
                 .foregroundStyle(Color.appTextMuted)
         }
-        .padding(Spacing.md)
-        .frame(width: 120, alignment: .leading)
-        .background(Color.appSurface)
-        .overlay(
-            RoundedRectangle(cornerRadius: Radius.lg)
-                .stroke(Color.appBorder, lineWidth: 1)
-        )
-        .clipShape(RoundedRectangle(cornerRadius: Radius.lg))
+        .frame(width: 132)
     }
 
     private var rateColor: Color {
@@ -132,35 +134,29 @@ private struct WrongAnswerCard: View {
     let item: WrongAnswer
 
     var body: some View {
-        HStack(alignment: .top, spacing: Spacing.md) {
-            VStack(alignment: .leading, spacing: Spacing.xs) {
-                Text(item.subjectName)
-                    .font(AppType.caption.weight(.semibold))
-                    .foregroundStyle(Color.brandPrimary)
-                Text(item.questionContent)
-                    .font(AppType.body)
-                    .foregroundStyle(Color.appTextPrimary)
-                    .lineLimit(3)
-                    .multilineTextAlignment(.leading)
-            }
-            Spacer()
-            VStack(spacing: Spacing.xxs) {
-                Text("\(item.wrongCount)")
-                    .font(AppType.monoNumericLarge.weight(.bold))
-                    .foregroundStyle(Color.semanticDanger)
-                Text("회 틀림")
-                    .font(AppType.caption)
-                    .foregroundStyle(Color.appTextMuted)
+        AppPanel {
+            HStack(alignment: .top, spacing: Spacing.md) {
+                VStack(alignment: .leading, spacing: Spacing.xs) {
+                    Text(item.subjectName)
+                        .font(AppType.caption.weight(.semibold))
+                        .foregroundStyle(Color.brandPrimary)
+                    Text(item.questionContent)
+                        .font(AppType.body)
+                        .foregroundStyle(Color.appTextPrimary)
+                        .lineLimit(3)
+                        .multilineTextAlignment(.leading)
+                }
+                Spacer()
+                VStack(spacing: Spacing.xxs) {
+                    Text("\(item.wrongCount)")
+                        .font(AppType.monoNumericLarge.weight(.bold))
+                        .foregroundStyle(Color.semanticDanger)
+                    Text("회 틀림")
+                        .font(AppType.caption)
+                        .foregroundStyle(Color.appTextMuted)
+                }
             }
         }
-        .padding(Spacing.base)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.appSurface)
-        .overlay(
-            RoundedRectangle(cornerRadius: Radius.lg)
-                .stroke(Color.appBorder, lineWidth: 1)
-        )
-        .clipShape(RoundedRectangle(cornerRadius: Radius.lg))
     }
 }
 

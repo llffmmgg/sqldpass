@@ -9,12 +9,14 @@ import com.sqldpass.persistent.solve.WrongAnswerProjection;
 public record WrongAnswerPreviewResponse(
         Long questionId,
         String questionContent,
+        String questionType,
         String subjectName
 ) {
     public static WrongAnswerPreviewResponse from(WrongAnswerProjection p) {
         return new WrongAnswerPreviewResponse(
                 p.getQuestionId(),
                 p.getQuestionContent(),
+                p.getQuestionType(),
                 p.getSubjectName()
         );
     }

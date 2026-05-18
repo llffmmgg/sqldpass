@@ -48,7 +48,7 @@ final class SolveViewModel {
 
     /// 답을 고른 문항 수
     var answeredCount: Int {
-        answers.values.filter { $0.chosenAnswer != nil }.count
+        answers.values.filter(\.isAnswered).count
     }
 
     /// 다시보기 표시된 문항 수
@@ -128,17 +128,27 @@ final class SolveViewModel {
 
     // MARK: Answer actions
 
-    func select(_ chosen: String) {
+    func select(option: Int) {
         guard let q = currentQuestion else { return }
         var entry = answers[q.id] ?? SolveAnswerEntry(questionId: q.id)
-        entry.chosenAnswer = chosen
+        entry.selectedOption = option
+        entry.answerText = nil
+        answers[q.id] = entry
+    }
+
+    func updateAnswerText(_ text: String) {
+        guard let q = currentQuestion else { return }
+        var entry = answers[q.id] ?? SolveAnswerEntry(questionId: q.id)
+        entry.answerText = text
+        entry.selectedOption = nil
         answers[q.id] = entry
     }
 
     func clearAnswer() {
         guard let q = currentQuestion else { return }
         guard var entry = answers[q.id] else { return }
-        entry.chosenAnswer = nil
+        entry.selectedOption = nil
+        entry.answerText = nil
         answers[q.id] = entry
     }
 
@@ -177,5 +187,9 @@ final class SolveViewModel {
         }
 
         isSubmitting = false
+    }
+
+    func dismissError() {
+        errorMessage = nil
     }
 }

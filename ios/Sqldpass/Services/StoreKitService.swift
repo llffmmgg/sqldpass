@@ -12,6 +12,12 @@ final class StoreKitService {
 
     private var updateTask: Task<Void, Never>?
 
+    struct VerifiedTransaction: Sendable {
+        let jws: String
+        let productId: String
+        let transaction: Transaction
+    }
+
     /// 백엔드 등록된 productId 목록. 실제 App Store Connect SKU 와 일치해야 함.
     static let knownProductIds: [String] = [
         "iap_three_day",
@@ -22,13 +28,18 @@ final class StoreKitService {
 
     private init() {}
 
-    func startListening(onNewTransaction: @escaping @Sendable (Transaction) async -> Void) {
+    func startListening(onNewTransaction: @escaping @Sendable (VerifiedTransaction) async -> Void) {
         updateTask?.cancel()
         updateTask = Task.detached {
             for await result in Transaction.updates {
                 if case .verified(let transaction) = result {
-                    await onNewTransaction(transaction)
-                    await transaction.finish()
+                    await onNewTransaction(
+                        VerifiedTransaction(
+                            jws: result.jwsRepresentation,
+                            productId: transaction.productID,
+                            transaction: transaction
+                        )
+                    )
                 }
             }
         }
@@ -49,7 +60,7 @@ final class StoreKitService {
 
     /// 구매. 성공 시 JWS signedTransaction 문자열 반환.
     enum PurchaseResult {
-        case success(jws: String, productId: String, transactionId: UInt64)
+        case success(jws: String, productId: String, transactionId: UInt64, transaction: Transaction)
         case userCancelled
         case pending
     }
@@ -64,9 +75,9 @@ final class StoreKitService {
                 let res = PurchaseResult.success(
                     jws: jws,
                     productId: transaction.productID,
-                    transactionId: transaction.id
+                    transactionId: transaction.id,
+                    transaction: transaction
                 )
-                await transaction.finish()
                 return res
             case .unverified(_, let error):
                 throw error
@@ -93,5 +104,21 @@ final class StoreKitService {
             }
         }
         return nil
+    }
+
+    func currentEntitlements() async -> [VerifiedTransaction] {
+        var entitlements: [VerifiedTransaction] = []
+        for await result in Transaction.currentEntitlements {
+            if case .verified(let transaction) = result {
+                entitlements.append(
+                    VerifiedTransaction(
+                        jws: result.jwsRepresentation,
+                        productId: transaction.productID,
+                        transaction: transaction
+                    )
+                )
+            }
+        }
+        return entitlements
     }
 }

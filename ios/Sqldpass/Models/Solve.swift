@@ -17,10 +17,12 @@ struct Solve: Codable, Equatable, Identifiable {
 }
 
 struct SolveAnswer: Codable, Equatable, Identifiable {
-    let id: Int64
     let questionId: Int64
-    let chosenAnswer: String?
+    let selectedOption: Int?
+    let correctOption: Int?
     let correct: Bool
+
+    var id: Int64 { questionId }
 }
 
 /// 전체 사용자 14일 평균 풀이 수 — Dashboard 차트
