@@ -86,6 +86,15 @@ class MainActivity : ComponentActivity() {
             getSystemService(ConnectivityManager::class.java)
                 ?.registerDefaultNetworkCallback(networkCallback)
         }
+        // 401 재발급 실패로 세션이 끊겼을 때 ─ TokenAuthenticator 가 토큰을 이미 비웠으므로
+        // 여기선 GoogleSignIn 세션과 ViewModel 상태만 정리하고 사용자에게 안내한다.
+        lifecycleScope.launch {
+            app.sessionLost.collect {
+                app.authManager.signOut(this@MainActivity)
+                viewModel.onAuthChanged()
+                viewModel.setMessage("세션이 만료되어 로그아웃되었습니다. 다시 로그인해 주세요.")
+            }
+        }
         setContent {
             val themeMode by app.settingsStore.themeMode.collectAsState()
             val systemDark = androidx.compose.foundation.isSystemInDarkTheme()

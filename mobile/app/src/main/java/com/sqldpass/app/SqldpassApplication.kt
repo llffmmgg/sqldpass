@@ -3,14 +3,20 @@ package com.sqldpass.app
 import android.app.Application
 import androidx.room.Room
 import com.sqldpass.app.auth.AuthManager
+import com.sqldpass.app.auth.TokenAuthenticator
 import com.sqldpass.app.billing.BillingManager
 import com.sqldpass.app.data.AppRepository
 import com.sqldpass.app.data.SettingsStore
 import com.sqldpass.app.data.TokenStore
 import com.sqldpass.app.data.local.SqldpassDatabase
+import com.sqldpass.app.data.remote.AuthRefreshApi
 import com.sqldpass.app.data.remote.SqldpassApi
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
+import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
@@ -19,34 +25,69 @@ import retrofit2.converter.moshi.MoshiConverterFactory
 class SqldpassApplication : Application() {
     val tokenStore: TokenStore by lazy { TokenStore(this) }
 
+    /**
+     * 토큰 재발급이 실패해 강제 로그아웃됐음을 UI 에 알린다.
+     * [com.sqldpass.app.MainActivity] 가 수집해 onAuthChanged 및 GoogleSignIn signOut 트리거.
+     */
+    private val _sessionLost = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+    val sessionLost: SharedFlow<Unit> = _sessionLost.asSharedFlow()
+
+    private val moshi: Moshi by lazy {
+        Moshi.Builder().add(KotlinJsonAdapterFactory()).build()
+    }
+
+    private val authHeaderInterceptor: Interceptor = Interceptor { chain ->
+        val token = tokenStore.token
+        val request = if (token.isNullOrBlank()) {
+            chain.request()
+        } else {
+            chain.request().newBuilder()
+                .header("Authorization", "Bearer $token")
+                .build()
+        }
+        chain.proceed(request)
+    }
+
+    private fun debugLogging(): HttpLoggingInterceptor? =
+        if (BuildConfig.DEBUG) {
+            HttpLoggingInterceptor().apply { level = HttpLoggingInterceptor.Level.BASIC }
+        } else null
+
+    // 재발급 호출 전용. Authenticator 미부착 — 부착하면 refresh 자체의 401 응답이
+    // 다시 TokenAuthenticator 를 호출해 재귀 루프가 발생함.
+    private val refreshOkHttp: OkHttpClient by lazy {
+        OkHttpClient.Builder()
+            .addInterceptor(authHeaderInterceptor)
+            .apply { debugLogging()?.let { addInterceptor(it) } }
+            .build()
+    }
+
+    private val authRefreshApi: AuthRefreshApi by lazy {
+        Retrofit.Builder()
+            .baseUrl(BuildConfig.API_BASE_URL)
+            .client(refreshOkHttp)
+            .addConverterFactory(MoshiConverterFactory.create(moshi))
+            .build()
+            .create(AuthRefreshApi::class.java)
+    }
+
+    private val tokenAuthenticator: TokenAuthenticator by lazy {
+        TokenAuthenticator(
+            tokenStore = tokenStore,
+            refreshApiProvider = { authRefreshApi },
+            onSessionLost = { _sessionLost.tryEmit(Unit) },
+        )
+    }
+
     private val okHttp: OkHttpClient by lazy {
         OkHttpClient.Builder()
-            .addInterceptor { chain ->
-                val token = tokenStore.token
-                val request = if (token.isNullOrBlank()) {
-                    chain.request()
-                } else {
-                    chain.request().newBuilder()
-                        .header("Authorization", "Bearer $token")
-                        .build()
-                }
-                chain.proceed(request)
-            }
-            .apply {
-                // 로깅은 debug 빌드에서만 — release 에서 호출당 5~10ms 누적 비용 제거.
-                if (BuildConfig.DEBUG) {
-                    addInterceptor(HttpLoggingInterceptor().apply {
-                        level = HttpLoggingInterceptor.Level.BASIC
-                    })
-                }
-            }
+            .addInterceptor(authHeaderInterceptor)
+            .authenticator(tokenAuthenticator)
+            .apply { debugLogging()?.let { addInterceptor(it) } }
             .build()
     }
 
     private val api: SqldpassApi by lazy {
-        val moshi = Moshi.Builder()
-            .add(KotlinJsonAdapterFactory())
-            .build()
         Retrofit.Builder()
             .baseUrl(BuildConfig.API_BASE_URL)
             .client(okHttp)

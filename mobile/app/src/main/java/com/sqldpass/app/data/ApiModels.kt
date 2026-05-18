@@ -13,6 +13,12 @@ data class OAuthLoginResponse(
 )
 
 @JsonClass(generateAdapter = true)
+data class TokenRefreshResponse(
+    val token: String,
+    val nickname: String?,
+)
+
+@JsonClass(generateAdapter = true)
 data class SnapshotResponse(
     val version: String,
     /** 백엔드 LocalDateTime KST naive ISO ("2026-05-18T16:25:35"). 표시용은 [com.sqldpass.app.text.formatKstDateTime] */
