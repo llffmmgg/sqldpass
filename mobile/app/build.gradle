@@ -127,6 +127,11 @@ dependencies {
     implementation "io.noties.markwon:linkify:4.6.2"
     implementation "io.noties.markwon:ext-tables:4.6.2"
 
+    // Coil — 문제 본문의 inline <svg> 블록을 Compose Image 로 렌더하기 위해.
+    // SVG XML 문자열을 ByteArray 로 만들어 decoderFactories 에 SvgDecoder 를 등록한 ImageLoader 로 표시.
+    implementation "io.coil-kt:coil-compose:2.6.0"
+    implementation "io.coil-kt:coil-svg:2.6.0"
+
     debugImplementation "androidx.compose.ui:ui-tooling"
     testImplementation "junit:junit:4.13.2"
 }

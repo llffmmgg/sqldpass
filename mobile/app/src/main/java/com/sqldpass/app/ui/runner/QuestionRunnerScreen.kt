@@ -473,6 +473,8 @@ private fun MarkdownContent(text: String, textSizeSp: Float = 16f) {
                     MarkwonTextView(text = seg.text, textSizeSp = textSizeSp)
                 is com.sqldpass.app.text.MarkdownSegment.CodeBlock ->
                     CodeBlockCard(language = seg.language, code = seg.code)
+                is com.sqldpass.app.text.MarkdownSegment.InlineSvg ->
+                    com.sqldpass.app.ui.common.InlineSvgView(svgXml = seg.svgXml)
             }
         }
     }

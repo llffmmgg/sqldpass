@@ -43,6 +43,13 @@
 -keep class io.noties.markwon.** { *; }
 -dontwarn io.noties.markwon.**
 
+# ---- Coil + coil-svg ----
+# Coil 은 reflection 안 쓰지만 AndroidSVG 의 ParseException 등이 미사용 시 strip 되면
+# SvgDecoder 가 throw 못 함. 보수적으로 keep.
+-dontwarn coil.**
+-dontwarn com.caverock.androidsvg.**
+-keep class com.caverock.androidsvg.** { *; }
+
 # ---- Logging strip ----
 -assumenosideeffects class android.util.Log {
     public static *** d(...);
