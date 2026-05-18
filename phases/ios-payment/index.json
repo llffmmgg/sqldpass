@@ -46,7 +46,7 @@
       "status": "completed",
       "started_at": "2026-05-18T14:29:48+0900",
       "summary": "Features/Paywall/PaywallViewModel.swift (@Observable, load/purchase/restore + PaymentService.verifyApple 연동) + Features/Paywall/PaywallView.swift (header/activeStateCard/productsSection/disclaimerSection, toolbar 복원 버튼, 자동갱신 약관 + 이용약관/개인정보 Link) 신규. ProfileView '구독' 섹션 placeholder Label → PaywallView NavigationLink로 교체. project.pbxproj 2개 파일 등록(PBXBuildFile/PBXFileReference/Paywall 그룹/Sources phase). Debug iOS 시뮬레이터 BUILD SUCCEEDED.",
-      "completed_at": "2026-05-18T14:35:00+0900"
+      "completed_at": "2026-05-18T14:34:29+0900"
     },
     {
       "step": 6,
