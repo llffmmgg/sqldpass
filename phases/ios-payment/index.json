@@ -25,7 +25,10 @@
       "step": 3,
       "name": "backend-app-store-notifications",
       "description": "backend: controller/payment/PaymentWebhookController.java에 POST /api/webhook/app-store/notifications 추가. App Store Server Notifications V2 signedPayload JWS 검증 → notificationType (SUBSCRIBED/DID_RENEW/EXPIRED/REFUND/REVOKE) 라우팅 → SubscriptionHistoryService 재사용. application.yaml에 sqldpass.payment.app-store.bundle-id 등 키 추가.",
-      "status": "pending"
+      "status": "completed",
+      "started_at": "2026-05-18T14:22:41+0900",
+      "summary": "AppStoreNotificationRequest DTO 신규 + PaymentWebhookController에 POST /api/webhook/app-store/notifications 추가. signedPayload JWS payload 디코딩 후 notificationType (SUBSCRIBED/DID_RENEW/EXPIRED/DID_FAIL_TO_RENEW/GRACE_PERIOD_EXPIRED/REVOKE/REFUND) 분기 로그 골격. JWS 서명 검증 및 entitlement 동기화는 후속 phase. /api/webhook/** 는 WebMvcConfig 인터셉터 미등록 — 변경 불필요.",
+      "completed_at": "2026-05-18T14:25:30+0900"
     },
     {
       "step": 4,

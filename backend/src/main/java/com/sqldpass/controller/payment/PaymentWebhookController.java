@@ -2,6 +2,7 @@ package com.sqldpass.controller.payment;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.sqldpass.controller.payment.dto.AppStoreNotificationRequest;
 import com.sqldpass.service.auth.GoogleIdTokenVerifier;
 import com.sqldpass.service.common.SqldpassException;
 import com.sqldpass.service.payment.PaymentService;
@@ -121,6 +123,50 @@ public class PaymentWebhookController {
     private static String mask(String token) {
         if (token == null) return "null";
         return token.length() <= 8 ? "***" : token.substring(0, 4) + "..." + token.substring(token.length() - 4);
+    }
+
+    @PostMapping("/app-store/notifications")
+    @Operation(summary = "App Store Server Notifications V2 — 구독 갱신/만료/환불 비동기 통보")
+    public Map<String, String> handleAppStoreNotification(@RequestBody AppStoreNotificationRequest body) {
+        if (body == null || body.signedPayload() == null || body.signedPayload().isBlank()) {
+            log.warn("App Store notification 빈 signedPayload");
+            return Map.of("status", "ignored");
+        }
+
+        try {
+            String[] parts = body.signedPayload().split("\\.");
+            if (parts.length != 3) {
+                log.warn("App Store notification JWS 형식 아님");
+                return Map.of("status", "ignored");
+            }
+            byte[] payloadBytes = Base64.getUrlDecoder().decode(parts[1]);
+            JsonNode payload = objectMapper.readTree(payloadBytes);
+
+            String notificationType = payload.path("notificationType").asText();
+            String subtype = payload.path("subtype").asText();
+
+            log.info("App Store notification: type={} subtype={}", notificationType, subtype);
+
+            // notificationType 분기 — 1차는 로그 + history 기록만, 실제 entitlement 동기화는 후속
+            switch (notificationType) {
+                case "SUBSCRIBED", "DID_RENEW" -> {
+                    // TODO: SubscriptionService.activateFromAppStoreNotification(payload)
+                    log.info("App Store SUBSCRIBED/DID_RENEW — 후속 phase 에서 entitlement 갱신 구현");
+                }
+                case "EXPIRED", "DID_FAIL_TO_RENEW", "GRACE_PERIOD_EXPIRED", "REVOKE" -> {
+                    log.info("App Store {} — 후속 phase 에서 entitlement 만료 구현", notificationType);
+                }
+                case "REFUND" -> {
+                    log.info("App Store REFUND — 후속 phase 에서 환불 동기화 구현");
+                }
+                default -> log.info("App Store notification 미처리 type: {}", notificationType);
+            }
+
+            return Map.of("status", "ok", "type", notificationType);
+        } catch (Exception e) {
+            log.warn("App Store notification 처리 실패", e);
+            return Map.of("status", "error");
+        }
     }
 
     /** Google Pub/Sub push subscription 표준 envelope. */
