@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { Container } from "@/components/ui";
 import CheckoutClient from "./CheckoutClient";
 
 export const metadata: Metadata = {
@@ -12,9 +11,10 @@ export const metadata: Metadata = {
 export default function CheckoutPage() {
   return (
     <main className="min-h-screen bg-bg text-text">
-      <Container size="wide" className="py-20">
+      {/* 결제 페이지 한정 — 5컬럼 카드가 좁아 보여서 1300px 까지 넓힘 (다른 페이지 영향 X) */}
+      <div className="mx-auto w-full max-w-[1300px] px-4 py-20 sm:px-6 lg:px-8">
         <CheckoutClient />
-      </Container>
+      </div>
     </main>
   );
 }

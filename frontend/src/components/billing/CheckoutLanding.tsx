@@ -106,6 +106,7 @@ const TIERS: Tier[] = [
     tagline: "6개월 풀 액세스",
     price: 29900,
     originalPrice: 39900,
+    unit: "180일",
     pitch: "6개월 동안 새 회차와 모의고사 PDF 다운로드까지 무제한으로 사용하세요.",
     features: [
       { text: "PASS+ 회차 무제한" },
