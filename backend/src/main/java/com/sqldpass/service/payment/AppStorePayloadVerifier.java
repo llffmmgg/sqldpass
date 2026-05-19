@@ -36,6 +36,12 @@ import lombok.extern.slf4j.Slf4j;
  *
  * <p>Apple Root CA 는 {@code src/main/resources/apple-roots/} 에 DER 형식으로 동봉
  * (Apple PKI 공식 배포본). 라이브러리는 자체로 root CA 를 번들하지 않으므로 직접 제공해야 한다.
+ *
+ * <p><b>fail-fast 격리:</b> PRODUCTION 환경에서 {@code appAppleId} 가 0(미설정) 이거나
+ * {@link SignedDataVerifier} 초기화가 실패해도 Bean 자체는 정상 생성된다. 대신 {@code misconfigured}
+ * 플래그를 세팅하고, 실제 verify 메서드 호출 시점에 {@link AppStorePayloadVerificationException}
+ * 을 던진다. 이렇게 해야 결제 webhook 1개 모듈의 misconfig 가 Spring {@code ApplicationContext}
+ * 전체 startup 을 죽이고 backend 다운타임을 일으키는 사고를 차단한다 (2026-05-19 사고 근본 해결).
  */
 @Slf4j
 @Service
@@ -48,6 +54,8 @@ public class AppStorePayloadVerifier {
     private final Environment environment;
     private final String bundleId;
     private final Long appAppleId;
+    /** PRODUCTION + appAppleId=0 또는 verifier 초기화 실패 등 misconfig 상태. verify 시점에 throw. */
+    private final boolean misconfigured;
 
     public AppStorePayloadVerifier(
             @Value("${app-store.bundle-id:com.sqldpass.app}") String bundleId,
@@ -57,38 +65,49 @@ public class AppStorePayloadVerifier {
         this.appAppleId = appAppleId;
         this.environment = parseEnvironment(environmentName);
 
-        Set<InputStream> rootCertificates = loadRootCertificates();
-        // PRODUCTION 환경 + appAppleId 미설정 시 라이브러리가 IllegalArgumentException 을 던진다.
-        // 그래도 운영자가 알아차리도록 명시적으로 로그.
         Long appAppleIdParam = appAppleId == 0L ? null : appAppleId;
-        if (this.environment == Environment.PRODUCTION && appAppleIdParam == null) {
-            throw new IllegalStateException(
-                    "app-store.app-apple-id 는 PRODUCTION 환경에서 필수입니다. " +
-                            "App Store Connect 의 numeric app id 를 환경변수 APP_STORE_APP_APPLE_ID 로 주입하세요.");
+        boolean prodWithoutAppleId = this.environment == Environment.PRODUCTION && appAppleIdParam == null;
+        if (prodWithoutAppleId) {
+            log.warn("app-store.app-apple-id 가 0(미설정) + PRODUCTION 환경 — App Store webhook 검증은 비활성화됩니다. " +
+                    "환경변수 APP_STORE_APP_APPLE_ID 로 App Store Connect 의 numeric app id 를 주입하세요. " +
+                    "backend 는 정상 가동되며 결제 외 기능은 영향 없습니다.");
         }
-        this.verifier = new SignedDataVerifier(
-                rootCertificates,
-                bundleId,
-                appAppleIdParam,
-                this.environment,
-                /* enableOnlineChecks = */ false);
+
+        SignedDataVerifier built = null;
+        if (!prodWithoutAppleId) {
+            try {
+                Set<InputStream> rootCertificates = loadRootCertificates();
+                built = new SignedDataVerifier(
+                        rootCertificates,
+                        bundleId,
+                        appAppleIdParam,
+                        this.environment,
+                        /* enableOnlineChecks = */ false);
+            } catch (RuntimeException e) {
+                log.warn("SignedDataVerifier 초기화 실패 — webhook 검증 비활성. 원인: {}", e.getMessage(), e);
+            }
+        }
+        this.verifier = built;
+        this.misconfigured = (built == null);
     }
 
     @PostConstruct
     void logConfig() {
-        log.info("AppStorePayloadVerifier 초기화 — bundleId={} environment={} appAppleId={}",
-                bundleId, environment, appAppleId == 0L ? "미설정(WARN: PRODUCTION 에서는 필수)" : appAppleId);
-        if (appAppleId == 0L) {
-            log.warn("app-store.app-apple-id 가 0(미설정) — SANDBOX/XCODE 가 아닌 환경에서는 검증이 실패합니다.");
+        log.info("AppStorePayloadVerifier 초기화 — bundleId={} environment={} appAppleId={} misconfigured={}",
+                bundleId, environment, appAppleId == 0L ? "미설정" : appAppleId, misconfigured);
+        if (misconfigured) {
+            log.warn("AppStorePayloadVerifier 가 misconfigured 상태로 가동 — App Store webhook 호출은 401 로 거부됩니다. " +
+                    "환경변수·인증서 점검 필요.");
         }
     }
 
     /**
      * ASSN v2 signedPayload(JWS) 의 서명 + 페이로드를 검증·디코딩.
      *
-     * @throws AppStorePayloadVerificationException 서명·체인·bundleId·환경 검증 실패 시
+     * @throws AppStorePayloadVerificationException misconfigured 상태이거나 서명·체인·bundleId·환경 검증 실패 시
      */
     public ResponseBodyV2DecodedPayload verifyAndDecodeNotification(String signedPayload) {
+        ensureConfigured();
         if (signedPayload == null || signedPayload.isBlank()) {
             throw new AppStorePayloadVerificationException("signedPayload 가 비어있습니다.");
         }
@@ -106,9 +125,10 @@ public class AppStorePayloadVerifier {
     /**
      * data.signedTransactionInfo (JWS) 의 서명 + 페이로드를 검증·디코딩.
      *
-     * @throws AppStorePayloadVerificationException 서명·체인·bundleId 검증 실패 시
+     * @throws AppStorePayloadVerificationException misconfigured 상태이거나 서명·체인·bundleId 검증 실패 시
      */
     public JWSTransactionDecodedPayload verifyAndDecodeTransaction(String signedTransactionInfo) {
+        ensureConfigured();
         if (signedTransactionInfo == null || signedTransactionInfo.isBlank()) {
             throw new AppStorePayloadVerificationException("signedTransactionInfo 가 비어있습니다.");
         }
@@ -120,6 +140,16 @@ public class AppStorePayloadVerifier {
         } catch (RuntimeException e) {
             throw new AppStorePayloadVerificationException(
                     "ASSN v2 transaction 디코딩 중 예외", e);
+        }
+    }
+
+    private void ensureConfigured() {
+        if (misconfigured) {
+            throw new AppStorePayloadVerificationException(
+                    "App Store webhook 검증이 비활성화 상태입니다. " +
+                            "environment=" + environment + ", appAppleId=" +
+                            (appAppleId == 0L ? "미설정" : appAppleId) + " — " +
+                            "운영자가 APP_STORE_APP_APPLE_ID 환경변수를 주입했는지 확인하세요.");
         }
     }
 

@@ -1,0 +1,11 @@
+{
+  "name": "backend-verifier-resilience",
+  "description": "AppStorePayloadVerifier 의 생성자 fail-fast 를 제거해 결제 검증 모듈 1개의 misconfig 가 backend 전체 startup 을 죽이지 않도록 격리. 2026-05-19 운영 다운타임 사고의 근본 해결.",
+  "status": "pending",
+  "steps": [
+    {
+      "id": "step1",
+      "description": "AppStorePayloadVerifier 생성자 throw 제거 → verify 메서드 호출 시점 검증으로 이동 + 단위 테스트 1건 추가"
+    }
+  ]
+}
