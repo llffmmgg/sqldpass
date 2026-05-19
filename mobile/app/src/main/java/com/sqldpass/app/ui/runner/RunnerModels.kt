@@ -3,7 +3,7 @@ package com.sqldpass.app.ui.runner
 import com.sqldpass.app.data.PastExamGradeResponse
 import com.sqldpass.app.data.SolveResponse
 
-enum class RunnerMode { MOCK_EXAM, PAST_EXAM, PRACTICE, WRONG_ANSWERS }
+enum class RunnerMode { MOCK_EXAM, PAST_EXAM, PRACTICE, WRONG_ANSWERS, HISTORY }
 
 data class RunnerQuestion(
     val id: Long,

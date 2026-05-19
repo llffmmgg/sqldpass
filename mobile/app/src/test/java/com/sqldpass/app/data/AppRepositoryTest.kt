@@ -132,7 +132,7 @@ class AppRepositoryTest {
     }
 
     @Test
-    fun soloSentinel_decodesPayload_andSubmitsAsPractice() = runBlocking {
+    fun soloSentinel_decodesPayload_andSubmitsAsNormalSubjectSolve() = runBlocking {
         every { tokenStore.token } returns "tok"
         val rows = listOf(
             pendingSoloRow("cs-solo", subjectId = 42L, createdAtMillis = 100L),
@@ -147,7 +147,7 @@ class AppRepositoryTest {
         val req = requestSlot.captured
         assertEquals(42L, req.subjectId)
         assertEquals(null, req.mockExamId)
-        assertEquals("MOBILE_PRACTICE", req.source)
+        assertEquals(null, req.source)
         assertEquals("cs-solo", req.clientSubmissionId)
         coVerify(exactly = 1) { dao.markSolveSynced("cs-solo", 999L) }
     }
@@ -180,4 +180,3 @@ class AppRepositoryTest {
         coVerify(exactly = 1) { dao.markSolveSynced("cs-3", 30L) }
     }
 }
-

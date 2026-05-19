@@ -1,5 +1,6 @@
 package com.sqldpass.app.data
 
+import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 
 @JsonClass(generateAdapter = true)
@@ -131,8 +132,8 @@ data class SolveResponse(
 @JsonClass(generateAdapter = true)
 data class SolveAnswerResponse(
     val questionId: Long,
-    val selectedOption: Int,
-    val correctOption: Int,
+    val selectedOption: Int? = null,
+    val correctOption: Int? = null,
     val correct: Boolean,
 )
 
@@ -164,6 +165,11 @@ data class VerifyPaymentResponse(
     val productName: String?,
     val plan: String?,
     val expiresAt: String?,
+)
+
+@JsonClass(generateAdapter = true)
+data class PaymentEligibilityResponse(
+    val eligible: Boolean,
 )
 
 @JsonClass(generateAdapter = true)
@@ -292,12 +298,15 @@ data class QuestionDetailResponse(
 data class StreakResponse(
     val currentStreak: Int = 0,
     val longestStreak: Int = 0,
+    @Json(name = "lastSolveDate")
     val lastSolvedDate: String? = null,
+    val solvedToday: Boolean = false,
     val milestoneDays: List<Int> = emptyList(),
 )
 
 @JsonClass(generateAdapter = true)
 data class OverallAvgResponse(
+    val avgDailyCount: Double? = null,
     val overallAvg: Double? = null,
     val myRecentAvg: Double? = null,
     val periodDays: Int? = null,
@@ -305,7 +314,9 @@ data class OverallAvgResponse(
 
 @JsonClass(generateAdapter = true)
 data class BestScoreEntry(
+    @Json(name = "correct")
     val correctCount: Int,
+    @Json(name = "total")
     val totalCount: Int,
 )
 
@@ -328,7 +339,7 @@ data class BookmarkListResponse(
 )
 
 @JsonClass(generateAdapter = true)
-data class BookmarkExistsResponse(val exists: Boolean)
+data class BookmarkExistsResponse(@Json(name = "bookmarked") val exists: Boolean)
 
 @JsonClass(generateAdapter = true)
 data class CreateFeedbackRequest(
@@ -336,6 +347,19 @@ data class CreateFeedbackRequest(
     val questionId: Long? = null,
     val content: String,
     val pageUrl: String? = null,
+)
+
+@JsonClass(generateAdapter = true)
+data class FeedbackResponse(
+    val id: Long,
+    val type: String,
+    val questionId: Long? = null,
+    val content: String,
+    val status: String? = null,
+    val answer: String? = null,
+    val createdAt: String? = null,
+    val answeredAt: String? = null,
+    val nickname: String? = null,
 )
 
 @JsonClass(generateAdapter = true)

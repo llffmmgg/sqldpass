@@ -84,6 +84,7 @@ fun PassPlusCatalogScreen(
     products: List<BillingProductSnapshot>,
     onLoadProducts: () -> Unit,
     onLoadSubscription: () -> Unit,
+    onRestorePurchases: () -> Unit,
     onPurchase: (productId: String) -> Unit,
     onClose: () -> Unit,
 ) {
@@ -144,6 +145,15 @@ fun PassPlusCatalogScreen(
             }
             if (subscription != null) {
                 item { ActiveSubscriptionCard(subscription) }
+            }
+            item {
+                AppButton(
+                    text = "구매 복구",
+                    onClick = onRestorePurchases,
+                    variant = AppButtonVariant.Secondary,
+                    size = AppButtonSize.Regular,
+                    modifier = Modifier.fillMaxWidth(),
+                )
             }
             items(DEFAULT_CATALOG) { entry ->
                 val product = productsById[entry.productId]

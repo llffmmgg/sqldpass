@@ -135,6 +135,7 @@ class AppViewModel(
         // 비로그인 콜드 스타트에서 /api/mock-exams 가 401 응답까지 100~300ms 블록되는 비용
         // 회피. 로그인된 상태일 때만 즉시 refresh, 아니면 onAuthChanged() 경로에 맡김.
         if (!tokenStore.token.isNullOrBlank()) refresh()
+        if (!tokenStore.token.isNullOrBlank()) loadSubscription()
     }
 
     /** 네트워크 복귀 콜백 등이 호출 — 비차단으로 큐 drain. */
@@ -183,6 +184,7 @@ class AppViewModel(
             loadSubjects()
             loadDashboard()
             loadWrongAnswerStats()
+            loadSubscription()
         } else {
             // 로그아웃 시 보호된 상태 초기화
             _state.update {
@@ -297,9 +299,31 @@ class AppViewModel(
     }
 
     fun loadSubscription() {
+        if (tokenStore.token.isNullOrBlank()) return
         viewModelScope.launch {
             runCatching { repository.subscription() }
                 .onSuccess { sub -> _state.update { it.copy(subscription = sub) } }
+        }
+    }
+
+    fun checkPaymentEligibility(onDone: (Boolean) -> Unit) {
+        if (tokenStore.token.isNullOrBlank()) {
+            _state.update { it.copy(message = "로그인 후 구매할 수 있습니다.") }
+            onDone(false)
+            return
+        }
+        viewModelScope.launch {
+            runCatching { repository.paymentEligible() }
+                .onSuccess { eligible ->
+                    if (!eligible) {
+                        _state.update { it.copy(message = "현재 결제 테스트 대상 계정이 아닙니다.") }
+                    }
+                    onDone(eligible)
+                }
+                .onFailure { e ->
+                    _state.update { it.copy(message = "결제 가능 여부 확인 실패: ${e.message}") }
+                    onDone(false)
+                }
         }
     }
 
@@ -339,8 +363,8 @@ class AppViewModel(
 
     /**
      * 선택된 오답 문제만 모아 RunnerSession 시작.
-     * subjectId 는 모든 문제가 동일 과목일 때만 채우고, 섞여 있으면 null → submitPractice 가
-     * 0L 로 폴백한다(기존 startWrongAnswerRunner 동작과 동일).
+     * subjectId 는 모든 문제가 동일 과목일 때만 채운다. 섞여 있으면 BOOKMARK source 로
+     * subjectId 없이 제출해 백엔드의 수집형 풀이 계약을 사용한다.
      */
     fun startWrongAnswersFromQuestions(
         items: List<com.sqldpass.app.data.WrongAnswerSummary>,
@@ -401,6 +425,41 @@ class AppViewModel(
                 }
                 .onFailure { e ->
                     _state.update { it.copy(message = "닉네임 변경 실패: ${e.message}") }
+                    onDone(false)
+                }
+        }
+    }
+
+    fun openHistoryDetail(solveId: Long, onOpened: (Boolean) -> Unit) {
+        viewModelScope.launch {
+            _state.update { it.copy(loading = true, message = null) }
+            runCatching { repository.solveDetail(solveId) }
+                .onSuccess { solve ->
+                    _state.update {
+                        it.copy(
+                            loading = false,
+                            runnerResult = RunnerResult.Solve(solve, RunnerMode.HISTORY),
+                        )
+                    }
+                    onOpened(true)
+                }
+                .onFailure { e ->
+                    _state.update { it.copy(loading = false, message = "풀이 기록 상세 조회 실패: ${e.message}") }
+                    onOpened(false)
+                }
+        }
+    }
+
+    fun deleteAccount(onDone: (Boolean) -> Unit) {
+        viewModelScope.launch {
+            runCatching { repository.deleteAccount() }
+                .onSuccess {
+                    tokenStore.clear()
+                    _state.value = AppUiState(message = "계정이 삭제되었습니다.")
+                    onDone(true)
+                }
+                .onFailure { e ->
+                    _state.update { it.copy(message = "계정 삭제 실패: ${e.message}") }
                     onDone(false)
                 }
         }
@@ -572,12 +631,12 @@ class AppViewModel(
                         val answers = drafts.map {
                             SolveAnswerRequest(it.questionId, it.selectedOption, it.answerText)
                         }
-                        val subjectId = session.subjectId ?: -1L
-                        val response = if (subjectId > 0) {
-                            repository.submitPractice(subjectId, answers)
+                        val response = if (session.mode == RunnerMode.WRONG_ANSWERS && session.subjectId == null) {
+                            repository.submitCollectedAnswers(answers)
+                        } else if (session.subjectId != null) {
+                            repository.submitPractice(session.subjectId, answers)
                         } else {
-                            // 오답노트 전체 풀이 등 subjectId 없는 케이스 — 백엔드 호환 시 그대로
-                            repository.submitPractice(0L, answers)
+                            error("풀이 과목 정보가 없습니다.")
                         }
                         RunnerResult.Solve(response, session.mode)
                     }
@@ -588,6 +647,7 @@ class AppViewModel(
                         val response = repository.gradePastExam(session.originId, answers)
                         RunnerResult.PastExam(response)
                     }
+                    RunnerMode.HISTORY -> error("기록 상세는 제출할 수 없습니다.")
                 }
                 _state.update {
                     it.copy(

@@ -19,10 +19,9 @@ import com.sqldpass.app.ui.common.AppTextField
 import com.sqldpass.app.ui.theme.LocalSqldpassPalette
 
 private val FEEDBACK_TYPES = listOf(
-    "WRONG_ANSWER" to "정답 오류",
-    "TYPO" to "오탈자",
-    "UNCLEAR" to "지문 모호",
-    "OUT_OF_SCOPE" to "출제 범위 외",
+    "QUESTION_ERROR" to "문항 오류",
+    "BUG" to "앱 오류",
+    "FEATURE" to "개선 제안",
     "OTHER" to "기타",
 )
 
@@ -41,11 +40,11 @@ fun ReportDialog(
 
     AppDialog(
         onDismiss = onDismiss,
-        title = "이 문제 신고하기",
+        title = "문제 신고하기",
         content = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(
-                    "문항 #$questionId — 어떤 문제가 있나요?",
+                    "문항 #$questionId 에 어떤 문제가 있나요?",
                     color = palette.textMuted,
                 )
                 FeedbackTypeChips(
@@ -62,7 +61,7 @@ fun ReportDialog(
                 )
             }
         },
-        confirmLabel = if (submitting) "전송중…" else "신고",
+        confirmLabel = if (submitting) "전송 중" else "신고",
         onConfirm = { if (canSubmit) onSubmit(selectedType, content) },
         dismissLabel = "취소",
         onDismissAction = onDismiss,

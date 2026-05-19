@@ -106,7 +106,7 @@ fun DashboardTab(
             }
             item {
                 AvgCard(
-                    overallAvg = state.dashboard?.overallAvg?.overallAvg,
+                    overallAvg = state.dashboard?.overallAvg?.let { it.overallAvg ?: it.avgDailyCount },
                     myRecentAvg = state.dashboard?.overallAvg?.myRecentAvg,
                 )
             }

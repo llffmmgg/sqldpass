@@ -100,7 +100,7 @@ class BillingManager internal constructor(
                 _events.tryEmit(
                     BillingEvent.Failed("이미 보유 중인 상품입니다. 구독 상태를 갱신했어요."),
                 )
-                scope.launch { recoverPendingPurchases() }
+                scope.launch { recoverPurchases(includeAcknowledged = true) }
             }
             else -> {
                 val detail = result.debugMessage
@@ -119,12 +119,14 @@ class BillingManager internal constructor(
                     scope.launch {
                         loadProducts()
                         // 앱이 결제 직후 종료됐을 경우를 위해 미확인(unacknowledged) 결제를 복구.
-                        recoverPendingPurchases()
+                        recoverPurchases(includeAcknowledged = false)
                     }
                 }
             }
 
-            override fun onBillingServiceDisconnected() = Unit
+            override fun onBillingServiceDisconnected() {
+                scope.launch { connect() }
+            }
         })
     }
 
@@ -177,6 +179,12 @@ class BillingManager internal constructor(
                 formattedPrice = offer?.formattedPrice.orEmpty(),
             )
         }
+
+    fun restorePurchases() {
+        _events.tryEmit(BillingEvent.Processing)
+        if (!billingClient.isReady) connect()
+        scope.launch { recoverPurchases(includeAcknowledged = true) }
+    }
 
     @VisibleForTesting
     internal fun handlePurchase(purchase: Purchase) {
@@ -258,7 +266,7 @@ class BillingManager internal constructor(
      * - 백엔드 검증이 일시 실패해 ack 못 했던 경우
      * 모두 본 경로로 복구된다.
      */
-    private suspend fun recoverPendingPurchases() {
+    private suspend fun recoverPurchases(includeAcknowledged: Boolean) {
         val params = QueryPurchasesParams.newBuilder()
             .setProductType(BillingClient.ProductType.INAPP)
             .build()
@@ -266,7 +274,7 @@ class BillingManager internal constructor(
         if (result.billingResult.responseCode != BillingClient.BillingResponseCode.OK) return
         for (purchase in result.purchasesList) {
             if (purchase.purchaseState != Purchase.PurchaseState.PURCHASED) continue
-            if (purchase.isAcknowledged) continue
+            if (purchase.isAcknowledged && !includeAcknowledged) continue
             verifyAndAcknowledge(purchase)
         }
     }

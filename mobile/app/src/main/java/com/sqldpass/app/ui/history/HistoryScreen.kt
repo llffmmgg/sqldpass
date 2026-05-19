@@ -41,13 +41,13 @@ import com.sqldpass.app.ui.theme.SqldSpacing
  * 마이 > 풀이 기록. iOS HistoryView 의 정보 구조 따라 점수 + 일자 + 정답수 카드를
  * LazyColumn 으로 표시.
  *
- * 본 단계에서는 상세(SolveResultView) 진입은 미구현 — 카드 탭 시 no-op.
- * 상세 화면은 후속 phase 의 작업.
+ * 카드를 탭하면 기존 채점 결과 화면으로 진입해 GET /api/solves/{id} 결과를 보여준다.
  */
 @Composable
 fun HistoryScreen(
     state: AppUiState,
     onLoadHistory: () -> Unit,
+    onOpenHistoryDetail: (Long) -> Unit,
     onBack: () -> Unit,
 ) {
     LaunchedEffect(state.nickname) {
@@ -97,7 +97,10 @@ fun HistoryScreen(
                     verticalArrangement = Arrangement.spacedBy(SqldSpacing.md),
                 ) {
                     items(state.history, key = { it.id }) { item ->
-                        HistoryRow(solve = item)
+                        HistoryRow(
+                            solve = item,
+                            onClick = { onOpenHistoryDetail(item.id) },
+                        )
                     }
                 }
             }
@@ -146,9 +149,9 @@ private fun HistoryTopBar(onBack: () -> Unit) {
 }
 
 @Composable
-private fun HistoryRow(solve: SolveSummary) {
+private fun HistoryRow(solve: SolveSummary, onClick: () -> Unit) {
     val palette = LocalSqldpassPalette.current
-    AppCard(surface = AppCardSurface.Card) {
+    AppCard(surface = AppCardSurface.Card, onClick = onClick) {
         Column(
             modifier = Modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(SqldSpacing.xs),

@@ -65,10 +65,13 @@ fun ProfileTab(
     onSync: () -> Unit = {},
     onUpdateNickname: (String, (Boolean) -> Unit) -> Unit = { _, cb -> cb(false) },
     onSubmitFeedback: (String, Long?, String, (Boolean) -> Unit) -> Unit = { _, _, _, cb -> cb(false) },
+    onDeleteAccount: ((Boolean) -> Unit) -> Unit = { cb -> cb(false) },
     onOpenPassPlus: () -> Unit = {},
     onOpenWrongAnswers: () -> Unit = {},
     onOpenBookmarks: () -> Unit = {},
     onOpenHistory: () -> Unit = {},
+    onOpenDashboard: () -> Unit = {},
+    onOpenInsights: () -> Unit = {},
     onLoadMe: () -> Unit = {},
     onLoadSubscription: () -> Unit = {},
     themeMode: ThemeMode = ThemeMode.LIGHT,
@@ -84,6 +87,8 @@ fun ProfileTab(
     var nicknameDialogOpen by remember { mutableStateOf(false) }
     var nicknameSubmitting by remember { mutableStateOf(false) }
     var feedbackDialogOpen by remember { mutableStateOf(false) }
+    var deleteDialogOpen by remember { mutableStateOf(false) }
+    var deleteSubmitting by remember { mutableStateOf(false) }
     var pendingNotice by remember { mutableStateOf<String?>(null) }
 
     if (nicknameDialogOpen) {
@@ -110,6 +115,27 @@ fun ProfileTab(
                     if (ok) feedbackDialogOpen = false
                 }
             },
+        )
+    }
+
+    if (deleteDialogOpen) {
+        AppDialog(
+            onDismiss = { if (!deleteSubmitting) deleteDialogOpen = false },
+            title = "계정 삭제",
+            message = "계정을 삭제하면 로그인 정보와 서버에 저장된 학습 데이터가 삭제됩니다. 이 작업은 되돌릴 수 없습니다. PASS+ 결제 취소나 환불은 Google Play 구매 내역에서 별도로 처리해야 합니다.",
+            confirmLabel = if (deleteSubmitting) "삭제 중" else "삭제",
+            onConfirm = {
+                if (!deleteSubmitting) {
+                    deleteSubmitting = true
+                    onDeleteAccount { ok ->
+                        deleteSubmitting = false
+                        if (ok) deleteDialogOpen = false
+                    }
+                }
+            },
+            dismissLabel = "취소",
+            onDismissAction = { if (!deleteSubmitting) deleteDialogOpen = false },
+            destructive = true,
         )
     }
 
@@ -174,6 +200,13 @@ fun ProfileTab(
                 item { AppSectionHeader(title = "학습") }
                 item {
                     AppListRow(
+                        title = "대시보드",
+                        leadingIcon = Icons.Outlined.History,
+                        onClick = onOpenDashboard,
+                    )
+                }
+                item {
+                    AppListRow(
                         title = "오답노트",
                         leadingIcon = Icons.Outlined.History,
                         onClick = onOpenWrongAnswers,
@@ -191,6 +224,13 @@ fun ProfileTab(
                         title = "풀이 기록",
                         leadingIcon = Icons.Outlined.History,
                         onClick = onOpenHistory,
+                    )
+                }
+                item {
+                    AppListRow(
+                        title = "학습 인사이트",
+                        leadingIcon = Icons.Outlined.History,
+                        onClick = onOpenInsights,
                     )
                 }
                 item {
@@ -255,9 +295,7 @@ fun ProfileTab(
                         title = "계정 삭제",
                         leadingIcon = Icons.AutoMirrored.Outlined.Logout,
                         destructive = true,
-                        onClick = {
-                            pendingNotice = "고객센터(heehun3658@gmail.com) 로 문의해주세요."
-                        },
+                        onClick = { deleteDialogOpen = true },
                     )
                 }
             }

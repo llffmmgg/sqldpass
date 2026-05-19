@@ -67,7 +67,11 @@ fun RunnerScreen(
             QuestionResultScreen(
                 result = result,
                 onClose = onDismissResult,
-                onRestart = onRestart,
+                onRestart = if (result is RunnerResult.Solve && result.mode == RunnerMode.PRACTICE) {
+                    onRestart
+                } else {
+                    null
+                },
             )
         }
     }

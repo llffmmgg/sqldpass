@@ -29,8 +29,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -148,6 +150,7 @@ class MainActivity : ComponentActivity() {
             SqldpassTheme(darkTheme = darkTheme) {
                 val state by viewModel.state.collectAsState()
                 val scope = rememberCoroutineScope()
+                var billingProducts by remember { mutableStateOf(app.billingManager.productSnapshot()) }
                 val launcher = rememberLauncherForActivityResult(
                     ActivityResultContracts.StartActivityForResult(),
                 ) { result ->
@@ -170,9 +173,28 @@ class MainActivity : ComponentActivity() {
                         app.authManager.signOut(this)
                         viewModel.onAuthChanged()
                     },
-                    onPurchase = { productId -> app.billingManager.launch(this, productId) },
-                    productSnapshot = { app.billingManager.productSnapshot() },
-                    onLoadProducts = { scope.launch { app.billingManager.loadProducts() } },
+                    onAccountDeleted = {
+                        app.authManager.signOut(this)
+                        viewModel.onAuthChanged()
+                        viewModel.setMessage("계정이 삭제되었습니다.")
+                    },
+                    onPurchase = { productId ->
+                        viewModel.checkPaymentEligibility { eligible ->
+                            if (eligible) app.billingManager.launch(this, productId)
+                        }
+                    },
+                    products = billingProducts,
+                    onLoadProducts = {
+                        scope.launch {
+                            app.billingManager.loadProducts()
+                            billingProducts = app.billingManager.productSnapshot()
+                        }
+                    },
+                    onRestorePurchases = {
+                        viewModel.setMessage("구매 내역을 확인하는 중입니다.")
+                        app.billingManager.restorePurchases()
+                        viewModel.loadSubscription()
+                    },
                     themeMode = themeMode,
                     onThemeChange = app.settingsStore::setThemeMode,
                 )
@@ -186,6 +208,11 @@ class MainActivity : ComponentActivity() {
             getSystemService(ConnectivityManager::class.java)
                 ?.unregisterNetworkCallback(networkCallback)
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        viewModel.loadSubscription()
     }
 }
 
@@ -204,9 +231,11 @@ private fun SqldpassApp(
     viewModel: AppViewModel,
     onLogin: () -> Unit,
     onLogout: () -> Unit,
+    onAccountDeleted: () -> Unit,
     onPurchase: (String) -> Unit,
-    productSnapshot: () -> List<com.sqldpass.app.billing.BillingProductSnapshot>,
+    products: List<com.sqldpass.app.billing.BillingProductSnapshot>,
     onLoadProducts: () -> Unit,
+    onRestorePurchases: () -> Unit,
     themeMode: ThemeMode,
     onThemeChange: (ThemeMode) -> Unit,
 ) {
@@ -372,10 +401,18 @@ private fun SqldpassApp(
                             onSync = viewModel::sync,
                             onUpdateNickname = viewModel::updateNickname,
                             onSubmitFeedback = viewModel::submitFeedback,
+                            onDeleteAccount = { done ->
+                                viewModel.deleteAccount { ok ->
+                                    if (ok) onAccountDeleted()
+                                    done(ok)
+                                }
+                            },
                             onOpenPassPlus = { navController.navigate(SqldpassRoute.PassPlus.route) },
                             onOpenWrongAnswers = { navController.navigate(SqldpassRoute.WrongAnswers.route) },
                             onOpenBookmarks = { navController.navigate(SqldpassRoute.Bookmarks.route) },
                             onOpenHistory = { navController.navigate(SqldpassRoute.History.route) },
+                            onOpenDashboard = { navController.navigate(SqldpassRoute.Dashboard.route) },
+                            onOpenInsights = { navController.navigate(SqldpassRoute.Insights.route) },
                             onLoadMe = viewModel::loadMe,
                             onLoadSubscription = viewModel::loadSubscription,
                             themeMode = themeMode,
@@ -391,12 +428,12 @@ private fun SqldpassApp(
                 ) {
                     PassPlusCatalogScreen(
                         subscription = state.subscription,
-                        products = productSnapshot(),
+                        products = products,
                         onLoadProducts = onLoadProducts,
                         onLoadSubscription = viewModel::loadSubscription,
+                        onRestorePurchases = onRestorePurchases,
                         onPurchase = { id ->
                             onPurchase(id)
-                            navController.popBackStack()
                         },
                         onClose = { navController.popBackStack() },
                     )
@@ -449,10 +486,10 @@ private fun SqldpassApp(
                         onToggleBookmark = viewModel::toggleBookmark,
                         onReport = { questionId ->
                             viewModel.submitFeedback(
-                                type = "QUESTION_REPORT",
+                                type = "QUESTION_ERROR",
                                 questionId = questionId,
                                 content = "단일 채점 풀이 화면에서 신고",
-                            ) { /* no-op — 상태는 viewModel.message 로 표시 */ }
+                            ) { /* ViewModel message displays the result. */ }
                         },
                         bookmarkedIds = state.runnerBookmarks,
                     )
@@ -481,6 +518,11 @@ private fun SqldpassApp(
                     HistoryScreen(
                         state = state,
                         onLoadHistory = viewModel::loadHistory,
+                        onOpenHistoryDetail = { id ->
+                            viewModel.openHistoryDetail(id) { ok ->
+                                if (ok) navController.navigate(SqldpassRoute.Runner.route)
+                            }
+                        },
                         onBack = {
                             if (navController.previousBackStackEntry != null) navController.popBackStack()
                         },

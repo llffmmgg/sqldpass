@@ -4,6 +4,7 @@ import com.sqldpass.app.data.BestScoreEntry
 import com.sqldpass.app.data.BookmarkExistsResponse
 import com.sqldpass.app.data.BookmarkListResponse
 import com.sqldpass.app.data.CreateFeedbackRequest
+import com.sqldpass.app.data.FeedbackResponse
 import com.sqldpass.app.data.MemberMeResponse
 import com.sqldpass.app.data.MockExamDetail
 import com.sqldpass.app.data.MockExamSummary
@@ -14,6 +15,7 @@ import com.sqldpass.app.data.PastExamDetail
 import com.sqldpass.app.data.PastExamGradeRequest
 import com.sqldpass.app.data.PastExamGradeResponse
 import com.sqldpass.app.data.PastExamSummary
+import com.sqldpass.app.data.PaymentEligibilityResponse
 import com.sqldpass.app.data.QuestionResponse
 import com.sqldpass.app.data.SnapshotResponse
 import com.sqldpass.app.data.SolveRequest
@@ -63,6 +65,9 @@ interface SqldpassApi {
 
     @GET("api/payment/subscription")
     suspend fun getSubscription(): SubscriptionResponse
+
+    @GET("api/payment/eligibility")
+    suspend fun getPaymentEligibility(): PaymentEligibilityResponse
 
     @GET("api/public/past-exams")
     suspend fun getPastExams(@Query("cert") certSlug: String?): List<PastExamSummary>
@@ -115,7 +120,7 @@ interface SqldpassApi {
 
     // Feedback (report)
     @POST("api/feedback")
-    suspend fun createFeedback(@Body body: CreateFeedbackRequest): Response<Unit>
+    suspend fun createFeedback(@Body body: CreateFeedbackRequest): Response<FeedbackResponse>
 
     // Wrong answers
     @GET("api/wrong-answers")
@@ -130,4 +135,7 @@ interface SqldpassApi {
 
     @GET("api/members/me")
     suspend fun getMe(): MemberMeResponse
+
+    @DELETE("api/members/me")
+    suspend fun deleteMe(): Response<Unit>
 }

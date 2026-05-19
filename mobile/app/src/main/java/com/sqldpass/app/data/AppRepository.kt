@@ -11,6 +11,7 @@ import com.sqldpass.app.data.local.SqldpassDatabase
 import com.sqldpass.app.data.remote.SqldpassApi
 import com.squareup.moshi.JsonClass
 import java.util.UUID
+import retrofit2.Response
 
 /**
  * 단일 채점 풀이를 PendingSolveEntity 에 담을 때 mockExamId 컬럼에 들어가는 sentinel.
@@ -100,6 +101,7 @@ class AppRepository(
         if (response.code() == 304) {
             return SyncResult(false, dao.mockExams().size, 0)
         }
+        response.requireSuccessful("콘텐츠 동기화")
         val body = response.body() ?: error("콘텐츠 동기화 응답이 비어 있습니다.")
         dao.clearMockExams()
         dao.clearQuestions()
@@ -162,7 +164,6 @@ class AppRepository(
     suspend fun submitPractice(subjectId: Long, answers: List<SolveAnswerRequest>): SolveResponse {
         val request = SolveRequest(
             subjectId = subjectId,
-            source = "MOBILE_PRACTICE",
             answers = answers,
             clientSubmissionId = "android-${UUID.randomUUID()}",
         )
@@ -173,7 +174,7 @@ class AppRepository(
      * 미동기화 PendingSolve 들을 createdAtMillis ASC 순으로 서버에 재전송.
      *
      * - mockExamId 가 [SOLO_PENDING_MOCK_EXAM_SENTINEL] 이면 SoloPendingPayload 로 디코드하여
-     *   subjectId + MOBILE_PRACTICE source 로 제출.
+     *   subjectId 기반 NORMAL 풀이로 제출.
      * - 그 외(양수) 는 기존 모의고사 row 로 처리.
      * - 개별 row 가 실패하면 다음 row 로 (네트워크 일시 오류일 수 있음).
      * - 멱등키 `clientSubmissionId` 로 서버는 같은 row 가 두 번 와도 중복 row 생성 X.
@@ -188,7 +189,6 @@ class AppRepository(
                     api.submitSolve(
                         SolveRequest(
                             subjectId = payload.subjectId,
-                            source = "MOBILE_PRACTICE",
                             answers = payload.answers,
                             clientSubmissionId = pending.clientSubmissionId,
                         ),
@@ -232,7 +232,7 @@ class AppRepository(
         api.getQuestionDetail(id)
 
     /**
-     * 단일 채점 풀이의 1문제 제출. 모의고사와 달리 `MOBILE_PRACTICE` source 로 백엔드에 신호.
+     * 단일 채점 풀이의 1문제 제출. subjectId 기반 NORMAL 풀이로 저장한다.
      *
      * 네트워크 실패 시 PendingSolveEntity 에 enqueue 한 뒤 throw — 호출부(ViewModel) 는
      * 실패를 정보로만 받고 다음 문제로 진행 가능. 복귀 시 [drainPendingSolves] 가 sentinel
@@ -248,7 +248,6 @@ class AppRepository(
         val answers = listOf(SolveAnswerRequest(questionId, selectedOption, answerText))
         val request = SolveRequest(
             subjectId = subjectId,
-            source = "MOBILE_PRACTICE",
             answers = answers,
             clientSubmissionId = clientSubmissionId,
         )
@@ -267,6 +266,15 @@ class AppRepository(
             )
             throw e
         }
+    }
+
+    suspend fun submitCollectedAnswers(answers: List<SolveAnswerRequest>): SolveResponse {
+        val request = SolveRequest(
+            source = "BOOKMARK",
+            answers = answers,
+            clientSubmissionId = "android-${UUID.randomUUID()}",
+        )
+        return api.submitSolve(request)
     }
 
     suspend fun streak(): StreakResponse =
@@ -296,14 +304,16 @@ class AppRepository(
 
     suspend fun subscription(): SubscriptionResponse = api.getSubscription()
 
+    suspend fun paymentEligible(): Boolean = api.getPaymentEligibility().eligible
+
     suspend fun bookmarks(): BookmarkListResponse = api.getBookmarks()
 
     suspend fun addBookmark(questionId: Long) {
-        api.addBookmark(questionId)
+        api.addBookmark(questionId).requireSuccessful("즐겨찾기 추가")
     }
 
     suspend fun removeBookmark(questionId: Long) {
-        api.removeBookmark(questionId)
+        api.removeBookmark(questionId).requireSuccessful("즐겨찾기 해제")
     }
 
     suspend fun isBookmarked(questionId: Long): Boolean =
@@ -312,12 +322,12 @@ class AppRepository(
     suspend fun reportFeedback(type: String, questionId: Long?, content: String, pageUrl: String? = null) {
         api.createFeedback(
             CreateFeedbackRequest(
-                type = type,
+                type = normalizeFeedbackType(type),
                 questionId = questionId,
                 content = content,
                 pageUrl = pageUrl,
             ),
-        )
+        ).requireSuccessful("피드백 전송")
     }
 
     suspend fun wrongAnswers(subjectId: Long? = null): List<WrongAnswerSummary> =
@@ -330,8 +340,33 @@ class AppRepository(
 
     suspend fun me(): MemberMeResponse = api.getMe()
 
+    suspend fun deleteAccount() {
+        api.deleteMe().requireSuccessful("계정 삭제")
+    }
+
     suspend fun myDailyCounts(days: Int = 14): List<DailyCountResponse> =
         api.getMyDailyCounts(days)
+
+    private fun normalizeFeedbackType(type: String): String = when (type) {
+        "QUESTION_ERROR",
+        "WRONG_ANSWER",
+        "TYPO",
+        "UNCLEAR",
+        "OUT_OF_SCOPE",
+        "QUESTION_REPORT"
+        -> "QUESTION_ERROR"
+        "BUG" -> "BUG"
+        "FEATURE", "GENERAL" -> "FEATURE"
+        else -> "OTHER"
+    }
+
+    private fun <T> Response<T>.requireSuccessful(actionLabel: String): T? {
+        if (!isSuccessful) {
+            val detail = errorBody()?.string()?.takeIf { it.isNotBlank() }
+            error("$actionLabel 실패: HTTP ${code()}${detail?.let { " - $it" } ?: ""}")
+        }
+        return body()
+    }
 }
 
 data class SyncResult(
