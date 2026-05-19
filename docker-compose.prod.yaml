@@ -57,6 +57,15 @@ services:
       PAYMENT_UNLIMITED_AMOUNT: ${PAYMENT_UNLIMITED_AMOUNT:-29900}
       PAYMENT_UNLIMITED_NAME: ${PAYMENT_UNLIMITED_NAME:-문어CBT All Pass}
 
+      # --- App Store Server Notifications v2 검증 ---
+      # ASSN v2 JWS 서명·체인·bundleId 검증에 사용. AppStorePayloadVerifier 가 읽음.
+      APP_STORE_BUNDLE_ID: ${APP_STORE_BUNDLE_ID:-com.sqldpass.app}
+      # App Store Connect → App Information → Apple ID 의 숫자값.
+      # PRODUCTION 환경에서 0/공란이면 startup 시 fail-fast.
+      APP_STORE_APP_APPLE_ID: ${APP_STORE_APP_APPLE_ID:-0}
+      # SANDBOX | PRODUCTION — TestFlight·sandbox 영수증을 받는 동안엔 SANDBOX, 정식 배포 후 PRODUCTION.
+      APP_STORE_ENVIRONMENT: ${APP_STORE_ENVIRONMENT:-PRODUCTION}
+
       # --- 관리자 ---
       ADMIN_USERNAME: ${ADMIN_USERNAME}
       ADMIN_PASSWORD_HASH: ${ADMIN_PASSWORD_HASH}
