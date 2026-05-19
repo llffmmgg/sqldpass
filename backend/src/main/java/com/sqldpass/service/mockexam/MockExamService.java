@@ -60,8 +60,13 @@ public class MockExamService {
         return mapRows(mockExamRepository.findAllWithQuestionCounts());
     }
 
-    /** 사용자용 — DRAFT 제외 (PUBLISHED + PREMIUM만) */
-    @Cacheable(CacheConfig.CACHE_MOCK_EXAM_LIST)
+    /**
+     * 사용자용 — DRAFT 제외 (PUBLISHED + PREMIUM 만, kind=AI).
+     * cache key 를 "all" 로 명시 — 같은 cache name 을 쓰는 {@link #getAllMiniForUser()} 와
+     * SimpleKey.EMPTY 키 충돌이 나면 미니 endpoint 가 정규 결과를 cache hit 으로 돌려주는
+     * 버그가 발생한다 (운영 사례 확인).
+     */
+    @Cacheable(value = CacheConfig.CACHE_MOCK_EXAM_LIST, key = "'all'")
     public List<MockExam> getAllForUser() {
         return mapRows(mockExamRepository.findUserVisibleWithQuestionCounts());
     }
@@ -69,8 +74,10 @@ public class MockExamService {
     /**
      * 사용자용 — MINI 회차 전용. 정규(AI) 와 동일 visibility/expertVerified 정책,
      * kind=MINI 만. /mini-mock-exams 페이지의 source.
+     * cache key 는 "mini" 로 명시 — {@link #getAllForUser()} 의 "all" 과 분리해 entry 충돌 방지.
+     * @CacheEvict(allEntries=true) 는 두 entry 모두 비우므로 어드민 write 작업의 일관성은 유지된다.
      */
-    @Cacheable(CacheConfig.CACHE_MOCK_EXAM_LIST)
+    @Cacheable(value = CacheConfig.CACHE_MOCK_EXAM_LIST, key = "'mini'")
     public List<MockExam> getAllMiniForUser() {
         return mapRows(mockExamRepository.findUserVisibleMiniWithQuestionCounts());
     }
