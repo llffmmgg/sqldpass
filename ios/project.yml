@@ -33,6 +33,8 @@ targets:
     type: application
     platform: iOS
     deploymentTarget: '17.0'
+    configFiles:
+      Release: Signing.xcconfig
     sources:
       - path: Sqldpass
     dependencies:
