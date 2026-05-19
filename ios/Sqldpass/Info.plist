@@ -37,6 +37,8 @@
 	<string>1026495161962-jtgphtjb90025fsmvb8e13tpnokv3edp.apps.googleusercontent.com</string>
 	<key>UILaunchScreen</key>
 	<dict/>
+	<key>UIUserInterfaceStyle</key>
+	<string>Light</string>
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
