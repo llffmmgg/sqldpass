@@ -20,7 +20,6 @@ import {
   type SubscriptionPlan,
 } from "@/lib/payment";
 import BuyerInfoModal from "@/components/billing/BuyerInfoModal";
-import AllPassPolicyNotice from "@/components/billing/AllPassPolicyNotice";
 import NoAdsGuard from "@/components/NoAdsGuard";
 import { invalidateSubscriptionCache } from "@/hooks/useSubscription";
 
@@ -182,7 +181,6 @@ function CheckoutContent() {
   return (
     <>
       <NoAdsGuard />
-      <AllPassPolicyNotice />
       <CheckoutLanding
         currentPlan={subscription?.active ? subscription.plan : null}
         previews={previews}
