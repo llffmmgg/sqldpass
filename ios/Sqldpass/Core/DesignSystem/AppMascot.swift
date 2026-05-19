@@ -34,8 +34,9 @@ enum AppMascotPose: String {
 /// 문어 마스코트 일러스트.
 ///
 /// - 등장 시 1회만 spring 으로 살짝 튕긴다 (0.92 → ~1.04 → 1.00).
-/// - 무한 루프 / idle 애니메이션 없음.
-/// - `accessibilityReduceMotion` 가 true 면 즉시 1.0 으로 스냅.
+/// - 등장 후 idle bobbing: y offset 0 ↔ -6pt, 위/아래 끝마다 짧게 멈춤.
+/// - `accessibilityReduceMotion` 가 true 또는 `animateOnAppear == false` 면
+///   등장 spring 과 idle bobbing 모두 비활성.
 struct AppMascot: View {
     let pose: AppMascotPose
     var sizeDp: Int = 64
@@ -45,9 +46,10 @@ struct AppMascot: View {
     @State private var appeared: Bool = false
 
     private var side: CGFloat { CGFloat(sizeDp) }
+    private var shouldBob: Bool { animateOnAppear && !reduceMotion }
 
     var body: some View {
-        Image(pose.assetName)
+        let base = Image(pose.assetName)
             .resizable()
             .scaledToFit()
             .frame(width: side, height: side)
@@ -71,6 +73,38 @@ struct AppMascot: View {
                 }
             }
             .accessibilityLabel(Text(pose.rawValue))
+
+        if shouldBob {
+            base.phaseAnimator(MascotBobPhase.allCases) { content, phase in
+                content.offset(y: phase.offsetY)
+            } animation: { phase in
+                phase.animation
+            }
+        } else {
+            base
+        }
+    }
+}
+
+// MARK: - Idle bobbing phases
+
+private enum MascotBobPhase: CaseIterable {
+    case rise, holdTop, fall, holdBottom
+
+    var offsetY: CGFloat {
+        switch self {
+        case .rise, .holdTop:    return -6
+        case .fall, .holdBottom: return 0
+        }
+    }
+
+    var animation: Animation {
+        switch self {
+        case .rise:       return .easeInOut(duration: 1.0)
+        case .holdTop:    return .linear(duration: 0.4)
+        case .fall:       return .easeInOut(duration: 1.0)
+        case .holdBottom: return .linear(duration: 0.4)
+        }
     }
 }
 

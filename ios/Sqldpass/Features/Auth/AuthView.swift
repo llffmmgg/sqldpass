@@ -53,12 +53,13 @@ struct AuthView: View {
                 AppButton(
                     title: "Google 로 로그인",
                     variant: .secondary,
-                    size: .large,
+                    size: .regular,
                     isEnabled: !isExchanging,
                     isLoading: false,
                     leadingSystemImage: "g.circle.fill",
                     action: { handleGoogleTap() }
                 )
+                .frame(height: 50)
                 .accessibilityLabel("Google로 로그인")
 
                 Text("로그인하면 이용약관과 개인정보처리방침에 동의한 것으로 간주됩니다.")
@@ -75,16 +76,10 @@ struct AuthView: View {
 
     private var logoSection: some View {
         VStack(spacing: Spacing.lg) {
-            AppMascot(pose: .onboarding, sizeDp: 120)
-            VStack(spacing: Spacing.xs) {
-                Text("문어CBT")
-                    .font(AppType.display)
-                    .foregroundStyle(Color.appTextPrimary)
-                Text("SQLD · 정보처리기사 · 컴활")
-                    .font(AppType.callout)
-                    .foregroundStyle(Color.appTextMuted)
-            }
-            .multilineTextAlignment(.center)
+            AppMascot(pose: .onboarding, sizeDp: 140)
+            Text("문어CBT")
+                .font(AppType.display)
+                .foregroundStyle(Color.appTextPrimary)
         }
     }
 
