@@ -388,6 +388,13 @@
       "created_at": "2026-05-19T15:00:00+0900",
       "completed_at": "2026-05-19T16:00:00+0900",
       "summary": "mobile/app/src/test 디렉토리 신설 + 17 테스트 (5+7+5) 통과. BillingManager 에 @VisibleForTesting internal 가시성 + 테스트용 internal constructor 추가 (public API 보존)."
+    },
+    {
+      "dir": "iap-thunder-sku-migration",
+      "name": "iap-thunder-sku-migration",
+      "description": "Thunder 상품의 product ID 를 iap_three_day → iap_thunder 로 일괄 변경. Apple App Store Connect 가 삭제된 product ID 의 재사용을 영구 차단. 양쪽 통일(iOS/Android/Backend/Frontend/Docs/Test) + iOS .storekit All Pass 가격 39000 정정.",
+      "status": "pending",
+      "created_at": "2026-05-19T17:00:00+0900"
     }
   ]
 }

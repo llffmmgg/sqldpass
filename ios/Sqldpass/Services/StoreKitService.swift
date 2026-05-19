@@ -20,7 +20,7 @@ final class StoreKitService {
 
     /// 백엔드 등록된 productId 목록. 실제 App Store Connect SKU 와 일치해야 함.
     static let knownProductIds: [String] = [
-        "iap_three_day",
+        "iap_thunder",
         "iap_focus",
         "iap_one_month",
         "iap_unlimited"

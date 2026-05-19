@@ -1,0 +1,11 @@
+{
+  "name": "iap-thunder-sku-migration",
+  "description": "Thunder 상품의 product ID 를 iap_three_day 에서 iap_thunder 로 일괄 변경. Apple App Store Connect 가 삭제된 product ID 의 재사용을 영구 차단하기 때문. iOS/Android/백엔드 매핑 + 테스트 동시 갱신. All Pass 가격 39900 → 39000 정정 (사용자 결정값 복원).",
+  "status": "pending",
+  "steps": [
+    {
+      "id": "step1",
+      "description": "iap_three_day → iap_thunder 일괄 치환 (7 파일) + iOS .storekit All Pass 가격 39000 정정"
+    }
+  ]
+}

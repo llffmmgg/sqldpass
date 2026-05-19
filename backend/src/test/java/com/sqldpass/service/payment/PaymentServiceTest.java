@@ -81,7 +81,7 @@ class PaymentServiceTest {
         properties.setUnlimited(new PaymentProperties.PlanConfig(29900, "문어CBT All Pass"));
 
         playBillingProperties = new PlayBillingProperties();
-        playBillingProperties.getProductIdMapping().put(SubscriptionPlan.THREE_DAY, "iap_three_day");
+        playBillingProperties.getProductIdMapping().put(SubscriptionPlan.THREE_DAY, "iap_thunder");
         playBillingProperties.getProductIdMapping().put(SubscriptionPlan.FOCUS, "iap_focus");
         playBillingProperties.getProductIdMapping().put(SubscriptionPlan.ONE_MONTH, "iap_one_month");
         playBillingProperties.getProductIdMapping().put(SubscriptionPlan.UNLIMITED, "iap_unlimited");
@@ -700,7 +700,7 @@ class PaymentServiceTest {
     void verifyPlayBillingRejectsBlankToken() {
         properties.setReviewerNicknames("");
         assertThatThrownBy(() ->
-                service.verifyPlayBilling(1L, "iap_three_day", ""))
+                service.verifyPlayBilling(1L, "iap_thunder", ""))
                 .isInstanceOf(SqldpassException.class)
                 .extracting("errorCode").isEqualTo(ErrorCode.INVALID_INPUT);
     }
@@ -712,10 +712,10 @@ class PaymentServiceTest {
         given(paymentRepository.findByPurchaseToken("tok-123")).willReturn(Optional.empty());
         var info = new PlayBillingClient.PlayPurchaseInfo(1, 0, System.currentTimeMillis(),
                 "GPA-test", "KR");
-        given(playBillingClient.verifyProduct("iap_three_day", "tok-123")).willReturn(info);
+        given(playBillingClient.verifyProduct("iap_thunder", "tok-123")).willReturn(info);
 
         assertThatThrownBy(() ->
-                service.verifyPlayBilling(1L, "iap_three_day", "tok-123"))
+                service.verifyPlayBilling(1L, "iap_thunder", "tok-123"))
                 .isInstanceOf(SqldpassException.class)
                 .extracting("errorCode").isEqualTo(ErrorCode.PAYMENT_VERIFICATION_FAILED);
     }
@@ -757,7 +757,7 @@ class PaymentServiceTest {
         given(paymentRepository.findByPurchaseToken("tok-prior")).willReturn(Optional.of(prior));
         given(subscriptionRepository.findByPaymentId(99L)).willReturn(Optional.empty());
 
-        var result = service.verifyPlayBilling(1L, "iap_three_day", "tok-prior");
+        var result = service.verifyPlayBilling(1L, "iap_thunder", "tok-prior");
 
         assertThat(result.paymentId()).isEqualTo("play-prior");
         // Google API 도, 신규 save 도, ack 도 없어야 한다.
@@ -779,7 +779,7 @@ class PaymentServiceTest {
         given(paymentRepository.findByPurchaseToken("tok-stolen")).willReturn(Optional.of(prior));
 
         assertThatThrownBy(() ->
-                service.verifyPlayBilling(1L, "iap_three_day", "tok-stolen"))
+                service.verifyPlayBilling(1L, "iap_thunder", "tok-stolen"))
                 .isInstanceOf(SqldpassException.class)
                 .extracting("errorCode").isEqualTo(ErrorCode.FORBIDDEN);
 
@@ -801,7 +801,7 @@ class PaymentServiceTest {
         given(paymentRepository.findByPurchaseToken("tok-pending")).willReturn(Optional.of(prior));
 
         assertThatThrownBy(() ->
-                service.verifyPlayBilling(1L, "iap_three_day", "tok-pending"))
+                service.verifyPlayBilling(1L, "iap_thunder", "tok-pending"))
                 .isInstanceOf(SqldpassException.class)
                 .extracting("errorCode").isEqualTo(ErrorCode.FORBIDDEN);
 
@@ -865,7 +865,7 @@ class PaymentServiceTest {
         given(paymentRepository.findByPurchaseToken("tok-down")).willReturn(Optional.empty());
         var info = new PlayBillingClient.PlayPurchaseInfo(0, 0, System.currentTimeMillis(),
                 "GPA-test", "KR");
-        given(playBillingClient.verifyProduct("iap_three_day", "tok-down")).willReturn(info);
+        given(playBillingClient.verifyProduct("iap_thunder", "tok-down")).willReturn(info);
 
         SubscriptionEntity active = new SubscriptionEntity(
                 1L, SubscriptionPlan.ONE_MONTH, 100L,
@@ -874,7 +874,7 @@ class PaymentServiceTest {
                 .willReturn(java.util.List.of(active));
 
         assertThatThrownBy(() ->
-                service.verifyPlayBilling(1L, "iap_three_day", "tok-down"))
+                service.verifyPlayBilling(1L, "iap_thunder", "tok-down"))
                 .isInstanceOf(SqldpassException.class)
                 .extracting("errorCode").isEqualTo(ErrorCode.INVALID_INPUT);
 

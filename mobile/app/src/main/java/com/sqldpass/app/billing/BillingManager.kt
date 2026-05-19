@@ -273,7 +273,7 @@ class BillingManager internal constructor(
 
     companion object {
         private val PRODUCT_IDS = listOf(
-            "iap_three_day",
+            "iap_thunder",
             "iap_focus",
             "iap_one_month",
             "iap_unlimited",

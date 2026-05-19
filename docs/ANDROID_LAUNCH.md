@@ -100,7 +100,7 @@ Console > 수익 창출 > 상품 > 인앱 상품 > "상품 만들기" 3번:
 
 | 상품 ID | 이름 | 가격 | 설명 |
 |---|---|---|---|
-| `iap_three_day` | 문어CBT 3일 이용권 | 3,900원 | 3일 동안 프리미엄 회차 풀이 |
+| `iap_thunder` | 문어CBT 3일 이용권 | 3,900원 | 3일 동안 프리미엄 회차 풀이 |
 | `iap_one_month` | 문어CBT 한달 이용권 | 9,900원 | 30일 동안 프리미엄 + 광고 제거 |
 | `iap_unlimited` | 문어CBT 평생 무제한 이용권 | 29,900원 | 평생 + PDF 다운로드 |
 
@@ -328,14 +328,14 @@ PLAY_BILLING_PACKAGE_NAME=com.sqldpass.app
 PLAY_BILLING_SA_PATH=/etc/secrets/play-billing-sa.json   # Step 3-4 JSON 마운트 경로
 PLAY_BILLING_RTDN_SECRET=<Step 3-5 에서 생성한 랜덤 시크릿>
 # SKU 매핑 (기본값 그대로면 생략 가능)
-PLAY_BILLING_SKU_THREE_DAY=iap_three_day
+PLAY_BILLING_SKU_THREE_DAY=iap_thunder
 PLAY_BILLING_SKU_ONE_MONTH=iap_one_month
 PLAY_BILLING_SKU_UNLIMITED=iap_unlimited
 ```
 
 프론트엔드 빌드 시:
 ```bash
-NEXT_PUBLIC_PLAY_BILLING_SKU_THREE_DAY=iap_three_day
+NEXT_PUBLIC_PLAY_BILLING_SKU_THREE_DAY=iap_thunder
 NEXT_PUBLIC_PLAY_BILLING_SKU_ONE_MONTH=iap_one_month
 NEXT_PUBLIC_PLAY_BILLING_SKU_UNLIMITED=iap_unlimited
 ```

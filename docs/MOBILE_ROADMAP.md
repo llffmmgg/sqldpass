@@ -150,7 +150,7 @@
 ### 사전 작업 (사용자)
 - Play Console 에서 앱 등록 (`com.sqldpass.app`, 한국어 기본)
 - "API 액세스" 에서 서비스 계정 + JSON 키 발급
-- 인앱 상품 4종 등록 (`iap_three_day` 등)
+- 인앱 상품 4종 등록 (`iap_thunder` 등)
 
 ### GitHub Secrets 5개 등록
 - `KEYSTORE_BASE64` — `base64 -w0 release.keystore | clip` 으로 클립보드 → Secrets

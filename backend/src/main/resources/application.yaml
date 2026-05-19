@@ -80,7 +80,7 @@ sqldpass:
     rtdn-oidc-audience: ${PLAY_BILLING_RTDN_AUDIENCE:}
     # Play Console 에 등록한 일회성 상품(SKU) 매핑 — 클라이언트가 보낸 productId 검증에 사용.
     product-id-mapping:
-      THREE_DAY: ${PLAY_BILLING_SKU_THREE_DAY:iap_three_day}
+      THREE_DAY: ${PLAY_BILLING_SKU_THREE_DAY:iap_thunder}
       FOCUS: ${PLAY_BILLING_SKU_FOCUS:iap_focus}
       ONE_MONTH: ${PLAY_BILLING_SKU_ONE_MONTH:iap_one_month}
       UNLIMITED: ${PLAY_BILLING_SKU_UNLIMITED:iap_unlimited}
@@ -149,7 +149,7 @@ sqldpass:
       bundle-id: ${APP_STORE_BUNDLE_ID:com.sqldpass.app}
     # 4티어 + iOS 인앱 결제 SKU 매핑 (App Store Connect 등록 후 확정).
     app-store-product-id-mapping:
-      THREE_DAY: ${APP_STORE_SKU_THREE_DAY:iap_three_day}
+      THREE_DAY: ${APP_STORE_SKU_THREE_DAY:iap_thunder}
       FOCUS: ${APP_STORE_SKU_FOCUS:iap_focus}
       ONE_MONTH: ${APP_STORE_SKU_ONE_MONTH:iap_one_month}
       UNLIMITED: ${APP_STORE_SKU_UNLIMITED:iap_unlimited}

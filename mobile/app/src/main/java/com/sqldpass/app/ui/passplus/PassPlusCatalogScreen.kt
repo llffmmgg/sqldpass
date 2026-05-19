@@ -52,7 +52,7 @@ private data class CatalogEntry(
 
 private val DEFAULT_CATALOG = listOf(
     CatalogEntry(
-        productId = "iap_three_day",
+        productId = "iap_thunder",
         planLabel = "Thunder",
         durationLabel = "3일",
         benefits = listOf("프리미엄 회차 풀이", "광고 제거", "오답·즐겨찾기 무제한"),

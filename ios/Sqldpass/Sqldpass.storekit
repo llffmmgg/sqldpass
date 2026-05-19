@@ -2,9 +2,9 @@
   "identifier": "F8B1A2C3-1111-2222-3333-444455556666",
   "nonRenewingSubscriptions": [
     {
-      "displayPrice": "3900",
+      "displayPrice": "5500",
       "familyShareable": false,
-      "internalID": "iap_three_day_id",
+      "internalID": "iap_thunder_id",
       "localizations": [
         {
           "description": "3일 동안 모든 기능 이용",
@@ -12,12 +12,12 @@
           "locale": "ko_KR"
         }
       ],
-      "productID": "iap_three_day",
+      "productID": "iap_thunder",
       "referenceName": "Thunder",
       "type": "NonRenewingSubscription"
     },
     {
-      "displayPrice": "2900",
+      "displayPrice": "4500",
       "familyShareable": false,
       "internalID": "iap_focus_id",
       "localizations": [
@@ -32,7 +32,7 @@
       "type": "NonRenewingSubscription"
     },
     {
-      "displayPrice": "9900",
+      "displayPrice": "13900",
       "familyShareable": false,
       "internalID": "iap_one_month_id",
       "localizations": [
@@ -47,7 +47,7 @@
       "type": "NonRenewingSubscription"
     },
     {
-      "displayPrice": "29900",
+      "displayPrice": "39000",
       "familyShareable": false,
       "internalID": "iap_unlimited_id",
       "localizations": [

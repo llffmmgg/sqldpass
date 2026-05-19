@@ -35,7 +35,7 @@ export type PaymentMethod = "KAKAOPAY" | "CARD";
  * 환경변수 NEXT_PUBLIC_PLAY_BILLING_SKU_* 로 빌드 시 오버라이드 가능.
  */
 const PLAY_BILLING_SKU: Record<SubscriptionPlan, string> = {
-  THREE_DAY: process.env.NEXT_PUBLIC_PLAY_BILLING_SKU_THREE_DAY ?? "iap_three_day",
+  THREE_DAY: process.env.NEXT_PUBLIC_PLAY_BILLING_SKU_THREE_DAY ?? "iap_thunder",
   FOCUS: process.env.NEXT_PUBLIC_PLAY_BILLING_SKU_FOCUS ?? "iap_focus",
   ONE_MONTH: process.env.NEXT_PUBLIC_PLAY_BILLING_SKU_ONE_MONTH ?? "iap_one_month",
   UNLIMITED: process.env.NEXT_PUBLIC_PLAY_BILLING_SKU_UNLIMITED ?? "iap_unlimited",
