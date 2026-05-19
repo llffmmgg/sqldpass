@@ -10,19 +10,35 @@ import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.unit.dp
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -42,6 +58,7 @@ import com.sqldpass.app.nav.tabFadeExit
 import com.sqldpass.app.ui.AppUiState
 import com.sqldpass.app.ui.AppViewModel
 import com.sqldpass.app.ui.AppViewModelFactory
+import com.sqldpass.app.ui.common.AppLoadingIndicator
 import com.sqldpass.app.ui.common.TabScaffold
 import com.sqldpass.app.ui.dashboard.DashboardTab
 import com.sqldpass.app.ui.home.HomeScreen
@@ -53,6 +70,9 @@ import com.sqldpass.app.ui.profile.ProfileTab
 import com.sqldpass.app.ui.runner.RunnerScreen
 import com.sqldpass.app.ui.solve.SoloSolveScreen
 import com.sqldpass.app.ui.solve.SolveTab
+import com.sqldpass.app.ui.theme.LocalSqldpassPalette
+import com.sqldpass.app.ui.theme.SqldRadius
+import com.sqldpass.app.ui.theme.SqldSpacing
 import com.sqldpass.app.ui.theme.SqldpassTheme
 import com.sqldpass.app.ui.bookmarks.BookmarksScreen
 import com.sqldpass.app.ui.history.HistoryScreen
@@ -196,10 +216,11 @@ private fun SqldpassApp(
     val showNavigationSuite = isBottomTabRoute(currentRoute)
 
     val appContent: @Composable () -> Unit = {
+        val palette = LocalSqldpassPalette.current
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background),
+                .background(palette.page),
         ) {
             NavHost(
                 navController = navController,
@@ -467,10 +488,8 @@ private fun SqldpassApp(
                 }
             }
             if (state.loading) {
-                val palette = com.sqldpass.app.ui.theme.LocalSqldpassPalette.current
-                CircularProgressIndicator(
+                AppLoadingIndicator(
                     modifier = Modifier.align(Alignment.Center),
-                    color = palette.accent,
                 )
             }
         }
@@ -478,7 +497,7 @@ private fun SqldpassApp(
 
     if (showNavigationSuite) {
         val palette = com.sqldpass.app.ui.theme.LocalSqldpassPalette.current
-        NavigationSuiteScaffold(
+        AppNavigationSuiteScaffold(
             navigationSuiteItems = {
                 BOTTOM_TABS.forEach { tab ->
                     val selected = currentRoute == tab.route.route
@@ -520,5 +539,97 @@ private fun SqldpassApp(
         }
     } else {
         appContent()
+    }
+}
+
+private class AppNavigationSuiteScope {
+    val items = mutableListOf<AppNavigationSuiteItem>()
+
+    fun item(
+        selected: Boolean,
+        onClick: () -> Unit,
+        icon: @Composable () -> Unit,
+        label: @Composable () -> Unit,
+    ) {
+        items += AppNavigationSuiteItem(
+            selected = selected,
+            onClick = onClick,
+            icon = icon,
+            label = label,
+        )
+    }
+}
+
+private data class AppNavigationSuiteItem(
+    val selected: Boolean,
+    val onClick: () -> Unit,
+    val icon: @Composable () -> Unit,
+    val label: @Composable () -> Unit,
+)
+
+@Composable
+private fun AppNavigationSuiteScaffold(
+    navigationSuiteItems: AppNavigationSuiteScope.() -> Unit,
+    containerColor: Color,
+    content: @Composable () -> Unit,
+) {
+    val palette = LocalSqldpassPalette.current
+    val haptic = LocalHapticFeedback.current
+    val scope = AppNavigationSuiteScope().apply(navigationSuiteItems)
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(containerColor),
+    ) {
+        Box(modifier = Modifier.weight(1f)) {
+            content()
+        }
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(palette.card),
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(1.dp)
+                    .background(palette.border),
+            )
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .navigationBarsPadding()
+                    .padding(horizontal = SqldSpacing.sm, vertical = SqldSpacing.xs),
+                horizontalArrangement = Arrangement.spacedBy(SqldSpacing.xs),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                scope.items.forEach { item ->
+                    val interactionSource = remember(item) { MutableInteractionSource() }
+                    val bg = if (item.selected) palette.accentSoftBg else Color.Transparent
+                    Column(
+                        modifier = Modifier
+                            .weight(1f)
+                            .defaultMinSize(minHeight = 56.dp)
+                            .clip(RoundedCornerShape(SqldRadius.md))
+                            .background(bg)
+                            .clickable(
+                                interactionSource = interactionSource,
+                                indication = androidx.compose.foundation.LocalIndication.current,
+                                role = Role.Tab,
+                                onClick = {
+                                    haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                    item.onClick()
+                                },
+                            )
+                            .padding(horizontal = SqldSpacing.xs, vertical = SqldSpacing.sm),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(SqldSpacing.xxs),
+                    ) {
+                        item.icon()
+                        item.label()
+                    }
+                }
+            }
+        }
     }
 }

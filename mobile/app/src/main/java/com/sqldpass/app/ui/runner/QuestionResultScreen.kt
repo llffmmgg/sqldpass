@@ -46,10 +46,12 @@ import com.sqldpass.app.ui.common.AppButtonVariant
 import com.sqldpass.app.ui.common.AppCard
 import com.sqldpass.app.ui.common.AppCardAccent
 import com.sqldpass.app.ui.common.AppCardSurface
+import com.sqldpass.app.ui.common.AppCodeBlockSurface
 import com.sqldpass.app.ui.common.AppMascot
 import com.sqldpass.app.ui.common.AppMascotPose
 import com.sqldpass.app.ui.common.AppNumberCell
 import com.sqldpass.app.ui.common.AppNumberCellSize
+import com.sqldpass.app.ui.common.AppQuestionContent
 import com.sqldpass.app.ui.common.BottomAction
 import com.sqldpass.app.ui.theme.LocalSqldpassPalette
 import com.sqldpass.app.ui.theme.SqldRadius
@@ -319,10 +321,10 @@ private fun PastExamItemBreakdown(items: List<PastExamGradedItem>) {
                                 .fillMaxWidth()
                                 .padding(top = SqldSpacing.xs),
                         ) {
-                            Text(
-                                exp,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = palette.textPrimary,
+                            AppQuestionContent(
+                                text = exp,
+                                textSizeSp = 14f,
+                                codeBlockSurface = AppCodeBlockSurface.Bare,
                             )
                         }
                     }

@@ -56,6 +56,7 @@ import com.sqldpass.app.ui.common.AppButtonSize
 import com.sqldpass.app.ui.common.AppButtonVariant
 import com.sqldpass.app.ui.common.AppCard
 import com.sqldpass.app.ui.common.AppCardSurface
+import com.sqldpass.app.ui.common.AppCodeBlockSurface
 import com.sqldpass.app.ui.common.AppDialog
 import com.sqldpass.app.ui.common.AppDropdown
 import com.sqldpass.app.ui.common.AppDropdownItem
@@ -65,12 +66,12 @@ import com.sqldpass.app.ui.common.AppNumberCell
 import com.sqldpass.app.ui.common.AppNumberCellSize
 import com.sqldpass.app.ui.common.AppOptionRow
 import com.sqldpass.app.ui.common.AppProgressPill
+import com.sqldpass.app.ui.common.AppQuestionContent
 import com.sqldpass.app.ui.common.AppSectionHeader
 import com.sqldpass.app.ui.common.AppStateView
 import com.sqldpass.app.ui.common.AppTextField
 import com.sqldpass.app.ui.common.AppViewState
 import com.sqldpass.app.ui.common.BottomAction
-import com.sqldpass.app.ui.common.SoloMarkdownContent
 import com.sqldpass.app.ui.common.appOptionStateOf
 import com.sqldpass.app.ui.solve.components.OfflineQueueChip
 import com.sqldpass.app.ui.solve.components.SoloExplanationCard
@@ -429,7 +430,10 @@ private fun QuestionContentCard(question: QuestionResponse) {
         surface = AppCardSurface.Card,
         modifier = Modifier.fillMaxWidth(),
     ) {
-        SoloMarkdownContent(text = body.ifBlank { question.content })
+        AppQuestionContent(
+            text = body.ifBlank { question.content },
+            codeBlockSurface = AppCodeBlockSurface.Card,
+        )
     }
 }
 

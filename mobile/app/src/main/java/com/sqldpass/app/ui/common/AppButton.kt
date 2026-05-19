@@ -16,7 +16,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowForward
 import androidx.compose.material.icons.outlined.Delete
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -46,7 +45,7 @@ import com.sqldpass.app.ui.theme.SqldpassTheme
  * - Press feedback: SqldpassIndication (전역 LocalIndication) — 0.97 scale + 4% wash.
  * - Variants: Primary/Secondary/Tertiary/Destructive.
  * - Sizes: Compact 40dp / Regular 48dp / Large 56dp.
- * - Loading: text/icon swap → CircularProgressIndicator. Width 유지.
+ * - Loading: text/icon swap → AppLoadingIndicator. Width 유지.
  * - Disabled: alpha 0.45, click 차단.
  *
  * 절대 Material3 `Button(...)` 위에 얹지 않는다 — ripple 이 살아남기 때문.
@@ -129,10 +128,11 @@ fun AppButton(
         contentAlignment = Alignment.Center,
     ) {
         if (loading) {
-            CircularProgressIndicator(
-                color = fg,
+            AppLoadingIndicator(
+                indicatorSize = 18.dp,
                 strokeWidth = 2.dp,
-                modifier = Modifier.size(18.dp),
+                color = fg,
+                trackColor = fg.copy(alpha = 0.28f),
             )
         } else {
             Row(

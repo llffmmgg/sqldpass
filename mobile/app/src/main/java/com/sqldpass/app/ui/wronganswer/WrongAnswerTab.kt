@@ -1,5 +1,11 @@
 package com.sqldpass.app.ui.wronganswer
 
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -7,11 +13,14 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Checkbox
-import androidx.compose.material3.CheckboxDefaults
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Check
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -23,6 +32,9 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.sqldpass.app.data.WrongAnswerSummary
@@ -32,10 +44,13 @@ import com.sqldpass.app.ui.common.AppButtonVariant
 import com.sqldpass.app.ui.common.AppCard
 import com.sqldpass.app.ui.common.AppCardSurface
 import com.sqldpass.app.ui.common.AppChip
+import com.sqldpass.app.ui.common.AppCodeBlockSurface
+import com.sqldpass.app.ui.common.AppQuestionContent
 import com.sqldpass.app.ui.common.CtaCard
 import com.sqldpass.app.ui.common.HeroHeader
 import com.sqldpass.app.ui.common.SqldpassBadge
 import com.sqldpass.app.ui.theme.LocalSqldpassPalette
+import com.sqldpass.app.ui.theme.SqldRadius
 import com.sqldpass.app.ui.theme.SqldSpacing
 
 private const val ALL_SUBJECTS = "전체"
@@ -211,14 +226,9 @@ private fun WrongRow(
             verticalAlignment = Alignment.Top,
             horizontalArrangement = Arrangement.spacedBy(SqldSpacing.sm),
         ) {
-            Checkbox(
+            AppCheckControl(
                 checked = checked,
-                onCheckedChange = { onToggle() },
-                colors = CheckboxDefaults.colors(
-                    checkedColor = palette.accent,
-                    uncheckedColor = palette.border,
-                    checkmarkColor = palette.accentFg,
-                ),
+                onToggle = onToggle,
             )
             Column(
                 modifier = Modifier.weight(1f),
@@ -241,11 +251,57 @@ private fun WrongRow(
                         )
                     }
                 }
-                Text(
-                    item.questionContent.trim().take(140),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = palette.textPrimary,
-                    maxLines = 3,
+                AppQuestionContent(
+                    text = item.questionContent.trim(),
+                    textSizeSp = 14f,
+                    codeBlockSurface = AppCodeBlockSurface.Bare,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun AppCheckControl(
+    checked: Boolean,
+    onToggle: () -> Unit,
+) {
+    val palette = LocalSqldpassPalette.current
+    val haptic = LocalHapticFeedback.current
+    val interactionSource = remember { MutableInteractionSource() }
+    Box(
+        modifier = Modifier
+            .size(48.dp)
+            .clickable(
+                interactionSource = interactionSource,
+                indication = androidx.compose.foundation.LocalIndication.current,
+                role = Role.Checkbox,
+                onClick = {
+                    haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                    onToggle()
+                },
+            ),
+        contentAlignment = Alignment.Center,
+    ) {
+        Box(
+            modifier = Modifier
+                .size(24.dp)
+                .background(
+                    if (checked) palette.accent else palette.elevated,
+                    RoundedCornerShape(SqldRadius.sm),
+                )
+                .border(
+                    BorderStroke(1.dp, if (checked) palette.accent else palette.borderStrong),
+                    RoundedCornerShape(SqldRadius.sm),
+                ),
+            contentAlignment = Alignment.Center,
+        ) {
+            if (checked) {
+                Icon(
+                    Icons.Outlined.Check,
+                    contentDescription = null,
+                    tint = palette.accentFg,
+                    modifier = Modifier.size(18.dp),
                 )
             }
         }

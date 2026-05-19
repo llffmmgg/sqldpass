@@ -5,10 +5,11 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
@@ -30,7 +31,7 @@ import com.sqldpass.app.ui.theme.SqldpassTheme
  *
  * - container: `LocalSqldpassPalette.current.card`
  * - shape: 상단 모서리만 `SqldRadius.xxl` 로 라운드
- * - drag handle: `showDragHandle=true` 면 `BottomSheetDefaults.DragHandle()`, 아니면 빈 슬롯
+ * - drag handle: custom palette bar, not Material's default handle.
  * - 내부 Column: `navigationBarsPadding` + 수평 `SqldSpacing.lg` + 수직 `SqldSpacing.base`
  */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -49,7 +50,18 @@ fun AppBottomSheet(
         containerColor = palette.card,
         shape = RoundedCornerShape(topStart = SqldRadius.xxl, topEnd = SqldRadius.xxl),
         dragHandle = if (showDragHandle) {
-            { BottomSheetDefaults.DragHandle() }
+            {
+                Box(
+                    modifier = Modifier
+                        .padding(top = SqldSpacing.md, bottom = SqldSpacing.xs)
+                        .width(38.dp)
+                        .height(4.dp)
+                        .background(
+                            palette.borderStrong,
+                            RoundedCornerShape(SqldRadius.full),
+                        ),
+                )
+            }
         } else {
             {}
         },

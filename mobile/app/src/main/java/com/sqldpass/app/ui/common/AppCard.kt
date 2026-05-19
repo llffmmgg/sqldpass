@@ -19,6 +19,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -66,6 +67,15 @@ fun AppCard(
 
     Box(
         modifier = modifier
+            .shadow(
+                elevation = when (surface) {
+                    AppCardSurface.Card -> 1.dp
+                    AppCardSurface.Elevated -> 3.dp
+                },
+                shape = RoundedCornerShape(SqldRadius.lg),
+                ambientColor = Color.Black.copy(alpha = 0.14f),
+                spotColor = Color.Black.copy(alpha = 0.12f),
+            )
             .clip(RoundedCornerShape(SqldRadius.lg))
             .background(bg)
             .border(

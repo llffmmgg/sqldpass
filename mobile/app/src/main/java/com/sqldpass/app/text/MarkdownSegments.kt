@@ -16,6 +16,7 @@ package com.sqldpass.app.text
 sealed interface MarkdownSegment {
     data class Markdown(val text: String) : MarkdownSegment
     data class CodeBlock(val language: String?, val code: String) : MarkdownSegment
+    data class Table(val rows: List<List<String>>) : MarkdownSegment
     data class InlineSvg(val svgXml: String) : MarkdownSegment
     data class Image(val src: String, val alt: String?) : MarkdownSegment
 }
@@ -58,6 +59,7 @@ fun splitMarkdownSegments(text: String): List<MarkdownSegment> {
             ),
         )
     }
+    findMarkdownTableHits(text, hits).forEach { hits += it }
     INLINE_SVG_REGEX.findAll(text).forEach { m ->
         // 코드블록 내부 svg 는 무시 — 코드 예시일 수 있음.
         val insideCode = hits.any { it.segment is MarkdownSegment.CodeBlock && m.range.first in it.range }
@@ -93,4 +95,99 @@ fun splitMarkdownSegments(text: String): List<MarkdownSegment> {
         if (tail.isNotBlank()) out.add(MarkdownSegment.Markdown(tail))
     }
     return out
+}
+
+private data class SourceLine(
+    val text: String,
+    val start: Int,
+    val endInclusive: Int,
+)
+
+private fun findMarkdownTableHits(text: String, existingHits: List<Hit>): List<Hit> {
+    val lines = buildSourceLines(text)
+    val hits = mutableListOf<Hit>()
+    var i = 0
+    while (i < lines.size - 1) {
+        val header = lines[i]
+        val delimiter = lines[i + 1]
+        val insideExisting = existingHits.any { header.start in it.range || delimiter.start in it.range }
+        if (!insideExisting && isPipeRow(header.text) && isTableDelimiterRow(delimiter.text)) {
+            val tableLines = mutableListOf(header, delimiter)
+            var j = i + 2
+            while (j < lines.size && isPipeRow(lines[j].text)) {
+                tableLines += lines[j]
+                j += 1
+            }
+            val rows = buildList {
+                add(splitTableCells(header.text))
+                tableLines.drop(2).forEach { row ->
+                    add(splitTableCells(row.text))
+                }
+            }.filter { it.any(String::isNotBlank) }
+            if (rows.isNotEmpty()) {
+                hits += Hit(
+                    range = header.start..tableLines.last().endInclusive,
+                    segment = MarkdownSegment.Table(rows),
+                )
+            }
+            i = j
+        } else {
+            i += 1
+        }
+    }
+    return hits
+}
+
+private fun buildSourceLines(text: String): List<SourceLine> {
+    val lines = mutableListOf<SourceLine>()
+    var start = 0
+    while (start <= text.length) {
+        val newline = text.indexOf('\n', start)
+        val endExclusive = if (newline == -1) text.length else newline
+        val raw = text.substring(start, endExclusive)
+        lines += SourceLine(
+            text = raw,
+            start = start,
+            endInclusive = (endExclusive - 1).coerceAtLeast(start),
+        )
+        if (newline == -1) break
+        start = newline + 1
+    }
+    return lines
+}
+
+private fun isPipeRow(line: String): Boolean {
+    val trimmed = line.trim()
+    return trimmed.contains("|") && trimmed.count { it == '|' } >= 2
+}
+
+private fun isTableDelimiterRow(line: String): Boolean {
+    if (!isPipeRow(line)) return false
+    val cells = splitTableCells(line)
+    return cells.isNotEmpty() && cells.all { cell ->
+        cell.matches(Regex(":?-{3,}:?"))
+    }
+}
+
+private fun splitTableCells(line: String): List<String> {
+    val trimmed = line.trim().removePrefix("|").removeSuffix("|")
+    val cells = mutableListOf<String>()
+    val current = StringBuilder()
+    var escaped = false
+    for (ch in trimmed) {
+        when {
+            escaped -> {
+                current.append(ch)
+                escaped = false
+            }
+            ch == '\\' -> escaped = true
+            ch == '|' -> {
+                cells += current.toString().trim()
+                current.clear()
+            }
+            else -> current.append(ch)
+        }
+    }
+    cells += current.toString().trim()
+    return cells
 }

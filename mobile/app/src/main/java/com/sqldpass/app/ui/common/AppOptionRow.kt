@@ -230,7 +230,11 @@ fun AppOptionRow(
                     .padding(vertical = SqldSpacing.sm),
             ) {
                 if (optionText != null) {
-                    SoloMarkdownContent(text = optionText, textSizeSp = 16f)
+                    AppQuestionContent(
+                        text = optionText,
+                        textSizeSp = 16f,
+                        codeBlockSurface = AppCodeBlockSurface.Bare,
+                    )
                 } else {
                     Text(
                         "${optionNumber}번",

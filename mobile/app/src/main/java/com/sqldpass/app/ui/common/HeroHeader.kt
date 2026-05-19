@@ -15,6 +15,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.sqldpass.app.ui.theme.LocalSqldpassPalette
 
 /**
  * 상단 system bar 영역까지 primary 솔리드로 채우는 히어로 헤더.
@@ -27,8 +28,9 @@ fun HeroHeader(
     actions: @Composable () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
-    val bg = MaterialTheme.colorScheme.primary
-    val fg = MaterialTheme.colorScheme.onPrimary
+    val palette = LocalSqldpassPalette.current
+    val bg = palette.accent
+    val fg = palette.accentFg
     CompositionLocalProvider(LocalContentColor provides fg) {
         Column(
             modifier = modifier

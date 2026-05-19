@@ -19,7 +19,8 @@ import com.sqldpass.app.ui.common.AppBadgeVariant
 import com.sqldpass.app.ui.common.AppCard
 import com.sqldpass.app.ui.common.AppCardAccent
 import com.sqldpass.app.ui.common.AppCardSurface
-import com.sqldpass.app.ui.common.SoloMarkdownContent
+import com.sqldpass.app.ui.common.AppCodeBlockSurface
+import com.sqldpass.app.ui.common.AppQuestionContent
 import com.sqldpass.app.ui.theme.LocalSqldpassPalette
 import com.sqldpass.app.ui.theme.SqldSpacing
 
@@ -110,7 +111,11 @@ fun SoloExplanationCard(
                 color = palette.accent,
                 fontWeight = FontWeight.SemiBold,
             )
-            SoloMarkdownContent(text = detail.explanation, textSizeSp = 16f)
+            AppQuestionContent(
+                text = detail.explanation,
+                textSizeSp = 16f,
+                codeBlockSurface = AppCodeBlockSurface.Bare,
+            )
         }
     }
 }

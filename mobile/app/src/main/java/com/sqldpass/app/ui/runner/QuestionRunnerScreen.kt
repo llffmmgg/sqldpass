@@ -1,7 +1,5 @@
 package com.sqldpass.app.ui.runner
 
-import android.view.ViewGroup
-import android.widget.TextView
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -41,7 +39,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalFocusManager
@@ -49,7 +46,7 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.viewinterop.AndroidView
+import com.sqldpass.app.ui.common.AppCodeBlockSurface
 import com.sqldpass.app.ui.common.AppBottomActionBar
 import com.sqldpass.app.ui.common.AppButton
 import com.sqldpass.app.ui.common.AppButtonSize
@@ -63,6 +60,7 @@ import com.sqldpass.app.ui.common.AppOptionRow
 import com.sqldpass.app.ui.common.AppOptionState
 import com.sqldpass.app.ui.common.AppProgressPill
 import com.sqldpass.app.ui.common.AppProgressPillTimer
+import com.sqldpass.app.ui.common.AppQuestionContent
 import com.sqldpass.app.ui.common.AppTextField
 import com.sqldpass.app.ui.common.BottomAction
 import com.sqldpass.app.ui.theme.LocalSqldpassPalette
@@ -178,7 +176,10 @@ fun QuestionRunnerScreen(
                 surface = AppCardSurface.Card,
                 modifier = Modifier.fillMaxWidth(),
             ) {
-                MarkdownContent(text = parsed.body.ifBlank { current.content })
+                AppQuestionContent(
+                    text = parsed.body.ifBlank { current.content },
+                    codeBlockSurface = AppCodeBlockSurface.Card,
+                )
             }
 
             if (isShortAnswer(current.questionType)) {
@@ -424,56 +425,6 @@ private fun HeaderIconButton(
  *
  * QuestionRunnerScreen 만의 사용처. SoloMarkdownContent 와 코드블록 chrome 만 다르다.
  */
-@Composable
-private fun MarkdownContent(text: String, textSizeSp: Float = 16f) {
-    val segments = remember(text) {
-        com.sqldpass.app.text.splitMarkdownSegments(
-            com.sqldpass.app.text.ensureCodeFences(text)
-        )
-    }
-    Column(verticalArrangement = Arrangement.spacedBy(SqldSpacing.sm)) {
-        segments.forEach { seg ->
-            when (seg) {
-                is com.sqldpass.app.text.MarkdownSegment.Markdown ->
-                    MarkwonTextView(text = seg.text, textSizeSp = textSizeSp)
-                is com.sqldpass.app.text.MarkdownSegment.CodeBlock ->
-                    CodeBlockCard(language = seg.language, code = seg.code)
-                is com.sqldpass.app.text.MarkdownSegment.InlineSvg ->
-                    com.sqldpass.app.ui.common.InlineSvgView(svgXml = seg.svgXml)
-                is com.sqldpass.app.text.MarkdownSegment.Image ->
-                    com.sqldpass.app.ui.common.RemoteImageView(src = seg.src, alt = seg.alt)
-            }
-        }
-    }
-}
-
-@Composable
-private fun MarkwonTextView(text: String, textSizeSp: Float) {
-    val ctx = androidx.compose.ui.platform.LocalContext.current
-    val palette = LocalSqldpassPalette.current
-    val textColor = palette.textPrimary.toArgb()
-    val markwon = remember(ctx) { com.sqldpass.app.text.SqldpassMarkwon.get(ctx) }
-    val spanned = remember(text, markwon) { markwon.toMarkdown(text) }
-    AndroidView(
-        modifier = Modifier.fillMaxWidth(),
-        factory = { c ->
-            TextView(c).apply {
-                layoutParams = ViewGroup.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.WRAP_CONTENT,
-                )
-                textSize = textSizeSp
-                setLineSpacing(6f, 1.05f)
-            }
-        },
-        update = { view ->
-            view.setTextColor(textColor)
-            view.textSize = textSizeSp
-            markwon.setParsedMarkdown(view, spanned)
-        },
-    )
-}
-
 @Composable
 private fun EmptyRunnerState(title: String, onCancel: () -> Unit) {
     val palette = LocalSqldpassPalette.current
