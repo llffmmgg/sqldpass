@@ -16,6 +16,9 @@ require_env IOS_BUNDLE_ID
 require_env IOS_CERTIFICATE_P12_BASE64
 require_env IOS_CERTIFICATE_PASSWORD
 require_env IOS_PROVISIONING_PROFILE_BASE64
+require_env APP_STORE_CONNECT_KEY_ID
+require_env APP_STORE_CONNECT_ISSUER_ID
+require_env APP_STORE_CONNECT_API_KEY_BASE64
 
 IOS_EXPORT_METHOD="${IOS_EXPORT_METHOD:-app-store-connect}"
 KEYCHAIN_PASSWORD="${KEYCHAIN_PASSWORD:-temporary-ios-build-keychain}"
@@ -70,6 +73,17 @@ if command -v xcodegen >/dev/null 2>&1; then
   fi
 fi
 
+# App Store Connect 의 같은 marketing version train 에서 최신 build number 를 조회해 +1.
+# Info.plist 가 $(MARKETING_VERSION)/$(CURRENT_PROJECT_VERSION) 변수 참조이므로
+# xcodebuild build setting override 가 그대로 plist 에 박힌다.
+MARKETING_VERSION=$(awk -F"['\"]" '/MARKETING_VERSION:/ {print $2; exit}' project.yml)
+if [[ -z "$MARKETING_VERSION" ]]; then
+  echo "[error] MARKETING_VERSION 을 project.yml 에서 찾지 못했습니다." >&2
+  exit 1
+fi
+NEXT_BUILD=$(python3 scripts/next_build_number.py "$IOS_BUNDLE_ID" "$MARKETING_VERSION")
+echo "[info] next build number = $NEXT_BUILD (marketing $MARKETING_VERSION)"
+
 cat > "$EXPORT_OPTIONS" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -108,6 +122,7 @@ xcodebuild \
   -configuration Release \
   -destination 'generic/platform=iOS' \
   -archivePath "$ARCHIVE_PATH" \
+  CURRENT_PROJECT_VERSION="$NEXT_BUILD" \
   archive
 
 xcodebuild \

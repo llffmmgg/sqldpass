@@ -96,6 +96,14 @@ export async function getMockExams(): Promise<MockExamSummary[]> {
   }
 }
 
+/**
+ * 미니 모의고사 목록 (로그인 사용자). 백엔드 `GET /api/mock-exams/mini` —
+ * MockExamKind=MINI 회차만 반환. visibility/검수 정책은 정규(`getMockExams`) 와 동일.
+ */
+export async function getMiniMockExams(): Promise<MockExamSummary[]> {
+  return fetchApi<MockExamSummary[]>("/mock-exams/mini");
+}
+
 export async function getMockExam(id: number): Promise<MockExamDetail> {
   // 앱 모드에선 캐시 우선 (지하철 풀이 시나리오). 캐시 hit 시 즉시 반환.
   // 캐시에 없으면 (DRAFT 회차거나 신규 회차) API 시도. API 가 실패하면 명시적 에러.

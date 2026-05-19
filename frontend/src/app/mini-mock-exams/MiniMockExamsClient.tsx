@@ -9,11 +9,11 @@ import { Card, Container } from "@/components/ui";
 import { CERT_LIST, CERT_TOKENS, type CertKey } from "@/lib/cert-tokens";
 import { isLoggedIn } from "@/lib/auth";
 import {
-  getMockExams,
+  getMiniMockExams,
   type MockExamSummary,
 } from "@/lib/mockExamApi";
 import { isExamNew } from "@/lib/mockExamNew";
-import { getPublicMockExams } from "@/lib/publicApi";
+import { getPublicMiniMockExams } from "@/lib/publicApi";
 import {
   DIFFICULTY_OPTIONS,
   MockExamCard,
@@ -40,7 +40,7 @@ function MiniMockExamsContent() {
 
   useEffect(() => {
     let alive = true;
-    const fetcher = isLoggedIn() ? getMockExams() : getPublicMockExams();
+    const fetcher = isLoggedIn() ? getMiniMockExams() : getPublicMiniMockExams();
     fetcher
       .then((next) => {
         if (alive) setExams(next);

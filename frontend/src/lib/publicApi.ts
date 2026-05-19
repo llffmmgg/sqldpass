@@ -238,6 +238,18 @@ export async function getPublicMockExams(): Promise<MockExamSummary[]> {
   return res.json();
 }
 
+/**
+ * 비로그인 /mini-mock-exams 화면용 미니 모의고사 목록.
+ * MockExamKind=MINI 만, 정규와 동일한 visibility/검수 정책.
+ */
+export async function getPublicMiniMockExams(): Promise<MockExamSummary[]> {
+  const res = await fetch(`/api/public/mock-exams/mini`, {
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`public mini mock-exams failed: ${res.status}`);
+  return res.json();
+}
+
 // ================= 기출 복원 (past-exams) — 서버용 SEO 호출 =================
 
 export type PublicExamType =
