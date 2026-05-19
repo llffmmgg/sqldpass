@@ -9,7 +9,9 @@ import Observation
 /// 본 모델은 모의고사 `SolveViewModel` 과 구조는 비슷하지만 백엔드 채점 흐름(`/grade`)이
 /// 별도 응답을 반환하므로 result 형식이 다르다. 큐잉/멱등키 인터페이스는 백엔드의
 /// `PastExamGradeRequest` 에 idempotency 필드가 없어 본 step 에선 채택하지 않는다.
-@MainActor
+// SolveViewModel 과 동일하게 클래스에는 @MainActor 를 두지 않는다 — 그러면
+// deinit 이 nonisolated 컨텍스트에서 실행되어도 timerTask 를 cancel 할 수 있다.
+// 메인 액터 격리가 필요한 async 메서드(load/submit)는 개별 @MainActor 어노테이션으로 처리.
 @Observable
 final class PastExamRunnerViewModel {
     let examId: Int64
@@ -62,6 +64,7 @@ final class PastExamRunnerViewModel {
 
     // MARK: Lifecycle
 
+    @MainActor
     func load() async {
         guard detail == nil else { return }
         isLoading = true
@@ -142,6 +145,7 @@ final class PastExamRunnerViewModel {
 
     // MARK: Submission
 
+    @MainActor
     func submit() async {
         guard !isSubmitting, graded == nil else { return }
         isSubmitting = true
