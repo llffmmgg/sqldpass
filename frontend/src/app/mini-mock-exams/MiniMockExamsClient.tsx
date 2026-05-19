@@ -106,8 +106,7 @@ function MiniMockExamsContent() {
     <Container size="narrow" className="py-16">
       <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">미니 모의고사</h2>
       <p className="mt-2 text-sm text-text-muted">
-        {token.labelLong} · 정규 회차의 과목 분포는 그대로 두고 분량만 축약한 짧은 한 세트.
-        점수 기록·오답 노트는 로그인 후 자동 저장됩니다.
+        {token.labelLong} · 미니 모의고사로 짧고 굵게 시험 대비해보세요
       </p>
 
       {/* 자격증 탭 */}
