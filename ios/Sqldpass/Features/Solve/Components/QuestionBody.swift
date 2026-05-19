@@ -4,6 +4,8 @@ import SwiftUI
 ///
 /// 본문 렌더링은 frozen 한 `QuestionContentView` 가 그대로 담당한다.
 /// `parsed.body` 가 있으면 본문만 분리 표시, 없으면 원본 content 그대로 표시.
+/// 과목명/문제 번호 라벨은 상위 화면(`SolveView`) 의 meta strip 이 chrome 에 그리므로
+/// 본문 카드에서는 중복 노출하지 않는다 (871lJPyM 디자인 정합).
 struct QuestionBody: View {
     let question: MockExamQuestionItem
 
@@ -13,17 +15,9 @@ struct QuestionBody: View {
             ? question.content
             : parsed.body
 
-        VStack(alignment: .leading, spacing: Spacing.sm) {
-            HStack(spacing: Spacing.sm) {
-                AppBadge(label: question.subjectName, tone: .accent)
-                AppBadge(label: "문제 \(question.displayOrder)", tone: .neutral)
-                Spacer(minLength: 0)
-            }
-
-            AppCard(surface: .card) {
-                QuestionContentView(text: bodyText)
-                    .textSelection(.enabled)
-            }
+        AppCard(surface: .card) {
+            QuestionContentView(text: bodyText)
+                .textSelection(.enabled)
         }
     }
 }

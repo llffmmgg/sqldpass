@@ -75,46 +75,82 @@ struct SoloSolveView: View {
                       || current.questionType.uppercased().contains("TEXT"))
 
         VStack(spacing: 0) {
-            // 헤더: 닫기 + 진행률 알약 + 북마크 + 신고
-            HStack(spacing: Spacing.sm) {
-                Button {
-                    showExitConfirm = true
-                } label: {
-                    Image(systemName: "xmark")
-                        .font(.title3)
-                        .foregroundStyle(Color.appTextPrimary)
-                        .frame(width: 40, height: 40)
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel("풀이 종료")
+            // 헤더: QuizScreen (screens.jsx ~492-623) 패턴.
+            //   row1: [X 닫기] [현재/전체 미니 카운터] ... [북마크] [⋯ 메뉴]
+            //   row2: AppSegmentedProgress (제출된 답안 수 기준 진행률)
+            //   meta: [문제 N] ... [과목명 칩]
+            VStack(alignment: .leading, spacing: Spacing.sm) {
+                HStack(spacing: Spacing.sm) {
+                    Button {
+                        showExitConfirm = true
+                    } label: {
+                        Image(systemName: "xmark")
+                            .font(.title3)
+                            .foregroundStyle(Color.appTextPrimary)
+                            .frame(width: 40, height: 40)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("풀이 종료")
 
-                AppProgressPill(
-                    current: min(viewModel.solvedCount + 1, SoloSolveViewModel.setSize),
+                    HStack(spacing: 4) {
+                        Text("\(min(viewModel.solvedCount + 1, SoloSolveViewModel.setSize))")
+                            .font(AppType.monoNumeric.weight(.semibold))
+                            .foregroundStyle(Color.appTextPrimary)
+                        Text("/ \(SoloSolveViewModel.setSize)")
+                            .font(AppType.monoNumeric)
+                            .foregroundStyle(Color.appTextMuted)
+                    }
+
+                    Spacer(minLength: Spacing.sm)
+
+                    Button {
+                        toggleBookmark(current.id)
+                    } label: {
+                        Image(systemName: bookmarkedIds.contains(current.id) ? "bookmark.fill" : "bookmark")
+                            .foregroundStyle(bookmarkedIds.contains(current.id) ? Color.brandPrimary : Color.appTextMuted)
+                            .frame(width: 40, height: 40)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel(bookmarkedIds.contains(current.id) ? "즐겨찾기 해제" : "즐겨찾기")
+
+                    Button {
+                        report(questionId: current.id)
+                    } label: {
+                        Image(systemName: "ellipsis")
+                            .rotationEffect(.degrees(90))
+                            .foregroundStyle(Color.appTextMuted)
+                            .frame(width: 40, height: 40)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("메뉴")
+                }
+
+                // 제출된 답안 수 기준으로 진행률을 채운다. revealed 상태면 현재 문제도 +1.
+                AppSegmentedProgress(
+                    current: min(viewModel.solvedCount + (viewModel.revealed ? 1 : 0), SoloSolveViewModel.setSize),
                     total: SoloSolveViewModel.setSize,
-                    label: nil
+                    color: .brandPrimary
                 )
-                .frame(maxWidth: .infinity)
 
-                Button {
-                    toggleBookmark(current.id)
-                } label: {
-                    Image(systemName: bookmarkedIds.contains(current.id) ? "bookmark.fill" : "bookmark")
-                        .foregroundStyle(bookmarkedIds.contains(current.id) ? Color.brandPrimary : Color.appTextMuted)
-                        .frame(width: 40, height: 40)
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel(bookmarkedIds.contains(current.id) ? "즐겨찾기 해제" : "즐겨찾기")
-
-                Button {
-                    report(questionId: current.id)
-                } label: {
-                    Image(systemName: "ellipsis")
-                        .rotationEffect(.degrees(90))
+                HStack(spacing: Spacing.sm) {
+                    Text("문제 \(min(viewModel.solvedCount + 1, SoloSolveViewModel.setSize))")
+                        .font(AppType.caption.weight(.semibold))
                         .foregroundStyle(Color.appTextMuted)
-                        .frame(width: 40, height: 40)
+
+                    Spacer(minLength: Spacing.sm)
+
+                    Text(viewModel.subjectName)
+                        .font(AppType.caption.weight(.semibold))
+                        .foregroundStyle(Color.appTextMuted)
+                        .padding(.horizontal, Spacing.sm + 1)
+                        .padding(.vertical, 3)
+                        .background(Color.appSurface)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: Radius.full, style: .continuous)
+                                .stroke(Color.appBorder, lineWidth: 1)
+                        )
+                        .clipShape(RoundedRectangle(cornerRadius: Radius.full, style: .continuous))
                 }
-                .buttonStyle(.plain)
-                .accessibilityLabel("메뉴")
             }
             .padding(.horizontal, Spacing.base)
             .padding(.vertical, Spacing.sm)
@@ -128,10 +164,7 @@ struct SoloSolveView: View {
                     // 오프라인 큐 인디케이터 (count > 0 일 때만)
                     OfflineQueueChip(count: solveQueue.pendingCount)
 
-                    // 과목 라벨
-                    Text(viewModel.subjectName)
-                        .font(AppType.bodyEmph)
-                        .foregroundStyle(Color.brandPrimary)
+                    // 과목명·문제 번호는 상단 chrome 의 meta strip 에서 노출 — 본문에서 중복 제거.
 
                     // 문제 본문 카드
                     QuestionBodyCard(content: isMcq ? parsed.body.isEmpty ? current.content : parsed.body

@@ -116,45 +116,55 @@ struct SolveView: View {
 
     // MARK: - Top bar
 
+    /// QuizScreen (screens.jsx ~492-623) 패턴:
+    ///   row1: [X 닫기] [중앙 카운터+타이머] [북마크] [Flag]
+    ///   row2: AppSegmentedProgress (N 셀)
+    ///   meta: [문제 번호] ... [과목명 칩]
     @ViewBuilder
     private var topBar: some View {
-        HStack(spacing: Spacing.sm) {
-            Button {
-                showExitConfirm = true
-            } label: {
-                Image(systemName: "xmark")
-                    .font(.title3)
-                    .foregroundStyle(Color.appTextPrimary)
-                    .frame(width: 40, height: 40)
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel("풀이 종료")
-
-            SolveHeader(
-                progress: viewModel.progress,
-                currentIndex: viewModel.currentIndex,
-                totalCount: viewModel.totalCount,
-                answeredCount: viewModel.answeredCount,
-                elapsedSeconds: viewModel.elapsedSeconds
-            )
-            .frame(maxWidth: .infinity, alignment: .leading)
-
-            if let q = viewModel.currentQuestion {
-                BookmarkToggleButton(questionId: q.id)
+        VStack(alignment: .leading, spacing: Spacing.sm) {
+            HStack(spacing: Spacing.sm) {
                 Button {
-                    viewModel.toggleMark()
+                    showExitConfirm = true
                 } label: {
-                    Image(systemName: viewModel.currentEntry?.markedForReview == true ? "flag.fill" : "flag")
-                        .font(AppType.body)
-                        .foregroundStyle(
-                            viewModel.currentEntry?.markedForReview == true
-                            ? Color.semanticWarning
-                            : Color.appTextMuted
-                        )
+                    Image(systemName: "xmark")
+                        .font(.title3)
+                        .foregroundStyle(Color.appTextPrimary)
                         .frame(width: 40, height: 40)
                 }
                 .buttonStyle(.plain)
-                .accessibilityLabel("다시 볼 문제로 표시")
+                .accessibilityLabel("풀이 종료")
+
+                SolveHeader(
+                    progress: viewModel.progress,
+                    currentIndex: viewModel.currentIndex,
+                    totalCount: viewModel.totalCount,
+                    answeredCount: viewModel.answeredCount,
+                    elapsedSeconds: viewModel.elapsedSeconds
+                )
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+                if let q = viewModel.currentQuestion {
+                    BookmarkToggleButton(questionId: q.id)
+                    Button {
+                        viewModel.toggleMark()
+                    } label: {
+                        Image(systemName: viewModel.currentEntry?.markedForReview == true ? "flag.fill" : "flag")
+                            .font(AppType.body)
+                            .foregroundStyle(
+                                viewModel.currentEntry?.markedForReview == true
+                                ? Color.semanticWarning
+                                : Color.appTextMuted
+                            )
+                            .frame(width: 40, height: 40)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("다시 볼 문제로 표시")
+                }
+            }
+
+            if let q = viewModel.currentQuestion {
+                metaStrip(question: q)
             }
         }
         .padding(.horizontal, Spacing.base)
@@ -164,6 +174,31 @@ struct SolveView: View {
             Rectangle()
                 .fill(Color.appBorder)
                 .frame(height: 1)
+        }
+    }
+
+    /// 헤더 하단 meta 줄: 좌측에 "문제 N", 우측에 과목명 칩.
+    /// CertBadge 는 모의고사 컨텍스트에서 자격증 정보가 없어 표시하지 않는다.
+    @ViewBuilder
+    private func metaStrip(question: MockExamQuestionItem) -> some View {
+        HStack(spacing: Spacing.sm) {
+            Text("문제 \(question.displayOrder)")
+                .font(AppType.caption.weight(.semibold))
+                .foregroundStyle(Color.appTextMuted)
+
+            Spacer(minLength: Spacing.sm)
+
+            Text(question.subjectName)
+                .font(AppType.caption.weight(.semibold))
+                .foregroundStyle(Color.appTextMuted)
+                .padding(.horizontal, Spacing.sm + 1)
+                .padding(.vertical, 3)
+                .background(Color.appSurface)
+                .overlay(
+                    RoundedRectangle(cornerRadius: Radius.full, style: .continuous)
+                        .stroke(Color.appBorder, lineWidth: 1)
+                )
+                .clipShape(RoundedRectangle(cornerRadius: Radius.full, style: .continuous))
         }
     }
 
