@@ -2,32 +2,49 @@ import SwiftUI
 
 /// 내정보(마이) 탭 루트 화면.
 ///
-/// 구조(위→아래) — `docs/MOBILE_UX_SPEC.md` § 2.5 의 단일 진실 원천:
-/// 1. 헤더 섹션: 프로필 헤더(닉네임·구독 배지) + KPI 2x2 그리드
-/// 2. 학습 섹션: 오답노트 / 북마크 / 풀이 이력
-/// 3. 계정 섹션: 닉네임 편집 / 결제·청구 / PASS+ 구독 관리
-/// 4. 설정·지원 섹션: 테마 / 알림 / 피드백 / 공지·약관 / 로그아웃 / 회원 탈퇴
+/// 구조(위→아래) — 871lJPyM 디자인 핸드오프 `screens.jsx` MyScreen (line 348~) 기준:
+/// 1. `AppPageHeader(title: "내정보")`
+/// 2. Hero 카드 — 닉네임/구독 배지 + streak strip(최장 연속·요일 7셀)
+/// 3. KPI 2x2 그리드 (총 풀이 / 평균 정답률 / 합격 확률 / 오답)
+/// 4. 학습 섹션 — 오답노트 / 북마크 / 풀이 이력
+/// 5. 계정 섹션 — 닉네임 편집 / Apple 구독 관리(활성 시) / PASS+ 구독 관리
+/// 6. 설정·지원 섹션 — 피드백 / 이용약관 / 개인정보처리방침 / 로그아웃 / 회원 탈퇴
 ///
-/// 본 phase(`mobile-ux-restructure` step 7) 에서는 진입 NavigationLink 만
-/// 추가하고 진입 화면(`WrongAnswersView` 등) 본체는 손대지 않는다.
+/// 메뉴는 `AppListGroupCard` 로 묶고 row 사이에 `AppListGroupDivider` 를 두어
+/// 핸드오프의 `MenuList` 카드형 레이아웃을 그대로 따른다.
 struct ProfileView: View {
     @State private var viewModel = ProfileViewModel()
     @State private var showNicknameEdit = false
     @State private var showFeedback = false
+    @State private var showPaywall = false
 
     var body: some View {
         NavigationStack {
-            List {
-                headerSection
-                learningSection
-                accountSection
-                settingsSupportSection
+            ScrollView {
+                VStack(alignment: .leading, spacing: Spacing.lg) {
+                    AppPageHeader(title: "내정보")
+
+                    ProfileHeroCard(
+                        nickname: viewModel.me?.nickname,
+                        provider: viewModel.me?.provider,
+                        subscription: viewModel.subscription,
+                        streak: viewModel.streak,
+                        errorMessage: viewModel.errorMessage,
+                        onUpgradeTap: { showPaywall = true }
+                    )
+
+                    KpiGrid(kpi: viewModel.kpi)
+
+                    learningSection
+                    accountSection
+                    settingsSupportSection
+                }
+                .padding(.horizontal, Spacing.base)
+                .padding(.bottom, Spacing.xxl)
             }
-            .listStyle(.insetGrouped)
             .background(Color.appPage)
-            .scrollContentBackground(.hidden)
-            .navigationTitle("내정보")
             .navigationBarTitleDisplayMode(.inline)
+            .toolbar(.hidden, for: .navigationBar)
             .refreshable {
                 await viewModel.load()
             }
@@ -42,197 +59,139 @@ struct ProfileView: View {
                     onUpdated: { viewModel.updateLocalNickname($0) }
                 )
             }
+            .navigationDestination(isPresented: $showPaywall) {
+                PaywallView()
+            }
             .sheet(isPresented: $showFeedback) {
                 FeedbackComposeView(initialType: .other, questionId: nil)
             }
         }
     }
 
-    // MARK: - Header (프로필 헤더 + KPI)
-
-    @ViewBuilder
-    private var headerSection: some View {
-        Section {
-            ProfileHeaderRow(
-                nickname: viewModel.me?.nickname,
-                provider: viewModel.me?.provider,
-                subscription: viewModel.subscription,
-                errorMessage: viewModel.errorMessage
-            )
-            .listRowInsets(EdgeInsets(top: Spacing.md, leading: Spacing.base,
-                                     bottom: Spacing.md, trailing: Spacing.base))
-            .listRowBackground(Color.clear)
-            .listRowSeparator(.hidden)
-
-            KpiGrid(kpi: viewModel.kpi)
-                .listRowInsets(EdgeInsets(top: 0, leading: Spacing.base,
-                                         bottom: Spacing.sm, trailing: Spacing.base))
-                .listRowBackground(Color.clear)
-                .listRowSeparator(.hidden)
-        }
-    }
-
     // MARK: - 학습
 
     private var learningSection: some View {
-        Section {
-            NavigationLink {
-                WrongAnswersView()
-            } label: {
-                MenuRowLabel(icon: "doc.text.magnifyingglass", title: "오답노트")
-            }
-            NavigationLink {
-                BookmarksView()
-            } label: {
-                MenuRowLabel(icon: "bookmark", title: "북마크")
-            }
-            NavigationLink {
-                HistoryView()
-            } label: {
-                MenuRowLabel(icon: "clock.arrow.circlepath", title: "풀이 이력")
-            }
-        } header: {
+        VStack(alignment: .leading, spacing: Spacing.sm) {
             SectionHeader(title: "학습")
+            AppListGroupCard {
+                NavigationLink {
+                    WrongAnswersView()
+                } label: {
+                    MenuRow(icon: "doc.text.magnifyingglass", title: "오답노트")
+                }
+                .buttonStyle(.plain)
+
+                AppListGroupDivider()
+
+                NavigationLink {
+                    BookmarksView()
+                } label: {
+                    MenuRow(icon: "bookmark", title: "북마크")
+                }
+                .buttonStyle(.plain)
+
+                AppListGroupDivider()
+
+                NavigationLink {
+                    HistoryView()
+                } label: {
+                    MenuRow(icon: "clock.arrow.circlepath", title: "풀이 이력")
+                }
+                .buttonStyle(.plain)
+            }
         }
     }
 
     // MARK: - 계정
 
     private var accountSection: some View {
-        Section {
-            Button {
-                showNicknameEdit = true
-            } label: {
-                MenuRowLabel(icon: "person.text.rectangle", title: "닉네임 편집")
-            }
-            .buttonStyle(.plain)
-
-            // 활성 구독이 있을 때만 Apple 구독 관리 페이지로 이동시킨다.
-            // 비활성 상태에서는 결제 내역 자체가 없으므로 행 자체를 숨김.
-            if viewModel.subscription?.active == true {
-                Link(destination: URL(string: "https://apps.apple.com/account/subscriptions")!) {
-                    MenuRowLabel(icon: "creditcard", title: "Apple 구독 관리")
-                }
-            }
-
-            NavigationLink {
-                PaywallView()
-            } label: {
-                MenuRowLabel(icon: "crown.fill", title: "PASS+ 구독 관리")
-            }
-        } header: {
+        VStack(alignment: .leading, spacing: Spacing.sm) {
             SectionHeader(title: "계정")
+            AppListGroupCard {
+                Button {
+                    showNicknameEdit = true
+                } label: {
+                    MenuRow(icon: "person.text.rectangle", title: "닉네임 편집")
+                }
+                .buttonStyle(.plain)
+
+                // 활성 구독이 있을 때만 Apple 구독 관리 페이지 노출.
+                if viewModel.subscription?.active == true {
+                    AppListGroupDivider()
+                    Link(destination: URL(string: "https://apps.apple.com/account/subscriptions")!) {
+                        MenuRow(icon: "creditcard", title: "Apple 구독 관리")
+                    }
+                }
+
+                AppListGroupDivider()
+
+                NavigationLink {
+                    PaywallView()
+                } label: {
+                    MenuRow(icon: "crown.fill", title: "PASS+ 구독 관리")
+                }
+                .buttonStyle(.plain)
+            }
         }
     }
 
     // MARK: - 설정·지원
 
     private var settingsSupportSection: some View {
-        Section {
-            // 인앱 피드백 폼 — 백엔드 `POST /api/feedback` 호출.
-            Button {
-                showFeedback = true
-            } label: {
-                MenuRowLabel(icon: "bubble.left.and.bubble.right", title: "피드백 보내기")
-            }
-            .buttonStyle(.plain)
-
-            Link(destination: URL(string: "https://www.sqldpass.com/terms")!) {
-                MenuRowLabel(icon: "doc.text", title: "이용약관")
-            }
-
-            Link(destination: URL(string: "https://www.sqldpass.com/privacy")!) {
-                MenuRowLabel(icon: "lock.shield", title: "개인정보처리방침")
-            }
-
-            Button(role: .destructive) {
-                AuthStore.shared.signOut()
-            } label: {
-                MenuRowLabel(
-                    icon: "rectangle.portrait.and.arrow.right",
-                    title: "로그아웃",
-                    tone: .danger
-                )
-            }
-            .buttonStyle(.plain)
-
-            NavigationLink {
-                AccountDeletionConfirmView()
-            } label: {
-                MenuRowLabel(
-                    icon: "person.crop.circle.badge.minus",
-                    title: "회원 탈퇴",
-                    tone: .danger
-                )
-            }
-        } header: {
+        VStack(alignment: .leading, spacing: Spacing.sm) {
             SectionHeader(title: "설정·지원")
-        }
-    }
-}
-
-// MARK: - 프로필 헤더 행 (닉네임 + 구독 상태 배지)
-
-private struct ProfileHeaderRow: View {
-    let nickname: String?
-    let provider: String?
-    let subscription: SubscriptionInfo?
-    let errorMessage: String?
-
-    var body: some View {
-        HStack(spacing: Spacing.base) {
-            Image(systemName: "person.crop.circle.fill")
-                .font(.system(size: 44))
-                .foregroundStyle(Color.brandPrimary)
-            VStack(alignment: .leading, spacing: Spacing.xxs) {
-                Text(nickname ?? "학습자")
-                    .font(AppType.heading.weight(.bold))
-                    .foregroundStyle(Color.appTextPrimary)
-                    .lineLimit(1)
-                if let provider {
-                    HStack(spacing: Spacing.xs) {
-                        SubscriptionBadge(subscription: subscription)
-                        Text("\(provider.lowercased()) 로그인")
-                            .font(AppType.caption)
-                            .foregroundStyle(Color.appTextMuted)
-                    }
-                } else if let errorMessage {
-                    Text(errorMessage)
-                        .font(AppType.caption)
-                        .foregroundStyle(Color.semanticDanger)
-                        .lineLimit(2)
+            AppListGroupCard {
+                // 인앱 피드백 폼 — 백엔드 `POST /api/feedback` 호출.
+                Button {
+                    showFeedback = true
+                } label: {
+                    MenuRow(icon: "bubble.left.and.bubble.right", title: "피드백 보내기")
                 }
+                .buttonStyle(.plain)
+
+                AppListGroupDivider()
+
+                Link(destination: URL(string: "https://www.sqldpass.com/terms")!) {
+                    MenuRow(icon: "doc.text", title: "이용약관")
+                }
+
+                AppListGroupDivider()
+
+                Link(destination: URL(string: "https://www.sqldpass.com/privacy")!) {
+                    MenuRow(icon: "lock.shield", title: "개인정보처리방침")
+                }
+
+                AppListGroupDivider()
+
+                Button(role: .destructive) {
+                    AuthStore.shared.signOut()
+                } label: {
+                    MenuRow(
+                        icon: "rectangle.portrait.and.arrow.right",
+                        title: "로그아웃",
+                        tone: .danger
+                    )
+                }
+                .buttonStyle(.plain)
+
+                AppListGroupDivider()
+
+                NavigationLink {
+                    AccountDeletionConfirmView()
+                } label: {
+                    MenuRow(
+                        icon: "person.crop.circle.badge.minus",
+                        title: "회원 탈퇴",
+                        tone: .danger
+                    )
+                }
+                .buttonStyle(.plain)
             }
-            Spacer(minLength: 0)
         }
     }
 }
 
-/// 구독 상태 배지 (헤더 영역). `SubscriptionInfo.displayBadgeLabel` 을 그대로 노출.
-/// 활성이면 plan 명 또는 "PRO" 색상 강조, 비활성이면 회색 "FREE".
-private struct SubscriptionBadge: View {
-    let subscription: SubscriptionInfo?
-
-    private var label: String {
-        subscription?.displayBadgeLabel ?? "FREE"
-    }
-
-    private var isActive: Bool {
-        subscription?.active ?? false
-    }
-
-    var body: some View {
-        Text(label)
-            .font(AppType.caption.weight(.semibold))
-            .foregroundStyle(isActive ? Color.brandPrimary : Color.appTextMuted)
-            .padding(.horizontal, Spacing.xs)
-            .padding(.vertical, 2)
-            .background(isActive ? Color.brandPrimary.opacity(0.12) : Color.appElevated)
-            .clipShape(RoundedRectangle(cornerRadius: Radius.sm))
-    }
-}
-
-// MARK: - 섹션 헤더 / 메뉴 행 라벨
+// MARK: - 섹션 헤더 / 메뉴 행
 
 private struct SectionHeader: View {
     let title: String
@@ -242,6 +201,7 @@ private struct SectionHeader: View {
             .font(AppType.footnote.weight(.semibold))
             .foregroundStyle(Color.appTextMuted)
             .textCase(nil)
+            .padding(.horizontal, Spacing.xs)
     }
 }
 
@@ -250,7 +210,7 @@ private enum MenuRowTone {
     case danger
 }
 
-private struct MenuRowLabel: View {
+private struct MenuRow: View {
     let icon: String
     let title: String
     var tone: MenuRowTone = .normal
@@ -279,7 +239,12 @@ private struct MenuRowLabel: View {
                 .font(AppType.body)
                 .foregroundStyle(foreground)
             Spacer(minLength: 0)
+            Image(systemName: "chevron.right")
+                .font(AppType.footnote)
+                .foregroundStyle(Color.appTextSubtle)
         }
+        .padding(.horizontal, Spacing.base)
+        .padding(.vertical, Spacing.md)
         .contentShape(Rectangle())
     }
 }

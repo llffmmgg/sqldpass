@@ -5,6 +5,9 @@ import Observation
 final class ProfileViewModel {
     private(set) var me: MemberMe?
     private(set) var subscription: SubscriptionInfo?
+    /// Hero 카드의 streak strip(최장 연속·오늘 풀이 여부) 렌더에 사용.
+    /// `/api/streak/me` 호출 실패 시 nil 유지.
+    private(set) var streak: StreakInfo?
     private(set) var isLoading = false
     private(set) var errorMessage: String?
 
@@ -44,10 +47,12 @@ final class ProfileViewModel {
         var longestStreak: Int? = nil
         do {
             let info = try await StreakService.me()
+            streak = info
             longestStreak = info.longestStreak
         } catch {
             // KPI 로드 실패는 화면 전체 실패로 승격하지 않는다.
             // streak 호출이 실패하면 해당 타일도 "—" 로 표시된다.
+            streak = nil
             longestStreak = nil
         }
         kpi = ProfileKpi(
