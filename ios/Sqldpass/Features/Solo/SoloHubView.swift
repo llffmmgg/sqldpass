@@ -2,10 +2,12 @@ import SwiftUI
 
 /// 실전 문제 탭 진입 화면 — 자격증 선택 후 과목 카드 → SoloSolveView push.
 ///
-/// 정보 위계 (docs/MOBILE_UX_SPEC.md § 2.4):
-///  1) 자격증 칩 (수평)
-///  2) 과목 카드 그리드/리스트
-///  3) 카드 탭 → SoloSolveScreen (1문 즉시 채점, 10문 세트)
+/// 정보 위계 (docs/MOBILE_UX_SPEC.md § 2.4, 871lJPyM 핸드오프 PracticeScreen):
+///  1) AppPageHeader (제목 + 서브타이틀)
+///  2) 모드 토글 (10문제 세트 / 약점 보강 / 랜덤) — 첫 항목만 활성
+///  3) 자격증 칩 (수평)
+///  4) 자격증별 과목 그룹 (AppListGroupCard)
+///  5) 카드 행 탭 → SoloSolveScreen (1문 즉시 채점, 10문 세트)
 ///
 /// 백엔드 `/api/subjects` 는 트리(자격증 = 루트, 과목 = children) 응답이므로
 /// 본 화면은 `SoloHubViewModel.grouped` 가 만들어 준 (parent root, children leaves)
@@ -15,6 +17,10 @@ import SwiftUI
 /// fetch 실패(401 외 사유) 시 EmptyState 만 노출하고 강한 alert 는 띄우지 않는다.
 struct SoloHubView: View {
     @State private var viewModel = SoloHubViewModel()
+
+    /// 모드 토글 상태 — 약점 보강 / 랜덤 은 곧 출시 (Phase 1 기준 비활성).
+    /// 사용자가 비활성 세그먼트를 탭해도 selection 은 항상 .standard 로 유지된다.
+    @State private var mode: PracticeMode = .standard
 
     var body: some View {
         content
@@ -43,11 +49,15 @@ struct SoloHubView: View {
     private var content: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: Spacing.lg) {
-                Text("자격증을 고르면 10문제 세트를 받아 한 문제씩 즉시 채점합니다.")
-                    .font(AppType.callout)
-                    .foregroundStyle(Color.appTextMuted)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .padding(.top, Spacing.base)
+                AppPageHeader(
+                    title: "실전 문제",
+                    subtitle: "과목별 10문제 세트를 받아 한 문제씩 즉시 채점합니다"
+                )
+
+                PracticeModeToggle(selected: mode) { tapped in
+                    // 비활성 세그먼트(약점 보강 / 랜덤)는 selection 변경하지 않는다.
+                    if tapped.isEnabled { mode = tapped }
+                }
 
                 if !viewModel.grouped.isEmpty {
                     SoloCertChipsRow(
@@ -79,6 +89,81 @@ struct SoloHubView: View {
                 }
             }
         }
+    }
+}
+
+// MARK: - 모드 토글
+
+/// 실전 문제 화면 상단 모드 토글. 현재는 `.standard` 만 활성.
+private enum PracticeMode: String, CaseIterable, Identifiable {
+    case standard      // 10문제 세트
+    case weakness      // 약점 보강
+    case random        // 랜덤
+
+    var id: String { rawValue }
+
+    var label: String {
+        switch self {
+        case .standard: return "10문제 세트"
+        case .weakness: return "약점 보강"
+        case .random:   return "랜덤"
+        }
+    }
+
+    var isEnabled: Bool {
+        self == .standard
+    }
+}
+
+/// SwiftUI `Picker(.segmented)` 대신 직접 만든 3-segment 토글.
+/// 비활성 세그먼트의 시각 상태(흐림 + "곧 출시" 캡션)를 표현하기 위함.
+private struct PracticeModeToggle: View {
+    let selected: PracticeMode
+    let onTap: (PracticeMode) -> Void
+
+    var body: some View {
+        HStack(spacing: Spacing.xs) {
+            ForEach(PracticeMode.allCases) { mode in
+                segment(for: mode)
+            }
+        }
+        .padding(Spacing.xs)
+        .background(Color.appSurface)
+        .overlay(
+            RoundedRectangle(cornerRadius: Radius.md, style: .continuous)
+                .stroke(Color.appBorder, lineWidth: 1)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: Radius.md, style: .continuous))
+    }
+
+    @ViewBuilder
+    private func segment(for mode: PracticeMode) -> some View {
+        let isSelected = mode == selected
+        Button {
+            onTap(mode)
+        } label: {
+            VStack(spacing: Spacing.xxs) {
+                Text(mode.label)
+                    .font(AppType.footnote.weight(.semibold))
+                    .foregroundStyle(Color.appTextPrimary)
+                if !mode.isEnabled {
+                    Text("곧 출시")
+                        .font(AppType.caption)
+                        .foregroundStyle(Color.appTextSubtle)
+                }
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, Spacing.sm)
+            .background(
+                RoundedRectangle(cornerRadius: Radius.sm, style: .continuous)
+                    .fill(isSelected ? Color.appElevated : Color.clear)
+            )
+            .contentShape(RoundedRectangle(cornerRadius: Radius.sm, style: .continuous))
+            .opacity(mode.isEnabled ? 1.0 : 0.45)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(mode.label)
+        .accessibilityHint(mode.isEnabled ? "선택됨" : "곧 출시")
     }
 }
 
@@ -150,7 +235,8 @@ private struct SubjectGroupCard: View {
     let children: [SubjectResponse]
 
     var body: some View {
-        VStack(alignment: .leading, spacing: Spacing.md) {
+        VStack(alignment: .leading, spacing: Spacing.sm) {
+            // group header — 자격증 색점 + 짧은 이름 + 과목 수
             HStack(spacing: Spacing.sm) {
                 Circle()
                     .fill(parentNameToCert(parent))
@@ -158,11 +244,17 @@ private struct SubjectGroupCard: View {
                 Text(shortenCertName(parent))
                     .font(AppType.subheading)
                     .foregroundStyle(Color.appTextPrimary)
+                Spacer(minLength: 0)
+                Text("\(children.count)과목")
+                    .font(AppType.caption)
+                    .foregroundStyle(Color.appTextMuted)
             }
+            .padding(.horizontal, Spacing.xs)
 
             // 과목은 NavigationLink 로 push — SoloSolveView 가 NavigationStack 안에서 동작.
-            VStack(spacing: Spacing.sm) {
-                ForEach(children) { subject in
+            AppListGroupCard {
+                ForEach(Array(children.enumerated()), id: \.element.id) { index, subject in
+                    if index > 0 { AppListGroupDivider() }
                     NavigationLink(value: subject) {
                         SubjectRow(name: subject.name)
                     }
@@ -170,14 +262,7 @@ private struct SubjectGroupCard: View {
                 }
             }
         }
-        .padding(Spacing.base)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.appSurface)
-        .overlay(
-            RoundedRectangle(cornerRadius: Radius.lg)
-                .stroke(Color.appBorder, lineWidth: 1)
-        )
-        .clipShape(RoundedRectangle(cornerRadius: Radius.lg))
     }
 }
 
@@ -199,11 +284,10 @@ private struct SubjectRow: View {
                 .font(AppType.footnote)
                 .foregroundStyle(Color.appTextSubtle)
         }
-        .padding(.horizontal, Spacing.sm)
-        .padding(.vertical, Spacing.sm)
+        .padding(.horizontal, Spacing.base)
+        .padding(.vertical, Spacing.md)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.appElevated)
-        .clipShape(RoundedRectangle(cornerRadius: Radius.md))
+        .contentShape(Rectangle())
     }
 }
 
