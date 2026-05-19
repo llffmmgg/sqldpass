@@ -20,42 +20,47 @@ struct StreakCard: View {
         atRisk ? "exclamationmark.triangle.fill" : "flame.fill"
     }
 
-    private var title: String {
+    /// 카드 하단 짧은 보조 안내. 새 디자인은 "오늘도 풀면 +1일" 등 짧은 카피를 사용.
+    private var caption: String {
         if atRisk {
-            return "오늘 자정이 끝나면 연속 일수가 끊겨요"
+            return "오늘 풀어야 streak 이 이어져요"
+        }
+        if streak.solvedToday {
+            return "오늘 학습 완료 — 내일도 같은 시간에"
         }
         if streak.currentStreak >= 1 {
-            return "연속 학습 \(streak.currentStreak)일째"
+            return "오늘도 풀면 +1일"
         }
-        return "오늘 풀이로 streak 을 시작해요"
-    }
-
-    private var body_: String {
-        if atRisk {
-            return "한 문제만 풀어도 \(streak.currentStreak)일이 이어집니다."
-        }
-        if streak.currentStreak >= 1 {
-            return "꾸준함이 합격을 만듭니다."
-        }
-        return "한 문제만 풀어도 streak 1일."
+        return "한 문제로 streak 을 시작해요"
     }
 
     var body: some View {
-        HStack(alignment: .center, spacing: Spacing.md) {
-            Image(systemName: iconName)
-                .font(.title3)
-                .foregroundStyle(accent)
-            VStack(alignment: .leading, spacing: Spacing.xxs) {
-                Text(title)
-                    .font(AppType.bodyEmph)
-                    .foregroundStyle(Color.appTextPrimary)
-                    .fixedSize(horizontal: false, vertical: true)
-                Text(body_)
+        VStack(alignment: .leading, spacing: Spacing.sm) {
+            HStack(spacing: Spacing.xs) {
+                Image(systemName: iconName)
                     .font(AppType.footnote)
-                    .foregroundStyle(Color.appTextMuted)
-                    .fixedSize(horizontal: false, vertical: true)
+                    .foregroundStyle(accent)
+                Text("STREAK")
+                    .font(AppType.caption.weight(.semibold))
+                    .tracking(1.2)
+                    .foregroundStyle(accent)
             }
-            Spacer(minLength: 0)
+
+            HStack(alignment: .lastTextBaseline, spacing: Spacing.xs) {
+                Text("\(streak.currentStreak)")
+                    .font(AppType.monoNumericLarge)
+                    .foregroundStyle(Color.appTextPrimary)
+                    .lineLimit(1)
+                Text("일 연속")
+                    .font(AppType.footnote.weight(.semibold))
+                    .foregroundStyle(Color.appTextMuted)
+            }
+
+            Text(caption)
+                .font(AppType.caption)
+                .foregroundStyle(Color.appTextSubtle)
+                .lineLimit(2)
+                .fixedSize(horizontal: false, vertical: true)
         }
         .padding(Spacing.base)
         .frame(maxWidth: .infinity, alignment: .leading)

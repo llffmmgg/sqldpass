@@ -10,6 +10,8 @@ final class HomeViewModel {
     private(set) var member: MemberMe?
     private(set) var streak: StreakInfo?
     private(set) var stats: OverallStats?
+    /// 약점 보강 섹션용. 실패 시 빈 배열 — errorMessage 에는 전파하지 않는다 (섹션이 단순히 숨겨질 뿐).
+    private(set) var wrongStats: [WrongAnswerStats] = []
     private(set) var isLoading = false
     private(set) var errorMessage: String?
 
@@ -30,6 +32,14 @@ final class HomeViewModel {
             errorMessage = error.errorDescription
         } catch {
             errorMessage = error.localizedDescription
+        }
+
+        // 약점 보강 stats 는 별도 분기 — 실패해도 main errorMessage 에 영향 주지 않는다.
+        // 권한/네트워크 등 어떤 이유로든 실패하면 섹션을 단순히 숨긴다.
+        do {
+            wrongStats = try await WrongAnswerService.stats()
+        } catch {
+            wrongStats = []
         }
     }
 }
