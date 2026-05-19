@@ -12,8 +12,6 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import com.sqldpass.persistent.mockexam.MockExamKind;
-import com.sqldpass.persistent.mockexam.MockExamVisibility;
 
 public interface QuestionRepository extends JpaRepository<QuestionEntity, Long> {
 
@@ -75,12 +73,8 @@ public interface QuestionRepository extends JpaRepository<QuestionEntity, Long> 
      * <p>안전망: <strong>visibility=DRAFT 회차는 항상 제외</strong> — 사용자에게 단 한 번도
      * 노출된 적 없는 모의고사의 문제는 미니 풀에 들어가지 못한다.
      *
-     * <p>출처 분류는 (kind, visibility) 페어로 호출자가 지정:
-     *  - 기출:           kind=PAST_EXAM, visibility=null (PUBLISHED/PREMIUM 모두 허용, DRAFT 는 위 안전망으로 차단)
-     *  - AI 무료 풀:     kind=AI,        visibility=PUBLISHED
-     *  - AI 프리미엄 풀: kind=AI,        visibility=PREMIUM
-     *
-     * <p>난이도 단일값 필터(difficulty 1~4). null 이면 전체.
+     * <p>출처(기출/AI/프리미엄) / 난이도 구분은 폐기 — 풀 활용을 극대화하고 풀 매트릭스 병목을 없앤다.
+     * 출처 분포는 풀의 자연 비율을 그대로 따라간다.
      */
     @Query("""
             SELECT q FROM QuestionEntity q
@@ -89,15 +83,8 @@ public interface QuestionRepository extends JpaRepository<QuestionEntity, Long> 
               AND q.includedInMiniAt IS NULL
               AND m.expertVerified = true
               AND m.visibility <> com.sqldpass.persistent.mockexam.MockExamVisibility.DRAFT
-              AND m.kind = :kind
-              AND (:visibility IS NULL OR m.visibility = :visibility)
-              AND (:difficulty IS NULL OR q.difficulty = :difficulty)
             """)
-    List<QuestionEntity> findMiniPoolBySubjectAndSource(
-            @Param("subjectId") Long subjectId,
-            @Param("kind") MockExamKind kind,
-            @Param("visibility") MockExamVisibility visibility,
-            @Param("difficulty") Integer difficulty);
+    List<QuestionEntity> findMiniPoolBySubject(@Param("subjectId") Long subjectId);
 
     /** 미니 풀 복제 일괄 마킹 — N+1 dirty checking 없이 단일 UPDATE */
     @Modifying

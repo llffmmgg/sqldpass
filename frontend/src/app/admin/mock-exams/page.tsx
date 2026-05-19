@@ -39,19 +39,6 @@ const ADMIN_DIFFICULTY_OPTIONS: { value: AdminDifficultyFilter; label: string; a
   { value: "매우 어려움", label: "매우 어려움", activeClass: "border-red-500/40 bg-red-500/10 text-red-300" },
 ];
 
-/** 미니 풀 난이도 단일 필터 — 1~4 또는 null(전체). */
-const MINI_DIFFICULTY_OPTIONS: { value: number | null; label: string; activeClass: string }[] = [
-  { value: null, label: "전체 난이도", activeClass: "border-foreground/40 bg-foreground/5 text-foreground" },
-  { value: 1, label: "쉬움", activeClass: "border-emerald-500/40 bg-emerald-500/10 text-emerald-300" },
-  { value: 2, label: "보통", activeClass: "border-amber-500/40 bg-amber-500/10 text-amber-300" },
-  { value: 3, label: "어려움", activeClass: "border-orange-500/40 bg-orange-500/10 text-orange-300" },
-  { value: 4, label: "매우 어려움", activeClass: "border-red-500/40 bg-red-500/10 text-red-300" },
-];
-
-function miniDifficultyLabel(value: number | null): string {
-  return MINI_DIFFICULTY_OPTIONS.find((o) => o.value === value)?.label ?? "전체 난이도";
-}
-
 /**
  * 자격증 레지스트리 — 새 자격증 추가 시 이 배열에만 항목을 추가하면
  * 탭/생성 버튼/배지가 자동 확장됨.
@@ -150,7 +137,6 @@ export default function AdminMockExamsPage() {
   const [exams, setExams] = useState<AdminMockExam[] | null>(null);
   const [creating, setCreating] = useState<CreateMockExamType | null>(null);
   const [creatingMini, setCreatingMini] = useState<CreateMockExamType | null>(null);
-  const [miniDifficulty, setMiniDifficulty] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<TabId>("all");
@@ -222,10 +208,9 @@ export default function AdminMockExamsPage() {
   async function handleCreateMini(examType: CreateMockExamType) {
     const cert = certOf(examType);
     const label = cert?.label ?? examType;
-    const diffLabel = miniDifficultyLabel(miniDifficulty);
     if (
       !confirm(
-        `${label} 미니 모의고사를 ${diffLabel} 풀에서 가능한 만큼 일괄 생성합니다.\n\n- 출처: 기출(공개) / AI 공개 / AI 프리미엄 (DRAFT 회차는 자동 제외)\n- 비율: 1:1:1, 과목 분포 보존\n\n계속하시겠습니까?`,
+        `${label} 미니 모의고사를 현재 풀에서 가능한 만큼 일괄 생성합니다.\n\n- 풀 조건: 공개/프리미엄 회차 + 전문가 검수 완료 + 미사용\n- 과목 분포 보존, 출처/난이도 구분 없음\n\n계속하시겠습니까?`,
       )
     ) {
       return;
@@ -234,18 +219,18 @@ export default function AdminMockExamsPage() {
     setError(null);
     setInfo(null);
     try {
-      const result = await createMiniMockExams(examType, miniDifficulty);
+      const result = await createMiniMockExams(examType);
       await load();
       if (result.createdCount === 0) {
         setError(
-          `${label} ${diffLabel} 풀로는 미니 모의고사를 만들 수 없습니다. 난이도/풀 보충 후 다시 시도하세요.`,
+          `${label} 풀로는 미니 모의고사를 만들 수 없습니다. 풀 보충 후 다시 시도하세요.`,
         );
       } else {
-        const remaining = Object.entries(result.remainingPoolBySource)
-          .map(([k, v]) => `${k}=${v}`)
+        const remaining = Object.entries(result.remainingPoolBySubject)
+          .map(([k, v]) => `과목${k}=${v}`)
           .join(" / ");
         setInfo(
-          `${label} 미니 모의고사 ${result.createdCount}회 생성됨 (${diffLabel}). 잔여 풀: ${remaining}`,
+          `${label} 미니 모의고사 ${result.createdCount}회 생성됨. 잔여 풀: ${remaining}`,
         );
       }
     } catch (e) {
@@ -406,40 +391,11 @@ export default function AdminMockExamsPage() {
         </div>
       </div>
 
-      {/* 미니 풀 난이도 단일 필터 (1~4 또는 전체) — 미니 생성 직전에 선택 */}
-      <div className="mt-4 flex flex-col gap-2">
-        <div className="text-xs font-semibold text-muted">
-          미니 풀 난이도 필터
-          <span className="ml-2 font-normal text-muted/70">
-            — 현재 선택: {miniDifficultyLabel(miniDifficulty)}
-          </span>
-        </div>
-        <div className="flex flex-wrap gap-1.5">
-          {MINI_DIFFICULTY_OPTIONS.map((opt) => {
-            const active = miniDifficulty === opt.value;
-            return (
-              <button
-                key={String(opt.value ?? "ALL")}
-                onClick={() => setMiniDifficulty(opt.value)}
-                disabled={creating !== null || creatingMini !== null}
-                className={`inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-medium transition-colors ${
-                  active
-                    ? `${opt.activeClass} ring-1 ring-current/30`
-                    : "border-border bg-surface text-muted hover:border-foreground/40 hover:text-foreground"
-                }`}
-              >
-                {opt.label}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* 미니 모의고사 일괄 생성 — 현재 풀을 비율 보존하며 가능한 회차를 한 번에 발급 */}
+      {/* 미니 모의고사 일괄 생성 — 현재 풀을 과목 분포만 보존하며 가능한 회차를 한 번에 발급 */}
       <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="text-xs text-muted">
-          미니 모의고사 — 공개/프리미엄 + 검수 완료 + 미사용 풀에서 기출/AI/프리미엄
-          1:1:1 비율로 일괄 발급 (visibility=PREMIUM)
+          미니 모의고사 — 공개/프리미엄 + 검수 완료 + 미사용 풀에서
+          과목 분포 보존해 일괄 발급 (visibility=PREMIUM)
         </div>
         <div className="flex flex-wrap gap-2">
           {createButtons.map((cert) => (

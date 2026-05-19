@@ -1,6 +1,5 @@
 package com.sqldpass.controller.admin;
 
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -81,8 +80,8 @@ public class AdminMockExamController {
     @Operation(
             summary = "미니 모의고사 일괄 생성",
             description = "현재 풀(includedInMiniAt IS NULL + visibility != DRAFT + expertVerified 인 검수 완료 문제)에서 "
-                    + "기출:AI:프리미엄 = 1:1:1, 과목 분포 보존하며 가능한 회차를 모두 생성한다. "
-                    + "difficulty(1~4) 지정 시 해당 난이도 문제만 풀에 포함. visibility=PREMIUM + kind=MINI 로 발급."
+                    + "과목 분포 보존하며 가능한 회차를 모두 생성한다. 출처(기출/AI/프리미엄) 와 난이도 구분은 폐기 — "
+                    + "풀의 자연 분포를 따른다. visibility=PREMIUM + kind=MINI 로 발급."
     )
     @ResponseStatus(HttpStatus.CREATED)
     public MiniMockExamGenerationResponse createMini(@RequestBody CreateMiniMockExamRequest body) {
@@ -90,27 +89,22 @@ public class AdminMockExamController {
             throw new SqldpassException(ErrorCode.INVALID_INPUT, "examType 은 필수입니다.");
         }
         return MiniMockExamGenerationResponse.from(
-                mockExamService.createMiniBatch(body.examType(), body.difficulty()));
+                mockExamService.createMiniBatch(body.examType()));
     }
 
-    /** difficulty=null 이면 전체 난이도, 1~4 단일값 지정 시 해당 난이도만. */
-    public record CreateMiniMockExamRequest(ExamType examType, Integer difficulty) {}
+    public record CreateMiniMockExamRequest(ExamType examType) {}
 
     public record MiniMockExamGenerationResponse(
             ExamType examType,
             int createdCount,
             List<Long> createdMockExamIds,
-            /** PAST_EXAM / AI_PUBLISHED / AI_PREMIUM 별 잔여 풀 수 (해당 examType 전체 과목 합) */
-            Map<String, Long> remainingPoolBySource,
-            /** 풀 필터에 실제 적용된 난이도. null 이면 전체 난이도 사용. */
-            Integer appliedDifficulty
+            /** 과목 ID → 잔여 풀 수 (회차 생성 후 남은 문제 수) */
+            Map<Long, Long> remainingPoolBySubject
     ) {
         public static MiniMockExamGenerationResponse from(MiniMockExamCreator.GenerationResult r) {
-            LinkedHashMap<String, Long> remaining = new LinkedHashMap<>();
-            r.remainingBySource().forEach((k, v) -> remaining.put(k.name(), v));
             return new MiniMockExamGenerationResponse(
                     r.examType(), r.createdCount(),
-                    r.createdMockExamIds(), remaining, r.appliedDifficulty());
+                    r.createdMockExamIds(), r.remainingBySubject());
         }
     }
 
