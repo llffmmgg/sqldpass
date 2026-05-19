@@ -12,7 +12,7 @@ on:
 jobs:
   archive:
     name: App Store archive
-    runs-on: macos-latest
+    runs-on: macos-26
     timeout-minutes: 45
     defaults:
       run:
