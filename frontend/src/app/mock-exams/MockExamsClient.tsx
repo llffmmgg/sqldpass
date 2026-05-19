@@ -21,7 +21,7 @@ import {
 import { isExamNew } from "@/lib/mockExamNew";
 import { getPublicMockExams } from "@/lib/publicApi";
 
-type DifficultyFilter = "ALL" | "쉬움" | "보통" | "어려움" | "매우 어려움";
+export type DifficultyFilter = "ALL" | "쉬움" | "보통" | "어려움" | "매우 어려움";
 
 const DEV_FIXTURE_EXAMS: MockExamSummary[] = [
   {
@@ -74,7 +74,7 @@ const DEV_FIXTURE_EXAMS: MockExamSummary[] = [
   },
 ];
 
-const DIFFICULTY_OPTIONS: { value: DifficultyFilter; label: string; activeClass: string }[] = [
+export const DIFFICULTY_OPTIONS: { value: DifficultyFilter; label: string; activeClass: string }[] = [
   { value: "ALL", label: "전체", activeClass: "border-primary/40 bg-primary/10 text-primary" },
   { value: "쉬움", label: "쉬움", activeClass: "border-emerald-500/40 bg-emerald-500/10 text-emerald-500" },
   { value: "보통", label: "보통", activeClass: "border-amber-500/40 bg-amber-500/10 text-amber-500" },
@@ -259,7 +259,7 @@ function MockExamsContent() {
   );
 }
 
-function MockExamCard({ exam }: { exam: MockExamSummary }) {
+export function MockExamCard({ exam }: { exam: MockExamSummary }) {
   const cert = certFromExamType(exam.examType);
   // PREMIUM 자동 분류 — backend 가 isPremium 을 계산해 응답 (visibility=PREMIUM 또는 난이도 ≥ 0.5).
   const isPremium = exam.isPremium ?? exam.visibility === "PREMIUM";
