@@ -84,6 +84,14 @@ fi
 NEXT_BUILD=$(python3 scripts/next_build_number.py "$IOS_BUNDLE_ID" "$MARKETING_VERSION")
 echo "[info] next build number = $NEXT_BUILD (marketing $MARKETING_VERSION)"
 
+# xcodegen 이 info.path 의 Info.plist 를 매번 재생성하면서 $(CURRENT_PROJECT_VERSION)
+# 변수 참조를 자기 default 값으로 덮어쓰는 경우가 있다. 그래서 xcodebuild build setting
+# override 만으로는 plist 에 NEXT_BUILD 가 반영되지 않을 수 있어, PlistBuddy 로 직접
+# 강제 패치한다. xcodegen 호출 다음에 실행되어야 효과가 있다.
+/usr/libexec/PlistBuddy -c "Set :CFBundleVersion $NEXT_BUILD" Sqldpass/Info.plist
+/usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $MARKETING_VERSION" Sqldpass/Info.plist
+echo "[info] patched Info.plist: CFBundleVersion=$NEXT_BUILD, CFBundleShortVersionString=$MARKETING_VERSION"
+
 cat > "$EXPORT_OPTIONS" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
