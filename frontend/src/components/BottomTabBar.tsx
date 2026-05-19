@@ -17,18 +17,19 @@ type Tab = {
   Icon: (props: { active: boolean }) => React.JSX.Element;
 };
 
-function HomeIcon({ active }: { active: boolean }) {
-  return (
-    <svg className="h-5 w-5" fill={active ? "currentColor" : "none"} viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-    </svg>
-  );
-}
-
 function LearnIcon({ active }: { active: boolean }) {
   return (
     <svg className="h-5 w-5" fill={active ? "currentColor" : "none"} viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
       <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+    </svg>
+  );
+}
+
+function MiniIcon({ active }: { active: boolean }) {
+  // 빠른 5–10분 미니 한 세트를 상징하는 번개+격자 아이콘.
+  return (
+    <svg className="h-5 w-5" fill={active ? "currentColor" : "none"} viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M13 3 L4 14 H11 L10 21 L20 9 H13 Z" />
     </svg>
   );
 }
@@ -49,27 +50,29 @@ function PastExamIcon({ active }: { active: boolean }) {
   );
 }
 
-function MyIcon({ active }: { active: boolean }) {
+function MyLearningIcon({ active }: { active: boolean }) {
+  // 학습 진행률을 상징하는 차트 + 책 아이콘 — 대시보드+오답노트 통합 의미.
   return (
     <svg className="h-5 w-5" fill={active ? "currentColor" : "none"} viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M9 19V6a2 2 0 012-2h6a2 2 0 012 2v13m-10 0h10m-10 0H5a2 2 0 01-2-2v-5a2 2 0 012-2h4v9z" />
     </svg>
   );
 }
 
+// 홈 / 마이 탭은 제거. 홈은 좌상단 로고로, 마이는 "내학습" 으로 통합.
 const TABS: Tab[] = [
-  {
-    href: "/",
-    label: "홈",
-    match: (p) => p === "/",
-    Icon: HomeIcon,
-  },
   {
     // href는 런타임에 마지막 본 cert로 덮어씀 (BottomTabBar 본체에서 처리)
     href: `/solve?cert=${DEFAULT_CERT_KEY}`,
-    label: "학습",
+    label: "문제",
     match: (p) => p.startsWith("/solve"),
     Icon: LearnIcon,
+  },
+  {
+    href: "/mini-mock-exams",
+    label: "미니",
+    match: (p) => p.startsWith("/mini-mock-exams"),
+    Icon: MiniIcon,
   },
   {
     href: "/mock-exams",
@@ -79,19 +82,21 @@ const TABS: Tab[] = [
   },
   {
     href: "/past-exams",
-    label: "기출복원",
+    label: "기출",
     match: (p) => p.startsWith("/past-exams"),
     Icon: PastExamIcon,
   },
   {
-    href: "/dashboard",
-    label: "마이",
+    href: "/my-learning",
+    label: "내학습",
     match: (p) =>
+      p.startsWith("/my-learning") ||
       p.startsWith("/dashboard") ||
       p.startsWith("/profile") ||
       p.startsWith("/mypage") ||
-      p.startsWith("/wrong-answers"),
-    Icon: MyIcon,
+      p.startsWith("/wrong-answers") ||
+      p.startsWith("/history"),
+    Icon: MyLearningIcon,
   },
 ];
 
@@ -130,7 +135,7 @@ export default function BottomTabBar() {
       <ul className="mx-auto grid max-w-md grid-cols-5">
         {TABS.map((tab) => {
           const active = tab.match(pathname);
-          const href = tab.label === "학습" ? learnHref : tab.href;
+          const href = tab.label === "문제" ? learnHref : tab.href;
           return (
             <li key={tab.label}>
               <Link
@@ -141,6 +146,7 @@ export default function BottomTabBar() {
                     ? "text-primary"
                     : "text-text-muted hover:text-text"
                 }`}
+                prefetch={false}
               >
                 <tab.Icon active={active} />
                 <span>{tab.label}</span>

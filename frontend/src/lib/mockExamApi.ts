@@ -15,7 +15,7 @@ export type DifficultyLabel = "쉬움" | "보통" | "어려움" | "매우 어려
 
 export type MockExamVisibility = "DRAFT" | "PUBLISHED" | "PREMIUM";
 
-export type MockExamKind = "AI" | "PAST_EXAM";
+export type MockExamKind = "AI" | "PAST_EXAM" | "MINI";
 
 export interface MockExamSummary {
   id: number;

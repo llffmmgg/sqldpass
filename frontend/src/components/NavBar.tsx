@@ -21,13 +21,13 @@ type NavItem =
   | { kind: "dropdown"; label: string; basePath: string; build: (cert: CertKey) => string }
   | { kind: "menu"; label: string; basePath: string; activePaths: string[]; items: MenuItem[] };
 
+// 홈은 좌측 로고 클릭으로 진입하므로 nav 에서 제거. 대시보드/오답노트는 /my-learning 으로 통합.
 const NAV_LINKS: NavItem[] = [
-  { kind: "link", href: "/", label: "홈" },
   { kind: "dropdown", label: "문제", basePath: "/solve", build: (cert) => `/solve?cert=${cert}` },
+  { kind: "dropdown", label: "미니모의고사", basePath: "/mini-mock-exams", build: (cert) => `/mini-mock-exams?cert=${cert}` },
   { kind: "dropdown", label: "모의고사", basePath: "/mock-exams", build: (cert) => `/mock-exams?cert=${cert}` },
   { kind: "dropdown", label: "기출", basePath: "/past-exams", build: (cert) => `/past-exams/${slugFromCert(cert)}` },
-  { kind: "link", href: "/dashboard", label: "대시보드" },
-  { kind: "link", href: "/wrong-answers", label: "오답 노트" },
+  { kind: "link", href: "/my-learning", label: "내학습" },
   {
     kind: "menu",
     label: "게시판",
@@ -107,6 +107,17 @@ export default function NavBar() {
 
   function isActive(href: string) {
     if (href === "/") return pathname === "/";
+    // "내학습" 메뉴는 dashboard/wrong-answers/history/profile 진입 시에도 활성 (기존 라우트 호환).
+    if (href === "/my-learning") {
+      return (
+        pathname.startsWith("/my-learning") ||
+        pathname.startsWith("/dashboard") ||
+        pathname.startsWith("/wrong-answers") ||
+        pathname.startsWith("/history") ||
+        pathname.startsWith("/profile") ||
+        pathname.startsWith("/mypage")
+      );
+    }
     return pathname.startsWith(href);
   }
 
