@@ -15,6 +15,10 @@ final class SolveViewModel {
     let mockExamId: Int64
     let questions: [MockExamQuestionItem]
 
+    /// 멱등키 — 백엔드 SolveRequest.clientSubmissionId(@Size max=64) 와 동치.
+    /// init 시 1회 생성해 재시도/오프라인 큐 drain 모두 동일 key 로 전송 → 중복 row 방지.
+    private let clientSubmissionId: String
+
     // MARK: State
 
     private(set) var currentIndex: Int = 0
@@ -31,6 +35,8 @@ final class SolveViewModel {
     private(set) var isSubmitting = false
     private(set) var submittedResult: Solve?
     private(set) var errorMessage: String?
+    /// 네트워크 실패 시 큐잉으로 폴백 성공한 상태. View 가 이 플래그를 보고 안내 후 dismiss.
+    private(set) var offlineSubmitted: Bool = false
 
     // MARK: Derived
 
@@ -70,7 +76,7 @@ final class SolveViewModel {
     }
 
     var canSubmit: Bool {
-        !isSubmitting && submittedResult == nil && totalCount > 0
+        !isSubmitting && submittedResult == nil && !offlineSubmitted && totalCount > 0
     }
 
     // MARK: Init
@@ -78,6 +84,7 @@ final class SolveViewModel {
     init(mockExamId: Int64, questions: [MockExamQuestionItem]) {
         self.mockExamId = mockExamId
         self.questions = questions
+        self.clientSubmissionId = "ios-\(UUID().uuidString)"
     }
 
     deinit {
@@ -167,23 +174,43 @@ final class SolveViewModel {
         isSubmitting = true
         errorMessage = nil
 
+        let submitAnswers: [SolveService.SubmitRequest.Answer] = questions.map { q in
+            let entry = answers[q.id] ?? SolveAnswerEntry(questionId: q.id)
+            return entry.toSubmitAnswer
+        }
+
         let payload = SolveService.SubmitRequest(
             subjectId: nil,
             mockExamId: mockExamId,
-            answers: questions.map { q in
-                let entry = answers[q.id] ?? SolveAnswerEntry(questionId: q.id)
-                return entry.toSubmitAnswer
-            }
+            answers: submitAnswers,
+            clientSubmissionId: clientSubmissionId
         )
 
         do {
             let result = try await SolveService.submit(payload)
             submittedResult = result
             stopTimer()
-        } catch let error as APIError {
-            errorMessage = error.errorDescription
+        } catch APIError.unauthorized {
+            // 인증 만료는 큐잉해도 의미 없음 — 로그인 화면으로 보내야 한다.
+            errorMessage = APIError.unauthorized.errorDescription
+        } catch APIError.forbidden {
+            // 권한 문제 — 큐잉해도 같은 실패.
+            errorMessage = APIError.forbidden.errorDescription
         } catch {
-            errorMessage = error.localizedDescription
+            // 네트워크/서버 일시 장애 → 오프라인 큐 폴백.
+            // 멱등키가 동일하므로 추후 drain 시 중복 row 생성되지 않는다.
+            do {
+                _ = try SolveQueue.shared.enqueueMockExam(
+                    mockExamId: mockExamId,
+                    answers: submitAnswers,
+                    clientSubmissionId: clientSubmissionId
+                )
+                offlineSubmitted = true
+                stopTimer()
+            } catch {
+                // 큐잉마저 실패 (SwiftData 오류). 사용자에게는 원래 네트워크 에러 메시지로 안내.
+                errorMessage = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+            }
         }
 
         isSubmitting = false
@@ -191,5 +218,11 @@ final class SolveViewModel {
 
     func dismissError() {
         errorMessage = nil
+    }
+
+    /// SolveView 가 오프라인 안내 alert 의 확인 버튼에서 호출 — 플래그를 떨어뜨려야
+    /// 동일 view 가 재렌더링될 때 alert 가 다시 뜨지 않는다. dismiss 와 함께 호출됨.
+    func acknowledgeOfflineSubmitted() {
+        offlineSubmitted = false
     }
 }

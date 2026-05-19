@@ -28,11 +28,7 @@ struct PastExamsListView: View {
                 await viewModel.load(slug: viewModel.selectedCert, force: true)
             }
             .navigationDestination(for: PastExamSummary.self) { exam in
-                // TODO(별 phase): 기출 풀이 Runner 진입.
-                //   백엔드: GET /api/public/past-exams/{id} → PastExamDetail
-                //          POST /api/public/past-exams/{id}/grade
-                //   본 step 은 클라이언트 골격만이므로 placeholder 만 노출.
-                PastExamPlaceholderView(exam: exam)
+                PastExamRunnerView(viewModel: PastExamRunnerViewModel(examId: exam.id))
             }
     }
 
@@ -291,36 +287,6 @@ private struct SkeletonExamCard: View {
                 .stroke(Color.appBorder, lineWidth: 1)
         )
         .clipShape(RoundedRectangle(cornerRadius: Radius.lg))
-    }
-}
-
-// MARK: - Placeholder push (별 phase 까지 임시 진입처)
-
-/// 기출 회차 카드 탭 시 노출되는 임시 안내 화면.
-/// 실제 Runner(응시·채점) 는 별 phase 에서 `PastExamRunnerView` 로 교체.
-private struct PastExamPlaceholderView: View {
-    let exam: PastExamSummary
-
-    var body: some View {
-        VStack(spacing: Spacing.lg) {
-            Image(systemName: "wrench.and.screwdriver")
-                .font(.system(size: 36))
-                .foregroundStyle(Color.appTextMuted)
-            Text(exam.name)
-                .font(AppType.bodyEmph)
-                .foregroundStyle(Color.appTextPrimary)
-                .multilineTextAlignment(.center)
-            Text("기출 풀이 화면은 곧 출시됩니다.\n자격증을 둘러보거나 모의고사 / 실전 문제 탭에서 학습을 이어가세요.")
-                .font(AppType.footnote)
-                .foregroundStyle(Color.appTextMuted)
-                .multilineTextAlignment(.center)
-                .fixedSize(horizontal: false, vertical: true)
-        }
-        .padding(Spacing.lg)
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color.appPage.ignoresSafeArea())
-        .navigationTitle("기출 풀이")
-        .navigationBarTitleDisplayMode(.inline)
     }
 }
 

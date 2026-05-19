@@ -1,28 +1,86 @@
 import SwiftUI
 
-/// 모의고사 풀이 화면 (Inked OMR 디자인 시스템).
-///
-/// 자체 헤더(닫기 / 진행 알약 / 북마크 / 다시보기 플래그) + 본문 + 하단 액션바 로 구성.
-/// 시스템 NavigationBar 는 숨기고 자체 chrome 으로 대체한다.
-struct SolveView: View {
-    @State var viewModel: SolveViewModel
+/// 기출 회차 풀이 화면. SolveView 와 동일한 chrome 을 사용하지만 채점이 백엔드에서
+/// 일괄로 일어나며(`POST /api/public/past-exams/{id}/grade`) 응답이 `Solve` 가 아닌
+/// `PastExamGradeResponse` 라 result 분기가 다르다.
+struct PastExamRunnerView: View {
+    @State var viewModel: PastExamRunnerViewModel
     @State private var showExitConfirm = false
     @Environment(\.dismiss) private var dismiss
 
-    var onSubmitted: ((Solve) -> Void)?
-
-    /// 오프라인 큐 — `@Observable` SolveQueue 의 pendingCount 를 view 에서 관찰.
-    private let solveQueue = SolveQueue.shared
-
     var body: some View {
+        Group {
+            if let graded = viewModel.graded, let detail = viewModel.detail {
+                PastExamResultView(
+                    examName: detail.name,
+                    graded: graded,
+                    questions: detail.questions,
+                    submittedAnswers: viewModel.answers,
+                    onDone: { dismiss() }
+                )
+            } else if viewModel.detail == nil {
+                loadingOrError
+            } else {
+                runner
+            }
+        }
+        .navigationBarBackButtonHidden(true)
+        .toolbar(.hidden, for: .navigationBar)
+        .task { await viewModel.load() }
+        .alert(
+            "제출 실패",
+            isPresented: Binding(
+                get: { viewModel.submitError != nil },
+                set: { if !$0 { viewModel.dismissError() } }
+            ),
+            actions: {
+                Button("확인", role: .cancel) { viewModel.dismissError() }
+            },
+            message: {
+                Text(viewModel.submitError ?? "")
+            }
+        )
+        .confirmationDialog(
+            "정말 종료할까요?",
+            isPresented: $showExitConfirm,
+            titleVisibility: .visible
+        ) {
+            Button("종료하기", role: .destructive) {
+                viewModel.stopTimer()
+                dismiss()
+            }
+            Button("계속 풀기", role: .cancel) {}
+        } message: {
+            Text("지금까지의 답안은 저장되지 않습니다.")
+        }
+    }
+
+    @ViewBuilder
+    private var loadingOrError: some View {
+        if viewModel.isLoading {
+            ProgressView()
+                .controlSize(.large)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(Color.appPage.ignoresSafeArea())
+        } else if let loadError = viewModel.loadError {
+            ContentUnavailableView {
+                Label("불러오기 실패", systemImage: "exclamationmark.triangle")
+            } description: {
+                Text(loadError)
+            } actions: {
+                Button("재시도") { Task { await viewModel.load() } }
+                Button("닫기", role: .cancel) { dismiss() }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var runner: some View {
         VStack(spacing: 0) {
             topBar
 
             ScrollView {
                 VStack(alignment: .leading, spacing: Spacing.lg) {
-                    // 오프라인 큐 인디케이터 (count > 0 일 때만)
-                    OfflineQueueChip(count: solveQueue.pendingCount)
-
                     if let question = viewModel.currentQuestion {
                         QuestionBody(question: question)
                         answerInput(for: question)
@@ -37,18 +95,12 @@ struct SolveView: View {
                             }
                             .buttonStyle(.plain)
                         }
-                    } else {
-                        Text("문제가 없습니다")
-                            .font(AppType.body)
-                            .foregroundStyle(Color.appTextMuted)
                     }
                 }
                 .padding(Spacing.base)
             }
             .background(Color.appPage)
         }
-        .navigationBarBackButtonHidden(true)
-        .toolbar(.hidden, for: .navigationBar)
         .safeAreaInset(edge: .bottom, spacing: 0) {
             SolveActionBar(
                 canGoPrevious: viewModel.currentIndex > 0,
@@ -58,63 +110,11 @@ struct SolveView: View {
                 onPrevious: { viewModel.goPrevious() },
                 onNext: { viewModel.goNext() },
                 onSubmit: {
-                    Task {
-                        await viewModel.submit()
-                        if let result = viewModel.submittedResult {
-                            onSubmitted?(result)
-                        }
-                    }
+                    Task { await viewModel.submit() }
                 }
             )
         }
-        .confirmationDialog(
-            "정말 종료할까요?",
-            isPresented: $showExitConfirm,
-            titleVisibility: .visible
-        ) {
-            Button("종료하기", role: .destructive) {
-                viewModel.stopTimer()
-                dismiss()
-            }
-            Button("계속 풀기", role: .cancel) {}
-        } message: {
-            Text("지금까지의 답안은 저장되지 않습니다.")
-        }
-        .alert(
-            "제출 실패",
-            isPresented: Binding(
-                get: { viewModel.errorMessage != nil },
-                set: { if !$0 { viewModel.dismissError() } }
-            ),
-            actions: {
-                Button("확인", role: .cancel) { viewModel.dismissError() }
-            },
-            message: {
-                Text(viewModel.errorMessage ?? "")
-            }
-        )
-        .alert(
-            "오프라인 제출",
-            isPresented: Binding(
-                get: { viewModel.offlineSubmitted },
-                set: { if !$0 { viewModel.acknowledgeOfflineSubmitted() } }
-            ),
-            actions: {
-                Button("확인", role: .cancel) {
-                    viewModel.acknowledgeOfflineSubmitted()
-                    dismiss()
-                }
-            },
-            message: {
-                Text("네트워크가 불안정해 답안을 기기에 보관했어요. 인터넷이 돌아오면 자동으로 전송돼 학습 기록에 추가됩니다.")
-            }
-        )
-        .onAppear {
-            viewModel.start()
-        }
     }
-
-    // MARK: - Top bar
 
     @ViewBuilder
     private var topBar: some View {
@@ -166,8 +166,6 @@ struct SolveView: View {
                 .frame(height: 1)
         }
     }
-
-    // MARK: - Answer inputs
 
     @ViewBuilder
     private func answerInput(for question: MockExamQuestionItem) -> some View {

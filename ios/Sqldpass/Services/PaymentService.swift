@@ -12,9 +12,16 @@ enum PaymentService {
         let productId: String
     }
 
+    /// 백엔드 `VerifyPaymentResult` record 와 1:1.
+    /// `{ paymentId: String, amount: Int, productName: String, plan: String, expiresAt: String }`
+    /// — `paymentId` 는 PG/Apple transactionId 기반 문자열. iOS 클라이언트는 본 응답을
+    /// 직접 사용하지 않고 직후 `/api/payment/subscription` 을 재조회해 활성 상태를 반영한다.
     struct VerifyResult: Decodable {
-        let paymentId: Int64
-        let status: String
+        let paymentId: String
+        let amount: Int?
+        let productName: String?
+        let plan: String?
+        let expiresAt: String?
     }
 
     static func verifyApple(signedTransaction: String, productId: String) async throws -> VerifyResult {

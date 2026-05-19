@@ -4,6 +4,7 @@ struct HistoryView: View {
     @State private var viewModel = HistoryViewModel()
 
     var body: some View {
+        // ProfileView 가 이미 NavigationStack 안에 있어 본 화면은 nested stack 을 피한다.
         content
             .background(Color.appPage)
             .navigationTitle("학습 기록")
@@ -15,6 +16,9 @@ struct HistoryView: View {
                 if viewModel.solves.isEmpty {
                     await viewModel.load()
                 }
+            }
+            .navigationDestination(for: SolveSummary.self) { summary in
+                HistoryDetailView(summary: summary)
             }
     }
 
@@ -41,15 +45,9 @@ struct HistoryView: View {
         } else {
             ScrollView {
                 LazyVStack(spacing: Spacing.md) {
-                    ForEach(viewModel.solves) { solve in
-                        NavigationLink {
-                            SolveResultView(
-                                result: solve,
-                                questions: [],
-                                onDone: {}
-                            )
-                        } label: {
-                            HistoryCard(solve: solve)
+                    ForEach(viewModel.solves) { summary in
+                        NavigationLink(value: summary) {
+                            HistoryCard(summary: summary)
                         }
                         .buttonStyle(.plain)
                     }
@@ -61,7 +59,7 @@ struct HistoryView: View {
 }
 
 private struct HistoryCard: View {
-    let solve: Solve
+    let summary: SolveSummary
 
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.sm) {
@@ -78,14 +76,10 @@ private struct HistoryCard: View {
                     .foregroundStyle(Color.appTextSubtle)
             }
             HStack(spacing: Spacing.sm) {
-                Label("\(solve.correctCount) / \(solve.totalCount)", systemImage: "checkmark.circle")
+                Label("\(summary.correctCount) / \(summary.totalCount)", systemImage: "checkmark.circle")
                     .font(AppType.footnote)
                     .foregroundStyle(Color.appTextMuted)
-                if let streak = solve.currentStreak, streak > 0 {
-                    Label("\(streak)일 연속", systemImage: "flame")
-                        .font(AppType.footnote)
-                        .foregroundStyle(Color.semanticWarning)
-                }
+                kindBadge
                 Spacer()
             }
         }
@@ -99,20 +93,33 @@ private struct HistoryCard: View {
         .clipShape(RoundedRectangle(cornerRadius: Radius.lg))
     }
 
-    private var scoreLabel: String { "\(solve.score)" }
+    private var scoreLabel: String { "\(summary.score)" }
 
     private var scoreColor: Color {
-        if solve.score >= 80 { return .brandPrimary }
-        if solve.score >= 60 { return .semanticInfo }
+        if summary.score >= 80 { return .brandPrimary }
+        if summary.score >= 60 { return .semanticInfo }
         return .semanticDanger
+    }
+
+    @ViewBuilder
+    private var kindBadge: some View {
+        if summary.mockExamId != nil {
+            Label("모의고사", systemImage: "doc.text")
+                .font(AppType.caption.weight(.semibold))
+                .foregroundStyle(Color.brandPrimary)
+        } else if summary.subjectId != nil {
+            Label("실전 문제", systemImage: "play.circle")
+                .font(AppType.caption.weight(.semibold))
+                .foregroundStyle(Color.semanticInfo)
+        }
     }
 
     private var formattedDate: String {
         let parser = ISO8601DateFormatter()
         parser.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        let date = parser.date(from: solve.solvedAt)
-            ?? ISO8601DateFormatter().date(from: solve.solvedAt)
-        guard let date else { return solve.solvedAt }
+        let date = parser.date(from: summary.solvedAt)
+            ?? ISO8601DateFormatter().date(from: summary.solvedAt)
+        guard let date else { return summary.solvedAt }
         let f = DateFormatter()
         f.locale = Locale(identifier: "ko_KR")
         f.dateFormat = "MM월 dd일 HH:mm"

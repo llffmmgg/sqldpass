@@ -31,6 +31,8 @@
 	</array>
 	<key>CFBundleVersion</key>
 	<string>1</string>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 	<key>GIDClientID</key>
 	<string>1026495161962-jtgphtjb90025fsmvb8e13tpnokv3edp.apps.googleusercontent.com</string>
 	<key>UILaunchScreen</key>

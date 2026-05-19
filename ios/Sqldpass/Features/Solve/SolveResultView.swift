@@ -107,7 +107,10 @@ struct SolveResultView: View {
             return AnswerReviewRow.Item(
                 questionId: ans.questionId,
                 displayOrder: q?.displayOrder ?? (idx + 1),
-                content: q?.content ?? "(문제 정보 누락)",
+                // 본문이 없으면 (학습 기록의 실전 문제 풀이처럼 문항 일괄 조회가 불가능한 케이스)
+                // 안내 문구를 "문제 정보 누락" 같은 부정적 카피로 보여주지 말고
+                // 식별자만 노출. selectedOption/correctOption 은 그대로 검토 가능.
+                content: q?.content ?? "문제 #\(ans.questionId)",
                 selectedOption: ans.selectedOption,
                 correctOption: ans.correctOption,
                 isCorrect: ans.correct

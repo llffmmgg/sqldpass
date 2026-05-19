@@ -4,6 +4,7 @@ import Observation
 @Observable
 final class ProfileViewModel {
     private(set) var me: MemberMe?
+    private(set) var subscription: SubscriptionInfo?
     private(set) var isLoading = false
     private(set) var errorMessage: String?
 
@@ -26,7 +27,9 @@ final class ProfileViewModel {
         } catch {
             errorMessage = error.localizedDescription
         }
+        // KPI 와 구독 상태는 본인 정보 로드 성공/실패와 무관하게 시도.
         await loadKpi()
+        await loadSubscription()
     }
 
     /// KPI 그리드용 값 적재.
@@ -53,6 +56,15 @@ final class ProfileViewModel {
             longestStreak: longestStreak,
             passProbability: nil
         )
+    }
+
+    /// 활성 구독 상태 — 헤더 배지/계정 섹션 분기에 사용. 실패해도 비활성으로 fallback.
+    func loadSubscription() async {
+        do {
+            subscription = try await PaymentService.subscription()
+        } catch {
+            subscription = nil
+        }
     }
 
     func updateLocalNickname(_ nickname: String) {

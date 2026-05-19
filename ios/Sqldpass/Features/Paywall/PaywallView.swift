@@ -77,22 +77,35 @@ struct PaywallView: View {
     }
 
     private var activeStateCard: some View {
-        VStack(alignment: .leading, spacing: Spacing.sm) {
+        VStack(alignment: .leading, spacing: Spacing.md) {
             HStack(spacing: Spacing.sm) {
                 Image(systemName: "checkmark.seal.fill")
                     .foregroundStyle(Color.brandPrimary)
                 Text("프리미엄 이용 중")
                     .font(AppType.bodyEmph)
-            }
-            if let provider = viewModel.subscription?.provider {
-                Text("결제 채널: \(provider)")
-                    .font(AppType.footnote)
-                    .foregroundStyle(Color.appTextMuted)
+                if let plan = viewModel.subscription?.plan, !plan.isEmpty {
+                    Text(plan)
+                        .font(AppType.caption.weight(.semibold))
+                        .padding(.horizontal, Spacing.sm)
+                        .padding(.vertical, Spacing.xxs)
+                        .background(Color.brandPrimary.opacity(0.12))
+                        .foregroundStyle(Color.brandPrimary)
+                        .clipShape(RoundedRectangle(cornerRadius: Radius.full))
+                }
             }
             if let expiresAt = viewModel.subscription?.expiresAt {
                 Text("만료: \(expiresAt)")
                     .font(AppType.footnote)
                     .foregroundStyle(Color.appTextMuted)
+            }
+            entitlementsList
+            // 백엔드는 자동갱신 구독이 아닌 비갱신(기간 만료) 모델로 통일. 사용자가 만료 시 다시
+            // 구매해야 한다는 점을 명시. Apple Subscriptions 페이지 링크는 자동갱신 상품이 도입되면
+            // 가치 있는 안내가 되므로 향후 활성화. 현재는 결제 채널 별도 관리 페이지가 없다.
+            Link(destination: URL(string: "https://apps.apple.com/account/subscriptions")!) {
+                Label("Apple 구독 관리", systemImage: "arrow.up.right.square")
+                    .font(AppType.footnote.weight(.semibold))
+                    .foregroundStyle(Color.semanticInfo)
             }
         }
         .padding(Spacing.base)
@@ -103,6 +116,36 @@ struct PaywallView: View {
                 .stroke(Color.brandPrimary.opacity(0.3), lineWidth: 1)
         )
         .clipShape(RoundedRectangle(cornerRadius: Radius.lg))
+    }
+
+    @ViewBuilder
+    private var entitlementsList: some View {
+        if let sub = viewModel.subscription {
+            VStack(alignment: .leading, spacing: Spacing.xxs) {
+                if sub.removesAds == true {
+                    entitlementRow("광고 제거")
+                }
+                if sub.allowsPremium == true {
+                    entitlementRow("프리미엄 모의고사 잠금 해제")
+                }
+                if sub.allowsPdf == true {
+                    entitlementRow("PDF 다운로드")
+                }
+                if sub.hasLibraryAccess == true {
+                    entitlementRow("라이브러리 전체 이용")
+                }
+            }
+        }
+    }
+
+    private func entitlementRow(_ text: String) -> some View {
+        HStack(spacing: Spacing.xs) {
+            Image(systemName: "checkmark.circle.fill")
+                .foregroundStyle(Color.brandPrimary)
+            Text(text)
+                .font(AppType.footnote)
+                .foregroundStyle(Color.appTextPrimary)
+        }
     }
 
     private var productsSection: some View {
@@ -121,16 +164,17 @@ struct PaywallView: View {
 
     private var disclaimerSection: some View {
         VStack(alignment: .leading, spacing: Spacing.xs) {
-            Text("자동갱신 안내")
+            Text("결제 안내")
                 .font(AppType.caption.weight(.semibold))
                 .foregroundStyle(Color.appTextPrimary)
-            Text("구매 후 자동으로 갱신되며, 만료 24시간 전까지 취소할 수 있습니다.")
+            // 백엔드/스토어 모두 비갱신(non-renewing) 모델. 자동갱신 카피를 쓰지 않도록 주의.
+            Text("이 상품은 자동으로 갱신되지 않습니다. 표시된 기간이 만료되면 다시 구매해야 이용을 이어갈 수 있습니다.")
                 .font(AppType.caption)
                 .foregroundStyle(Color.appTextMuted)
                 .fixedSize(horizontal: false, vertical: true)
             HStack(spacing: Spacing.md) {
-                Link("이용약관", destination: URL(string: "https://sqldpass.com/terms")!)
-                Link("개인정보처리방침", destination: URL(string: "https://sqldpass.com/privacy")!)
+                Link("이용약관", destination: URL(string: "https://www.sqldpass.com/terms")!)
+                Link("개인정보처리방침", destination: URL(string: "https://www.sqldpass.com/privacy")!)
             }
             .font(AppType.caption)
             .foregroundStyle(Color.semanticInfo)

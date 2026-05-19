@@ -47,21 +47,28 @@ struct BookmarksView: View {
                     Button {
                         selectedBookmark = bookmark
                     } label: {
-                        HStack(spacing: Spacing.md) {
+                        HStack(alignment: .top, spacing: Spacing.md) {
                             Image(systemName: "bookmark.fill")
                                 .foregroundStyle(Color.brandPrimary)
+                                .padding(.top, 2)
                             VStack(alignment: .leading, spacing: Spacing.xxs) {
-                                Text("문제 #\(bookmark.questionId)")
+                                Text(bookmark.subjectName)
+                                    .font(AppType.caption.weight(.semibold))
+                                    .foregroundStyle(Color.brandPrimary)
+                                Text(bookmark.questionContent)
                                     .font(AppType.bodyEmph)
                                     .foregroundStyle(Color.appTextPrimary)
+                                    .lineLimit(2)
+                                    .multilineTextAlignment(.leading)
                                 Text(formatDate(bookmark.createdAt))
                                     .font(AppType.footnote)
                                     .foregroundStyle(Color.appTextSubtle)
                             }
-                            Spacer()
+                            Spacer(minLength: 0)
                             Image(systemName: "chevron.right")
                                 .font(.footnote)
                                 .foregroundStyle(Color.appTextSubtle)
+                                .padding(.top, 4)
                         }
                     }
                     .buttonStyle(.plain)

@@ -1,27 +1,34 @@
 import Foundation
 
-/// 백엔드 응답: GET /api/subjects (each)
+/// 백엔드 응답: GET /api/subjects (각 원소).
 ///
-/// Android 미러: `mobile/app/src/main/java/com/sqldpass/app/data/ApiModels.kt`
-/// 의 `SubjectResponse` 와 동일 필드.
+/// 백엔드(`SubjectResponse.java`) 는 평면 리스트가 아니라 **트리** 를 내려준다.
+/// `[ { id, name, displayOrder, children: [ { id, name, displayOrder, children: [] }, ... ] }, ... ]`
+/// 루트 노드 = 자격증 (예: SQLD, 정보처리기사 실기), 자식 노드 = 과목.
 ///
-/// `parentName` 이 자격증 명(예: "SQLD", "정보처리기사 실기", "ADsP") 으로
-/// 사용되어 SoloHubView 의 자격증 칩 그룹핑 키가 된다.
+/// 그룹핑/플래트닝 책임은 호출자(`SoloHubViewModel`) 에 있다.
 struct SubjectResponse: Codable, Equatable, Hashable, Identifiable {
     let id: Int64
     let name: String
-    let parentId: Int64?
-    let parentName: String?
+    let displayOrder: Int
+    let children: [SubjectResponse]
 
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         id = try c.decode(Int64.self, forKey: .id)
         name = try c.decode(String.self, forKey: .name)
-        parentId = try c.decodeIfPresent(Int64.self, forKey: .parentId)
-        parentName = try c.decodeIfPresent(String.self, forKey: .parentName)
+        displayOrder = (try c.decodeIfPresent(Int.self, forKey: .displayOrder)) ?? 0
+        children = (try c.decodeIfPresent([SubjectResponse].self, forKey: .children)) ?? []
+    }
+
+    init(id: Int64, name: String, displayOrder: Int = 0, children: [SubjectResponse] = []) {
+        self.id = id
+        self.name = name
+        self.displayOrder = displayOrder
+        self.children = children
     }
 
     private enum CodingKeys: String, CodingKey {
-        case id, name, parentId, parentName
+        case id, name, displayOrder, children
     }
 }

@@ -13,4 +13,27 @@ enum PastExamService {
         }
         return try await APIClient.shared.get("/api/public/past-exams", query: query)
     }
+
+    /// GET /api/public/past-exams/{id} — 회차 상세 (정답/해설 미포함).
+    /// 로그인 인터셉터는 `optionalMemberAuthInterceptor` — 토큰 있으면 회차 best score 반영, 없어도 200.
+    static func detail(id: Int64) async throws -> PastExamDetailResponse {
+        try await APIClient.shared.get("/api/public/past-exams/\(id)")
+    }
+
+    /// POST /api/public/past-exams/{id}/grade — 채점 + (로그인 시) solve 기록.
+    struct GradeRequest: Encodable {
+        let answers: [Answer]
+        struct Answer: Encodable {
+            let questionId: Int64
+            let selectedOption: Int?
+            let answerText: String?
+        }
+    }
+
+    static func grade(id: Int64, answers: [GradeRequest.Answer]) async throws -> PastExamGradeResponse {
+        try await APIClient.shared.post(
+            "/api/public/past-exams/\(id)/grade",
+            body: GradeRequest(answers: answers)
+        )
+    }
 }

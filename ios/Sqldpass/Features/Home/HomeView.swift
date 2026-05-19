@@ -15,7 +15,7 @@ import SwiftUI
 ///
 /// Android 미러: mobile/app/src/main/java/com/sqldpass/app/ui/home/HomeScreen.kt.
 struct HomeView: View {
-    @State private var viewModel = DashboardViewModel()
+    @State private var viewModel = HomeViewModel()
     @State private var sheetCert: CertInfo? = nil
     @State private var showPaywall: Bool = false
 

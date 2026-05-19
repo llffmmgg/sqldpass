@@ -7,10 +7,12 @@ import SwiftUI
 ///  2) 과목 카드 그리드/리스트
 ///  3) 카드 탭 → SoloSolveScreen (1문 즉시 채점, 10문 세트)
 ///
+/// 백엔드 `/api/subjects` 는 트리(자격증 = 루트, 과목 = children) 응답이므로
+/// 본 화면은 `SoloHubViewModel.grouped` 가 만들어 준 (parent root, children leaves)
+/// 그룹을 그대로 렌더한다.
+///
 /// 인증: 앱 진입 시 이미 로그인 게이트 통과 — SoloHubView 도달 시점에는 로그인 보장.
 /// fetch 실패(401 외 사유) 시 EmptyState 만 노출하고 강한 alert 는 띄우지 않는다.
-///
-/// Android 미러: `mobile/app/src/main/java/com/sqldpass/app/ui/solve/SolveTab.kt`.
 struct SoloHubView: View {
     @State private var viewModel = SoloHubViewModel()
 
@@ -20,7 +22,7 @@ struct SoloHubView: View {
             .navigationTitle("실전 문제")
             .navigationBarTitleDisplayMode(.inline)
             .task {
-                if viewModel.subjects.isEmpty {
+                if viewModel.roots.isEmpty {
                     await viewModel.load()
                 }
             }
@@ -64,16 +66,16 @@ struct SoloHubView: View {
 
     @ViewBuilder
     private var listSection: some View {
-        if viewModel.isLoading && viewModel.subjects.isEmpty {
+        if viewModel.isLoading && viewModel.roots.isEmpty {
             VStack(spacing: Spacing.md) {
                 ForEach(0..<2, id: \.self) { _ in SkeletonSubjectGroup() }
             }
-        } else if viewModel.subjects.isEmpty {
+        } else if viewModel.roots.isEmpty || viewModel.subjectsCount == 0 {
             EmptyHint(message: viewModel.errorMessage)
         } else {
             VStack(spacing: Spacing.md) {
-                ForEach(viewModel.visibleGroups, id: \.parent) { group in
-                    SubjectGroupCard(parent: group.parent, children: group.children)
+                ForEach(viewModel.visibleGroups, id: \.parent.id) { group in
+                    SubjectGroupCard(parent: group.parent.name, children: group.children)
                 }
             }
         }
@@ -83,20 +85,20 @@ struct SoloHubView: View {
 // MARK: - 자격증 칩
 
 private struct SoloCertChipsRow: View {
-    let groups: [(parent: String, children: [SubjectResponse])]
+    let groups: [SoloHubViewModel.Group]
     let selectedParent: String?
     let onSelect: (String) -> Void
 
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: Spacing.sm) {
-                ForEach(groups, id: \.parent) { group in
+                ForEach(groups, id: \.parent.id) { group in
                     SoloCertChip(
-                        label: shortenCertName(group.parent),
-                        dotColor: parentNameToCert(group.parent),
+                        label: shortenCertName(group.parent.name),
+                        dotColor: parentNameToCert(group.parent.name),
                         count: group.children.count,
-                        selected: group.parent == selectedParent,
-                        onTap: { onSelect(group.parent) }
+                        selected: group.parent.name == selectedParent,
+                        onTap: { onSelect(group.parent.name) }
                     )
                 }
             }

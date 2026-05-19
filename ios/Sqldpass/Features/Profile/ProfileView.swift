@@ -13,7 +13,7 @@ import SwiftUI
 struct ProfileView: View {
     @State private var viewModel = ProfileViewModel()
     @State private var showNicknameEdit = false
-    @State private var pendingNotice: String?
+    @State private var showFeedback = false
 
     var body: some View {
         NavigationStack {
@@ -42,19 +42,9 @@ struct ProfileView: View {
                     onUpdated: { viewModel.updateLocalNickname($0) }
                 )
             }
-            .alert(
-                "안내",
-                isPresented: Binding(
-                    get: { pendingNotice != nil },
-                    set: { if !$0 { pendingNotice = nil } }
-                ),
-                actions: {
-                    Button("확인", role: .cancel) { pendingNotice = nil }
-                },
-                message: {
-                    Text(pendingNotice ?? "")
-                }
-            )
+            .sheet(isPresented: $showFeedback) {
+                FeedbackComposeView(initialType: .other, questionId: nil)
+            }
         }
     }
 
@@ -66,6 +56,7 @@ struct ProfileView: View {
             ProfileHeaderRow(
                 nickname: viewModel.me?.nickname,
                 provider: viewModel.me?.provider,
+                subscription: viewModel.subscription,
                 errorMessage: viewModel.errorMessage
             )
             .listRowInsets(EdgeInsets(top: Spacing.md, leading: Spacing.base,
@@ -116,14 +107,13 @@ struct ProfileView: View {
             }
             .buttonStyle(.plain)
 
-            // PaymentHistoryView 는 아직 없음 — placeholder.
-            // 결제·청구 화면 구현은 별 phase 의 책임.
-            Button {
-                pendingNotice = "결제·청구 내역 화면은 곧 출시됩니다."
-            } label: {
-                MenuRowLabel(icon: "creditcard", title: "결제·청구")
+            // 활성 구독이 있을 때만 Apple 구독 관리 페이지로 이동시킨다.
+            // 비활성 상태에서는 결제 내역 자체가 없으므로 행 자체를 숨김.
+            if viewModel.subscription?.active == true {
+                Link(destination: URL(string: "https://apps.apple.com/account/subscriptions")!) {
+                    MenuRowLabel(icon: "creditcard", title: "Apple 구독 관리")
+                }
             }
-            .buttonStyle(.plain)
 
             NavigationLink {
                 PaywallView()
@@ -139,32 +129,20 @@ struct ProfileView: View {
 
     private var settingsSupportSection: some View {
         Section {
-            // 테마 — 현재 iOS 는 시스템 다크 모드 자동 적응. 명시적 토글 화면은 아직 없음.
+            // 인앱 피드백 폼 — 백엔드 `POST /api/feedback` 호출.
             Button {
-                pendingNotice = "테마는 시스템 설정을 따릅니다. 별도 토글은 곧 추가됩니다."
+                showFeedback = true
             } label: {
-                MenuRowLabel(icon: "moon.circle", title: "테마")
-            }
-            .buttonStyle(.plain)
-
-            // 알림 — 푸시 알림 없음(plan Q15). 인앱 안내 placeholder 유지.
-            Button {
-                pendingNotice = "알림 설정은 곧 출시됩니다."
-            } label: {
-                MenuRowLabel(icon: "bell", title: "알림")
-            }
-            .buttonStyle(.plain)
-
-            // 피드백 placeholder — Android 미러: 인앱 폼은 별 phase.
-            Button {
-                pendingNotice = "피드백은 heehun3658@gmail.com 으로 보내주세요."
-            } label: {
-                MenuRowLabel(icon: "bubble.left.and.bubble.right", title: "피드백")
+                MenuRowLabel(icon: "bubble.left.and.bubble.right", title: "피드백 보내기")
             }
             .buttonStyle(.plain)
 
             Link(destination: URL(string: "https://www.sqldpass.com/terms")!) {
-                MenuRowLabel(icon: "doc.text", title: "공지·약관")
+                MenuRowLabel(icon: "doc.text", title: "이용약관")
+            }
+
+            Link(destination: URL(string: "https://www.sqldpass.com/privacy")!) {
+                MenuRowLabel(icon: "lock.shield", title: "개인정보처리방침")
             }
 
             Button(role: .destructive) {
@@ -198,6 +176,7 @@ struct ProfileView: View {
 private struct ProfileHeaderRow: View {
     let nickname: String?
     let provider: String?
+    let subscription: SubscriptionInfo?
     let errorMessage: String?
 
     var body: some View {
@@ -212,7 +191,7 @@ private struct ProfileHeaderRow: View {
                     .lineLimit(1)
                 if let provider {
                     HStack(spacing: Spacing.xs) {
-                        SubscriptionBadge()
+                        SubscriptionBadge(subscription: subscription)
                         Text("\(provider.lowercased()) 로그인")
                             .font(AppType.caption)
                             .foregroundStyle(Color.appTextMuted)
@@ -229,18 +208,26 @@ private struct ProfileHeaderRow: View {
     }
 }
 
-/// 구독 상태 배지 (헤더 영역).
-///
-/// 본 step 에서는 정적 "FREE" 라벨만 노출 — 실제 구독 상태 조회는
-/// ProfileViewModel 에 SubscriptionInfo 필드를 추가하는 별 phase 작업.
+/// 구독 상태 배지 (헤더 영역). `SubscriptionInfo.displayBadgeLabel` 을 그대로 노출.
+/// 활성이면 plan 명 또는 "PRO" 색상 강조, 비활성이면 회색 "FREE".
 private struct SubscriptionBadge: View {
+    let subscription: SubscriptionInfo?
+
+    private var label: String {
+        subscription?.displayBadgeLabel ?? "FREE"
+    }
+
+    private var isActive: Bool {
+        subscription?.active ?? false
+    }
+
     var body: some View {
-        Text("FREE")
+        Text(label)
             .font(AppType.caption.weight(.semibold))
-            .foregroundStyle(Color.appTextMuted)
+            .foregroundStyle(isActive ? Color.brandPrimary : Color.appTextMuted)
             .padding(.horizontal, Spacing.xs)
             .padding(.vertical, 2)
-            .background(Color.appElevated)
+            .background(isActive ? Color.brandPrimary.opacity(0.12) : Color.appElevated)
             .clipShape(RoundedRectangle(cornerRadius: Radius.sm))
     }
 }

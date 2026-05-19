@@ -1,12 +1,14 @@
 import Foundation
 
 enum SolveService {
-    /// GET /api/solves — 내 풀이 히스토리
-    static func myHistory() async throws -> [Solve] {
+    /// GET /api/solves — 내 풀이 히스토리.
+    /// 백엔드는 `SolveSummaryResponse` (답안 미포함) 배열을 반환 → `[SolveSummary]`.
+    /// 상세 검토는 `detail(id:)` 로 단건 재조회.
+    static func myHistory() async throws -> [SolveSummary] {
         try await APIClient.shared.get("/api/solves")
     }
 
-    /// GET /api/solves/{id} — 단일 풀이 상세
+    /// GET /api/solves/{id} — 단일 풀이 상세 (답안 포함, `Solve`).
     static func detail(id: Int64) async throws -> Solve {
         try await APIClient.shared.get("/api/solves/\(id)")
     }

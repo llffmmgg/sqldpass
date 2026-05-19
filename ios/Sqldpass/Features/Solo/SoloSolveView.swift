@@ -8,7 +8,7 @@ struct SoloSolveView: View {
     @State var viewModel: SoloSolveViewModel
     @State private var showExitConfirm = false
     @State private var bookmarkedIds: Set<Int64> = []
-    @State private var reportSubmitting = false
+    @State private var reportingQuestionId: Int64?
     @Environment(\.dismiss) private var dismiss
 
     /// 오프라인 큐 — `@Observable` SolveQueue 의 pendingCount 를 view 에서 관찰.
@@ -52,6 +52,18 @@ struct SoloSolveView: View {
             Button("종료하기", role: .destructive) { dismiss() }
             Button("계속 풀기", role: .cancel) {}
         }
+        .sheet(item: Binding(
+            get: { reportingQuestionId.map(ReportTarget.init) },
+            set: { reportingQuestionId = $0?.questionId }
+        )) { target in
+            FeedbackComposeView(initialType: .questionError, questionId: target.questionId)
+        }
+    }
+
+    /// `.sheet(item:)` 가 `Identifiable` 을 요구해 Int64 만으로는 부족 — 얇은 래퍼.
+    private struct ReportTarget: Identifiable {
+        let questionId: Int64
+        var id: Int64 { questionId }
     }
 
     @ViewBuilder
@@ -223,13 +235,9 @@ struct SoloSolveView: View {
         }
     }
 
+    /// 더보기 메뉴 → 문제 신고. FeedbackComposeView 를 sheet 로 띄워 백엔드 `/api/feedback` 로 전송.
     private func report(questionId: Int64) {
-        guard !reportSubmitting else { return }
-        reportSubmitting = true
-        // FeedbackService 가 별 phase 에 있을 수 있어서 본 step 은 단순 placeholder.
-        // 실제 신고 흐름은 별 phase 에서 작업.
-        _ = questionId
-        reportSubmitting = false
+        reportingQuestionId = questionId
     }
 }
 

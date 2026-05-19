@@ -49,6 +49,30 @@ final class SolveQueue {
         return entity
     }
 
+    /// 모의고사 전체 답안 enqueue.
+    /// `SolveSyncManager.tryDrain` 이 `mockExamId != nil` 분기로 `/api/solves` 에 재전송.
+    @discardableResult
+    func enqueueMockExam(
+        mockExamId: Int64,
+        answers: [SolveService.SubmitRequest.Answer],
+        clientSubmissionId: String
+    ) throws -> PendingSolve {
+        let data = try JSONEncoder().encode(answers)
+        let json = String(data: data, encoding: .utf8) ?? "[]"
+        let entity = PendingSolve(
+            subjectId: nil,
+            mockExamId: mockExamId,
+            totalCount: answers.count,
+            correctCount: 0,
+            answersJSON: json,
+            clientSubmissionId: clientSubmissionId
+        )
+        context.insert(entity)
+        try context.save()
+        refreshCount()
+        return entity
+    }
+
     func listUnsynced() throws -> [PendingSolve] {
         let descriptor = FetchDescriptor<PendingSolve>(
             predicate: #Predicate { !$0.synced },
