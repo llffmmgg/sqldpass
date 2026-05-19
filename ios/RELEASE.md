@@ -2,6 +2,8 @@
 
 This app is intentionally wired to stop before TestFlight upload by default.
 
+> 🆕 **최초 Secret 셋업은 [`RELEASE_SETUP.md`](RELEASE_SETUP.md) 참조** (인증서·프로파일·API Key 발급·base64 변환·등록 단계별 가이드).
+
 ## GitHub Actions
 
 `iOS CI` runs on PR and main pushes for `ios/**` changes:
