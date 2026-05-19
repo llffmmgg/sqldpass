@@ -86,7 +86,6 @@ xcodebuild \
   PRODUCT_BUNDLE_IDENTIFIER="$IOS_BUNDLE_ID" \
   CODE_SIGN_STYLE=Manual \
   CODE_SIGN_IDENTITY="Apple Distribution" \
-  PROVISIONING_PROFILE_SPECIFIER="$PROFILE_NAME" \
   archive
 
 xcodebuild \
