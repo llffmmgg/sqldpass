@@ -40,7 +40,7 @@ import lombok.extern.slf4j.Slf4j;
  *   <li>{@code question.included_in_mini_at IS NULL} — 한 번 미니로 복제된 문제는 다시 사용 X</li>
  * </ul>
  *
- * <p>비율 정책: 각 시험 종목의 원본 분포 ×0.4 (정처기 실기는 코드 카테고리 가중 8문 슬롯).
+ * <p>비율 정책: 각 시험 종목의 원본 분포 ×0.4 (정처기 실기는 ×0.5 비례 축소 10문 슬롯).
  * 출처(기출/AI 무료/AI 프리미엄) 와 난이도 구분은 의도적으로 폐기 — 풀 활용을 극대화하고
  * (과목 × 출처) 매트릭스 병목(예: 정처기 필기에 AI_PREMIUM 회차가 없어 0회 생성되던 문제)을 제거한다.
  * 출처 비율은 풀의 자연 분포를 그대로 따른다.
@@ -218,15 +218,20 @@ public class MiniMockExamCreator {
                 yield q;
             }
             case ENGINEER_PRACTICAL -> {
-                // 정처기 실기: 코드 카테고리 가중 (사용자 결정안). 총 8문.
+                // 정처기 실기: 정규 20문 분포의 ×0.5 비례 축소. 총 10문.
+                // 코드 해석 5문 (C 2 + Java 1 + Python 1 + SQL 1) +
+                // 이론 5문 (설계 1 + DB 1 + NetOS 1 + 보안 1 + 신기술 1) — 실기 단원 빠짐없이 커버.
                 SubjectEntity root = rootSubject("정보처리기사 실기");
                 LinkedHashMap<SubjectEntity, Integer> q = new LinkedHashMap<>();
-                q.put(leafOf(root, "C언어"), 3);
+                q.put(leafOf(root, "C언어"), 2);
                 q.put(leafOf(root, "Java"), 1);
                 q.put(leafOf(root, "Python"), 1);
                 q.put(leafOf(root, "SQL"), 1);
                 q.put(leafOf(root, "소프트웨어 설계"), 1);
+                q.put(leafOf(root, "데이터베이스 이론"), 1);
                 q.put(leafOf(root, "네트워크/OS"), 1);
+                q.put(leafOf(root, "보안"), 1);
+                q.put(leafOf(root, "신기술 동향"), 1);
                 yield q;
             }
         };
