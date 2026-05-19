@@ -44,6 +44,25 @@ public interface MockExamRepository extends JpaRepository<MockExamEntity, Long> 
     List<Object[]> findUserVisibleWithQuestionCounts();
 
     /**
+     * 사용자용 — MINI 회차 전용. 정규(AI) 와 동일한 visibility/expertVerified 필터를 적용하되
+     * kind=MINI 만 반환. /mini-mock-exams 페이지 / `GET /api/mock-exams/mini` (로그인) +
+     * `GET /api/public/mock-exams/mini` (비로그인) 가 사용.
+     *
+     * <p>정렬은 정규와 동일 (PREMIUM 먼저 → sequence DESC) — 미니는 모두 PREMIUM 이라
+     * 첫 정렬 키가 무차별이지만 정책 일관성을 위해 동일 식 유지.
+     */
+    @Query("SELECT m, COUNT(q), AVG(q.difficulty), MIN(q.difficulty), MAX(q.difficulty) " +
+            "FROM MockExamEntity m LEFT JOIN m.questions q " +
+            "WHERE m.visibility <> com.sqldpass.persistent.mockexam.MockExamVisibility.DRAFT " +
+            "  AND m.expertVerified = true " +
+            "  AND m.kind = com.sqldpass.persistent.mockexam.MockExamKind.MINI " +
+            "GROUP BY m " +
+            "ORDER BY CASE WHEN m.visibility = com.sqldpass.persistent.mockexam.MockExamVisibility.PREMIUM " +
+            "              THEN 0 ELSE 1 END, " +
+            "         m.sequence DESC")
+    List<Object[]> findUserVisibleMiniWithQuestionCounts();
+
+    /**
      * 안드로이드 앱 첫 부트 prefetch 용 스냅샷 — visibility != DRAFT + expert_verified=true 인
      * 모든 회차(AI/PAST_EXAM 모두 포함)를 문제 + 과목까지 한 번에 fetch.
      * MINI 는 사용자 노출 차단되므로 스냅샷에도 포함하지 않는다.

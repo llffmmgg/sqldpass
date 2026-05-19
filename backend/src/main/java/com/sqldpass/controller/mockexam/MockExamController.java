@@ -82,6 +82,38 @@ public class MockExamController {
                 .toList();
     }
 
+    @GetMapping("/mini")
+    @Operation(summary = "미니 모의고사 목록",
+            description = "MockExamKind=MINI 회차만. visibility 정책·purchased 처리는 정규 목록과 동일. " +
+                    "/mini-mock-exams 프론트 페이지의 source.")
+    public List<MockExamSummaryResponse> listMini(HttpServletRequest request) {
+        Long memberId = (Long) request.getAttribute("memberId");
+
+        Map<Long, int[]> bestScoreMap = new HashMap<>();
+        Set<Long> purchasedIds = new HashSet<>();
+        if (memberId != null) {
+            for (Object[] row : solveRepository.findBestScoresByMember(memberId)) {
+                Long mockExamId = (Long) row[0];
+                Integer bestCorrect = ((Number) row[1]).intValue();
+                Integer bestTotal = ((Number) row[2]).intValue();
+                bestScoreMap.put(mockExamId, new int[]{bestCorrect, bestTotal});
+            }
+            purchasedIds.addAll(mockExamPurchaseRepository.findMockExamIdsByMemberId(memberId));
+        }
+
+        return mockExamService.getAllMiniForUser().stream()
+                .map(exam -> {
+                    int[] best = bestScoreMap.get(exam.getId());
+                    boolean purchased = purchasedIds.contains(exam.getId());
+                    return MockExamSummaryResponse.from(
+                            exam,
+                            best != null ? best[0] : null,
+                            best != null ? best[1] : null,
+                            purchased);
+                })
+                .toList();
+    }
+
     @GetMapping("/{id}")
     @Operation(summary = "모의고사 상세 (50문항 포함, 정답 미포함)")
     public MockExamDetailResponse get(@PathVariable Long id, HttpServletRequest request) {

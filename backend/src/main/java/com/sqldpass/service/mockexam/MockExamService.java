@@ -66,6 +66,15 @@ public class MockExamService {
         return mapRows(mockExamRepository.findUserVisibleWithQuestionCounts());
     }
 
+    /**
+     * 사용자용 — MINI 회차 전용. 정규(AI) 와 동일 visibility/expertVerified 정책,
+     * kind=MINI 만. /mini-mock-exams 페이지의 source.
+     */
+    @Cacheable(CacheConfig.CACHE_MOCK_EXAM_LIST)
+    public List<MockExam> getAllMiniForUser() {
+        return mapRows(mockExamRepository.findUserVisibleMiniWithQuestionCounts());
+    }
+
     private List<MockExam> mapRows(List<Object[]> rows) {
         return rows.stream()
                 .map(row -> {

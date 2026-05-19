@@ -487,4 +487,16 @@ public class PublicContentService {
                 .map(MockExamSummaryResponse::from)
                 .toList();
     }
+
+    /**
+     * 비로그인 /mini-mock-exams 화면용 미니 모의고사 목록.
+     * MockExamKind=MINI 만, 정규와 동일한 visibility/expertVerified 정책.
+     * best-score 정보는 비로그인이라 모두 null. PREMIUM 카드는 purchased=false 로 항상 잠금 — 카드 클릭 시
+     * /mock-exams/{id} 의 PassPlusLockNotice 가 결제 유도.
+     */
+    public List<MockExamSummaryResponse> listPublicMiniMockExams() {
+        return mockExamService.getAllMiniForUser().stream()
+                .map(MockExamSummaryResponse::from)
+                .toList();
+    }
 }

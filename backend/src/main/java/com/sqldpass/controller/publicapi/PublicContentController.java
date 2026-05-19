@@ -169,6 +169,13 @@ public class PublicContentController {
         return publicContentService.listPublicMockExams();
     }
 
+    @GetMapping("/mock-exams/mini")
+    @Operation(summary = "미니 모의고사 목록 (비로그인 공개, MockExamKind=MINI 만)",
+            description = "정규(/mock-exams)와 동일한 visibility·검수 정책. PREMIUM 카드는 비로그인에서 purchased=false 로 항상 잠금.")
+    public List<MockExamSummaryResponse> listPublicMiniMockExams() {
+        return publicContentService.listPublicMiniMockExams();
+    }
+
     // ================= 기출 복원 (past-exams) — 비로그인 공개 =================
 
     @GetMapping("/past-exams")

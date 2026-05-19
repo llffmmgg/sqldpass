@@ -66,6 +66,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
                         "/api/public/daily-question",
                         "/api/public/subjects",
                         "/api/public/mock-exams",
+                        "/api/public/mock-exams/mini",
                         "/api/public/past-exams/*/with-answers",
                         "/api/public/blog/views",
                         "/api/public/posts/*",
