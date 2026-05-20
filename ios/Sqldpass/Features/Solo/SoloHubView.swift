@@ -18,15 +18,11 @@ import SwiftUI
 struct SoloHubView: View {
     @State private var viewModel = SoloHubViewModel()
 
-    /// 모드 토글 상태 — 약점 보강 / 랜덤 은 곧 출시 (Phase 1 기준 비활성).
-    /// 사용자가 비활성 세그먼트를 탭해도 selection 은 항상 .standard 로 유지된다.
-    @State private var mode: PracticeMode = .standard
-
     var body: some View {
         content
             .background(Color.appPage)
-            .navigationTitle("실전 문제")
             .navigationBarTitleDisplayMode(.inline)
+            .toolbar(.hidden, for: .navigationBar)
             .task {
                 if viewModel.roots.isEmpty {
                     await viewModel.load()
@@ -49,21 +45,21 @@ struct SoloHubView: View {
     private var content: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: Spacing.lg) {
-                AppPageHeader(
-                    title: "실전 문제",
-                    subtitle: "과목별 10문제 세트를 받아 한 문제씩 즉시 채점합니다"
-                )
-
-                PracticeModeToggle(selected: mode) { tapped in
-                    // 비활성 세그먼트(약점 보강 / 랜덤)는 selection 변경하지 않는다.
-                    if tapped.isEnabled { mode = tapped }
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("실전 문제")
+                        .font(AppType.bodyEmph)
+                        .foregroundStyle(Color.appTextPrimary)
+                    Text("오늘은 어떤 과목으로 한 세트 풀어볼까요?")
+                        .font(AppType.footnote)
+                        .foregroundStyle(Color.appTextMuted)
                 }
+                .padding(.top, Spacing.xs)
 
                 if !viewModel.grouped.isEmpty {
                     SoloCertChipsRow(
                         groups: viewModel.grouped,
-                        selectedParent: viewModel.selectedParent,
-                        onSelect: { parent in viewModel.selectParent(parent) }
+                        selectedSlug: viewModel.selectedSlug,
+                        onSelect: { slug in viewModel.selectSlug(slug) }
                     )
                 }
 
@@ -82,88 +78,17 @@ struct SoloHubView: View {
             }
         } else if viewModel.roots.isEmpty || viewModel.subjectsCount == 0 {
             EmptyHint(message: viewModel.errorMessage)
-        } else {
+        } else if let active = viewModel.activeGroup {
             VStack(spacing: Spacing.md) {
-                ForEach(viewModel.visibleGroups, id: \.parent.id) { group in
-                    SubjectGroupCard(parent: group.parent.name, children: group.children)
+                ForEach(active.roots) { root in
+                    SubjectGroupCard(
+                        parent: root.name,
+                        children: root.children,
+                        dotColor: certColorOf(slug: active.slug)
+                    )
                 }
             }
         }
-    }
-}
-
-// MARK: - 모드 토글
-
-/// 실전 문제 화면 상단 모드 토글. 현재는 `.standard` 만 활성.
-private enum PracticeMode: String, CaseIterable, Identifiable {
-    case standard      // 10문제 세트
-    case weakness      // 약점 보강
-    case random        // 랜덤
-
-    var id: String { rawValue }
-
-    var label: String {
-        switch self {
-        case .standard: return "10문제 세트"
-        case .weakness: return "약점 보강"
-        case .random:   return "랜덤"
-        }
-    }
-
-    var isEnabled: Bool {
-        self == .standard
-    }
-}
-
-/// SwiftUI `Picker(.segmented)` 대신 직접 만든 3-segment 토글.
-/// 비활성 세그먼트의 시각 상태(흐림 + "곧 출시" 캡션)를 표현하기 위함.
-private struct PracticeModeToggle: View {
-    let selected: PracticeMode
-    let onTap: (PracticeMode) -> Void
-
-    var body: some View {
-        HStack(spacing: Spacing.xs) {
-            ForEach(PracticeMode.allCases) { mode in
-                segment(for: mode)
-            }
-        }
-        .padding(Spacing.xs)
-        .background(Color.appSurface)
-        .overlay(
-            RoundedRectangle(cornerRadius: Radius.md, style: .continuous)
-                .stroke(Color.appBorder, lineWidth: 1)
-        )
-        .clipShape(RoundedRectangle(cornerRadius: Radius.md, style: .continuous))
-    }
-
-    @ViewBuilder
-    private func segment(for mode: PracticeMode) -> some View {
-        let isSelected = mode == selected
-        Button {
-            onTap(mode)
-        } label: {
-            VStack(spacing: Spacing.xxs) {
-                Text(mode.label)
-                    .font(AppType.footnote.weight(.semibold))
-                    .foregroundStyle(Color.appTextPrimary)
-                if !mode.isEnabled {
-                    Text("곧 출시")
-                        .font(AppType.caption)
-                        .foregroundStyle(Color.appTextSubtle)
-                }
-            }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, Spacing.sm)
-            .background(
-                RoundedRectangle(cornerRadius: Radius.sm, style: .continuous)
-                    .fill(isSelected ? Color.appElevated : Color.clear)
-            )
-            .contentShape(RoundedRectangle(cornerRadius: Radius.sm, style: .continuous))
-            .opacity(mode.isEnabled ? 1.0 : 0.45)
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel(mode.label)
-        .accessibilityHint(mode.isEnabled ? "선택됨" : "곧 출시")
     }
 }
 
@@ -171,19 +96,19 @@ private struct PracticeModeToggle: View {
 
 private struct SoloCertChipsRow: View {
     let groups: [SoloHubViewModel.Group]
-    let selectedParent: String?
+    let selectedSlug: String?
     let onSelect: (String) -> Void
 
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: Spacing.sm) {
-                ForEach(groups, id: \.parent.id) { group in
+                ForEach(groups) { group in
                     SoloCertChip(
-                        label: shortenCertName(group.parent.name),
-                        dotColor: parentNameToCert(group.parent.name),
-                        count: group.children.count,
-                        selected: group.parent.name == selectedParent,
-                        onTap: { onSelect(group.parent.name) }
+                        label: group.label,
+                        dotColor: certColorOf(slug: group.slug),
+                        count: group.subjectCount,
+                        selected: group.slug == selectedSlug,
+                        onTap: { onSelect(group.slug) }
                     )
                 }
             }
@@ -233,16 +158,17 @@ private struct SoloCertChip: View {
 private struct SubjectGroupCard: View {
     let parent: String
     let children: [SubjectResponse]
+    let dotColor: Color
 
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.sm) {
-            // group header — 자격증 색점 + 짧은 이름 + 과목 수
+            // group header — 자격증 색점 + root 이름 (예: "1과목 데이터 모델링의 이해") + 과목 수
             HStack(spacing: Spacing.sm) {
                 Circle()
-                    .fill(parentNameToCert(parent))
+                    .fill(dotColor)
                     .frame(width: 8, height: 8)
-                Text(shortenCertName(parent))
-                    .font(AppType.subheading)
+                Text(parent)
+                    .font(AppType.bodyEmph)
                     .foregroundStyle(Color.appTextPrimary)
                 Spacer(minLength: 0)
                 Text("\(children.count)과목")
@@ -339,32 +265,6 @@ private struct SkeletonSubjectGroup: View {
         )
         .clipShape(RoundedRectangle(cornerRadius: Radius.lg))
     }
-}
-
-// MARK: - parentName → 디자인 토큰 매핑
-
-/// /api/subjects 의 parentName(예: "SQLD", "정보처리기사 실기") 을 자격증 점 색으로.
-/// Android `SolveTab.parentNameToCert` 와 동일 규칙.
-private func parentNameToCert(_ name: String) -> Color {
-    if name.range(of: "SQLD", options: .caseInsensitive) != nil { return .certSQLD }
-    if name.contains("실기") { return .certEngineerPractical }
-    if name.contains("필기") && !name.contains("컴퓨터") { return .certEngineerWritten }
-    if name.contains("컴퓨터활용능력 1") || name.contains("컴활 1") { return .certComputerL1 }
-    if name.contains("컴퓨터활용능력 2") || name.contains("컴활 2") { return .certComputerL2 }
-    if name.range(of: "ADsP", options: .caseInsensitive) != nil { return .certADSP }
-    return .brandPrimary
-}
-
-/// 긴 한국어 자격증 명을 칩에 들어갈 짧은 라벨로.
-/// Android `SolveTab.shortenCertName` 와 동일 규칙.
-private func shortenCertName(_ name: String) -> String {
-    if name.range(of: "SQLD", options: .caseInsensitive) != nil { return "SQLD" }
-    if name.contains("정보처리기사 실기") { return "정처기 실기" }
-    if name.contains("정보처리기사 필기") { return "정처기 필기" }
-    if name.contains("컴퓨터활용능력 1") { return "컴활 1급" }
-    if name.contains("컴퓨터활용능력 2") { return "컴활 2급" }
-    if name.range(of: "ADsP", options: .caseInsensitive) != nil { return "ADsP" }
-    return name
 }
 
 #Preview {

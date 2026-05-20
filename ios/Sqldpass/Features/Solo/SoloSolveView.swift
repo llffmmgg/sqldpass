@@ -232,7 +232,8 @@ struct SoloSolveView: View {
                         isEnabled: true,
                         isLoading: false,
                         variant: .primary
-                    )
+                    ),
+                    buttonSize: .regular
                 )
             } else {
                 AppBottomActionBar(
@@ -242,7 +243,8 @@ struct SoloSolveView: View {
                         isEnabled: viewModel.hasAnswer,
                         isLoading: viewModel.submitting,
                         variant: .primary
-                    )
+                    ),
+                    buttonSize: .regular
                 )
             }
         }
