@@ -71,14 +71,20 @@ final class PastExamRunnerViewModel {
         loadError = nil
         do {
             detail = try await PastExamService.detail(id: examId)
-            startedAt = Date()
-            startTicker()
+            // 타이머는 사용자가 start() 호출 시점에 시작. 자동 시작 X.
         } catch let error as APIError {
             loadError = error.errorDescription
         } catch {
             loadError = error.localizedDescription
         }
         isLoading = false
+    }
+
+    /// 시작 오버레이의 버튼이 호출 — 풀이 데이터가 로드된 뒤에만 동작.
+    func start() {
+        guard startedAt == nil, detail != nil else { return }
+        startedAt = Date()
+        startTicker()
     }
 
     func stopTimer() {
@@ -103,6 +109,11 @@ final class PastExamRunnerViewModel {
     func goNext() {
         guard currentIndex < totalCount - 1 else { return }
         currentIndex += 1
+    }
+
+    func go(to index: Int) {
+        guard questions.indices.contains(index) else { return }
+        currentIndex = index
     }
 
     func goPrevious() {

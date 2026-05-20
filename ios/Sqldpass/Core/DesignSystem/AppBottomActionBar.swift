@@ -19,6 +19,8 @@ struct BottomAction {
 struct AppBottomActionBar: View {
     let primary: BottomAction
     var secondary: BottomAction? = nil
+    /// 버튼 크기 — 기본은 `.large`(56pt). 모의고사·실전문제 풀이 화면처럼 얇은 액션 바를 원하면 `.regular` 전달.
+    var buttonSize: AppButtonSize = .large
 
     var body: some View {
         HStack(spacing: Spacing.sm) {
@@ -26,7 +28,7 @@ struct AppBottomActionBar: View {
                 AppButton(
                     title: secondary.title,
                     variant: secondary.variant,
-                    size: .large,
+                    size: buttonSize,
                     isEnabled: secondary.isEnabled,
                     isLoading: secondary.isLoading,
                     action: secondary.action
@@ -37,7 +39,7 @@ struct AppBottomActionBar: View {
                 AppButton(
                     title: primary.title,
                     variant: primary.variant,
-                    size: .large,
+                    size: buttonSize,
                     isEnabled: primary.isEnabled,
                     isLoading: primary.isLoading,
                     action: primary.action
@@ -48,7 +50,7 @@ struct AppBottomActionBar: View {
                 AppButton(
                     title: primary.title,
                     variant: primary.variant,
-                    size: .large,
+                    size: buttonSize,
                     isEnabled: primary.isEnabled,
                     isLoading: primary.isLoading,
                     action: primary.action
@@ -57,8 +59,8 @@ struct AppBottomActionBar: View {
             }
         }
         .padding(.horizontal, Spacing.base)
-        .padding(.vertical, Spacing.sm)
-        .frame(minHeight: 56)
+        .padding(.vertical, buttonSize == .large ? Spacing.sm : Spacing.xs)
+        .frame(minHeight: buttonSize == .large ? 56 : 44)
         .frame(maxWidth: .infinity)
         .background(Color.appSurface)
         .overlay(alignment: .top) {

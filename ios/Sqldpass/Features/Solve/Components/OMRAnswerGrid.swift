@@ -8,6 +8,8 @@ struct OMRAnswerGrid: View {
     let question: MockExamQuestionItem
     let selectedOption: Int?
     let onSelect: (Int) -> Void
+    /// 이미 선택된 보기를 다시 탭(= 두 번째 클릭)했을 때 호출. View 쪽에서 다음 문제로 넘김.
+    var onAdvance: () -> Void = {}
 
     private let choices = [1, 2, 3, 4]
 
@@ -25,7 +27,11 @@ struct OMRAnswerGrid: View {
                     state: selectedOption == value ? .selected : .idle,
                     onTap: {
                         Haptics.light()
-                        onSelect(value)
+                        if selectedOption == value {
+                            onAdvance()
+                        } else {
+                            onSelect(value)
+                        }
                     }
                 )
             }

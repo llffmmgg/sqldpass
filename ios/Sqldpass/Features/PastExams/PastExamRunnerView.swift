@@ -8,6 +8,17 @@ struct PastExamRunnerView: View {
     @State private var showExitConfirm = false
     @Environment(\.dismiss) private var dismiss
 
+    /// OMR 답안 카드용 — viewModel.answers 에서 응답이 있는 문항의 0-base 인덱스.
+    private var answeredIndices: Set<Int> {
+        var set = Set<Int>()
+        for (i, q) in viewModel.questions.enumerated() {
+            if viewModel.answers[q.id]?.isAnswered == true {
+                set.insert(i)
+            }
+        }
+        return set
+    }
+
     var body: some View {
         Group {
             if let graded = viewModel.graded, let detail = viewModel.detail {
@@ -21,7 +32,12 @@ struct PastExamRunnerView: View {
             } else if viewModel.detail == nil {
                 loadingOrError
             } else {
-                runner
+                ZStack {
+                    runner
+                    if viewModel.startedAt == nil {
+                        startOverlay
+                    }
+                }
             }
         }
         .navigationBarBackButtonHidden(true)
@@ -74,6 +90,43 @@ struct PastExamRunnerView: View {
         }
     }
 
+    /// 시작 버튼 — 사용자가 명시적으로 trigger. SolveView 패턴과 동일.
+    private var startOverlay: some View {
+        ZStack {
+            Color.appPage.ignoresSafeArea()
+            VStack(spacing: Spacing.lg) {
+                Image(systemName: "timer")
+                    .font(.system(size: 56, weight: .light))
+                    .foregroundStyle(Color.brandPrimary)
+
+                VStack(spacing: Spacing.xs) {
+                    Text("준비되면 시작해주세요")
+                        .font(AppType.heading)
+                        .foregroundStyle(Color.appTextPrimary)
+                    Text("시작을 누르면 타이머가 동작합니다.")
+                        .font(AppType.callout)
+                        .foregroundStyle(Color.appTextMuted)
+                        .multilineTextAlignment(.center)
+                }
+
+                Button {
+                    viewModel.start()
+                } label: {
+                    Text("시작")
+                        .font(AppType.bodyEmph)
+                        .foregroundStyle(Color.brandPrimaryFG)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, Spacing.md)
+                        .background(Color.brandPrimary)
+                        .clipShape(RoundedRectangle(cornerRadius: Radius.lg, style: .continuous))
+                }
+                .buttonStyle(.plain)
+                .padding(.horizontal, Spacing.xl)
+                .padding(.top, Spacing.sm)
+            }
+        }
+    }
+
     @ViewBuilder
     private var runner: some View {
         VStack(spacing: 0) {
@@ -95,6 +148,13 @@ struct PastExamRunnerView: View {
                             }
                             .buttonStyle(.plain)
                         }
+
+                        SolveOMRSheet(
+                            totalCount: viewModel.totalCount,
+                            currentIndex: viewModel.currentIndex,
+                            answeredIndices: answeredIndices,
+                            onTap: { viewModel.go(to: $0) }
+                        )
                     }
                 }
                 .padding(Spacing.base)
@@ -183,7 +243,12 @@ struct PastExamRunnerView: View {
             OMRAnswerGrid(
                 question: question,
                 selectedOption: viewModel.currentEntry?.selectedOption,
-                onSelect: { viewModel.select(option: $0) }
+                onSelect: { viewModel.select(option: $0) },
+                onAdvance: {
+                    if viewModel.currentIndex < viewModel.totalCount - 1 {
+                        viewModel.goNext()
+                    }
+                }
             )
         }
     }

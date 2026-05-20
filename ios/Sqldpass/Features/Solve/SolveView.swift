@@ -14,7 +14,28 @@ struct SolveView: View {
     /// 오프라인 큐 — `@Observable` SolveQueue 의 pendingCount 를 view 에서 관찰.
     private let solveQueue = SolveQueue.shared
 
+    /// OMR 답안 카드용 — viewModel.answers 에서 응답이 있는 문항의 0-base 인덱스.
+    private var answeredIndices: Set<Int> {
+        var set = Set<Int>()
+        for (i, q) in viewModel.questions.enumerated() {
+            if viewModel.answers[q.id]?.isAnswered == true {
+                set.insert(i)
+            }
+        }
+        return set
+    }
+
     var body: some View {
+        ZStack {
+            mainContent
+            if viewModel.startedAt == nil {
+                startOverlay
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var mainContent: some View {
         VStack(spacing: 0) {
             topBar
 
@@ -37,6 +58,13 @@ struct SolveView: View {
                             }
                             .buttonStyle(.plain)
                         }
+
+                        SolveOMRSheet(
+                            totalCount: viewModel.totalCount,
+                            currentIndex: viewModel.currentIndex,
+                            answeredIndices: answeredIndices,
+                            onTap: { viewModel.go(to: $0) }
+                        )
                     } else {
                         Text("문제가 없습니다")
                             .font(AppType.body)
@@ -109,8 +137,44 @@ struct SolveView: View {
                 Text("네트워크가 불안정해 답안을 기기에 보관했어요. 인터넷이 돌아오면 자동으로 전송돼 학습 기록에 추가됩니다.")
             }
         )
-        .onAppear {
-            viewModel.start()
+    }
+
+    // MARK: - Start overlay
+
+    /// 시작 버튼을 누르기 전 모달 — 자동 시작을 막고 사용자가 명시적으로 trigger.
+    private var startOverlay: some View {
+        ZStack {
+            Color.appPage.ignoresSafeArea()
+            VStack(spacing: Spacing.lg) {
+                Image(systemName: "timer")
+                    .font(.system(size: 56, weight: .light))
+                    .foregroundStyle(Color.brandPrimary)
+
+                VStack(spacing: Spacing.xs) {
+                    Text("준비되면 시작해주세요")
+                        .font(AppType.heading)
+                        .foregroundStyle(Color.appTextPrimary)
+                    Text("시작을 누르면 타이머가 동작합니다.")
+                        .font(AppType.callout)
+                        .foregroundStyle(Color.appTextMuted)
+                        .multilineTextAlignment(.center)
+                }
+
+                Button {
+                    viewModel.start()
+                } label: {
+                    Text("시작")
+                        .font(AppType.bodyEmph)
+                        .foregroundStyle(Color.brandPrimaryFG)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, Spacing.md)
+                        .background(Color.brandPrimary)
+                        .clipShape(RoundedRectangle(cornerRadius: Radius.lg, style: .continuous))
+                }
+                .buttonStyle(.plain)
+                .padding(.horizontal, Spacing.xl)
+                .padding(.top, Spacing.sm)
+            }
         }
     }
 
@@ -220,7 +284,12 @@ struct SolveView: View {
             OMRAnswerGrid(
                 question: question,
                 selectedOption: viewModel.currentEntry?.selectedOption,
-                onSelect: { viewModel.select(option: $0) }
+                onSelect: { viewModel.select(option: $0) },
+                onAdvance: {
+                    if viewModel.currentIndex < viewModel.totalCount - 1 {
+                        viewModel.goNext()
+                    }
+                }
             )
         }
     }
