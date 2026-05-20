@@ -948,6 +948,31 @@ export function fetchRevenueByPlan(days: number) {
   return adminFetch<RevenueByPlan[]>(`/stats/revenue/by-plan?days=${days}`);
 }
 
+// 채널(provider)별 매출 — Step 2 backend endpoint.
+// 같은 날짜라도 provider 가 다르면 별 row 로 옴.
+export interface RevenueByProviderPoint {
+  date: string;       // "YYYY-MM-DD"
+  provider: string;   // "PORTONE" | "PLAY_BILLING" | "APP_STORE"
+  revenue: number;
+  refundAmount: number;
+  count: number;
+}
+
+export interface RevenueByProviderPlan {
+  provider: string;
+  plan: string;
+  count: number;
+  revenue: number;
+}
+
+export function fetchRevenueByProvider(days: number) {
+  return adminFetch<RevenueByProviderPoint[]>(`/stats/revenue/by-provider?days=${days}`);
+}
+
+export function fetchRevenueByProviderAndPlan(days: number) {
+  return adminFetch<RevenueByProviderPlan[]>(`/stats/revenue/by-provider/by-plan?days=${days}`);
+}
+
 // ============================================================
 // 결제 / 환불 관리 (어드민 전용)
 // ============================================================

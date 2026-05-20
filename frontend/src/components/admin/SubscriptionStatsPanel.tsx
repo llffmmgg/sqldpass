@@ -1,7 +1,5 @@
 "use client";
 
-/* eslint-disable react-hooks/set-state-in-effect -- 마운트 시 stats fetch 후 setState */
-
 import { useEffect, useId, useMemo, useState } from "react";
 import {
   AnimatePresence,
@@ -13,7 +11,10 @@ import {
 
 import {
   fetchRevenueByPlan,
+  fetchRevenueByProvider,
+  fetchRevenueByProviderAndPlan,
   fetchRevenueStats,
+  type AdminSubscriptionPlan,
   type RevenueByPlan,
   type RevenuePoint,
 } from "@/lib/adminApi";
@@ -21,6 +22,14 @@ import { PLAN_TOKENS, type SubscriptionPlanKey } from "@/lib/plan-tokens";
 
 const RANGES = [7, 30, 90] as const;
 type Range = (typeof RANGES)[number];
+
+const CHANNEL_OPTIONS = [
+  { id: "ALL", label: "전체" },
+  { id: "PORTONE", label: "PortOne" },
+  { id: "PLAY_BILLING", label: "Play" },
+  { id: "APP_STORE", label: "App Store" },
+] as const;
+type ChannelId = (typeof CHANNEL_OPTIONS)[number]["id"];
 
 const SPRING_FAST = { stiffness: 220, damping: 28, mass: 0.6 };
 const PATH_TWEEN = { duration: 0.35, ease: [0.4, 0, 0.2, 1] as const };
@@ -48,27 +57,70 @@ function AnimatedCount({ value }: { value: number }) {
 
 export default function SubscriptionStatsPanel() {
   const [days, setDays] = useState<Range>(30);
+  const [channel, setChannel] = useState<ChannelId>("ALL");
   const [points, setPoints] = useState<RevenuePoint[]>([]);
   const [byPlan, setByPlan] = useState<RevenueByPlan[]>([]);
   const [pending, setPending] = useState(true);
   const [hasLoaded, setHasLoaded] = useState(false);
 
   useEffect(() => {
+    let cancelled = false;
     setPending(true);
-    Promise.all([fetchRevenueStats(days), fetchRevenueByPlan(days)])
-      .then(([rev, plan]) => {
-        setPoints(rev);
-        setByPlan(plan);
-      })
-      .catch(() => {
+
+    const load = async () => {
+      try {
+        if (channel === "ALL") {
+          const [rev, plan] = await Promise.all([
+            fetchRevenueStats(days),
+            fetchRevenueByPlan(days),
+          ]);
+          if (cancelled) return;
+          setPoints(rev);
+          setByPlan(plan);
+        } else {
+          const [byProv, byProvPlan] = await Promise.all([
+            fetchRevenueByProvider(days),
+            fetchRevenueByProviderAndPlan(days),
+          ]);
+          if (cancelled) return;
+          // 한 provider 당 같은 날짜에 한 row 라 별도 합산 불필요.
+          setPoints(
+            byProv
+              .filter((p) => p.provider === channel)
+              .map((p) => ({
+                date: p.date,
+                revenue: p.revenue,
+                refundAmount: p.refundAmount,
+                count: p.count,
+              })),
+          );
+          setByPlan(
+            byProvPlan
+              .filter((p) => p.provider === channel)
+              .map((p) => ({
+                plan: p.plan as AdminSubscriptionPlan,
+                count: p.count,
+                revenue: p.revenue,
+              })),
+          );
+        }
+      } catch {
+        if (cancelled) return;
         setPoints([]);
         setByPlan([]);
-      })
-      .finally(() => {
+      } finally {
+        if (cancelled) return;
         setPending(false);
         setHasLoaded(true);
-      });
-  }, [days]);
+      }
+    };
+
+    load();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [days, channel]);
 
   const totalRevenue = points.reduce((s, p) => s + p.revenue, 0);
   const totalRefund = points.reduce((s, p) => s + p.refundAmount, 0);
@@ -84,38 +136,74 @@ export default function SubscriptionStatsPanel() {
           <p className="mt-0.5 text-[11px] text-text-muted">archived 구독은 집계에서 제외</p>
         </div>
 
-        {/* segmented control — 대시보드 패턴 */}
-        <div
-          role="group"
-          aria-label="기간 선택"
-          className="relative inline-flex items-center rounded-sm border border-border bg-bg-elevated p-0.5 text-xs"
-        >
-          {RANGES.map((r) => {
-            const isActive = days === r;
-            return (
-              <button
-                key={r}
-                type="button"
-                aria-pressed={isActive}
-                aria-label={`최근 ${r}일`}
-                disabled={initialLoad}
-                onClick={() => setDays(r)}
-                className={`relative z-10 rounded-sm px-2.5 py-1 font-medium transition-colors duration-200 ${
-                  isActive ? "text-text" : "text-text-subtle hover:text-text"
-                } ${initialLoad ? "cursor-wait opacity-70" : ""}`}
-              >
-                {isActive && (
-                  <motion.span
-                    layoutId="admin-revenue-active-indicator"
-                    className="absolute inset-0 -z-10 rounded-sm bg-surface shadow-sm"
-                    transition={{ type: "spring", stiffness: 380, damping: 32 }}
-                    aria-hidden
-                  />
-                )}
-                <span className="relative">{r}일</span>
-              </button>
-            );
-          })}
+        <div className="flex flex-wrap items-center gap-2">
+          {/* 채널 segmented control */}
+          <div
+            role="group"
+            aria-label="채널 선택"
+            className="relative inline-flex items-center rounded-sm border border-border bg-bg-elevated p-0.5 text-xs"
+          >
+            {CHANNEL_OPTIONS.map((opt) => {
+              const isActive = channel === opt.id;
+              return (
+                <button
+                  key={opt.id}
+                  type="button"
+                  aria-pressed={isActive}
+                  aria-label={`채널 ${opt.label}`}
+                  disabled={initialLoad}
+                  onClick={() => setChannel(opt.id)}
+                  className={`relative z-10 rounded-sm px-2.5 py-1 font-medium transition-colors duration-200 ${
+                    isActive ? "text-text" : "text-text-subtle hover:text-text"
+                  } ${initialLoad ? "cursor-wait opacity-70" : ""}`}
+                >
+                  {isActive && (
+                    <motion.span
+                      layoutId="admin-revenue-channel-indicator"
+                      className="absolute inset-0 -z-10 rounded-sm bg-surface shadow-sm"
+                      transition={{ type: "spring", stiffness: 380, damping: 32 }}
+                      aria-hidden
+                    />
+                  )}
+                  <span className="relative">{opt.label}</span>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* segmented control — 대시보드 패턴 */}
+          <div
+            role="group"
+            aria-label="기간 선택"
+            className="relative inline-flex items-center rounded-sm border border-border bg-bg-elevated p-0.5 text-xs"
+          >
+            {RANGES.map((r) => {
+              const isActive = days === r;
+              return (
+                <button
+                  key={r}
+                  type="button"
+                  aria-pressed={isActive}
+                  aria-label={`최근 ${r}일`}
+                  disabled={initialLoad}
+                  onClick={() => setDays(r)}
+                  className={`relative z-10 rounded-sm px-2.5 py-1 font-medium transition-colors duration-200 ${
+                    isActive ? "text-text" : "text-text-subtle hover:text-text"
+                  } ${initialLoad ? "cursor-wait opacity-70" : ""}`}
+                >
+                  {isActive && (
+                    <motion.span
+                      layoutId="admin-revenue-active-indicator"
+                      className="absolute inset-0 -z-10 rounded-sm bg-surface shadow-sm"
+                      transition={{ type: "spring", stiffness: 380, damping: 32 }}
+                      aria-hidden
+                    />
+                  )}
+                  <span className="relative">{r}일</span>
+                </button>
+              );
+            })}
+          </div>
         </div>
       </div>
 
