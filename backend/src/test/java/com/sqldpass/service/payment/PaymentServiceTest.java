@@ -1522,6 +1522,81 @@ class PaymentServiceTest {
         assertThat(result.expiresAt()).isEqualTo(LocalDateTime.of(2026, 7, 1, 0, 0, 0));
     }
 
+    // ============================================================
+    // history.record GRANTED/UPGRADED 분기 (Step 1: payment-upgrade-channel-stats)
+    // ============================================================
+
+    @Test
+    @DisplayName("verify (PortOne) 신규 결제 — active 없음 → historyService.record GRANTED 1회 (reason=verify:portone)")
+    void verifyPortOne_신규_결제_active_없으면_GRANTED_record_1회() {
+        MemberEntity m = newMember(1L, "pay-rv-7f2a91");
+        given(memberRepository.findById(1L)).willReturn(Optional.of(m));
+
+        PaymentEntity entity = new PaymentEntity("p-1", 1L, null, "3일 이용권",
+                SubscriptionPlan.THREE_DAY, 3900);
+        setField(entity, "id", 42L);
+        given(paymentRepository.findByPaymentId("p-1")).willReturn(Optional.of(entity));
+        // active 없음 — findActiveByMemberId 기본 mock 이 빈 리스트.
+
+        var info = new PortOneClient.PortOnePaymentInfo("p-1", "PAID", 3900, "KRW",
+                OffsetDateTime.now(), Map.of("id", "p-1", "status", "PAID"));
+        given(portOneClient.getPayment("p-1")).willReturn(info);
+
+        service.verify(1L, "p-1");
+
+        verify(historyService, times(1)).record(eq(1L), eq(SubscriptionPlan.THREE_DAY),
+                eq(com.sqldpass.persistent.payment.SubscriptionHistoryAction.GRANTED),
+                eq("verify:portone"), eq(null), eq(42L));
+    }
+
+    @Test
+    @DisplayName("verifyPlayBilling: ONE_MONTH 활성 위 UNLIMITED 결제 → historyService.record UPGRADED 1회 (reason=verify:play_billing)")
+    void verifyPlayBilling_활성_위_업그레이드_UPGRADED_record_1회() {
+        properties.setReviewerNicknames("");
+        given(paymentRepository.findByPurchaseToken("tok-upgrade")).willReturn(Optional.empty());
+        var info = new PlayBillingClient.PlayPurchaseInfo(0, 0, System.currentTimeMillis(),
+                "GPA-upgrade", "KR");
+        given(playBillingClient.verifyProduct("iap_unlimited", "tok-upgrade")).willReturn(info);
+
+        // ONE_MONTH 활성 → UNLIMITED 업그레이드 허용.
+        SubscriptionEntity active = new SubscriptionEntity(
+                1L, SubscriptionPlan.ONE_MONTH, 100L,
+                LocalDateTime.now().minusDays(5), LocalDateTime.now().plusDays(25));
+        given(subscriptionRepository.findActiveByMemberId(any(), any()))
+                .willReturn(java.util.List.of(active));
+
+        service.verifyPlayBilling(1L, "iap_unlimited", "tok-upgrade");
+
+        // payment.getId() 은 mock 상황에서 null (실제로는 DB 가 채움) — 인자 위치 검증만 한다.
+        verify(historyService, times(1)).record(eq(1L), eq(SubscriptionPlan.UNLIMITED),
+                eq(com.sqldpass.persistent.payment.SubscriptionHistoryAction.UPGRADED),
+                eq("verify:play_billing"), eq(null), org.mockito.ArgumentMatchers.<Long>any());
+    }
+
+    @Test
+    @DisplayName("verifyAppStore: 같은 transactionId 의 PAID 재요청(idempotent) → historyService.record 0회")
+    void verifyAppStore_PAID_재요청_idempotent_history_0회() {
+        properties.setReviewerNicknames("");
+        var info = new AppStoreClient.TransactionInfo(
+                "tx-prior-h", "tx-prior-h", "iap_thunder", "com.sqldpass.app",
+                System.currentTimeMillis(), 0L);
+        given(appStoreClient.parsePayload("jws-prior-h")).willReturn(info);
+
+        PaymentEntity prior = new PaymentEntity(
+                "appstore-prior-h", 1L, null, "문어CBT Thunder",
+                SubscriptionPlan.THREE_DAY, 3900, 3900, 0,
+                com.sqldpass.persistent.payment.PaymentProvider.APP_STORE, "tx-prior-h");
+        prior.markPaid("appstore:txId=tx-prior-h", LocalDateTime.now());
+        setField(prior, "id", 77L);
+        given(paymentRepository.findByPurchaseToken("tx-prior-h")).willReturn(Optional.of(prior));
+        given(subscriptionRepository.findByPaymentId(77L)).willReturn(Optional.empty());
+
+        service.verifyAppStore(1L, "jws-prior-h", "iap_thunder");
+
+        // PAID idempotent 분기는 createAppStorePayment 까지 진입하지 않으므로 history 0회.
+        verify(historyService, never()).record(any(), any(), any(), any(), any(), any());
+    }
+
     private MemberEntity newMember(Long id, String nickname) {
         MemberEntity m = new MemberEntity("google", "g-" + id, nickname);
         setField(m, "id", id);

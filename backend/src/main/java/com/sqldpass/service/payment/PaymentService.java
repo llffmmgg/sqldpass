@@ -241,6 +241,12 @@ public class PaymentService {
             throw new SqldpassException(ErrorCode.PAYMENT_AMOUNT_MISMATCH);
         }
 
+        // history action 분기를 위한 활성 plan 스냅샷 — markPaid 전에 조회.
+        // (verify 진입 시점에 active 였던 plan 이 있었으면 UPGRADED, 없었으면 GRANTED.)
+        SubscriptionEntity activeBefore = subscriptionRepository
+                .findActiveByMemberId(memberId, LocalDateTime.now())
+                .stream().findFirst().orElse(null);
+
         LocalDateTime paidAt = info.paidAt() != null
                 ? info.paidAt().atZoneSameInstant(ZoneId.systemDefault()).toLocalDateTime()
                 : LocalDateTime.now();
@@ -256,6 +262,12 @@ public class PaymentService {
         SubscriptionEntity subscription = new SubscriptionEntity(
                 memberId, plan, entity.getId(), paidAt, expiresAt);
         subscriptionRepository.save(subscription);
+
+        SubscriptionHistoryAction action = (activeBefore != null)
+                ? SubscriptionHistoryAction.UPGRADED
+                : SubscriptionHistoryAction.GRANTED;
+        historyService.record(memberId, plan, action,
+                "verify:portone", null, entity.getId());
 
         scheduleDiscordPaymentNotify(memberId, entity, subscription);
 
@@ -405,6 +417,12 @@ public class PaymentService {
                 memberId, plan, payment.getId(), paidAt, expiresAt);
         subscriptionRepository.save(subscription);
 
+        SubscriptionHistoryAction action = (active != null)
+                ? SubscriptionHistoryAction.UPGRADED
+                : SubscriptionHistoryAction.GRANTED;
+        historyService.record(memberId, plan, action,
+                "verify:play_billing", null, payment.getId());
+
         // acknowledge — 3일 내 미호출 시 Google 이 자동 환불하므로 검증 직후 즉시 처리.
         if (info.needsAcknowledge()) {
             playBillingClient.acknowledge(productId, purchaseToken);
@@ -540,6 +558,12 @@ public class PaymentService {
         SubscriptionEntity subscription = new SubscriptionEntity(
                 memberId, plan, payment.getId(), paidAt, expiresAt);
         subscriptionRepository.save(subscription);
+
+        SubscriptionHistoryAction action = (active != null)
+                ? SubscriptionHistoryAction.UPGRADED
+                : SubscriptionHistoryAction.GRANTED;
+        historyService.record(memberId, plan, action,
+                "verify:app_store", null, payment.getId());
 
         scheduleDiscordPaymentNotify(memberId, payment, subscription);
 
