@@ -44,10 +44,13 @@ final class HomeViewModel {
         }
 
         // 3) History — optional. KPI/잔디는 부분 표시되며, 실패해도 critical 에러 아님.
+        //    cancelled(중복 호출 취소) 는 기존 값 유지 — pull-to-refresh 중 깜빡임 방지.
         do {
             let history = try await SolveService.myHistory()
             kpi = HomeViewModel.aggregate(history: history, longestStreak: loadedStreak?.longestStreak)
             weekCounts = HomeViewModel.last7DaysCounts(history: history)
+        } catch APIError.cancelled {
+            // 기존 kpi/weekCounts 유지.
         } catch {
             kpi = ProfileKpi(
                 totalSolved: nil,

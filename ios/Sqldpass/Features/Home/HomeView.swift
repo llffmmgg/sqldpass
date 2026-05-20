@@ -97,13 +97,7 @@ struct HomeView: View {
                         .padding(.horizontal, Spacing.base)
                         .padding(.bottom, Spacing.xxl)
                         .frame(maxWidth: .infinity, alignment: .top)
-                        .background(
-                            UnevenRoundedRectangle(
-                                cornerRadii: .init(topLeading: 28, topTrailing: 28),
-                                style: .continuous
-                            )
-                            .fill(Color.appPage)
-                        )
+                        .background(Color.appPage)
                     }
                 }
                 .background(Color.appPage) // 위로 bounce 해도 흰색만 보이게 — 빈 초록 영역 노출 방지

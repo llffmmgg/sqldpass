@@ -18,14 +18,19 @@ struct MainTabView: View {
     @State private var selection: MainTab = .home
 
     init() {
-        // TabBar 평면 불투명 강제 — iOS 18 floating glass 톤 끔.
+        // TabBar 평면 직사각형 강제 — iOS 18 floating glass + corner radius 모두 끔.
         let appearance = UITabBarAppearance()
         appearance.configureWithOpaqueBackground()
         appearance.backgroundColor = UIColor.systemBackground
         appearance.backgroundEffect = nil   // 반투명 블러 제거
         appearance.shadowColor = .clear     // 상단 hairline 제거
+        appearance.shadowImage = UIImage()
         UITabBar.appearance().standardAppearance = appearance
         UITabBar.appearance().scrollEdgeAppearance = appearance
+        // iOS 18 자동 corner radius / inset 무효화 — 화면 바닥 끝까지 직사각형으로.
+        UITabBar.appearance().clipsToBounds = false
+        UITabBar.appearance().layer.cornerRadius = 0
+        UITabBar.appearance().layer.masksToBounds = true
     }
 
     var body: some View {

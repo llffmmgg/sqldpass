@@ -69,7 +69,13 @@ struct HomeDDayBanner: View {
         .padding(.top, Spacing.sm)
         .padding(.bottom, Spacing.lg)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.brandPrimary)
+        .background(
+            UnevenRoundedRectangle(
+                cornerRadii: .init(bottomLeading: 28, bottomTrailing: 28),
+                style: .continuous
+            )
+            .fill(Color.brandPrimary)
+        )
     }
 
     private var dDayRow: some View {
