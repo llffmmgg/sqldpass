@@ -14,6 +14,7 @@ struct SqldpassApp: App {
     var body: some Scene {
         WindowGroup {
             RootView()
+                .environment(SubscriptionStore.shared)
                 .onOpenURL { url in
                     GIDSignIn.sharedInstance.handle(url)
                 }
@@ -21,6 +22,11 @@ struct SqldpassApp: App {
                     networkMonitor.start()
                     // 부팅 즉시 한 번 시도 (앱 재시작 후 큐 남았을 수 있음).
                     await SolveSyncManager.shared.tryDrain()
+                    // 로그인 상태면 활성 구독 정보를 전역 store 에 채워둔다 — 모의고사/Paywall 등
+                    // 어디서든 권한 게이팅이 즉시 동작하도록.
+                    if AuthStore.shared.isAuthenticated {
+                        await SubscriptionStore.shared.refresh()
+                    }
                 }
                 .onChange(of: networkMonitor.isOnline) { _, isOnline in
                     if isOnline {

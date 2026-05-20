@@ -9,6 +9,7 @@ struct MockExamsListView: View {
     @State private var viewModel = MockExamsViewModel()
     @State private var path = NavigationPath()
     @State private var selectedCertSlug: String? = nil
+    @Environment(SubscriptionStore.self) private var subscriptionStore
 
     var body: some View {
         NavigationStack(path: $path) {
@@ -23,6 +24,12 @@ struct MockExamsListView: View {
                     if viewModel.exams.isEmpty {
                         await viewModel.load()
                     }
+                }
+                // 결제/복원/환불로 구독 활성 상태가 바뀌면 모의고사 리스트를 다시 받아온다 —
+                // 백엔드는 `MockExamService.getForUser` 에서 `hasPremiumAccess` 로 가드하고
+                // `exam.purchased` 도 사용자 권한에 따라 계산하므로 reload 한 번이면 잠금 해제 반영.
+                .onChange(of: subscriptionStore.isActive) { _, _ in
+                    Task { await viewModel.load() }
                 }
                 .navigationDestination(for: MockExamRoute.self) { route in
                     switch route {

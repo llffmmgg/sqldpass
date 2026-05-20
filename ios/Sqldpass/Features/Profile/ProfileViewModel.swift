@@ -2,14 +2,22 @@ import Foundation
 import Observation
 
 @Observable
+@MainActor
 final class ProfileViewModel {
     private(set) var me: MemberMe?
-    private(set) var subscription: SubscriptionInfo?
     /// Hero 카드의 streak strip(최장 연속·오늘 풀이 여부) 렌더에 사용.
     /// `/api/streak/me` 호출 실패 시 nil 유지.
     private(set) var streak: StreakInfo?
     private(set) var isLoading = false
     private(set) var errorMessage: String?
+
+    private let subscriptionStore = SubscriptionStore.shared
+
+    /// 구독 정보는 전역 SubscriptionStore 의 single source of truth 참조.
+    /// 기존 호출부(`viewModel.subscription`) 는 그대로 동작한다.
+    var subscription: SubscriptionInfo? {
+        subscriptionStore.info
+    }
 
     /// 내정보 KPI 2x2 그리드 값.
     ///
@@ -63,13 +71,9 @@ final class ProfileViewModel {
         )
     }
 
-    /// 활성 구독 상태 — 헤더 배지/계정 섹션 분기에 사용. 실패해도 비활성으로 fallback.
+    /// 활성 구독 상태 — 전역 store 를 갱신해 헤더 배지/계정 섹션이 자동 반영되게 한다.
     func loadSubscription() async {
-        do {
-            subscription = try await PaymentService.subscription()
-        } catch {
-            subscription = nil
-        }
+        await subscriptionStore.refresh()
     }
 
     func updateLocalNickname(_ nickname: String) {

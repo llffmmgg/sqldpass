@@ -48,6 +48,10 @@ final class AuthStore {
         keychain.delete()
         token = nil
         nickname = nil
+        // 전역 구독 store 도 함께 비워야 다음 로그인 전까지 잔여 권한이 화면에 보이지 않는다.
+        Task { @MainActor in
+            SubscriptionStore.shared.clear()
+        }
     }
 
     /// APIClient.tokenProvider 에 주입할 수 있는 클로저.
