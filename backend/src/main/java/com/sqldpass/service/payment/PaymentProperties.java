@@ -1,6 +1,8 @@
 package com.sqldpass.service.payment;
 
+import java.util.HashMap;
 import java.util.LinkedHashSet;
+import java.util.Map;
 import java.util.Set;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -28,6 +30,8 @@ public class PaymentProperties {
     private PlanConfig focus = new PlanConfig(2900, "문어CBT Focus");
     private PlanConfig oneMonth = new PlanConfig(9900, "문어CBT Pro");
     private PlanConfig unlimited = new PlanConfig(29900, "문어CBT All Pass");
+    private AppStore appStore = new AppStore();
+    private Map<SubscriptionPlan, String> appStoreProductIdMapping = new HashMap<>();
 
     public PortOne getPortone() {
         return portone;
@@ -75,6 +79,31 @@ public class PaymentProperties {
 
     public void setUnlimited(PlanConfig unlimited) {
         this.unlimited = unlimited;
+    }
+
+    public AppStore getAppStore() {
+        return appStore;
+    }
+
+    public void setAppStore(AppStore appStore) {
+        this.appStore = appStore == null ? new AppStore() : appStore;
+    }
+
+    public Map<SubscriptionPlan, String> getAppStoreProductIdMapping() {
+        return appStoreProductIdMapping;
+    }
+
+    public void setAppStoreProductIdMapping(Map<SubscriptionPlan, String> appStoreProductIdMapping) {
+        this.appStoreProductIdMapping = appStoreProductIdMapping == null ? new HashMap<>() : appStoreProductIdMapping;
+    }
+
+    /** App Store productId 로 역매핑된 plan 조회 — 매핑 없거나 일치 없으면 null. */
+    public SubscriptionPlan appStorePlanFor(String productId) {
+        if (productId == null) return null;
+        for (Map.Entry<SubscriptionPlan, String> entry : appStoreProductIdMapping.entrySet()) {
+            if (productId.equals(entry.getValue())) return entry.getKey();
+        }
+        return null;
     }
 
     /** 주어진 plan 의 가격·상품명 설정 반환. */
@@ -127,6 +156,19 @@ public class PaymentProperties {
 
         public void setProductName(String productName) {
             this.productName = productName;
+        }
+    }
+
+    /** App Store 설정 — bundle-id 만 사용. signedTransaction payload 의 bundleId 검증용. */
+    public static class AppStore {
+        private String bundleId = "com.sqldpass.app";
+
+        public String getBundleId() {
+            return bundleId;
+        }
+
+        public void setBundleId(String bundleId) {
+            this.bundleId = bundleId == null ? "com.sqldpass.app" : bundleId;
         }
     }
 

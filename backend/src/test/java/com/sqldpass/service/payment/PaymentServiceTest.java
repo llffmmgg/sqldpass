@@ -57,6 +57,8 @@ class PaymentServiceTest {
     @Mock
     private AppStoreClient appStoreClient;
     @Mock
+    private AppStorePayloadVerifier appStorePayloadVerifier;
+    @Mock
     private PaymentFailureRecorder failureRecorder;
     @Mock
     private SubscriptionHistoryService historyService;
@@ -86,9 +88,16 @@ class PaymentServiceTest {
         playBillingProperties.getProductIdMapping().put(SubscriptionPlan.ONE_MONTH, "iap_one_month");
         playBillingProperties.getProductIdMapping().put(SubscriptionPlan.UNLIMITED, "iap_unlimited");
 
+        // App Store 매핑 — application.yaml 의 app-store-product-id-mapping 과 동일.
+        properties.getAppStoreProductIdMapping().put(SubscriptionPlan.THREE_DAY, "iap_thunder");
+        properties.getAppStoreProductIdMapping().put(SubscriptionPlan.FOCUS, "iap_focus");
+        properties.getAppStoreProductIdMapping().put(SubscriptionPlan.ONE_MONTH, "iap_one_month");
+        properties.getAppStoreProductIdMapping().put(SubscriptionPlan.UNLIMITED, "iap_unlimited");
+
         service = new PaymentService(properties, portOneClient,
                 paymentRepository, subscriptionRepository, memberRepository,
-                playBillingClient, playBillingProperties, appStoreClient, failureRecorder, historyService,
+                playBillingClient, playBillingProperties, appStoreClient, appStorePayloadVerifier,
+                failureRecorder, historyService,
                 subscriptionService, appSettingService, discordNotifier);
 
         // 기존 테스트는 화이트리스트(베타) 모드 동작을 검증하므로 토글 OFF 가정.
@@ -1319,6 +1328,127 @@ class PaymentServiceTest {
         verify(subscriptionRepository, times(1)).save(subCaptor.capture());
         assertThat(subCaptor.getValue().getExpiresAt()).isEqualTo(expectedExpiry);
         assertThat(subCaptor.getValue().getPlan()).isEqualTo(SubscriptionPlan.UNLIMITED);
+    }
+
+    // ============================================================
+    // App Store (iOS)
+    // ============================================================
+
+    @Test
+    @DisplayName("verifyAppStore: 신규 transactionId + 정상 JWS → PaymentEntity + SubscriptionEntity 발급, expiresAt = paidAt + days + 1")
+    void verifyAppStoreCreatesPaymentAndSubscription() {
+        properties.setReviewerNicknames("");
+        // 2026-05-14 02:00 KR → 5/14·5/15·5/16·5/17 사용 → 5/18 00:00 만료 (days=3, +1).
+        long purchaseEpochMs = LocalDateTime.of(2026, 5, 14, 2, 0, 0)
+                .atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
+        var info = new AppStoreClient.TransactionInfo(
+                "tx-fresh", "tx-fresh", "iap_thunder", "com.sqldpass.app",
+                purchaseEpochMs, 0L);
+        given(appStoreClient.parsePayload("jws-fresh")).willReturn(info);
+        given(paymentRepository.findByPurchaseToken("tx-fresh")).willReturn(Optional.empty());
+
+        var result = service.verifyAppStore(1L, "jws-fresh", "iap_thunder");
+
+        assertThat(result.plan()).isEqualTo(SubscriptionPlan.THREE_DAY);
+        assertThat(result.amount()).isEqualTo(3900);
+        assertThat(result.expiresAt()).isEqualTo(LocalDateTime.of(2026, 5, 18, 0, 0, 0));
+
+        // JWS 서명 검증이 호출됐는지 확인.
+        verify(appStorePayloadVerifier, times(1)).verifyAndDecodeTransaction("jws-fresh");
+        // PaymentEntity 신규 save + SubscriptionEntity 신규 save.
+        ArgumentCaptor<PaymentEntity> payCap = ArgumentCaptor.forClass(PaymentEntity.class);
+        verify(paymentRepository, times(1)).save(payCap.capture());
+        assertThat(payCap.getValue().getProvider())
+                .isEqualTo(com.sqldpass.persistent.payment.PaymentProvider.APP_STORE);
+        assertThat(payCap.getValue().getPurchaseToken()).isEqualTo("tx-fresh");
+        ArgumentCaptor<SubscriptionEntity> subCap = ArgumentCaptor.forClass(SubscriptionEntity.class);
+        verify(subscriptionRepository, times(1)).save(subCap.capture());
+        assertThat(subCap.getValue().getPlan()).isEqualTo(SubscriptionPlan.THREE_DAY);
+    }
+
+    @Test
+    @DisplayName("verifyAppStore: 같은 transactionId 의 PAID 결제 존재 → 신규 save 없이 기존 응답 (idempotent)")
+    void verifyAppStoreIdempotentOnSameTransaction() {
+        properties.setReviewerNicknames("");
+        var info = new AppStoreClient.TransactionInfo(
+                "tx-prior", "tx-prior", "iap_thunder", "com.sqldpass.app",
+                System.currentTimeMillis(), 0L);
+        given(appStoreClient.parsePayload("jws-prior")).willReturn(info);
+
+        PaymentEntity prior = new PaymentEntity(
+                "appstore-prior", 1L, null, "문어CBT Thunder",
+                SubscriptionPlan.THREE_DAY, 3900, 3900, 0,
+                com.sqldpass.persistent.payment.PaymentProvider.APP_STORE, "tx-prior");
+        prior.markPaid("appstore:txId=tx-prior", LocalDateTime.now());
+        setField(prior, "id", 77L);
+        given(paymentRepository.findByPurchaseToken("tx-prior")).willReturn(Optional.of(prior));
+        given(subscriptionRepository.findByPaymentId(77L)).willReturn(Optional.empty());
+
+        var result = service.verifyAppStore(1L, "jws-prior", "iap_thunder");
+
+        assertThat(result.paymentId()).isEqualTo("appstore-prior");
+        // 신규 발급 없음.
+        verify(paymentRepository, times(0)).save(any(PaymentEntity.class));
+        verify(subscriptionRepository, times(0)).save(any(SubscriptionEntity.class));
+    }
+
+    @Test
+    @DisplayName("verifyAppStore: 다른 memberId 가 같은 PAID transactionId 재사용 시 FORBIDDEN — 영수증 도용 차단")
+    void verifyAppStoreRejectsStolenTransaction() {
+        properties.setReviewerNicknames("");
+        var info = new AppStoreClient.TransactionInfo(
+                "tx-stolen", "tx-stolen", "iap_thunder", "com.sqldpass.app",
+                System.currentTimeMillis(), 0L);
+        given(appStoreClient.parsePayload("jws-stolen")).willReturn(info);
+
+        PaymentEntity prior = new PaymentEntity(
+                "appstore-prior", 99L /* 다른 회원 */, null, "문어CBT Thunder",
+                SubscriptionPlan.THREE_DAY, 3900, 3900, 0,
+                com.sqldpass.persistent.payment.PaymentProvider.APP_STORE, "tx-stolen");
+        prior.markPaid("appstore:txId=tx-stolen", LocalDateTime.now());
+        given(paymentRepository.findByPurchaseToken("tx-stolen")).willReturn(Optional.of(prior));
+
+        assertThatThrownBy(() -> service.verifyAppStore(1L, "jws-stolen", "iap_thunder"))
+                .isInstanceOf(SqldpassException.class)
+                .extracting("errorCode").isEqualTo(ErrorCode.FORBIDDEN);
+
+        verify(paymentRepository, times(0)).save(any(PaymentEntity.class));
+        verify(subscriptionRepository, times(0)).save(any(SubscriptionEntity.class));
+    }
+
+    @Test
+    @DisplayName("verifyAppStore: JWS 서명 검증 실패 → PAYMENT_VERIFICATION_FAILED, parsePayload 도 호출되지 않음")
+    void verifyAppStoreRejectsTamperedJws() {
+        properties.setReviewerNicknames("");
+        org.mockito.BDDMockito.willThrow(new AppStorePayloadVerificationException("서명 변조"))
+                .given(appStorePayloadVerifier).verifyAndDecodeTransaction("jws-tampered");
+
+        assertThatThrownBy(() -> service.verifyAppStore(1L, "jws-tampered", "iap_thunder"))
+                .isInstanceOf(SqldpassException.class)
+                .extracting("errorCode").isEqualTo(ErrorCode.PAYMENT_VERIFICATION_FAILED);
+
+        verify(appStoreClient, times(0)).parsePayload(anyString());
+        verify(paymentRepository, times(0)).save(any(PaymentEntity.class));
+        verify(subscriptionRepository, times(0)).save(any(SubscriptionEntity.class));
+    }
+
+    @Test
+    @DisplayName("verifyAppStore: UNLIMITED 결제 → expiresAt = paidAt 의 LocalDate + 181일 00:00 KST (verifyPlayBilling 일관)")
+    void verifyAppStoreUnlimitedExpiresAtPolicy() {
+        properties.setReviewerNicknames("");
+        // 2026-01-01 10:00 KR → LocalDate +181 일 = 2026-07-01 00:00 KR.
+        long purchaseEpochMs = LocalDateTime.of(2026, 1, 1, 10, 0, 0)
+                .atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
+        var info = new AppStoreClient.TransactionInfo(
+                "tx-life", "tx-life", "iap_unlimited", "com.sqldpass.app",
+                purchaseEpochMs, 0L);
+        given(appStoreClient.parsePayload("jws-life")).willReturn(info);
+        given(paymentRepository.findByPurchaseToken("tx-life")).willReturn(Optional.empty());
+
+        var result = service.verifyAppStore(1L, "jws-life", "iap_unlimited");
+
+        assertThat(result.plan()).isEqualTo(SubscriptionPlan.UNLIMITED);
+        assertThat(result.expiresAt()).isEqualTo(LocalDateTime.of(2026, 7, 1, 0, 0, 0));
     }
 
     private MemberEntity newMember(Long id, String nickname) {

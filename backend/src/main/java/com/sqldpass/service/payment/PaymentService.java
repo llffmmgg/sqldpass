@@ -1,5 +1,6 @@
 package com.sqldpass.service.payment;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Optional;
@@ -8,8 +9,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
-
-import org.springframework.beans.factory.annotation.Value;
 
 import com.sqldpass.persistent.member.MemberEntity;
 import com.sqldpass.persistent.member.MemberRepository;
@@ -50,15 +49,12 @@ public class PaymentService {
     private final PlayBillingClient playBillingClient;
     private final PlayBillingProperties playBillingProperties;
     private final AppStoreClient appStoreClient;
+    private final AppStorePayloadVerifier appStorePayloadVerifier;
     private final PaymentFailureRecorder failureRecorder;
     private final SubscriptionHistoryService historyService;
     private final SubscriptionService subscriptionService;
     private final AppSettingService appSettingService;
     private final DiscordNotifier discordNotifier;
-
-    /** iOS 앱 Bundle ID — Apple StoreKit signedTransaction payload 의 bundleId 와 일치해야 한다. */
-    @Value("${sqldpass.payment.app-store.bundle-id:com.sqldpass.app}")
-    private String appStoreBundleId;
 
     /** 카드사 심사 가이드 + PG 정책상 최소 결제 금액. */
     private static final int MIN_CHARGE_AMOUNT = 100;
@@ -408,11 +404,14 @@ public class PaymentService {
     }
 
     /**
-     * iOS 앱 Apple StoreKit 2 영수증 검증 — 클라이언트가 보낸 signedTransaction(JWS) 의 payload 를
-     * 파싱해 productId/transactionId 를 추출하고 SubscriptionEntity 발급.
+     * iOS 앱 Apple StoreKit 2 영수증 검증 — 클라이언트가 보낸 signedTransaction(JWS) 의 서명/체인을
+     * Apple Root CA 까지 검증한 뒤 payload 를 파싱해 productId/transactionId 를 추출하고
+     * SubscriptionEntity 를 발급한다.
      *
-     * <p>본 phase 1차 minimal: JWS 서명 검증 생략. 출시 직전 별도 phase 에서 Apple Root CA 체인 +
-     * App Store Server API 교차 확인 추가 예정.
+     * <p>서명 검증은 {@link AppStorePayloadVerifier} 가 담당. SANDBOX 환경에서는 그대로 동작하고
+     * PRODUCTION 환경에서 {@code APP_STORE_APP_APPLE_ID} 미설정이면 misconfigured 상태가 되어
+     * 호출 시 {@link AppStorePayloadVerificationException} 을 throw 한다 — 운영자가 환경변수
+     * 주입 전까지 결제 검증이 차단되는 fail-safe.
      *
      * <p>Idempotency — 같은 transactionId 가 이미 처리됐으면 같은 응답을 다시 돌려준다 (재시도 무해).
      * purchaseToken 컬럼을 App Store transactionId 저장소로 재활용 (Play Billing 패턴과 동일).
@@ -420,6 +419,13 @@ public class PaymentService {
     @Transactional
     public VerifyPaymentResult verifyAppStore(Long memberId, String signedTransaction, String clientProductId) {
         ensureReviewer(memberId);
+        // JWS 서명 + Apple Root CA 체인 + bundleId 검증. 실패 시 PAYMENT_VERIFICATION_FAILED.
+        try {
+            appStorePayloadVerifier.verifyAndDecodeTransaction(signedTransaction);
+        } catch (AppStorePayloadVerificationException e) {
+            log.warn("App Store JWS 서명 검증 실패 memberId={}", memberId, e);
+            throw new SqldpassException(ErrorCode.PAYMENT_VERIFICATION_FAILED, "유효하지 않은 결제");
+        }
         AppStoreClient.TransactionInfo info = appStoreClient.parsePayload(signedTransaction);
 
         // productId 일치 검증 — 클라이언트 hint 와 payload 의 productId 가 같아야 한다.
@@ -429,9 +435,10 @@ public class PaymentService {
             throw new SqldpassException(ErrorCode.INVALID_INPUT, "productId 불일치");
         }
         // bundleId 검증 — 다른 앱이 발급한 영수증 차단.
-        if (!info.bundleId().equals(appStoreBundleId)) {
+        String expectedBundleId = properties.getAppStore().getBundleId();
+        if (!info.bundleId().equals(expectedBundleId)) {
             log.warn("App Store bundleId mismatch memberId={} payload={} expected={}",
-                    memberId, info.bundleId(), appStoreBundleId);
+                    memberId, info.bundleId(), expectedBundleId);
             throw new SqldpassException(ErrorCode.PAYMENT_VERIFICATION_FAILED, "유효하지 않은 결제");
         }
 
@@ -454,15 +461,66 @@ public class PaymentService {
     }
 
     /**
-     * App Store 결제 신규 발급 — 실제 영속화 + SubscriptionEntity 발급은 본 step 의 후속 PR 에서
-     * {@link #verifyPlayBilling(Long, String, String)} 흐름을 미러링해 구현 예정.
-     *
-     * <p>현 step 은 컴파일·라우팅 골격만 완성. 호출 시 UnsupportedOperationException 발생.
+     * App Store 결제 신규 발급 — {@link #verifyPlayBilling(Long, String, String)} 흐름을
+     * 미러링한다. PAID idempotent 가드는 {@link #verifyAppStore} 가 이미 처리했으므로 여기 도달한
+     * existing 은 없거나 PENDING/FAILED 상태.
      */
     private VerifyPaymentResult createAppStorePayment(Long memberId, AppStoreClient.TransactionInfo info) {
-        throw new UnsupportedOperationException(
-                "createAppStorePayment 실제 구현은 후속 step 에서 verifyPlayBilling 흐름을 미러링해 작성. "
-                + "memberId=" + memberId + " txId=" + maskToken(info.transactionId()));
+        SubscriptionPlan plan = properties.appStorePlanFor(info.productId());
+        if (plan == null) {
+            log.warn("App Store 상품 매핑 실패 memberId={} productId={}", memberId, info.productId());
+            throw new SqldpassException(ErrorCode.PAYMENT_VERIFICATION_FAILED,
+                    "알 수 없는 상품: " + info.productId());
+        }
+
+        PaymentProperties.PlanConfig planConfig = properties.configFor(plan);
+        int baseAmount = planConfig.getAmount();
+        String productName = planConfig.getProductName();
+
+        // 정책 검증 — UNLIMITED 활성/같은 plan/다운그레이드 차단. PortOne/Play Billing 흐름과 동일 규칙.
+        // 차단 시 사용자는 이미 Apple 결제 완료 상태 — 운영자 수동 환불(App Store Connect) 필요.
+        SubscriptionEntity active = subscriptionRepository
+                .findActiveByMemberId(memberId, LocalDateTime.now())
+                .stream().findFirst().orElse(null);
+        UpgradeEvaluation eval = evaluateUpgrade(active, plan, baseAmount);
+        if (!eval.allowed()) {
+            log.warn("App Store 정책 차단 memberId={} productId={} reason={}",
+                    memberId, info.productId(), eval.reason());
+            throw new SqldpassException(ErrorCode.INVALID_INPUT, eval.reason());
+        }
+
+        // existing 재조회 — verifyAppStore 에서 PAID idempotent 만 거름. PENDING/FAILED 는 여기까지 온다.
+        Optional<PaymentEntity> existing = paymentRepository.findByPurchaseToken(info.transactionId());
+        PaymentEntity payment;
+        if (existing.isPresent()) {
+            payment = existing.get();
+        } else {
+            String paymentId = "appstore-" + System.currentTimeMillis() + "-" + memberId;
+            payment = new PaymentEntity(paymentId, memberId, null, productName, plan,
+                    baseAmount, baseAmount, 0,
+                    PaymentProvider.APP_STORE, info.transactionId());
+            paymentRepository.save(payment);
+        }
+
+        LocalDateTime paidAt = info.purchaseDate() > 0
+                ? LocalDateTime.ofInstant(Instant.ofEpochMilli(info.purchaseDate()), ZoneId.systemDefault())
+                : LocalDateTime.now();
+        payment.markPaid("appstore:txId=" + info.transactionId(), paidAt);
+
+        // 사용자 정책 일관 — paidAt 의 KR 일자 + (plan.days + 1)일 00:00 KR.
+        LocalDateTime expiresAt = plan.isLifetime()
+                ? null
+                : paidAt.toLocalDate().plusDays(plan.getDays() + 1L).atStartOfDay();
+        SubscriptionEntity subscription = new SubscriptionEntity(
+                memberId, plan, payment.getId(), paidAt, expiresAt);
+        subscriptionRepository.save(subscription);
+
+        scheduleDiscordPaymentNotify(memberId, payment, subscription);
+
+        log.info("App Store verify 성공 memberId={} productId={} plan={} expiresAt={}",
+                memberId, info.productId(), plan, expiresAt);
+        return new VerifyPaymentResult(payment.getPaymentId(), payment.getAmount(),
+                payment.getProductName(), plan, expiresAt);
     }
 
     /**
