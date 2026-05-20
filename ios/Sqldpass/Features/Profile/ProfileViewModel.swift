@@ -59,13 +59,30 @@ final class ProfileViewModel {
             longestStreak = info.longestStreak
         } catch {
             // KPI 로드 실패는 화면 전체 실패로 승격하지 않는다.
-            // streak 호출이 실패하면 해당 타일도 "—" 로 표시된다.
             streak = nil
             longestStreak = nil
         }
+
+        // 누적 풀이/정답률 — `SolveService.myHistory()` 응답을 클라이언트 집계.
+        var totalSolved: Int? = nil
+        var avgCorrectRate: Int? = nil
+        do {
+            let history = try await SolveService.myHistory()
+            let summed = history.reduce(into: (total: 0, correct: 0)) { acc, s in
+                acc.total += s.totalCount
+                acc.correct += s.correctCount
+            }
+            totalSolved = summed.total
+            if summed.total > 0 {
+                avgCorrectRate = Int(round(Double(summed.correct) / Double(summed.total) * 100))
+            }
+        } catch {
+            // 무시 — 타일은 placeholder 유지.
+        }
+
         kpi = ProfileKpi(
-            totalSolved: nil,
-            avgCorrectRate: nil,
+            totalSolved: totalSolved,
+            avgCorrectRate: avgCorrectRate,
             longestStreak: longestStreak,
             passProbability: nil
         )

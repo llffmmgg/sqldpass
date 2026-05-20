@@ -3,6 +3,9 @@ import Observation
 
 @Observable
 final class BookmarksViewModel {
+    /// 최신 30개까지만 표시 — 백엔드가 더 많이 내려와도 클라이언트에서 가드.
+    static let displayLimit = 30
+
     private(set) var items: [Bookmark] = []
     private(set) var isLoading = false
     private(set) var errorMessage: String?
@@ -11,7 +14,8 @@ final class BookmarksViewModel {
         isLoading = true
         defer { isLoading = false }
         do {
-            items = try await BookmarkService.list()
+            let all = try await BookmarkService.list()
+            items = Array(all.prefix(Self.displayLimit))
             errorMessage = nil
         } catch let error as APIError {
             errorMessage = error.errorDescription

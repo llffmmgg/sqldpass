@@ -30,7 +30,7 @@ struct BookmarkDetailSheet: View {
                 .padding(Spacing.base)
             }
             .background(Color.appPage)
-            .navigationTitle("북마크 미리보기")
+            .navigationTitle("즐겨찾기 미리보기")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {

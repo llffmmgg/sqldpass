@@ -33,18 +33,11 @@ struct ProfileHeroCard: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: Spacing.base) {
-            topRow
-            streakStrip
-        }
-        .padding(Spacing.base)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.brandPrimary.opacity(0.10))
-        .overlay(
-            RoundedRectangle(cornerRadius: Radius.xl, style: .continuous)
-                .stroke(Color.brandPrimary.opacity(0.18), lineWidth: 1)
-        )
-        .clipShape(RoundedRectangle(cornerRadius: Radius.xl, style: .continuous))
+        topRow
+            .padding(Spacing.base)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Color.brandPrimary)
+            .clipShape(RoundedRectangle(cornerRadius: Radius.xl, style: .continuous))
     }
 
     // MARK: - Top row
@@ -52,144 +45,46 @@ struct ProfileHeroCard: View {
     @ViewBuilder
     private var topRow: some View {
         HStack(spacing: Spacing.md) {
-            mascotBox
+            initialAvatar
 
             VStack(alignment: .leading, spacing: Spacing.xxs) {
-                HStack(spacing: Spacing.xs) {
-                    Text(displayNickname)
-                        .font(AppType.heading.weight(.bold))
-                        .foregroundStyle(Color.appTextPrimary)
-                        .lineLimit(1)
-                    subscriptionBadge
-                }
+                Text(displayNickname)
+                    .font(AppType.heading.weight(.bold))
+                    .foregroundStyle(Color.brandPrimaryFG)
+                    .lineLimit(1)
                 if let provider, !provider.isEmpty {
                     Text("\(provider.lowercased()) 로그인")
                         .font(AppType.caption)
-                        .foregroundStyle(Color.appTextMuted)
+                        .foregroundStyle(Color.brandPrimaryFG.opacity(0.85))
                         .lineLimit(1)
                 } else if let errorMessage, !errorMessage.isEmpty {
                     Text(errorMessage)
                         .font(AppType.caption)
-                        .foregroundStyle(Color.semanticDanger)
+                        .foregroundStyle(Color.brandPrimaryFG)
                         .lineLimit(2)
                 }
             }
 
             Spacer(minLength: 0)
-
-            if !isActive {
-                Button(action: onUpgradeTap) {
-                    Text("PRO")
-                        .font(AppType.caption.weight(.bold))
-                        .foregroundStyle(Color.brandPrimaryFG)
-                        .padding(.horizontal, Spacing.md)
-                        .padding(.vertical, Spacing.xs)
-                        .background(Color.brandPrimary)
-                        .clipShape(RoundedRectangle(cornerRadius: Radius.full, style: .continuous))
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel("PRO 업그레이드")
-            }
         }
     }
 
-    private var mascotBox: some View {
+    /// 닉네임 첫 글자 이니셜 아바타 — 진한 초록 배경 위 흰 톤 박스.
+    private var initialAvatar: some View {
         ZStack {
             RoundedRectangle(cornerRadius: Radius.lg, style: .continuous)
-                .fill(Color.brandPrimary.opacity(0.12))
-            AppMascot(pose: .greeting, sizeDp: 44, animateOnAppear: false)
+                .fill(Color.brandPrimaryFG.opacity(0.20))
+            Text(String(displayNickname.prefix(1)))
+                .font(AppType.heading.weight(.bold))
+                .foregroundStyle(Color.brandPrimaryFG)
         }
         .frame(width: 56, height: 56)
         .overlay(
             RoundedRectangle(cornerRadius: Radius.lg, style: .continuous)
-                .stroke(Color.brandPrimary.opacity(0.18), lineWidth: 1)
+                .stroke(Color.brandPrimaryFG.opacity(0.3), lineWidth: 1)
         )
     }
 
-    private var subscriptionBadge: some View {
-        Text(badgeLabel)
-            .font(AppType.caption.weight(.semibold))
-            .foregroundStyle(isActive ? Color.brandPrimary : Color.appTextMuted)
-            .padding(.horizontal, Spacing.xs)
-            .padding(.vertical, 2)
-            .background(isActive ? Color.brandPrimary.opacity(0.12) : Color.appElevated)
-            .clipShape(RoundedRectangle(cornerRadius: Radius.sm))
-    }
-
-    // MARK: - Streak strip
-
-    private var streakStrip: some View {
-        VStack(alignment: .leading, spacing: Spacing.xs) {
-            HStack(alignment: .center, spacing: Spacing.md) {
-                Text("🔥")
-                    .font(AppType.title)
-                    .accessibilityHidden(true)
-
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("최장 연속")
-                        .font(AppType.caption.weight(.bold))
-                        .foregroundStyle(Color.semanticWarning)
-                    HStack(alignment: .firstTextBaseline, spacing: Spacing.xxs) {
-                        Text(streak.map { String($0.longestStreak) } ?? "—")
-                            .font(AppType.monoNumericLarge.weight(.bold))
-                            .foregroundStyle(Color.appTextPrimary)
-                            .lineLimit(1)
-                        Text("일")
-                            .font(AppType.footnote.weight(.semibold))
-                            .foregroundStyle(Color.appTextMuted)
-                    }
-                }
-
-                Spacer(minLength: 0)
-
-                weekDotsRow
-            }
-
-            Text("일주일 기록은 곧 표시돼요")
-                .font(AppType.caption)
-                .foregroundStyle(Color.appTextSubtle)
-        }
-        .padding(Spacing.md)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.appElevated)
-        .clipShape(RoundedRectangle(cornerRadius: Radius.lg, style: .continuous))
-    }
-
-    private var weekDotsRow: some View {
-        let labels = ["월", "화", "수", "목", "금", "토", "일"]
-        let todayIdx = todayMondayBasedIndex
-        let solvedToday = streak?.solvedToday ?? false
-
-        return HStack(spacing: 4) {
-            ForEach(0..<7, id: \.self) { i in
-                VStack(spacing: 2) {
-                    dayCell(isToday: i == todayIdx, solved: i == todayIdx && solvedToday)
-                    Text(labels[i])
-                        .font(AppType.caption)
-                        .foregroundStyle(i == todayIdx ? Color.semanticWarning : Color.appTextSubtle)
-                }
-            }
-        }
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel("이번 주 학습 기록 — 오늘 \(labels[todayIdx])")
-    }
-
-    @ViewBuilder
-    private func dayCell(isToday: Bool, solved: Bool) -> some View {
-        let shape = RoundedRectangle(cornerRadius: Radius.sm, style: .continuous)
-        ZStack {
-            if solved {
-                shape.fill(Color.semanticWarning)
-            } else {
-                shape.fill(Color.appSurface)
-            }
-            shape.stroke(
-                isToday ? Color.semanticWarning : Color.appBorder,
-                lineWidth: 1
-            )
-        }
-        .frame(width: 18, height: 18)
-    }
 }
 
 // MARK: - Preview

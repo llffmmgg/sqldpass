@@ -7,7 +7,7 @@ struct BookmarksView: View {
     var body: some View {
         content
             .background(Color.appPage)
-            .navigationTitle("북마크")
+            .navigationTitle("즐겨찾기")
             .navigationBarTitleDisplayMode(.large)
             .refreshable {
                 await viewModel.load()
@@ -37,9 +37,9 @@ struct BookmarksView: View {
             }
         } else if viewModel.items.isEmpty {
             ContentUnavailableView(
-                "북마크가 없어요",
-                systemImage: "bookmark",
-                description: Text("풀이 중에 ⭐︎ 버튼으로 북마크할 수 있어요")
+                "즐겨찾기가 없어요",
+                systemImage: "star",
+                description: Text("풀이 중에 ⭐︎ 버튼으로 즐겨찾기할 수 있어요")
             )
         } else {
             List {
@@ -48,7 +48,7 @@ struct BookmarksView: View {
                         selectedBookmark = bookmark
                     } label: {
                         HStack(alignment: .top, spacing: Spacing.md) {
-                            Image(systemName: "bookmark.fill")
+                            Image(systemName: "star.fill")
                                 .foregroundStyle(Color.brandPrimary)
                                 .padding(.top, 2)
                             VStack(alignment: .leading, spacing: Spacing.xxs) {

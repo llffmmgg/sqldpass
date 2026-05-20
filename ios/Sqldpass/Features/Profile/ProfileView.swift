@@ -22,7 +22,11 @@ struct ProfileView: View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: Spacing.lg) {
-                    AppPageHeader(title: "내정보")
+                    Text("내 정보")
+                        .font(AppType.bodyEmph)
+                        .foregroundStyle(Color.appTextPrimary)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.top, Spacing.xs)
 
                     ProfileHeroCard(
                         nickname: viewModel.me?.nickname,
@@ -32,8 +36,6 @@ struct ProfileView: View {
                         errorMessage: viewModel.errorMessage,
                         onUpgradeTap: { showPaywall = true }
                     )
-
-                    KpiGrid(kpi: viewModel.kpi)
 
                     learningSection
                     accountSection
@@ -86,16 +88,7 @@ struct ProfileView: View {
                 NavigationLink {
                     BookmarksView()
                 } label: {
-                    MenuRow(icon: "bookmark", title: "북마크")
-                }
-                .buttonStyle(.plain)
-
-                AppListGroupDivider()
-
-                NavigationLink {
-                    HistoryView()
-                } label: {
-                    MenuRow(icon: "clock.arrow.circlepath", title: "풀이 이력")
+                    MenuRow(icon: "star", title: "즐겨찾기")
                 }
                 .buttonStyle(.plain)
             }
@@ -128,7 +121,7 @@ struct ProfileView: View {
                 NavigationLink {
                     PaywallView()
                 } label: {
-                    MenuRow(icon: "crown.fill", title: "PASS+ 구독 관리")
+                    MenuRow(icon: "sparkles", title: "플랜 관리")
                 }
                 .buttonStyle(.plain)
             }
@@ -169,19 +162,6 @@ struct ProfileView: View {
                     MenuRow(
                         icon: "rectangle.portrait.and.arrow.right",
                         title: "로그아웃",
-                        tone: .danger
-                    )
-                }
-                .buttonStyle(.plain)
-
-                AppListGroupDivider()
-
-                NavigationLink {
-                    AccountDeletionConfirmView()
-                } label: {
-                    MenuRow(
-                        icon: "person.crop.circle.badge.minus",
-                        title: "회원 탈퇴",
                         tone: .danger
                     )
                 }
