@@ -89,18 +89,20 @@ struct HomeView: View {
                                     .padding(.bottom, Spacing.lg)
                             }
 
-                            if let errorMessage = viewModel.errorMessage {
-                                errorBanner(message: errorMessage)
-                                    .padding(.top, Spacing.lg)
-                            }
                         }
                         .padding(.horizontal, Spacing.base)
                         .padding(.bottom, Spacing.xxl)
                         .frame(maxWidth: .infinity, minHeight: 1200, alignment: .top)
-                        .background(Color.appPage)
+                        .background(
+                            UnevenRoundedRectangle(
+                                cornerRadii: .init(topLeading: 28, topTrailing: 28),
+                                style: .continuous
+                            )
+                            .fill(Color.appPage)
+                        )
                     }
                 }
-                .background(Color.brandPrimary) // D-day 위쪽(위로 bounce 시) 은 초록 유지, 흰 본문 minHeight 가 아래 영역을 덮음
+                .background(Color.brandPrimary) // D-day 위쪽은 초록 유지, 흰 본문 minHeight 가 아래 덮음. 두 영역 사이 라운드 곡선은 흰 본문 위쪽 라운드로 시각화.
             }
             .navigationBarTitleDisplayMode(.inline)
             .toolbar(.hidden, for: .navigationBar)
