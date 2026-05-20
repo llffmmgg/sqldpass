@@ -16,6 +16,24 @@ enum MainTab: Hashable {
 
 struct MainTabView: View {
     @State private var selection: MainTab = .home
+    private var tabSelection: Binding<MainTab> {
+        Binding(
+            get: { selection },
+            set: { newSelection in
+                guard newSelection != selection else { return }
+
+                var transaction = Transaction()
+                transaction.disablesAnimations = true
+                transaction.animation = nil
+
+                withTransaction(transaction) {
+                    UIView.performWithoutAnimation {
+                        selection = newSelection
+                    }
+                }
+            }
+        )
+    }
 
     init() {
         // TabBar 평면 직사각형 강제 — iOS 18+ floating glass 톤 끔.
@@ -37,16 +55,22 @@ struct MainTabView: View {
             layout.selected.titleTextAttributes = [.font: UIFont.systemFont(ofSize: 10, weight: .semibold)]
         }
 
-        UITabBar.appearance().standardAppearance = appearance
-        UITabBar.appearance().scrollEdgeAppearance = appearance
+        let tabBar = UITabBar.appearance()
+        tabBar.isTranslucent = false
+        tabBar.backgroundColor = UIColor.systemBackground
+        tabBar.backgroundImage = UIImage()
+        tabBar.selectionIndicatorImage = UIImage()
+        tabBar.shadowImage = UIImage()
+        tabBar.standardAppearance = appearance
+        tabBar.scrollEdgeAppearance = appearance
     }
 
     var body: some View {
-        TabView(selection: $selection) {
+        TabView(selection: tabSelection) {
             // HomeView / MockExamsListView / ProfileView 는 자체 NavigationStack 을 갖고 있어
             // 추가로 감싸지 않는다. PastExamsListView / SoloHubView 는 본 step 신규로 만들면서
             // NavigationStack 을 MainTabView 쪽에 둔다 — 자식 화면이 더 단순해진다.
-            HomeView(selectedTab: $selection)
+            HomeView(selectedTab: tabSelection)
                 .tabItem {
                     Label("홈", systemImage: "house.fill")
                 }
@@ -81,6 +105,11 @@ struct MainTabView: View {
                 .tag(MainTab.profile)
         }
         .tint(.brandPrimary)
+        .animation(nil, value: selection)
+        .transaction { transaction in
+            transaction.disablesAnimations = true
+            transaction.animation = nil
+        }
         // iOS 18 의 floating glass tab bar 효과 끔 — 평면 불투명 강제.
         .toolbarBackground(Color.appSurface, for: .tabBar)
         .toolbarBackground(.visible, for: .tabBar)

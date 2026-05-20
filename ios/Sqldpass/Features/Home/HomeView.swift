@@ -99,11 +99,15 @@ struct HomeView: View {
                         .frame(maxWidth: .infinity, alignment: .top)
                         .background(
                             UnevenRoundedRectangle(
-                                cornerRadii: .init(topLeading: 28, topTrailing: 28),
+                                cornerRadii: .init(topLeading: 32, topTrailing: 32),
                                 style: .continuous
                             )
                             .fill(Color.appPage)
                         )
+                        .background(alignment: .top) {
+                            Color.brandPrimary
+                                .frame(height: 32)
+                        }
                     }
                 }
                 .background(Color.appPage) // D-day 자체 background trick 으로 위쪽 brandPrimary 확장. 그 외 전체 흰색.
