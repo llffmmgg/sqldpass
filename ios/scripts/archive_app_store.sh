@@ -80,6 +80,11 @@ fi
 # App Store Connect 의 같은 marketing version train 에서 최신 build number 를 조회해 +1.
 # Info.plist 가 $(MARKETING_VERSION)/$(CURRENT_PROJECT_VERSION) 변수 참조이므로
 # xcodebuild build setting override 가 그대로 plist 에 박힌다.
+if [[ "$(/usr/libexec/PlistBuddy -c 'Print :com.apple.developer.applesignin:0' Sqldpass/Sqldpass.entitlements)" != "Default" ]]; then
+  echo "[error] Source entitlements file is missing Sign in with Apple" >&2
+  exit 1
+fi
+
 MARKETING_VERSION=$(awk -F"['\"]" '/MARKETING_VERSION:/ {print $2; exit}' project.yml)
 if [[ -z "$MARKETING_VERSION" ]]; then
   echo "[error] MARKETING_VERSION 을 project.yml 에서 찾지 못했습니다." >&2
