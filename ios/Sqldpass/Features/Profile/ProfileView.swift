@@ -108,14 +108,6 @@ struct ProfileView: View {
                 }
                 .buttonStyle(.plain)
 
-                // 활성 구독이 있을 때만 Apple 구독 관리 페이지 노출.
-                if viewModel.subscription?.active == true {
-                    AppListGroupDivider()
-                    Link(destination: URL(string: "https://apps.apple.com/account/subscriptions")!) {
-                        MenuRow(icon: "creditcard", title: "Apple 구독 관리")
-                    }
-                }
-
                 AppListGroupDivider()
 
                 NavigationLink {

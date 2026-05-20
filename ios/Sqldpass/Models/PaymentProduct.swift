@@ -17,15 +17,16 @@ struct PaymentProduct: Identifiable, Equatable {
         self.underlying = product
     }
 
-    /// 한국식 ₩ 포맷 강제 표시. App Store Connect 의 KRW 가격이 base 라는 전제.
-    /// 시뮬레이터 region 이 한국이 아니어도 항상 ₩9,900 같은 한국식 표기로 노출한다.
+    /// 한국식 "9,900원" 포맷 강제 표시. App Store Connect 의 KRW 가격이 base 라는 전제.
+    /// 시뮬레이터 region 무관 항상 한국 자연체 표기로 노출 — ₩ 기호 대신 "원" 글자가
+    /// 한국어 사용자에게 직관적.
     var displayPriceKRW: String {
+        let intValue = (underlying.price as NSDecimalNumber).intValue
         let formatter = NumberFormatter()
-        formatter.numberStyle = .currency
+        formatter.numberStyle = .decimal
         formatter.locale = Locale(identifier: "ko_KR")
-        formatter.currencyCode = "KRW"
-        formatter.maximumFractionDigits = 0
-        return formatter.string(from: underlying.price as NSDecimalNumber) ?? displayPrice
+        let formatted = formatter.string(from: NSNumber(value: intValue)) ?? "\(intValue)"
+        return "\(formatted)원"
     }
 
     static func == (lhs: PaymentProduct, rhs: PaymentProduct) -> Bool {
