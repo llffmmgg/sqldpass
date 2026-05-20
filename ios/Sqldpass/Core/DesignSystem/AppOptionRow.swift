@@ -32,6 +32,9 @@ struct AppOptionRow: View {
 
     @State private var shakeOffset: CGFloat = 0
     @State private var bounceScale: CGFloat = 1
+    /// 손가락 down 상태 — `DragGesture(minimumDistance: 0)` 로 즉시 감지.
+    /// 압축 scale 0.97 적용으로 "탭한 순간 카드가 반응" 감각.
+    @GestureState private var isPressed: Bool = false
 
     /// 선택 / 공개 정보로부터 상태를 계산하는 헬퍼.
     static func appOptionStateOf(selected: Bool,
@@ -121,9 +124,13 @@ struct AppOptionRow: View {
         )
         .clipShape(RoundedRectangle(cornerRadius: Radius.lg))
         .opacity(isRevealedOther ? 0.5 : 1.0)
-        .scaleEffect(bounceScale)
+        .scaleEffect(bounceScale * (isPressed && !isRevealed ? 0.97 : 1.0))
         .offset(x: shakeOffset)
         .contentShape(Rectangle())
+        .simultaneousGesture(
+            DragGesture(minimumDistance: 0)
+                .updating($isPressed) { _, state, _ in state = true }
+        )
         .simultaneousGesture(
             TapGesture(count: 2).onEnded {
                 guard !isRevealed else { return }
@@ -142,6 +149,7 @@ struct AppOptionRow: View {
                 animateBounce()
             }
         }
+        .animation(.spring(response: 0.18, dampingFraction: 0.75), value: isPressed)
         .animation(.easeOut(duration: 0.2), value: state)
     }
 

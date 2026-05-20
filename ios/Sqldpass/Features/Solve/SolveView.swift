@@ -7,6 +7,9 @@ import SwiftUI
 struct SolveView: View {
     @State var viewModel: SolveViewModel
     @State private var showExitConfirm = false
+    /// 답 미선택 상태에서 "다음" 누른 직후 잠시 떠 있는 inline 경고. 답을 고르거나
+    /// 문항을 이동하면 자동으로 false 로 떨어진다.
+    @State private var showUnansweredHint = false
     @Environment(\.dismiss) private var dismiss
 
     var onSubmitted: ((Solve) -> Void)?
@@ -50,6 +53,25 @@ struct SolveView: View {
                         QuestionBody(question: question)
                         answerInput(for: question)
 
+                        if showUnansweredHint {
+                            HStack(spacing: Spacing.xs) {
+                                Image(systemName: "exclamationmark.circle.fill")
+                                    .font(AppType.footnote)
+                                Text("답을 선택하지 않았어요")
+                                    .font(AppType.footnote.weight(.semibold))
+                            }
+                            .foregroundStyle(Color.semanticWarning)
+                            .padding(.vertical, Spacing.xs)
+                            .padding(.horizontal, Spacing.sm)
+                            .background(Color.semanticWarning.opacity(0.10))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: Radius.sm)
+                                    .stroke(Color.semanticWarning.opacity(0.35), lineWidth: 1)
+                            )
+                            .clipShape(RoundedRectangle(cornerRadius: Radius.sm))
+                            .transition(.opacity)
+                        }
+
                         if viewModel.currentEntry?.isAnswered == true {
                             Button {
                                 viewModel.clearAnswer()
@@ -86,7 +108,19 @@ struct SolveView: View {
                 isLastQuestion: viewModel.currentIndex == viewModel.totalCount - 1,
                 isSubmitting: viewModel.isSubmitting,
                 onPrevious: { viewModel.goPrevious() },
-                onNext: { viewModel.goNext() },
+                onNext: {
+                    // 답 미선택 상태에서 다음 누르면 즉시 진행하지 않고 한 박자 경고.
+                    // 같은 문항에서 한 번 더 누르면(= hint 가 이미 떠 있는 상태) 그대로 진행.
+                    if viewModel.currentEntry?.isAnswered == true || showUnansweredHint {
+                        showUnansweredHint = false
+                        viewModel.goNext()
+                    } else {
+                        Haptics.warning()
+                        withAnimation(.easeOut(duration: 0.2)) {
+                            showUnansweredHint = true
+                        }
+                    }
+                },
                 onSubmit: {
                     Task {
                         await viewModel.submit()
@@ -96,6 +130,17 @@ struct SolveView: View {
                     }
                 }
             )
+        }
+        // 문항 이동 또는 답 선택 시 미선택 경고 자동 reset.
+        .onChange(of: viewModel.currentIndex) { _, _ in
+            showUnansweredHint = false
+        }
+        .onChange(of: viewModel.currentEntry?.isAnswered) { _, isAnswered in
+            if isAnswered == true { showUnansweredHint = false }
+        }
+        // 제출 성공 시 한 번 success 햅틱.
+        .onChange(of: viewModel.submittedResult?.id) { _, newId in
+            if newId != nil { Haptics.success() }
         }
         .confirmationDialog(
             "정말 종료할까요?",

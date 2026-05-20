@@ -26,10 +26,13 @@ struct OMRAnswerGrid: View {
                     optionText: text,
                     state: selectedOption == value ? .selected : .idle,
                     onTap: {
-                        Haptics.light()
+                        // 이미 선택된 보기 두 번째 탭은 다음 문항 advance — light(네비게이션).
+                        // 신규 선택은 selection(미세한 선택 변경).
                         if selectedOption == value {
+                            Haptics.light()
                             onAdvance()
                         } else {
+                            Haptics.selection()
                             onSelect(value)
                         }
                     }

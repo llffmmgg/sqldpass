@@ -11,6 +11,11 @@ enum Haptics {
     static func medium() {
         UIImpactFeedbackGenerator(style: .medium).impactOccurred()
     }
+    /// 미세한 선택 변경 햅틱 — 선택지/세그먼트/스위치 등 "선택 상태가 바뀌었다" 신호.
+    /// `light` 보다 약하고 자연스러워 객관식 선택지 탭에 적합.
+    static func selection() {
+        UISelectionFeedbackGenerator().selectionChanged()
+    }
     static func success() {
         UINotificationFeedbackGenerator().notificationOccurred(.success)
     }

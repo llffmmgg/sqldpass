@@ -44,6 +44,9 @@ struct ScoreHeadline: View {
                         Text("\(score)")
                             .font(.system(size: 32, weight: .bold, design: .monospaced))
                             .foregroundStyle(accentColor)
+                            // 0 → score 자연스러운 카운트 transition. iOS 17+ 의 numericText.
+                            .contentTransition(.numericText(value: Double(score)))
+                            .animation(.spring(response: 0.6, dampingFraction: 0.7), value: score)
                         Text("점")
                             .font(AppType.title)
                             .foregroundStyle(Color.appTextMuted)

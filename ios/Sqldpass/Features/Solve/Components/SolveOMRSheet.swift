@@ -62,12 +62,15 @@ struct SolveOMRSheet: View {
             : isAnswered ? .brandPrimary
             : .appTextMuted
 
-        Button { onTap(i) } label: {
+        Button {
+            Haptics.selection()
+            onTap(i)
+        } label: {
             Text("\(i + 1)")
                 .font(AppType.footnote.weight(.semibold))
                 .monospacedDigit()
                 .foregroundStyle(fg)
-                .frame(maxWidth: .infinity, minHeight: 32)
+                .frame(maxWidth: .infinity, minHeight: 44)
                 .background(bg)
                 .clipShape(RoundedRectangle(cornerRadius: Radius.sm, style: .continuous))
         }
