@@ -1,0 +1,33 @@
+{
+  "project": "sqldpass",
+  "phase": "payment-upgrade-channel-stats",
+  "description": "결제 정산 가시성 보강. (1) UPGRADED 액션 + 3 verify 흐름에 history 기록 — 관리자 감사 추적. (2) provider 별 매출 분리 통계 — iOS/Play/PortOne 채널 매출 추이 가시화. prorate 로직(백엔드 기준 가격, 수수료 미고려)은 의도된 동작이라 변경 없음.",
+  "steps": [
+    {
+      "step": 1,
+      "name": "backend-upgrade-history",
+      "description": "SubscriptionHistoryAction.UPGRADED enum 추가 + PaymentService 의 verify/verifyPlayBilling/createAppStorePayment 3 흐름에서 SubscriptionEntity save 직후 historyService.record 호출. 활성 plan 있었던 경우 UPGRADED, 아니면 GRANTED 분기. PaymentServiceTest 시나리오 3종(GRANTED 신규/UPGRADED 활성위/idempotent 0회) 추가. DB 마이그레이션 없음 — enum string 저장.",
+      "status": "completed",
+      "summary": "SubscriptionHistoryAction.UPGRADED enum 추가 + PaymentService.verify(PortOne) / verifyPlayBilling / createAppStorePayment 3 흐름의 subscriptionRepository.save 직후 historyService.record(GRANTED|UPGRADED) 호출. PortOne 만 activeBefore 스냅샷을 markPaid 직전에 별도 조회. PaymentServiceTest 3종 추가 (GRANTED/UPGRADED/idempotent 0회). 73 tests pass, gradlew test/compileJava OK.",
+      "completed_at": "2026-05-20T14:30:00+0900"
+    },
+    {
+      "step": 2,
+      "name": "backend-channel-stats-api",
+      "description": "PaymentRepository.findDailyRevenueByProvider + findRevenueByProviderAndPlan native 쿼리 추가 (LEFT JOIN subscription, archived_at IS NULL 필터 유지). AdminRevenueByProviderPoint / AdminRevenueByProviderPlan record 신설. AdminStatsService.revenueByProvider/revenueByProviderAndPlan 메서드. AdminStatsController 에 GET /api/admin/stats/revenue/by-provider, /revenue/by-provider/by-plan endpoint 2개. 테스트 추가(provider 분리 sum/플랜별 분리). 기존 /revenue, /revenue/by-plan 그대로 유지(호환성).",
+      "status": "completed",
+      "summary": "AdminRevenueByProviderPoint / AdminRevenueByProviderPlan record + PaymentRepository.findDailyRevenueByProviderRaw / findRevenueByProviderAndPlanRaw native 쿼리 (LEFT JOIN subscription + archived_at IS NULL) + AdminStatsService.revenueByProvider / revenueByProviderAndPlan (clamp 7~365 + provider null→PORTONE 보정) + AdminStatsController endpoint 2개 + AdminStatsServiceTest 4건 추가 (provider 분리/null 보정/clamp/by-plan). 기존 /revenue, /revenue/by-plan 무변경. test/compileJava OK.",
+      "completed_at": "2026-05-20T14:35:00+0900"
+    },
+    {
+      "step": 3,
+      "name": "frontend-channel-stats-ui",
+      "description": "adminApi 에 RevenueByProviderPoint/RevenueByProviderPlan 타입 + fetchRevenueByProvider/fetchRevenueByProviderAndPlan 함수. SubscriptionStatsPanel 에 채널 segmented control(전체/PortOne/Play/AppStore) 추가 — 전체 선택 시 기존 통합 차트, 특정 채널 선택 시 그 채널만 차트. lint/build 통과.",
+      "status": "completed",
+      "summary": "adminApi.ts: RevenueByProviderPoint/Plan 타입 + fetchRevenueByProvider/fetchRevenueByProviderAndPlan 함수. SubscriptionStatsPanel: CHANNEL_OPTIONS 4종 + channel state + 기간 토글 옆 segmented control(layoutId spring 애니메이션) + useEffect 분기 (ALL → 기존 endpoint, 그 외 → by-provider 호출 후 클라이언트 필터) + cancelled flag race 방지. 차트 컴포넌트 시각 톤 무변경. npm run lint 0 new error, npm run build PASS.",
+      "completed_at": "2026-05-20T14:45:00+0900"
+    }
+  ],
+  "created_at": "2026-05-20T14:00:00+0900",
+  "completed_at": "2026-05-20T14:45:00+0900"
+}

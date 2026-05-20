@@ -395,6 +395,15 @@
       "description": "Thunder 상품의 product ID 를 iap_three_day → iap_thunder 로 일괄 변경. Apple App Store Connect 가 삭제된 product ID 의 재사용을 영구 차단. 양쪽 통일(iOS/Android/Backend/Frontend/Docs/Test) + iOS .storekit All Pass 가격 39000 정정.",
       "status": "pending",
       "created_at": "2026-05-19T17:00:00+0900"
+    },
+    {
+      "dir": "payment-upgrade-channel-stats",
+      "name": "payment-upgrade-channel-stats",
+      "description": "결제 정산 가시성 보강 — (1) SubscriptionHistoryAction.UPGRADED 추가 + verify/verifyPlayBilling/createAppStorePayment 3 흐름에서 SubscriptionEntity save 직후 historyService.record 호출(active 있으면 UPGRADED, 아니면 GRANTED). (2) PaymentRepository 에 provider 별 일별/플랜별 매출 쿼리 신설 + AdminStats API + SubscriptionStatsPanel 채널 segmented control. prorate 로직 + 가격 정책(백엔드 기준 통일)은 그대로 유지.",
+      "status": "completed",
+      "created_at": "2026-05-20T14:00:00+0900",
+      "completed_at": "2026-05-20T14:45:00+0900",
+      "summary": "Step 1(backend UPGRADED history) + Step 2(backend provider 매출 API) + Step 3(frontend 채널 segmented control) 모두 완료. worktree 2개 병렬(Step 1+2) 후 main 머지 → Step 3 메인에서 진행. backend gradle test 전체 통과, frontend lint/build 통과. prorate 로직·가격 정책 무변경."
     }
   ]
 }
