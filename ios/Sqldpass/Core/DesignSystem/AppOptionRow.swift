@@ -32,9 +32,6 @@ struct AppOptionRow: View {
 
     @State private var shakeOffset: CGFloat = 0
     @State private var bounceScale: CGFloat = 1
-    /// 손가락 down 상태 — `DragGesture(minimumDistance: 0)` 로 즉시 감지.
-    /// 압축 scale 0.97 적용으로 "탭한 순간 카드가 반응" 감각.
-    @GestureState private var isPressed: Bool = false
 
     /// 선택 / 공개 정보로부터 상태를 계산하는 헬퍼.
     static func appOptionStateOf(selected: Bool,
@@ -78,6 +75,39 @@ struct AppOptionRow: View {
     }
 
     var body: some View {
+        // SwiftUI Button + ButtonStyle 패턴으로 ScrollView pan 과 자동 조화.
+        // 손가락이 옵션 위에 있어도 드래그 시작하면 ScrollView 가 인식해 스크롤 동작 + Button highlight cancel.
+        // DragGesture(simultaneous) 패턴을 쓰면 모의고사/기출복원의 ScrollView 와 충돌해 스크롤·터치가 막힌다.
+        Button(action: handleTap) {
+            content
+        }
+        .buttonStyle(PressableOptionStyle())
+        .simultaneousGesture(
+            TapGesture(count: 2).onEnded {
+                guard !isRevealed else { return }
+                onDoubleTap?()
+            }
+        )
+        .scaleEffect(bounceScale)
+        .offset(x: shakeOffset)
+        .onChange(of: state) { _, newValue in
+            if case .revealed(let correct, let wasSelected) = newValue,
+               !correct, wasSelected {
+                animateShake()
+            } else if newValue == .selected {
+                animateBounce()
+            }
+        }
+        .animation(.easeOut(duration: 0.2), value: state)
+    }
+
+    private func handleTap() {
+        guard !isRevealed else { return }
+        onTap()
+    }
+
+    @ViewBuilder
+    private var content: some View {
         HStack(spacing: Spacing.sm) {
             Rectangle()
                 .fill(barColor)
@@ -124,35 +154,7 @@ struct AppOptionRow: View {
         )
         .clipShape(RoundedRectangle(cornerRadius: Radius.lg))
         .opacity(isRevealedOther ? 0.5 : 1.0)
-        .scaleEffect(bounceScale * (isPressed && !isRevealed ? 0.97 : 1.0))
-        .offset(x: shakeOffset)
         .contentShape(Rectangle())
-        // minimumDistance 가 0 이면 ScrollView 의 drag 보다 먼저 잡혀서 풀이 화면 스크롤이 막힌다.
-        // 10pt 이상 움직일 때만 press 상태로 — short tap 의 scale 효과는 살짝 양보.
-        .simultaneousGesture(
-            DragGesture(minimumDistance: 10)
-                .updating($isPressed) { _, state, _ in state = true }
-        )
-        .simultaneousGesture(
-            TapGesture(count: 2).onEnded {
-                guard !isRevealed else { return }
-                onDoubleTap?()
-            }
-        )
-        .onTapGesture {
-            guard !isRevealed else { return }
-            onTap()
-        }
-        .onChange(of: state) { _, newValue in
-            if case .revealed(let correct, let wasSelected) = newValue,
-               !correct, wasSelected {
-                animateShake()
-            } else if newValue == .selected {
-                animateBounce()
-            }
-        }
-        .animation(.spring(response: 0.18, dampingFraction: 0.75), value: isPressed)
-        .animation(.easeOut(duration: 0.2), value: state)
     }
 
     // MARK: - Animations
@@ -242,6 +244,19 @@ struct AppOptionRow: View {
         if isRevealedSelectedWrong { return .semanticDanger }
         if isSelectedIdle          { return .brandPrimary }
         return .appTextSubtle
+    }
+}
+
+// MARK: - ButtonStyle
+
+/// 옵션 카드 누름 효과 — `configuration.isPressed` 추적해 0.97 scale.
+/// ScrollView 가 drag 를 시작하면 SwiftUI 가 자동으로 isPressed 를 false 로 cancel 하므로
+/// 별도 gesture 충돌 처리 불필요.
+private struct PressableOptionStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? 0.97 : 1.0)
+            .animation(.spring(response: 0.18, dampingFraction: 0.75), value: configuration.isPressed)
     }
 }
 
