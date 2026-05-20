@@ -44,6 +44,14 @@ final class PaywallViewModel {
         defer { isPurchasing = false }
         errorMessage = nil
 
+        // 결제 진입 전 사전 차단 — 베타 화이트리스트 모드에서 Apple 결제 완료 후
+        // 백엔드 verify 가 PAYMENT_REVIEWER_ONLY 로 거부되는 incoherent 흐름을 피한다.
+        // 네트워크 실패는 fail-open — 결제 자체는 시도, 백엔드 verify 가 최종 게이트.
+        if let elig = try? await PaymentService.eligibility(), !elig.eligible {
+            errorMessage = elig.reason ?? "현재 결제할 수 없습니다."
+            return
+        }
+
         do {
             let result = try await StoreKitService.shared.purchase(product)
             switch result {
@@ -70,6 +78,12 @@ final class PaywallViewModel {
         isPurchasing = true
         defer { isPurchasing = false }
         errorMessage = nil
+
+        // 복원 흐름도 백엔드 verify 를 거치므로 reviewer mode 영향 동일 — 사전 차단.
+        if let elig = try? await PaymentService.eligibility(), !elig.eligible {
+            errorMessage = elig.reason ?? "현재 복원할 수 없습니다."
+            return
+        }
 
         do {
             try await StoreKitService.shared.restore()

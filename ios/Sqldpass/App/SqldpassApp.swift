@@ -41,6 +41,9 @@ struct SqldpassApp: App {
                                 productId: event.productId
                             )
                             await event.transaction.finish()
+                            // 백그라운드 transaction (pending → approved / 자동 갱신 / 타 디바이스 결제) 으로
+                            // 권한이 바뀐 경우 전 화면이 즉시 반영되도록 전역 store 갱신.
+                            await SubscriptionStore.shared.refresh()
                         } catch {
                             // 영수증 검증 실패는 백엔드/네트워크 이슈일 가능성. transaction 은
                             // finish 하지 않고 두면 다음 Transaction.updates 에서 다시 들어온다.

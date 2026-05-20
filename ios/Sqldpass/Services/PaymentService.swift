@@ -6,6 +6,13 @@ enum PaymentService {
         try await APIClient.shared.get("/api/payment/subscription")
     }
 
+    /// GET /api/payment/eligibility — 결제 페이지 접근 가능 여부.
+    /// 베타/리뷰어 화이트리스트 모드에서 결제 진입 전 사용자에게 즉시 차단을 안내하기 위해 사용.
+    /// 정식 오픈 모드(`reviewer-nicknames=""`)에서는 항상 `eligible=true` 를 반환한다.
+    static func eligibility() async throws -> PaymentEligibility {
+        try await APIClient.shared.get("/api/payment/eligibility")
+    }
+
     /// POST /api/payment/apple/verify — 영수증 검증 + Subscription 발급
     struct AppleVerifyRequest: Encodable {
         let signedTransaction: String
