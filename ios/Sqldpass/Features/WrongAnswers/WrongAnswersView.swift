@@ -3,6 +3,7 @@ import SwiftUI
 struct WrongAnswersView: View {
     @State private var viewModel = WrongAnswersViewModel()
     @State private var retryTarget: WrongAnswer?
+    @State private var showPaywall = false
 
     var body: some View {
         NavigationStack {
@@ -28,6 +29,9 @@ struct WrongAnswersView: View {
                     )
                     .presentationDetents([.medium, .large])
                 }
+                .sheet(isPresented: $showPaywall) {
+                    PaywallView()
+                }
         }
     }
 
@@ -37,6 +41,8 @@ struct WrongAnswersView: View {
             ProgressView()
                 .controlSize(.large)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
+        } else if viewModel.isLocked {
+            lockedView
         } else if let errorMessage = viewModel.errorMessage, viewModel.items.isEmpty {
             ContentUnavailableView {
                 Label("불러오기 실패", systemImage: "exclamationmark.triangle")
@@ -73,6 +79,18 @@ struct WrongAnswersView: View {
                 }
                 .padding(Spacing.base)
             }
+        }
+    }
+
+    /// 401/403 응답 — 플랜 미가입 사용자에게 잠금 안내 + 결제 화면 진입 CTA.
+    private var lockedView: some View {
+        ContentUnavailableView {
+            Label("플랜 전용 기능이에요", systemImage: "lock.fill")
+        } description: {
+            Text("플랜에 가입하면 오답노트와 약점 영역 분석을 이용할 수 있어요.")
+        } actions: {
+            Button("플랜 보기") { showPaywall = true }
+                .buttonStyle(.borderedProminent)
         }
     }
 

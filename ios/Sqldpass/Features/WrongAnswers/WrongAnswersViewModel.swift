@@ -5,6 +5,8 @@ import Observation
 final class WrongAnswersViewModel {
     private(set) var items: [WrongAnswer] = []
     private(set) var stats: [WrongAnswerStats] = []
+    /// 401/403 응답 — 플랜 미가입 등 권한 부족. View 는 잠금 안내로 분기한다.
+    private(set) var isLocked = false
     private(set) var isLoading = false
     private(set) var errorMessage: String?
 
@@ -17,10 +19,20 @@ final class WrongAnswersViewModel {
             let (i, s) = try await (itemsTask, statsTask)
             items = i
             stats = s
+            isLocked = false
+            errorMessage = nil
+        } catch APIError.cancelled {
+            // 동일 endpoint 동시 호출에서 한 쪽이 취소된 경우 — 화면 에러로 띄우지 않는다.
+        } catch APIError.unauthorized, APIError.forbidden {
+            items = []
+            stats = []
+            isLocked = true
             errorMessage = nil
         } catch let error as APIError {
+            isLocked = false
             errorMessage = error.errorDescription
         } catch {
+            isLocked = false
             errorMessage = error.localizedDescription
         }
     }
