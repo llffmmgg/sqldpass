@@ -132,4 +132,58 @@ public interface PaymentRepository extends JpaRepository<PaymentEntity, Long> {
             ORDER BY revenue DESC
             """, nativeQuery = true)
     List<Object[]> findRevenueByPlan(@Param("since") LocalDateTime since);
+
+    /**
+     * 일별 × provider 매출/환불/건수 — 어드민 채널별 분리 통계용.
+     *
+     * <p>{@link #findDailyRevenue} 의 provider 분리 버전. {@code GROUP BY DATE(p.paid_at), p.provider}
+     * 로 같은 날짜라도 PORTONE/PLAY_BILLING/APP_STORE 별 row 가 분리된다.
+     * archived 구독 연결 결제 제외 규칙은 그대로 유지.
+     *
+     * <p>V79 이전 옛 결제는 {@code p.provider} 가 NULL 일 수 있다. NULL row 도 그대로
+     * 그룹에 포함되며, Service 매핑 단계에서 "PORTONE" 으로 보정한다.
+     *
+     * <p>반환 Object[] 컬럼: [date(java.sql.Date), provider(String), revenue(BigDecimal),
+     * refundAmount(BigDecimal), count(BigInteger)].
+     */
+    @Query(value = """
+            SELECT
+                DATE(p.paid_at)                                                          AS d,
+                p.provider                                                               AS provider,
+                COALESCE(SUM(CASE WHEN p.status = 'PAID'      THEN p.amount ELSE 0 END), 0) AS revenue,
+                COALESCE(SUM(CASE WHEN p.status = 'CANCELLED' THEN p.amount ELSE 0 END), 0) AS refund_amount,
+                SUM(CASE WHEN p.status = 'PAID' THEN 1 ELSE 0 END)                       AS paid_count
+            FROM payment p
+            LEFT JOIN subscription s ON s.payment_id = p.id
+            WHERE p.paid_at >= :since
+              AND (s.id IS NULL OR s.archived_at IS NULL)
+            GROUP BY DATE(p.paid_at), p.provider
+            ORDER BY DATE(p.paid_at) ASC, p.provider ASC
+            """, nativeQuery = true)
+    List<Object[]> findDailyRevenueByProviderRaw(@Param("since") LocalDateTime since);
+
+    /**
+     * provider × plan 별 PAID 매출 분포 — 어드민 채널별 플랜 분포 차트용.
+     *
+     * <p>{@link #findRevenueByPlan} 의 provider 분리 버전. archived 제외 + plan NOT NULL 필터 동일.
+     * NULL provider 도 그룹에 포함되며 Service 단계에서 "PORTONE" 으로 보정한다.
+     *
+     * <p>반환 Object[] 컬럼: [provider(String), plan(String), count(BigInteger), revenue(BigDecimal)].
+     */
+    @Query(value = """
+            SELECT
+                p.provider                   AS provider,
+                p.plan                       AS plan,
+                COUNT(*)                     AS paid_count,
+                COALESCE(SUM(p.amount), 0)   AS revenue
+            FROM payment p
+            LEFT JOIN subscription s ON s.payment_id = p.id
+            WHERE p.status = 'PAID'
+              AND p.paid_at >= :since
+              AND p.plan IS NOT NULL
+              AND (s.id IS NULL OR s.archived_at IS NULL)
+            GROUP BY p.provider, p.plan
+            ORDER BY revenue DESC
+            """, nativeQuery = true)
+    List<Object[]> findRevenueByProviderAndPlanRaw(@Param("since") LocalDateTime since);
 }

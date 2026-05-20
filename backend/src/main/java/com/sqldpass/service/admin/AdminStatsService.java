@@ -10,6 +10,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.sqldpass.controller.admin.AdminRevenueByPlan;
+import com.sqldpass.controller.admin.AdminRevenueByProviderPlan;
+import com.sqldpass.controller.admin.AdminRevenueByProviderPoint;
 import com.sqldpass.controller.admin.AdminRevenuePoint;
 import com.sqldpass.controller.admin.dto.AdminStatsResponse;
 import com.sqldpass.controller.admin.dto.AdminStatsResponse.ActivityBucket;
@@ -199,6 +201,43 @@ public class AdminStatsService {
                         (String) row[0],
                         ((Number) row[1]).intValue(),
                         ((Number) row[2]).longValue()))
+                .toList();
+    }
+
+    /**
+     * 일자 × provider 분리 매출 추이 — 어드민 채널별 분리 라인 차트용.
+     *
+     * <p>{@link #revenueTrend(int)} 와 같은 days 가드(7~365 clamp) 적용. archived 구독 연결 결제 제외.
+     * V79 이전 옛 결제는 provider 가 NULL 일 수 있어 "PORTONE" 으로 보정한다.
+     */
+    public List<AdminRevenueByProviderPoint> revenueByProvider(int days) {
+        int safe = Math.max(7, Math.min(days, 365));
+        LocalDateTime since = LocalDate.now().minusDays(safe - 1L).atStartOfDay();
+        return paymentRepository.findDailyRevenueByProviderRaw(since).stream()
+                .map(row -> new AdminRevenueByProviderPoint(
+                        toLocalDate(row[0]),
+                        row[1] == null ? "PORTONE" : (String) row[1],
+                        ((Number) row[2]).longValue(),
+                        ((Number) row[3]).longValue(),
+                        ((Number) row[4]).intValue()))
+                .toList();
+    }
+
+    /**
+     * provider × plan 분리 PAID 매출 분포 — 어드민 채널별 플랜 분포 차트용.
+     *
+     * <p>{@link #revenueByPlan(int)} 와 같은 가드(7~365 clamp). archived 제외 + plan NOT NULL.
+     * NULL provider 는 "PORTONE" 으로 보정.
+     */
+    public List<AdminRevenueByProviderPlan> revenueByProviderAndPlan(int days) {
+        int safe = Math.max(7, Math.min(days, 365));
+        LocalDateTime since = LocalDate.now().minusDays(safe - 1L).atStartOfDay();
+        return paymentRepository.findRevenueByProviderAndPlanRaw(since).stream()
+                .map(row -> new AdminRevenueByProviderPlan(
+                        row[0] == null ? "PORTONE" : (String) row[0],
+                        (String) row[1],
+                        ((Number) row[2]).intValue(),
+                        ((Number) row[3]).longValue()))
                 .toList();
     }
 }

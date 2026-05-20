@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.sql.Date;
 import java.time.LocalDate;
+import java.util.Arrays;
 import java.util.List;
 
 import org.junit.jupiter.api.DisplayName;
@@ -14,6 +15,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.sqldpass.controller.admin.AdminRevenueByPlan;
+import com.sqldpass.controller.admin.AdminRevenueByProviderPlan;
+import com.sqldpass.controller.admin.AdminRevenueByProviderPoint;
 import com.sqldpass.controller.admin.AdminRevenuePoint;
 import com.sqldpass.controller.admin.dto.AdminStatsResponse;
 import com.sqldpass.persistent.member.MemberRepository;
@@ -117,5 +120,79 @@ class AdminStatsServiceTest {
         assertThat(result.get(0).count()).isEqualTo(12);
         assertThat(result.get(0).revenue()).isEqualTo(118800L);
         assertThat(result.get(1).plan()).isEqualTo("THREE_DAY");
+    }
+
+    @Test
+    @DisplayName("revenueByProvider: 같은 날짜의 PortOne/APP_STORE row 가 별도로 분리되어 반환")
+    void revenueByProvider_provider_분리() {
+        Date day = Date.valueOf(LocalDate.of(2026, 5, 14));
+        given(paymentRepository.findDailyRevenueByProviderRaw(any())).willReturn(List.of(
+                new Object[] { day, "PORTONE",   new BigDecimal("19800"), new BigDecimal("0"), BigInteger.valueOf(2) },
+                new Object[] { day, "APP_STORE", new BigDecimal("9900"),  new BigDecimal("0"), BigInteger.valueOf(1) }
+        ));
+
+        List<AdminRevenueByProviderPoint> result = adminStatsService.revenueByProvider(30);
+
+        assertThat(result).hasSize(2);
+        assertThat(result).extracting(AdminRevenueByProviderPoint::date)
+                .containsOnly(LocalDate.of(2026, 5, 14));
+        assertThat(result).extracting(AdminRevenueByProviderPoint::provider)
+                .containsExactly("PORTONE", "APP_STORE");
+        assertThat(result.get(0).revenue()).isEqualTo(19800L);
+        assertThat(result.get(0).count()).isEqualTo(2);
+        assertThat(result.get(1).revenue()).isEqualTo(9900L);
+        assertThat(result.get(1).count()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("revenueByProvider: provider 가 NULL 인 옛 결제(V79 이전) 는 PORTONE 으로 보정")
+    void revenueByProvider_null_provider_PORTONE_보정() {
+        Date day = Date.valueOf(LocalDate.of(2026, 5, 14));
+        given(paymentRepository.findDailyRevenueByProviderRaw(any())).willReturn(Arrays.<Object[]>asList(
+                new Object[] { day, null, new BigDecimal("4900"), new BigDecimal("0"), BigInteger.valueOf(1) }
+        ));
+
+        List<AdminRevenueByProviderPoint> result = adminStatsService.revenueByProvider(30);
+
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).provider()).isEqualTo("PORTONE");
+        assertThat(result.get(0).revenue()).isEqualTo(4900L);
+    }
+
+    @Test
+    @DisplayName("revenueByProvider: days < 7 은 7 로, > 365 는 365 로 clamp")
+    void revenueByProvider_clamp() {
+        given(paymentRepository.findDailyRevenueByProviderRaw(any())).willReturn(List.of());
+
+        adminStatsService.revenueByProvider(3);
+        adminStatsService.revenueByProvider(9999);
+
+        org.mockito.Mockito.verify(paymentRepository, org.mockito.Mockito.times(2))
+                .findDailyRevenueByProviderRaw(any());
+    }
+
+    @Test
+    @DisplayName("revenueByProviderAndPlan: provider/plan/count/revenue 매핑 + NULL provider 보정")
+    void revenueByProviderAndPlan_매핑() {
+        // Arrays.asList — List.of 가 NULL provider 원소를 허용하지 않으므로.
+        given(paymentRepository.findRevenueByProviderAndPlanRaw(any())).willReturn(Arrays.<Object[]>asList(
+                new Object[] { "PORTONE",   "ONE_MONTH", BigInteger.valueOf(8), new BigDecimal("79200") },
+                new Object[] { "APP_STORE", "ONE_MONTH", BigInteger.valueOf(3), new BigDecimal("29700") },
+                new Object[] { null,        "THREE_DAY", BigInteger.valueOf(2), new BigDecimal("7800")  }
+        ));
+
+        List<AdminRevenueByProviderPlan> result = adminStatsService.revenueByProviderAndPlan(30);
+
+        assertThat(result).hasSize(3);
+        assertThat(result.get(0).provider()).isEqualTo("PORTONE");
+        assertThat(result.get(0).plan()).isEqualTo("ONE_MONTH");
+        assertThat(result.get(0).count()).isEqualTo(8);
+        assertThat(result.get(0).revenue()).isEqualTo(79200L);
+        assertThat(result.get(1).provider()).isEqualTo("APP_STORE");
+        // NULL provider → PORTONE 보정
+        assertThat(result.get(2).provider()).isEqualTo("PORTONE");
+        assertThat(result.get(2).plan()).isEqualTo("THREE_DAY");
+        assertThat(result.get(2).count()).isEqualTo(2);
+        assertThat(result.get(2).revenue()).isEqualTo(7800L);
     }
 }

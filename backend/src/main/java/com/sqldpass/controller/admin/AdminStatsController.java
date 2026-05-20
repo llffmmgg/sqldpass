@@ -46,4 +46,20 @@ public class AdminStatsController {
     public List<AdminRevenueByPlan> getRevenueByPlan(@RequestParam(defaultValue = "30") int days) {
         return adminStatsService.revenueByPlan(days);
     }
+
+    @GetMapping("/api/admin/stats/revenue/by-provider")
+    @Operation(summary = "provider 별 일별 매출 추이 (기본 30일, 7~365일)",
+            description = "PORTONE/PLAY_BILLING/APP_STORE 채널별 분리. archived 제외. " +
+                    "V79 이전 옛 결제(provider=NULL) 는 PORTONE 으로 보정.")
+    public List<AdminRevenueByProviderPoint> getRevenueByProvider(@RequestParam(defaultValue = "30") int days) {
+        return adminStatsService.revenueByProvider(days);
+    }
+
+    @GetMapping("/api/admin/stats/revenue/by-provider/by-plan")
+    @Operation(summary = "provider × plan 매출 분포 (기본 30일)",
+            description = "PAID 만 집계. archived 제외. revenue DESC. " +
+                    "V79 이전 옛 결제(provider=NULL) 는 PORTONE 으로 보정.")
+    public List<AdminRevenueByProviderPlan> getRevenueByProviderAndPlan(@RequestParam(defaultValue = "30") int days) {
+        return adminStatsService.revenueByProviderAndPlan(days);
+    }
 }
