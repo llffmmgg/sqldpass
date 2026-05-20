@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!--
+		Sign in with Apple — AuthView 의 SignInWithAppleButton 이 동작하려면 본 entitlement
+		가 빌드 시 포함되어야 한다. Apple Developer Portal 의 App ID
+		(com.sqldpass.app) Capabilities 에서 "Sign in with Apple" 도 활성화 필수.
+		둘 중 하나만 있으면 토큰 검증 실패.
+	-->
+	<key>com.apple.developer.applesignin</key>
+	<array>
+		<string>Default</string>
+	</array>
+</dict>
+</plist>

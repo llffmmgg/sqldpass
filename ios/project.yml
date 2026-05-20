@@ -35,6 +35,8 @@ targets:
     deploymentTarget: '17.0'
     configFiles:
       Release: Signing.xcconfig
+    entitlements:
+      path: Sqldpass/Sqldpass.entitlements
     sources:
       - path: Sqldpass
     dependencies:
