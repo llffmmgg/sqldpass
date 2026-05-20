@@ -37,6 +37,9 @@ targets:
       Release: Signing.xcconfig
     entitlements:
       path: Sqldpass/Sqldpass.entitlements
+      properties:
+        com.apple.developer.applesignin:
+          - Default
     sources:
       - path: Sqldpass
     dependencies:
