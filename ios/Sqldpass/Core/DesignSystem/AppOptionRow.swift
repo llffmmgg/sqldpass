@@ -127,8 +127,10 @@ struct AppOptionRow: View {
         .scaleEffect(bounceScale * (isPressed && !isRevealed ? 0.97 : 1.0))
         .offset(x: shakeOffset)
         .contentShape(Rectangle())
+        // minimumDistance 가 0 이면 ScrollView 의 drag 보다 먼저 잡혀서 풀이 화면 스크롤이 막힌다.
+        // 10pt 이상 움직일 때만 press 상태로 — short tap 의 scale 효과는 살짝 양보.
         .simultaneousGesture(
-            DragGesture(minimumDistance: 0)
+            DragGesture(minimumDistance: 10)
                 .updating($isPressed) { _, state, _ in state = true }
         )
         .simultaneousGesture(

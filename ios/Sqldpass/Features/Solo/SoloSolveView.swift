@@ -44,13 +44,11 @@ struct SoloSolveView: View {
                 Haptics.warning()
             }
         }
-        .confirmationDialog(
-            "지금까지의 진행은 저장되지 않습니다.",
-            isPresented: $showExitConfirm,
-            titleVisibility: .visible
-        ) {
-            Button("종료하기", role: .destructive) { dismiss() }
+        .alert("정말 종료할까요?", isPresented: $showExitConfirm) {
             Button("계속 풀기", role: .cancel) {}
+            Button("종료", role: .destructive) { dismiss() }
+        } message: {
+            Text("지금까지의 진행은 저장되지 않습니다.")
         }
         .sheet(item: Binding(
             get: { reportingQuestionId.map(ReportTarget.init) },
@@ -161,9 +159,6 @@ struct SoloSolveView: View {
 
             ScrollView {
                 VStack(alignment: .leading, spacing: Spacing.base) {
-                    // 오프라인 큐 인디케이터 (count > 0 일 때만)
-                    OfflineQueueChip(count: solveQueue.pendingCount)
-
                     // 과목명·문제 번호는 상단 chrome 의 meta strip 에서 노출 — 본문에서 중복 제거.
 
                     // 문제 본문 카드

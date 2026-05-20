@@ -58,16 +58,12 @@ struct PastExamRunnerView: View {
                 Text(viewModel.submitError ?? "")
             }
         )
-        .confirmationDialog(
-            "정말 종료할까요?",
-            isPresented: $showExitConfirm,
-            titleVisibility: .visible
-        ) {
-            Button("종료하기", role: .destructive) {
+        .alert("정말 종료할까요?", isPresented: $showExitConfirm) {
+            Button("계속 풀기", role: .cancel) {}
+            Button("종료", role: .destructive) {
                 viewModel.stopTimer()
                 dismiss()
             }
-            Button("계속 풀기", role: .cancel) {}
         } message: {
             Text("지금까지의 답안은 저장되지 않습니다.")
         }
