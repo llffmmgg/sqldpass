@@ -18,11 +18,12 @@ struct MainTabView: View {
     @State private var selection: MainTab = .home
 
     init() {
-        // TabBar 상단 1pt hairline 제거 + 불투명 배경 통일.
+        // TabBar 평면 불투명 강제 — iOS 18 floating glass 톤 끔.
         let appearance = UITabBarAppearance()
         appearance.configureWithOpaqueBackground()
         appearance.backgroundColor = UIColor.systemBackground
-        appearance.shadowColor = .clear
+        appearance.backgroundEffect = nil   // 반투명 블러 제거
+        appearance.shadowColor = .clear     // 상단 hairline 제거
         UITabBar.appearance().standardAppearance = appearance
         UITabBar.appearance().scrollEdgeAppearance = appearance
     }
@@ -67,6 +68,9 @@ struct MainTabView: View {
                 .tag(MainTab.profile)
         }
         .tint(.brandPrimary)
+        // iOS 18 의 floating glass tab bar 효과 끔 — 평면 불투명 강제.
+        .toolbarBackground(Color.appSurface, for: .tabBar)
+        .toolbarBackground(.visible, for: .tabBar)
     }
 }
 

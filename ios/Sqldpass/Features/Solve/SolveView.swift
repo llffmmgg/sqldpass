@@ -30,8 +30,10 @@ struct SolveView: View {
             mainContent
             if viewModel.startedAt == nil {
                 startOverlay
+                    .transition(.opacity)
             }
         }
+        .animation(.easeOut(duration: 0.2), value: viewModel.startedAt)
     }
 
     @ViewBuilder
