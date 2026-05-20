@@ -106,7 +106,7 @@ struct HomeView: View {
                         )
                     }
                 }
-                .background(Color.brandPrimary) // 위쪽 bounce 영역만 헤더와 같은 색으로 — D-day 아래는 .appPage 가 덮음
+                .background(Color.appPage) // 위로 bounce 해도 흰색만 보이게 — 빈 초록 영역 노출 방지
             }
             .navigationBarTitleDisplayMode(.inline)
             .toolbar(.hidden, for: .navigationBar)
