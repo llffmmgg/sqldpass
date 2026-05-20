@@ -1,21 +1,8 @@
 import SwiftUI
 
-/// 내정보 상단 KPI 2x2 그리드 (4 타일).
-///
-/// 항목 순서(좌→우, 위→아래):
-/// 1. 총 풀이 (문제)        — checkmark.circle / semanticSuccess
-/// 2. 평균 정답률 (%)       — target / brandPrimary
-/// 3. 합격 확률 (%)          — chart.line.uptrend.xyaxis / semanticInfo
-/// 4. 오답 (개)              — note.text / semanticWarning
-///
-/// 871lJPyM 핸드오프 `screens.jsx` MyScreen (line 414~) StatCard 4 종에 대응.
-/// 백엔드가 아직 4 종 모두를 제공하지 않으므로 본 phase 에서는 전 타일 `—`
-/// placeholder + trend 캡션 "데이터가 쌓이면 표시돼요" 로 통일한다.
-///
-/// 최장 연속 KPI 는 Hero 카드의 streak strip 으로 이동했으므로 더 이상
-/// 본 그리드에 포함되지 않는다.
+/// 사용자 KPI — 가로 2 타일 (총 풀이 / 평균 정답률).
+/// 합격 확률·오답은 별 phase 에서 백엔드 신설로 채우기 전까지 본 그리드에서 제외한다.
 struct KpiGrid: View {
-    /// 미사용 — 데이터가 채워지는 별 phase 에서 동일 props 시그니처를 유지하기 위해 남겨둔다.
     let kpi: ProfileKpi
 
     private let columns = [
@@ -23,48 +10,45 @@ struct KpiGrid: View {
         GridItem(.flexible(), spacing: Spacing.md)
     ]
 
-    private let trendCaption = "데이터가 쌓이면 표시돼요"
+    private let placeholder = "데이터가 쌓이면 표시돼요"
 
     var body: some View {
         LazyVGrid(columns: columns, spacing: Spacing.md) {
             KpiTile(
                 icon: "checkmark.circle",
                 label: "총 풀이",
-                value: "—",
+                value: kpi.totalSolved.map(String.init) ?? "—",
                 unit: "문제",
                 iconColor: .semanticSuccess,
-                trend: trendCaption
+                trend: kpi.totalSolved == nil ? placeholder : nil
             )
             KpiTile(
                 icon: "target",
                 label: "평균 정답률",
-                value: "—",
+                value: kpi.avgCorrectRate.map(String.init) ?? "—",
                 unit: "%",
                 iconColor: .brandPrimary,
-                trend: trendCaption
-            )
-            KpiTile(
-                icon: "chart.line.uptrend.xyaxis",
-                label: "합격 확률",
-                value: "—",
-                unit: "%",
-                iconColor: .semanticInfo,
-                trend: trendCaption
-            )
-            KpiTile(
-                icon: "note.text",
-                label: "오답",
-                value: "—",
-                unit: "개",
-                iconColor: .semanticWarning,
-                trend: trendCaption
+                trend: kpi.avgCorrectRate == nil ? placeholder : nil
             )
         }
     }
 }
 
-#Preview("KpiGrid — placeholder (4 타일)") {
+#Preview("KpiGrid — placeholder") {
     KpiGrid(kpi: .empty)
         .padding()
         .background(Color.appPage)
+}
+
+#Preview("KpiGrid — populated") {
+    KpiGrid(
+        kpi: ProfileKpi(
+            totalSolved: 312,
+            avgCorrectRate: 74,
+            longestStreak: 9,
+            passProbability: nil
+        )
+    )
+    .padding()
+    .background(Color.appPage)
 }

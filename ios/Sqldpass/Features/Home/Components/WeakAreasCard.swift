@@ -49,25 +49,36 @@ private struct WeakAreaRow: View {
     var body: some View {
         Button(action: onTap) {
             HStack(spacing: Spacing.md) {
-                // 좌측 36pt rounded square (wrongRate%).
+                // 좌측 ring progress — wrongRate% 만큼 trim. 12시 방향에서 시작해 시계방향.
                 ZStack {
-                    RoundedRectangle(cornerRadius: Radius.md)
-                        .fill(accent.opacity(0.14))
-                    Text("\(stat.wrongRate)%")
-                        .font(AppType.footnote.weight(.bold))
+                    Circle()
+                        .stroke(accent.opacity(0.18), lineWidth: 3.5)
+                    Circle()
+                        .trim(from: 0, to: min(max(Double(stat.wrongRate) / 100.0, 0), 1))
+                        .stroke(
+                            accent,
+                            style: StrokeStyle(lineWidth: 3.5, lineCap: .round)
+                        )
+                        .rotationEffect(.degrees(-90))
+                    Text("\(stat.wrongRate)")
+                        .font(AppType.caption.weight(.bold))
+                        .monospacedDigit()
                         .foregroundStyle(accent)
-                        .minimumScaleFactor(0.7)
+                        .minimumScaleFactor(0.6)
                         .lineLimit(1)
                 }
-                .frame(width: 36, height: 36)
+                .frame(width: 40, height: 40)
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel("오답률 \(stat.wrongRate) 퍼센트")
 
-                // 중앙 2-line: subject + sub caption.
-                VStack(alignment: .leading, spacing: Spacing.xxs) {
+                // 중앙 2-line: 짧은 과목명 + 풀이/오답 카운트.
+                VStack(alignment: .leading, spacing: 2) {
                     Text(stat.subjectName)
-                        .font(AppType.bodyEmph)
+                        .font(AppType.callout.weight(.semibold))
                         .foregroundStyle(Color.appTextPrimary)
                         .lineLimit(1)
-                    Text("\(stat.subjectName) · 오답 \(stat.wrongCount)/\(stat.totalSolved)문제")
+                        .truncationMode(.tail)
+                    Text("오답 \(stat.wrongCount)/\(stat.totalSolved)문제")
                         .font(AppType.caption)
                         .foregroundStyle(Color.appTextMuted)
                         .lineLimit(1)

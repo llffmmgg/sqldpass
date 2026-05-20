@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 /// 하단 5탭 (좌→우): 홈 / 모의고사 / 기출복원 / 실전 문제 / 마이.
 ///
@@ -16,12 +17,22 @@ enum MainTab: Hashable {
 struct MainTabView: View {
     @State private var selection: MainTab = .home
 
+    init() {
+        // TabBar 상단 1pt hairline 제거 + 불투명 배경 통일.
+        let appearance = UITabBarAppearance()
+        appearance.configureWithOpaqueBackground()
+        appearance.backgroundColor = UIColor.systemBackground
+        appearance.shadowColor = .clear
+        UITabBar.appearance().standardAppearance = appearance
+        UITabBar.appearance().scrollEdgeAppearance = appearance
+    }
+
     var body: some View {
         TabView(selection: $selection) {
             // HomeView / MockExamsListView / ProfileView 는 자체 NavigationStack 을 갖고 있어
             // 추가로 감싸지 않는다. PastExamsListView / SoloHubView 는 본 step 신규로 만들면서
             // NavigationStack 을 MainTabView 쪽에 둔다 — 자식 화면이 더 단순해진다.
-            HomeView()
+            HomeView(selectedTab: $selection)
                 .tabItem {
                     Label("홈", systemImage: "house.fill")
                 }
@@ -51,7 +62,7 @@ struct MainTabView: View {
 
             ProfileView()
                 .tabItem {
-                    Label("마이", systemImage: "person.crop.circle.fill")
+                    Label("내 정보", systemImage: "person.crop.circle.fill")
                 }
                 .tag(MainTab.profile)
         }

@@ -20,7 +20,7 @@ struct ProfileKpi: Equatable {
     /// 최장 연속 학습 일수. 단위: 일.
     let longestStreak: Int?
 
-    /// 합격 확률 (0~100, 정수 백분율).
+    /// 합격 확률 (0~100, 정수 백분율). 현재 미통합 — 향후 백엔드 신설 예정.
     let passProbability: Int?
 
     static let empty = ProfileKpi(

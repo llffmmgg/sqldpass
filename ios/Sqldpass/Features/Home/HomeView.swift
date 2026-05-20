@@ -13,59 +13,101 @@ import SwiftUI
 /// 데이터 미통합 섹션(오늘 목표/추천 미션, 자격증별 진척도)은 "곧 제공돼요" placeholder 로 노출.
 /// 자격증 카드 탭 시 기존 `CertInfoSheet` 흐름은 유지한다.
 struct HomeView: View {
-    @State private var viewModel = HomeViewModel()
-    @State private var sheetCert: CertInfo? = nil
-    @State private var showPaywall: Bool = false
+    @Binding var selectedTab: MainTab
 
-    // 후속 phase 에서 lastCert/lastMode 가 통합되면 hero 카드를 active 상태로 전환한다.
-    private var isHeroActive: Bool { false }
+    @State private var viewModel = HomeViewModel()
+    @State private var showPaywall: Bool = false
+    @State private var showNoticeSheet = false
+    @State private var showWrongAnswers = false
+
+    /// 시험 D-day 설정값. `@AppStorage` 로 영속화 — 미설정(0) 이면 오늘 + 300일 기본값.
+    @AppStorage("home.examTargetDate") private var examDateRaw: Double = 0
+    @State private var showExamDatePicker = false
+    @State private var draftExamDate: Date = Date()
 
     private var nickname: String {
         viewModel.member?.nickname ?? "학습자"
     }
 
-    /// "2026.05.19 · 화요일" 포맷. KST 기준의 한국어 요일.
-    private var greetingDateLabel: String {
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "ko_KR")
-        formatter.timeZone = TimeZone(identifier: "Asia/Seoul") ?? .current
-        formatter.dateFormat = "yyyy.MM.dd · EEEE"
-        return formatter.string(from: Date())
+    private var examDate: Date {
+        examDateRaw > 0
+            ? Date(timeIntervalSince1970: examDateRaw)
+            : Calendar.current.date(byAdding: .day, value: 300, to: Date()) ?? Date()
+    }
+
+    private var daysRemaining: Int {
+        let cal = Calendar.current
+        let start = cal.startOfDay(for: Date())
+        let end = cal.startOfDay(for: examDate)
+        return cal.dateComponents([.day], from: start, to: end).day ?? 0
+    }
+
+    private var dDayText: String {
+        if daysRemaining == 0 { return "D-DAY" }
+        if daysRemaining < 0 { return "D+\(-daysRemaining)" }
+        return "D-\(daysRemaining)"
     }
 
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 0) {
-                    greetingRow
-                        .padding(.top, Spacing.sm)
-                        .padding(.bottom, Spacing.lg)
+            VStack(spacing: 0) {
+                HomeBrandHeader(
+                    onPlanTap: { showPaywall = true },
+                    onNotificationTap: { showNoticeSheet = true },
+                    onProfileTap: { selectedTab = .profile }
+                )
 
-                    HeroContinueCard(isActive: isHeroActive)
-                        .padding(.bottom, Spacing.md)
+                ScrollView {
+                    VStack(spacing: 0) {
+                        HomeDDayBanner(
+                            dDayText: dDayText,
+                            daysRemaining: max(0, daysRemaining),
+                            nickname: nickname,
+                            streakDays: viewModel.streak?.currentStreak ?? 0,
+                            onEditExamDateTap: {
+                                draftExamDate = examDate
+                                showExamDatePicker = true
+                            }
+                        )
 
-                    streakAndGoalGrid
-                        .padding(.bottom, Spacing.xl)
+                        VStack(alignment: .leading, spacing: 0) {
+                            KpiGrid(kpi: viewModel.kpi)
+                                .padding(.top, Spacing.lg)
+                                .padding(.bottom, Spacing.md)
 
-                    myCertsSection
-                        .padding(.bottom, Spacing.xl)
+                            HomeWeekAttendanceStrip(counts: viewModel.weekCounts)
+                                .padding(.bottom, Spacing.lg)
 
-                    if !viewModel.wrongStats.isEmpty {
-                        weakAreasSection
-                            .padding(.bottom, Spacing.xl)
-                    }
+                            myCertsSection
+                                .padding(.bottom, Spacing.lg)
 
-                    todayPickSection
+                            if !viewModel.wrongStats.isEmpty {
+                                weakAreasSection
+                                    .padding(.bottom, Spacing.lg)
+                            } else if viewModel.wrongStatsLocked {
+                                weakAreasLockedSection
+                                    .padding(.bottom, Spacing.lg)
+                            }
 
-                    if let errorMessage = viewModel.errorMessage {
-                        errorBanner(message: errorMessage)
-                            .padding(.top, Spacing.lg)
+                            if let errorMessage = viewModel.errorMessage {
+                                errorBanner(message: errorMessage)
+                                    .padding(.top, Spacing.lg)
+                            }
+                        }
+                        .padding(.horizontal, Spacing.base)
+                        .padding(.bottom, Spacing.xxl)
+                        .frame(maxWidth: .infinity, alignment: .top)
+                        .background(
+                            UnevenRoundedRectangle(
+                                cornerRadii: .init(topLeading: 28, topTrailing: 28),
+                                style: .continuous
+                            )
+                            .fill(Color.appPage)
+                        )
                     }
                 }
-                .padding(.horizontal, Spacing.base)
-                .padding(.bottom, Spacing.xxl)
+                .background(Color.brandPrimary) // 위쪽 bounce 영역만 헤더와 같은 색으로 — D-day 아래는 .appPage 가 덮음
             }
-            .background(Color.appPage)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar(.hidden, for: .navigationBar)
             .refreshable {
@@ -82,137 +124,157 @@ struct HomeView: View {
                         .controlSize(.large)
                 }
             }
-            .sheet(item: $sheetCert) { info in
-                CertInfoSheet(
-                    info: info,
-                    onOpenPassPlus: {
-                        showPaywall = true
-                    }
-                )
-            }
             .sheet(isPresented: $showPaywall) {
                 PaywallView()
             }
+            .sheet(isPresented: $showExamDatePicker) {
+                examDatePickerSheet
+            }
+            .sheet(isPresented: $showNoticeSheet) {
+                noticeSheet
+            }
+            .navigationDestination(isPresented: $showWrongAnswers) {
+                WrongAnswersView()
+            }
         }
+    }
+
+    // MARK: - Notice sheet (공지)
+
+    private var noticeSheet: some View {
+        NavigationStack {
+            VStack(spacing: Spacing.lg) {
+                Image(systemName: "megaphone")
+                    .font(.system(size: 44, weight: .regular))
+                    .foregroundStyle(Color.appTextSubtle)
+                Text("공지가 없어요")
+                    .font(AppType.heading)
+                    .foregroundStyle(Color.appTextPrimary)
+                Text("새 공지가 등록되면 여기에서 알려드릴게요.")
+                    .font(AppType.footnote)
+                    .foregroundStyle(Color.appTextMuted)
+                    .multilineTextAlignment(.center)
+            }
+            .padding(Spacing.lg)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color.appPage)
+            .navigationTitle("공지")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("닫기") { showNoticeSheet = false }
+                }
+            }
+        }
+        .presentationDetents([.medium, .large])
+    }
+
+    // MARK: - Exam date sheet
+
+    private var examDatePickerSheet: some View {
+        NavigationStack {
+            Form {
+                Section {
+                    DatePicker(
+                        "시험일",
+                        selection: $draftExamDate,
+                        in: Date()...,
+                        displayedComponents: .date
+                    )
+                    .datePickerStyle(.graphical)
+                } footer: {
+                    Text("선택한 날짜를 기준으로 D-day 가 매일 갱신돼요.")
+                }
+            }
+            .navigationTitle("시험일 설정")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button("취소") { showExamDatePicker = false }
+                }
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("저장") {
+                        examDateRaw = draftExamDate.timeIntervalSince1970
+                        showExamDatePicker = false
+                    }
+                    .fontWeight(.semibold)
+                }
+            }
+        }
+        .presentationDetents([.medium, .large])
     }
 
     // MARK: - Sections
 
-    /// 1) 인사말 row — 날짜+요일 위에 큰 닉네임 문구, 우측에 44pt 마스코트 박스.
-    private var greetingRow: some View {
-        HStack(alignment: .center, spacing: Spacing.md) {
-            VStack(alignment: .leading, spacing: Spacing.xxs) {
-                Text(greetingDateLabel)
-                    .font(AppType.footnote.weight(.semibold))
-                    .foregroundStyle(Color.appTextSubtle)
-                (
-                    Text("안녕하세요, ")
-                        .foregroundStyle(Color.appTextPrimary)
-                    + Text(nickname)
-                        .foregroundStyle(Color.brandPrimary)
-                    + Text("님")
-                        .foregroundStyle(Color.appTextPrimary)
-                )
-                .font(AppType.title.weight(.bold))
-                .fixedSize(horizontal: false, vertical: true)
-            }
-
-            Spacer(minLength: Spacing.sm)
-
-            ZStack {
-                RoundedRectangle(cornerRadius: Radius.md)
-                    .fill(Color.appSurface)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: Radius.md)
-                            .stroke(Color.appBorder, lineWidth: 1)
-                    )
-                AppMascot(pose: .greeting, sizeDp: 32, animateOnAppear: false)
-            }
-            .frame(width: 44, height: 44)
-        }
-    }
-
-    /// 3) Streak (.45) + 오늘 목표 (.55) 2-column grid.
-    /// SwiftUI 의 `GridItem(.flexible)` 두 개를 사용해 폭을 자동 분할한다.
-    @ViewBuilder
-    private var streakAndGoalGrid: some View {
-        let columns = [
-            GridItem(.flexible(), spacing: Spacing.md),
-            GridItem(.flexible(), spacing: Spacing.md),
-        ]
-        LazyVGrid(columns: columns, alignment: .leading, spacing: Spacing.md) {
-            // 좌측 — 실제 streak 있으면 카드, 없으면 placeholder (백엔드 미응답).
-            if let streak = viewModel.streak {
-                StreakCard(streak: streak)
-            } else {
-                streakPlaceholder
-            }
-            TodayGoalCard()
-        }
-    }
-
-    /// streak fetch 실패/대기 시 동일한 frame 의 빈 카드.
-    private var streakPlaceholder: some View {
-        VStack(alignment: .leading, spacing: Spacing.sm) {
-            Text("STREAK")
-                .font(AppType.caption.weight(.semibold))
-                .tracking(1.2)
-                .foregroundStyle(Color.appTextSubtle)
-            Text("—")
-                .font(AppType.monoNumericLarge)
-                .foregroundStyle(Color.appTextMuted)
-            Text("불러오는 중이에요")
-                .font(AppType.caption)
-                .foregroundStyle(Color.appTextSubtle)
-        }
-        .padding(Spacing.base)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-            RoundedRectangle(cornerRadius: Radius.lg)
-                .fill(Color.appSurface)
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: Radius.lg)
-                .stroke(Color.appBorder, lineWidth: 1)
-        )
-    }
-
-    /// 4) 내 자격증 — section header + 수평 캐러셀.
+    /// 자격증 둘러보기 — 시험 정보 카드 캐러셀 (진척도/탭 액션 없음, 순수 정보).
+    /// 캐러셀은 화면 풀폭으로 그리기 위해 부모 horizontal padding 을 음수로 상쇄한다.
     private var myCertsSection: some View {
-        VStack(alignment: .leading, spacing: Spacing.md) {
-            AppSectionHeader(
-                title: "내 자격증",
-                action: SectionAction(label: "전체", onTap: {})
-            )
-            MyCertsCarousel(onCertTap: { info in
-                sheetCert = info
-            })
+        VStack(alignment: .leading, spacing: Spacing.xs) {
+            Text("자격증 둘러보기")
+                .font(AppType.bodyEmph)
+                .foregroundStyle(Color.appTextPrimary)
+            HomeCertCarousel()
+                .padding(.horizontal, -Spacing.base)
         }
     }
 
-    /// 5) 약점 보강 — section header (subtitle 보조) + WeakAreasCard.
+    /// 약점 TOP5 — 인라인 헤더(bodyEmph) + WeakAreasCard. row 탭 시 오답노트로 push.
     private var weakAreasSection: some View {
-        VStack(alignment: .leading, spacing: Spacing.md) {
-            VStack(alignment: .leading, spacing: Spacing.xxs) {
-                AppSectionHeader(title: "약점 보강")
-                Text("오답이 많은 영역부터 다시 풀어보기")
-                    .font(AppType.footnote)
-                    .foregroundStyle(Color.appTextMuted)
+        VStack(alignment: .leading, spacing: Spacing.sm) {
+            Text("약점 TOP5")
+                .font(AppType.bodyEmph)
+                .foregroundStyle(Color.appTextPrimary)
+            WeakAreasCard(stats: viewModel.wrongStats) { _ in
+                showWrongAnswers = true
             }
-            WeakAreasCard(stats: viewModel.wrongStats)
         }
     }
 
-    /// 6) 오늘의 추천 — section header (subtitle 보조) + placeholder 카드.
-    private var todayPickSection: some View {
-        VStack(alignment: .leading, spacing: Spacing.md) {
-            VStack(alignment: .leading, spacing: Spacing.xxs) {
-                AppSectionHeader(title: "오늘의 추천")
-                Text("오늘의 추천 미션은 곧 제공돼요")
-                    .font(AppType.footnote)
-                    .foregroundStyle(Color.appTextMuted)
+    /// 약점 TOP5 잠금 — 플랜 미가입으로 오답노트 API 가 거부된 경우.
+    private var weakAreasLockedSection: some View {
+        VStack(alignment: .leading, spacing: Spacing.sm) {
+            Text("약점 TOP5")
+                .font(AppType.bodyEmph)
+                .foregroundStyle(Color.appTextPrimary)
+
+            Button {
+                showPaywall = true
+            } label: {
+                HStack(alignment: .center, spacing: Spacing.md) {
+                    ZStack {
+                        Circle()
+                            .fill(Color.brandPrimary.opacity(0.12))
+                        Image(systemName: "lock.fill")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundStyle(Color.brandPrimary)
+                    }
+                    .frame(width: 40, height: 40)
+
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("플랜 전용 기능이에요")
+                            .font(AppType.callout.weight(.semibold))
+                            .foregroundStyle(Color.appTextPrimary)
+                        Text("플랜에 가입하면 약점 영역을 분석해드려요")
+                            .font(AppType.caption)
+                            .foregroundStyle(Color.appTextMuted)
+                            .lineLimit(1)
+                    }
+
+                    Spacer(minLength: 0)
+                    Image(systemName: "chevron.right")
+                        .font(AppType.footnote)
+                        .foregroundStyle(Color.appTextSubtle)
+                }
+                .padding(Spacing.base)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(Color.appSurface)
+                .clipShape(RoundedRectangle(cornerRadius: Radius.lg, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: Radius.lg, style: .continuous)
+                        .stroke(Color.appTextMuted.opacity(0.25), lineWidth: 0.5)
+                )
             }
-            TodayPickCard()
+            .buttonStyle(.plain)
         }
     }
 
@@ -250,5 +312,5 @@ struct HomeView: View {
 }
 
 #Preview {
-    HomeView()
+    HomeView(selectedTab: .constant(.home))
 }
