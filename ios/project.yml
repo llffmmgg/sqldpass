@@ -63,6 +63,8 @@ targets:
         GIDClientID: 1026495161962-jtgphtjb90025fsmvb8e13tpnokv3edp.apps.googleusercontent.com
         # 표준 HTTPS 만 사용 — App Store Connect 수출 규정 질문 회피.
         ITSAppUsesNonExemptEncryption: false
+        # 다크 모드 비활성 — 디자인 토큰이 라이트 기준으로 잡혀 있어 항상 라이트로 강제.
+        UIUserInterfaceStyle: Light
     settings:
       base:
         PRODUCT_NAME: Sqldpass
