@@ -45,8 +45,9 @@ private struct HomeCertCard: View {
         }
         .padding(.horizontal, Spacing.md)
         .padding(.vertical, Spacing.sm)
+        // 카드 컨텐츠 차이로 LazyHStack max child height 가 잉여 vertical 영역을 만들지 않도록 고정.
         .frame(maxWidth: .infinity, alignment: .topLeading)
-        .fixedSize(horizontal: false, vertical: true)
+        .frame(height: 150)
         .background(Color.appSurface)
         .clipShape(RoundedRectangle(cornerRadius: Radius.lg, style: .continuous))
         .overlay(

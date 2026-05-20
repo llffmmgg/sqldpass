@@ -319,7 +319,7 @@
 		FED8091B72FAA7C8EC304477 /* BookmarksViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BookmarksViewModel.swift; sourceTree = "<group>"; };
 		FF29A3CD13BA2DEDA06BF118 /* Subscription.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Subscription.swift; sourceTree = "<group>"; };
 		FFB7967904ADA9CDF33E7FEE /* MemberService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemberService.swift; sourceTree = "<group>"; };
-		"TEMP_F04ADE62-023B-44EC-8F2B-13DBB34BD483" /* Signing.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Signing.xcconfig; sourceTree = "<group>"; };
+		"TEMP_55266212-747A-47D5-A3EF-5D127DB3F2B2" /* Signing.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Signing.xcconfig; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -744,10 +744,10 @@
 			path = Components;
 			sourceTree = "<group>";
 		};
-		"TEMP_5C09F760-1F35-481C-9C6A-E482518F05F5" /* ios */ = {
+		"TEMP_D8AE0CB0-B5F0-450A-B2A1-71E335DD2BE9" /* ios */ = {
 			isa = PBXGroup;
 			children = (
-				"TEMP_F04ADE62-023B-44EC-8F2B-13DBB34BD483" /* Signing.xcconfig */,
+				"TEMP_55266212-747A-47D5-A3EF-5D127DB3F2B2" /* Signing.xcconfig */,
 			);
 			path = ios;
 			sourceTree = "<group>";
@@ -1004,7 +1004,7 @@
 		};
 		795D41F6292CDA5CACB2576F /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = "TEMP_F04ADE62-023B-44EC-8F2B-13DBB34BD483" /* Signing.xcconfig */;
+			baseConfigurationReference = "TEMP_55266212-747A-47D5-A3EF-5D127DB3F2B2" /* Signing.xcconfig */;
 			buildSettings = {
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_PREVIEWS = YES;

@@ -69,6 +69,11 @@ struct HomeView: View {
                                 showExamDatePicker = true
                             }
                         )
+                        // padding-background-padding trick — D-day 의 brandPrimary background 를 위로 무한 확장.
+                        // 위로 bounce 시 헤더 톤이 자연스럽게 이어지고, 아래쪽 ScrollView background 는 흰색.
+                        .padding(.top, 2000)
+                        .background(Color.brandPrimary)
+                        .padding(.top, -2000)
 
                         VStack(alignment: .leading, spacing: 0) {
                             KpiGrid(kpi: viewModel.kpi)
@@ -79,20 +84,19 @@ struct HomeView: View {
                                 .padding(.bottom, Spacing.lg)
 
                             myCertsSection
-                                .padding(.bottom, Spacing.lg)
 
                             if !viewModel.wrongStats.isEmpty {
                                 weakAreasSection
-                                    .padding(.bottom, Spacing.lg)
+                                    .padding(.top, Spacing.sm)
                             } else if viewModel.wrongStatsLocked {
                                 weakAreasLockedSection
-                                    .padding(.bottom, Spacing.lg)
+                                    .padding(.top, Spacing.sm)
                             }
 
                         }
                         .padding(.horizontal, Spacing.base)
-                        .padding(.bottom, Spacing.xxl)
-                        .frame(maxWidth: .infinity, minHeight: 1200, alignment: .top)
+                        .padding(.bottom, Spacing.lg)
+                        .frame(maxWidth: .infinity, alignment: .top)
                         .background(
                             UnevenRoundedRectangle(
                                 cornerRadii: .init(topLeading: 28, topTrailing: 28),
@@ -102,7 +106,7 @@ struct HomeView: View {
                         )
                     }
                 }
-                .background(Color.brandPrimary) // D-day 위쪽은 초록 유지, 흰 본문 minHeight 가 아래 덮음. 두 영역 사이 라운드 곡선은 흰 본문 위쪽 라운드로 시각화.
+                .background(Color.appPage) // D-day 자체 background trick 으로 위쪽 brandPrimary 확장. 그 외 전체 흰색.
             }
             .navigationBarTitleDisplayMode(.inline)
             .toolbar(.hidden, for: .navigationBar)

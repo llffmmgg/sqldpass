@@ -18,13 +18,25 @@ struct MainTabView: View {
     @State private var selection: MainTab = .home
 
     init() {
-        // TabBar 평면 직사각형 강제 — iOS 18 floating glass 톤 끔.
+        // TabBar 평면 직사각형 강제 — iOS 18+ floating glass 톤 끔.
         let appearance = UITabBarAppearance()
         appearance.configureWithOpaqueBackground()
         appearance.backgroundColor = UIColor.systemBackground
         appearance.backgroundEffect = nil   // 반투명 블러 제거
         appearance.shadowColor = .clear     // 상단 hairline 제거
         appearance.shadowImage = UIImage()
+
+        // item 라벨/아이콘 시각 압축 — TabBar 자체 height 는 시스템 표준이지만,
+        // title 을 위로 올리고 폰트를 축소해 컨텐츠 영역을 컴팩트하게.
+        for layout in [appearance.stackedLayoutAppearance,
+                       appearance.inlineLayoutAppearance,
+                       appearance.compactInlineLayoutAppearance] {
+            layout.normal.titlePositionAdjustment = UIOffset(horizontal: 0, vertical: -3)
+            layout.selected.titlePositionAdjustment = UIOffset(horizontal: 0, vertical: -3)
+            layout.normal.titleTextAttributes = [.font: UIFont.systemFont(ofSize: 10, weight: .medium)]
+            layout.selected.titleTextAttributes = [.font: UIFont.systemFont(ofSize: 10, weight: .semibold)]
+        }
+
         UITabBar.appearance().standardAppearance = appearance
         UITabBar.appearance().scrollEdgeAppearance = appearance
     }
