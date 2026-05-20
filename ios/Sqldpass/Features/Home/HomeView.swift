@@ -96,11 +96,11 @@ struct HomeView: View {
                         }
                         .padding(.horizontal, Spacing.base)
                         .padding(.bottom, Spacing.xxl)
-                        .frame(maxWidth: .infinity, alignment: .top)
+                        .frame(maxWidth: .infinity, minHeight: 1200, alignment: .top)
                         .background(Color.appPage)
                     }
                 }
-                .background(Color.appPage) // 위로 bounce 해도 흰색만 보이게 — 빈 초록 영역 노출 방지
+                .background(Color.brandPrimary) // D-day 위쪽(위로 bounce 시) 은 초록 유지, 흰 본문 minHeight 가 아래 영역을 덮음
             }
             .navigationBarTitleDisplayMode(.inline)
             .toolbar(.hidden, for: .navigationBar)
