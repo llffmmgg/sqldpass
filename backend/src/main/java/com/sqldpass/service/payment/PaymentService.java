@@ -202,6 +202,14 @@ public class PaymentService {
             return new VerifyPaymentResult(entity.getPaymentId(), entity.getAmount(),
                     entity.getProductName(), entity.getPlan(), cachedExpiresAt);
         }
+        // 운영자 환불(revokePortOnePayment) 로 이미 취소된 결제는 같은 paymentId 로 verify 재시도해도 권한 재발급 금지.
+        // App Store/Play Billing 의 webhook 환불과 동일 정책 — 채널 간 일관성.
+        if (entity.getStatus() == PaymentStatus.CANCELLED) {
+            log.warn("환불/취소된 PortOne 결제 재요청 차단 memberId={} paymentId={}",
+                    memberId, paymentId);
+            throw new SqldpassException(ErrorCode.PAYMENT_CANCELLED,
+                    "환불된 결제입니다. 새로 결제해 주세요.");
+        }
 
         PortOneClient.PortOnePaymentInfo info = portOneClient.getPayment(paymentId);
         if (!info.isPaid()) {
@@ -341,6 +349,13 @@ public class PaymentService {
             return new VerifyPaymentResult(prior.getPaymentId(), prior.getAmount(),
                     prior.getProductName(), prior.getPlan(), priorExpires);
         }
+        // RTDN 으로 이미 환불·취소된 결제는 재발급 금지 — 같은 token 으로 권한이 되살아나는 사고 차단.
+        if (existing.isPresent() && existing.get().getStatus() == PaymentStatus.CANCELLED) {
+            log.warn("환불/취소된 Play Billing 결제 재요청 차단 memberId={} token={}",
+                    memberId, maskToken(purchaseToken));
+            throw new SqldpassException(ErrorCode.PAYMENT_CANCELLED,
+                    "환불된 영수증입니다. 새로 구매해 주세요.");
+        }
 
         PlayBillingClient.PlayPurchaseInfo info =
                 playBillingClient.verifyProduct(productId, purchaseToken);
@@ -456,6 +471,13 @@ public class PaymentService {
             return new VerifyPaymentResult(prior.getPaymentId(), prior.getAmount(),
                     prior.getProductName(), prior.getPlan(), priorExpires);
         }
+        // ASSN v2 로 이미 환불·취소된 결제는 재발급 금지 — 같은 transactionId 로 권한이 되살아나는 사고 차단.
+        if (existing.isPresent() && existing.get().getStatus() == PaymentStatus.CANCELLED) {
+            log.warn("환불/취소된 App Store 결제 재요청 차단 memberId={} txId={}",
+                    memberId, maskToken(info.transactionId()));
+            throw new SqldpassException(ErrorCode.PAYMENT_CANCELLED,
+                    "환불된 영수증입니다. 새로 구매해 주세요.");
+        }
 
         return createAppStorePayment(memberId, info);
     }
@@ -489,12 +511,16 @@ public class PaymentService {
             throw new SqldpassException(ErrorCode.INVALID_INPUT, eval.reason());
         }
 
-        // existing 재조회 — verifyAppStore 에서 PAID idempotent 만 거름. PENDING/FAILED 는 여기까지 온다.
+        // existing 재조회 — verifyAppStore 에서 PAID/CANCELLED idempotent 가드 통과. PENDING/FAILED 는 여기까지 온다.
         Optional<PaymentEntity> existing = paymentRepository.findByPurchaseToken(info.transactionId());
         PaymentEntity payment;
         if (existing.isPresent()) {
             payment = existing.get();
         } else {
+            // 매출 amount 는 의도적으로 application.yaml 의 백엔드 기준 가격(예: ONE_MONTH=9900) 을 사용한다.
+            // App Store Connect 등록 가격은 Apple 30% 수수료 보전을 위해 더 높지만(예: 13900),
+            // 회계 단가 통일을 위해 백엔드 가격으로 기록. 채널별 실 청구액과 환수율 차이는
+            // 운영 매출 통계에서 provider 기준으로 분리 집계한다.
             String paymentId = "appstore-" + System.currentTimeMillis() + "-" + memberId;
             payment = new PaymentEntity(paymentId, memberId, null, productName, plan,
                     baseAmount, baseAmount, 0,

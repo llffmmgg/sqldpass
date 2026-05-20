@@ -524,6 +524,27 @@ class PaymentServiceTest {
     }
 
     @Test
+    @DisplayName("verify: 운영자 환불(CANCELLED) 된 결제는 같은 paymentId 로 재요청해도 PAYMENT_CANCELLED — 권한 재발급 차단")
+    void verifyRejectsRefundedPortOnePayment() {
+        MemberEntity m = newMember(1L, "pay-rv-7f2a91");
+        given(memberRepository.findById(1L)).willReturn(Optional.of(m));
+
+        PaymentEntity entity = new PaymentEntity("p-refunded", 1L, null, "3일 이용권",
+                SubscriptionPlan.THREE_DAY, 3900);
+        entity.markPaid("{...}", LocalDateTime.now().minusDays(2));
+        entity.markCancelled("admin-refund:test");
+        setField(entity, "id", 42L);
+        given(paymentRepository.findByPaymentId("p-refunded")).willReturn(Optional.of(entity));
+
+        assertThatThrownBy(() -> service.verify(1L, "p-refunded"))
+                .isInstanceOf(SqldpassException.class)
+                .extracting("errorCode").isEqualTo(ErrorCode.PAYMENT_CANCELLED);
+
+        verify(portOneClient, times(0)).getPayment(any());
+        verify(subscriptionRepository, times(0)).save(any(SubscriptionEntity.class));
+    }
+
+    @Test
     @DisplayName("verify: currency 가 KRW 아니면 PAYMENT_AMOUNT_MISMATCH + markFailedInNewTx 호출")
     void verifyDetectsNonKrwCurrency() {
         MemberEntity m = newMember(1L, "pay-rv-7f2a91");
@@ -792,6 +813,30 @@ class PaymentServiceTest {
                 .isInstanceOf(SqldpassException.class)
                 .extracting("errorCode").isEqualTo(ErrorCode.FORBIDDEN);
 
+        verify(playBillingClient, times(0)).verifyProduct(any(), any());
+        verify(paymentRepository, times(0)).save(any(PaymentEntity.class));
+        verify(subscriptionRepository, times(0)).save(any(SubscriptionEntity.class));
+        verify(playBillingClient, times(0)).acknowledge(any(), any());
+    }
+
+    @Test
+    @DisplayName("verifyPlayBilling: 환불(CANCELLED)된 purchaseToken 으로 재요청 시 PAYMENT_CANCELLED — 권한 재발급 차단")
+    void verifyPlayBillingRejectsRefundedToken() {
+        properties.setReviewerNicknames("");
+        // RTDN webhook 으로 markCancelled() 된 상태.
+        PaymentEntity prior = new PaymentEntity(
+                "play-refunded", 1L, null, "문어CBT Thunder",
+                SubscriptionPlan.THREE_DAY, 3900, 3900, 0,
+                com.sqldpass.persistent.payment.PaymentProvider.PLAY_BILLING, "tok-refunded");
+        prior.markCancelled("play:rtdn-refund");
+        given(paymentRepository.findByPurchaseToken("tok-refunded")).willReturn(Optional.of(prior));
+
+        assertThatThrownBy(() ->
+                service.verifyPlayBilling(1L, "iap_thunder", "tok-refunded"))
+                .isInstanceOf(SqldpassException.class)
+                .extracting("errorCode").isEqualTo(ErrorCode.PAYMENT_CANCELLED);
+
+        // Google API 호출 자체가 없어야 함 — 권한이 되살아나면 안 된다.
         verify(playBillingClient, times(0)).verifyProduct(any(), any());
         verify(paymentRepository, times(0)).save(any(PaymentEntity.class));
         verify(subscriptionRepository, times(0)).save(any(SubscriptionEntity.class));
@@ -1428,6 +1473,32 @@ class PaymentServiceTest {
                 .extracting("errorCode").isEqualTo(ErrorCode.PAYMENT_VERIFICATION_FAILED);
 
         verify(appStoreClient, times(0)).parsePayload(anyString());
+        verify(paymentRepository, times(0)).save(any(PaymentEntity.class));
+        verify(subscriptionRepository, times(0)).save(any(SubscriptionEntity.class));
+    }
+
+    @Test
+    @DisplayName("verifyAppStore: 환불(CANCELLED)된 영수증을 같은 transactionId 로 재요청 시 PAYMENT_CANCELLED — 권한 재발급 차단")
+    void verifyAppStoreRejectsRefundedTransaction() {
+        properties.setReviewerNicknames("");
+        var info = new AppStoreClient.TransactionInfo(
+                "tx-refunded", "tx-refunded", "iap_thunder", "com.sqldpass.app",
+                System.currentTimeMillis(), 0L);
+        given(appStoreClient.parsePayload("jws-refunded")).willReturn(info);
+
+        // ASSN v2 환불 webhook 으로 markCancelled() 된 상태.
+        PaymentEntity prior = new PaymentEntity(
+                "appstore-refunded", 1L, null, "문어CBT Thunder",
+                SubscriptionPlan.THREE_DAY, 3900, 3900, 0,
+                com.sqldpass.persistent.payment.PaymentProvider.APP_STORE, "tx-refunded");
+        prior.markCancelled("appstore:refund");
+        given(paymentRepository.findByPurchaseToken("tx-refunded")).willReturn(Optional.of(prior));
+
+        assertThatThrownBy(() -> service.verifyAppStore(1L, "jws-refunded", "iap_thunder"))
+                .isInstanceOf(SqldpassException.class)
+                .extracting("errorCode").isEqualTo(ErrorCode.PAYMENT_CANCELLED);
+
+        // 신규 발급 없음 — 권한이 되살아나면 안 된다.
         verify(paymentRepository, times(0)).save(any(PaymentEntity.class));
         verify(subscriptionRepository, times(0)).save(any(SubscriptionEntity.class));
     }
