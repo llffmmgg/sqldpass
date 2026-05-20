@@ -116,6 +116,9 @@ final class APIClient {
         do {
             (data, response) = try await session.data(for: request)
         } catch {
+            if let urlError = error as? URLError, urlError.code == .cancelled {
+                throw APIError.cancelled
+            }
             throw APIError.transport(message: error.localizedDescription)
         }
 

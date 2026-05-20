@@ -6,6 +6,8 @@ enum APIError: Error, LocalizedError, Equatable {
     case invalidURL
     /// 네트워크 단절 / 타임아웃
     case transport(message: String)
+    /// URLSession 측에서 동일 endpoint 중복 또는 명시적 cancel — 화면 에러로 표시하지 않는다.
+    case cancelled
     /// 401 — 호출자는 토큰 폐기 후 로그인 화면으로 라우팅한다.
     case unauthorized
     /// 403 — 권한 부족 (PREMIUM 미구독 등)
@@ -25,6 +27,7 @@ enum APIError: Error, LocalizedError, Equatable {
         switch self {
         case .invalidURL: return "잘못된 요청 주소입니다."
         case .transport(let m): return "네트워크 연결을 확인해주세요. (\(m))"
+        case .cancelled: return "요청이 취소되었습니다."
         case .unauthorized: return "로그인이 필요합니다."
         case .forbidden: return "이용 권한이 없습니다."
         case .notFound: return "요청한 정보를 찾을 수 없습니다."
