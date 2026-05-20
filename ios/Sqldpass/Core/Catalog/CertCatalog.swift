@@ -32,7 +32,7 @@ enum CertCatalog {
         ),
         CertInfo(
             slug: "engineer-written",
-            label: "정처기 필기",
+            label: "정보처리기사 필기",
             shortDesc: "정보처리기사 필기",
             issuer: "한국산업인력공단",
             questionCount: 100,
@@ -41,7 +41,7 @@ enum CertCatalog {
         ),
         CertInfo(
             slug: "engineer",
-            label: "정처기 실기",
+            label: "정보처리기사 실기",
             shortDesc: "정보처리기사 실기",
             issuer: "한국산업인력공단",
             questionCount: 20,
@@ -50,7 +50,7 @@ enum CertCatalog {
         ),
         CertInfo(
             slug: "computer-literacy-1",
-            label: "컴활 1급",
+            label: "컴퓨터활용능력 1급",
             shortDesc: "컴퓨터활용능력 1급 필기",
             issuer: "대한상공회의소",
             questionCount: 60,
@@ -59,7 +59,7 @@ enum CertCatalog {
         ),
         CertInfo(
             slug: "computer-literacy-2",
-            label: "컴활 2급",
+            label: "컴퓨터활용능력 2급",
             shortDesc: "컴퓨터활용능력 2급 필기",
             issuer: "대한상공회의소",
             questionCount: 40,
