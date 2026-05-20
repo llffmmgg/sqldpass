@@ -9,8 +9,8 @@ import SwiftUI
 /// App Store Connect 의 `displayName`/`description` 은 화면에서 사용하지 않는다 —
 /// 카피 동기화에 Apple 메타데이터 리뷰가 끼지 않도록.
 ///
-/// 가격은 `PaymentProduct.displayPriceKRW` 로 항상 한국 자연체 ("9,900원") 표기 강제.
-/// 시뮬레이터 region 이 KR 이 아니어도 동일.
+/// 가격은 `PaymentProduct.displayPrice` (StoreKit priceFormatStyle) 로 표시. KR 스토어프론트에서는
+/// "₩13,900" 처럼 자동 포맷되며, 다른 지역은 해당 통화 그대로 노출.
 struct PaywallView: View {
     @State private var viewModel = PaywallViewModel()
     @State private var selectedKey: PaywallPlanKey = .oneMonth
@@ -337,7 +337,7 @@ private struct PlanCard: View {
 
     private var priceBlock: some View {
         HStack(alignment: .firstTextBaseline, spacing: Spacing.xs) {
-            Text(product?.displayPriceKRW ?? "—")
+            Text(product?.displayPrice ?? "—")
                 .font(AppType.monoNumericLarge.weight(.bold))
                 .foregroundStyle(Color.appTextPrimary)
             Text("/ \(tier.unit)")
