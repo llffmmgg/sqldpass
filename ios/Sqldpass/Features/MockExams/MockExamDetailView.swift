@@ -62,7 +62,7 @@ struct MockExamDetailView: View {
 
     private func header(for detail: MockExamDetail) -> some View {
         VStack(alignment: .leading, spacing: Spacing.sm) {
-            Text(detail.examType)
+            Text(detail.typeLabel)
                 .font(AppType.caption.weight(.semibold))
                 .foregroundStyle(Color.brandPrimary)
             Text(detail.name)

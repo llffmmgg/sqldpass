@@ -48,10 +48,15 @@ struct PastExamsListView: View {
     private var content: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: Spacing.lg) {
-                AppPageHeader(
-                    title: "기출복원",
-                    subtitle: "회차별 실제 시험과 동일한 구성으로 복원했어요"
-                )
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("기출복원")
+                        .font(AppType.bodyEmph)
+                        .foregroundStyle(Color.appTextPrimary)
+                    Text("회차별 실제 시험과 동일한 구성으로 복원했어요")
+                        .font(AppType.footnote)
+                        .foregroundStyle(Color.appTextMuted)
+                }
+                .padding(.top, Spacing.xs)
 
                 AppCertChipRow(
                     items: chipItems,
@@ -125,63 +130,37 @@ private struct PastExamCard: View {
     let exam: PastExamSummary
     let isNew: Bool
 
-    private var certColor: Color { certColorOf(slug: exam.certSlug ?? "sqld") }
-
-    private var ringColor: Color {
-        exam.solved ? .semanticSuccess : certColor
-    }
-
-    private var ringTotal: Int {
-        max(exam.bestTotalCount ?? exam.totalQuestions, 1)
-    }
-
-    private var ringValue: Int {
-        max(0, min(exam.bestCorrectCount ?? 0, ringTotal))
-    }
-
-    private var ringLabel: String {
-        if exam.solved { return "✓" }
-        let denom = max(exam.totalQuestions, 1)
-        let pct = Int((Double(exam.bestCorrectCount ?? 0) / Double(denom) * 100).rounded())
-        return "\(pct)%"
-    }
-
-    private var metaText: String {
+    private var sequenceLabel: String {
         var parts: [String] = []
         if let year = exam.examYear { parts.append("\(year)년") }
         if let round = exam.examRound { parts.append("\(round)회") }
-        parts.append("\(exam.totalQuestions)문제")
         return parts.joined(separator: " · ")
     }
 
-    var body: some View {
-        HStack(alignment: .top, spacing: Spacing.md) {
-            AppProgressRing(
-                value: ringValue,
-                total: ringTotal,
-                color: ringColor,
-                size: 56,
-                stroke: 4,
-                label: ringLabel
-            )
+    private var metaText: String {
+        "\(exam.totalQuestions)문제"
+    }
 
-            VStack(alignment: .leading, spacing: Spacing.xs) {
-                HStack(spacing: Spacing.xs) {
-                    AppCertBadge(cert: appCertFor(slug: exam.certSlug), size: .small)
-                    if isNew {
-                        Text("NEW")
-                            .font(AppType.caption.weight(.bold))
-                            .foregroundStyle(Color.brandPrimaryFG)
-                            .padding(.horizontal, Spacing.sm)
-                            .padding(.vertical, Spacing.xxs)
-                            .background(certColor)
-                            .clipShape(RoundedRectangle(cornerRadius: Radius.full))
-                    }
-                    if exam.expertVerified {
-                        Image(systemName: "checkmark.seal.fill")
-                            .font(AppType.footnote)
-                            .foregroundStyle(Color.brandPrimary)
-                    }
+    private var scoreLabel: String {
+        if let best = exam.bestCorrectCount {
+            return "\(best)/\(exam.totalQuestions)"
+        }
+        return "—/\(exam.totalQuestions)"
+    }
+
+    private var scoreColor: Color {
+        if exam.solved { return .semanticSuccess }
+        if exam.bestCorrectCount != nil { return .brandPrimary }
+        return .appTextSubtle
+    }
+
+    var body: some View {
+        HStack(alignment: .center, spacing: Spacing.md) {
+            VStack(alignment: .leading, spacing: Spacing.sm) {
+                if !sequenceLabel.isEmpty {
+                    Text(sequenceLabel)
+                        .font(AppType.caption.weight(.semibold))
+                        .foregroundStyle(Color.appTextMuted)
                 }
 
                 Text(exam.name)
@@ -191,41 +170,28 @@ private struct PastExamCard: View {
                     .multilineTextAlignment(.leading)
                     .fixedSize(horizontal: false, vertical: true)
 
-                HStack(spacing: Spacing.xs) {
-                    Label(metaText, systemImage: "calendar")
-                        .labelStyle(.titleAndIcon)
-                        .font(AppType.footnote)
-                        .foregroundStyle(Color.appTextMuted)
-                    if exam.solved {
-                        Circle()
-                            .fill(Color.appBorderStrong)
-                            .frame(width: 3, height: 3)
-                        Text("완료")
-                            .font(AppType.footnote.weight(.semibold))
-                            .foregroundStyle(Color.semanticSuccess)
-                    }
-                }
+                Text(metaText)
+                    .font(AppType.footnote)
+                    .foregroundStyle(Color.appTextMuted)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
 
-            Image(systemName: "chevron.right")
-                .font(AppType.footnote.weight(.semibold))
-                .foregroundStyle(Color.appTextSubtle)
-                .padding(.top, Spacing.xs)
+            HStack(spacing: Spacing.xs) {
+                Text(scoreLabel)
+                    .font(AppType.bodyEmph)
+                    .monospacedDigit()
+                    .foregroundStyle(scoreColor)
+                Image(systemName: "chevron.right")
+                    .font(AppType.footnote.weight(.semibold))
+                    .foregroundStyle(Color.appTextSubtle)
+            }
         }
         .padding(Spacing.base)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-            ZStack {
-                Color.appSurface
-                if isNew {
-                    certColor.opacity(0.08)
-                }
-            }
-        )
+        .background(Color.appSurface)
         .overlay(
             RoundedRectangle(cornerRadius: Radius.lg)
-                .stroke(isNew ? certColor.opacity(0.4) : Color.appBorder, lineWidth: 1)
+                .stroke(Color.appBorder, lineWidth: 1)
         )
         .clipShape(RoundedRectangle(cornerRadius: Radius.lg))
     }

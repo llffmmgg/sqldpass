@@ -9,6 +9,7 @@ struct MockExamsListView: View {
     @State private var viewModel = MockExamsViewModel()
     @State private var path = NavigationPath()
     @State private var selectedCertSlug: String? = nil
+    @State private var showPaywall = false
     @Environment(SubscriptionStore.self) private var subscriptionStore
 
     var body: some View {
@@ -24,6 +25,9 @@ struct MockExamsListView: View {
                     if viewModel.exams.isEmpty {
                         await viewModel.load()
                     }
+                }
+                .sheet(isPresented: $showPaywall) {
+                    PaywallView()
                 }
                 // 결제/복원/환불로 구독 활성 상태가 바뀌면 모의고사 리스트를 다시 받아온다 —
                 // 백엔드는 `MockExamService.getForUser` 에서 `hasPremiumAccess` 로 가드하고
@@ -62,15 +66,11 @@ struct MockExamsListView: View {
         Set(viewModel.exams.map { slugFor(examType: $0.examType) })
     }
 
-    /// 칩 항목. 현재 fetch 결과에 존재하는 자격증만 노출하되, 없으면 카탈로그 전체로 fallback.
+    /// 칩 항목. CertCatalog 6종 전체를 항상 노출 — 시험이 없는 자격증도 칩은 보이고 빈 목록으로 안내.
     private var chipItems: [AppCertChipRow<String>.Item] {
         let counts = Dictionary(grouping: viewModel.exams) { slugFor(examType: $0.examType) }
             .mapValues { $0.count }
-        let visibleSlugs = availableCertSlugs
-        let source: [CertInfo] = visibleSlugs.isEmpty
-            ? CertCatalog.all
-            : CertCatalog.all.filter { visibleSlugs.contains($0.slug) }
-        return source.map { info in
+        return CertCatalog.all.map { info in
             AppCertChipRow<String>.Item(
                 id: info.slug,
                 label: info.label,
@@ -130,10 +130,15 @@ struct MockExamsListView: View {
         } else {
             ScrollView {
                 VStack(alignment: .leading, spacing: Spacing.lg) {
-                    AppPageHeader(
-                        title: "모의고사",
-                        subtitle: "실전 감각을 유지할 수 있게 한 회차씩 정리했어요"
-                    )
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("모의고사")
+                            .font(AppType.bodyEmph)
+                            .foregroundStyle(Color.appTextPrimary)
+                        Text("실전 감각을 유지할 수 있게 한 회차씩 정리했어요")
+                            .font(AppType.footnote)
+                            .foregroundStyle(Color.appTextMuted)
+                    }
+                    .padding(.top, Spacing.xs)
 
                     AppCertChipRow(
                         items: chipItems,
@@ -149,13 +154,15 @@ struct MockExamsListView: View {
                         ForEach(filteredExams) { exam in
                             let locked = exam.isPremium && !exam.purchased
                             Button {
-                                guard !locked else { return }
-                                path.append(MockExamRoute.detail(examId: exam.id))
+                                if locked {
+                                    showPaywall = true
+                                } else {
+                                    path.append(MockExamRoute.detail(examId: exam.id))
+                                }
                             } label: {
                                 MockExamCard(exam: exam)
                             }
                             .buttonStyle(.plain)
-                            .disabled(locked)
                         }
                     }
                 }
@@ -204,7 +211,8 @@ struct MockExamsListView: View {
                 .font(AppType.caption)
                 .foregroundStyle(Color.appTextMuted)
             Text(value)
-                .font(AppType.bodyEmph)
+                .font(AppType.footnote.weight(.semibold))
+                .monospacedDigit()
                 .foregroundStyle(tint)
         }
     }
@@ -219,15 +227,16 @@ struct MockExamsListView: View {
 // MARK: - Slug / cert mapping
 
 /// `examType` (백엔드 ENUM 문자열) → CertCatalog slug.
+/// 매칭 안 되는 raw 값은 그대로 반환 — 어떤 cert 칩에도 매칭되지 않게 해 잘못된 분류를 방지한다.
 private func slugFor(examType: String) -> String {
     switch examType {
-    case "SQLD":                 return "sqld"
-    case "ENGINEER_PRACTICAL":   return "engineer"
-    case "ENGINEER_WRITTEN":     return "engineer-written"
-    case "COMPUTER_LITERACY_ONE": return "computer-literacy-1"
-    case "COMPUTER_LITERACY_TWO": return "computer-literacy-2"
-    case "ADSP":                 return "adsp"
-    default:                     return "sqld"
+    case "SQLD":                  return "sqld"
+    case "ENGINEER_PRACTICAL":    return "engineer"
+    case "ENGINEER_WRITTEN":      return "engineer-written"
+    case "COMPUTER_LITERACY_1": return "computer-literacy-1"
+    case "COMPUTER_LITERACY_2": return "computer-literacy-2"
+    case "ADSP":                  return "adsp"
+    default:                      return examType
     }
 }
 
@@ -272,8 +281,7 @@ private struct MockExamCard: View {
     }
 
     var body: some View {
-        HStack(alignment: .top, spacing: Spacing.md) {
-            leadingVisual
+        HStack(alignment: .center, spacing: Spacing.md) {
             middleColumn
             trailingTrailer
         }
@@ -287,50 +295,26 @@ private struct MockExamCard: View {
         .clipShape(RoundedRectangle(cornerRadius: Radius.lg))
     }
 
-    @ViewBuilder
-    private var leadingVisual: some View {
-        if locked {
-            ZStack {
-                RoundedRectangle(cornerRadius: Radius.md)
-                    .fill(Color.appElevated)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: Radius.md)
-                            .stroke(Color.appBorderStrong, lineWidth: 1)
-                    )
-                Image(systemName: "lock.fill")
-                    .foregroundStyle(Color.semanticWarning)
-            }
-            .frame(width: 52, height: 52)
-        } else {
-            AppProgressRing(
-                value: exam.bestCorrectCount ?? 0,
-                total: max(exam.totalQuestions, 1),
-                color: ringColor,
-                size: 52,
-                stroke: 4,
-                label: exam.solved ? "✓" : nil
-            )
+    /// "정답수/전체" 점수 라벨. 풀이 기록 없으면 "—/N".
+    private var scoreLabel: String {
+        if let best = exam.bestCorrectCount {
+            return "\(best)/\(exam.totalQuestions)"
         }
+        return "—/\(exam.totalQuestions)"
+    }
+
+    private var scoreColor: Color {
+        if exam.solved { return .semanticSuccess }
+        if exam.bestCorrectCount != nil { return .brandPrimary }
+        return .appTextSubtle
     }
 
     @ViewBuilder
     private var middleColumn: some View {
         VStack(alignment: .leading, spacing: Spacing.xs) {
-            HStack(spacing: Spacing.xs) {
-                AppCertBadge(cert: appCertFor(slug: slugFor(examType: exam.examType)), size: .small)
-                Text(sequenceLabel)
-                    .font(AppType.caption.weight(.semibold))
-                    .foregroundStyle(Color.appTextMuted)
-                if exam.isPastExam {
-                    Text("기출")
-                        .font(AppType.caption.weight(.semibold))
-                        .foregroundStyle(Color.semanticInfo)
-                        .padding(.horizontal, Spacing.sm)
-                        .padding(.vertical, Spacing.xxs)
-                        .background(Color.semanticInfo.opacity(0.12))
-                        .clipShape(RoundedRectangle(cornerRadius: Radius.full))
-                }
-            }
+            Text(sequenceLabel)
+                .font(AppType.caption.weight(.semibold))
+                .foregroundStyle(Color.appTextMuted)
 
             Text(exam.name)
                 .font(AppType.bodyEmph)
@@ -365,7 +349,7 @@ private struct MockExamCard: View {
         if locked {
             HStack(spacing: Spacing.xxs) {
                 Image(systemName: "lock.fill")
-                Text("PRO")
+                Text("PASS+")
             }
             .font(AppType.caption.weight(.bold))
             .foregroundStyle(Color.semanticWarning)
@@ -374,10 +358,15 @@ private struct MockExamCard: View {
             .background(Color.semanticWarning.opacity(0.12))
             .clipShape(RoundedRectangle(cornerRadius: Radius.full))
         } else {
-            Image(systemName: "chevron.right")
-                .font(AppType.footnote.weight(.semibold))
-                .foregroundStyle(Color.appTextSubtle)
-                .padding(.top, Spacing.xs)
+            HStack(spacing: Spacing.xs) {
+                Text(scoreLabel)
+                    .font(AppType.bodyEmph)
+                    .monospacedDigit()
+                    .foregroundStyle(scoreColor)
+                Image(systemName: "chevron.right")
+                    .font(AppType.footnote.weight(.semibold))
+                    .foregroundStyle(Color.appTextSubtle)
+            }
         }
     }
 }
