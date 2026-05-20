@@ -68,6 +68,10 @@ XCCONFIG
 # 실패할 수 있어 안전하게 재실행.)
 if command -v xcodegen >/dev/null 2>&1; then
   xcodegen generate
+  if ! grep -q "CODE_SIGN_ENTITLEMENTS = Sqldpass/Sqldpass.entitlements" Sqldpass.xcodeproj/project.pbxproj; then
+    echo "[error] CODE_SIGN_ENTITLEMENTS was not generated for the Sqldpass target" >&2
+    exit 1
+  fi
   if grep -q "objectVersion = 77;" Sqldpass.xcodeproj/project.pbxproj; then
     perl -0pi -e 's/objectVersion = 77;/objectVersion = 56;/' Sqldpass.xcodeproj/project.pbxproj
   fi
@@ -132,6 +136,12 @@ xcodebuild \
   -archivePath "$ARCHIVE_PATH" \
   CURRENT_PROJECT_VERSION="$NEXT_BUILD" \
   archive
+
+if ! codesign -d --entitlements :- "$ARCHIVE_PATH/Products/Applications/Sqldpass.app" 2>/dev/null \
+  | grep -q "com.apple.developer.applesignin"; then
+  echo "[error] Sign in with Apple entitlement is missing from the archived app" >&2
+  exit 1
+fi
 
 xcodebuild \
   -exportArchive \

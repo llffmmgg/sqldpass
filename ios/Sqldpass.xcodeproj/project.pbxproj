@@ -991,6 +991,7 @@
 		66E7B809976BC60234DF680D /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = Sqldpass/Sqldpass.entitlements;
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_PREVIEWS = YES;
 				INFOPLIST_FILE = Sqldpass/Info.plist;
@@ -1006,6 +1007,7 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = "TEMP_55266212-747A-47D5-A3EF-5D127DB3F2B2" /* Signing.xcconfig */;
 			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = Sqldpass/Sqldpass.entitlements;
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_PREVIEWS = YES;
 				INFOPLIST_FILE = Sqldpass/Info.plist;

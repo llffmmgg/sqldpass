@@ -19,6 +19,11 @@ fi
 
 xcodegen generate
 
+if ! grep -q "CODE_SIGN_ENTITLEMENTS = Sqldpass/Sqldpass.entitlements" Sqldpass.xcodeproj/project.pbxproj; then
+  echo "[error] CODE_SIGN_ENTITLEMENTS was not generated for the Sqldpass target" >&2
+  exit 1
+fi
+
 if grep -q "objectVersion = 77;" Sqldpass.xcodeproj/project.pbxproj; then
   perl -0pi -e 's/objectVersion = 77;/objectVersion = 56;/' Sqldpass.xcodeproj/project.pbxproj
 fi
