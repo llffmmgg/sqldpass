@@ -1,0 +1,43 @@
+{
+  "project": "sqldpass",
+  "phase": "free-daily-quota-backend",
+  "description": "무료 회원 일일 한도 도입 — 백엔드 전체. DailyUsage 엔티티/서비스(MySQL UPSERT 동시성), QuestionController·MockExamController 가드 삽입, 402 응답 + quota envelope, 통합 테스트. 활성 구독자(Focus 포함)는 카운터 미생성. 클라이언트 phase 3개(web/ios/android)의 전제.",
+  "steps": [
+    {
+      "step": 1,
+      "name": "migration-v94-daily-usage",
+      "description": "Flyway V94 마이그레이션 — daily_usage 테이블 신규 생성. 복합 PK (member_id, usage_date). question_count + mock_session_count.",
+      "status": "completed",
+      "summary": "V94__create_daily_usage.sql 추가 — 복합 PK(member_id, usage_date) + question_count/mock_session_count, idx_daily_usage_date 보조 인덱스."
+    },
+    {
+      "step": 2,
+      "name": "entity-and-repository",
+      "description": "DailyUsageEntity + DailyUsageId(복합 PK) + DailyUsageRepository. JPA @IdClass 또는 @EmbeddedId 패턴. 기존 persistent/ 구조 준수.",
+      "status": "completed",
+      "summary": "persistent/usage 패키지에 @EmbeddedId 패턴(AnonymousSolveIpQuotaEntity 컨벤션 일치)으로 DailyUsageEntity/Id/Repository 추가."
+    },
+    {
+      "step": 3,
+      "name": "service-with-upsert",
+      "description": "DailyUsageService — MySQL native UPSERT(`INSERT ... ON DUPLICATE KEY UPDATE`)로 atomic 증가. SubscriptionService.getActive() Present 시 카운터 미생성. 한도 초과 시 QuotaExceededException throw → @Transactional 롤백. 단위·동시성 테스트.",
+      "status": "completed",
+      "summary": "DailyUsageService(consumeQuestion/consumeMockSession/getQuota) + QuotaExceededException + upsertAndAdd native query 추가. 14개 단위 테스트(구독자 면제·한도 초과·반복 30→31번째 예외 포함) 통과."
+    },
+    {
+      "step": 4,
+      "name": "exception-and-advice",
+      "description": "QuotaExceededException + GlobalExceptionHandler(@ControllerAdvice)에 402 Payment Required 변환 추가. 응답 body: { error: 'DAILY_QUESTION_LIMIT' | 'DAILY_MOCK_LIMIT', used, limit, resetAt }.",
+      "status": "completed",
+      "summary": "기존 GlobalExceptionHandler 에 QuotaExceededException 핸들러 추가 — 402 + QuotaExceededResponse(error, used, limit, resetAt KST naive). MockMvc advice 테스트 2건 통과."
+    },
+    {
+      "step": 5,
+      "name": "controller-guards-and-quota-envelope",
+      "description": "QuestionController.getQuestions에 consumeQuestion(size) 호출, MockExamController.get(id)에 consumeMockSession 호출(MockExamKind=MINI 포함, 기출=PAST_EXAM은 면제). 응답 헤더 X-Quota-* 또는 별도 GET /api/quota 엔드포인트로 quota envelope 제공. 통합 테스트.",
+      "status": "completed",
+      "summary": "QuestionController/MockExamController 가드 + PAST_EXAM 면제 분기 + QuotaController(GET /api/quota) + WebMvcConfig /api/quota/** 등록. QuotaIntegrationTest 8건 통과(가드·면제·구독자·quota envelope)."
+    }
+  ],
+  "completed_at": "2026-05-21T16:25:00+09:00"
+}

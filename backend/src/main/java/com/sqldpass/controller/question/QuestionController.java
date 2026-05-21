@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.sqldpass.controller.question.dto.QuestionDetailResponse;
 import com.sqldpass.controller.question.dto.QuestionResponse;
 import com.sqldpass.service.question.QuestionService;
+import com.sqldpass.service.usage.DailyUsageService;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.constraints.Max;
@@ -28,6 +29,7 @@ import lombok.RequiredArgsConstructor;
 public class QuestionController {
 
     private final QuestionService questionService;
+    private final DailyUsageService dailyUsageService;
 
     @GetMapping("/api/questions")
     @Operation(summary = "과목별 랜덤 문제 조회", description = "정답과 해설은 포함하지 않는다. 로그인 사용자의 경우 푼 문제는 풀 맨 뒤로 밀린다.")
@@ -36,6 +38,8 @@ public class QuestionController {
             @RequestParam Long subjectId,
             @RequestParam(defaultValue = "10") @Min(1) @Max(50) int size) {
         Long memberId = (Long) request.getAttribute("memberId");
+        // 무료 회원 일일 한도 가드 — 활성 구독자/비로그인은 service 안에서 면제 처리
+        dailyUsageService.consumeQuestion(memberId, size);
         return questionService.getRandomQuestions(subjectId, memberId, size).stream()
                 .map(QuestionResponse::from)
                 .toList();

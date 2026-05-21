@@ -18,8 +18,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.sqldpass.controller.mockexam.dto.MockExamDetailResponse;
 import com.sqldpass.controller.mockexam.dto.MockExamSummaryResponse;
+import com.sqldpass.domain.mockexam.MockExam;
 import com.sqldpass.persistent.member.MemberEntity;
 import com.sqldpass.persistent.member.MemberRepository;
+import com.sqldpass.persistent.mockexam.MockExamKind;
 import com.sqldpass.persistent.payment.MockExamPurchaseRepository;
 import com.sqldpass.persistent.solve.SolveRepository;
 import com.sqldpass.service.common.ErrorCode;
@@ -29,6 +31,7 @@ import com.sqldpass.service.payment.PaymentProperties;
 import com.sqldpass.service.payment.SubscriptionService;
 import com.sqldpass.service.pdf.MockExamPdfService;
 import com.sqldpass.service.pdf.MockExamPdfService.DownloadResult;
+import com.sqldpass.service.usage.DailyUsageService;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -48,6 +51,7 @@ public class MockExamController {
     private final SubscriptionService subscriptionService;
     private final PaymentProperties paymentProperties;
     private final MemberRepository memberRepository;
+    private final DailyUsageService dailyUsageService;
 
     @GetMapping
     @Operation(summary = "모의고사 목록", description = "로그인 사용자는 풀이 완료 마킹 + 최고 점수가 함께 응답된다.")
@@ -119,7 +123,12 @@ public class MockExamController {
     public MockExamDetailResponse get(@PathVariable Long id, HttpServletRequest request) {
         // PREMIUM이면 403 LOCKED (단, memberId 가 결제 이력이 있으면 통과), DRAFT면 404
         Long memberId = (Long) request.getAttribute("memberId");
-        return MockExamDetailResponse.from(mockExamService.getForUser(id, memberId));
+        MockExam mockExam = mockExamService.getForUser(id, memberId);
+        // 기출복원(PAST_EXAM)은 무료 무제한 — 가드 면제. MINI/AI 정규 회차만 일일 한도 카운트.
+        if (mockExam.getKind() != MockExamKind.PAST_EXAM) {
+            dailyUsageService.consumeMockSession(memberId);
+        }
+        return MockExamDetailResponse.from(mockExam);
     }
 
     /**

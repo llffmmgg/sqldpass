@@ -15,9 +15,11 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.async.AsyncRequestNotUsableException;
 import org.springframework.web.multipart.MultipartException;
 
+import com.sqldpass.controller.usage.dto.QuotaExceededResponse;
 import com.sqldpass.service.common.ErrorCode;
 import com.sqldpass.service.common.SqldpassException;
 import com.sqldpass.service.notification.DiscordNotifier;
+import com.sqldpass.service.usage.QuotaExceededException;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,6 +30,18 @@ import lombok.extern.slf4j.Slf4j;
 public class GlobalExceptionHandler {
 
     private final DiscordNotifier discordNotifier;
+
+    /**
+     * 무료 일일 한도 초과 — HTTP 402 Payment Required.
+     * 응답 body 의 code(DAILY_QUESTION_LIMIT|DAILY_MOCK_LIMIT) 가 클라이언트 모달 분기 키.
+     * resetAt 은 KST naive (project_kst_naive_serialization 메모리).
+     */
+    @ExceptionHandler(QuotaExceededException.class)
+    public ResponseEntity<QuotaExceededResponse> handleQuotaExceeded(QuotaExceededException e) {
+        QuotaExceededResponse body = new QuotaExceededResponse(
+                e.getCode(), e.getUsed(), e.getLimit(), e.getResetAt());
+        return ResponseEntity.status(HttpStatus.PAYMENT_REQUIRED).body(body);
+    }
 
     @ExceptionHandler(SqldpassException.class)
     public ResponseEntity<ErrorResponse> handleSqldpassException(SqldpassException e, HttpServletRequest request) {

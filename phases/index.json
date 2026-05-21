@@ -440,6 +440,34 @@
       "description": "(1) MockExamDetailView '시험 시작하기' 버튼이 CustomTabBar 와 겹쳐 가려지는 잔여 회귀 — .hideCustomTabBar() 패턴 적용. (2) 다른 앱들처럼 edge swipe back 활성화 — UINavigationController extension 으로 모든 push 자식에 swipe back. 풀이 화면(Solve/SoloSolve/PastExamRunner) 은 SwipeBackInterceptor singleton 으로 swipe 시 종료 confirm alert 트리거(답안 보호). 백엔드/Android/frontend 변경 0. Plan: C:/Users/admin/.claude/plans/ios-parallel-flask.md.",
       "status": "in_progress",
       "created_at": "2026-05-21T02:00:00+0900"
+    },
+    {
+      "dir": "free-daily-quota-backend",
+      "name": "free-daily-quota-backend",
+      "description": "무료 회원 일일 한도 백엔드 — DailyUsage 엔티티/서비스(MySQL UPSERT 동시성), QuestionController·MockExamController 가드 삽입(기출복원 면제), QuotaExceededException → 402 advice, GET /api/quota 엔드포인트. 활성 구독자(Focus 포함)는 카운터 미생성. 클라이언트 3개 phase의 선행. Plan: C:/Users/admin/.claude/plans/curried-scribbling-gadget.md.",
+      "status": "pending",
+      "created_at": "2026-05-21T13:00:00+0900"
+    },
+    {
+      "dir": "free-daily-quota-web",
+      "name": "free-daily-quota-web",
+      "description": "무료 회원 일일 한도 웹 — Next.js fetch wrapper 402 인터셉터, QuotaPaywallModal, GET /api/quota 헤더 사전 표시. 카운팅 로직 없음. free-daily-quota-backend 선행.",
+      "status": "pending",
+      "created_at": "2026-05-21T13:00:00+0900"
+    },
+    {
+      "dir": "free-daily-quota-ios",
+      "name": "free-daily-quota-ios",
+      "description": "무료 회원 일일 한도 iOS — APIError.quotaExceeded 케이스, APIClient 402 분기, QuotaPaywallView 시트, 헤더 quota 사전 표시. 카운팅 로직 없음. free-daily-quota-backend 선행.",
+      "status": "pending",
+      "created_at": "2026-05-21T13:00:00+0900"
+    },
+    {
+      "dir": "free-daily-quota-android",
+      "name": "free-daily-quota-android",
+      "description": "무료 회원 일일 한도 Android — OkHttp Interceptor 402, QuotaPaywallSheet, GET /api/quota Compose 헤더. 카운팅 로직 없음. free-daily-quota-backend 선행.",
+      "status": "pending",
+      "created_at": "2026-05-21T13:00:00+0900"
     }
   ]
 }

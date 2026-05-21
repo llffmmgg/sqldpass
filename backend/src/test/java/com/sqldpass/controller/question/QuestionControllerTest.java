@@ -16,6 +16,7 @@ import com.sqldpass.service.common.ErrorCode;
 import com.sqldpass.service.common.SqldpassException;
 import com.sqldpass.service.notification.DiscordNotifier;
 import com.sqldpass.service.question.QuestionService;
+import com.sqldpass.service.usage.DailyUsageService;
 
 import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -36,6 +37,9 @@ class QuestionControllerTest {
 
     @MockitoBean
     private DiscordNotifier discordNotifier;
+
+    @MockitoBean
+    private DailyUsageService dailyUsageService;
 
     private static final String AUTH_HEADER = "Bearer test-token";
 

@@ -20,6 +20,7 @@ import com.sqldpass.service.notification.DiscordNotifier;
 import com.sqldpass.service.payment.PaymentProperties;
 import com.sqldpass.service.payment.SubscriptionService;
 import com.sqldpass.service.pdf.MockExamPdfService;
+import com.sqldpass.service.usage.DailyUsageService;
 
 import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -58,6 +59,9 @@ class MockExamControllerTest {
 
     @MockitoBean
     private DiscordNotifier discordNotifier;
+
+    @MockitoBean
+    private DailyUsageService dailyUsageService;
 
     private void mockAuth(long memberId) {
         given(jwtProvider.validateToken("test-token")).willReturn(true);
