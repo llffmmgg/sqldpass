@@ -27,38 +27,15 @@ type Copy = {
 const COPY: Record<QuotaErrorCode, Copy> = {
   DAILY_QUESTION_LIMIT: {
     title: "오늘의 30문제 완주! 🐙",
-    body: "플랜으로 매일 풀 수 있어요.",
+    body: "오늘 무료 문제를 모두 풀었어요.\n플랜을 이용하면 매일 문제를 더 풀 수 있어요.",
     ctaLabel: "플랜 보기",
   },
   DAILY_MOCK_LIMIT: {
     title: "오늘 모의고사 1회 완료",
-    body: "플랜으로 매일 풀 수 있어요.",
+    body: "오늘 무료 모의고사를 모두 풀었어요.\n플랜을 이용하면 매일 모의고사를 더 풀 수 있어요.",
     ctaLabel: "플랜 보기",
   },
 };
-
-/**
- * KST naive ISO (예: "2026-05-22T00:00:00") 를 "오전 0시" 같은 사람 친화 시각으로.
- * 백엔드가 Z 없이 보내므로 +09:00 부착해서 Date 로 파싱한다 (project_kst_naive_serialization).
- * 형식이 깨졌으면 표시를 생략(null).
- */
-function formatResetAt(resetAt: string): string | null {
-  if (!resetAt) return null;
-  const withTz = /Z$|[+-]\d{2}:?\d{2}$/.test(resetAt) ? resetAt : `${resetAt}+09:00`;
-  const d = new Date(withTz);
-  if (Number.isNaN(d.getTime())) return null;
-  try {
-    return new Intl.DateTimeFormat("ko-KR", {
-      timeZone: "Asia/Seoul",
-      month: "long",
-      day: "numeric",
-      hour: "numeric",
-      minute: "2-digit",
-    }).format(d);
-  } catch {
-    return null;
-  }
-}
 
 export default function QuotaPaywallModal() {
   const [info, setInfo] = useState<QuotaExceededPayload | null>(null);
@@ -88,7 +65,6 @@ export default function QuotaPaywallModal() {
   if (!info) return null;
 
   const copy = COPY[info.error];
-  const resetLabel = formatResetAt(info.resetAt);
 
   return (
     <div
@@ -111,7 +87,7 @@ export default function QuotaPaywallModal() {
         >
           {copy.title}
         </h2>
-        <p className="mt-3 text-sm text-text-muted">{copy.body}</p>
+        <p className="mt-3 whitespace-pre-line text-sm text-text-muted">{copy.body}</p>
 
         <div className="mt-5 rounded-lg border border-border bg-bg px-4 py-3 text-xs text-text-muted">
           <div className="flex items-center justify-between">
@@ -120,17 +96,12 @@ export default function QuotaPaywallModal() {
               {info.used} / {info.limit}
             </span>
           </div>
-          {resetLabel && (
-            <div className="mt-1.5 flex items-center justify-between">
-              <span>리셋</span>
-              <span className="tabular-nums text-text">{resetLabel}</span>
-            </div>
-          )}
+          <p className="mt-1.5 text-text">내일 0시에 다시 열려요</p>
         </div>
 
         {info.error === "DAILY_MOCK_LIMIT" && (
           <p className="mt-2 text-[11px] text-text-subtle">
-            PASS+ 회차는 Pro 부터
+            PASS+ 회차는 Thunder 부터
           </p>
         )}
 

@@ -43,7 +43,7 @@ struct QuotaPaywallView: View {
             usageCard
 
             if info.isMock {
-                Text("PASS+ 회차는 Pro 부터")
+                Text("PASS+ 회차는 Thunder 부터")
                     .font(AppType.caption)
                     .foregroundStyle(Color.appTextSubtle)
                     .multilineTextAlignment(.center)
@@ -85,7 +85,8 @@ struct QuotaPaywallView: View {
     }
 
     private var bodyText: String {
-        "플랜으로 매일 풀 수 있어요."
+        let noun = info.isMock ? "모의고사" : "문제"
+        return "오늘 무료 \(noun)를 모두 풀었어요.\n플랜을 이용하면 매일 \(noun)를 더 풀 수 있어요."
     }
 
     private var unitLabel: String { info.isMock ? "회" : "문제" }
@@ -119,10 +120,9 @@ struct QuotaPaywallView: View {
         .clipShape(RoundedRectangle(cornerRadius: Radius.lg))
     }
 
-    /// "내일 0시 (KST) 에 초기화됩니다" 같은 안내.
+    /// 자정 리셋 안내. resetAt 파싱 무관하게 한 줄 고정 카피.
     private var resetSubtitle: String {
-        guard let formatted = Self.formatResetAt(info.resetAt) else { return "" }
-        return "\(formatted)에 다시 도전할 수 있어요"
+        "내일 0시에 다시 열려요"
     }
 
     /// 백엔드는 KST naive (`+09:00` 가정) → 표시용 "MM/dd HH:mm" 로 정규화.
