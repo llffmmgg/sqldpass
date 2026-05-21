@@ -27,13 +27,13 @@ type Copy = {
 const COPY: Record<QuotaErrorCode, Copy> = {
   DAILY_QUESTION_LIMIT: {
     title: "오늘의 30문제 완주! 🐙",
-    body: "내일 다시 만나거나, Focus 7일권으로 끝까지 가볼까요?",
-    ctaLabel: "Focus 7일권 보기",
+    body: "플랜으로 매일 풀 수 있어요.",
+    ctaLabel: "플랜 보기",
   },
   DAILY_MOCK_LIMIT: {
     title: "오늘 모의고사 1회 완료",
-    body: "Focus 7일권으로 매일 풀 수 있어요.",
-    ctaLabel: "Focus 7일권 보기",
+    body: "플랜으로 매일 풀 수 있어요.",
+    ctaLabel: "플랜 보기",
   },
 };
 
@@ -127,6 +127,12 @@ export default function QuotaPaywallModal() {
             </div>
           )}
         </div>
+
+        {info.error === "DAILY_MOCK_LIMIT" && (
+          <p className="mt-2 text-[11px] text-text-subtle">
+            PASS+ 회차는 Pro 부터
+          </p>
+        )}
 
         <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row">
           <Button

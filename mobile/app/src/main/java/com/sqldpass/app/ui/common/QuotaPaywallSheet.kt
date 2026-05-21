@@ -42,11 +42,7 @@ fun QuotaPaywallSheet(
     val palette = LocalSqldpassPalette.current
     val isMock = info.code == "DAILY_MOCK_LIMIT"
     val title = if (isMock) "오늘 모의고사 1회 완료" else "오늘의 30문제 완주!"
-    val body = if (isMock) {
-        "Focus 7일권으로 매일 풀 수 있어요."
-    } else {
-        "내일 다시 만나거나, Focus 7일권으로 끝까지 가볼까요?"
-    }
+    val body = "플랜으로 매일 풀 수 있어요."
 
     AppBottomSheet(onDismiss = onDismiss) {
         Box(
@@ -74,6 +70,14 @@ fun QuotaPaywallSheet(
             color = palette.textSubtle,
             modifier = Modifier.padding(top = SqldSpacing.sm),
         )
+        if (isMock) {
+            Text(
+                text = "PASS+ 회차는 Pro 부터",
+                style = MaterialTheme.typography.labelSmall,
+                color = palette.textSubtle,
+                modifier = Modifier.padding(top = SqldSpacing.xs),
+            )
+        }
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -81,7 +85,7 @@ fun QuotaPaywallSheet(
             verticalArrangement = Arrangement.spacedBy(SqldSpacing.sm),
         ) {
             AppButton(
-                text = "Focus 7일권 보기",
+                text = "플랜 보기",
                 onClick = onPurchase,
                 variant = AppButtonVariant.Primary,
                 size = AppButtonSize.Large,

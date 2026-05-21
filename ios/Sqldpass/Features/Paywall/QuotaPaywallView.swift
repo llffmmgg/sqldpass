@@ -42,9 +42,16 @@ struct QuotaPaywallView: View {
 
             usageCard
 
+            if info.isMock {
+                Text("PASS+ 회차는 Pro 부터")
+                    .font(AppType.caption)
+                    .foregroundStyle(Color.appTextSubtle)
+                    .multilineTextAlignment(.center)
+            }
+
             VStack(spacing: Spacing.sm) {
                 AppButton(
-                    title: "Focus 7일권 보기",
+                    title: "플랜 보기",
                     variant: .primary,
                     size: .regular,
                     action: onPurchase
@@ -78,9 +85,7 @@ struct QuotaPaywallView: View {
     }
 
     private var bodyText: String {
-        info.isMock
-            ? "Focus 7일권으로 매일 모의고사를 풀 수 있어요."
-            : "내일 다시 만나거나, Focus 7일권으로 끝까지 가볼까요?"
+        "플랜으로 매일 풀 수 있어요."
     }
 
     private var unitLabel: String { info.isMock ? "회" : "문제" }
