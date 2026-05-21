@@ -39,7 +39,9 @@ struct MainTabView: View {
         // TabBar 평면 직사각형 강제 — iOS 18+ floating glass 톤 끔.
         let appearance = UITabBarAppearance()
         appearance.configureWithOpaqueBackground()
-        appearance.backgroundColor = UIColor.systemBackground
+        // page 배경(#fafafa)과 TabBar 배경 톤을 통일 — appSurface(#ffffff) 로 두면
+        // ScrollView 바닥과 TabBar 사이에 1~2px 흰 띠가 보임.
+        appearance.backgroundColor = UIColor(Color.appPage)
         appearance.backgroundEffect = nil   // 반투명 블러 제거
         appearance.shadowColor = .clear     // 상단 hairline 제거
         appearance.shadowImage = UIImage()
@@ -57,7 +59,7 @@ struct MainTabView: View {
 
         let tabBar = UITabBar.appearance()
         tabBar.isTranslucent = false
-        tabBar.backgroundColor = UIColor.systemBackground
+        tabBar.backgroundColor = UIColor(Color.appPage)
         tabBar.backgroundImage = UIImage()
         tabBar.selectionIndicatorImage = UIImage()
         tabBar.shadowImage = UIImage()
@@ -111,7 +113,8 @@ struct MainTabView: View {
             transaction.animation = nil
         }
         // iOS 18 의 floating glass tab bar 효과 끔 — 평면 불투명 강제.
-        .toolbarBackground(Color.appSurface, for: .tabBar)
+        // 톤은 page(#fafafa) 와 일치시켜 ScrollView 바닥 흰 띠 제거.
+        .toolbarBackground(Color.appPage, for: .tabBar)
         .toolbarBackground(.visible, for: .tabBar)
     }
 }
