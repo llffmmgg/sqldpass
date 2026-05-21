@@ -51,14 +51,20 @@ struct MarkdownTextView: View {
     }
 
     private func inlineText(_ content: String) -> Text {
-        if let attributed = try? AttributedString(
+        guard var attributed = try? AttributedString(
             markdown: content,
             options: AttributedString.MarkdownParsingOptions(interpretedSyntax: .inlineOnlyPreservingWhitespace)
-        ) {
-            return Text(attributed)
-                .font(AppType.body)
+        ) else {
+            return Text(content).font(AppType.body)
         }
-        return Text(content).font(AppType.body)
+        for run in attributed.runs {
+            if run.inlinePresentationIntent?.contains(.code) == true {
+                attributed[run.range].font = .system(.body, design: .monospaced)
+                attributed[run.range].backgroundColor = Color.appCodeInline
+                attributed[run.range].foregroundColor = Color.appCodeInlineFG
+            }
+        }
+        return Text(attributed).font(AppType.body)
     }
 
     private func headingFont(_ level: Int) -> Font {
@@ -86,7 +92,7 @@ struct MarkdownTextView: View {
 
         func flushParagraph() {
             if !paragraphBuffer.isEmpty {
-                let joined = paragraphBuffer.joined(separator: " ").trimmingCharacters(in: .whitespaces)
+                let joined = paragraphBuffer.joined(separator: "\n").trimmingCharacters(in: .whitespacesAndNewlines)
                 if !joined.isEmpty {
                     out.append(.paragraph(joined))
                 }

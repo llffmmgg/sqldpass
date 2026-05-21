@@ -130,7 +130,7 @@ struct AppOptionRow: View {
             // 본문
             Group {
                 if let text = optionText, !text.isEmpty {
-                    QuestionContentView(text: text)
+                    QuestionContentView(text: text, codeBlockSurface: .bare)
                 } else {
                     Text("\(optionNumber)번")
                         .font(AppType.body)

@@ -1,22 +1,20 @@
 import Foundation
 
-/// 문제 본문을 `QuestionSegment` 배열로 분리.
+/// Splits question body content into renderable segments.
 ///
-/// Android `mobile/.../text/MarkdownSegments.kt` 의 `splitMarkdownSegments` 와 동치 + GFM Table 추가.
-/// 사용 순서: `EnsureCodeFences.normalize(text)` → `ParseQuestionContent.parse(_:)`.
-///
-/// - fenced code (` ```lang\n...``` `): `.codeBlock`
-/// - inline `<svg>...</svg>`: `.inlineSVG`
-/// - `<img src="...">`: `.image`
-/// - GFM table (`| col |...`): `.table`
-/// - 나머지: `.markdown`
-///
-/// 코드블록 내부의 svg/img/table 은 무시 (코드 예시일 수 있음).
+/// Usage order: `EnsureCodeFences.normalize(text)` then `ParseQuestionContent.parse(_:)`.
+/// Fenced code is collected first, and later rich-content parsing is skipped inside those ranges.
 enum ParseQuestionContent {
 
     private struct Hit {
         let range: NSRange
         let segment: QuestionSegment
+    }
+
+    private struct LineRecord {
+        let content: String
+        let contentRange: NSRange
+        let fullRange: NSRange
     }
 
     static func parse(_ text: String) -> [QuestionSegment] {
@@ -32,14 +30,14 @@ enum ParseQuestionContent {
             let code = m.range(at: 2).location != NSNotFound
                 ? ns.substring(with: m.range(at: 2))
                 : ""
-            let trimmed = code.trimmingCharacters(in: CharacterSet(charactersIn: "\n "))
+            let trimmed = code.trimmingCharacters(in: CharacterSet(charactersIn: "\n"))
             hits.append(.init(
                 range: m.range,
                 segment: .codeBlock(language: lang.isEmpty ? nil : lang, code: trimmed)
             ))
         }
 
-        // 2) inline SVG — 코드블록 내부는 스킵
+        // 2) inline SVG
         let svgs = svgRegex.matches(in: text, options: [], range: NSRange(location: 0, length: ns.length))
         for m in svgs {
             if Self.isInside(m.range, hits: hits) { continue }
@@ -56,14 +54,18 @@ enum ParseQuestionContent {
             hits.append(.init(range: m.range, segment: .image(src: src, alt: alt)))
         }
 
-        // 4) GFM table — 헤더 + separator + 한 줄 이상
-        let tables = tableRegex.matches(in: text, options: [], range: NSRange(location: 0, length: ns.length))
-        for m in tables {
+        // 4) markdown image
+        let markdownImages = markdownImageRegex.matches(in: text, options: [], range: NSRange(location: 0, length: ns.length))
+        for m in markdownImages {
             if Self.isInside(m.range, hits: hits) { continue }
-            let raw = ns.substring(with: m.range)
-            guard let rows = parseGfmTable(raw) else { continue }
-            hits.append(.init(range: m.range, segment: .table(rows: rows)))
+            let alt = ns.substring(with: m.range(at: 1))
+            let src = ns.substring(with: m.range(at: 2)).trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !src.isEmpty else { continue }
+            hits.append(.init(range: m.range, segment: .image(src: src, alt: alt.isEmpty ? nil : alt)))
         }
+
+        // 5) GFM table
+        hits.append(contentsOf: findGfmTables(in: ns, excluding: hits))
 
         if hits.isEmpty {
             return [.markdown(text)]
@@ -95,7 +97,6 @@ enum ParseQuestionContent {
 
     private static func isInside(_ range: NSRange, hits: [Hit]) -> Bool {
         hits.contains { h in
-            // codeBlock 안에 있는지만 검사 (svg/img/table 끼리는 겹치지 않는다 가정)
             if case .codeBlock = h.segment {
                 return range.location >= h.range.location
                     && range.location < h.range.location + h.range.length
@@ -119,38 +120,150 @@ enum ParseQuestionContent {
         return nil
     }
 
-    /// GFM table 본문을 row 배열로 파싱. 첫 줄 = 헤더, 둘째 줄 = separator(스킵), 나머지 = data.
-    /// 셀 좌우 공백 trim, 빈 셀은 " " 로 유지.
-    private static func parseGfmTable(_ raw: String) -> [[String]]? {
-        let lines = raw
-            .split(separator: "\n", omittingEmptySubsequences: false)
-            .map { $0.trimmingCharacters(in: .whitespaces) }
-            .filter { !$0.isEmpty }
-        guard lines.count >= 2 else { return nil }
-        // separator (---) 라인 확인
-        let separatorOk = lines[1].contains("---")
-        guard separatorOk else { return nil }
-        var rows: [[String]] = []
-        for (idx, line) in lines.enumerated() where idx != 1 {
-            let cells = splitTableRow(line)
-            rows.append(cells)
+    /// Parses GFM tables line-by-line so escaped pipes and fenced-code ranges are respected.
+    private static func findGfmTables(in ns: NSString, excluding hits: [Hit]) -> [Hit] {
+        let lines = lineRecords(in: ns)
+        var tables: [Hit] = []
+        var idx = 0
+
+        while idx + 1 < lines.count {
+            let headerLine = lines[idx]
+            let delimiterLine = lines[idx + 1]
+
+            guard !isInside(headerLine.contentRange, hits: hits),
+                  !isInside(delimiterLine.contentRange, hits: hits),
+                  let header = parseTableContentRow(headerLine.content),
+                  header.count >= 2,
+                  let delimiterWidth = parseDelimiterRow(delimiterLine.content),
+                  delimiterWidth == header.count
+            else {
+                idx += 1
+                continue
+            }
+
+            let width = header.count
+            var rows = [normalizeTableRow(header, width: width)]
+            var lastLineIndex = idx + 1
+            var bodyIndex = idx + 2
+
+            while bodyIndex < lines.count {
+                let bodyLine = lines[bodyIndex]
+                let trimmed = bodyLine.content.trimmingCharacters(in: .whitespaces)
+                if trimmed.isEmpty || isInside(bodyLine.contentRange, hits: hits) {
+                    break
+                }
+                guard let bodyRow = parseTableContentRow(bodyLine.content) else {
+                    break
+                }
+                rows.append(normalizeTableRow(bodyRow, width: width))
+                lastLineIndex = bodyIndex
+                bodyIndex += 1
+            }
+
+            let start = headerLine.fullRange.location
+            let end = lines[lastLineIndex].fullRange.location + lines[lastLineIndex].fullRange.length
+            tables.append(.init(
+                range: NSRange(location: start, length: end - start),
+                segment: .table(rows: rows)
+            ))
+            idx = lastLineIndex + 1
         }
-        guard !rows.isEmpty else { return nil }
-        let width = rows.map(\.count).max() ?? 0
-        guard width > 0 else { return nil }
-        return rows.map { row in
-            row.count == width ? row : row + Array(repeating: " ", count: width - row.count)
+
+        return tables
+    }
+
+    private static func lineRecords(in ns: NSString) -> [LineRecord] {
+        guard ns.length > 0 else { return [] }
+
+        var records: [LineRecord] = []
+        var location = 0
+        while location < ns.length {
+            var lineStart = 0
+            var lineEnd = 0
+            var contentsEnd = 0
+            ns.getLineStart(&lineStart, end: &lineEnd, contentsEnd: &contentsEnd, for: NSRange(location: location, length: 0))
+
+            let contentRange = NSRange(location: lineStart, length: contentsEnd - lineStart)
+            let fullRange = NSRange(location: lineStart, length: lineEnd - lineStart)
+            records.append(.init(
+                content: ns.substring(with: contentRange),
+                contentRange: contentRange,
+                fullRange: fullRange
+            ))
+            location = lineEnd
         }
+        return records
+    }
+
+    private static func parseTableContentRow(_ line: String) -> [String]? {
+        let cells = splitTableRow(line)
+        return cells.count >= 2 ? cells : nil
+    }
+
+    private static func parseDelimiterRow(_ line: String) -> Int? {
+        let cells = splitTableRow(line)
+        guard cells.count >= 2, cells.allSatisfy(isValidDelimiterCell) else { return nil }
+        return cells.count
+    }
+
+    private static func isValidDelimiterCell(_ cell: String) -> Bool {
+        var value = cell.trimmingCharacters(in: .whitespaces)
+        if value.first == ":" {
+            value.removeFirst()
+        }
+        if value.last == ":" {
+            value.removeLast()
+        }
+        return value.count >= 3 && value.allSatisfy { $0 == "-" }
+    }
+
+    private static func normalizeTableRow(_ row: [String], width: Int) -> [String] {
+        if row.count == width {
+            return row
+        }
+        if row.count > width {
+            return Array(row.prefix(width))
+        }
+        return row + Array(repeating: "", count: width - row.count)
     }
 
     private static func splitTableRow(_ line: String) -> [String] {
-        var trimmed = line
-        if trimmed.hasPrefix("|") { trimmed.removeFirst() }
-        if trimmed.hasSuffix("|") { trimmed.removeLast() }
-        return trimmed
-            .split(separator: "|", omittingEmptySubsequences: false)
-            .map { $0.trimmingCharacters(in: .whitespaces) }
-            .map { $0.isEmpty ? " " : $0 }
+        let trimmed = line.trimmingCharacters(in: .whitespaces)
+        var cells: [String] = []
+        var cell = ""
+        var backslashCount = 0
+
+        for char in trimmed {
+            if char == "\\" {
+                backslashCount += 1
+                cell.append(char)
+                continue
+            }
+
+            if char == "|" {
+                if backslashCount % 2 == 1 {
+                    cell.removeLast()
+                    cell.append("|")
+                } else {
+                    cells.append(cell.trimmingCharacters(in: .whitespaces))
+                    cell = ""
+                }
+                backslashCount = 0
+                continue
+            }
+
+            backslashCount = 0
+            cell.append(char)
+        }
+
+        cells.append(cell.trimmingCharacters(in: .whitespaces))
+        if trimmed.hasPrefix("|"), !cells.isEmpty {
+            cells.removeFirst()
+        }
+        if trimmed.hasSuffix("|"), !cells.isEmpty {
+            cells.removeLast()
+        }
+        return cells
     }
 
     // MARK: - Regexes
@@ -164,12 +277,8 @@ enum ParseQuestionContent {
     private static let imgRegex: NSRegularExpression = {
         try! NSRegularExpression(pattern: #"<img\b([^>]*?)/?>"#, options: [.caseInsensitive])
     }()
-    private static let tableRegex: NSRegularExpression = {
-        // 헤더 라인 + separator(---) 라인 + 한 줄 이상 본문
-        try! NSRegularExpression(
-            pattern: #"(?m)^\|.+\|\s*\n\|[\s\-:|]+\|\s*\n(?:\|.+\|\s*\n?)+"#,
-            options: []
-        )
+    private static let markdownImageRegex: NSRegularExpression = {
+        try! NSRegularExpression(pattern: #"!\[([^\]]*)\]\(([^)\s]+)(?:\s+"[^"]*")?\)"#, options: [])
     }()
     private static let srcRegex: NSRegularExpression = {
         try! NSRegularExpression(pattern: #"src\s*=\s*(?:"([^"]+)"|'([^']+)')"#, options: [.caseInsensitive])

@@ -158,7 +158,7 @@ private struct WrongAnswerCard: View {
                     Text(item.subjectName)
                         .font(AppType.caption.weight(.semibold))
                         .foregroundStyle(Color.brandPrimary)
-                    Text(item.questionContent)
+                    Text(QuestionContentPreview.make(item.questionContent, maxLength: 96))
                         .font(AppType.body)
                         .foregroundStyle(Color.appTextPrimary)
                         .lineLimit(3)

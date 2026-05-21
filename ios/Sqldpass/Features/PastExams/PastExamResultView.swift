@@ -111,9 +111,14 @@ struct PastExamResultView: View {
                 questionId: ans.questionId,
                 displayOrder: q?.displayOrder ?? (idx + 1),
                 content: q?.content ?? "문제 #\(ans.questionId)",
+                questionType: q?.questionType ?? "MCQ",
                 selectedOption: ans.selectedOption,
                 correctOption: ans.correctOption,
-                isCorrect: ans.correct
+                isCorrect: ans.correct,
+                submittedAnswerText: ans.submittedAnswerText,
+                answer: ans.answer,
+                keywords: ans.keywords,
+                explanation: ans.explanation
             )
         }
     }

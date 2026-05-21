@@ -55,7 +55,7 @@ struct BookmarksView: View {
                                 Text(bookmark.subjectName)
                                     .font(AppType.caption.weight(.semibold))
                                     .foregroundStyle(Color.brandPrimary)
-                                Text(bookmark.questionContent)
+                                Text(QuestionContentPreview.make(bookmark.questionContent, maxLength: 72))
                                     .font(AppType.bodyEmph)
                                     .foregroundStyle(Color.appTextPrimary)
                                     .lineLimit(2)

@@ -23,8 +23,20 @@ struct BookmarkDetailSheet: View {
                         Text("문제 #\(question.id)")
                             .font(AppType.caption.weight(.semibold))
                             .foregroundStyle(Color.brandPrimary)
-                        QuestionContentView(text: question.content)
+                        let parsed = QuestionParser.parseNormalized(question.content)
+                        QuestionContentView(text: parsed.body.isEmpty ? question.content : parsed.body)
                             .textSelection(.enabled)
+                        if !parsed.options.isEmpty {
+                            VStack(spacing: Spacing.sm) {
+                                ForEach(Array(parsed.options.enumerated()), id: \.offset) { idx, option in
+                                    AppOptionRow(
+                                        optionNumber: idx + 1,
+                                        optionText: option,
+                                        state: .idle
+                                    )
+                                }
+                            }
+                        }
                     }
                 }
                 .padding(Spacing.base)

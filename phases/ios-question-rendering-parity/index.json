@@ -1,0 +1,54 @@
+{
+  "project": "sqldpass",
+  "phase": "ios-question-rendering-parity",
+  "description": "iOS 네이티브 SwiftUI 앱의 문제 본문/보기/해설/결과/오답노트 렌더링을 웹 수준으로 끌어올린다. 평문 SQL 자동 펜싱, 인라인 코드 스타일, 다크톤 코드블록 + 키워드 신택스 하이라이팅, 단락 내 줄바꿈 보존, 옵션 마커 줄바꿈 정규화, 오답노트 공통 렌더러 사용. 백엔드/안드로이드/프론트엔드 변경 0. Plan: C:/Users/admin/.claude/plans/ios-parallel-flask.md.",
+  "steps": [
+    {
+      "step": 1,
+      "name": "ensure-code-fences-heuristic",
+      "description": "EnsureCodeFences.normalize 끝에 (a) 평문 SQL/C/Java/Python 자동 펜싱 휴리스틱 + (b) 옵션 마커(①②③④, 1./2./3./4., 1)/2)/3)/4)) 줄바꿈 정규화 단계 2개 추가.",
+      "status": "completed",
+      "summary": "EnsureCodeFences.swift +276 라인. autoFencePlainCode + normalizeOptionMarkers + 보조 함수/enum 추가. NSRegularExpression 8개 static let 캐시(웹 ensureCodeFences 와 1:1 동치 — hasKorean/sqlStart/sqlCont/cStart/javaStart/pyStart/contIndented/contSymbols + 마커용 dotMarkerRegex/parenMarkerRegex). 한글 라인 false-positive 방지(detectAutoFenceLang 진입 즉시 nil) + 1줄+40자미만 펜싱 보류 + 펜스 토글로 펜스 안 라인 통과 + 4 마커 동시 등장만 트리거(superset 검사) + 음의 후방탐색 (?<![\\d.]) 으로 12./1.2. 오매치 차단. mental test 5건 모두 예상 출력 일치.",
+      "completed_at": "2026-05-21T00:30:00+0900"
+    },
+    {
+      "step": 2,
+      "name": "markdown-textview-inline-code-and-newline",
+      "description": "MarkdownTextView 의 inlineText 가 AttributedString runs 순회로 inline code 토큰에 monospaced + appCodeInline 배경 + appCodeInlineFG 텍스트 강제. flushParagraph join ' '→'\\n' 으로 단락 내 \\n 보존.",
+      "status": "completed",
+      "summary": "MarkdownTextView.swift +18/-? 라인. inlineText 를 if let → guard var 로 변환 후 for run in attributed.runs 루프에서 run.inlinePresentationIntent?.contains(.code) == true 구간에 .font/.backgroundColor/.foregroundColor 3 attribute 강제(iOS 17+ SwiftUI 표준 subscript-mutation API). flushParagraph 의 joined separator ' '→'\\n', trimmingCharacters .whitespaces→.whitespacesAndNewlines. heading/bullet/orderedItem/blank 분기 + interpretedSyntax: .inlineOnlyPreservingWhitespace 옵션 + AppType.body modifier 무변경.",
+      "completed_at": "2026-05-21T00:30:00+0900"
+    },
+    {
+      "step": 3,
+      "name": "wrong-answer-sheet-shared-renderer",
+      "description": "WrongAnswerRetrySheet 의 plain Text(item.questionContent) 와 Text(explanation) 를 QuestionContentView(text:) 로 교체.",
+      "status": "completed",
+      "summary": "WrongAnswerRetrySheet.swift +10/-? 라인. 라인 31-34 Text(item.questionContent)+.font+.foregroundStyle+.fixedSize 4 라인 → QuestionContentView(text: item.questionContent) 1 라인. 라인 165-168 Text(explanation)+.font+.foregroundStyle+.fixedSize 4 라인 → QuestionContentView(text: explanation) 1 라인. 같은 모듈이라 import 추가 없음. 시트 레이아웃/선택지/결과 카드/submit 흐름 무변경.",
+      "completed_at": "2026-05-21T00:30:00+0900"
+    },
+    {
+      "step": 4,
+      "name": "color-tokens-code-surface",
+      "description": "Color+Tokens.swift 에 코드블록 다크톤 토큰 6 개 추가 (appCodeSurface/Header/Border/Text + appCodeInline/InlineFG). 라이트/다크 모두 동일 다크 값.",
+      "status": "completed",
+      "summary": "Color+Tokens.swift +8 라인. // MARK: Code surface 섹션 신설 + 6 토큰 추가: appCodeSurface(#1e1e1e), appCodeHeader(#2a2a2a), appCodeBorder(#3a3a3a), appCodeText(#e6e6e6), appCodeInline(#1f1f1f), appCodeInlineFG(#fcd34d). 모두 Color(light:dark:) 헬퍼로 라이트/다크 동일 다크 값(코드 영역 모드 불변 정책). Brand/Surfaces/Borders/Text/Semantic/Cert 기존 토큰 무변경.",
+      "completed_at": "2026-05-21T00:30:00+0900"
+    },
+    {
+      "step": 5,
+      "name": "syntax-highlighter-and-codeblock-view",
+      "description": "신규 SimpleSyntaxHighlighter.swift (순수 Swift NSRegularExpression 기반 SQL/Java/Python/C/JS/TS/Bash 키워드·문자열·주석·숫자 색 분리) + CodeBlockView.swift 다크톤 토큰 적용 + SimpleSyntaxHighlighter.highlight 호출.",
+      "status": "completed",
+      "summary": "SimpleSyntaxHighlighter.swift 신규(enum + static highlight). NSMutableIndexSet 마스킹으로 주석→문자열→숫자→키워드 순 패스, 앞 매치 range 와 겹치면 skip(주석 내 키워드 false-positive 회피). NSRange→Range<AttributedString.Index> 변환 헬퍼. 언어 정규화: sql/python|py/java/c|cpp|c++/javascript|js|typescript|ts/bash|sh|shell→그 외 plain. SQL 만 case-insensitive. 색 토큰: 주석=appTextMuted, 문자열=appCodeInlineFG, 숫자=semanticInfo, 키워드=brandPrimary, 기본=appCodeText, 폰트=.system(.footnote, design: .monospaced). CodeBlockView.swift +20 라인 (전체 교체): appElevated→appCodeHeader, appTextSubtle→appCodeText.opacity(0.7), appSurface→appCodeSurface, appBorder→appCodeBorder, 헤더-본문 사이 1px Rectangle(appCodeBorder) 구분선 신설, Text(code)... → Text(SimpleSyntaxHighlighter.highlight(code, language:)). ScrollView(.horizontal)/fixedSize/lineLimit/padding 보존. project.yml sources 글롭(- path: Sqldpass) 이라 신규 파일 자동 포함, yml 수정 불필요(단 xcodegen generate 1회 권장).",
+      "completed_at": "2026-05-21T00:30:00+0900"
+    },
+    {
+      "step": 6,
+      "name": "build-and-screenshot-verification",
+      "description": "macOS 셸에서 xcodegen / xcodebuild / xcrun simctl 로 빌드 + 5 화면 + 4 보기 줄바꿈 케이스 + 다크 모드 + Dynamic Type 스크린샷 검증. Windows 셸에서 실행 불가이므로 사용자 수동 안내 step.",
+      "status": "pending"
+    }
+  ],
+  "created_at": "2026-05-21T00:00:00+0900"
+}

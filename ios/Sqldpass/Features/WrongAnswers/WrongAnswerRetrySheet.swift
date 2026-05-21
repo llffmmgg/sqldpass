@@ -14,6 +14,10 @@ struct WrongAnswerRetrySheet: View {
 
     private let choices = [1, 2, 3, 4]
 
+    private var parsedQuestion: ParsedQuestion {
+        QuestionParser.parseNormalized(item.questionContent)
+    }
+
     private var canSubmit: Bool {
         if item.isTextAnswerType {
             return !answerText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && !isSubmitting
@@ -28,10 +32,8 @@ struct WrongAnswerRetrySheet: View {
                     Text(item.subjectName)
                         .font(AppType.caption.weight(.semibold))
                         .foregroundStyle(Color.brandPrimary)
-                    Text(item.questionContent)
-                        .font(AppType.body)
-                        .foregroundStyle(Color.appTextPrimary)
-                        .fixedSize(horizontal: false, vertical: true)
+                    let parsed = parsedQuestion
+                    QuestionContentView(text: parsed.body.isEmpty ? item.questionContent : parsed.body)
 
                     if let result {
                         resultBlock(result)
@@ -67,35 +69,22 @@ struct WrongAnswerRetrySheet: View {
 
     private var choiceBlock: some View {
         VStack(spacing: Spacing.sm) {
-            ForEach(choices, id: \.self) { value in
-                Button {
-                    selectedOption = value
-                } label: {
-                    HStack {
-                        ZStack {
-                            Circle()
-                                .stroke(
-                                    selectedOption == value ? Color.brandPrimary : Color.appBorder,
-                                    lineWidth: selectedOption == value ? 2 : 1
-                                )
-                                .frame(width: 28, height: 28)
-                            Text("\(value)")
-                                .font(AppType.bodyEmph)
-                                .foregroundStyle(selectedOption == value ? Color.brandPrimary : Color.appTextPrimary)
-                        }
-                        Text("\(value)번")
-                            .font(AppType.body)
-                        Spacer()
+            let parsed = parsedQuestion
+            let count = parsed.options.isEmpty ? choices.count : parsed.options.count
+            ForEach(1...count, id: \.self) { value in
+                let optionText = parsed.options.indices.contains(value - 1)
+                    ? parsed.options[value - 1]
+                    : nil
+                AppOptionRow(
+                    optionNumber: value,
+                    optionText: optionText,
+                    state: selectedOption == value ? .selected : .idle,
+                    onTap: {
+                        selectedOption = value
                     }
-                    .padding(Spacing.md)
-                    .background(selectedOption == value ? Color.brandPrimary.opacity(0.1) : Color.appSurface)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: Radius.md)
-                            .stroke(selectedOption == value ? Color.brandPrimary : Color.appBorder, lineWidth: 1)
-                    )
-                    .clipShape(RoundedRectangle(cornerRadius: Radius.md))
-                }
-                .buttonStyle(.plain)
+                )
+                .disabled(isSubmitting)
+                .opacity(isSubmitting ? 0.55 : 1)
             }
 
             submitButton
@@ -162,10 +151,7 @@ struct WrongAnswerRetrySheet: View {
                 Divider()
                 Text("해설")
                     .font(AppType.bodyEmph)
-                Text(explanation)
-                    .font(AppType.body)
-                    .foregroundStyle(Color.appTextMuted)
-                    .fixedSize(horizontal: false, vertical: true)
+                QuestionContentView(text: explanation)
             }
             if r.correct {
                 Text("이 문제는 오답노트에서 제거됩니다.")

@@ -14,7 +14,7 @@ struct OMRAnswerGrid: View {
     private let choices = [1, 2, 3, 4]
 
     var body: some View {
-        let parsed = QuestionParser.parse(question.content)
+        let parsed = QuestionParser.parseNormalized(question.content)
 
         VStack(spacing: Spacing.sm) {
             ForEach(choices, id: \.self) { value in

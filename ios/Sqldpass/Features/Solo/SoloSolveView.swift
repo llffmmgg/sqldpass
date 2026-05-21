@@ -67,7 +67,7 @@ struct SoloSolveView: View {
     @ViewBuilder
     private var content: some View {
         let current = viewModel.current!
-        let parsed = QuestionParser.parse(current.content)
+        let parsed = QuestionParser.parseNormalized(current.content)
         let isMcq = !(current.questionType.uppercased().contains("SHORT")
                       || current.questionType.uppercased().contains("DESCRIPTIVE")
                       || current.questionType.uppercased().contains("TEXT"))

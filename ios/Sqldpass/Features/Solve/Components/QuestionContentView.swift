@@ -7,6 +7,7 @@ import SwiftUI
 /// 각 세그먼트 전용 뷰로 렌더.
 struct QuestionContentView: View {
     let text: String
+    var codeBlockSurface: CodeBlockSurface = .card
 
     private var segments: [QuestionSegment] {
         ParseQuestionContent.parse(EnsureCodeFences.normalize(text))
@@ -27,32 +28,11 @@ struct QuestionContentView: View {
         case .markdown(let md):
             MarkdownTextView(text: md)
         case .codeBlock(let lang, let code):
-            CodeBlockView(language: lang, code: code)
+            CodeBlockView(language: lang, code: code, surface: codeBlockSurface)
         case .inlineSVG(let xml):
             InlineSVGView(svgXML: xml)
         case .image(let src, let alt):
-            if let url = URL(string: src) {
-                AsyncImage(url: url) { phase in
-                    switch phase {
-                    case .empty:
-                        Color.appSurfaceHover
-                            .frame(height: 80)
-                            .clipShape(RoundedRectangle(cornerRadius: Radius.md))
-                    case .success(let image):
-                        image
-                            .resizable()
-                            .scaledToFit()
-                            .frame(maxWidth: .infinity)
-                            .clipShape(RoundedRectangle(cornerRadius: Radius.md))
-                    case .failure:
-                        Text(alt ?? "이미지를 불러올 수 없습니다")
-                            .font(AppType.footnote)
-                            .foregroundStyle(Color.appTextSubtle)
-                    @unknown default:
-                        EmptyView()
-                    }
-                }
-            }
+            RemoteQuestionImageView(src: src, alt: alt)
         case .table(let rows):
             MarkdownTableView(rows: rows)
         }

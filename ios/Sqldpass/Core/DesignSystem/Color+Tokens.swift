@@ -46,4 +46,12 @@ extension Color {
     static let certComputerL1          = Color(light: "#0ea5e9", dark: "#0ea5e9")
     static let certComputerL2          = Color(light: "#6366f1", dark: "#6366f1")
     static let certADSP                = Color(light: "#14b8a6", dark: "#14b8a6")
+
+    // MARK: Code surface (다크톤 고정 — 라이트/다크 무관, 웹 zinc-900 톤과 매칭)
+    static let appCodeSurface   = Color(light: "#1e1e1e", dark: "#1e1e1e")
+    static let appCodeHeader    = Color(light: "#2a2a2a", dark: "#2a2a2a")
+    static let appCodeBorder    = Color(light: "#3a3a3a", dark: "#3a3a3a")
+    static let appCodeText      = Color(light: "#e6e6e6", dark: "#e6e6e6")
+    static let appCodeInline    = Color(light: "#1f1f1f", dark: "#1f1f1f")
+    static let appCodeInlineFG  = Color(light: "#fcd34d", dark: "#fcd34d")
 }

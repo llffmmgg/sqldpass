@@ -111,9 +111,14 @@ struct SolveResultView: View {
                 // 안내 문구를 "문제 정보 누락" 같은 부정적 카피로 보여주지 말고
                 // 식별자만 노출. selectedOption/correctOption 은 그대로 검토 가능.
                 content: q?.content ?? "문제 #\(ans.questionId)",
+                questionType: q?.questionType ?? "MCQ",
                 selectedOption: ans.selectedOption,
                 correctOption: ans.correctOption,
-                isCorrect: ans.correct
+                isCorrect: ans.correct,
+                submittedAnswerText: nil,
+                answer: nil,
+                keywords: [],
+                explanation: nil
             )
         }
     }

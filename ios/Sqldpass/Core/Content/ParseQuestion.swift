@@ -15,6 +15,10 @@ enum QuestionParser {
         try! NSRegularExpression(pattern: "^[①②③④]\\s*")
     }()
 
+    static func parseNormalized(_ content: String) -> ParsedQuestion {
+        parse(EnsureCodeFences.normalize(content))
+    }
+
     static func parse(_ content: String) -> ParsedQuestion {
         let lines = content.components(separatedBy: "\n")
         var bodyLines: [String] = []

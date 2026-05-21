@@ -10,7 +10,7 @@ struct QuestionBody: View {
     let question: MockExamQuestionItem
 
     var body: some View {
-        let parsed = QuestionParser.parse(question.content)
+        let parsed = QuestionParser.parseNormalized(question.content)
         let bodyText = parsed.options.isEmpty || parsed.body.isEmpty
             ? question.content
             : parsed.body
