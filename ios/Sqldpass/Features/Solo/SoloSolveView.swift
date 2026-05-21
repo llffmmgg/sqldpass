@@ -56,6 +56,7 @@ struct SoloSolveView: View {
         )) { target in
             FeedbackComposeView(initialType: .questionError, questionId: target.questionId)
         }
+        .hideCustomTabBar()
     }
 
     /// `.sheet(item:)` 가 `Identifiable` 을 요구해 Int64 만으로는 부족 — 얇은 래퍼.

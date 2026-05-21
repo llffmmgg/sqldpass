@@ -67,6 +67,7 @@ struct PastExamRunnerView: View {
         } message: {
             Text("지금까지의 답안은 저장되지 않습니다.")
         }
+        .hideCustomTabBar()
     }
 
     @ViewBuilder

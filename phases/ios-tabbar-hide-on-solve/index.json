@@ -1,0 +1,30 @@
+{
+  "project": "sqldpass",
+  "phase": "ios-tabbar-hide-on-solve",
+  "description": "직전 커밋(73ba3e0 커스텀 탭바) 의 회귀 fix — 풀이 화면(Solve/SoloSolve/PastExamRunner) 에서 CustomTabBar 가 자체 ActionBar 와 stack/겹쳐 정답 버튼 일부가 가려지는 문제. PreferenceKey 패턴으로 풀이 화면 진입 시 탭바 숨김. 이전 phase 의 흰 띠 해결은 그대로 유지. 백엔드/Android/frontend 변경 0.",
+  "steps": [
+    {
+      "step": 1,
+      "name": "main-tab-view-hide-key",
+      "description": "ios/Sqldpass/App/MainTabView.swift 에 HideCustomTabBarKey PreferenceKey + View.hideCustomTabBar() extension 추가. @State hideTabBar + safeAreaInset content 안 if !hideTabBar { CustomTabBar(...) } + .onPreferenceChange 핸들러(Transaction.disablesAnimations).",
+      "status": "completed",
+      "summary": "MainTabView.swift +20/-1 라인. HideCustomTabBarKey(reduce: ||) + hideCustomTabBar() modifier 헬퍼 + @State hideTabBar + safeAreaInset 분기 + onPreferenceChange. 풀이 화면 push 시 자동 숨김, pop 시 defaultValue(false) 자동 복원.",
+      "completed_at": "2026-05-21T01:30:00+0900"
+    },
+    {
+      "step": 2,
+      "name": "hide-modifier-in-solve-screens",
+      "description": "풀이 화면 3 개의 body 끝에 .hideCustomTabBar() 한 줄씩 추가.",
+      "status": "completed",
+      "summary": "SolveView.swift body ZStack 의 .animation 뒤 + SoloSolveView.swift body Group 의 .sheet 뒤 + PastExamRunnerView.swift body Group 의 .alert 뒤. 각 +1 라인.",
+      "completed_at": "2026-05-21T01:30:00+0900"
+    },
+    {
+      "step": 3,
+      "name": "build-and-screenshot-verification",
+      "description": "macOS 셸 + 실기기에서 빌드 + 풀이 진입/이탈 시 탭바 사라짐/복원 + 정답 버튼 완전 노출 + 다른 화면 회귀 0 확인.",
+      "status": "pending"
+    }
+  ],
+  "created_at": "2026-05-21T01:30:00+0900"
+}

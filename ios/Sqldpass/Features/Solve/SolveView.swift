@@ -37,6 +37,7 @@ struct SolveView: View {
             }
         }
         .animation(.easeOut(duration: 0.2), value: viewModel.startedAt)
+        .hideCustomTabBar()
     }
 
     @ViewBuilder
