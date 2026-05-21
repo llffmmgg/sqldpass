@@ -17,6 +17,7 @@ import com.sqldpass.app.data.PastExamGradeResponse
 import com.sqldpass.app.data.PastExamSummary
 import com.sqldpass.app.data.PaymentEligibilityResponse
 import com.sqldpass.app.data.QuestionResponse
+import com.sqldpass.app.data.QuotaResponse
 import com.sqldpass.app.data.SnapshotResponse
 import com.sqldpass.app.data.SolveRequest
 import com.sqldpass.app.data.SolveResponse
@@ -68,6 +69,13 @@ interface SqldpassApi {
 
     @GET("api/payment/eligibility")
     suspend fun getPaymentEligibility(): PaymentEligibilityResponse
+
+    /**
+     * 무료 일일 한도 — MockExamTab/SolveTab 진입 시 헤더 배지 표시 용.
+     * limit 가 null 이면 활성 구독자 (UI 측에서 표시 숨김).
+     */
+    @GET("api/quota")
+    suspend fun getQuota(): QuotaResponse
 
     @GET("api/public/past-exams")
     suspend fun getPastExams(@Query("cert") certSlug: String?): List<PastExamSummary>

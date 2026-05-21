@@ -1,0 +1,22 @@
+{
+  "project": "sqldpass",
+  "phase": "free-daily-quota-android",
+  "description": "무료 회원 일일 한도 — Android Jetpack Compose 클라이언트. OkHttp/Retrofit 인터셉터에서 402 응답을 잡아 페이월 Bottom Sheet 노출. GET /api/quota 사전 표시. 카운팅·차단 로직 없음.",
+  "steps": [
+    {
+      "step": 1,
+      "name": "quota-interceptor-and-bottom-sheet",
+      "description": "OkHttp Interceptor 또는 ResponseAdapter에서 402 응답 감지 → QuotaExceededException 변환. AppViewModel 또는 SqldpassNav 레벨에서 catch → Compose Bottom Sheet 페이월 표시.",
+      "status": "completed",
+      "summary": "QuotaInfo/QuotaExceededException, QuotaInterceptor(application interceptor — 401 TokenAuthenticator 비변경), SqldpassApplication.quotaExceeded SharedFlow + OkHttp 빌더에 인터셉터 추가, AppViewModel.quotaPaywall 전역 상태 + showQuotaPaywall/dismissQuotaPaywall, MainActivity 에서 collect → SqldpassApp 최상위 Box 안 QuotaPaywallSheet 마운트(AppBottomSheet + AppMascot Celebrate + AppButton). onPurchase → PassPlus 라우트로 navigate."
+    },
+    {
+      "step": 2,
+      "name": "quota-api-and-tab-header",
+      "description": "SqldpassApi에 getQuota() 추가, AppRepository에 노출. MockExamTab/SolveTab 진입 시 헤더에 '오늘 18 / 30' 표시. limit null이면 숨김.",
+      "status": "completed",
+      "summary": "QuotaResponse 추가(questionUsed/Limit?, mockUsed/Limit?, resetAt KST naive), SqldpassApi.getQuota(), AppRepository.fetchQuota(), AppViewModel.quota state + refreshQuota(비로그인 가드). QuotaBadge(Question/Mock kind, limit null → 숨김, 카운팅·차단 없음). MockExamTab/SolveTab 헤더에 마운트 + LaunchedEffect 에서 onLoadQuota 호출, MainActivity 두 탭 라우트에서 viewModel::refreshQuota 전달. PastExamTab 미마운트(기출 무제한 규칙 준수). 미니 회차 진입 경로: 현재 mobile 에 /api/mock-exams/mini 호출 없음 — 미니 카탈로그 신규 화면은 본 phase 범위 외(탭 구성·정책 변경 금지 규약). 별도 phase 로 분리 권장."
+    }
+  ],
+  "completed_at": "2026-05-21"
+}

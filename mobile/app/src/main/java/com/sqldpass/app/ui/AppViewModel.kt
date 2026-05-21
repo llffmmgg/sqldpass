@@ -12,6 +12,8 @@ import com.sqldpass.app.data.PastExamAnswer
 import com.sqldpass.app.data.PastExamSummary
 import com.sqldpass.app.data.QuestionDetailResponse
 import com.sqldpass.app.data.QuestionResponse
+import com.sqldpass.app.data.QuotaInfo
+import com.sqldpass.app.data.QuotaResponse
 import com.sqldpass.app.data.SolveAnswerRequest
 import com.sqldpass.app.data.SolveSummary
 import com.sqldpass.app.data.StreakResponse
@@ -114,6 +116,13 @@ data class AppUiState(
     val history: List<SolveSummary> = emptyList(),
     val historyLoading: Boolean = false,
     val historyError: String? = null,
+    /** 무료 일일 한도 초과 페이월 — non-null 이면 [com.sqldpass.app.ui.common.QuotaPaywallSheet] 표시. */
+    val quotaPaywall: QuotaInfo? = null,
+    /**
+     * GET /api/quota 사전 표시 캐시. MockExamTab/SolveTab 진입 시 [com.sqldpass.app.ui.AppViewModel.refreshQuota] 호출.
+     * questionLimit/mockLimit 가 null 이면 활성 구독자 — [QuotaBadge] 가 표시 숨김.
+     */
+    val quota: QuotaResponse? = null,
 )
 
 class AppViewModel(
@@ -200,6 +209,31 @@ class AppViewModel(
 
     fun setMessage(message: String?) {
         _state.update { it.copy(message = message) }
+    }
+
+    /**
+     * QuotaInterceptor 가 HTTP 402 를 잡았을 때 호출되는 전역 enter point.
+     * Bottom Sheet 표시는 [com.sqldpass.app.MainActivity.SqldpassApp] 최상위에서 collect.
+     */
+    fun showQuotaPaywall(info: QuotaInfo) {
+        _state.update { it.copy(quotaPaywall = info) }
+    }
+
+    fun dismissQuotaPaywall() {
+        _state.update { it.copy(quotaPaywall = null) }
+    }
+
+    /**
+     * MockExamTab / SolveTab 진입 시 호출. 비로그인이면 무시(401 노이즈 회피).
+     * 결과는 [AppUiState.quota] 에 저장 — limit null 이면 [QuotaBadge] 가 표시 숨김.
+     */
+    fun refreshQuota() {
+        if (tokenStore.token.isNullOrBlank()) return
+        viewModelScope.launch {
+            runCatching { repository.fetchQuota() }
+                .onSuccess { q -> _state.update { it.copy(quota = q) } }
+            // 실패 시: 조용히 무시 — 배지 미표시는 회귀 아님(이전 캐시 유지).
+        }
     }
 
     fun toggleBookmark(questionId: Long) {

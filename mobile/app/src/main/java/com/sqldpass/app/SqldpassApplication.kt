@@ -6,10 +6,12 @@ import com.sqldpass.app.auth.AuthManager
 import com.sqldpass.app.auth.TokenAuthenticator
 import com.sqldpass.app.billing.BillingManager
 import com.sqldpass.app.data.AppRepository
+import com.sqldpass.app.data.QuotaInfo
 import com.sqldpass.app.data.SettingsStore
 import com.sqldpass.app.data.TokenStore
 import com.sqldpass.app.data.local.SqldpassDatabase
 import com.sqldpass.app.data.remote.AuthRefreshApi
+import com.sqldpass.app.data.remote.QuotaInterceptor
 import com.sqldpass.app.data.remote.SqldpassApi
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
@@ -32,6 +34,15 @@ class SqldpassApplication : Application() {
      */
     private val _sessionLost = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
     val sessionLost: SharedFlow<Unit> = _sessionLost.asSharedFlow()
+
+    /**
+     * 무료 일일 한도(HTTP 402) 감지 시 [QuotaInterceptor] 가 emit. ViewModel 이 collect 해
+     * 전역 페이월 Bottom Sheet 상태로 변환한다.
+     *
+     * extraBufferCapacity = 1 — 단발성 이벤트라 버퍼링 불필요.
+     */
+    private val _quotaExceeded = MutableSharedFlow<QuotaInfo>(extraBufferCapacity = 1)
+    val quotaExceeded: SharedFlow<QuotaInfo> = _quotaExceeded.asSharedFlow()
 
     private val moshi: Moshi by lazy {
         Moshi.Builder().add(KotlinJsonAdapterFactory()).build()
@@ -87,14 +98,27 @@ class SqldpassApplication : Application() {
         )
     }
 
+    // 일일 한도(402) 인터셉터 — TokenAuthenticator(401) 동작은 건드리지 않는다.
+    private val quotaInterceptor: QuotaInterceptor by lazy {
+        QuotaInterceptor(
+            moshi = moshi,
+            onQuotaExceeded = { info -> _quotaExceeded.tryEmit(info) },
+        )
+    }
+
     // 명시 timeout: OS sleep 이후 좀비 socket hang 차단. callTimeout 은 일부러 미설정 —
     // TokenAuthenticator 의 401 재발급 후 retry 가 callTimeout 안에 끊겨버리는 회귀를 피함.
+    //
+    // QuotaInterceptor 는 application interceptor 로 — 401 재발급 retry 와 충돌하지 않는다
+    // (401 응답이면 402 가 아니므로 quotaInterceptor 는 통과시키고, 402 응답이면 throw 라
+    //  TokenAuthenticator 가 호출될 일이 없다).
     private val okHttp: OkHttpClient by lazy {
         OkHttpClient.Builder()
             .connectTimeout(15, TimeUnit.SECONDS)
             .readTimeout(30, TimeUnit.SECONDS)
             .writeTimeout(30, TimeUnit.SECONDS)
             .addInterceptor(authHeaderInterceptor)
+            .addInterceptor(quotaInterceptor)
             .authenticator(tokenAuthenticator)
             .apply { debugLogging()?.let { addInterceptor(it) } }
             .build()

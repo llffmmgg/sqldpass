@@ -34,6 +34,8 @@ import com.sqldpass.app.ui.common.AppCardAccent
 import com.sqldpass.app.ui.common.AppCardSurface
 import com.sqldpass.app.ui.common.AppChip
 import com.sqldpass.app.ui.common.CtaCard
+import com.sqldpass.app.ui.common.QuotaBadge
+import com.sqldpass.app.ui.common.QuotaKind
 import com.sqldpass.app.ui.common.SkeletonCard
 import com.sqldpass.app.ui.theme.CertColors
 import com.sqldpass.app.ui.theme.LocalSqldpassPalette
@@ -51,9 +53,12 @@ fun MockExamTab(
     state: AppUiState,
     onRefresh: () -> Unit,
     onStartExam: (Long) -> Unit,
+    onLoadQuota: () -> Unit = {},
 ) {
     LaunchedEffect(Unit) {
         if (state.mockExams.isEmpty() && !state.loading) onRefresh()
+        // 일일 한도 사전 표시 — 비로그인이면 ViewModel 측에서 무시.
+        onLoadQuota()
     }
 
     val exams = state.mockExams
@@ -72,6 +77,16 @@ fun MockExamTab(
         ),
         verticalArrangement = Arrangement.spacedBy(SqldSpacing.md),
     ) {
+        // 일일 한도 배지 — 무료 회원에 한해 "오늘 N / 1 모의고사" 표시(활성 구독자는 null → 숨김).
+        item {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Start,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                QuotaBadge(quota = state.quota, kind = QuotaKind.Mock)
+            }
+        }
         if (certs.size > 1) {
             item {
                 Row(

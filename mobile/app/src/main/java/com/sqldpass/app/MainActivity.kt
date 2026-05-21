@@ -61,6 +61,7 @@ import com.sqldpass.app.ui.AppUiState
 import com.sqldpass.app.ui.AppViewModel
 import com.sqldpass.app.ui.AppViewModelFactory
 import com.sqldpass.app.ui.common.AppLoadingIndicator
+import com.sqldpass.app.ui.common.QuotaPaywallSheet
 import com.sqldpass.app.ui.common.TabScaffold
 import com.sqldpass.app.ui.dashboard.DashboardTab
 import com.sqldpass.app.ui.home.HomeScreen
@@ -117,6 +118,12 @@ class MainActivity : ComponentActivity() {
                 app.authManager.signOut(this@MainActivity)
                 viewModel.onAuthChanged()
                 viewModel.setMessage("세션이 만료되어 로그아웃되었습니다. 다시 로그인해 주세요.")
+            }
+        }
+        // 무료 일일 한도(HTTP 402) 감지 — QuotaInterceptor 가 emit → ViewModel 전역 페이월 상태로.
+        lifecycleScope.launch {
+            app.quotaExceeded.collect { info ->
+                viewModel.showQuotaPaywall(info)
             }
         }
         // Play Billing 결과 메시지 + 구독 상태 동기화.
@@ -295,6 +302,7 @@ private fun SqldpassApp(
                                 viewModel.startMockExamRunner(id)
                                 navController.navigate(SqldpassRoute.Runner.route)
                             },
+                            onLoadQuota = viewModel::refreshQuota,
                         )
                     }
                 }
@@ -329,6 +337,7 @@ private fun SqldpassApp(
                                 viewModel.startSoloSolve(id, name)
                                 navController.navigate(SqldpassRoute.SoloSolve.route)
                             },
+                            onLoadQuota = viewModel::refreshQuota,
                         )
                     }
                 }
@@ -532,6 +541,17 @@ private fun SqldpassApp(
             if (state.loading) {
                 AppLoadingIndicator(
                     modifier = Modifier.align(Alignment.Center),
+                )
+            }
+            // 무료 일일 한도 페이월 — 모든 라우트 위에 떠오른다. PassPlus 결제 카탈로그로 이동.
+            state.quotaPaywall?.let { info ->
+                QuotaPaywallSheet(
+                    info = info,
+                    onDismiss = { viewModel.dismissQuotaPaywall() },
+                    onPurchase = {
+                        viewModel.dismissQuotaPaywall()
+                        navController.navigate(SqldpassRoute.PassPlus.route)
+                    },
                 )
             }
         }

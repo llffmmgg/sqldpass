@@ -32,6 +32,8 @@ import com.sqldpass.app.ui.common.AppCard
 import com.sqldpass.app.ui.common.AppCardAccent
 import com.sqldpass.app.ui.common.AppCardSurface
 import com.sqldpass.app.ui.common.AppChip
+import com.sqldpass.app.ui.common.QuotaBadge
+import com.sqldpass.app.ui.common.QuotaKind
 import com.sqldpass.app.ui.common.SkeletonCard
 import com.sqldpass.app.ui.theme.CertColors
 import com.sqldpass.app.ui.theme.LocalSqldpassPalette
@@ -43,11 +45,16 @@ fun SolveTab(
     state: AppUiState,
     onLoadSubjects: () -> Unit,
     onStartPractice: (Long) -> Unit,
+    onLoadQuota: () -> Unit = {},
 ) {
     // /api/subjects 는 로그인 필수 — 비로그인이면 401. 가드.
     val loggedIn = state.nickname != null
     LaunchedEffect(loggedIn) {
-        if (loggedIn) onLoadSubjects()
+        if (loggedIn) {
+            onLoadSubjects()
+            // 일일 한도 사전 표시 — 로그인 상태에서만.
+            onLoadQuota()
+        }
     }
 
     if (!loggedIn) {
@@ -73,6 +80,10 @@ fun SolveTab(
                 style = MaterialTheme.typography.bodyMedium,
                 color = palette.textMuted,
             )
+        }
+        // 일일 한도 배지 — "오늘 N / 30 문제" (활성 구독자는 자동 숨김).
+        item {
+            QuotaBadge(quota = state.quota, kind = QuotaKind.Question)
         }
         // 자격증 탭바 (frontend SolveClient.tsx:512-540 패턴)
         if (parents.isNotEmpty()) {

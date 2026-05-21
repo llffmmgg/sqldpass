@@ -306,6 +306,9 @@ class AppRepository(
 
     suspend fun paymentEligible(): Boolean = api.getPaymentEligibility().eligible
 
+    /** GET /api/quota — 무료 일일 한도 사전 표시. 활성 구독자는 limit 가 null 로 내려옴. */
+    suspend fun fetchQuota(): QuotaResponse = api.getQuota()
+
     suspend fun bookmarks(): BookmarkListResponse = api.getBookmarks()
 
     suspend fun addBookmark(questionId: Long) {

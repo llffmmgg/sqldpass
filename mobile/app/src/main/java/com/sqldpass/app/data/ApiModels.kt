@@ -408,3 +408,20 @@ data class DailyCountResponse(
     val date: String, // ISO yyyy-MM-dd
     val count: Long,
 )
+
+/**
+ * GET /api/quota — 무료 일일 한도 사전 표시용.
+ *
+ * - questionLimit / mockLimit 가 null → 활성 구독자(Focus 7일권 등) → 표시 숨김.
+ * - resetAt: KST naive ISO ("2026-05-22T00:00:00").
+ *
+ * **본 클라이언트는 표시 전용 — 카운팅·차단 로직 없음.** 서버 단일 진실 소스.
+ */
+@JsonClass(generateAdapter = true)
+data class QuotaResponse(
+    val questionUsed: Int,
+    val questionLimit: Int?,
+    val mockUsed: Int,
+    val mockLimit: Int?,
+    val resetAt: String,
+)
