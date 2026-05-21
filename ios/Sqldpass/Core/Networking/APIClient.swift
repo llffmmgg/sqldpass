@@ -156,12 +156,7 @@ final class APIClient {
             // `{ "error": "DAILY_QUESTION_LIMIT" | "DAILY_MOCK_LIMIT",
             //    "used": Int, "limit": Int, "resetAt": "YYYY-MM-DDTHH:mm:ss" }`
             // 형태로 응답한다. 디코딩 성공 시 quotaExceeded, 실패 시 일반 clientError 로 폴백.
-            struct QuotaBody: Decodable {
-                let error: String
-                let used: Int
-                let limit: Int
-                let resetAt: String
-            }
+            // Swift 는 generic function 안에 nested type 선언을 불허하므로 file-scoped 로 분리.
             if let body = try? decoder.decode(QuotaBody.self, from: data) {
                 throw APIError.quotaExceeded(
                     code: body.error,
@@ -187,6 +182,15 @@ final class APIClient {
 }
 
 private struct EmptyBody: Encodable {}
+
+/// HTTP 402 응답 body 디코딩용. APIClient.send 의 402 분기에서 사용.
+/// Swift 는 generic function 안에 nested type 선언을 불허해 file-scoped 로 둔다.
+private struct QuotaBody: Decodable {
+    let error: String
+    let used: Int
+    let limit: Int
+    let resetAt: String
+}
 
 /// 204 No Content / 응답 본문이 없을 때 사용.
 struct EmptyResponse: Decodable {
