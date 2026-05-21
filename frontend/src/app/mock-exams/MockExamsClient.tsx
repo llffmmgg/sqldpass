@@ -6,6 +6,7 @@ import { Suspense, useEffect, useMemo, useState } from "react";
 
 import Spinner from "@/components/Spinner";
 import { Card, Container } from "@/components/ui";
+import QuotaBadge from "@/components/QuotaBadge";
 import {
   CERT_LIST,
   CERT_TOKENS,
@@ -151,10 +152,15 @@ function MockExamsContent() {
 
   return (
     <Container size="narrow" className="py-16">
-      <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">모의고사</h2>
-      <p className="mt-2 text-sm text-text-muted">
-        {token.labelLong} · 실전 타이머와 함께 무료 CBT 로 응시해보세요. 점수 기록·오답 노트는 로그인 후 자동 저장됩니다.
-      </p>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">모의고사</h2>
+          <p className="mt-2 text-sm text-text-muted">
+            {token.labelLong} · 실전 타이머와 함께 무료 CBT 로 응시해보세요. 점수 기록·오답 노트는 로그인 후 자동 저장됩니다.
+          </p>
+        </div>
+        <QuotaBadge kind="mock" className="mt-1 shrink-0" />
+      </div>
 
       {/* 자격증 탭 — past-exams 와 동일한 단일 pill + cert dot + count + NEW 카운트 */}
       <div className="mt-6 -mx-1 flex gap-1 overflow-x-auto rounded-lg border border-border bg-surface p-1 text-sm">

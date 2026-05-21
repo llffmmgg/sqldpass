@@ -1,7 +1,33 @@
 import { getToken, clearAuth } from "@/lib/auth";
 import { isCapacitorApp } from "@/lib/platform";
+import {
+  QuotaExceededError,
+  dispatchQuotaExceeded,
+  isQuotaErrorCode,
+  type QuotaExceededPayload,
+} from "@/lib/quotaEvents";
 
 const BASE = "/api";
+
+// 백엔드가 무료 일일 한도 초과 시 HTTP 402 + { error, used, limit, resetAt } 응답을 던진다.
+// 본문이 정상 페이로드면 전역 quota-exceeded 이벤트를 발행해 페이월 모달을 띄우고,
+// 호출자에게는 QuotaExceededError 를 throw 한다. 자체 카운팅·차단 로직은 없다 — 서버 단일 가드.
+async function handleQuotaResponse(res: Response): Promise<QuotaExceededError | null> {
+  if (res.status !== 402) return null;
+  const body = (await res.json().catch(() => null)) as Partial<QuotaExceededPayload> | null;
+  if (body && isQuotaErrorCode(body.error)) {
+    const payload: QuotaExceededPayload = {
+      error: body.error,
+      used: typeof body.used === "number" ? body.used : 0,
+      limit: typeof body.limit === "number" ? body.limit : 0,
+      resetAt: typeof body.resetAt === "string" ? body.resetAt : "",
+    };
+    dispatchQuotaExceeded(payload);
+    return new QuotaExceededError(payload);
+  }
+  // 402 인데 형식이 안 맞으면 그냥 일반 에러로 처리 (사용자에게 페이월을 띄울 근거 없음)
+  return null;
+}
 
 export async function fetchApi<T>(path: string, options?: RequestInit): Promise<T> {
   const token = getToken();
@@ -24,6 +50,9 @@ export async function fetchApi<T>(path: string, options?: RequestInit): Promise<
     }
     throw new Error("로그인이 필요합니다.");
   }
+
+  const quotaErr = await handleQuotaResponse(res);
+  if (quotaErr) throw quotaErr;
 
   if (!res.ok) {
     const error = await res.json().catch(() => ({ message: "요청에 실패했습니다." }));
@@ -369,6 +398,8 @@ async function fetchApiVoid(path: string, options?: RequestInit): Promise<void> 
     }
     throw new Error("로그인이 필요합니다.");
   }
+  const quotaErr = await handleQuotaResponse(res);
+  if (quotaErr) throw quotaErr;
   if (!res.ok) {
     const error = await res.json().catch(() => ({ message: "요청에 실패했습니다." }));
     throw new Error(error.message);

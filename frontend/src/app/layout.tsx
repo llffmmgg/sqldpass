@@ -15,6 +15,7 @@ import AppRouteGuard from "@/components/AppRouteGuard";
 import ServiceWorkerRegistrar from "@/components/ServiceWorkerRegistrar";
 import OfflineSyncManager from "@/components/OfflineSyncManager";
 import { ToastProvider } from "@/components/Toast";
+import QuotaPaywallModal from "@/components/QuotaPaywallModal";
 import "./globals.css";
 
 const ADSENSE_SIDEBAR_SLOT = process.env.NEXT_PUBLIC_ADSENSE_SIDEBAR_SLOT ?? "1606583562";
@@ -218,6 +219,7 @@ export default function RootLayout({
           <AppRouteGuard />
           <ServiceWorkerRegistrar />
           <OfflineSyncManager />
+          <QuotaPaywallModal />
         </ToastProvider>
         <AdSenseLoader />
       </body>

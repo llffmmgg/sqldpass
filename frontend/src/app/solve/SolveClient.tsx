@@ -31,6 +31,7 @@ import AdInfeed from "@/components/AdInfeed";
 import AdDisplay from "@/components/AdDisplay";
 import { useToast } from "@/components/Toast";
 import { Badge, Button, Card, Container } from "@/components/ui";
+import QuotaBadge from "@/components/QuotaBadge";
 import {
   CERT_LIST,
   CERT_TOKENS,
@@ -503,10 +504,16 @@ function SolvePageContent() {
       <section className="bg-bg text-text">
         <GradingDisclaimerModal />
         <Container size="narrow" className="py-16">
-          <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">과목 선택</h2>
-          <p className="mt-2 text-sm text-text-muted">
-            자격증을 고른 뒤 과목 하나로 {SET_SIZE}문제 한 세트를 풀어보세요.
-          </p>
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">과목 선택</h2>
+              <p className="mt-2 text-sm text-text-muted">
+                자격증을 고른 뒤 과목 하나로 {SET_SIZE}문제 한 세트를 풀어보세요.
+              </p>
+            </div>
+            {/* 회원 무료 일일 한도 — 비회원은 풀이 화면의 별도 anonQuota 칩이 담당 */}
+            <QuotaBadge kind="question" className="mt-1 shrink-0" />
+          </div>
 
           {/* 자격증 탭 — past-exams/mock-exams 와 동일한 pill + cert dot + count */}
           <div className="mt-6 -mx-1 flex gap-1 overflow-x-auto rounded-lg border border-border bg-surface p-1 text-sm">

@@ -1,0 +1,22 @@
+{
+  "project": "sqldpass",
+  "phase": "free-daily-quota-web",
+  "description": "무료 회원 일일 한도 — Next.js 웹 클라이언트. 백엔드의 402 응답을 fetch wrapper에서 인터셉트해 페이월 모달 표시. GET /api/quota 의 응답을 헤더 영역에 '오늘 18/30' 형태로 사전 표시. 카운팅·차단 로직 없음 — 백엔드 단일 가드를 신뢰.",
+  "steps": [
+    {
+      "step": 1,
+      "name": "fetch-interceptor-and-modal",
+      "description": "frontend/src/lib/api.ts 또는 동등한 API 클라이언트에 402 인터셉터 추가. error 코드(DAILY_QUESTION_LIMIT|DAILY_MOCK_LIMIT)에 맞는 페이월 모달 표시. CTA: Focus 7일권 결제 페이지로 이동.",
+      "status": "completed",
+      "summary": "frontend/src/lib/api.ts 의 fetchApi/fetchApiVoid 양쪽에 handleQuotaResponse() 추가 — HTTP 402 + {error, used, limit, resetAt} 응답을 받으면 quota-exceeded 커스텀 이벤트 발행 + QuotaExceededError throw. 신규 lib/quotaEvents.ts(이벤트 상수·에러 클래스·타입), components/QuotaPaywallModal.tsx(글로벌 페이월 모달, step1.md 확정 카피·CTA /checkout·resetAt KST 표시) 추가. app/layout.tsx 의 ToastProvider 내부에 QuotaPaywallModal 마운트해 어느 페이지에서도 동작. 자체 카운팅 로직 없음, backdrop-blur/glow/opacity-pulse 미사용, 색 계열 변경 없음. npm run lint(기존 warning만), npm run build 통과."
+    },
+    {
+      "step": 2,
+      "name": "quota-header-display",
+      "description": "GET /api/quota 응답을 받아 문제 탭·모의고사 탭 진입 헤더에 '오늘 18 / 30 문제' 출력. questionLimit/mockLimit이 null이면 표시 숨김(활성 구독자). 백엔드가 보낸 값을 그대로 표시(클라 계산 금지).",
+      "status": "completed",
+      "summary": "신규 lib/quotaApi.ts(fetchQuota + Quota 타입), components/QuotaBadge.tsx(useSyncExternalStore 로 로그인 상태 구독, 마운트 시 fetchQuota 1회, *Limit=null 또는 비로그인 시 자동 숨김, 한도 근접 시 기존 warning/danger 토큰만 사용). solve/SolveClient.tsx 의 phase==='select' 헤더, mock-exams/MockExamsClient.tsx, mini-mock-exams/MiniMockExamsClient.tsx 헤더에 마운트. /past-exams 는 마운트 안 함(기출 무제한 정책). 클라 계산 없음 — 서버 값 그대로 출력. BottomTabBar 변경 없음. npm run lint(기존 warning만, 신규 error 0), npm run build(176 페이지 정적 생성 성공) 통과."
+    }
+  ],
+  "completed_at": "2026-05-21T16:31:38+09:00"
+}

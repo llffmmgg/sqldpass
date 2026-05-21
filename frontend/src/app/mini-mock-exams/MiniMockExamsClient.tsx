@@ -6,6 +6,7 @@ import { Suspense, useEffect, useMemo, useState } from "react";
 
 import Spinner from "@/components/Spinner";
 import { Card, Container } from "@/components/ui";
+import QuotaBadge from "@/components/QuotaBadge";
 import { CERT_LIST, CERT_TOKENS, type CertKey } from "@/lib/cert-tokens";
 import { isLoggedIn } from "@/lib/auth";
 import {
@@ -104,10 +105,16 @@ function MiniMockExamsContent() {
 
   return (
     <Container size="narrow" className="py-16">
-      <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">미니 모의고사</h2>
-      <p className="mt-2 text-sm text-text-muted">
-        {token.labelLong} · 미니 모의고사로 짧고 굵게 시험 대비해보세요
-      </p>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">미니 모의고사</h2>
+          <p className="mt-2 text-sm text-text-muted">
+            {token.labelLong} · 미니 모의고사로 짧고 굵게 시험 대비해보세요
+          </p>
+        </div>
+        {/* mini 도 정규 모의고사와 합산되는 일일 1회 한도(mockUsed/mockLimit) 적용 — 백엔드 정책 */}
+        <QuotaBadge kind="mock" className="mt-1 shrink-0" />
+      </div>
 
       {/* 자격증 탭 */}
       <div className="mt-6 -mx-1 flex gap-1 overflow-x-auto rounded-lg border border-border bg-surface p-1 text-sm">
