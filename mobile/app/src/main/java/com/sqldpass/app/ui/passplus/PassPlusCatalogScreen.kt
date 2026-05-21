@@ -55,26 +55,26 @@ private val DEFAULT_CATALOG = listOf(
         productId = "iap_thunder",
         planLabel = "Thunder",
         durationLabel = "3일",
-        benefits = listOf("프리미엄 회차 풀이", "광고 제거", "오답·즐겨찾기 무제한"),
+        benefits = listOf("일반·PASS+ 회차 매일 무제한", "광고 제거", "오답·즐겨찾기 무제한"),
     ),
     CatalogEntry(
         productId = "iap_focus",
         planLabel = "Focus",
         durationLabel = "30일",
-        benefits = listOf("광고 제거", "오답 노트 전체 잠금 해제", "즐겨찾기 무제한"),
+        benefits = listOf("일반 회차 매일 무제한", "광고 제거", "오답 노트 전체 잠금 해제", "즐겨찾기 무제한"),
     ),
     CatalogEntry(
         productId = "iap_one_month",
         planLabel = "Pro",
         durationLabel = "30일",
-        benefits = listOf("프리미엄 회차 + Focus 혜택", "PDF 다운로드"),
+        benefits = listOf("일반·PASS+ 회차 매일 무제한", "Focus 의 모든 혜택", "PDF 다운로드"),
         recommended = true,
     ),
     CatalogEntry(
         productId = "iap_unlimited",
         planLabel = "All Pass",
         durationLabel = "6개월",
-        benefits = listOf("Pro 의 모든 혜택", "6개월 PASS+ 무제한 풀이", "모의고사 PDF 다운로드"),
+        benefits = listOf("일반·PASS+ 회차 매일 무제한", "Pro 의 모든 혜택", "모의고사 PDF 다운로드"),
     ),
 )
 

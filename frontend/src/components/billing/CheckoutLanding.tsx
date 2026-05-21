@@ -43,6 +43,7 @@ const TIERS: Tier[] = [
     price: 0,
     pitch: "쉬움·보통 회차를 무료로 풀며 가볍게 시작해보세요.",
     features: [
+      { text: "문제 30개·모의 1회/일" },
       { text: "쉬움/보통 회차" },
       { text: "즐겨찾기 30개" },
       { text: "대시보드" },
@@ -57,6 +58,7 @@ const TIERS: Tier[] = [
     unit: "30일",
     pitch: "광고를 제거하고 오답노트로 한 달 동안 집중 공부하세요.",
     features: [
+      { text: "일반 회차 매일 무제한" },
       { text: "광고 제거" },
       { text: "오답노트 사용" },
       { text: "즐겨찾기 무제한" },
@@ -72,7 +74,7 @@ const TIERS: Tier[] = [
     unit: "3일",
     pitch: "시험 임박 3일, PASS+ 회차까지 벼락치기로 마무리하세요.",
     features: [
-      { text: "PASS+ 회차 풀이" },
+      { text: "일반·PASS+ 회차 매일 무제한" },
       { text: "72시간 풀 액세스" },
       { text: "광고 제거" },
       { text: "오답노트 사용" },
@@ -90,7 +92,7 @@ const TIERS: Tier[] = [
     unit: "30일",
     pitch: "한 달 동안 PASS+ 회차와 모든 학습 도구를 무제한으로 사용해보세요.",
     features: [
-      { text: "PASS+ 회차 무제한" },
+      { text: "일반·PASS+ 회차 매일 무제한" },
       { text: "30일 풀 액세스" },
       { text: "광고 제거" },
       { text: "오답노트 사용" },
@@ -109,7 +111,7 @@ const TIERS: Tier[] = [
     unit: "180일",
     pitch: "6개월 동안 새 회차와 모의고사 PDF 다운로드까지 무제한으로 사용하세요.",
     features: [
-      { text: "PASS+ 회차 무제한" },
+      { text: "일반·PASS+ 회차 매일 무제한" },
       { text: "6개월 풀 액세스" },
       { text: "광고 제거" },
       { text: "오답노트 사용" },

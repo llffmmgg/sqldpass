@@ -253,28 +253,28 @@ private let paywallTiers: [PaywallTier] = [
         key: .threeDay, name: "Thunder",
         pitch: "시험 임박 3일, PASS+ 회차까지 벼락치기로 마무리하세요.",
         unit: "3일",
-        features: ["PASS+ 회차 풀이", "72시간 풀 액세스", "광고 제거", "오답노트 사용", "즐겨찾기 무제한"],
+        features: ["일반·PASS+ 회차 매일 무제한", "72시간 풀 액세스", "광고 제거", "오답노트 사용", "즐겨찾기 무제한"],
         ctaLabel: "Thunder 시작", highlight: false
     ),
     PaywallTier(
         key: .focus, name: "Focus",
         pitch: "광고를 제거하고 오답노트로 한 달 동안 집중 공부하세요.",
         unit: "30일",
-        features: ["광고 제거", "오답노트 사용", "즐겨찾기 무제한"],
+        features: ["일반 회차 매일 무제한", "광고 제거", "오답노트 사용", "즐겨찾기 무제한"],
         ctaLabel: "Focus 시작", highlight: false
     ),
     PaywallTier(
         key: .oneMonth, name: "Pro",
         pitch: "한 달 동안 PASS+ 회차와 모든 학습 도구를 무제한으로 사용해보세요.",
         unit: "30일",
-        features: ["PASS+ 회차 무제한", "30일 풀 액세스", "광고 제거", "오답노트 사용", "즐겨찾기 무제한"],
+        features: ["일반·PASS+ 회차 매일 무제한", "30일 풀 액세스", "광고 제거", "오답노트 사용", "즐겨찾기 무제한"],
         ctaLabel: "Pro 시작", highlight: true
     ),
     PaywallTier(
         key: .unlimited, name: "All Pass",
         pitch: "6개월 동안 새 회차와 모의고사 PDF 다운로드까지 무제한으로 사용하세요.",
         unit: "180일",
-        features: ["PASS+ 회차 무제한", "6개월 풀 액세스", "광고 제거", "오답노트 사용", "즐겨찾기 무제한", "PDF 다운로드"],
+        features: ["일반·PASS+ 회차 매일 무제한", "6개월 풀 액세스", "광고 제거", "오답노트 사용", "즐겨찾기 무제한", "PDF 다운로드"],
         ctaLabel: "All Pass 시작", highlight: false
     )
 ]
