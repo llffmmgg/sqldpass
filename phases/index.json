@@ -419,6 +419,13 @@
       "status": "blocked",
       "created_at": "2026-05-21T12:00:00+0900",
       "blocked_reason": "구현 step 1~5 완료. Step 6 iOS Xcode build/simulator screenshot 검증은 macOS 환경 필요."
+    },
+    {
+      "dir": "ios-custom-tabbar-and-page-white",
+      "name": "ios-custom-tabbar-and-page-white",
+      "description": "iOS 하단 탭바를 SwiftUI TabView (iOS 18/26 floating pill 강제) → 커스텀 직사각형 풀폭 바로 교체. ZStack + safeAreaInset(.bottom) + 커스텀 HStack 5 버튼. 동시에 페이지 톤 라이트 모드 #fafafa → #ffffff 로 통일해 탭바 위 '애매한 흰색' 띠 제거. 백엔드/Android/frontend 변경 0. Plan: C:/Users/admin/.claude/plans/ios-parallel-flask.md.",
+      "status": "in_progress",
+      "created_at": "2026-05-21T01:00:00+0900"
     }
   ]
 }

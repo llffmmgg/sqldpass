@@ -19,7 +19,7 @@ extension Color {
     static let brandCTABgHover    = Color(light: "#1fa374", dark: "#1f4b37")
 
     // MARK: Surfaces
-    static let appPage            = Color(light: "#fafafa", dark: "#121212")
+    static let appPage            = Color(light: "#ffffff", dark: "#121212")
     static let appElevated        = Color(light: "#f4f4f4", dark: "#242424")
     static let appSurface         = Color(light: "#ffffff", dark: "#2e2e2e")
     static let appSurfaceHover    = Color(light: "#f4f4f4", dark: "#242424")

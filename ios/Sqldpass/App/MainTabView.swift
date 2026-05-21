@@ -1,121 +1,51 @@
 import SwiftUI
-import UIKit
 
-/// 하단 5탭 (좌→우): 홈 / 모의고사 / 기출복원 / 실전 문제 / 마이.
+/// 하단 5탭 (좌→우): 홈 / 모의고사 / 기출복원 / 실전 문제 / 내 정보.
 ///
 /// 단일 진실 원천: `docs/MOBILE_UX_SPEC.md` § 1.
-/// 변경 이력 (phase `mobile-ux-restructure` step 5):
-///  - `.dashboard` → `.home` 으로 교체, `DashboardView()` 호출은 `HomeView()` 로 대체.
-///  - `.wrongAnswers`, `.insights` 탭 제거 — ProfileView 안 NavigationLink 으로 진입 (step 7).
-///  - `.pastExams` 탭 신규 — `PastExamsListView`.
-///  - `.soloSolve` 탭 신규 — `SoloHubView` (Android `SolveTab` 동등).
-///  - `fullScreenCover` 기반 임시 SoloSolveContext 진입 제거 — SoloHubView 의 NavigationLink push 로 일원화.
+///
+/// 컨테이너: SwiftUI `TabView` 대신 ZStack + `safeAreaInset(edge: .bottom)` + 커스텀 `CustomTabBar`.
+/// 이유: iOS 18/26 의 SwiftUI TabView 가 시스템 강제로 floating pill 디자인을 그려서,
+/// `UITabBarAppearance` / `.toolbarBackground` 만으로는 평면 직사각형 풀폭 탭바를 만들 수 없음.
 enum MainTab: Hashable {
     case home, mockExams, pastExams, soloSolve, profile
 }
 
 struct MainTabView: View {
     @State private var selection: MainTab = .home
-    private var tabSelection: Binding<MainTab> {
-        Binding(
-            get: { selection },
-            set: { newSelection in
-                guard newSelection != selection else { return }
-
-                var transaction = Transaction()
-                transaction.disablesAnimations = true
-                transaction.animation = nil
-
-                withTransaction(transaction) {
-                    UIView.performWithoutAnimation {
-                        selection = newSelection
-                    }
-                }
-            }
-        )
-    }
-
-    init() {
-        // TabBar 평면 직사각형 강제 — iOS 18+ floating glass 톤 끔.
-        let appearance = UITabBarAppearance()
-        appearance.configureWithOpaqueBackground()
-        // page 배경(#fafafa)과 TabBar 배경 톤을 통일 — appSurface(#ffffff) 로 두면
-        // ScrollView 바닥과 TabBar 사이에 1~2px 흰 띠가 보임.
-        appearance.backgroundColor = UIColor(Color.appPage)
-        appearance.backgroundEffect = nil   // 반투명 블러 제거
-        appearance.shadowColor = .clear     // 상단 hairline 제거
-        appearance.shadowImage = UIImage()
-
-        // item 라벨/아이콘 시각 압축 — TabBar 자체 height 는 시스템 표준이지만,
-        // title 을 위로 올리고 폰트를 축소해 컨텐츠 영역을 컴팩트하게.
-        for layout in [appearance.stackedLayoutAppearance,
-                       appearance.inlineLayoutAppearance,
-                       appearance.compactInlineLayoutAppearance] {
-            layout.normal.titlePositionAdjustment = UIOffset(horizontal: 0, vertical: -3)
-            layout.selected.titlePositionAdjustment = UIOffset(horizontal: 0, vertical: -3)
-            layout.normal.titleTextAttributes = [.font: UIFont.systemFont(ofSize: 10, weight: .medium)]
-            layout.selected.titleTextAttributes = [.font: UIFont.systemFont(ofSize: 10, weight: .semibold)]
-        }
-
-        let tabBar = UITabBar.appearance()
-        tabBar.isTranslucent = false
-        tabBar.backgroundColor = UIColor(Color.appPage)
-        tabBar.backgroundImage = UIImage()
-        tabBar.selectionIndicatorImage = UIImage()
-        tabBar.shadowImage = UIImage()
-        tabBar.standardAppearance = appearance
-        tabBar.scrollEdgeAppearance = appearance
-    }
 
     var body: some View {
-        TabView(selection: tabSelection) {
-            // HomeView / MockExamsListView / ProfileView 는 자체 NavigationStack 을 갖고 있어
-            // 추가로 감싸지 않는다. PastExamsListView / SoloHubView 는 본 step 신규로 만들면서
-            // NavigationStack 을 MainTabView 쪽에 둔다 — 자식 화면이 더 단순해진다.
-            HomeView(selectedTab: tabSelection)
-                .tabItem {
-                    Label("홈", systemImage: "house.fill")
-                }
-                .tag(MainTab.home)
+        ZStack(alignment: .bottom) {
+            content
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+        }
+        .background(Color.appPage)
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            CustomTabBar(selection: $selection)
+        }
+        .tint(Color.brandPrimary)
+    }
 
+    @ViewBuilder
+    private var content: some View {
+        // NavigationStack 래핑 정책: HomeView / MockExamsListView / ProfileView 는 자체 NavigationStack 보유.
+        // PastExamsListView / SoloHubView 는 본 컨테이너에서 NavigationStack 으로 감싼다.
+        switch selection {
+        case .home:
+            HomeView(selectedTab: $selection)
+        case .mockExams:
             MockExamsListView()
-                .tabItem {
-                    Label("모의고사", systemImage: "doc.text.fill")
-                }
-                .tag(MainTab.mockExams)
-
+        case .pastExams:
             NavigationStack {
                 PastExamsListView()
             }
-            .tabItem {
-                Label("기출복원", systemImage: "clock.arrow.circlepath")
-            }
-            .tag(MainTab.pastExams)
-
+        case .soloSolve:
             NavigationStack {
                 SoloHubView()
             }
-            .tabItem {
-                Label("실전 문제", systemImage: "play.circle.fill")
-            }
-            .tag(MainTab.soloSolve)
-
+        case .profile:
             ProfileView()
-                .tabItem {
-                    Label("내 정보", systemImage: "person.crop.circle.fill")
-                }
-                .tag(MainTab.profile)
         }
-        .tint(.brandPrimary)
-        .animation(nil, value: selection)
-        .transaction { transaction in
-            transaction.disablesAnimations = true
-            transaction.animation = nil
-        }
-        // iOS 18 의 floating glass tab bar 효과 끔 — 평면 불투명 강제.
-        // 톤은 page(#fafafa) 와 일치시켜 ScrollView 바닥 흰 띠 제거.
-        .toolbarBackground(Color.appPage, for: .tabBar)
-        .toolbarBackground(.visible, for: .tabBar)
     }
 }
 
