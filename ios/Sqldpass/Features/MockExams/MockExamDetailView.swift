@@ -56,6 +56,7 @@ struct MockExamDetailView: View {
         .task {
             if detail == nil { await load() }
         }
+        .hideCustomTabBar()
     }
 
     // MARK: Sections

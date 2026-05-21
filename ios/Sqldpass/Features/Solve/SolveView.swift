@@ -38,6 +38,12 @@ struct SolveView: View {
         }
         .animation(.easeOut(duration: 0.2), value: viewModel.startedAt)
         .hideCustomTabBar()
+        .onAppear {
+            SwipeBackInterceptor.shared.onSwipeAttempt = { showExitConfirm = true }
+        }
+        .onDisappear {
+            SwipeBackInterceptor.shared.onSwipeAttempt = nil
+        }
     }
 
     @ViewBuilder

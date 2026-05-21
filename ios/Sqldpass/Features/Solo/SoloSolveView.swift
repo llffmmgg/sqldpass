@@ -57,6 +57,12 @@ struct SoloSolveView: View {
             FeedbackComposeView(initialType: .questionError, questionId: target.questionId)
         }
         .hideCustomTabBar()
+        .onAppear {
+            SwipeBackInterceptor.shared.onSwipeAttempt = { showExitConfirm = true }
+        }
+        .onDisappear {
+            SwipeBackInterceptor.shared.onSwipeAttempt = nil
+        }
     }
 
     /// `.sheet(item:)` 가 `Identifiable` 을 요구해 Int64 만으로는 부족 — 얇은 래퍼.

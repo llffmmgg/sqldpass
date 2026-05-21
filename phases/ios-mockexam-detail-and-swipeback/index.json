@@ -1,0 +1,38 @@
+{
+  "project": "sqldpass",
+  "phase": "ios-mockexam-detail-and-swipeback",
+  "description": "(1) MockExamDetailView '시험 시작하기' 버튼이 CustomTabBar 와 겹쳐 가려지는 잔여 회귀 — 직전 phase 의 .hideCustomTabBar() 패턴 적용. (2) 다른 앱들처럼 edge swipe back 활성화 — UINavigationController extension 으로 모든 NavigationStack push 자식에 swipe back 켜기. 풀이 화면(Solve/SoloSolve/PastExamRunner) 은 SwipeBackInterceptor singleton 으로 swipe 시작 시 종료 confirm alert 트리거(답안 보호). 백엔드/Android/frontend 변경 0.",
+  "steps": [
+    {
+      "step": 1,
+      "name": "uinavigationcontroller-swipeback",
+      "description": "신규 ios/Sqldpass/App/UINavigationController+SwipeBack.swift — SwipeBackInterceptor singleton + UINavigationController extension(UIGestureRecognizerDelegate). delegate 등록으로 모든 NavigationStack push 자식에서 좌→우 swipe back 활성화. interceptor handler 있으면 차단+호출, 없으면 표준 pop.",
+      "status": "completed",
+      "summary": "신규 파일 ~36 라인. SwipeBackInterceptor.shared.onSwipeAttempt closure. UINavigationController.viewDidLoad 에서 interactivePopGestureRecognizer.delegate = self. gestureRecognizerShouldBegin: viewControllers.count>1 가드 + interceptor handler 분기.",
+      "completed_at": "2026-05-21T02:00:00+0900"
+    },
+    {
+      "step": 2,
+      "name": "mockexam-detail-hide-tabbar",
+      "description": "ios/Sqldpass/Features/MockExams/MockExamDetailView.swift 의 body 끝(.task 뒤)에 .hideCustomTabBar() 한 줄 추가. 직전 phase 의 PreferenceKey 패턴 재사용.",
+      "status": "completed",
+      "summary": "MockExamDetailView body 끝에 .hideCustomTabBar() +1. '시험 시작하기' 버튼 가림 해결.",
+      "completed_at": "2026-05-21T02:00:00+0900"
+    },
+    {
+      "step": 3,
+      "name": "solve-screens-swipeback-interceptor",
+      "description": "SolveView / SoloSolveView / PastExamRunnerView 각 body 끝에 .onAppear { SwipeBackInterceptor.shared.onSwipeAttempt = { showExitConfirm = true } } + .onDisappear { ... = nil } 추가. swipe back 시 X 버튼과 동등하게 종료 confirm alert 트리거.",
+      "status": "completed",
+      "summary": "풀이 3 화면 각 +6 라인. onAppear 에서 interceptor handler 등록(showExitConfirm = true), onDisappear 에서 nil 해제. 풀이 외 화면은 표준 pop.",
+      "completed_at": "2026-05-21T02:00:00+0900"
+    },
+    {
+      "step": 4,
+      "name": "build-and-screenshot-verification",
+      "description": "macOS 셸: xcodegen 재생성(신규 파일 인식) → xcodebuild → 시뮬레이터/실기기. 7 체크포인트(MockExamDetail 탭바 hide / 시험 시작하기 노출 / 일반 화면 swipe back / 풀이 swipe 시 alert / interactive 복귀 / 루트 swipe 무효 / 다크모드).",
+      "status": "pending"
+    }
+  ],
+  "created_at": "2026-05-21T02:00:00+0900"
+}

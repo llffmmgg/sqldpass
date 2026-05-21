@@ -68,6 +68,12 @@ struct PastExamRunnerView: View {
             Text("지금까지의 답안은 저장되지 않습니다.")
         }
         .hideCustomTabBar()
+        .onAppear {
+            SwipeBackInterceptor.shared.onSwipeAttempt = { showExitConfirm = true }
+        }
+        .onDisappear {
+            SwipeBackInterceptor.shared.onSwipeAttempt = nil
+        }
     }
 
     @ViewBuilder

@@ -433,6 +433,13 @@
       "description": "직전 커밋(73ba3e0 커스텀 탭바) 회귀 fix — 풀이 화면(Solve/SoloSolve/PastExamRunner) 에서 CustomTabBar 가 자체 ActionBar 와 겹쳐 정답 버튼 일부가 가려지는 문제. PreferenceKey(HideCustomTabBarKey) 패턴으로 풀이 화면 진입 시 탭바 숨김, pop 시 자동 복원. 이전 phase 의 흰색 통일/직사각형 탭바 정책은 유지. 백엔드/Android/frontend 변경 0. Plan: C:/Users/admin/.claude/plans/ios-parallel-flask.md.",
       "status": "in_progress",
       "created_at": "2026-05-21T01:30:00+0900"
+    },
+    {
+      "dir": "ios-mockexam-detail-and-swipeback",
+      "name": "ios-mockexam-detail-and-swipeback",
+      "description": "(1) MockExamDetailView '시험 시작하기' 버튼이 CustomTabBar 와 겹쳐 가려지는 잔여 회귀 — .hideCustomTabBar() 패턴 적용. (2) 다른 앱들처럼 edge swipe back 활성화 — UINavigationController extension 으로 모든 push 자식에 swipe back. 풀이 화면(Solve/SoloSolve/PastExamRunner) 은 SwipeBackInterceptor singleton 으로 swipe 시 종료 confirm alert 트리거(답안 보호). 백엔드/Android/frontend 변경 0. Plan: C:/Users/admin/.claude/plans/ios-parallel-flask.md.",
+      "status": "in_progress",
+      "created_at": "2026-05-21T02:00:00+0900"
     }
   ]
 }
