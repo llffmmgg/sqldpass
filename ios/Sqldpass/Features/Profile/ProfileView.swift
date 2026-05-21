@@ -148,6 +148,19 @@ struct ProfileView: View {
 
                 AppListGroupDivider()
 
+                NavigationLink {
+                    AccountDeletionConfirmView()
+                } label: {
+                    MenuRow(
+                        icon: "person.crop.circle.badge.minus",
+                        title: "계정 삭제",
+                        tone: .danger
+                    )
+                }
+                .buttonStyle(.plain)
+
+                AppListGroupDivider()
+
                 Button(role: .destructive) {
                     AuthStore.shared.signOut()
                 } label: {
