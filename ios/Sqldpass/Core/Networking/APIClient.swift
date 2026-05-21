@@ -151,6 +151,26 @@ final class APIClient {
             }
             onUnauthorized?()
             throw APIError.unauthorized
+        case 402:
+            // 무료 회원 일일 한도 초과. 백엔드는
+            // `{ "error": "DAILY_QUESTION_LIMIT" | "DAILY_MOCK_LIMIT",
+            //    "used": Int, "limit": Int, "resetAt": "YYYY-MM-DDTHH:mm:ss" }`
+            // 형태로 응답한다. 디코딩 성공 시 quotaExceeded, 실패 시 일반 clientError 로 폴백.
+            struct QuotaBody: Decodable {
+                let error: String
+                let used: Int
+                let limit: Int
+                let resetAt: String
+            }
+            if let body = try? decoder.decode(QuotaBody.self, from: data) {
+                throw APIError.quotaExceeded(
+                    code: body.error,
+                    used: body.used,
+                    limit: body.limit,
+                    resetAt: body.resetAt
+                )
+            }
+            throw APIError.clientError(status: 402, message: nil)
         case 403:
             throw APIError.forbidden
         case 404:

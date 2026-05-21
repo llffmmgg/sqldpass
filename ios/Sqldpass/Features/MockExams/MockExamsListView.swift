@@ -29,6 +29,19 @@ struct MockExamsListView: View {
                 .sheet(isPresented: $showPaywall) {
                     PaywallView()
                 }
+                .sheet(item: Binding(
+                    get: { viewModel.quotaPaywall },
+                    set: { viewModel.quotaPaywall = $0 }
+                )) { info in
+                    QuotaPaywallView(
+                        info: info,
+                        onClose: { viewModel.quotaPaywall = nil },
+                        onPurchase: {
+                            viewModel.quotaPaywall = nil
+                            showPaywall = true
+                        }
+                    )
+                }
                 // 결제/복원/환불로 구독 활성 상태가 바뀌면 모의고사 리스트를 다시 받아온다 —
                 // 백엔드는 `MockExamService.getForUser` 에서 `hasPremiumAccess` 로 가드하고
                 // `exam.purchased` 도 사용자 권한에 따라 계산하므로 reload 한 번이면 잠금 해제 반영.
@@ -94,6 +107,12 @@ struct MockExamsListView: View {
         return viewModel.exams.filter { slugFor(examType: $0.examType) == slug }
     }
 
+    /// 활성 자격증 필터를 적용한 미니 회차 목록.
+    private var filteredMiniExams: [MockExamSummary] {
+        guard let slug = activeSlug else { return viewModel.miniExams }
+        return viewModel.miniExams.filter { slugFor(examType: $0.examType) == slug }
+    }
+
     private var solvedCount: Int {
         filteredExams.filter { $0.solved }.count
     }
@@ -107,11 +126,13 @@ struct MockExamsListView: View {
 
     @ViewBuilder
     private var content: some View {
-        if viewModel.isLoading && viewModel.exams.isEmpty {
+        if viewModel.isLoading && viewModel.exams.isEmpty && viewModel.miniExams.isEmpty {
             ProgressView()
                 .controlSize(.large)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-        } else if let errorMessage = viewModel.errorMessage, viewModel.exams.isEmpty {
+        } else if let errorMessage = viewModel.errorMessage,
+                  viewModel.exams.isEmpty,
+                  viewModel.miniExams.isEmpty {
             ContentUnavailableView {
                 Label("불러오기 실패", systemImage: "exclamationmark.triangle")
             } description: {
@@ -121,7 +142,7 @@ struct MockExamsListView: View {
                     Task { await viewModel.load() }
                 }
             }
-        } else if viewModel.exams.isEmpty {
+        } else if viewModel.exams.isEmpty && viewModel.miniExams.isEmpty {
             ContentUnavailableView(
                 "모의고사가 없어요",
                 systemImage: "doc.text",
@@ -130,13 +151,18 @@ struct MockExamsListView: View {
         } else {
             ScrollView {
                 VStack(alignment: .leading, spacing: Spacing.lg) {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("모의고사")
-                            .font(AppType.bodyEmph)
-                            .foregroundStyle(Color.appTextPrimary)
-                        Text("실전 감각을 유지할 수 있게 한 회차씩 정리했어요")
-                            .font(AppType.footnote)
-                            .foregroundStyle(Color.appTextMuted)
+                    HStack(alignment: .top, spacing: Spacing.sm) {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("모의고사")
+                                .font(AppType.bodyEmph)
+                                .foregroundStyle(Color.appTextPrimary)
+                            Text("실전 감각을 유지할 수 있게 한 회차씩 정리했어요")
+                                .font(AppType.footnote)
+                                .foregroundStyle(Color.appTextMuted)
+                        }
+                        Spacer(minLength: Spacing.sm)
+                        // 무료 회원 일일 모의고사 한도. 활성 구독자는 자동으로 숨김.
+                        AppQuotaBadge(kind: .mock)
                     }
                     .padding(.top, Spacing.xs)
 
@@ -165,10 +191,46 @@ struct MockExamsListView: View {
                             .buttonStyle(.plain)
                         }
                     }
+
+                    // 미니 모의고사 섹션 — 정책상 미니+모의 합산 1회/일.
+                    // 진입 경로가 있어야 합산 한도 정책이 의미를 가진다.
+                    miniSection
                 }
                 .padding(.horizontal, Spacing.base)
                 .padding(.bottom, Spacing.xxl)
             }
+        }
+    }
+
+    @ViewBuilder
+    private var miniSection: some View {
+        if !filteredMiniExams.isEmpty {
+            VStack(alignment: .leading, spacing: Spacing.sm) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("미니 모의고사")
+                        .font(AppType.bodyEmph)
+                        .foregroundStyle(Color.appTextPrimary)
+                    Text("짧게 한 세트 — 모의고사 일일 한도를 공유합니다")
+                        .font(AppType.footnote)
+                        .foregroundStyle(Color.appTextMuted)
+                }
+                LazyVStack(spacing: Spacing.md) {
+                    ForEach(filteredMiniExams) { exam in
+                        let locked = exam.isPremium && !exam.purchased
+                        Button {
+                            if locked {
+                                showPaywall = true
+                            } else {
+                                path.append(MockExamRoute.detail(examId: exam.id))
+                            }
+                        } label: {
+                            MockExamCard(exam: exam)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+            }
+            .padding(.top, Spacing.sm)
         }
     }
 

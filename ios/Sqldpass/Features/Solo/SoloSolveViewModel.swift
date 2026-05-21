@@ -29,6 +29,9 @@ final class SoloSolveViewModel {
     private(set) var submitError: String? = nil
     private(set) var loading = false
     private(set) var fatalError: String? = nil
+    /// 무료 회원 일일 한도 초과 시 노출되는 페이월 정보.
+    /// 서버 단일 진실 — 자체 카운터 사용 금지.
+    var quotaPaywall: QuotaPaywallInfo? = nil
 
     init(subjectId: Int64, subjectName: String) {
         self.subjectId = subjectId
@@ -68,6 +71,8 @@ final class SoloSolveViewModel {
                 sessionQuestions = questions
                 queue = questions
             }
+        } catch APIError.quotaExceeded(let code, let used, let limit, let resetAt) {
+            quotaPaywall = QuotaPaywallInfo(code: code, used: used, limit: limit, resetAt: resetAt)
         } catch {
             fatalError = error.localizedDescription
         }
@@ -172,6 +177,8 @@ final class SoloSolveViewModel {
             let fresh = try await QuestionService.list(subjectId: subjectId, size: Self.setSize)
             queue = fresh
             resetCurrentInput()
+        } catch APIError.quotaExceeded(let code, let used, let limit, let resetAt) {
+            quotaPaywall = QuotaPaywallInfo(code: code, used: used, limit: limit, resetAt: resetAt)
         } catch {
             submitError = error.localizedDescription
         }

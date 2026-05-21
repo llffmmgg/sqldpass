@@ -1,0 +1,22 @@
+{
+  "project": "sqldpass",
+  "phase": "free-daily-quota-ios",
+  "description": "무료 회원 일일 한도 — iOS SwiftUI 클라이언트. APIClient/APIError에 402 분기 추가, 한도 도달 시 PaywallSheet 노출. GET /api/quota 로 사전 표시. 카운팅·차단 로직 없음.",
+  "steps": [
+    {
+      "step": 1,
+      "name": "apierror-402-and-handler",
+      "description": "ios/Sqldpass/Core/Networking/APIError.swift에 quotaExceeded(code, used, limit, resetAt) case 추가. APIClient.swift의 send()에서 402 응답을 body 디코딩 후 quotaExceeded throw. 호출부에서 catch → PaywallSheet 또는 모달 표시.",
+      "status": "completed",
+      "summary": "APIError.quotaExceeded(code:used:limit:resetAt:) case 추가, APIClient.send() 402 분기에서 QuotaBody 디코딩 후 throw. QuotaPaywallView/QuotaPaywallInfo 신규 (AppMascot/AppButton 재사용, KST naive resetAt 정규화 포함). 호출 측 catch: SoloSolveViewModel.start()+goNext(fresh fetch), MockExamsViewModel.load(), MockExamDetailView.load() — 가장 실제로 402가 발생하는 detail 진입 지점까지 커버. 시트는 SoloSolveView/MockExamsListView/MockExamDetailView 에 마운트, 기출복원(PastExams) 화면에는 의도적으로 마운트 안 함. CustomTabBar 구조/탭 5개 무변경. 빌드 검증은 macOS xcodebuild 부재로 사용자 검증."
+    },
+    {
+      "step": 2,
+      "name": "quota-service-and-tab-header",
+      "description": "QuotaService(GET /api/quota) + 모의고사/문제 탭 진입 시 헤더에 '오늘 18 / 30' 표시. questionLimit nil이면 숨김. CustomTabBar 회귀 주의 (최근 f084a00, c5f160f 이슈).",
+      "status": "completed",
+      "summary": "Models/Quota.swift (Codable: questionUsed/questionLimit?/mockUsed/mockLimit?/resetAt), Services/QuotaService.swift (GET /api/quota), Core/DesignSystem/AppQuotaBadge.swift (kind: .question | .mock, limit nil → EmptyView, 한도 도달 시 semanticWarning 톤) 신규. SoloHubView '실전 문제' 헤더에 AppQuotaBadge(.question), MockExamsListView '모의고사' 헤더에 AppQuotaBadge(.mock) 마운트. 기출복원·홈 화면에는 의도적으로 마운트 안 함. ExamService.listMini(`/api/mock-exams/mini`) 신규 + MockExamsViewModel.miniExams 상태 + MockExamsListView 의 'miniSection' (정규 카드 아래 노출, 활성 자격증 칩 필터 공유) 추가 — 미니+모의 합산 1회/일 정책에 진입 경로 보장. CustomTabBar 5탭 구조 무변경. 빌드 검증은 macOS xcodebuild 부재로 사용자 검증."
+    }
+  ],
+  "completed_at": "2026-05-21"
+}

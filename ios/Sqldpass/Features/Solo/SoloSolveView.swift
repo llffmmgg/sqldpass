@@ -56,6 +56,22 @@ struct SoloSolveView: View {
         )) { target in
             FeedbackComposeView(initialType: .questionError, questionId: target.questionId)
         }
+        .sheet(item: Binding(
+            get: { viewModel.quotaPaywall },
+            set: { viewModel.quotaPaywall = $0 }
+        )) { info in
+            QuotaPaywallView(
+                info: info,
+                onClose: {
+                    viewModel.quotaPaywall = nil
+                    dismiss()
+                },
+                onPurchase: {
+                    viewModel.quotaPaywall = nil
+                    dismiss()
+                }
+            )
+        }
         .hideCustomTabBar()
         .onAppear {
             SwipeBackInterceptor.shared.onSwipeAttempt = { showExitConfirm = true }

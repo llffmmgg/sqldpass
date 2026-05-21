@@ -14,6 +14,11 @@ enum APIError: Error, LocalizedError, Equatable {
     case forbidden
     /// 404 — 자원 없음
     case notFound
+    /// 402 — 무료 회원 일일 한도 초과. 서버가 단일 진실 소스.
+    /// - code: "DAILY_QUESTION_LIMIT" | "DAILY_MOCK_LIMIT"
+    /// - used / limit: 오늘 사용량 / 한도
+    /// - resetAt: KST naive ISO 문자열 (예: "2026-05-22T00:00:00")
+    case quotaExceeded(code: String, used: Int, limit: Int, resetAt: String)
     /// 4xx (위 외)
     case clientError(status: Int, message: String?)
     /// 5xx — 서버 측 일시 장애
@@ -31,6 +36,10 @@ enum APIError: Error, LocalizedError, Equatable {
         case .unauthorized: return "로그인이 필요합니다."
         case .forbidden: return "이용 권한이 없습니다."
         case .notFound: return "요청한 정보를 찾을 수 없습니다."
+        case .quotaExceeded(let code, _, _, _):
+            return code == "DAILY_MOCK_LIMIT"
+                ? "오늘 모의고사 1회 완료"
+                : "오늘의 30문제 완주!"
         case .clientError(let s, let m): return m ?? "요청을 처리할 수 없습니다. (\(s))"
         case .serverError(let s): return "서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요. (\(s))"
         case .decoding: return "응답 형식이 올바르지 않습니다."

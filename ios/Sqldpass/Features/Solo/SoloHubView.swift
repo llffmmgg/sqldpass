@@ -45,13 +45,18 @@ struct SoloHubView: View {
     private var content: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: Spacing.lg) {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("실전 문제")
-                        .font(AppType.bodyEmph)
-                        .foregroundStyle(Color.appTextPrimary)
-                    Text("오늘은 어떤 과목으로 한 세트 풀어볼까요?")
-                        .font(AppType.footnote)
-                        .foregroundStyle(Color.appTextMuted)
+                HStack(alignment: .top, spacing: Spacing.sm) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("실전 문제")
+                            .font(AppType.bodyEmph)
+                            .foregroundStyle(Color.appTextPrimary)
+                        Text("오늘은 어떤 과목으로 한 세트 풀어볼까요?")
+                            .font(AppType.footnote)
+                            .foregroundStyle(Color.appTextMuted)
+                    }
+                    Spacer(minLength: Spacing.sm)
+                    // 무료 회원 일일 한도 — 활성 구독자는 자동으로 숨김.
+                    AppQuotaBadge(kind: .question)
                 }
                 .padding(.top, Spacing.xs)
 

@@ -7,6 +7,10 @@ struct MockExamDetailView: View {
     @State private var detail: MockExamDetail?
     @State private var isLoading = true
     @State private var errorMessage: String?
+    /// 서버 402 → 무료 회원 일일 모의고사 한도 도달 시 시트 노출.
+    /// 자체 카운팅 금지 — 서버가 단일 진실.
+    @State private var quotaPaywall: QuotaPaywallInfo?
+    @Environment(\.dismiss) private var dismiss
 
     var body: some View {
         ScrollView {
@@ -55,6 +59,19 @@ struct MockExamDetailView: View {
         }
         .task {
             if detail == nil { await load() }
+        }
+        .sheet(item: $quotaPaywall) { info in
+            QuotaPaywallView(
+                info: info,
+                onClose: {
+                    quotaPaywall = nil
+                    dismiss()
+                },
+                onPurchase: {
+                    quotaPaywall = nil
+                    dismiss()
+                }
+            )
         }
         .hideCustomTabBar()
     }
@@ -149,6 +166,8 @@ struct MockExamDetailView: View {
         do {
             detail = try await ExamService.detail(id: examId)
             errorMessage = nil
+        } catch APIError.quotaExceeded(let code, let used, let limit, let resetAt) {
+            quotaPaywall = QuotaPaywallInfo(code: code, used: used, limit: limit, resetAt: resetAt)
         } catch let error as APIError {
             errorMessage = error.errorDescription
         } catch {
