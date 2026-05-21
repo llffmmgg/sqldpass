@@ -5,12 +5,18 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.sqldpass.controller.member.dto.MemberMeResponse;
+import com.sqldpass.persistent.bookmark.BookmarkRepository;
 import com.sqldpass.persistent.feedback.FeedbackRepository;
 import com.sqldpass.persistent.member.MemberEntity;
 import com.sqldpass.persistent.member.MemberRepository;
 import com.sqldpass.persistent.notification.NotificationRepository;
+import com.sqldpass.persistent.payment.MockExamPurchaseRepository;
+import com.sqldpass.persistent.payment.PaymentRepository;
+import com.sqldpass.persistent.payment.SubscriptionHistoryRepository;
+import com.sqldpass.persistent.payment.SubscriptionRepository;
 import com.sqldpass.persistent.solve.SolveEntity;
 import com.sqldpass.persistent.solve.SolveRepository;
+import com.sqldpass.persistent.usage.DailyUsageRepository;
 import com.sqldpass.service.common.ErrorCode;
 import com.sqldpass.service.common.SqldpassException;
 
@@ -26,6 +32,12 @@ public class MemberService {
     private final FeedbackRepository feedbackRepository;
     private final NotificationRepository notificationRepository;
     private final SolveRepository solveRepository;
+    private final BookmarkRepository bookmarkRepository;
+    private final DailyUsageRepository dailyUsageRepository;
+    private final MockExamPurchaseRepository mockExamPurchaseRepository;
+    private final SubscriptionRepository subscriptionRepository;
+    private final SubscriptionHistoryRepository subscriptionHistoryRepository;
+    private final PaymentRepository paymentRepository;
 
     @Transactional(readOnly = true)
     public MemberMeResponse getMe(Long memberId) {
@@ -61,6 +73,8 @@ public class MemberService {
      * - Notification: 본인 알림 모두 삭제
      * - Feedback: member_id 만 null 처리 (운영상 보존, '탈퇴한 회원'으로 표시)
      * - Solve: 본인 풀이 모두 삭제 (SolveAnswerEntity 는 orphanRemoval 로 cascade)
+     * - Bookmark / DailyUsage: 본인 학습 부가 데이터 삭제
+     * - Payment / Subscription / Purchase / History: row 는 보존하되 member_id 만 null 처리
      * - Member: row 삭제
      */
     @Transactional
@@ -70,6 +84,13 @@ public class MemberService {
 
         notificationRepository.deleteAllByMemberId(memberId);
         feedbackRepository.nullifyMember(memberId);
+        bookmarkRepository.deleteAllByMemberId(memberId);
+        dailyUsageRepository.deleteAllByMemberId(memberId);
+
+        mockExamPurchaseRepository.nullifyMember(memberId);
+        subscriptionRepository.nullifyMember(memberId);
+        subscriptionHistoryRepository.nullifyMember(memberId);
+        paymentRepository.nullifyMember(memberId);
 
         List<SolveEntity> solves = solveRepository.findAllByMember_Id(memberId);
         if (!solves.isEmpty()) {

@@ -60,7 +60,7 @@ struct AccountDeletionConfirmView: View {
             .tint(Color.semanticDanger)
             .disabled(!checked || isDeleting)
             .padding(.horizontal, Spacing.base)
-            .padding(.bottom, Spacing.sm)
+            .padding(.bottom, Spacing.xxxl)
             .background(Color.appPage)
         }
     }

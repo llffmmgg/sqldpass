@@ -7,6 +7,7 @@ import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -18,6 +19,10 @@ public interface PaymentRepository extends JpaRepository<PaymentEntity, Long> {
 
     /** Google Play Billing RTDN webhook 이 token 으로 결제 row 찾을 때 사용. */
     Optional<PaymentEntity> findByPurchaseToken(String purchaseToken);
+
+    @Modifying
+    @Query("update PaymentEntity p set p.memberId = null where p.memberId = :memberId")
+    int nullifyMember(@Param("memberId") Long memberId);
 
     /**
      * 어드민 결제 목록 조회 — Member LEFT JOIN 으로 nickname 같이 가져오고,

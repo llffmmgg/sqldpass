@@ -3,6 +3,9 @@ package com.sqldpass.persistent.bookmark;
 import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 public interface BookmarkRepository extends JpaRepository<BookmarkEntity, Long> {
 
@@ -16,4 +19,8 @@ public interface BookmarkRepository extends JpaRepository<BookmarkEntity, Long> 
     List<Long> findQuestionIdByMemberIdAndQuestionIdIn(Long memberId, List<Long> questionIds);
 
     long countByMemberId(Long memberId);
+
+    @Modifying
+    @Query("delete from BookmarkEntity b where b.memberId = :memberId")
+    int deleteAllByMemberId(@Param("memberId") Long memberId);
 }

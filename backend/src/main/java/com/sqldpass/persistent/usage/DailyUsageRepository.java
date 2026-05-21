@@ -37,4 +37,8 @@ public interface DailyUsageRepository extends JpaRepository<DailyUsageEntity, Da
                      @Param("usageDate") LocalDate usageDate,
                      @Param("questionDelta") int questionDelta,
                      @Param("mockDelta") int mockDelta);
+
+    @Modifying
+    @Query("DELETE FROM DailyUsageEntity d WHERE d.id.memberId = :memberId")
+    int deleteAllByMemberId(@Param("memberId") Long memberId);
 }

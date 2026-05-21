@@ -41,7 +41,7 @@ public class PaymentEntity extends BaseTimeEntity {
     @Column(name = "payment_id", nullable = false, length = 80)
     private String paymentId;
 
-    @Column(name = "member_id", nullable = false)
+    @Column(name = "member_id")
     private Long memberId;
 
     /**
