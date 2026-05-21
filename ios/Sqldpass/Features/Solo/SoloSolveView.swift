@@ -9,6 +9,7 @@ struct SoloSolveView: View {
     @State private var showExitConfirm = false
     @State private var bookmarkedIds: Set<Int64> = []
     @State private var reportingQuestionId: Int64?
+    @State private var showPaywall = false
     @Environment(\.dismiss) private var dismiss
 
     /// 오프라인 큐 — `@Observable` SolveQueue 의 pendingCount 를 view 에서 관찰.
@@ -68,9 +69,12 @@ struct SoloSolveView: View {
                 },
                 onPurchase: {
                     viewModel.quotaPaywall = nil
-                    dismiss()
+                    showPaywall = true
                 }
             )
+        }
+        .sheet(isPresented: $showPaywall) {
+            PaywallView()
         }
         .hideCustomTabBar()
         .onAppear {

@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.sqldpass.controller.question.dto.QuestionDetailResponse;
 import com.sqldpass.controller.question.dto.QuestionResponse;
+import com.sqldpass.domain.question.Question;
 import com.sqldpass.service.question.QuestionService;
 import com.sqldpass.service.usage.DailyUsageService;
 
@@ -39,8 +40,9 @@ public class QuestionController {
             @RequestParam(defaultValue = "10") @Min(1) @Max(50) int size) {
         Long memberId = (Long) request.getAttribute("memberId");
         // 무료 회원 일일 한도 가드 — 활성 구독자/비로그인은 service 안에서 면제 처리
-        dailyUsageService.consumeQuestion(memberId, size);
-        return questionService.getRandomQuestions(subjectId, memberId, size).stream()
+        List<Question> questions = questionService.getRandomQuestions(subjectId, memberId, size);
+        dailyUsageService.consumeQuestion(memberId, questions.size());
+        return questions.stream()
                 .map(QuestionResponse::from)
                 .toList();
     }

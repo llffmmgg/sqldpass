@@ -16,4 +16,11 @@ enum ExamService {
     static func detail(id: Int64) async throws -> MockExamDetail {
         try await APIClient.shared.get("/api/mock-exams/\(id)")
     }
+
+    /// POST /api/mock-exams/{id}/start - consumes daily mock quota and returns detail.
+    static func start(id: Int64) async throws -> MockExamDetail {
+        try await APIClient.shared.post("/api/mock-exams/\(id)/start", body: EmptyExamStartBody())
+    }
 }
+
+private struct EmptyExamStartBody: Encodable {}

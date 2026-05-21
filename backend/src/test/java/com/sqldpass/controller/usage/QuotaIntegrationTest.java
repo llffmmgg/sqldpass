@@ -44,6 +44,7 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -112,6 +113,8 @@ class QuotaIntegrationTest {
                 "DAILY_QUESTION_LIMIT", 30, 30,
                 LocalDateTime.of(2026, 5, 22, 0, 0, 0)))
                 .when(dailyUsageService).consumeQuestion(eq(MEMBER_ID), anyInt());
+        given(questionService.getRandomQuestions(eq(5L), eq(MEMBER_ID), eq(20)))
+                .willReturn(List.of(new Question(1L, 5L, "Q", 1, "E")));
 
         mockMvc.perform(get("/api/questions")
                         .param("subjectId", "5")
@@ -138,36 +141,48 @@ class QuotaIntegrationTest {
                         .header("Authorization", AUTH_HEADER))
                 .andExpect(status().isOk());
 
-        verify(dailyUsageService).consumeQuestion(MEMBER_ID, 20);
+        verify(dailyUsageService).consumeQuestion(MEMBER_ID, 1);
     }
 
     @Test
-    @DisplayName("[2] GET /api/mock-exams/{id} — consumeMockSession 호출(정규 회차)")
-    void mockexam_regular_calls_consume() throws Exception {
+    @DisplayName("[2-detail] GET /api/mock-exams/{id} — 상세 조회는 consumeMockSession 미호출")
+    void mockexam_detail_does_not_consume() throws Exception {
+        MockExam mock = aiMockExam(100L);
+        given(mockExamService.getForUser(eq(100L), eq(MEMBER_ID))).willReturn(mock);
+
+        mockMvc.perform(get("/api/mock-exams/100").header("Authorization", AUTH_HEADER))
+                .andExpect(status().isOk());
+
+        verify(dailyUsageService, never()).consumeMockSession(anyLong());
+    }
+
+    @Test
+    @DisplayName("[2-start] POST /api/mock-exams/{id}/start — consumeMockSession 호출(정규 회차)")
+    void mockexam_start_regular_calls_consume() throws Exception {
         MockExam mock = aiMockExam(100L);
         given(mockExamService.getForUser(eq(100L), eq(MEMBER_ID))).willReturn(mock);
         doNothing().when(dailyUsageService).consumeMockSession(MEMBER_ID);
 
-        mockMvc.perform(get("/api/mock-exams/100").header("Authorization", AUTH_HEADER))
+        mockMvc.perform(post("/api/mock-exams/100/start").header("Authorization", AUTH_HEADER))
                 .andExpect(status().isOk());
 
         verify(dailyUsageService).consumeMockSession(MEMBER_ID);
     }
 
     @Test
-    @DisplayName("[2-over] GET /api/mock-exams/{id} — 한도 초과 시 402 DAILY_MOCK_LIMIT")
+    @DisplayName("[2-over] POST /api/mock-exams/{id}/start — 한도 초과 시 402 DAILY_MOCK_LIMIT")
     void mockexam_over_limit_returns_402() throws Exception {
         MockExam mock = aiMockExam(101L);
         given(mockExamService.getForUser(eq(101L), eq(MEMBER_ID))).willReturn(mock);
         doThrow(new QuotaExceededException(
-                "DAILY_MOCK_LIMIT", 2, 1,
+                "DAILY_MOCK_LIMIT", 1, 1,
                 LocalDateTime.of(2026, 5, 22, 0, 0, 0)))
                 .when(dailyUsageService).consumeMockSession(MEMBER_ID);
 
-        mockMvc.perform(get("/api/mock-exams/101").header("Authorization", AUTH_HEADER))
+        mockMvc.perform(post("/api/mock-exams/101/start").header("Authorization", AUTH_HEADER))
                 .andExpect(status().isPaymentRequired())
                 .andExpect(jsonPath("$.error").value("DAILY_MOCK_LIMIT"))
-                .andExpect(jsonPath("$.used").value(2))
+                .andExpect(jsonPath("$.used").value(1))
                 .andExpect(jsonPath("$.limit").value(1));
     }
 

@@ -71,7 +71,9 @@ class AppRepository(
 
     suspend fun mockExam(id: Long): MockExamDetail {
         return try {
-            api.getMockExam(id)
+            api.startMockExam(id)
+        } catch (e: QuotaExceededException) {
+            throw e
         } catch (_: Exception) {
             val exam = dao.mockExam(id) ?: throw IllegalStateException("다운로드된 모의고사가 없습니다.")
             val questions = dao.questionsForExam(id).map {
@@ -148,6 +150,8 @@ class AppRepository(
         )
         return try {
             api.submitSolve(request)
+        } catch (e: QuotaExceededException) {
+            throw e
         } catch (e: Exception) {
             dao.upsertPendingSolve(
                 PendingSolveEntity(
@@ -253,6 +257,8 @@ class AppRepository(
         )
         return try {
             api.submitSolve(request)
+        } catch (e: QuotaExceededException) {
+            throw e
         } catch (e: Exception) {
             dao.upsertPendingSolve(
                 PendingSolveEntity(

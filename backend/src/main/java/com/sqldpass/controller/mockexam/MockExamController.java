@@ -13,6 +13,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -122,6 +123,14 @@ public class MockExamController {
     @Operation(summary = "모의고사 상세 (50문항 포함, 정답 미포함)")
     public MockExamDetailResponse get(@PathVariable Long id, HttpServletRequest request) {
         // PREMIUM이면 403 LOCKED (단, memberId 가 결제 이력이 있으면 통과), DRAFT면 404
+        Long memberId = (Long) request.getAttribute("memberId");
+        MockExam mockExam = mockExamService.getForUser(id, memberId);
+        return MockExamDetailResponse.from(mockExam);
+    }
+
+    @PostMapping("/{id}/start")
+    @Operation(summary = "모의고사 시작 (50문항 포함, quota 카운트)")
+    public MockExamDetailResponse start(@PathVariable Long id, HttpServletRequest request) {
         Long memberId = (Long) request.getAttribute("memberId");
         MockExam mockExam = mockExamService.getForUser(id, memberId);
         // 기출복원(PAST_EXAM)은 무료 무제한 — 가드 면제. MINI/AI 정규 회차만 일일 한도 카운트.

@@ -469,5 +469,14 @@
       "status": "pending",
       "created_at": "2026-05-21T13:00:00+0900"
     }
+    ,
+    {
+      "dir": "quota-policy-fixes",
+      "name": "quota-policy-fixes",
+      "description": "무료 일일 quota 리뷰 후속 수정. 모의고사 상세 조회와 시작 과금 분리, 실제 반환 문제 수 기준 차감, quota 초과 표시값 보정, 웹/Android/iOS start 계약 및 paywall CTA 정합성 수정.",
+      "status": "completed",
+      "created_at": "2026-05-21T14:00:00+0900",
+      "completed_at": "2026-05-21T14:45:00+0900"
+    }
   ]
 }

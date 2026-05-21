@@ -6,10 +6,12 @@ struct MockExamDetailView: View {
 
     @State private var detail: MockExamDetail?
     @State private var isLoading = true
+    @State private var isStarting = false
     @State private var errorMessage: String?
     /// 서버 402 → 무료 회원 일일 모의고사 한도 도달 시 시트 노출.
     /// 자체 카운팅 금지 — 서버가 단일 진실.
     @State private var quotaPaywall: QuotaPaywallInfo?
+    @State private var showPaywall = false
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
@@ -42,9 +44,9 @@ struct MockExamDetailView: View {
         .safeAreaInset(edge: .bottom) {
             if let detail {
                 Button {
-                    path.append(MockExamRoute.solve(examId: detail.id, questions: detail.questions))
+                    Task { await startExam() }
                 } label: {
-                    Text("시험 시작하기")
+                    Text(isStarting ? "시작 중..." : "시험 시작하기")
                         .font(AppType.bodyEmph)
                         .frame(maxWidth: .infinity)
                         .frame(height: 52)
@@ -54,7 +56,7 @@ struct MockExamDetailView: View {
                 .padding(.horizontal, Spacing.base)
                 .padding(.bottom, Spacing.sm)
                 .background(Color.appPage)
-                .disabled(detail.questions.isEmpty)
+                .disabled(detail.questions.isEmpty || isStarting)
             }
         }
         .task {
@@ -69,9 +71,12 @@ struct MockExamDetailView: View {
                 },
                 onPurchase: {
                     quotaPaywall = nil
-                    dismiss()
+                    showPaywall = true
                 }
             )
+        }
+        .sheet(isPresented: $showPaywall) {
+            PaywallView()
         }
         .hideCustomTabBar()
     }
@@ -174,5 +179,23 @@ struct MockExamDetailView: View {
             errorMessage = error.localizedDescription
         }
         isLoading = false
+    }
+
+    private func startExam() async {
+        guard !isStarting else { return }
+        isStarting = true
+        defer { isStarting = false }
+        do {
+            let started = try await ExamService.start(id: examId)
+            detail = started
+            errorMessage = nil
+            path.append(MockExamRoute.solve(examId: started.id, questions: started.questions))
+        } catch APIError.quotaExceeded(let code, let used, let limit, let resetAt) {
+            quotaPaywall = QuotaPaywallInfo(code: code, used: used, limit: limit, resetAt: resetAt)
+        } catch let error as APIError {
+            errorMessage = error.errorDescription
+        } catch {
+            errorMessage = error.localizedDescription
+        }
     }
 }

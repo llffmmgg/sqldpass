@@ -49,6 +49,9 @@ interface SqldpassApi {
     @GET("api/mock-exams/{id}")
     suspend fun getMockExam(@Path("id") id: Long): MockExamDetail
 
+    @POST("api/mock-exams/{id}/start")
+    suspend fun startMockExam(@Path("id") id: Long): MockExamDetail
+
     @GET("api/mobile/content/snapshot")
     suspend fun getMobileSnapshot(@Header("If-None-Match") etag: String?): Response<SnapshotResponse>
 

@@ -74,7 +74,7 @@ class DailyUsageServiceTest {
         assertThatThrownBy(() -> service.consumeQuestion(MEMBER_ID, 20))
                 .isInstanceOf(QuotaExceededException.class)
                 .extracting("code", "used", "limit")
-                .containsExactly("DAILY_QUESTION_LIMIT", 40, DailyUsageService.DAILY_QUESTION_LIMIT);
+                .containsExactly("DAILY_QUESTION_LIMIT", DailyUsageService.DAILY_QUESTION_LIMIT, DailyUsageService.DAILY_QUESTION_LIMIT);
     }
 
     @Test
@@ -139,7 +139,7 @@ class DailyUsageServiceTest {
         assertThatThrownBy(() -> service.consumeMockSession(MEMBER_ID))
                 .isInstanceOf(QuotaExceededException.class)
                 .extracting("code", "used", "limit")
-                .containsExactly("DAILY_MOCK_LIMIT", 2, DailyUsageService.DAILY_MOCK_SESSION_LIMIT);
+                .containsExactly("DAILY_MOCK_LIMIT", DailyUsageService.DAILY_MOCK_SESSION_LIMIT, DailyUsageService.DAILY_MOCK_SESSION_LIMIT);
     }
 
     @Test

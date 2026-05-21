@@ -49,7 +49,7 @@ public class DailyUsageService {
         if (row.getQuestionCount() > DAILY_QUESTION_LIMIT) {
             throw new QuotaExceededException(
                     "DAILY_QUESTION_LIMIT",
-                    row.getQuestionCount(),
+                    Math.min(row.getQuestionCount(), DAILY_QUESTION_LIMIT),
                     DAILY_QUESTION_LIMIT,
                     nextResetAt(today)
             );
@@ -68,7 +68,7 @@ public class DailyUsageService {
         if (row.getMockSessionCount() > DAILY_MOCK_SESSION_LIMIT) {
             throw new QuotaExceededException(
                     "DAILY_MOCK_LIMIT",
-                    row.getMockSessionCount(),
+                    Math.min(row.getMockSessionCount(), DAILY_MOCK_SESSION_LIMIT),
                     DAILY_MOCK_SESSION_LIMIT,
                     nextResetAt(today)
             );

@@ -20,6 +20,7 @@ import { poseFromScore } from "@/components/mascot";
 import { parseQuestion } from "@/lib/parseQuestion";
 import {
   getMockExam,
+  startMockExam,
   type MockExamDetail,
   type MockExamQuestion,
 } from "@/lib/mockExamApi";
@@ -48,6 +49,7 @@ import { evaluatePass } from "@/lib/pass-criteria";
 import { useToast } from "@/components/Toast";
 import { trackEvent } from "@/lib/gtag";
 import { hapticError, hapticLight, hapticSuccess } from "@/lib/haptic";
+import { QuotaExceededError } from "@/lib/quotaEvents";
 
 /** 자격증별 실제 시험 시간 (분) */
 const EXAM_TIME_MINUTES: Record<string, number> = {
@@ -93,6 +95,8 @@ function MockExamDetailContent() {
   const [result, setResult] = useState<SolveResponse | null>(null);
   const [attempts, setAttempts] = useState<SolveSummaryResponse[] | null>(null);
   const [started, setStarted] = useState(false);
+  const [startConsumed, setStartConsumed] = useState(false);
+  const [starting, setStarting] = useState(false);
   const [showTutorial, setShowTutorial] = useState(false);
 
   useEffect(() => {
@@ -109,13 +113,39 @@ function MockExamDetailContent() {
     [exam],
   );
 
-  const startTimer = useCallback(() => {
+  const ensureStarted = useCallback(async () => {
+    if (startConsumed) return true;
+    if (!id || !exam) return false;
+    setStarting(true);
+    try {
+      const data = await startMockExam(id);
+      setExam(data);
+      setStarted(true);
+      setStartConsumed(true);
+      trackEvent("start_exam", {
+        exam_id: data.id,
+        exam_type: data.examType,
+        exam_name: data.name,
+      });
+      return true;
+    } catch (e) {
+      if (!(e instanceof QuotaExceededError)) {
+        setError(e instanceof Error ? e.message : "모의고사를 시작할 수 없습니다.");
+      }
+      return false;
+    } finally {
+      setStarting(false);
+    }
+  }, [exam, id, startConsumed]);
+
+  const startTimer = useCallback(async () => {
     if (timerRef.current) return;
+    if (!(await ensureStarted())) return;
     setTimerRunning(true);
     timerRef.current = setInterval(() => {
       setTimerSeconds((prev) => prev + 1);
     }, 1000);
-  }, []);
+  }, [ensureStarted]);
 
   const pauseTimer = useCallback(() => {
     if (timerRef.current) {
@@ -151,12 +181,6 @@ function MockExamDetailContent() {
       .then(([data, mySolves]) => {
         setExam(data);
         setAttempts(mySolves);
-        // GA4 — 모의고사 시작
-        trackEvent("start_exam", {
-          exam_id: data.id,
-          exam_type: data.examType,
-          exam_name: data.name,
-        });
       })
       .catch((e) => setError(e instanceof Error ? e.message : "모의고사를 불러올 수 없습니다."));
   }, [id]);
@@ -484,6 +508,7 @@ function MockExamDetailContent() {
       );
       if (!ok) return;
     }
+    if (!(await ensureStarted())) return;
 
     setSubmitting(true);
     try {
@@ -571,10 +596,10 @@ function MockExamDetailContent() {
             <MockExamPdfButton examId={exam.id} />
             <button
               onClick={handleSubmit}
-              disabled={submitting || answeredCount === 0}
+              disabled={starting || submitting || answeredCount === 0}
               className={`shrink-0 rounded-lg ${accent.bg} px-5 py-2.5 text-sm font-semibold text-zinc-900 shadow-sm transition disabled:opacity-40`}
             >
-              {submitting ? "제출 중..." : `제출하기 (${answeredCount}/${total})`}
+              {starting ? "시작 중..." : submitting ? "제출 중..." : `제출하기 (${answeredCount}/${total})`}
             </button>
           </div>
         </div>
@@ -657,10 +682,10 @@ function MockExamDetailContent() {
         <div className="mt-8">
           <button
             onClick={handleSubmit}
-            disabled={submitting || answeredCount === 0}
+            disabled={starting || submitting || answeredCount === 0}
             className={`w-full rounded-xl ${accent.bg} py-4 text-base font-bold text-zinc-900 shadow-sm transition disabled:opacity-40`}
           >
-            {submitting ? "제출 중..." : "제출하기"}
+            {starting ? "시작 중..." : submitting ? "제출 중..." : "제출하기"}
           </button>
           {answeredCount < total && answeredCount > 0 && (
             <p className="mt-2 text-center text-xs text-muted">

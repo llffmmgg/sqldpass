@@ -122,6 +122,10 @@ export async function getMockExam(id: number): Promise<MockExamDetail> {
   }
 }
 
+export async function startMockExam(id: number): Promise<MockExamDetail> {
+  return fetchApi<MockExamDetail>(`/mock-exams/${id}/start`, { method: "POST" });
+}
+
 async function fromCacheAsDetail(id: number): Promise<MockExamDetail | null> {
   const exam = await getMockExamFromCache(id);
   if (!exam) return null;
